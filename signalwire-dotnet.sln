@@ -3,32 +3,29 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "signalwire-dotnet", "signalwire-dotnet\signalwire-dotnet.csproj", "{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "signalwire-dotnet", "signalwire-dotnet\signalwire-dotnet.csproj", "{349C0884-4FBE-4388-8078-C9DC4B4D35FB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Twilio", "laml\src\Twilio\Twilio.csproj", "{FF7CAB69-B034-426B-8F3B-50902CA41BB3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
-		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
-		Release|x64 = Release|x64
-		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{349C0884-4FBE-4388-8078-C9DC4B4D35FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{349C0884-4FBE-4388-8078-C9DC4B4D35FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{349C0884-4FBE-4388-8078-C9DC4B4D35FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{349C0884-4FBE-4388-8078-C9DC4B4D35FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF7CAB69-B034-426B-8F3B-50902CA41BB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF7CAB69-B034-426B-8F3B-50902CA41BB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF7CAB69-B034-426B-8F3B-50902CA41BB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF7CAB69-B034-426B-8F3B-50902CA41BB3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Debug|x64.Build.0 = Debug|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Debug|x86.Build.0 = Debug|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Release|x64.ActiveCfg = Release|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Release|x64.Build.0 = Release|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Release|x86.ActiveCfg = Release|Any CPU
-		{A13BB3D5-763C-4121-93C4-1F61F3CBCEAF}.Release|x86.Build.0 = Release|Any CPU
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {07D95FE8-9E6B-4BC5-88AC-BAD3CAF4D2E7}
 	EndGlobalSection
 EndGlobal
