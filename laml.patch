@@ -1,0 +1,47 @@
+diff --git a/src/Twilio/Twilio.csproj b/src/Twilio/Twilio.csproj
+index 34aef7e6..8f7b5b4b 100644
+--- a/src/Twilio/Twilio.csproj
++++ b/src/Twilio/Twilio.csproj
+@@ -1,6 +1,6 @@
+ ﻿<Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup Label="NuGet">
+-    <TargetFrameworks>netstandard1.4;net451;net35</TargetFrameworks>
++    <TargetFrameworks>netstandard1.4</TargetFrameworks>
+     <IsPackable>true</IsPackable>
+     <PackageId>Twilio</PackageId>
+     <Description>Twilio REST API helper library</Description>
+@@ -11,12 +11,12 @@
+     <VersionSuffix>
+     </VersionSuffix>
+     <Authors>Twilio</Authors>
+-    <NoWarn>$(NoWarn);CS1591</NoWarn>
++    <NoWarn>$(NoWarn);CS1591;CS0618;CS1570;CS1572;CS1573;CS1587;</NoWarn>
+     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+     <AssemblyName>Twilio</AssemblyName>
+     <PackageTags>REST;SMS;voice;telephony;phone;twilio;twiml;video;wireless;api</PackageTags>
+-    <PackageIconUrl>https://www.twilio.com/marketing/bundles/marketing/img/favicons/favicon.ico</PackageIconUrl>
++    <PackageIconUrl>https://www.signalwire.com/marketing/bundles/marketing/img/favicons/favicon.ico</PackageIconUrl>
+     <PackageProjectUrl>http://github.com/twilio/twilio-csharp</PackageProjectUrl>
+     <PackageLicenseUrl>https://github.com/twilio/twilio-csharp/blob/master/LICENSE.md</PackageLicenseUrl>
+     <RepositoryUrl>http://github.com/twilio/twilio-csharp</RepositoryUrl>
+diff --git a/test/Twilio.Test/Twilio.Test.csproj b/test/Twilio.Test/Twilio.Test.csproj
+index 756cddea..02bb3134 100644
+--- a/test/Twilio.Test/Twilio.Test.csproj
++++ b/test/Twilio.Test/Twilio.Test.csproj
+@@ -2,7 +2,7 @@
+   <PropertyGroup>
+     <OutputType>Exe</OutputType>
+     <RootNamespace>Twilio.Tests</RootNamespace>
+-    <TargetFrameworks>netcoreapp1.1;net451;net35</TargetFrameworks>
++    <TargetFrameworks>netcoreapp1.1</TargetFrameworks>
+     <RuntimeIdentifier Condition=" '$(TargetFramework)' == 'net451' ">win7-x86</RuntimeIdentifier>
+     <RuntimeIdentifier Condition=" '$(TargetFramework)' == 'net35' ">win7-x86</RuntimeIdentifier>
+   </PropertyGroup>
+@@ -19,4 +19,4 @@
+   <ItemGroup>
+     <ProjectReference Include="..\..\src\Twilio\Twilio.csproj" />
+   </ItemGroup>
+-</Project>
+\ No newline at end of file
++</Project>
