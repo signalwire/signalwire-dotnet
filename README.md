@@ -31,6 +31,4 @@ To create a nuget package, with a complete set of files required including depen
 
 ```dotnet pack```
 
-
-
-
+Or under Windows you may open the solution file with VS2017 and immediately build the entire solution after bootstrap.sh has been run.
