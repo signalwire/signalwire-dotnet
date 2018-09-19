@@ -32,3 +32,13 @@ To create a nuget package, with a complete set of files required including depen
 ```dotnet pack```
 
 Or under Windows you may open the solution file with VS2017 and immediately build the entire solution after bootstrap.sh has been run.
+
+
+
+Runtime Notes:
+
+After calling ```TwilioClient.Init`` with your projectid and token for the username and password you must also call the following:
+
+```TwilioClient.SetDomain("<yourdomain>");```
+
+Where <yourdomain> is where your dashboard can be found on SignalWire, IE: http://<yourdomain>.signalwire.com
