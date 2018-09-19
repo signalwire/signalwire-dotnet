@@ -1,8 +1,8 @@
 diff --git a/src/Twilio/Twilio.csproj b/src/Twilio/Twilio.csproj
-index 34aef7e6..8f7b5b4b 100644
+index 34aef7e6..f28e7896 100644
 --- a/src/Twilio/Twilio.csproj
 +++ b/src/Twilio/Twilio.csproj
-@@ -1,6 +1,6 @@
+@@ -1,22 +1,20 @@
  ﻿<Project Sdk="Microsoft.NET.Sdk">
    <PropertyGroup Label="NuGet">
 -    <TargetFrameworks>netstandard1.4;net451;net35</TargetFrameworks>
@@ -10,9 +10,13 @@ index 34aef7e6..8f7b5b4b 100644
      <IsPackable>true</IsPackable>
      <PackageId>Twilio</PackageId>
      <Description>Twilio REST API helper library</Description>
-@@ -11,12 +11,12 @@
-     <VersionSuffix>
-     </VersionSuffix>
+     <Copyright>Copyright © Twilio</Copyright>
+     <AssemblyTitle>Twilio</AssemblyTitle>
+     <NeutralLanguage>en-US</NeutralLanguage>
+-    <VersionPrefix>5.16.4</VersionPrefix>
+-    <VersionSuffix>
+-    </VersionSuffix>
++    <Version>5.16.4</Version>
      <Authors>Twilio</Authors>
 -    <NoWarn>$(NoWarn);CS1591</NoWarn>
 +    <NoWarn>$(NoWarn);CS1591;CS0618;CS1570;CS1572;CS1573;CS1587;</NoWarn>
