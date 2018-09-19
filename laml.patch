@@ -1,3 +1,96 @@
+diff --git a/src/Twilio/Base/Page.cs b/src/Twilio/Base/Page.cs
+index 6c31c57d..3a005b37 100644
+--- a/src/Twilio/Base/Page.cs
++++ b/src/Twilio/Base/Page.cs
+@@ -61,7 +61,7 @@ namespace Twilio.Base
+         private static string UrlFromUri(Domain domain, string region, string uri)
+         {
+             var b = new StringBuilder();
+-            b.Append("https://").Append(domain);
++            b.Append("https://").Append(domain == Domain.Api ? TwilioClient.GetDomain() : domain.ToString());
+             
+             if (!IsNullOrEmpty(region))
+             {
+@@ -170,4 +170,4 @@ namespace Twilio.Base
+             );
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/src/Twilio/Http/Request.cs b/src/Twilio/Http/Request.cs
+index 7f318aeb..354c379f 100644
+--- a/src/Twilio/Http/Request.cs
++++ b/src/Twilio/Http/Request.cs
+@@ -75,7 +75,7 @@ namespace Twilio.Http
+             Method = method;
+ 
+             var b = new StringBuilder();
+-            b.Append("https://").Append(domain);
++            b.Append("https://").Append(domain == Domain.Api ? TwilioClient.GetDomain() : domain.ToString());
+             if (!string.IsNullOrEmpty(region))
+             {
+                 b.Append(".").Append(region);
+diff --git a/src/Twilio/Twilio.cs b/src/Twilio/Twilio.cs
+index e6403598..7e5de56c 100644
+--- a/src/Twilio/Twilio.cs
++++ b/src/Twilio/Twilio.cs
+@@ -11,6 +11,7 @@ namespace Twilio
+         private static string _username;
+         private static string _password;
+         private static string _accountSid;
++        private static string _domain;
+         private static ITwilioRestClient _restClient;
+ 
+         private TwilioClient() {}
+@@ -96,6 +97,34 @@ namespace Twilio
+         }
+ 
+         /// <summary>
++        /// Set the client Domain
++        /// </summary>
++        /// <param name="domain">Domain</param>
++        public static void SetDomain(string domain)
++        {
++            if (domain == null)
++            {
++                throw new AuthenticationException("Domain can not be null");
++            }
++
++            if (domain != _domain)
++            {
++                Invalidate();
++            }
++
++            _domain = domain;
++        }
++
++        /// <summary>
++        /// Get the client Domain
++        /// </summary>
++        /// <returns>Domain</returns>
++        public static string GetDomain()
++        {
++            return _domain;
++        }
++
++        /// <summary>
+         /// Get the rest client
+         /// </summary>
+         /// <returns>The rest client</returns>
+@@ -106,10 +135,10 @@ namespace Twilio
+                 return _restClient;
+             }
+ 
+-            if (_username == null || _password == null)
++            if (_username == null || _password == null || _domain == null)
+             {
+                 throw new AuthenticationException (
+-                    "TwilioRestClient was used before AccountSid and AuthToken were set, please call TwilioClient.init()"
++                    "TwilioRestClient was used before AccountSid and AuthToken were set, please call TwilioClient.init() and TwilioClient.SetDomain"
+                 );
+             }
+ 
 diff --git a/src/Twilio/Twilio.csproj b/src/Twilio/Twilio.csproj
 index 34aef7e6..2a2aab4a 100644
 --- a/src/Twilio/Twilio.csproj
