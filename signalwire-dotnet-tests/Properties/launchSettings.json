@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "signalwire-dotnet-tests": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "LAML_PASSWORD": "replaceme",
+        "LAML_DOMAIN": "replaceme",
+        "LAML_FROM": "replaceme",
+        "LAML_USERNAME": "replaceme",
+        "LAML_TO": "replaceme"
+      }
+    }
+  }
+}
