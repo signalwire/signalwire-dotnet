@@ -1,5 +1,5 @@
 diff --git a/src/Twilio/Twilio.csproj b/src/Twilio/Twilio.csproj
-index 34aef7e6..f28e7896 100644
+index 34aef7e6..2a2aab4a 100644
 --- a/src/Twilio/Twilio.csproj
 +++ b/src/Twilio/Twilio.csproj
 @@ -1,22 +1,20 @@
@@ -29,6 +29,14 @@ index 34aef7e6..f28e7896 100644
      <PackageProjectUrl>http://github.com/twilio/twilio-csharp</PackageProjectUrl>
      <PackageLicenseUrl>https://github.com/twilio/twilio-csharp/blob/master/LICENSE.md</PackageLicenseUrl>
      <RepositoryUrl>http://github.com/twilio/twilio-csharp</RepositoryUrl>
+@@ -25,7 +23,6 @@
+   </PropertyGroup>
+   <ItemGroup>
+     <PackageReference Include="Newtonsoft.Json" Version="[9.0.1,)" />
+-    <Reference Include="System.Xml.Linq" />
+   </ItemGroup>
+   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.4' ">
+     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.1.2" />
 diff --git a/test/Twilio.Test/Twilio.Test.csproj b/test/Twilio.Test/Twilio.Test.csproj
 index 756cddea..02bb3134 100644
 --- a/test/Twilio.Test/Twilio.Test.csproj
