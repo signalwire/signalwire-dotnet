@@ -13,8 +13,8 @@
     <Copyright>Copyright © SignalWire Inc</Copyright>
     <Description>SignalWire development kit for operating with http://signalwire.com services.</Description>
     <PackageTags>REST;websocket;json;jsonrpc;SMS;voice;telephony;phone;video;voip;realtime;sdk;api</PackageTags>
-    <PackageProjectUrl>http://github.com/signalwire/signalwire-dotnet</PackaveProjectUrl>
-    <PackageLicenseUrl>http://github.com/signalwire/signalwire-dotnet/LICENSE</PackaveLicenseUrl>
+    <PackageProjectUrl>http://github.com/signalwire/signalwire-dotnet</PackageProjectUrl>
+    <PackageLicenseUrl>http://github.com/signalwire/signalwire-dotnet/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>http://github.com/signalwire/signalwire-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
