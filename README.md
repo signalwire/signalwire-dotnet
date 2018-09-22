@@ -37,8 +37,8 @@ Or under Windows you may open the solution file with VS2017 and immediately buil
 
 Runtime Notes:
 
-After calling ```TwilioClient.Init`` with your projectid and token for the username and password you must also call the following:
+After calling ```TwilioClient.Init``` with your projectid and token for the username and password you must also call the following:
 
 ```TwilioClient.SetDomain("<yourdomain>");```
 
-Where <yourdomain> is where your dashboard can be found on SignalWire, IE: http://<yourdomain>.signalwire.com
+Where ```<yourdomain>``` is where your dashboard can be found on SignalWire, IE: ```http://<yourdomain>.signalwire.com```

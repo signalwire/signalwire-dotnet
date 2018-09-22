@@ -1,17 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
-    <ProjectReference Include="..\laml\src\Twilio\Twilio.csproj" />
-  </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>SignalWire</RootNamespace>
+    <NoWarn>$(NoWarn);CS0618;</NoWarn>
 
     <PackageId>SignalWire-DotNet</PackageId>
-    <Version>1.0.0-rc.1</Version>
+    <Title>SignalWire</Title>
+    <Version>1.0.0-test-0-rc-1</Version>
     <Authors>SignalWire Team</Authors>
     <Company>SignalWire Inc</Company>
+    <Copyright>Copyright © SignalWire Inc</Copyright>
+    <Description>SignalWire development kit for operating with http://signalwire.com services.</Description>
+    <PackageTags>REST;websocket;json;jsonrpc;SMS;voice;telephony;phone;video;voip;realtime;sdk;api</PackageTags>
+    <PackageProjectUrl>http://github.com/signalwire/signalwire-dotnet</PackaveProjectUrl>
+    <PackageLicenseUrl>http://github.com/signalwire/signalwire-dotnet/LICENSE</PackaveLicenseUrl>
+    <RepositoryUrl>http://github.com/signalwire/signalwire-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="[9.0.1,)" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.1.2" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="5.1.2" />
+    <PackageReference Include="Microsoft.IdentityModel.Logging" Version="1.1.2" />
+    <PackageReference Include="System.Collections.Specialized" Version="4.3.0" />
+  </ItemGroup>
 </Project>

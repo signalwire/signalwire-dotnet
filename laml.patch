@@ -91,45 +91,6 @@ index e6403598..7e5de56c 100644
                  );
              }
  
-diff --git a/src/Twilio/Twilio.csproj b/src/Twilio/Twilio.csproj
-index 34aef7e6..2a2aab4a 100644
---- a/src/Twilio/Twilio.csproj
-+++ b/src/Twilio/Twilio.csproj
-@@ -1,22 +1,20 @@
- ﻿<Project Sdk="Microsoft.NET.Sdk">
-   <PropertyGroup Label="NuGet">
--    <TargetFrameworks>netstandard1.4;net451;net35</TargetFrameworks>
-+    <TargetFrameworks>netstandard1.4</TargetFrameworks>
-     <IsPackable>true</IsPackable>
-     <PackageId>Twilio</PackageId>
-     <Description>Twilio REST API helper library</Description>
-     <Copyright>Copyright © Twilio</Copyright>
-     <AssemblyTitle>Twilio</AssemblyTitle>
-     <NeutralLanguage>en-US</NeutralLanguage>
--    <VersionPrefix>5.16.4</VersionPrefix>
--    <VersionSuffix>
--    </VersionSuffix>
-+    <Version>5.16.4</Version>
-     <Authors>Twilio</Authors>
--    <NoWarn>$(NoWarn);CS1591</NoWarn>
-+    <NoWarn>$(NoWarn);CS1591;CS0618;CS1570;CS1572;CS1573;CS1587;</NoWarn>
-     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-     <AssemblyName>Twilio</AssemblyName>
-     <PackageTags>REST;SMS;voice;telephony;phone;twilio;twiml;video;wireless;api</PackageTags>
--    <PackageIconUrl>https://www.twilio.com/marketing/bundles/marketing/img/favicons/favicon.ico</PackageIconUrl>
-+    <PackageIconUrl>https://www.signalwire.com/marketing/bundles/marketing/img/favicons/favicon.ico</PackageIconUrl>
-     <PackageProjectUrl>http://github.com/twilio/twilio-csharp</PackageProjectUrl>
-     <PackageLicenseUrl>https://github.com/twilio/twilio-csharp/blob/master/LICENSE.md</PackageLicenseUrl>
-     <RepositoryUrl>http://github.com/twilio/twilio-csharp</RepositoryUrl>
-@@ -25,7 +23,6 @@
-   </PropertyGroup>
-   <ItemGroup>
-     <PackageReference Include="Newtonsoft.Json" Version="[9.0.1,)" />
--    <Reference Include="System.Xml.Linq" />
-   </ItemGroup>
-   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.4' ">
-     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.1.2" />
 diff --git a/test/Twilio.Test/Twilio.Test.csproj b/test/Twilio.Test/Twilio.Test.csproj
 index 756cddea..02bb3134 100644
 --- a/test/Twilio.Test/Twilio.Test.csproj

@@ -5,8 +5,6 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "signalwire-dotnet", "signalwire-dotnet\signalwire-dotnet.csproj", "{349C0884-4FBE-4388-8078-C9DC4B4D35FB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Twilio", "laml\src\Twilio\Twilio.csproj", "{FF7CAB69-B034-426B-8F3B-50902CA41BB3}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "signalwire-dotnet-tests", "signalwire-dotnet-tests\signalwire-dotnet-tests.csproj", "{CCD41B0D-71F2-48A4-BEF7-50A08BA3C40E}"
 EndProject
 Global
@@ -19,10 +17,6 @@ Global
 		{349C0884-4FBE-4388-8078-C9DC4B4D35FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{349C0884-4FBE-4388-8078-C9DC4B4D35FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{349C0884-4FBE-4388-8078-C9DC4B4D35FB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FF7CAB69-B034-426B-8F3B-50902CA41BB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FF7CAB69-B034-426B-8F3B-50902CA41BB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FF7CAB69-B034-426B-8F3B-50902CA41BB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FF7CAB69-B034-426B-8F3B-50902CA41BB3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CCD41B0D-71F2-48A4-BEF7-50A08BA3C40E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CCD41B0D-71F2-48A4-BEF7-50A08BA3C40E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CCD41B0D-71F2-48A4-BEF7-50A08BA3C40E}.Release|Any CPU.ActiveCfg = Release|Any CPU
