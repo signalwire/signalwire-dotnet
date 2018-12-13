@@ -37,7 +37,9 @@ Or under Windows you may open the solution file with VS2017 and immediately buil
 
 Runtime Notes:
 
-After calling ```TwilioClient.Init``` with your projectid and token for the username and password you must also call the following:
+Use nuget to add the reference to ```signalwire-dotnet``` project, found here: https://www.nuget.org/packages/SignalWire-DotNet/
+
+Calling ```TwilioClient.Init``` with your projectid and token for the username and password and then call:
 
 ```TwilioClient.SetDomain("<yourdomain>");```
 
