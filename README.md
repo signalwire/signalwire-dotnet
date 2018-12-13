@@ -42,3 +42,9 @@ After calling ```TwilioClient.Init``` with your projectid and token for the user
 ```TwilioClient.SetDomain("<yourdomain>");```
 
 Where ```<yourdomain>``` is where your dashboard can be found on SignalWire, IE: ```http://<yourdomain>.signalwire.com```
+
+Example:
+```
+TwilioClient.Init("<projectid>", "<token>");
+TwilioClient.SetDomain("<domain>");
+```
