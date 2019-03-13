@@ -1,5 +1,5 @@
 diff --git a/src/Twilio/Base/Page.cs b/src/Twilio/Base/Page.cs
-index 6c31c57d..3a005b37 100644
+index 6c31c57d..a28d26e6 100644
 --- a/src/Twilio/Base/Page.cs
 +++ b/src/Twilio/Base/Page.cs
 @@ -61,7 +61,7 @@ namespace Twilio.Base
@@ -7,7 +7,7 @@ index 6c31c57d..3a005b37 100644
          {
              var b = new StringBuilder();
 -            b.Append("https://").Append(domain);
-+            b.Append("https://").Append(domain == Domain.Api ? TwilioClient.GetDomain() : domain.ToString());
++            b.Append("https://").Append(TwilioClient.GetDomain());
              
              if (!IsNullOrEmpty(region))
              {
@@ -31,6 +31,100 @@ index 7f318aeb..354c379f 100644
              if (!string.IsNullOrEmpty(region))
              {
                  b.Append(".").Append(region);
+diff --git a/src/Twilio/Rest/Fax/V1/Fax/FaxMediaResource.cs b/src/Twilio/Rest/Fax/V1/Fax/FaxMediaResource.cs
+index c25251ad..2e8480d9 100644
+--- a/src/Twilio/Rest/Fax/V1/Fax/FaxMediaResource.cs
++++ b/src/Twilio/Rest/Fax/V1/Fax/FaxMediaResource.cs
+@@ -27,7 +27,7 @@ namespace Twilio.Rest.Fax.V1.Fax
+             return new Request(
+                 HttpMethod.Get,
+                 Rest.Domain.Fax,
+-                "/v1/Faxes/" + options.PathFaxSid + "/Media/" + options.PathSid + "",
++                "/2010-04-01/Accounts/" + client.AccountSid + "/Faxes/" + options.PathFaxSid + "/Media/" + options.PathSid + "",
+                 client.Region,
+                 queryParams: options.GetParams()
+             );
+@@ -97,7 +97,7 @@ namespace Twilio.Rest.Fax.V1.Fax
+             return new Request(
+                 HttpMethod.Get,
+                 Rest.Domain.Fax,
+-                "/v1/Faxes/" + options.PathFaxSid + "/Media",
++                "/2010-04-01/Accounts/" + client.AccountSid + "/Faxes/" + options.PathFaxSid + "/Media",
+                 client.Region,
+                 queryParams: options.GetParams()
+             );
+@@ -236,7 +236,7 @@ namespace Twilio.Rest.Fax.V1.Fax
+             return new Request(
+                 HttpMethod.Delete,
+                 Rest.Domain.Fax,
+-                "/v1/Faxes/" + options.PathFaxSid + "/Media/" + options.PathSid + "",
++                "/2010-04-01/Accounts/" + client.AccountSid + "/Faxes/" + options.PathFaxSid + "/Media/" + options.PathSid + "",
+                 client.Region,
+                 queryParams: options.GetParams()
+             );
+@@ -361,4 +361,4 @@ namespace Twilio.Rest.Fax.V1.Fax
+         }
+     }
+ 
+-}
+\ No newline at end of file
++}
+diff --git a/src/Twilio/Rest/Fax/V1/FaxResource.cs b/src/Twilio/Rest/Fax/V1/FaxResource.cs
+index fcf88205..a8e33e7d 100644
+--- a/src/Twilio/Rest/Fax/V1/FaxResource.cs
++++ b/src/Twilio/Rest/Fax/V1/FaxResource.cs
+@@ -88,7 +88,7 @@ namespace Twilio.Rest.Fax.V1
+             return new Request(
+                 HttpMethod.Get,
+                 Rest.Domain.Fax,
+-                "/v1/Faxes/" + options.PathSid + "",
++                "/2010-04-01/Accounts/" + client.AccountSid + "/Faxes/" + options.PathSid + "",
+                 client.Region,
+                 queryParams: options.GetParams()
+             );
+@@ -155,7 +155,7 @@ namespace Twilio.Rest.Fax.V1
+             return new Request(
+                 HttpMethod.Get,
+                 Rest.Domain.Fax,
+-                "/v1/Faxes",
++                "/2010-04-01/Accounts/" + client.AccountSid + "/Faxes",
+                 client.Region,
+                 queryParams: options.GetParams()
+             );
+@@ -306,7 +306,7 @@ namespace Twilio.Rest.Fax.V1
+             return new Request(
+                 HttpMethod.Post,
+                 Rest.Domain.Fax,
+-                "/v1/Faxes",
++                "/2010-04-01/Accounts/" + client.AccountSid + "/Faxes",
+                 client.Region,
+                 postParams: options.GetParams()
+             );
+@@ -406,7 +406,7 @@ namespace Twilio.Rest.Fax.V1
+             return new Request(
+                 HttpMethod.Post,
+                 Rest.Domain.Fax,
+-                "/v1/Faxes/" + options.PathSid + "",
++                "/2010-04-01/Accounts/" + client.AccountSid + "/Faxes/" + options.PathSid + "",
+                 client.Region,
+                 postParams: options.GetParams()
+             );
+@@ -478,7 +478,7 @@ namespace Twilio.Rest.Fax.V1
+             return new Request(
+                 HttpMethod.Delete,
+                 Rest.Domain.Fax,
+-                "/v1/Faxes/" + options.PathSid + "",
++                "/2010-04-01/Accounts/" + client.AccountSid + "/Faxes/" + options.PathSid + "",
+                 client.Region,
+                 queryParams: options.GetParams()
+             );
+@@ -657,4 +657,4 @@ namespace Twilio.Rest.Fax.V1
+         }
+     }
+ 
+-}
+\ No newline at end of file
++}
 diff --git a/src/Twilio/Twilio.cs b/src/Twilio/Twilio.cs
 index e6403598..7e5de56c 100644
 --- a/src/Twilio/Twilio.cs
@@ -92,22 +186,15 @@ index e6403598..7e5de56c 100644
              }
  
 diff --git a/test/Twilio.Test/Twilio.Test.csproj b/test/Twilio.Test/Twilio.Test.csproj
-index 756cddea..02bb3134 100644
+index 92a29914..3f2b0842 100644
 --- a/test/Twilio.Test/Twilio.Test.csproj
 +++ b/test/Twilio.Test/Twilio.Test.csproj
 @@ -2,7 +2,7 @@
    <PropertyGroup>
      <OutputType>Exe</OutputType>
      <RootNamespace>Twilio.Tests</RootNamespace>
--    <TargetFrameworks>netcoreapp1.1;net451;net35</TargetFrameworks>
-+    <TargetFrameworks>netcoreapp1.1</TargetFrameworks>
+-    <TargetFrameworks>netcoreapp2.0;net451;net35</TargetFrameworks>
++    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
      <RuntimeIdentifier Condition=" '$(TargetFramework)' == 'net451' ">win7-x86</RuntimeIdentifier>
      <RuntimeIdentifier Condition=" '$(TargetFramework)' == 'net35' ">win7-x86</RuntimeIdentifier>
    </PropertyGroup>
-@@ -19,4 +19,4 @@
-   <ItemGroup>
-     <ProjectReference Include="..\..\src\Twilio\Twilio.csproj" />
-   </ItemGroup>
--</Project>
-\ No newline at end of file
-+</Project>
