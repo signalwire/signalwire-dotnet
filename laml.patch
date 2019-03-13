@@ -27,7 +27,7 @@ index 7f318aeb..354c379f 100644
  
              var b = new StringBuilder();
 -            b.Append("https://").Append(domain);
-+            b.Append("https://").Append(domain == Domain.Api ? TwilioClient.GetDomain() : domain.ToString());
++            b.Append("https://").Append(TwilioClient.GetDomain());
              if (!string.IsNullOrEmpty(region))
              {
                  b.Append(".").Append(region);
