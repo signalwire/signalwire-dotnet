@@ -1,17 +1,24 @@
 diff --git a/src/Twilio/Base/Page.cs b/src/Twilio/Base/Page.cs
-index 6c31c57d..a28d26e6 100644
+index 6c31c57d..e816b272 100644
 --- a/src/Twilio/Base/Page.cs
 +++ b/src/Twilio/Base/Page.cs
-@@ -61,7 +61,7 @@ namespace Twilio.Base
+@@ -61,14 +61,8 @@ namespace Twilio.Base
          private static string UrlFromUri(Domain domain, string region, string uri)
          {
              var b = new StringBuilder();
 -            b.Append("https://").Append(domain);
-+            b.Append("https://").Append(TwilioClient.GetDomain());
++            b.Append("https://").Append(TwilioClient.GetDomain()).Append(uri);
              
-             if (!IsNullOrEmpty(region))
-             {
-@@ -170,4 +170,4 @@ namespace Twilio.Base
+-            if (!IsNullOrEmpty(region))
+-            {
+-                b.Append(".").Append(region);
+-            }
+-
+-            b.Append(".twilio.com").Append(uri);
+             return b.ToString();
+         }
+ 
+@@ -170,4 +164,4 @@ namespace Twilio.Base
              );
          }
      }
@@ -19,18 +26,23 @@ index 6c31c57d..a28d26e6 100644
 \ No newline at end of file
 +}
 diff --git a/src/Twilio/Http/Request.cs b/src/Twilio/Http/Request.cs
-index 7f318aeb..354c379f 100644
+index 7f318aeb..318301dc 100644
 --- a/src/Twilio/Http/Request.cs
 +++ b/src/Twilio/Http/Request.cs
-@@ -75,7 +75,7 @@ namespace Twilio.Http
+@@ -75,12 +75,7 @@ namespace Twilio.Http
              Method = method;
  
              var b = new StringBuilder();
 -            b.Append("https://").Append(domain);
-+            b.Append("https://").Append(TwilioClient.GetDomain());
-             if (!string.IsNullOrEmpty(region))
-             {
-                 b.Append(".").Append(region);
+-            if (!string.IsNullOrEmpty(region))
+-            {
+-                b.Append(".").Append(region);
+-            }
+-            b.Append(".twilio.com").Append(uri);
++            b.Append("https://").Append(TwilioClient.GetDomain()).Append(uri);
+ 
+             _uri = new Uri(b.ToString());
+             _queryParams = queryParams ?? new List<KeyValuePair<string, string>>();
 diff --git a/src/Twilio/Rest/Fax/V1/Fax/FaxMediaResource.cs b/src/Twilio/Rest/Fax/V1/Fax/FaxMediaResource.cs
 index c25251ad..2e8480d9 100644
 --- a/src/Twilio/Rest/Fax/V1/Fax/FaxMediaResource.cs
@@ -126,21 +138,72 @@ index fcf88205..a8e33e7d 100644
 \ No newline at end of file
 +}
 diff --git a/src/Twilio/Twilio.cs b/src/Twilio/Twilio.cs
-index e6403598..7e5de56c 100644
+index e6403598..0cef4851 100644
 --- a/src/Twilio/Twilio.cs
 +++ b/src/Twilio/Twilio.cs
-@@ -11,6 +11,7 @@ namespace Twilio
+@@ -1,5 +1,8 @@
+-﻿using Twilio.Clients;
++﻿using System;
++using System.Collections.Generic;
++using Twilio.Clients;
+ using Twilio.Exceptions;
++using Twilio.Http;
+ 
+ namespace Twilio
+ {
+@@ -11,6 +14,8 @@ namespace Twilio
          private static string _username;
          private static string _password;
          private static string _accountSid;
++        private static HttpClient _httpClient;
 +        private static string _domain;
          private static ITwilioRestClient _restClient;
  
          private TwilioClient() {}
-@@ -96,6 +97,34 @@ namespace Twilio
+@@ -20,10 +25,13 @@ namespace Twilio
+         /// </summary>
+         /// <param name="username">Auth username</param>
+         /// <param name="password">Auth password</param>
+-        public static void Init(string username, string password)
++        /// <param name="others">Other parameters</param>
++        public static void Init(string username, string password, Dictionary<string, object> others = null)
+         {
+             SetUsername(username);
+             SetPassword(password);
++            if (others != null) SetOthers(others);
++	    SetFromEnvironment();
          }
  
          /// <summary>
+@@ -32,11 +40,14 @@ namespace Twilio
+         /// <param name="username">Auth username</param>
+         /// <param name="password">Auth password</param>
+         /// <param name="accountSid">Account SID to use</param>
+-        public static void Init(string username, string password, string accountSid)
++        /// <param name="others">Other parameters</param>
++        public static void Init(string username, string password, string accountSid, Dictionary<string, object> others = null)
+         {
+             SetUsername(username);
+             SetPassword(password);
+             SetAccountSid(accountSid);
++            if (others != null) SetOthers(others);
++	    SetFromEnvironment();
+         }
+ 
+         /// <summary>
+@@ -96,6 +107,67 @@ namespace Twilio
+         }
+ 
+         /// <summary>
++        /// Set the http client
++        /// </summary>
++        /// <param name="httpClient">HTTP Client</param>
++        public static void SetHttpClient(HttpClient httpClient)
++        {
++            _httpClient = httpClient;
++        }
++
++        /// <summary>
 +        /// Set the client Domain
 +        /// </summary>
 +        /// <param name="domain">Domain</param>
@@ -169,10 +232,34 @@ index e6403598..7e5de56c 100644
 +        }
 +
 +        /// <summary>
++        /// Set the other options dynamically
++        /// </summary>
++        /// <param name="others">Other parameters</param>
++        private static void SetOthers(Dictionary<string, object> others)
++        {
++            object val = null;
++            if (others.TryGetValue("accountSid", out val)) SetAccountSid((string)val);
++            if (others.TryGetValue("httpClient", out val)) SetHttpClient((HttpClient)val);
++            if (others.TryGetValue("signalwireSpaceUrl", out val)) SetDomain((string)val);
++        }
++
++        /// <summary>
++        /// Set the other options from environment overrides
++        /// </summary>
++        private static void SetFromEnvironment()
++        {
++            string val = null;
++            if ((val = Environment.GetEnvironmentVariable("LAML_USERNAME")) != null) SetUsername(val);
++            if ((val = Environment.GetEnvironmentVariable("LAML_PASSWORD")) != null) SetPassword(val);
++            if ((val = Environment.GetEnvironmentVariable("LAML_ACCOUNT_SID")) != null) SetAccountSid(val);
++            if ((val = Environment.GetEnvironmentVariable("LAML_SIGNALWIRE_SPACE_URL")) != null) SetDomain(val);
++        }
++
++        /// <summary>
          /// Get the rest client
          /// </summary>
          /// <returns>The rest client</returns>
-@@ -106,10 +135,10 @@ namespace Twilio
+@@ -106,14 +178,14 @@ namespace Twilio
                  return _restClient;
              }
  
@@ -184,6 +271,11 @@ index e6403598..7e5de56c 100644
 +                    "TwilioRestClient was used before AccountSid and AuthToken were set, please call TwilioClient.init() and TwilioClient.SetDomain"
                  );
              }
+ 
+-            _restClient = new TwilioRestClient(_username, _password, accountSid: _accountSid);
++            _restClient = new TwilioRestClient(_username, _password, accountSid: _accountSid, httpClient: _httpClient);
+             return _restClient;
+         }
  
 diff --git a/test/Twilio.Test/Twilio.Test.csproj b/test/Twilio.Test/Twilio.Test.csproj
 index 92a29914..3f2b0842 100644
