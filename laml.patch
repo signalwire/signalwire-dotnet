@@ -285,7 +285,7 @@ index e6403598..8a0a19f0 100644
 +        private static void SetFromEnvironment()
 +        {
 +            string val = null;
-+            if ((val = Environment.GetEnvironmentVariable("LAML_SIGNALWIRE_SPACE_URL")) != null) SetSignalwireSpaceUrl(val);
++            if ((val = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE_URL")) != null) SetSignalwireSpaceUrl(val);
 +        }
 +
 +        /// <summary>
