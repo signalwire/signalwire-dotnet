@@ -1,13 +1,16 @@
 diff --git a/src/Twilio/Base/Page.cs b/src/Twilio/Base/Page.cs
-index 6c31c57d..e816b272 100644
+index 6c31c57d..b0d555a4 100644
 --- a/src/Twilio/Base/Page.cs
 +++ b/src/Twilio/Base/Page.cs
-@@ -61,14 +61,8 @@ namespace Twilio.Base
+@@ -61,14 +61,11 @@ namespace Twilio.Base
          private static string UrlFromUri(Domain domain, string region, string uri)
          {
              var b = new StringBuilder();
 -            b.Append("https://").Append(domain);
-+            b.Append("https://").Append(TwilioClient.GetDomain()).Append(uri);
++            string host = TwilioClient.GetDomain() + ".signalwire.com";
++            if (TwilioClient.GetSignalwireSpaceUrl() != null)
++                host = TwilioClient.GetSignalwireSpaceUrl();
++            b.Append("https://").Append(host).Append(uri);
              
 -            if (!IsNullOrEmpty(region))
 -            {
@@ -18,7 +21,7 @@ index 6c31c57d..e816b272 100644
              return b.ToString();
          }
  
-@@ -170,4 +164,4 @@ namespace Twilio.Base
+@@ -170,4 +167,4 @@ namespace Twilio.Base
              );
          }
      }
@@ -26,10 +29,10 @@ index 6c31c57d..e816b272 100644
 \ No newline at end of file
 +}
 diff --git a/src/Twilio/Http/Request.cs b/src/Twilio/Http/Request.cs
-index 7f318aeb..318301dc 100644
+index 7f318aeb..8eae03d0 100644
 --- a/src/Twilio/Http/Request.cs
 +++ b/src/Twilio/Http/Request.cs
-@@ -75,12 +75,7 @@ namespace Twilio.Http
+@@ -75,12 +75,10 @@ namespace Twilio.Http
              Method = method;
  
              var b = new StringBuilder();
@@ -39,7 +42,10 @@ index 7f318aeb..318301dc 100644
 -                b.Append(".").Append(region);
 -            }
 -            b.Append(".twilio.com").Append(uri);
-+            b.Append("https://").Append(TwilioClient.GetDomain()).Append(uri);
++            string host = TwilioClient.GetDomain() + ".signalwire.com";
++            if (TwilioClient.GetSignalwireSpaceUrl() != null)
++                host = TwilioClient.GetSignalwireSpaceUrl();
++            b.Append("https://").Append(host).Append(uri);
  
              _uri = new Uri(b.ToString());
              _queryParams = queryParams ?? new List<KeyValuePair<string, string>>();
@@ -138,7 +144,7 @@ index fcf88205..a8e33e7d 100644
 \ No newline at end of file
 +}
 diff --git a/src/Twilio/Twilio.cs b/src/Twilio/Twilio.cs
-index e6403598..0cef4851 100644
+index e6403598..8a0a19f0 100644
 --- a/src/Twilio/Twilio.cs
 +++ b/src/Twilio/Twilio.cs
 @@ -1,5 +1,8 @@
@@ -151,16 +157,17 @@ index e6403598..0cef4851 100644
  
  namespace Twilio
  {
-@@ -11,6 +14,8 @@ namespace Twilio
+@@ -11,6 +14,9 @@ namespace Twilio
          private static string _username;
          private static string _password;
          private static string _accountSid;
 +        private static HttpClient _httpClient;
 +        private static string _domain;
++	private static string _signalwireSpaceUrl;
          private static ITwilioRestClient _restClient;
  
          private TwilioClient() {}
-@@ -20,10 +25,13 @@ namespace Twilio
+@@ -20,10 +26,13 @@ namespace Twilio
          /// </summary>
          /// <param name="username">Auth username</param>
          /// <param name="password">Auth password</param>
@@ -175,7 +182,7 @@ index e6403598..0cef4851 100644
          }
  
          /// <summary>
-@@ -32,11 +40,14 @@ namespace Twilio
+@@ -32,11 +41,14 @@ namespace Twilio
          /// <param name="username">Auth username</param>
          /// <param name="password">Auth password</param>
          /// <param name="accountSid">Account SID to use</param>
@@ -191,7 +198,7 @@ index e6403598..0cef4851 100644
          }
  
          /// <summary>
-@@ -96,6 +107,67 @@ namespace Twilio
+@@ -96,6 +108,93 @@ namespace Twilio
          }
  
          /// <summary>
@@ -207,6 +214,7 @@ index e6403598..0cef4851 100644
 +        /// Set the client Domain
 +        /// </summary>
 +        /// <param name="domain">Domain</param>
++        [Obsolete("Domain is deprecated, use SignalwireSpaceUrl instead")]
 +        public static void SetDomain(string domain)
 +        {
 +            if (domain == null)
@@ -232,6 +240,34 @@ index e6403598..0cef4851 100644
 +        }
 +
 +        /// <summary>
++        /// Set the client space url
++        /// </summary>
++        /// <param name="space">SignalWire Space Url</param>
++        public static void SetSignalwireSpaceUrl(string space)
++        {
++            if (space == null)
++            {
++                throw new AuthenticationException("Space can not be null");
++            }
++
++            if (space != _signalwireSpaceUrl)
++            {
++                Invalidate();
++            }
++
++            _signalwireSpaceUrl = space;
++        }
++
++        /// <summary>
++        /// Get the client space url
++        /// </summary>
++        /// <returns>Signalwire Space Url</returns>
++        public static string GetSignalwireSpaceUrl()
++        {
++            return _signalwireSpaceUrl;
++        }
++
++        /// <summary>
 +        /// Set the other options dynamically
 +        /// </summary>
 +        /// <param name="others">Other parameters</param>
@@ -240,7 +276,7 @@ index e6403598..0cef4851 100644
 +            object val = null;
 +            if (others.TryGetValue("accountSid", out val)) SetAccountSid((string)val);
 +            if (others.TryGetValue("httpClient", out val)) SetHttpClient((HttpClient)val);
-+            if (others.TryGetValue("signalwireSpaceUrl", out val)) SetDomain((string)val);
++            if (others.TryGetValue("signalwireSpaceUrl", out val)) SetSignalwireSpaceUrl((string)val);
 +        }
 +
 +        /// <summary>
@@ -249,17 +285,14 @@ index e6403598..0cef4851 100644
 +        private static void SetFromEnvironment()
 +        {
 +            string val = null;
-+            if ((val = Environment.GetEnvironmentVariable("LAML_USERNAME")) != null) SetUsername(val);
-+            if ((val = Environment.GetEnvironmentVariable("LAML_PASSWORD")) != null) SetPassword(val);
-+            if ((val = Environment.GetEnvironmentVariable("LAML_ACCOUNT_SID")) != null) SetAccountSid(val);
-+            if ((val = Environment.GetEnvironmentVariable("LAML_SIGNALWIRE_SPACE_URL")) != null) SetDomain(val);
++            if ((val = Environment.GetEnvironmentVariable("LAML_SIGNALWIRE_SPACE_URL")) != null) SetSignalwireSpaceUrl(val);
 +        }
 +
 +        /// <summary>
          /// Get the rest client
          /// </summary>
          /// <returns>The rest client</returns>
-@@ -106,14 +178,14 @@ namespace Twilio
+@@ -106,14 +205,14 @@ namespace Twilio
                  return _restClient;
              }
  

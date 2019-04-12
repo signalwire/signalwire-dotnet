@@ -39,14 +39,11 @@ Runtime Notes:
 
 Use nuget to add the reference to ```signalwire-dotnet``` project, found here: https://www.nuget.org/packages/SignalWire-DotNet/
 
-Calling ```TwilioClient.Init``` with your projectid and token for the username and password and then call:
+Calling ```TwilioClient.Init``` with your projectid and token for the username, password and signalwireSpaceUrl:
 
-```TwilioClient.SetDomain("<yourdomain>");```
-
-Where ```<yourdomain>``` is where your dashboard can be found on SignalWire, IE: ```http://<yourdomain>.signalwire.com```
+```TwilioClient.Init("<username>", "password", new Dictionary<string, object> { ["signalwireSpaceUrl"] = "<yourdomain>.signalwire.com" });```
 
 Example:
 ```
-TwilioClient.Init("<projectid>", "<token>");
-TwilioClient.SetDomain("<domain>");
+TwilioClient.Init("<projectid>", "<token>", new Dictionary<string, object> { ["signalwireSpaceUrl"] = "<domain>.signalwire.com" });
 ```
