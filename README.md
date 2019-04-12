@@ -41,7 +41,7 @@ Use nuget to add the reference to ```signalwire-dotnet``` project, found here: h
 
 Calling ```TwilioClient.Init``` with your projectid and token for the username, password and signalwireSpaceUrl:
 
-```TwilioClient.Init("<username>", "password", new Dictionary<string, object> { ["signalwireSpaceUrl"] = "<yourdomain>.signalwire.com" });```
+```TwilioClient.Init("<username>", "<password>", new Dictionary<string, object> { ["signalwireSpaceUrl"] = "<yourdomain>.signalwire.com" });```
 
 Example:
 ```
