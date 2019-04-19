@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "CallingCall_SimpleForwarding": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "SWCLIENT_EXAMPLE_SESSION_BOOTSTRAP": "replaceme",
+        "SWCLIENT_EXAMPLE_SESSION_PROJECT": "replaceme",
+        "SWCLIENT_EXAMPLE_SESSION_TOKEN": "replaceme",
+        "SWCLIENT_EXAMPLE_CALLRECEIVE_CONTEXT": "replaceme",
+        "SWCLIENT_EXAMPLE_CALL_FROM_NUMBER": "replaceme",
+        "SWCLIENT_EXAMPLE_CALL_TO_NUMBER": "replaceme"
+      }
+    }
+  }
+}

@@ -4,7 +4,7 @@
       "commandName": "Project",
       "environmentVariables": {
         "LAML_PASSWORD": "replaceme",
-        "LAML_DOMAIN": "replaceme",
+        "LAML_SPACE": "replaceme",
         "LAML_FROM": "replaceme",
         "LAML_USERNAME": "replaceme",
         "LAML_TO": "replaceme"
