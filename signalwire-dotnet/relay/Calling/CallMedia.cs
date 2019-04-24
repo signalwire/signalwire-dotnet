@@ -7,9 +7,9 @@ using System.Text;
 
 namespace SignalWire.Calling
 {
-    public sealed class CallPlay
+    public sealed class CallMedia
     {
-        public enum PlayType
+        public enum MediaType
         {
             audio,
             tts,
@@ -41,7 +41,7 @@ namespace SignalWire.Calling
         }
 
         [JsonProperty("type", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
-        public PlayType Type { get; set; }
+        public MediaType Type { get; set; }
 
         [JsonProperty("params", Required = Required.Always)]
         public JObject Parameters { get; set; }

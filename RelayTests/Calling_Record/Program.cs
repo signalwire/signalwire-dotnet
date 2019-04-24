@@ -20,7 +20,7 @@ namespace Calling_Record
         private static ManualResetEventSlim sCompleted = new ManualResetEventSlim();
         private static bool sSuccessful = false;
 
-        private static Client sClient = null;
+        private static RelayClient sClient = null;
         private static CallingAPI sCallingAPI = null;
 
         private static string sCallReceiveContext = null;
@@ -40,28 +40,28 @@ namespace Calling_Record
 
             Stopwatch timer = Stopwatch.StartNew();
 
-            // Setup the options for the client
-            Client.ClientOptions options = new Client.ClientOptions();
-
             // Use environment variables
             string session_bootstrap = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_BOOTSTRAP");
-            if (!string.IsNullOrWhiteSpace(session_bootstrap)) options.SessionOptions.Bootstrap = new Uri(session_bootstrap);
             string session_project = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_PROJECT");
             string session_token = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_TOKEN");
-            if (!string.IsNullOrWhiteSpace(session_project) && !string.IsNullOrWhiteSpace(session_token)) options.SessionOptions.Authentication = Client.CreateAuthentication(session_project, session_token);
             sCallReceiveContext = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALLRECEIVE_CONTEXT");
             sCallToNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_TO_NUMBER");
             sCallFromNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_FROM_NUMBER");
 
             // Make sure we have mandatory options filled in
-            if (options.SessionOptions.Bootstrap == null)
+            if (session_bootstrap == null)
             {
                 Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_BOOTSTRAP' environment variable");
                 return -1;
             }
-            if (options.SessionOptions.Authentication == null)
+            if (session_project == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_PROJECT' and/or 'SWCLIENT_TEST_SESSION_TOKEN' environment variables");
+                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_PROJECT' environment variable");
+                return -1;
+            }
+            if (session_token == null)
+            {
+                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_TOKEN' environment variable");
                 return -1;
             }
             if (sCallReceiveContext == null)
@@ -83,7 +83,7 @@ namespace Calling_Record
             try
             {
                 // Create the client
-                using (sClient = new Client(options))
+                using (sClient = new RelayClient(session_bootstrap, session_project, session_token))
                 {
                     // Setup callbacks before the client is started
                     sClient.OnReady += Client_OnReady;
@@ -113,7 +113,7 @@ namespace Calling_Record
             return sSuccessful ? 0 : -1;
         }
 
-        private static void Client_OnReady(Client client)
+        private static void Client_OnReady(RelayClient client)
         {
             // This is called when the client has established a new session, this is NOT called when a session is restored
             Logger.LogInformation("OnReady");
@@ -122,12 +122,12 @@ namespace Calling_Record
             sCallingAPI = new CallingAPI(client);
 
             // Hook all the callbacks for testing
-            sCallingAPI.OnCallReceiveCreated += CallingAPI_OnCallReceiveCreated;
+            sCallingAPI.OnCallReceived += CallingAPI_OnCallReceived;
 
             Task.Run(() =>
             {
                 // Request that the inbound calls for the given context reach this client
-                try { sCallingAPI.CallReceive(sCallReceiveContext); }
+                try { sCallingAPI.Receive(sCallReceiveContext); }
                 catch (Exception exc)
                 {
                     Logger.LogError(exc, "CallReceive failed");
@@ -142,9 +142,9 @@ namespace Calling_Record
             Logger.LogInformation("OnCallCreated: {0}, {1}", call.CallID, call.State);
         }
 
-        private static void CallingAPI_OnCallReceiveCreated(CallingAPI api, Call call, CallEventParams.ReceiveParams receiveParams)
+        private static void CallingAPI_OnCallReceived(CallingAPI api, Call call, CallEventParams.ReceiveParams receiveParams)
         {
-            Logger.LogInformation("OnCallReceiveCreated: {0}, {1}", call.CallID, call.State);
+            Logger.LogInformation("OnCallReceived: {0}, {1}", call.CallID, call.State);
 
             Task.Run(() =>
             {
@@ -158,9 +158,9 @@ namespace Calling_Record
 
                 try
                 {
-                    call.OnRecordUpdate += OnCallRecordUpdate;
+                    call.OnRecordStateChange += OnCallRecordStateChange;
 
-                    call.Record("bobs_your_uncle", CallRecordType.audio, new CallRecordAudio()
+                    call.StartRecord("bobs_your_uncle", CallRecordType.audio, new CallRecordAudio()
                     {
                         // Default parameters
                     });
@@ -199,7 +199,7 @@ namespace Calling_Record
             Logger.LogInformation("OnCallEnded: {0}, {1}", call.CallID, call.State);
         }
 
-        private static void OnCallRecordUpdate(CallingAPI api, Call call, CallEventParams.RecordParams recordParams)
+        private static void OnCallRecordStateChange(CallingAPI api, Call call, CallEventParams.RecordParams recordParams)
         {
             Logger.LogInformation("OnCallRecordUpdate: {0}, {1} for {2}, {3}", call.CallID, call.State, recordParams.ControlID, recordParams.State);
             if (recordParams.State == CallEventParams.RecordParams.RecordState.finished || recordParams.State == CallEventParams.RecordParams.RecordState.no_input)

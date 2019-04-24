@@ -11,7 +11,7 @@ namespace SignalWire
 {
     public sealed class ProvisioningAPI : RelayAPI
     {
-        public ProvisioningAPI(Client client) : base(client, "provisioning") { }
+        public ProvisioningAPI(RelayClient client) : base(client, "provisioning") { }
 
         public async Task<ConfigureResult> ConfigureAsync(ConfigureParams parameters)
         {

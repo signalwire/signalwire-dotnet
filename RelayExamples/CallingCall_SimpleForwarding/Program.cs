@@ -12,7 +12,7 @@ namespace CallingCall_SimpleForwarding
     {
         private static ILogger Logger { get; set; }
 
-        private static Client sClient = null;
+        private static RelayClient sClient = null;
         private static CallingAPI sCallingAPI = null;
 
         private static string sCallReceiveContext = null;
@@ -30,27 +30,28 @@ namespace CallingCall_SimpleForwarding
 
             Logger.LogInformation("Started");
 
-            Client.ClientOptions options = new Client.ClientOptions();
-
             // Use environment variables
             string session_bootstrap = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_SESSION_BOOTSTRAP");
-            if (!string.IsNullOrWhiteSpace(session_bootstrap)) options.SessionOptions.Bootstrap = new Uri(session_bootstrap);
             string session_project = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_SESSION_PROJECT");
             string session_token = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_SESSION_TOKEN");
-            if (!string.IsNullOrWhiteSpace(session_project) && !string.IsNullOrWhiteSpace(session_token)) options.SessionOptions.Authentication = Client.CreateAuthentication(session_project, session_token);
             sCallReceiveContext = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_CALLRECEIVE_CONTEXT");
             sCallToNumber = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_CALL_TO_NUMBER");
             sCallFromNumber = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_CALL_FROM_NUMBER");
 
             // Make sure we have mandatory options filled in
-            if (options.SessionOptions.Bootstrap == null)
+            if (session_bootstrap == null)
             {
                 Logger.LogError("Missing 'SWCLIENT_EXAMPLE_SESSION_BOOTSTRAP' environment variable");
                 return;
             }
-            if (options.SessionOptions.Authentication == null)
+            if (session_project == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_EXAMPLE_SESSION_PROJECT' and/or 'SWCLIENT_EXAMPLE_SESSION_TOKEN' environment variables");
+                Logger.LogError("Missing 'SWCLIENT_EXAMPLE_SESSION_PROJECT' environment variable");
+                return;
+            }
+            if (session_token == null)
+            {
+                Logger.LogError("Missing 'SWCLIENT_EXAMPLE_SESSION_TOKEN' environment variable");
                 return;
             }
             if (sCallReceiveContext == null)
@@ -72,7 +73,7 @@ namespace CallingCall_SimpleForwarding
             try
             {
                 // Create the client
-                using (sClient = new Client(options))
+                using (sClient = new RelayClient(session_bootstrap, session_project, session_token))
                 {
                     // Setup callbacks before the client is started
                     sClient.OnReady += Client_OnReady;
@@ -89,7 +90,7 @@ namespace CallingCall_SimpleForwarding
             }
         }
 
-        private static void Client_OnReady(Client client)
+        private static void Client_OnReady(RelayClient client)
         {
             // This is called when the client has established a new session, this is NOT called when a session is restored
             Logger.LogInformation("OnReady");
@@ -98,10 +99,10 @@ namespace CallingCall_SimpleForwarding
             sCallingAPI = new CallingAPI(client);
 
             // Hook the callback that occurs when an inbound call is created
-            sCallingAPI.OnCallReceiveCreated += CallingAPI_OnCallReceiveCreated;
+            sCallingAPI.OnCallReceived += CallingAPI_OnCallReceived;
 
             // Request that the inbound calls for the given context reach this client
-            try { sCallingAPI.CallReceive(sCallReceiveContext); }
+            try { sCallingAPI.Receive(sCallReceiveContext); }
             catch (Exception exc)
             {
                 Logger.LogError(exc, "CallReceive failed");
@@ -109,10 +110,10 @@ namespace CallingCall_SimpleForwarding
             }
         }
 
-        private static void CallingAPI_OnCallReceiveCreated(CallingAPI api, Call call, CallEventParams.ReceiveParams receiveParams)
+        private static void CallingAPI_OnCallReceived(CallingAPI api, Call call, CallEventParams.ReceiveParams receiveParams)
         {
             // This is called when the client is informed that a new inbound call has been created
-            Logger.LogInformation("OnCallReceiveCreated: {0}, {1}", call.CallID, call.State);
+            Logger.LogInformation("OnCallReceived: {0}, {1}", call.CallID, call.State);
 
             // Answer the inbound call
             try { call.Answer(); }

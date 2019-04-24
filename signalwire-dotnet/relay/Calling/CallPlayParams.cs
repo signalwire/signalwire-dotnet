@@ -19,6 +19,6 @@ namespace SignalWire.Calling
         public string ControlID { get; set; }
 
         [JsonProperty("play", Required = Required.Always)]
-        public List<CallPlay> Play { get; set; }
+        public List<CallMedia> Play { get; set; }
     }
 }

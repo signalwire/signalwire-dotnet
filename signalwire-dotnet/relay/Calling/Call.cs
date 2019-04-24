@@ -7,21 +7,38 @@ using System.Threading.Tasks;
 
 namespace SignalWire.Calling
 {
-    public sealed class Call
+    public abstract class Call
     {
         public delegate void StateChangeCallback(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams);
-        public delegate void AnsweredCallback(CallingAPI api, Call call, CallEventParams.StateParams stateParams);
-        public delegate void EndedCallback(CallingAPI api, Call call, CallEventParams.StateParams stateParams);
-        public delegate void ConnectConnectedCallback(CallingAPI api, Call call, Call callConnected, CallEventParams.ConnectParams connectParams);
+        public delegate void RingingCallback(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams);
+        public delegate void AnsweredCallback(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams);
+        public delegate void EndingCallback(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams);
+        public delegate void EndedCallback(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams);
+
+        public delegate void ConnectStateChangeCallback(CallingAPI api, Call call, CallEventParams.ConnectParams connectParams);
         public delegate void ConnectFailedCallback(CallingAPI api, Call call, CallEventParams.ConnectParams connectParams);
-        public delegate void CollectResultCallback(CallingAPI api, Call call, CallEventParams.CollectParams collectParams);
-        public delegate void RecordUpdateCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
-        public delegate void PlayUpdateCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
+        public delegate void ConnectConnectingCallback(CallingAPI api, Call call, CallEventParams.ConnectParams connectParams);
+        public delegate void ConnectConnectedCallback(CallingAPI api, Call call, Call callConnected, CallEventParams.ConnectParams connectParams);
+        public delegate void ConnectDisconnectedCallback(CallingAPI api, Call call, CallEventParams.ConnectParams connectParams);
 
-        private readonly ILogger mLogger = null;
+        public delegate void PlayStateChangeCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
+        public delegate void PlayPlayingCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
+        public delegate void PlayErrorCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
+        public delegate void PlayPausedCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
+        public delegate void PlayFinishedCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
 
-        private readonly CallingAPI mAPI = null;
-        private readonly string mTag = null;
+        public delegate void CollectCallback(CallingAPI api, Call call, CallEventParams.CollectParams collectParams);
+
+        public delegate void RecordStateChangeCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
+        public delegate void RecordRecordingCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
+        public delegate void RecordPausedCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
+        public delegate void RecordFinishedCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
+        public delegate void RecordNoInputCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
+
+        protected readonly ILogger mLogger = null;
+
+        protected readonly CallingAPI mAPI = null;
+        protected readonly string mTag = null;
         private string mNodeID = null;
         private string mCallID = null;
         private CallState mState = CallState.created;
@@ -29,25 +46,40 @@ namespace SignalWire.Calling
         private Call mPeer = null;
 
         public event StateChangeCallback OnStateChange;
+        public event RingingCallback OnRinging;
         public event AnsweredCallback OnAnswered;
+        public event EndingCallback OnEnding;
         public event EndedCallback OnEnded;
 
-        public event ConnectConnectedCallback OnConnectConnected;
+        public event ConnectStateChangeCallback OnConnectStateChange;
         public event ConnectFailedCallback OnConnectFailed;
+        public event ConnectConnectingCallback OnConnectConnecting;
+        public event ConnectConnectedCallback OnConnectConnected;
+        public event ConnectDisconnectedCallback OnConnectDisconnected;
 
-        public event CollectResultCallback OnCollectResult;
-        public event RecordUpdateCallback OnRecordUpdate;
-        public event PlayUpdateCallback OnPlayUpdate;
+        public event PlayStateChangeCallback OnPlayStateChange;
+        public event PlayPlayingCallback OnPlayPlaying;
+        public event PlayErrorCallback OnPlayError;
+        public event PlayPausedCallback OnPlayPaused;
+        public event PlayFinishedCallback OnPlayFinished;
 
-        internal Call(CallingAPI api, string tag)
+        public event CollectCallback OnCollect;
+
+        public event RecordStateChangeCallback OnRecordStateChange;
+        public event RecordRecordingCallback OnRecordRecording;
+        public event RecordPausedCallback OnRecordPaused;
+        public event RecordFinishedCallback OnRecordFinished;
+        public event RecordNoInputCallback OnRecordNoInput;
+
+        protected Call(CallingAPI api, string tag)
         {
-            mLogger = SignalWireLogging.CreateLogger<Client>();
+            mLogger = SignalWireLogging.CreateLogger<RelayClient>();
             mAPI = api;
             mTag = tag;
         }
-        internal Call(CallingAPI api, string nodeID, string callID)
+        protected Call(CallingAPI api, string nodeID, string callID)
         {
-            mLogger = SignalWireLogging.CreateLogger<Client>();
+            mLogger = SignalWireLogging.CreateLogger<RelayClient>();
             mAPI = api;
             mNodeID = nodeID;
             mCallID = callID;
@@ -80,8 +112,14 @@ namespace SignalWire.Calling
 
             switch (stateParams.CallState)
             {
+                case CallState.ringing:
+                    OnRinging?.Invoke(mAPI, this, oldState, stateParams);
+                    break;
                 case CallState.answered:
-                    OnAnswered?.Invoke(mAPI, this, stateParams);
+                    OnAnswered?.Invoke(mAPI, this, oldState, stateParams);
+                    break;
+                case CallState.ending:
+                    OnEnding?.Invoke(mAPI, this, oldState, stateParams);
                     break;
                 case CallState.ended:
                     mAPI.RemoveCall(stateParams.CallID);
@@ -91,7 +129,7 @@ namespace SignalWire.Calling
                         Peer.Peer = null;
                         Peer = null;
                     }
-                    OnEnded?.Invoke(mAPI, this, stateParams);
+                    OnEnded?.Invoke(mAPI, this, oldState, stateParams);
                     break;
                 default: break;
             }
@@ -99,85 +137,93 @@ namespace SignalWire.Calling
 
         internal void ConnectHandler(CallEventParams.ConnectParams connectParams)
         {
-            if (connectParams.ConnectState == CallState.connected)
+            OnConnectStateChange?.Invoke(mAPI, this, connectParams);
+
+            switch (connectParams.ConnectState)
             {
-                if (Peer != null)
-                {
-                    mLogger.LogWarning("Received ConnectParams for Call that is already connected to a Peer");
-                    return;
-                }
-                Call peer = mAPI.GetCall(connectParams.Peer.CallID);
-                if (peer == null)
-                {
-                    mLogger.LogWarning("Received ConnectParams with unknown Peer.CallID: {0}", connectParams.Peer.CallID);
-                    return;
-                }
-                Peer = peer;
-                peer.Peer = this;
-                OnConnectConnected?.Invoke(mAPI, this, peer, connectParams);
+                case CallState.failed:
+                    OnConnectFailed?.Invoke(mAPI, this, connectParams);
+                    break;
+                case CallState.connecting:
+                    OnConnectConnecting?.Invoke(mAPI, this, connectParams);
+                    break;
+                case CallState.connected:
+                    if (Peer != null)
+                    {
+                        mLogger.LogWarning("Received ConnectParams for Call that is already connected to a Peer");
+                        return;
+                    }
+                    Call peer = mAPI.GetCall(connectParams.Peer.CallID);
+                    if (peer == null)
+                    {
+                        mLogger.LogWarning("Received ConnectParams with unknown Peer.CallID: {0}", connectParams.Peer.CallID);
+                        return;
+                    }
+                    Peer = peer;
+                    peer.Peer = this;
+                    OnConnectConnected?.Invoke(mAPI, this, peer, connectParams);
+                    break;
+                case CallState.disconnected:
+                    OnConnectDisconnected?.Invoke(mAPI, this, connectParams);
+                    break;
             }
-            else if (connectParams.ConnectState == CallState.failed)
+        }
+
+        internal void PlayHandler(CallEventParams.PlayParams playParams)
+        {
+            OnPlayStateChange?.Invoke(mAPI, this, playParams);
+
+            switch (playParams.State)
             {
-                OnConnectFailed?.Invoke(mAPI, this, connectParams);
+                case CallEventParams.PlayParams.PlayState.playing:
+                    OnPlayPlaying?.Invoke(mAPI, this, playParams);
+                    break;
+                case CallEventParams.PlayParams.PlayState.error:
+                    OnPlayError?.Invoke(mAPI, this, playParams);
+                    break;
+                case CallEventParams.PlayParams.PlayState.paused:
+                    OnPlayPaused?.Invoke(mAPI, this, playParams);
+                    break;
+                case CallEventParams.PlayParams.PlayState.finished:
+                    OnPlayFinished?.Invoke(mAPI, this, playParams);
+                    break;
+                default: break;
             }
         }
 
         internal void CollectHandler(CallEventParams.CollectParams collectParams)
         {
-            OnCollectResult?.Invoke(mAPI, this, collectParams);
+            OnCollect?.Invoke(mAPI, this, collectParams);
         }
 
         internal void RecordHandler(CallEventParams.RecordParams recordParams)
         {
-            OnRecordUpdate?.Invoke(mAPI, this, recordParams);
-        }
+            OnRecordStateChange?.Invoke(mAPI, this, recordParams);
 
-        internal void PlayHandler(CallEventParams.PlayParams playParams)
-        {
-            OnPlayUpdate?.Invoke(mAPI, this, playParams);
-        }
-
-        public Call BeginPhone(string toNumber, string fromNumber)
-        {
-            return BeginPhoneAsync(toNumber, fromNumber).Result;
-        }
-
-        public async Task<Call> BeginPhoneAsync(string toNumber, string fromNumber)
-        {
-            await mAPI.Setup();
-
-            // Send the request
-            Task<CallBeginResult> taskCallBeginResult = mAPI.LL_CallBeginAsync(new CallBeginParams()
+            switch (recordParams.State)
             {
-                Device = new CallDevice()
-                {
-                    Type = CallDevice.DeviceType.phone,
-                    Parameters = new CallDevice.PhoneParams()
-                    {
-                        ToNumber = toNumber,
-                        FromNumber = fromNumber,
-                    },
-                },
-                Tag = mTag,
-            });
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallBeginResult callBeginResult = await taskCallBeginResult;
-
-            // If there was an internal error of any kind then throw an exception
-            if (callBeginResult.Code != "200")
-            {
-                mLogger.LogWarning(callBeginResult.Message);
-                throw new InvalidOperationException(callBeginResult.Message);
+                case CallEventParams.RecordParams.RecordState.recording:
+                    OnRecordRecording?.Invoke(mAPI, this, recordParams);
+                    break;
+                case CallEventParams.RecordParams.RecordState.paused:
+                    OnRecordPaused?.Invoke(mAPI, this, recordParams);
+                    break;
+                case CallEventParams.RecordParams.RecordState.finished:
+                    OnRecordFinished?.Invoke(mAPI, this, recordParams);
+                    break;
+                case CallEventParams.RecordParams.RecordState.no_input:
+                    OnRecordNoInput?.Invoke(mAPI, this, recordParams);
+                    break;
+                default: break;
             }
-            if (callBeginResult.NodeID == null || callBeginResult.CallID == null)
-            {
-                mLogger.LogWarning("NodeID and CallID must be present on success");
-                throw new InvalidOperationException("NodeID and CallID must be present on success");
-            }
-
-            // Create the call if it does not exist yet, but if the call has already been added due to an event coming in before the response then we'll get that and return it instead
-            return mAPI.GetOrAddCall(mTag, callBeginResult.NodeID, callBeginResult.CallID);
         }
+
+        public void Begin()
+        {
+            BeginAsync().Wait();
+        }
+
+        public abstract Task BeginAsync();
 
         public void Answer()
         {
@@ -186,11 +232,17 @@ namespace SignalWire.Calling
 
         public async Task AnswerAsync()
         {
-            await mAPI.LL_CallAnswerAsync(new CallAnswerParams()
+            Task<CallAnswerResult> taskCallAnswerResult = mAPI.LL_CallAnswerAsync(new CallAnswerParams()
             {
                 NodeID = mNodeID,
                 CallID = mCallID,
             });
+
+            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
+            CallAnswerResult callAnswerResult = await taskCallAnswerResult;
+
+            // If there was an internal error of any kind then throw an exception
+            mAPI.ThrowIfError(callAnswerResult.Code, callAnswerResult.Message);
         }
 
         public void Hangup()
@@ -200,12 +252,18 @@ namespace SignalWire.Calling
 
         public async Task HangupAsync()
         {
-            await mAPI.LL_CallEndAsync(new CallEndParams()
+            Task<CallEndResult> taskCallEndResult = mAPI.LL_CallEndAsync(new CallEndParams()
             {
                 NodeID = mNodeID,
                 CallID = mCallID,
                 Reason = "hangup",
             });
+
+            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
+            CallEndResult callEndResult = await taskCallEndResult;
+
+            // If there was an internal error of any kind then throw an exception
+            mAPI.ThrowIfError(callEndResult.Code, callEndResult.Message);
         }
 
         public Call Connect(List<List<CallDevice>> devices)
@@ -222,16 +280,8 @@ namespace SignalWire.Calling
 
             // Completion source and callbacks for detecting when an appropriate event is received
             TaskCompletionSource<bool> connectFinished = new TaskCompletionSource<bool>();
-            ConnectConnectedCallback connectedCallback = (a, c, cc, cp) =>
-            {
-                if (c != this) return;
-                connectFinished.SetResult(true);
-            };
-            ConnectFailedCallback failedCallback = (a, c, cp) =>
-            {
-                if (c != this) return;
-                connectFinished.SetResult(false);
-            };
+            ConnectConnectedCallback connectedCallback = (a, c, cc, cp) => connectFinished.SetResult(true);
+            ConnectFailedCallback failedCallback = (a, c, cp) => connectFinished.SetResult(false);
 
             // Hook temporary callbacks for the completion source
             OnConnectConnected += connectedCallback;
@@ -245,43 +295,91 @@ namespace SignalWire.Calling
                 NodeID = NodeID,
                 Devices = devices,
             });
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallConnectResult callConnectResult = await taskCallConnectResult;
 
-            if (callConnectResult.Code != "200")
+            bool connected = false;
+            try
             {
-                // Unhook the temporary callbacks
+                // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
+                CallConnectResult callConnectResult = await taskCallConnectResult;
+                // If there was an internal error of any kind then throw an exception
+                mAPI.ThrowIfError(callConnectResult.Code, callConnectResult.Message);
+                // Wait for completion source, either connected or failed connect state
+                connected = await connectFinished.Task;
+            }
+            catch
+            {
+                // Rethrow the exception, we catch and throw to ensure the finally block is called in case the exception
+                // isn't caught up the stack otherwise, which can cause the finally block not to be called
+                throw;
+            }
+            finally
+            {
+                // Unhook the temporary callbacks whether an exception occurs or not
                 OnConnectConnected -= connectedCallback;
                 OnConnectFailed -= failedCallback;
-
-                mLogger.LogWarning(callConnectResult.Message);
-                throw new InvalidOperationException(callConnectResult.Message);
             }
 
-            // Wait for completion source, either connected or failed connect state
-            bool connected = await connectFinished.Task;
-
-            // Unhook the temporary callbacks
-            OnConnectConnected -= connectedCallback;
-            OnConnectFailed -= failedCallback;
-
-            if (!connected)
-            {
-                mLogger.LogWarning("Connect failed");
-                throw new InvalidOperationException("Connect failed");
-            }
+            // We get here if no exceptions or errors occurred, this means it was connected and a peer will get returned,
+            // or it failed and null is returned which means the call could not be connected but no real errors occurred
+            if (!connected) mLogger.LogWarning("Call {0} connect failed", CallID);
 
             return mPeer;
         }
 
-        public void PlayAndCollect(string controlID, List<CallPlay> play, CallCollect collect)
+
+        public void PlayMedia(string controlID, List<CallMedia> play)
+        {
+            PlayMediaAsync(controlID, play).Wait();
+        }
+
+        public async Task PlayMediaAsync(string controlID, List<CallMedia> play)
+        {
+            Task<CallPlayResult> taskCallPlayResult = mAPI.LL_CallPlayAsync(new CallPlayParams()
+            {
+                NodeID = mNodeID,
+                CallID = mCallID,
+                ControlID = controlID,
+                Play = play,
+            });
+
+
+            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
+            CallPlayResult callPlayResult = await taskCallPlayResult;
+
+            // If there was an internal error of any kind then throw an exception
+            mAPI.ThrowIfError(callPlayResult.Code, callPlayResult.Message);
+        }
+
+        public void StopPlay(string controlID)
+        {
+            StopPlayAsync(controlID).Wait();
+        }
+
+        public async Task StopPlayAsync(string controlID)
+        {
+            Task<CallPlayStopResult> taskCallPlayStopResult = mAPI.LL_CallPlayStopAsync(new CallPlayStopParams()
+            {
+                NodeID = mNodeID,
+                CallID = mCallID,
+                ControlID = controlID,
+            });
+
+
+            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
+            CallPlayStopResult callPlayStopResult = await taskCallPlayStopResult;
+
+            // If there was an internal error of any kind then throw an exception
+            mAPI.ThrowIfError(callPlayStopResult.Code, callPlayStopResult.Message);
+        }
+
+        public void PlayAndCollect(string controlID, List<CallMedia> play, CallCollect collect)
         {
             PlayAndCollectAsync(controlID, play, collect).Wait();
         }
 
-        public async Task PlayAndCollectAsync(string controlID, List<CallPlay> play, CallCollect collect)
+        public async Task PlayAndCollectAsync(string controlID, List<CallMedia> play, CallCollect collect)
         {
-            await mAPI.LL_CallPlayAndCollectAsync(new CallPlayAndCollectParams()
+            Task<CallPlayAndCollectResult> taskCallPlayAndCollectResult = mAPI.LL_CallPlayAndCollectAsync(new CallPlayAndCollectParams()
             {
                 NodeID = mNodeID,
                 CallID = mCallID,
@@ -289,16 +387,23 @@ namespace SignalWire.Calling
                 Play = play,
                 Collect = collect,
             });
+
+
+            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
+            CallPlayAndCollectResult callPlayAndCollectResult = await taskCallPlayAndCollectResult;
+
+            // If there was an internal error of any kind then throw an exception
+            mAPI.ThrowIfError(callPlayAndCollectResult.Code, callPlayAndCollectResult.Message);
         }
 
-        public void Record(string controlID, CallRecordType type, object parameters)
+        public void StartRecord(string controlID, CallRecordType type, object parameters)
         {
-            RecordAsync(controlID, type, parameters).Wait();
+            StartRecordAsync(controlID, type, parameters).Wait();
         }
 
-        public async Task RecordAsync(string controlID, CallRecordType type, object parameters)
+        public async Task StartRecordAsync(string controlID, CallRecordType type, object parameters)
         {
-            await mAPI.LL_CallRecordAsync(new CallRecordParams()
+            Task<CallRecordResult> taskCallRecordResult = mAPI.LL_CallRecordAsync(new CallRecordParams()
             {
                 NodeID = mNodeID,
                 CallID = mCallID,
@@ -306,52 +411,79 @@ namespace SignalWire.Calling
                 Type = type,
                 Parameters = parameters,
             });
+
+
+            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
+            CallRecordResult callRecordResult = await taskCallRecordResult;
+
+            // If there was an internal error of any kind then throw an exception
+            mAPI.ThrowIfError(callRecordResult.Code, callRecordResult.Message);
         }
 
-        public void RecordStop(string controlID)
+        public void StopRecord(string controlID)
         {
-            RecordStopAsync(controlID).Wait();
+            StopRecordAsync(controlID).Wait();
         }
 
-        public async Task RecordStopAsync(string controlID)
+        public async Task StopRecordAsync(string controlID)
         {
-            await mAPI.LL_CallRecordStopAsync(new CallRecordStopParams()
+            Task<CallRecordStopResult> taskCallRecordStopResult = mAPI.LL_CallRecordStopAsync(new CallRecordStopParams()
             {
                 NodeID = mNodeID,
                 CallID = mCallID,
                 ControlID = controlID,
             });
-        }
 
-        public void Play(string controlID, List<CallPlay> play)
-        {
-            PlayAsync(controlID, play).Wait();
-        }
 
-        public async Task PlayAsync(string controlID, List<CallPlay> play)
+            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
+            CallRecordStopResult callRecordStopResult = await taskCallRecordStopResult;
+
+            // If there was an internal error of any kind then throw an exception
+            mAPI.ThrowIfError(callRecordStopResult.Code, callRecordStopResult.Message);
+        }
+    }
+
+    public sealed class PhoneCall : Call
+    {
+        public string To { get; set; }
+        public string From { get; set; }
+        public int Timeout { get; set; }
+
+        internal PhoneCall(CallingAPI api, string nodeID, string callID)
+            : base(api, nodeID, callID) { }
+        internal PhoneCall(CallingAPI api, string tag)
+            : base (api, tag) { }
+
+        public override async Task BeginAsync()
         {
-            await mAPI.LL_CallPlayAsync(new CallPlayParams()
+            await mAPI.Setup();
+
+            // Send the request
+            Task<CallBeginResult> taskCallBeginResult = mAPI.LL_CallBeginAsync(new CallBeginParams()
             {
-                NodeID = mNodeID,
-                CallID = mCallID,
-                ControlID = controlID,
-                Play = play,
+                Device = new CallDevice()
+                {
+                    Type = CallDevice.DeviceType.phone,
+                    Parameters = new CallDevice.PhoneParams()
+                    {
+                        ToNumber = To,
+                        FromNumber = From,
+                        Timeout = Timeout,
+                    },
+                },
+                Tag = mTag,
             });
-        }
+            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
+            CallBeginResult callBeginResult = await taskCallBeginResult;
 
-        public void PlayStop(string controlID)
-        {
-            PlayStopAsync(controlID).Wait();
-        }
+            // If there was an internal error of any kind then throw an exception
+            mAPI.ThrowIfError(callBeginResult.Code, callBeginResult.Message);
 
-        public async Task PlayStopAsync(string controlID)
-        {
-            await mAPI.LL_CallPlayStopAsync(new CallPlayStopParams()
+            if (string.IsNullOrWhiteSpace(callBeginResult.NodeID) || string.IsNullOrWhiteSpace(callBeginResult.CallID))
             {
-                NodeID = mNodeID,
-                CallID = mCallID,
-                ControlID = controlID,
-            });
+                mLogger.LogWarning("Internal error, NodeID and CallID must be present on success");
+                throw new FormatException("Internal error, NodeID and CallID must be present on success");
+            }
         }
     }
 }

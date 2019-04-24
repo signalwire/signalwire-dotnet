@@ -11,26 +11,26 @@ namespace SignalWire
 {
     public abstract class RelayAPI
     {
-        public delegate void ClientServiceNotificationCallback(Client client, BroadcastParams broadcastParams);
+        public delegate void ClientServiceNotificationCallback(RelayClient client, BroadcastParams broadcastParams);
 
         private readonly ILogger mLogger = null;
 
-        private readonly Client mClient = null;
+        private readonly RelayClient mClient = null;
         private readonly string mService = null;
         private string mProtocol = null;
 
         public event ClientServiceNotificationCallback OnEvent;
 
-        internal RelayAPI(Client client, string service)
+        internal RelayAPI(RelayClient client, string service)
         {
-            mLogger = SignalWireLogging.CreateLogger<Client>();
+            mLogger = SignalWireLogging.CreateLogger<RelayClient>();
             mClient = client;
             mService = service;
         }
 
         public ILogger Logger {  get { return mLogger; } }
 
-        public Client Client { get { return mClient; } }
+        public RelayClient Client { get { return mClient; } }
         public string Protocol { get { return mProtocol; } }
         public bool SetupCompleted { get { return mProtocol != null; } }
 

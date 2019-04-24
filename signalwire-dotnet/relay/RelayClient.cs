@@ -16,13 +16,8 @@ using System.Threading.Tasks;
 
 namespace SignalWire
 {
-    public sealed class Client : IDisposable
+    public sealed class RelayClient : IDisposable
     {
-        public sealed class ClientOptions
-        {
-            public UpstreamSession.SessionOptions SessionOptions { get; set; } = new UpstreamSession.SessionOptions();
-        }
-
         public static string CreateAuthentication(string project, string token)
         {
             return new JObject
@@ -41,13 +36,29 @@ namespace SignalWire
             }.ToString(Formatting.None);
         }
 
-        public delegate void ClientCallback(Client client);
+        public delegate void RelayClientCallback(RelayClient client);
 
         private bool mDisposed = false;
+        private CallingAPI mCalling = null;
 
-        public Client(ClientOptions options)
+        public RelayClient(string host, string project, string token = null, string jwt_token = null)
         {
-            Session = new UpstreamSession(options.SessionOptions);
+            if (string.IsNullOrWhiteSpace(host)) throw new ArgumentNullException("Must provide a host");
+            if (string.IsNullOrWhiteSpace(project)) throw new ArgumentNullException("Must provide a project");
+            bool useToken = !string.IsNullOrWhiteSpace(token);
+            bool useJWTToken = !string.IsNullOrWhiteSpace(jwt_token);
+            string authentication = null;
+            if (useToken) authentication = CreateAuthentication(project, token);
+            else if (useJWTToken) authentication = CreateJWTAuthentication(project, jwt_token);
+            else throw new ArgumentNullException("Must provide a token or jwt_token");
+
+            UpstreamSession.SessionOptions options = new UpstreamSession.SessionOptions()
+            {
+                Bootstrap = new Uri(host),
+                Authentication = authentication,
+            };
+
+            Session = new UpstreamSession(options);
 
             Session.OnReady += Session_OnReady;
             Session.OnRestored += s => OnRestored?.Invoke(this);
@@ -55,13 +66,21 @@ namespace SignalWire
         }
 
         public UpstreamSession Session { get; private set; }
+        public CallingAPI Calling
+        {
+            get
+            {
+                if (mCalling == null) mCalling = new CallingAPI(this);
+                return mCalling;
+            }
+        }
 
-        public event ClientCallback OnReady;
-        public event ClientCallback OnRestored;
-        public event ClientCallback OnDisconnected;
+        public event RelayClientCallback OnReady;
+        public event RelayClientCallback OnRestored;
+        public event RelayClientCallback OnDisconnected;
 
         #region Disposable
-        ~Client()
+        ~RelayClient()
         {
             Dispose(false);
         }

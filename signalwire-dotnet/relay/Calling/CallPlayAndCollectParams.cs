@@ -19,7 +19,7 @@ namespace SignalWire.Calling
         public string ControlID { get; set; }
 
         [JsonProperty("play", Required = Required.Always)]
-        public List<CallPlay> Play { get; set; }
+        public List<CallMedia> Play { get; set; }
 
         [JsonProperty("collect", Required = Required.Always)]
         public CallCollect Collect { get; set; }

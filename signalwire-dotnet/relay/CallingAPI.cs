@@ -14,52 +14,40 @@ namespace SignalWire
     public sealed class CallingAPI : RelayAPI
     {
         public delegate void CallCreatedCallback(CallingAPI api, Call call);
-        public delegate void CallReceiveCreatedCallback(CallingAPI api, Call call, CallEventParams.ReceiveParams receiveParams);
+        public delegate void CallReceivedCallback(CallingAPI api, Call call, CallEventParams.ReceiveParams receiveParams);
 
         private bool mHighLevelAPISetup = false;
         private ConcurrentDictionary<string, Call> mCalls = new ConcurrentDictionary<string, Call>();
 
         public event CallCreatedCallback OnCallCreated;
-        public event CallReceiveCreatedCallback OnCallReceiveCreated;
+        public event CallReceivedCallback OnCallReceived;
 
-        public CallingAPI(Client client) : base(client, "calling") { }
+        public CallingAPI(RelayClient client) : base(client, "calling") { }
 
         // High Level API
 
-        public Call CreateCall(string tag)
+        public PhoneCall NewPhoneCall(string tag, string to, string from, int timeout = 30)
         {
-            Call call = new Call(this, tag);
+            PhoneCall call = new PhoneCall(this, tag)
+            {
+                To = to,
+                From = from,
+                Timeout = timeout,
+            };
             mCalls.TryAdd(tag, call);
             OnCallCreated?.Invoke(this, call);
             return call;
         }
 
-        public Call GetOrAddCall(string tag, string nodeid, string callid)
-        {
-            Call tmp = null;
-            Call call = null;
-            if (!string.IsNullOrWhiteSpace(tag))
-            {
-                if (mCalls.TryRemove(tag, out call))
-                {
-                    call.NodeID = nodeid;
-                    call.CallID = callid;
-                }
-            }
-            call = mCalls.GetOrAdd(callid, k => call ?? (tmp = new Call(this, nodeid, callid)));
-            bool added = tmp == call;
+        // @TODO: NewSIPCall and NewWebRTCCall
 
-            if (added) OnCallCreated?.Invoke(this, call);
-            return call;
-        }
-
-        public Call GetCall(string callid)
+        internal Call GetCall(string callid)
         {
             mCalls.TryGetValue(callid, out Call call);
             return call;
         }
 
-        public void RemoveCall(string callid)
+        internal void RemoveCall(string callid)
         {
             mCalls.TryRemove(callid, out _);
         }
@@ -76,12 +64,12 @@ namespace SignalWire
             }
         }
 
-        public void CallReceive(string context)
+        public void Receive(string context)
         {
-            CallReceiveAsync(context).Wait();
+            ReceiveAsync(context).Wait();
         }
 
-        public async Task CallReceiveAsync(string context)
+        public async Task ReceiveAsync(string context)
         {
             await Setup();
 
@@ -92,14 +80,10 @@ namespace SignalWire
             // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
             CallReceiveResult callReceiveResult = await taskCallReceiveResult;
 
-            if (callReceiveResult.Code != "200")
-            {
-                Logger.LogWarning(callReceiveResult.Message);
-                throw new InvalidOperationException(callReceiveResult.Message);
-            }
+            ThrowIfError(callReceiveResult.Code, callReceiveResult.Message);
         }
 
-        private void CallingAPI_OnEvent(Client client, BroadcastParams broadcastParams)
+        private void CallingAPI_OnEvent(RelayClient client, BroadcastParams broadcastParams)
         {
             Logger.LogInformation("CallingAPI OnEvent");
 
@@ -141,7 +125,7 @@ namespace SignalWire
             }
         }
 
-        private void OnEvent_CallingCallState(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallState(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.StateParams stateParams = null;
             try { stateParams = callEventParams.ParametersAs<CallEventParams.StateParams>(); }
@@ -151,12 +135,52 @@ namespace SignalWire
                 return;
             }
 
-            Call call = GetOrAddCall(stateParams.Tag, stateParams.NodeID, stateParams.CallID);
+            Call call = null;
+            if (!string.IsNullOrWhiteSpace(stateParams.Tag))
+            {
+                if (mCalls.TryRemove(stateParams.Tag, out call))
+                {
+                    call.NodeID = stateParams.NodeID;
+                    call.CallID = stateParams.CallID;
+                }
+            }
+
+            Call tmp = null;
+            switch (stateParams.Device.Type)
+            {
+                case CallDevice.DeviceType.phone:
+                    {
+                        CallDevice.PhoneParams phoneParams = null;
+                        try { phoneParams = stateParams.Device.ParametersAs<CallDevice.PhoneParams>(); }
+                        catch (Exception exc)
+                        {
+                            Logger.LogWarning(exc, "Failed to parse PhoneParams");
+                            return;
+                        }
+
+                        call = mCalls.GetOrAdd(stateParams.CallID, k => call ?? (tmp = new PhoneCall(this, stateParams.NodeID, stateParams.CallID)
+                        {
+                            To = phoneParams.ToNumber,
+                            From = phoneParams.FromNumber,
+                            Timeout = phoneParams.Timeout,
+                            // Capture the state, but it should always be created the first time we see the call
+                            State = stateParams.CallState,
+                        }));
+                        break;
+                    }
+                // @TODO: sip and webrtc
+                default:
+                    Logger.LogWarning("Unknown device type: {0}", stateParams.Device.Type);
+                    return;
+            }
+
+            if (tmp == call) OnCallCreated?.Invoke(this, call);
+
 
             call.StateChangeHandler(stateParams);
         }
 
-        private void OnEvent_CallingCallReceive(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallReceive(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.ReceiveParams receiveParams = null;
             try { receiveParams = callEventParams.ParametersAs<CallEventParams.ReceiveParams>(); }
@@ -166,18 +190,47 @@ namespace SignalWire
                 return;
             }
 
-            // Will not receive any other events for the call until it is answered by the client so it is safe to only create on created state here
-            if (receiveParams.CallState == CallState.created)
+            // @note A received call should only ever receive one receive event regardless of the state of the call, but we act as though
+            // we could receive multiple just for sanity here, but the callbacks will still only be called when first created, which makes
+            // this effectively a no-op on additional receive events
+            Call call = null;
+            Call tmp = null;
+            switch (receiveParams.Device.Type)
             {
-                Call call = new Call(this, receiveParams.NodeID, receiveParams.CallID);
-                mCalls.TryAdd(receiveParams.CallID, call);
+                case CallDevice.DeviceType.phone:
+                    {
+                        CallDevice.PhoneParams phoneParams = null;
+                        try { phoneParams = receiveParams.Device.ParametersAs<CallDevice.PhoneParams>(); }
+                        catch (Exception exc)
+                        {
+                            Logger.LogWarning(exc, "Failed to parse PhoneParams");
+                            return;
+                        }
 
+                        call = mCalls.GetOrAdd(receiveParams.CallID, k => call ?? (tmp = new PhoneCall(this, receiveParams.NodeID, receiveParams.CallID)
+                        {
+                            To = phoneParams.ToNumber,
+                            From = phoneParams.FromNumber,
+                            Timeout = phoneParams.Timeout,
+                            // Capture the state, it may not always be created the first time we see the call
+                            State = receiveParams.CallState,
+                        }));
+                        break;
+                    }
+                // @TODO: sip and webrtc
+                default:
+                    Logger.LogWarning("Unknown device type: {0}", receiveParams.Device.Type);
+                    return;
+            }
+
+            if (tmp == call)
+            {
                 OnCallCreated?.Invoke(this, call);
-                OnCallReceiveCreated?.Invoke(this, call, receiveParams);
+                OnCallReceived?.Invoke(this, call, receiveParams);
             }
         }
 
-        private void OnEvent_CallingCallConnect(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallConnect(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.ConnectParams connectParams = null;
             try { connectParams = callEventParams.ParametersAs<CallEventParams.ConnectParams>(); }
@@ -195,7 +248,7 @@ namespace SignalWire
             call.ConnectHandler(connectParams);
         }
 
-        private void OnEvent_CallingCallCollect(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallCollect(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.CollectParams collectParams = null;
             try { collectParams = callEventParams.ParametersAs<CallEventParams.CollectParams>(); }
@@ -213,7 +266,7 @@ namespace SignalWire
             call.CollectHandler(collectParams);
         }
 
-        private void OnEvent_CallingCallRecord(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallRecord(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.RecordParams recordParams = null;
             try { recordParams = callEventParams.ParametersAs<CallEventParams.RecordParams>(); }
@@ -231,7 +284,7 @@ namespace SignalWire
             call.RecordHandler(recordParams);
         }
 
-        private void OnEvent_CallingCallPlay(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallPlay(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.PlayParams playParams = null;
             try { playParams = callEventParams.ParametersAs<CallEventParams.PlayParams>(); }
@@ -249,56 +302,69 @@ namespace SignalWire
             call.PlayHandler(playParams);
         }
 
+        // Utility
+        internal void ThrowIfError(string code, string message)
+        {
+            if (code == "200") return;
+
+            Logger.LogWarning(message);
+            switch (code)
+            {
+                // @TODO: Convert error codes to appropriate exception types
+                default: throw new InvalidOperationException(message);
+            }
+        }
+
         // Low Level API
 
-        public async Task<CallBeginResult> LL_CallBeginAsync(CallBeginParams parameters)
+        public Task<CallBeginResult> LL_CallBeginAsync(CallBeginParams parameters)
         {
-            return await ExecuteAsync<CallBeginParams, CallBeginResult>("call.begin", parameters);
+            return ExecuteAsync<CallBeginParams, CallBeginResult>("call.begin", parameters);
         }
 
-        public async Task<CallReceiveResult> LL_CallReceiveAsync(CallReceiveParams parameters)
+        public Task<CallReceiveResult> LL_CallReceiveAsync(CallReceiveParams parameters)
         {
-            return await ExecuteAsync<CallReceiveParams, CallReceiveResult>("call.receive", parameters);
+            return ExecuteAsync<CallReceiveParams, CallReceiveResult>("call.receive", parameters);
         }
 
-        public async Task<CallAnswerResult> LL_CallAnswerAsync(CallAnswerParams parameters)
+        public Task<CallAnswerResult> LL_CallAnswerAsync(CallAnswerParams parameters)
         {
-            return await ExecuteAsync<CallAnswerParams, CallAnswerResult>("call.answer", parameters);
+            return ExecuteAsync<CallAnswerParams, CallAnswerResult>("call.answer", parameters);
         }
 
-        public async Task<CallEndResult> LL_CallEndAsync(CallEndParams parameters)
+        public Task<CallEndResult> LL_CallEndAsync(CallEndParams parameters)
         {
-            return await ExecuteAsync<CallEndParams, CallEndResult>("call.end", parameters);
+            return ExecuteAsync<CallEndParams, CallEndResult>("call.end", parameters);
         }
 
-        public async Task<CallConnectResult> LL_CallConnectAsync(CallConnectParams parameters)
+        public Task<CallConnectResult> LL_CallConnectAsync(CallConnectParams parameters)
         {
-            return await ExecuteAsync<CallConnectParams, CallConnectResult>("call.connect", parameters);
+            return ExecuteAsync<CallConnectParams, CallConnectResult>("call.connect", parameters);
         }
 
-        public async Task<CallPlayAndCollectResult> LL_CallPlayAndCollectAsync(CallPlayAndCollectParams parameters)
+        public Task<CallPlayAndCollectResult> LL_CallPlayAndCollectAsync(CallPlayAndCollectParams parameters)
         {
-            return await ExecuteAsync<CallPlayAndCollectParams, CallPlayAndCollectResult>("call.play_and_collect", parameters);
+            return ExecuteAsync<CallPlayAndCollectParams, CallPlayAndCollectResult>("call.play_and_collect", parameters);
         }
 
-        public async Task<CallRecordResult> LL_CallRecordAsync(CallRecordParams parameters)
+        public Task<CallRecordResult> LL_CallRecordAsync(CallRecordParams parameters)
         {
-            return await ExecuteAsync<CallRecordParams, CallRecordResult>("call.record", parameters);
+            return ExecuteAsync<CallRecordParams, CallRecordResult>("call.record", parameters);
         }
 
-        public async Task<CallRecordStopResult> LL_CallRecordStopAsync(CallRecordStopParams parameters)
+        public Task<CallRecordStopResult> LL_CallRecordStopAsync(CallRecordStopParams parameters)
         {
-            return await ExecuteAsync<CallRecordStopParams, CallRecordStopResult>("call.record.stop", parameters);
+            return ExecuteAsync<CallRecordStopParams, CallRecordStopResult>("call.record.stop", parameters);
         }
 
-        public async Task<CallPlayResult> LL_CallPlayAsync(CallPlayParams parameters)
+        public Task<CallPlayResult> LL_CallPlayAsync(CallPlayParams parameters)
         {
-            return await ExecuteAsync<CallPlayParams, CallPlayResult>("call.play", parameters);
+            return ExecuteAsync<CallPlayParams, CallPlayResult>("call.play", parameters);
         }
 
-        public async Task<CallPlayStopResult> LL_CallPlayStopAsync(CallPlayStopParams parameters)
+        public Task<CallPlayStopResult> LL_CallPlayStopAsync(CallPlayStopParams parameters)
         {
-            return await ExecuteAsync<CallPlayStopParams, CallPlayStopResult>("call.play.stop", parameters);
+            return ExecuteAsync<CallPlayStopParams, CallPlayStopResult>("call.play.stop", parameters);
         }
     }
 }
