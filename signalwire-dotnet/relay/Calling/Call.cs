@@ -86,6 +86,7 @@ namespace SignalWire.Calling
             mCallID = callID;
         }
 
+        public string TemporaryCallID { get { return mTemporaryCallID; } }
         public string NodeID { get { return mNodeID; } internal set { mNodeID = value; } }
         public string CallID { get { return mCallID; } internal set { mCallID = value; } }
         public CallState State { get { return mState; } internal set { mState = value; } }
