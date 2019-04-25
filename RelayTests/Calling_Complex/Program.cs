@@ -48,7 +48,7 @@ namespace Calling_Complex
             Stopwatch timer = Stopwatch.StartNew();
 
             // Use environment variables
-            string session_bootstrap = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_BOOTSTRAP");
+            string session_host = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_HOST");
             string session_project = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_PROJECT");
             string session_token = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_TOKEN");
             sCallReceiveContext = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALLRECEIVE_CONTEXT");
@@ -56,9 +56,9 @@ namespace Calling_Complex
             sCallFromNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_FROM_NUMBER");
 
             // Make sure we have mandatory options filled in
-            if (session_bootstrap == null)
+            if (session_host == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_BOOTSTRAP' environment variable");
+                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_HOST' environment variable");
                 return -1;
             }
             if (session_project == null)
@@ -90,13 +90,13 @@ namespace Calling_Complex
             try
             {
                 // Create the client
-                using (sClient = new RelayClient(session_bootstrap, session_project, session_token))
+                using (sClient = new RelayClient(session_host, session_project, session_token))
                 {
                     // Setup callbacks before the client is started
                     sClient.OnReady += Client_OnReady;
 
                     // Start the client
-                    sClient.Start();
+                    sClient.Connect();
 
                     // Wait more than long enough for the test to be completed
                     if (!sCompleted.Wait(TimeSpan.FromMinutes(2))) Logger.LogError("Test timed out");
@@ -126,8 +126,6 @@ namespace Calling_Complex
             Logger.LogInformation("OnReady");
 
             // Hook all the callbacks for testing
-            client.Calling.OnCallCreated += CallingAPI_OnCallCreated;
-
             client.Calling.OnCallReceived += CallingAPI_OnCallReceived;
 
             Task.Run(() =>
@@ -146,12 +144,6 @@ namespace Calling_Complex
                 try
                 {
                     callA = client.Calling.NewPhoneCall(Guid.NewGuid().ToString(), sCallToNumber, sCallFromNumber);
-                    callA.OnConnectConnected += OnCallConnectConnected;
-                    callA.OnConnectFailed += OnCallConnectFailed;
-
-                    callA.OnStateChange += OnCallStateChange;
-                    callA.OnAnswered += OnCallAnswered;
-                    callA.OnEnded += OnCallEnded;
 
                     callA.Begin();
                 }
@@ -163,7 +155,7 @@ namespace Calling_Complex
                 }
 
                 // Block waiting for a reasonable amount of time for the state to change to answered or ended, this will succeed
-                // after answering the call in CallingAPI_OnCallReceiveCreated
+                // after answering the call in CallingAPI_OnCallReceived
                 if (!callA.WaitForState(TimeSpan.FromSeconds(20), CallState.answered, CallState.ended))
                 {
                     Logger.LogError("CallA was not answered or ended in a timely fashion: {0}", callA.State);
@@ -228,11 +220,6 @@ namespace Calling_Complex
             });
         }
 
-        private static void CallingAPI_OnCallCreated(CallingAPI api, Call call)
-        {
-            Logger.LogInformation("OnCallCreated: {0}, {1}", call.CallID, call.State);
-        }
-
         private static void CallingAPI_OnCallReceived(CallingAPI api, Call call, CallEventParams.ReceiveParams receiveParams)
         {
             Logger.LogInformation("OnCallReceived: {0}, {1}", call.CallID, call.State);
@@ -242,35 +229,10 @@ namespace Calling_Complex
                 try { call.Answer(); }
                 catch (Exception exc)
                 {
-                    Logger.LogError(exc, "CallAnswer failed");
+                    Logger.LogError(exc, "Answer failed");
                     sCompleted.Set();
                 }
             });
-        }
-
-        private static void OnCallConnectConnected(CallingAPI api, Call call, Call callConnected, CallEventParams.ConnectParams connectParams)
-        {
-            Logger.LogInformation("OnCallConnectConnected: {0}, {1} to {2}, {3}", call.CallID, call.State, callConnected.CallID, callConnected.State);
-        }
-
-        private static void OnCallConnectFailed(CallingAPI api, Call call, CallEventParams.ConnectParams connectParams)
-        {
-            Logger.LogInformation("OnCallConnectFailed: {0}, {1}", call.CallID, call.State);
-        }
-
-        private static void OnCallStateChange(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams)
-        {
-            Logger.LogInformation("OnCallStateChange: {0}, {1} to {2}", call.CallID, oldState, stateParams.CallState);
-        }
-
-        private static void OnCallAnswered(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams)
-        {
-            Logger.LogInformation("OnCallAnswered: {0}, {1}", call.CallID, call.State);
-        }
-
-        private static void OnCallEnded(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams)
-        {
-            Logger.LogInformation("OnCallEnded: {0}, {1}", call.CallID, call.State);
         }
     }
 }

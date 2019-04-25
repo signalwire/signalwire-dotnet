@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -38,7 +39,7 @@ namespace SignalWire.Calling
         protected readonly ILogger mLogger = null;
 
         protected readonly CallingAPI mAPI = null;
-        protected readonly string mTag = null;
+        protected readonly string mTemporaryCallID = null;
         private string mNodeID = null;
         private string mCallID = null;
         private CallState mState = CallState.created;
@@ -71,11 +72,11 @@ namespace SignalWire.Calling
         public event RecordFinishedCallback OnRecordFinished;
         public event RecordNoInputCallback OnRecordNoInput;
 
-        protected Call(CallingAPI api, string tag)
+        protected Call(CallingAPI api, string temporaryCallID)
         {
             mLogger = SignalWireLogging.CreateLogger<RelayClient>();
             mAPI = api;
-            mTag = tag;
+            mTemporaryCallID = temporaryCallID;
         }
         protected Call(CallingAPI api, string nodeID, string callID)
         {
@@ -89,6 +90,8 @@ namespace SignalWire.Calling
         public string CallID { get { return mCallID; } internal set { mCallID = value; } }
         public CallState State { get { return mState; } internal set { mState = value; } }
         public Call Peer { get { return mPeer; } internal set { mPeer = value; } }
+
+        public object UserData { get; set; }
 
         public bool WaitForState(TimeSpan timeout, params CallState[] states)
         {
@@ -350,6 +353,36 @@ namespace SignalWire.Calling
             mAPI.ThrowIfError(callPlayResult.Code, callPlayResult.Message);
         }
 
+        public void PlayAudio(string controlID, CallMedia.AudioParams audio)
+        {
+            PlayAudioAsync(controlID, audio).Wait();
+        }
+
+        public Task PlayAudioAsync(string controlID, CallMedia.AudioParams audio)
+        {
+            return PlayMediaAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.audio, Parameters = JObject.FromObject(audio) } });
+        }
+
+        public void PlayTTS(string controlID, CallMedia.TTSParams tts)
+        {
+            PlayTTSAsync(controlID, tts).Wait();
+        }
+
+        public Task PlayTTSAsync(string controlID, CallMedia.TTSParams tts)
+        {
+            return PlayMediaAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.tts, Parameters = JObject.FromObject(tts) } });
+        }
+
+        public void PlaySilence(string controlID, CallMedia.SilenceParams silence)
+        {
+            PlaySilenceAsync(controlID, silence).Wait();
+        }
+
+        public Task PlaySilenceAsync(string controlID, CallMedia.SilenceParams silence)
+        {
+            return PlayMediaAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.silence, Parameters = JObject.FromObject(silence) } });
+        }
+
         public void StopPlay(string controlID)
         {
             StopPlayAsync(controlID).Wait();
@@ -372,12 +405,12 @@ namespace SignalWire.Calling
             mAPI.ThrowIfError(callPlayStopResult.Code, callPlayStopResult.Message);
         }
 
-        public void PlayAndCollect(string controlID, List<CallMedia> play, CallCollect collect)
+        public void PlayMediaAndCollect(string controlID, List<CallMedia> play, CallCollect collect)
         {
-            PlayAndCollectAsync(controlID, play, collect).Wait();
+            PlayMediaAndCollectAsync(controlID, play, collect).Wait();
         }
 
-        public async Task PlayAndCollectAsync(string controlID, List<CallMedia> play, CallCollect collect)
+        public async Task PlayMediaAndCollectAsync(string controlID, List<CallMedia> play, CallCollect collect)
         {
             Task<CallPlayAndCollectResult> taskCallPlayAndCollectResult = mAPI.LL_CallPlayAndCollectAsync(new CallPlayAndCollectParams()
             {
@@ -394,6 +427,36 @@ namespace SignalWire.Calling
 
             // If there was an internal error of any kind then throw an exception
             mAPI.ThrowIfError(callPlayAndCollectResult.Code, callPlayAndCollectResult.Message);
+        }
+
+        public void PlayAudioAndCollect(string controlID, CallMedia.AudioParams audio, CallCollect collect)
+        {
+            PlayAudioAndCollectAsync(controlID, audio, collect).Wait();
+        }
+
+        public Task PlayAudioAndCollectAsync(string controlID, CallMedia.AudioParams audio, CallCollect collect)
+        {
+            return PlayMediaAndCollectAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.audio, Parameters = JObject.FromObject(audio) } }, collect);
+        }
+
+        public void PlayTTSAndCollect(string controlID, CallMedia.TTSParams tts, CallCollect collect)
+        {
+            PlayTTSAndCollectAsync(controlID, tts, collect).Wait();
+        }
+
+        public Task PlayTTSAndCollectAsync(string controlID, CallMedia.TTSParams tts, CallCollect collect)
+        {
+            return PlayMediaAndCollectAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.tts, Parameters = JObject.FromObject(tts) } }, collect);
+        }
+
+        public void PlaySilenceAndCollect(string controlID, CallMedia.SilenceParams silence, CallCollect collect)
+        {
+            PlaySilenceAndCollectAsync(controlID, silence, collect).Wait();
+        }
+
+        public Task PlaySilenceAndCollectAsync(string controlID, CallMedia.SilenceParams silence, CallCollect collect)
+        {
+            return PlayMediaAndCollectAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.silence, Parameters = JObject.FromObject(silence) } }, collect);
         }
 
         public void StartRecord(string controlID, CallRecordType type, object parameters)
@@ -451,8 +514,8 @@ namespace SignalWire.Calling
 
         internal PhoneCall(CallingAPI api, string nodeID, string callID)
             : base(api, nodeID, callID) { }
-        internal PhoneCall(CallingAPI api, string tag)
-            : base (api, tag) { }
+        internal PhoneCall(CallingAPI api, string temporaryCallID)
+            : base (api, temporaryCallID) { }
 
         public override async Task BeginAsync()
         {
@@ -471,7 +534,7 @@ namespace SignalWire.Calling
                         Timeout = Timeout,
                     },
                 },
-                Tag = mTag,
+                TemporaryCallID = mTemporaryCallID,
             });
             // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
             CallBeginResult callBeginResult = await taskCallBeginResult;

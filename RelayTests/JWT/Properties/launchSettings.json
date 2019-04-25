@@ -3,7 +3,7 @@
     "JWT": {
       "commandName": "Project",
       "environmentVariables": {
-        "SWCLIENT_TEST_SESSION_BOOTSTRAP": "replaceme",
+        "SWCLIENT_TEST_SESSION_HOST": "replaceme",
         "SWCLIENT_TEST_SESSION_PROJECT": "replaceme",
         "SWCLIENT_TEST_JWT_TOKEN": "replaceme",
         "SWCLIENT_TEST_JWT_URL": "replaceme"

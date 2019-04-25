@@ -41,27 +41,30 @@ namespace SignalWire
         private bool mDisposed = false;
         private CallingAPI mCalling = null;
 
-        public RelayClient(string host, string project, string token = null, string jwt_token = null)
+        public RelayClient(
+            string host, string project, string token,
+            bool jwt = false,
+            TimeSpan? connectDelay = null, TimeSpan? connectTimeout = null, TimeSpan? closeTimeout = null)
         {
             if (string.IsNullOrWhiteSpace(host)) throw new ArgumentNullException("Must provide a host");
             if (string.IsNullOrWhiteSpace(project)) throw new ArgumentNullException("Must provide a project");
-            bool useToken = !string.IsNullOrWhiteSpace(token);
-            bool useJWTToken = !string.IsNullOrWhiteSpace(jwt_token);
+            if (string.IsNullOrWhiteSpace(token)) throw new ArgumentNullException("Must provide a token");
             string authentication = null;
-            if (useToken) authentication = CreateAuthentication(project, token);
-            else if (useJWTToken) authentication = CreateJWTAuthentication(project, jwt_token);
-            else throw new ArgumentNullException("Must provide a token or jwt_token");
+            if (!jwt) authentication = CreateAuthentication(project, token);
+            else authentication = CreateJWTAuthentication(project, token);
 
             UpstreamSession.SessionOptions options = new UpstreamSession.SessionOptions()
             {
-                Bootstrap = new Uri(host),
+                Bootstrap = new Uri("wss://" + host + ":443/api/relay/wss"),
                 Authentication = authentication,
             };
+            if (connectDelay.HasValue) options.ConnectDelay = connectDelay.Value;
+            if (connectTimeout.HasValue) options.ConnectTimeout = connectTimeout.Value;
+            if (closeTimeout.HasValue) options.CloseTimeout = closeTimeout.Value;
 
             Session = new UpstreamSession(options);
 
-            Session.OnReady += Session_OnReady;
-            Session.OnRestored += s => OnRestored?.Invoke(this);
+            Session.OnReady += s => OnReady?.Invoke(this);
             Session.OnDisconnected += s => OnDisconnected?.Invoke(this);
         }
 
@@ -76,7 +79,6 @@ namespace SignalWire
         }
 
         public event RelayClientCallback OnReady;
-        public event RelayClientCallback OnRestored;
         public event RelayClientCallback OnDisconnected;
 
         #region Disposable
@@ -104,7 +106,7 @@ namespace SignalWire
         }
         #endregion
 
-        public void Start()
+        public void Connect()
         {
             Session.Start();
         }
@@ -112,11 +114,6 @@ namespace SignalWire
         public void Disconnect()
         {
             Session.Disconnect();
-        }
-
-        private void Session_OnReady(UpstreamSession session)
-        {
-            OnReady?.Invoke(this);
         }
     }
 }

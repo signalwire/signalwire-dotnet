@@ -41,7 +41,7 @@ namespace Calling_PlayAndCollect
             Stopwatch timer = Stopwatch.StartNew();
 
             // Use environment variables
-            string session_bootstrap = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_BOOTSTRAP");
+            string session_host = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_HOST");
             string session_project = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_PROJECT");
             string session_token = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_TOKEN");
             sCallReceiveContext = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALLRECEIVE_CONTEXT");
@@ -49,9 +49,9 @@ namespace Calling_PlayAndCollect
             sCallFromNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_FROM_NUMBER");
 
             // Make sure we have mandatory options filled in
-            if (session_bootstrap == null)
+            if (session_host == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_BOOTSTRAP' environment variable");
+                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_HOST' environment variable");
                 return -1;
             }
             if (session_project == null)
@@ -83,13 +83,13 @@ namespace Calling_PlayAndCollect
             try
             {
                 // Create the client
-                using (sClient = new RelayClient(session_bootstrap, session_project, session_token))
+                using (sClient = new RelayClient(session_host, session_project, session_token))
                 {
                     // Setup callbacks before the client is started
                     sClient.OnReady += Client_OnReady;
 
                     // Start the client
-                    sClient.Start();
+                    sClient.Connect();
 
                     // Wait more than long enough for the test to be completed
                     if (!sCompleted.Wait(TimeSpan.FromMinutes(5))) Logger.LogError("Test timed out");
@@ -151,26 +151,20 @@ namespace Calling_PlayAndCollect
                 try { call.Answer(); }
                 catch (Exception exc)
                 {
-                    Logger.LogError(exc, "CallAnswer failed");
+                    Logger.LogError(exc, "Answer failed");
                     sCompleted.Set();
                     return;
                 }
 
                 try
                 {
-                    call.OnCollect += OnCallCollectResult;
+                    call.OnCollect += OnCallCollect;
 
-                    call.PlayAndCollect("im_a_little_teapot",
-                        new List<CallMedia>
+                    call.PlayTTSAndCollect(
+                        "im_a_little_teapot",
+                        new CallMedia.TTSParams()
                         {
-                            new CallMedia()
-                            {
-                                Type = CallMedia.MediaType.tts,
-                                Parameters = JObject.FromObject(new CallMedia.TTSParams()
-                                {
-                                    Text = "i'm a little teapot",
-                                }),
-                            },
+                            Text = "i'm a little teapot",
                         },
                         new CallCollect()
                         {
@@ -182,39 +176,14 @@ namespace Calling_PlayAndCollect
                 }
                 catch (Exception exc)
                 {
-                    Logger.LogError(exc, "CallPlayAndCollect failed");
+                    Logger.LogError(exc, "PlayTTSAndCollect failed");
                     sCompleted.Set();
                     return;
                 }
             });
         }
 
-        private static void OnCallConnectConnected(CallingAPI api, Call call, Call callConnected, CallEventParams.ConnectParams connectParams)
-        {
-            Logger.LogInformation("OnCallConnectConnected: {0}, {1} to {2}, {3}", call.CallID, call.State, callConnected.CallID, callConnected.State);
-        }
-
-        private static void OnCallConnectFailed(CallingAPI api, Call call, CallEventParams.ConnectParams connectParams)
-        {
-            Logger.LogInformation("OnCallConnectFailed: {0}, {1}", call.CallID, call.State);
-        }
-
-        private static void OnCallStateChange(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams)
-        {
-            Logger.LogInformation("OnCallStateChange: {0}, {1} to {2}", call.CallID, oldState, stateParams.CallState);
-        }
-
-        private static void OnCallAnswered(CallingAPI api, Call call, CallEventParams.StateParams stateParams)
-        {
-            Logger.LogInformation("OnCallAnswered: {0}, {1}", call.CallID, call.State);
-        }
-
-        private static void OnCallEnded(CallingAPI api, Call call, CallEventParams.StateParams stateParams)
-        {
-            Logger.LogInformation("OnCallEnded: {0}, {1}", call.CallID, call.State);
-        }
-
-        private static void OnCallCollectResult(CallingAPI api, Call call, CallEventParams.CollectParams collectParams)
+        private static void OnCallCollect(CallingAPI api, Call call, CallEventParams.CollectParams collectParams)
         {
             Logger.LogInformation("OnCallCollectResult: {0}, {1} for {2}, {3}", call.CallID, call.State, collectParams.ControlID, collectParams.Result.Type);
             sSuccessful = true;

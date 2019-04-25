@@ -16,12 +16,12 @@ namespace SignalWire
         private readonly ILogger mLogger = null;
 
         private readonly RelayClient mClient = null;
-        private readonly string mService = null;
+        private readonly RelayService mService = RelayService.none;
         private string mProtocol = null;
 
         public event ClientServiceNotificationCallback OnEvent;
 
-        internal RelayAPI(RelayClient client, string service)
+        internal RelayAPI(RelayClient client, RelayService service)
         {
             mLogger = SignalWireLogging.CreateLogger<RelayClient>();
             mClient = client;

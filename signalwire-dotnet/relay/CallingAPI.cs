@@ -22,19 +22,19 @@ namespace SignalWire
         public event CallCreatedCallback OnCallCreated;
         public event CallReceivedCallback OnCallReceived;
 
-        public CallingAPI(RelayClient client) : base(client, "calling") { }
+        public CallingAPI(RelayClient client) : base(client, RelayService.calling) { }
 
         // High Level API
 
-        public PhoneCall NewPhoneCall(string tag, string to, string from, int timeout = 30)
+        public PhoneCall NewPhoneCall(string temporaryCallID, string to, string from, int timeout = 30)
         {
-            PhoneCall call = new PhoneCall(this, tag)
+            PhoneCall call = new PhoneCall(this, temporaryCallID)
             {
                 To = to,
                 From = from,
                 Timeout = timeout,
             };
-            mCalls.TryAdd(tag, call);
+            mCalls.TryAdd(temporaryCallID, call);
             OnCallCreated?.Invoke(this, call);
             return call;
         }
@@ -136,14 +136,18 @@ namespace SignalWire
             }
 
             Call call = null;
-            if (!string.IsNullOrWhiteSpace(stateParams.Tag))
+            if (!string.IsNullOrWhiteSpace(stateParams.TemporaryCallID))
             {
-                if (mCalls.TryRemove(stateParams.Tag, out call))
+                // Remove the call keyed by the temporary call id if it exists
+                if (mCalls.TryRemove(stateParams.TemporaryCallID, out call))
                 {
+                    // Update the internal details for the call, including the real call id
                     call.NodeID = stateParams.NodeID;
                     call.CallID = stateParams.CallID;
                 }
             }
+            // If call is not null at this point, it means this is the first event for a call that was started with a temporary call id
+            // and the call should be readded under the real call id
 
             Call tmp = null;
             switch (stateParams.Device.Type)
@@ -158,12 +162,14 @@ namespace SignalWire
                             return;
                         }
 
+                        // If the call already exists under the real call id simply obtain the call, however if the call was found under
+                        // a temporary call id then readd it here under the real call id, otherwise create a new call
                         call = mCalls.GetOrAdd(stateParams.CallID, k => call ?? (tmp = new PhoneCall(this, stateParams.NodeID, stateParams.CallID)
                         {
                             To = phoneParams.ToNumber,
                             From = phoneParams.FromNumber,
                             Timeout = phoneParams.Timeout,
-                            // Capture the state, but it should always be created the first time we see the call
+                            // Capture the state, it may not always be created the first time we see the call
                             State = stateParams.CallState,
                         }));
                         break;
@@ -175,7 +181,6 @@ namespace SignalWire
             }
 
             if (tmp == call) OnCallCreated?.Invoke(this, call);
-
 
             call.StateChangeHandler(stateParams);
         }
@@ -207,7 +212,8 @@ namespace SignalWire
                             return;
                         }
 
-                        call = mCalls.GetOrAdd(receiveParams.CallID, k => call ?? (tmp = new PhoneCall(this, receiveParams.NodeID, receiveParams.CallID)
+                        // If the call already exists under the real call id simply obtain the call, otherwise create a new call
+                        call = mCalls.GetOrAdd(receiveParams.CallID, k => (tmp = new PhoneCall(this, receiveParams.NodeID, receiveParams.CallID)
                         {
                             To = phoneParams.ToNumber,
                             From = phoneParams.FromNumber,

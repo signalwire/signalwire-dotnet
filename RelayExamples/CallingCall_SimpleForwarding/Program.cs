@@ -31,7 +31,7 @@ namespace CallingCall_SimpleForwarding
             Logger.LogInformation("Started");
 
             // Use environment variables
-            string session_bootstrap = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_SESSION_BOOTSTRAP");
+            string session_host = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_SESSION_HOST");
             string session_project = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_SESSION_PROJECT");
             string session_token = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_SESSION_TOKEN");
             sCallReceiveContext = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_CALLRECEIVE_CONTEXT");
@@ -39,9 +39,9 @@ namespace CallingCall_SimpleForwarding
             sCallFromNumber = Environment.GetEnvironmentVariable("SWCLIENT_EXAMPLE_CALL_FROM_NUMBER");
 
             // Make sure we have mandatory options filled in
-            if (session_bootstrap == null)
+            if (session_host == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_EXAMPLE_SESSION_BOOTSTRAP' environment variable");
+                Logger.LogError("Missing 'SWCLIENT_EXAMPLE_SESSION_HOST' environment variable");
                 return;
             }
             if (session_project == null)
@@ -73,13 +73,13 @@ namespace CallingCall_SimpleForwarding
             try
             {
                 // Create the client
-                using (sClient = new RelayClient(session_bootstrap, session_project, session_token))
+                using (sClient = new RelayClient(session_host, session_project, session_token))
                 {
                     // Setup callbacks before the client is started
                     sClient.OnReady += Client_OnReady;
 
                     // Start the client
-                    sClient.Start();
+                    sClient.Connect();
 
                     Console.ReadKey(true);
                 }

@@ -37,7 +37,7 @@ namespace Garbage
             Stopwatch timer = Stopwatch.StartNew();
 
             // Use environment variables
-            string session_bootstrap = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_BOOTSTRAP");
+            string session_host = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_HOST");
             string session_project = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_PROJECT");
             string session_token = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_TOKEN");
             sCallReceiveContext = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALLRECEIVE_CONTEXT");
@@ -45,9 +45,9 @@ namespace Garbage
             sCallFromNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_FROM_NUMBER");
 
             // Make sure we have mandatory options filled in
-            if (session_bootstrap == null)
+            if (session_host == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_BOOTSTRAP' environment variable");
+                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_HOST' environment variable");
                 return -1;
             }
             if (session_project == null)
@@ -79,13 +79,13 @@ namespace Garbage
             try
             {
                 // Create the client
-                using (sClient = new RelayClient(session_bootstrap, session_project, session_token))
+                using (sClient = new RelayClient(session_host, session_project, session_token))
                 {
                     // Setup callbacks before the client is started
                     sClient.OnReady += Client_OnReady;
 
                     // Start the client
-                    sClient.Start();
+                    sClient.Connect();
 
                     // Wait more than long enough for the test to be completed
                     if (!sCompleted.Wait(TimeSpan.FromMinutes(2))) Logger.LogError("Test timed out");
@@ -113,9 +113,6 @@ namespace Garbage
         {
             // This is called when the client has established a new session, this is NOT called when a session is restored
             Logger.LogInformation("OnReady");
-
-            // Create the api associating it to the client for transport
-            //sCallingAPI = new CallingAPI(client);
 
             Task.Run(() =>
             {

@@ -25,7 +25,7 @@ namespace JWT
 
         private static RelayClient sClient = null;
 
-        private static string sSessionBootstrap = null;
+        private static string sSessionHost = null;
         private static string sSessionProject = null;
         private static string sJWTTokenServer = null;
         private static string sJWTURL = null;
@@ -46,15 +46,15 @@ namespace JWT
             Stopwatch timer = Stopwatch.StartNew();
 
             // Use environment variables
-            sSessionBootstrap = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_BOOTSTRAP");
+            sSessionHost = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_HOST");
             sSessionProject = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_PROJECT");
             sJWTTokenServer = Environment.GetEnvironmentVariable("SWCLIENT_TEST_JWT_TOKEN");
             sJWTURL = Environment.GetEnvironmentVariable("SWCLIENT_TEST_JWT_URL");
 
             // Make sure we have mandatory options filled in
-            if (string.IsNullOrWhiteSpace(sSessionBootstrap))
+            if (string.IsNullOrWhiteSpace(sSessionHost))
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_BOOTSTRAP' environment variable");
+                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_HOST' environment variable");
                 return -1;
             }
             if (string.IsNullOrWhiteSpace(sSessionProject))
@@ -85,13 +85,13 @@ namespace JWT
                 try
                 {
                     // Create the client
-                    using (sClient = new RelayClient(sSessionBootstrap, sSessionProject, jwt_token: sJWTTokenClient))
+                    using (sClient = new RelayClient(sSessionHost, sSessionProject, sJWTTokenClient, jwt: true))
                     {
                         // Setup callbacks before the client is started
                         sClient.OnReady += Client_OnReady;
 
                         // Start the client
-                        sClient.Start();
+                        sClient.Connect();
 
                         // Wait more than long enough for the test to be completed
                         //if (!sCompleted.Wait(TimeSpan.FromMinutes(2))) Logger.LogError("Test timed out");

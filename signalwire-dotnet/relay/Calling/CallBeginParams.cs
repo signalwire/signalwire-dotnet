@@ -13,6 +13,6 @@ namespace SignalWire.Calling
         public CallDevice Device { get; set; }
 
         [JsonProperty("tag", NullValueHandling = NullValueHandling.Ignore)]
-        public string Tag { get; set; }
+        public string TemporaryCallID { get; set; }
     }
 }
