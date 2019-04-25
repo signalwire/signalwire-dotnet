@@ -331,19 +331,19 @@ namespace SignalWire.Calling
         }
 
 
-        public void PlayMedia(string controlID, List<CallMedia> play)
+        public void PlayMedia(string controlID, List<CallMedia> media)
         {
-            PlayMediaAsync(controlID, play).Wait();
+            PlayMediaAsync(controlID, media).Wait();
         }
 
-        public async Task PlayMediaAsync(string controlID, List<CallMedia> play)
+        public async Task PlayMediaAsync(string controlID, List<CallMedia> media)
         {
             Task<CallPlayResult> taskCallPlayResult = mAPI.LL_CallPlayAsync(new CallPlayParams()
             {
                 NodeID = mNodeID,
                 CallID = mCallID,
                 ControlID = controlID,
-                Play = play,
+                Play = media,
             });
 
 
@@ -406,19 +406,19 @@ namespace SignalWire.Calling
             mAPI.ThrowIfError(callPlayStopResult.Code, callPlayStopResult.Message);
         }
 
-        public void PlayMediaAndCollect(string controlID, List<CallMedia> play, CallCollect collect)
+        public void PlayMediaAndCollect(string controlID, List<CallMedia> media, CallCollect collect)
         {
-            PlayMediaAndCollectAsync(controlID, play, collect).Wait();
+            PlayMediaAndCollectAsync(controlID, media, collect).Wait();
         }
 
-        public async Task PlayMediaAndCollectAsync(string controlID, List<CallMedia> play, CallCollect collect)
+        public async Task PlayMediaAndCollectAsync(string controlID, List<CallMedia> media, CallCollect collect)
         {
             Task<CallPlayAndCollectResult> taskCallPlayAndCollectResult = mAPI.LL_CallPlayAndCollectAsync(new CallPlayAndCollectParams()
             {
                 NodeID = mNodeID,
                 CallID = mCallID,
                 ControlID = controlID,
-                Play = play,
+                Play = media,
                 Collect = collect,
             });
 

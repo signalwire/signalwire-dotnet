@@ -28,11 +28,12 @@ namespace SignalWire
             mService = service;
         }
 
-        public ILogger Logger {  get { return mLogger; } }
+        protected ILogger Logger {  get { return mLogger; } }
 
         public RelayClient Client { get { return mClient; } }
         public string Protocol { get { return mProtocol; } }
-        public bool SetupCompleted { get { return mProtocol != null; } }
+
+        protected bool SetupCompleted { get { return mProtocol != null; } }
 
         internal void Reset()
         {
