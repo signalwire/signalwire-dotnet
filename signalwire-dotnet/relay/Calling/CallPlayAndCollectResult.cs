@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SignalWire.Calling
+namespace SignalWire.Relay.Calling
 {
     public sealed class CallPlayAndCollectResult
     {

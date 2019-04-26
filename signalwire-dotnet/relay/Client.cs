@@ -14,9 +14,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SignalWire
+namespace SignalWire.Relay
 {
-    public sealed class RelayClient : IDisposable
+    public sealed class Client : IDisposable
     {
         public static string CreateAuthentication(string project, string token)
         {
@@ -36,12 +36,12 @@ namespace SignalWire
             }.ToString(Formatting.None);
         }
 
-        public delegate void RelayClientCallback(RelayClient client);
+        public delegate void ClientCallback(Client client);
 
         private bool mDisposed = false;
         private CallingAPI mCalling = null;
 
-        public RelayClient(
+        public Client(
             string host, string project, string token,
             bool jwt = false,
             TimeSpan? connectDelay = null, TimeSpan? connectTimeout = null, TimeSpan? closeTimeout = null)
@@ -78,11 +78,11 @@ namespace SignalWire
             }
         }
 
-        public event RelayClientCallback OnReady;
-        public event RelayClientCallback OnDisconnected;
+        public event ClientCallback OnReady;
+        public event ClientCallback OnDisconnected;
 
         #region Disposable
-        ~RelayClient()
+        ~Client()
         {
             Dispose(false);
         }

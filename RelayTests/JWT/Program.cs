@@ -3,8 +3,8 @@ using Blade.Messages;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SignalWire;
-using SignalWire.Calling;
+using SignalWire.Relay;
+using SignalWire.Relay.Calling;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,7 +23,7 @@ namespace JWT
         private static ManualResetEventSlim sCompleted = new ManualResetEventSlim();
         private static bool sSuccessful = false;
 
-        private static RelayClient sClient = null;
+        private static Client sClient = null;
 
         private static string sSessionHost = null;
         private static string sSessionProject = null;
@@ -85,7 +85,7 @@ namespace JWT
                 try
                 {
                     // Create the client
-                    using (sClient = new RelayClient(sSessionHost, sSessionProject, sJWTTokenClient, jwt: true))
+                    using (sClient = new Client(sSessionHost, sSessionProject, sJWTTokenClient, jwt: true))
                     {
                         // Setup callbacks before the client is started
                         sClient.OnReady += Client_OnReady;
@@ -117,7 +117,7 @@ namespace JWT
             return sSuccessful ? 0 : -1;
         }
 
-        private static void Client_OnReady(RelayClient client)
+        private static void Client_OnReady(Client client)
         {
             // This is called when the client has established a new session, this is NOT called when a session is restored
             Logger.LogInformation("OnReady");
@@ -130,7 +130,7 @@ namespace JWT
             {
                 Logger.LogInformation("Successfully refreshed JWT token: {0}", sJWTTokenClient);
 
-                string authentication = RelayClient.CreateJWTAuthentication(sSessionProject, sJWTTokenClient);
+                string authentication = Client.CreateJWTAuthentication(sSessionProject, sJWTTokenClient);
                 client.Session.ReauthenticateAsync(JObject.Parse(authentication)).ContinueWith(r =>
                 {
                     if (r.IsFaulted || r.IsCanceled)

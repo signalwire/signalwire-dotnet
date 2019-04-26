@@ -3,8 +3,8 @@ using Blade.Messages;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SignalWire;
-using SignalWire.Calling;
+using SignalWire.Relay;
+using SignalWire.Relay.Calling;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,7 +20,7 @@ namespace Calling_Record
         private static ManualResetEventSlim sCompleted = new ManualResetEventSlim();
         private static bool sSuccessful = false;
 
-        private static RelayClient sClient = null;
+        private static Client sClient = null;
         private static CallingAPI sCallingAPI = null;
 
         private static string sCallReceiveContext = null;
@@ -83,7 +83,7 @@ namespace Calling_Record
             try
             {
                 // Create the client
-                using (sClient = new RelayClient(session_host, session_project, session_token))
+                using (sClient = new Client(session_host, session_project, session_token))
                 {
                     // Setup callbacks before the client is started
                     sClient.OnReady += Client_OnReady;
@@ -113,7 +113,7 @@ namespace Calling_Record
             return sSuccessful ? 0 : -1;
         }
 
-        private static void Client_OnReady(RelayClient client)
+        private static void Client_OnReady(Client client)
         {
             // This is called when the client has established a new session, this is NOT called when a session is restored
             Logger.LogInformation("OnReady");
@@ -160,7 +160,6 @@ namespace Calling_Record
                 {
                     call.OnPlayStateChange += OnCallPlayStateChange;
                     call.PlayTTS(
-                        "im_a_little_teapot",
                         new CallMedia.TTSParams()
                         {
                             Text = "i'm a little teapot",

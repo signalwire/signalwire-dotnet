@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SignalWire.Provisioning
+namespace SignalWire.Relay.Provisioning
 {
     public sealed class ConfigureResult
     {

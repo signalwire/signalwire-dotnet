@@ -7,38 +7,35 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SignalWire
+namespace SignalWire.Relay
 {
     public abstract class RelayAPI
     {
-        public delegate void ClientServiceNotificationCallback(RelayClient client, BroadcastParams broadcastParams);
-
         private readonly ILogger mLogger = null;
 
-        private readonly RelayClient mClient = null;
+        private readonly Client mClient = null;
         private readonly RelayService mService = RelayService.none;
         private string mProtocol = null;
 
-        public event ClientServiceNotificationCallback OnEvent;
-
-        internal RelayAPI(RelayClient client, RelayService service)
+        protected RelayAPI(Client client, RelayService service)
         {
-            mLogger = SignalWireLogging.CreateLogger<RelayClient>();
+            mLogger = SignalWireLogging.CreateLogger<Client>();
             mClient = client;
             mService = service;
         }
 
         protected ILogger Logger {  get { return mLogger; } }
 
-        public RelayClient Client { get { return mClient; } }
+        public Client Client { get { return mClient; } }
         public string Protocol { get { return mProtocol; } }
 
         protected bool SetupCompleted { get { return mProtocol != null; } }
 
+        protected virtual void OnEvent(Client client, BroadcastParams broadcastParams) { }
+
         internal void Reset()
         {
             mProtocol = null;
-            OnEvent = null;
         }
 
         private async Task<bool> CheckProtocolAvailableAsync(string protocol, TimeSpan timeout)
@@ -50,7 +47,7 @@ namespace SignalWire
                 bool found = false;
                 while (!found && DateTime.Now < expiration)
                 {
-                    if (!(found = mClient.Session.Cache.CheckProtocolAvailable("signalwire")))
+                    if (!(found = mClient.Session.Cache.CheckProtocolAvailable(protocol)))
                     {
                         await Task.Delay(100);
                     }
@@ -59,7 +56,7 @@ namespace SignalWire
             });
         }
 
-        public async Task<string> LL_SetupAsync()
+        protected async Task<string> LL_SetupAsync()
         {
             return await Task.Run(async () =>
             {

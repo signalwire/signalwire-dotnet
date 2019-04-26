@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 
-namespace SignalWire
+namespace SignalWire.Relay
 {
     public static class SignalWireLogging
     {

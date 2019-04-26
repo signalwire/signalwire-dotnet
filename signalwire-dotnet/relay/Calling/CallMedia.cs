@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SignalWire.Calling
+namespace SignalWire.Relay.Calling
 {
     public sealed class CallMedia
     {
@@ -44,7 +44,7 @@ namespace SignalWire.Calling
         public MediaType Type { get; set; }
 
         [JsonProperty("params", Required = Required.Always)]
-        public JObject Parameters { get; set; }
+        public object Parameters { get; set; }
 
         public T ParametersAs<T>() { return Parameters == null ? default(T) : (Parameters as JObject).ToObject<T>(); }
     }

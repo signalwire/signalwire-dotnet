@@ -2,14 +2,14 @@
 using Blade.Messages;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using SignalWire.Calling;
+using SignalWire.Relay.Calling;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SignalWire
+namespace SignalWire.Relay
 {
     public sealed class CallingAPI : RelayAPI
     {
@@ -22,19 +22,19 @@ namespace SignalWire
         public event CallCreatedCallback OnCallCreated;
         public event CallReceivedCallback OnCallReceived;
 
-        public CallingAPI(RelayClient client) : base(client, RelayService.calling) { }
+        public CallingAPI(Client client) : base(client, RelayService.calling) { }
 
         // High Level API
 
-        public PhoneCall NewPhoneCall(string temporaryCallID, string to, string from, int timeout = 30)
+        public PhoneCall NewPhoneCall(string to, string from, int timeout = 30)
         {
-            PhoneCall call = new PhoneCall(this, temporaryCallID)
+            PhoneCall call = new PhoneCall(this, Guid.NewGuid().ToString())
             {
                 To = to,
                 From = from,
                 Timeout = timeout,
             };
-            mCalls.TryAdd(temporaryCallID, call);
+            mCalls.TryAdd(call.TemporaryCallID, call);
             OnCallCreated?.Invoke(this, call);
             return call;
         }
@@ -60,7 +60,6 @@ namespace SignalWire
             if (!mHighLevelAPISetup)
             {
                 mHighLevelAPISetup = true;
-                OnEvent += CallingAPI_OnEvent;
             }
         }
 
@@ -83,7 +82,7 @@ namespace SignalWire
             ThrowIfError(callReceiveResult.Code, callReceiveResult.Message);
         }
 
-        private void CallingAPI_OnEvent(RelayClient client, BroadcastParams broadcastParams)
+        protected override void OnEvent(Client client, BroadcastParams broadcastParams)
         {
             Logger.LogInformation("CallingAPI OnEvent");
 
@@ -125,7 +124,7 @@ namespace SignalWire
             }
         }
 
-        private void OnEvent_CallingCallState(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallState(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.StateParams stateParams = null;
             try { stateParams = callEventParams.ParametersAs<CallEventParams.StateParams>(); }
@@ -185,7 +184,7 @@ namespace SignalWire
             call.StateChangeHandler(stateParams);
         }
 
-        private void OnEvent_CallingCallReceive(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallReceive(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.ReceiveParams receiveParams = null;
             try { receiveParams = callEventParams.ParametersAs<CallEventParams.ReceiveParams>(); }
@@ -236,7 +235,7 @@ namespace SignalWire
             }
         }
 
-        private void OnEvent_CallingCallConnect(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallConnect(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.ConnectParams connectParams = null;
             try { connectParams = callEventParams.ParametersAs<CallEventParams.ConnectParams>(); }
@@ -254,7 +253,7 @@ namespace SignalWire
             call.ConnectHandler(connectParams);
         }
 
-        private void OnEvent_CallingCallCollect(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallCollect(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.CollectParams collectParams = null;
             try { collectParams = callEventParams.ParametersAs<CallEventParams.CollectParams>(); }
@@ -272,7 +271,7 @@ namespace SignalWire
             call.CollectHandler(collectParams);
         }
 
-        private void OnEvent_CallingCallRecord(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallRecord(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.RecordParams recordParams = null;
             try { recordParams = callEventParams.ParametersAs<CallEventParams.RecordParams>(); }
@@ -290,7 +289,7 @@ namespace SignalWire
             call.RecordHandler(recordParams);
         }
 
-        private void OnEvent_CallingCallPlay(RelayClient client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnEvent_CallingCallPlay(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
         {
             CallEventParams.PlayParams playParams = null;
             try { playParams = callEventParams.ParametersAs<CallEventParams.PlayParams>(); }

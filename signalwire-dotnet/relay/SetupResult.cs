@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SignalWire
+namespace SignalWire.Relay
 {
     public sealed class SetupResult
     {

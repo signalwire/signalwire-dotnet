@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SignalWire.Calling
+namespace SignalWire.Relay.Calling
 {
     public abstract class Call
     {
@@ -74,13 +74,13 @@ namespace SignalWire.Calling
 
         protected Call(CallingAPI api, string temporaryCallID)
         {
-            mLogger = SignalWireLogging.CreateLogger<RelayClient>();
+            mLogger = SignalWireLogging.CreateLogger<Client>();
             mAPI = api;
             mTemporaryCallID = temporaryCallID;
         }
         protected Call(CallingAPI api, string nodeID, string callID)
         {
-            mLogger = SignalWireLogging.CreateLogger<RelayClient>();
+            mLogger = SignalWireLogging.CreateLogger<Client>();
             mAPI = api;
             mNodeID = nodeID;
             mCallID = callID;
@@ -331,13 +331,14 @@ namespace SignalWire.Calling
         }
 
 
-        public void PlayMedia(string controlID, List<CallMedia> media)
+        public List<CallMedia> PlayMedia(List<CallMedia> media)
         {
-            PlayMediaAsync(controlID, media).Wait();
+            return PlayMediaAsync(media).Result;
         }
 
-        public async Task PlayMediaAsync(string controlID, List<CallMedia> media)
+        public async Task<List<CallMedia>> PlayMediaAsync(List<CallMedia> media)
         {
+            string controlID = Guid.NewGuid().ToString();
             Task<CallPlayResult> taskCallPlayResult = mAPI.LL_CallPlayAsync(new CallPlayParams()
             {
                 NodeID = mNodeID,
@@ -346,42 +347,49 @@ namespace SignalWire.Calling
                 Play = media,
             });
 
-
             // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
             CallPlayResult callPlayResult = await taskCallPlayResult;
 
             // If there was an internal error of any kind then throw an exception
             mAPI.ThrowIfError(callPlayResult.Code, callPlayResult.Message);
+
+            return media;
         }
 
-        public void PlayAudio(string controlID, CallMedia.AudioParams audio)
+        public CallMedia PlayAudio(CallMedia.AudioParams audio)
         {
-            PlayAudioAsync(controlID, audio).Wait();
+            return PlayAudioAsync(audio).Result;
         }
 
-        public Task PlayAudioAsync(string controlID, CallMedia.AudioParams audio)
+        public async Task<CallMedia> PlayAudioAsync(CallMedia.AudioParams audio)
         {
-            return PlayMediaAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.audio, Parameters = JObject.FromObject(audio) } });
+            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.audio, Parameters = JObject.FromObject(audio) };
+            await PlayMediaAsync(new List<CallMedia> { media });
+            return media;
         }
 
-        public void PlayTTS(string controlID, CallMedia.TTSParams tts)
+        public CallMedia PlayTTS(CallMedia.TTSParams tts)
         {
-            PlayTTSAsync(controlID, tts).Wait();
+            return PlayTTSAsync(tts).Result;
         }
 
-        public Task PlayTTSAsync(string controlID, CallMedia.TTSParams tts)
+        public async Task<CallMedia> PlayTTSAsync(CallMedia.TTSParams tts)
         {
-            return PlayMediaAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.tts, Parameters = JObject.FromObject(tts) } });
+            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.tts, Parameters = JObject.FromObject(tts) };
+            await PlayMediaAsync(new List<CallMedia> { media });
+            return media;
         }
 
-        public void PlaySilence(string controlID, CallMedia.SilenceParams silence)
+        public CallMedia PlaySilence(CallMedia.SilenceParams silence)
         {
-            PlaySilenceAsync(controlID, silence).Wait();
+            return PlaySilenceAsync(silence).Result;
         }
 
-        public Task PlaySilenceAsync(string controlID, CallMedia.SilenceParams silence)
+        public async Task<CallMedia> PlaySilenceAsync(CallMedia.SilenceParams silence)
         {
-            return PlayMediaAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.silence, Parameters = JObject.FromObject(silence) } });
+            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.silence, Parameters = JObject.FromObject(silence) };
+            await PlayMediaAsync(new List<CallMedia> { media });
+            return media;
         }
 
         public void StopPlay(string controlID)
@@ -406,13 +414,14 @@ namespace SignalWire.Calling
             mAPI.ThrowIfError(callPlayStopResult.Code, callPlayStopResult.Message);
         }
 
-        public void PlayMediaAndCollect(string controlID, List<CallMedia> media, CallCollect collect)
+        public List<CallMedia> PlayMediaAndCollect(List<CallMedia> media, CallCollect collect)
         {
-            PlayMediaAndCollectAsync(controlID, media, collect).Wait();
+            return PlayMediaAndCollectAsync(media, collect).Result;
         }
 
-        public async Task PlayMediaAndCollectAsync(string controlID, List<CallMedia> media, CallCollect collect)
+        public async Task<List<CallMedia>> PlayMediaAndCollectAsync(List<CallMedia> media, CallCollect collect)
         {
+            string controlID = Guid.NewGuid().ToString();
             Task<CallPlayAndCollectResult> taskCallPlayAndCollectResult = mAPI.LL_CallPlayAndCollectAsync(new CallPlayAndCollectParams()
             {
                 NodeID = mNodeID,
@@ -422,42 +431,49 @@ namespace SignalWire.Calling
                 Collect = collect,
             });
 
-
             // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
             CallPlayAndCollectResult callPlayAndCollectResult = await taskCallPlayAndCollectResult;
 
             // If there was an internal error of any kind then throw an exception
             mAPI.ThrowIfError(callPlayAndCollectResult.Code, callPlayAndCollectResult.Message);
+
+            return media;
         }
 
-        public void PlayAudioAndCollect(string controlID, CallMedia.AudioParams audio, CallCollect collect)
+        public CallMedia PlayAudioAndCollect(CallMedia.AudioParams audio, CallCollect collect)
         {
-            PlayAudioAndCollectAsync(controlID, audio, collect).Wait();
+            return PlayAudioAndCollectAsync(audio, collect).Result;
         }
 
-        public Task PlayAudioAndCollectAsync(string controlID, CallMedia.AudioParams audio, CallCollect collect)
+        public async Task<CallMedia> PlayAudioAndCollectAsync(CallMedia.AudioParams audio, CallCollect collect)
         {
-            return PlayMediaAndCollectAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.audio, Parameters = JObject.FromObject(audio) } }, collect);
+            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.audio, Parameters = JObject.FromObject(audio) };
+            await PlayMediaAndCollectAsync(new List<CallMedia> { media }, collect);
+            return media;
         }
 
-        public void PlayTTSAndCollect(string controlID, CallMedia.TTSParams tts, CallCollect collect)
+        public CallMedia PlayTTSAndCollect(CallMedia.TTSParams tts, CallCollect collect)
         {
-            PlayTTSAndCollectAsync(controlID, tts, collect).Wait();
+            return PlayTTSAndCollectAsync(tts, collect).Result;
         }
 
-        public Task PlayTTSAndCollectAsync(string controlID, CallMedia.TTSParams tts, CallCollect collect)
+        public async Task<CallMedia> PlayTTSAndCollectAsync(CallMedia.TTSParams tts, CallCollect collect)
         {
-            return PlayMediaAndCollectAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.tts, Parameters = JObject.FromObject(tts) } }, collect);
+            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.tts, Parameters = JObject.FromObject(tts) };
+            await PlayMediaAndCollectAsync(new List<CallMedia> { media }, collect);
+            return media;
         }
 
-        public void PlaySilenceAndCollect(string controlID, CallMedia.SilenceParams silence, CallCollect collect)
+        public CallMedia PlaySilenceAndCollect(CallMedia.SilenceParams silence, CallCollect collect)
         {
-            PlaySilenceAndCollectAsync(controlID, silence, collect).Wait();
+            return PlaySilenceAndCollectAsync(silence, collect).Result;
         }
 
-        public Task PlaySilenceAndCollectAsync(string controlID, CallMedia.SilenceParams silence, CallCollect collect)
+        public async Task<CallMedia> PlaySilenceAndCollectAsync(CallMedia.SilenceParams silence, CallCollect collect)
         {
-            return PlayMediaAndCollectAsync(controlID, new List<CallMedia> { new CallMedia() { Type = CallMedia.MediaType.silence, Parameters = JObject.FromObject(silence) } }, collect);
+            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.silence, Parameters = JObject.FromObject(silence) };
+            await PlayMediaAndCollectAsync(new List<CallMedia> { media }, collect);
+            return media;
         }
 
         public void StartRecord(string controlID, CallRecordType type, object parameters)

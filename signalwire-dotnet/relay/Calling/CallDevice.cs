@@ -5,15 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SignalWire.Calling
+namespace SignalWire.Relay.Calling
 {
     public sealed class CallDevice
     {
         public enum DeviceType
         {
             phone,
-            sip,
-            webrtc,
+            //sip,
+            //webrtc,
         }
 
         public sealed class PhoneParams

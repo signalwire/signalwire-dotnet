@@ -2,7 +2,7 @@
 using Blade.Messages;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using SignalWire;
+using SignalWire.Relay;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -17,7 +17,7 @@ namespace Garbage
         private static ManualResetEventSlim sCompleted = new ManualResetEventSlim();
         private static bool sSuccessful = false;
 
-        private static RelayClient sClient = null;
+        private static Client sClient = null;
 
         private static string sCallReceiveContext = null;
         private static string sCallToNumber = null;
@@ -79,7 +79,7 @@ namespace Garbage
             try
             {
                 // Create the client
-                using (sClient = new RelayClient(session_host, session_project, session_token))
+                using (sClient = new Client(session_host, session_project, session_token))
                 {
                     // Setup callbacks before the client is started
                     sClient.OnReady += Client_OnReady;
@@ -109,7 +109,7 @@ namespace Garbage
             return sSuccessful ? 0 : -1;
         }
 
-        private static void Client_OnReady(RelayClient client)
+        private static void Client_OnReady(Client client)
         {
             // This is called when the client has established a new session, this is NOT called when a session is restored
             Logger.LogInformation("OnReady");
@@ -127,7 +127,7 @@ namespace Garbage
             });
         }
 
-        private static bool Test1(RelayClient client)
+        private static bool Test1(Client client)
         {
             // Test execute of signalwire setup with no inner params object
             Task<ResponseTaskResult<ExecuteResult>> setupTask = null;
@@ -180,7 +180,7 @@ namespace Garbage
             return true;
         }
 
-        private static bool Test2(RelayClient client)
+        private static bool Test2(Client client)
         {
             // Test execute of signalwire setup with an empty inner params object (no service field)
             Task<ResponseTaskResult<ExecuteResult>> setupTask = null;
@@ -233,7 +233,7 @@ namespace Garbage
             return true;
         }
 
-        private static bool Test3(RelayClient client)
+        private static bool Test3(Client client)
         {
             // Test execute of signalwire setup with an inner params object containing a service field that has an invalid value
             Task<ResponseTaskResult<ExecuteResult>> setupTask = null;
@@ -286,7 +286,7 @@ namespace Garbage
             return true;
         }
 
-        private static bool Test4(RelayClient client)
+        private static bool Test4(Client client)
         {
             // Test execute of signalwire setup with an inner params object containing a service field that has a valid value but an invalid protocol for restoring
             Task<ResponseTaskResult<ExecuteResult>> setupTask = null;
