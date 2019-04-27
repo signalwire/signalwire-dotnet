@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <RootNamespace>SignalWire</RootNamespace>
+    <RootNamespace>Tests</RootNamespace>
 
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\signalwire-dotnet\signalwire-dotnet.csproj" />
+    <ProjectReference Include="..\..\signalwire-dotnet\signalwire-dotnet.csproj" />
   </ItemGroup>
 
   <ItemGroup>

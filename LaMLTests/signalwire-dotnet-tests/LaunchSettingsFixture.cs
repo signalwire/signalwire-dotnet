@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace SignalWire
+namespace Tests
 {
     public class LaunchSettingsFixture : IDisposable
     {

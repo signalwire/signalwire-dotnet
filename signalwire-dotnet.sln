@@ -5,7 +5,27 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "signalwire-dotnet", "signalwire-dotnet\signalwire-dotnet.csproj", "{349C0884-4FBE-4388-8078-C9DC4B4D35FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "signalwire-dotnet-tests", "signalwire-dotnet-tests\signalwire-dotnet-tests.csproj", "{CCD41B0D-71F2-48A4-BEF7-50A08BA3C40E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "signalwire-dotnet-tests", "LaMLTests\signalwire-dotnet-tests\signalwire-dotnet-tests.csproj", "{CCD41B0D-71F2-48A4-BEF7-50A08BA3C40E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RelayTests", "RelayTests", "{1861F546-601F-40C5-87F9-90904AEF3FFC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_Play", "RelayTests\Calling_Play\Calling_Play.csproj", "{88F4EEF8-1DBF-4DCA-B779-E7802A7F8C93}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_PlayAndCollect", "RelayTests\Calling_PlayAndCollect\Calling_PlayAndCollect.csproj", "{F287CAC5-EC22-4C8C-BEF7-A666339E61A4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_Record", "RelayTests\Calling_Record\Calling_Record.csproj", "{0AD108B5-EDB3-45AD-8283-C203F9F2E0FF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_Complex", "RelayTests\Calling_Complex\Calling_Complex.csproj", "{7A1A32E0-09D6-406F-801F-38D3D38EC1CD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Garbage", "RelayTests\Garbage\Garbage.csproj", "{D91AE7CF-BEB3-40CB-ACAC-2B7065BA7F39}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JWT", "RelayTests\JWT\JWT.csproj", "{CD5BA39E-9E6B-47DF-8A0E-17F88652A7B4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RelayExamples", "RelayExamples", "{CBE6F4FA-C7EC-45D6-82E2-5C2D97F55124}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CallingCall_SimpleForwarding", "RelayExamples\CallingCall_SimpleForwarding\CallingCall_SimpleForwarding.csproj", "{D67F4901-1330-439E-B428-7E2957072288}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LaMLTests", "LaMLTests", "{F0492ADC-3034-4231-A36A-82AF477BCF03}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +41,47 @@ Global
 		{CCD41B0D-71F2-48A4-BEF7-50A08BA3C40E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CCD41B0D-71F2-48A4-BEF7-50A08BA3C40E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CCD41B0D-71F2-48A4-BEF7-50A08BA3C40E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88F4EEF8-1DBF-4DCA-B779-E7802A7F8C93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88F4EEF8-1DBF-4DCA-B779-E7802A7F8C93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88F4EEF8-1DBF-4DCA-B779-E7802A7F8C93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88F4EEF8-1DBF-4DCA-B779-E7802A7F8C93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F287CAC5-EC22-4C8C-BEF7-A666339E61A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F287CAC5-EC22-4C8C-BEF7-A666339E61A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F287CAC5-EC22-4C8C-BEF7-A666339E61A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F287CAC5-EC22-4C8C-BEF7-A666339E61A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AD108B5-EDB3-45AD-8283-C203F9F2E0FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AD108B5-EDB3-45AD-8283-C203F9F2E0FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AD108B5-EDB3-45AD-8283-C203F9F2E0FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AD108B5-EDB3-45AD-8283-C203F9F2E0FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A1A32E0-09D6-406F-801F-38D3D38EC1CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A1A32E0-09D6-406F-801F-38D3D38EC1CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A1A32E0-09D6-406F-801F-38D3D38EC1CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A1A32E0-09D6-406F-801F-38D3D38EC1CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D91AE7CF-BEB3-40CB-ACAC-2B7065BA7F39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D91AE7CF-BEB3-40CB-ACAC-2B7065BA7F39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D91AE7CF-BEB3-40CB-ACAC-2B7065BA7F39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D91AE7CF-BEB3-40CB-ACAC-2B7065BA7F39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD5BA39E-9E6B-47DF-8A0E-17F88652A7B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD5BA39E-9E6B-47DF-8A0E-17F88652A7B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD5BA39E-9E6B-47DF-8A0E-17F88652A7B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD5BA39E-9E6B-47DF-8A0E-17F88652A7B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D67F4901-1330-439E-B428-7E2957072288}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D67F4901-1330-439E-B428-7E2957072288}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D67F4901-1330-439E-B428-7E2957072288}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D67F4901-1330-439E-B428-7E2957072288}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CCD41B0D-71F2-48A4-BEF7-50A08BA3C40E} = {F0492ADC-3034-4231-A36A-82AF477BCF03}
+		{88F4EEF8-1DBF-4DCA-B779-E7802A7F8C93} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
+		{F287CAC5-EC22-4C8C-BEF7-A666339E61A4} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
+		{0AD108B5-EDB3-45AD-8283-C203F9F2E0FF} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
+		{7A1A32E0-09D6-406F-801F-38D3D38EC1CD} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
+		{D91AE7CF-BEB3-40CB-ACAC-2B7065BA7F39} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
+		{CD5BA39E-9E6B-47DF-8A0E-17F88652A7B4} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
+		{D67F4901-1330-439E-B428-7E2957072288} = {CBE6F4FA-C7EC-45D6-82E2-5C2D97F55124}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {07D95FE8-9E6B-4BC5-88AC-BAD3CAF4D2E7}
