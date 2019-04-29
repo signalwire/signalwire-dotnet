@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <TargetFrameworks>netstandard2.0;netcoreapp2.1</TargetFrameworks>
     <RootNamespace>SignalWire</RootNamespace>
     <NoWarn>$(NoWarn);CS0618;</NoWarn>
 
@@ -17,6 +18,10 @@
     <PackageLicenseUrl>http://github.com/signalwire/signalwire-dotnet/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/signalwire/signalwire-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1'">
+    <DefineConstants>NETCOREAPP2_1</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
