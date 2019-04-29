@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -291,15 +292,17 @@ namespace Blade
                         mLogger.LogInformation("Connecting");
 
                         mSocket = new ClientWebSocket();
-
+                        
                         // @todo support inline conversion of individual PEM to PKCS12 combined
                         if (mOptions.ClientCertificate != null)
                         {
                             mLogger.LogInformation("Using ClientCertificate: " + mOptions.ClientCertificate);
                             mSocket.Options.ClientCertificates.Add(new X509Certificate2(mOptions.ClientCertificate));
                         }
-                        ServicePointManager.ServerCertificateValidationCallback += (s, c, ch, e) => true;
-                        //mSocket.Options.RemoteCertificateValidationCallback += (s, c, ch, e) => true;
+
+#if NETCOREAPP2_1
+                        mSocket.Options.RemoteCertificateValidationCallback += (s, c, ch, e) => true;
+#endif
                         mSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(5); // 5 second ping/pong check
                         mSocket.Options.SetBuffer(1024 << 10, 1024 << 10); // 1MB buffers before continuation is used?
 
@@ -779,7 +782,7 @@ namespace Blade
             OnAuthenticate?.Invoke(this, request, authenticateParams);
         }
 
-        #region "Authenticate Management"
+#region "Authenticate Management"
         public void SendAuthenticateResult(Request request, Blade.Messages.AuthenticateParams authenticateParams, JObject authorization)
         {
             Response response = Response.Create(request.ID, out Blade.Messages.AuthenticateResult result);
@@ -800,9 +803,9 @@ namespace Blade
 
             Send(response);
         }
-        #endregion
+#endregion
 
-        #region "Reauthenticate Management"
+#region "Reauthenticate Management"
         public async Task<ResponseTaskResult<ReauthenticateResult>> ReauthenticateAsync(JObject authentication)
         {
             TaskCompletionSource<ResponseTaskResult<ReauthenticateResult>> tcs = new TaskCompletionSource<ResponseTaskResult<ReauthenticateResult>>();
@@ -818,9 +821,9 @@ namespace Blade
 
             return await tcs.Task;
         }
-        #endregion
+#endregion
 
-        #region "Identity Management"
+#region "Identity Management"
         public async Task<ResponseTaskResult<IdentityResult>> IdentityAddAsync(params string[] identities)
         {
             TaskCompletionSource<ResponseTaskResult<IdentityResult>> tcs = new TaskCompletionSource<ResponseTaskResult<IdentityResult>>();
@@ -853,9 +856,9 @@ namespace Blade
 
             return await tcs.Task;
         }
-        #endregion
+#endregion
 
-        #region "Protocol Management"
+#region "Protocol Management"
         public async Task<ResponseTaskResult<ProtocolResult>> ProtocolProviderAddAsync(
             string protocol,
             AccessControl default_method_execute_access,
@@ -1017,9 +1020,9 @@ namespace Blade
 
             return await tcs.Task;
         }
-        #endregion
+#endregion
 
-        #region "Execute Protocol Method"
+#region "Execute Protocol Method"
         public async Task<ResponseTaskResult<ExecuteResult>> ExecuteAsync(string protocol, string method, object parameters)
         {
             return await ExecuteAsync(protocol, method, parameters, TimeSpan.FromSeconds(Request.DEFAULT_RESPONSE_TIMEOUT_SECONDS));
@@ -1061,9 +1064,9 @@ namespace Blade
         {
             Send(Response.CreateError(request, code, message, executeParameters.RequesterNodeID, executeParameters.ResponderNodeID));
         }
-        #endregion
+#endregion
 
-        #region "Broadcast Protocol Channel"
+#region "Broadcast Protocol Channel"
         public void Broadcast(string protocol, string channel, string eventName, object parameters)
         {
             Request request = Request.CreateWithoutResponse("blade.broadcast", out BroadcastParams broadcastParameters);
@@ -1076,9 +1079,9 @@ namespace Blade
 
             Send(request);
         }
-        #endregion
+#endregion
 
-        #region "Unicast Target Event"
+#region "Unicast Target Event"
         public void Unicast(string target, string eventName, object parameters)
         {
             Request request = Request.CreateWithoutResponse("blade.unicast", out UnicastParams unicastParameters);
@@ -1089,9 +1092,9 @@ namespace Blade
 
             Send(request);
         }
-        #endregion
+#endregion
 
-        #region "Subscription Management"
+#region "Subscription Management"
         public async Task<ResponseTaskResult<SubscriptionResult>> SubscriptionAddAsync(string protocol, params string[] channels)
         {
             TaskCompletionSource<ResponseTaskResult<SubscriptionResult>> tcs = new TaskCompletionSource<ResponseTaskResult<SubscriptionResult>>();
@@ -1126,9 +1129,9 @@ namespace Blade
 
             return await tcs.Task;
         }
-        #endregion
+#endregion
 
-        #region "Authority Management"
+#region "Authority Management"
         public async Task<ResponseTaskResult<AuthorityResult>> AuthorityAddAsync()
         {
             TaskCompletionSource<ResponseTaskResult<AuthorityResult>> tcs = new TaskCompletionSource<ResponseTaskResult<AuthorityResult>>();
@@ -1159,9 +1162,9 @@ namespace Blade
 
             return await tcs.Task;
         }
-        #endregion
+#endregion
 
-        #region "Netcast Authorization Management"
+#region "Netcast Authorization Management"
         public void NetcastAuthorizationAdd(string authentication, JObject authorization, string nodeid)
         {
             Request request = Request.CreateWithoutResponse("blade.netcast", out NetcastParams netcastParameters);
@@ -1186,6 +1189,6 @@ namespace Blade
 
             Send(request);
         }
-        #endregion
+#endregion
     }
 }

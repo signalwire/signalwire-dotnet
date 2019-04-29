@@ -5,3 +5,6 @@
 
 ## 1.2.0
 - Initial merge of SignalWire.Relay support
+
+## 1.2.1
+- Internal fix for ignoring certificate verification
