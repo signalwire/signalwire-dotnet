@@ -11,3 +11,6 @@
 
 ## 1.3.0
 - Adding PlayMedia and PlayAndCollectMedia, and convenience helpers
+
+## 1.3.1
+- Fixed cleanup of some internal temporary callback assignments
