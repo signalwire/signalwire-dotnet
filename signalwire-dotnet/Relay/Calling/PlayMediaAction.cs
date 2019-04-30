@@ -20,17 +20,7 @@ namespace SignalWire.Relay.Calling
         public readonly string ControlID;
         public readonly List<CallMedia> Media;
 
-        private bool mDisposed;
         private TaskCompletionSource<bool> mFinished = new TaskCompletionSource<bool>();
-
-        public void Dispose()
-        {
-            if (!mDisposed)
-            {
-                mDisposed = true;
-                Call.OnPlayStateChange -= Call_OnPlayStateChange;
-            }
-        }
 
         public void Stop()
         {
@@ -63,6 +53,7 @@ namespace SignalWire.Relay.Calling
             {
                 case CallEventParams.PlayParams.PlayState.error:
                 case CallEventParams.PlayParams.PlayState.finished:
+                    Call.OnPlayStateChange -= Call_OnPlayStateChange;
                     mFinished.SetResult(true);
                     break;
                 default: break;

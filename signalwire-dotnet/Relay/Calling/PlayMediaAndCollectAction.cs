@@ -22,17 +22,7 @@ namespace SignalWire.Relay.Calling
         public readonly List<CallMedia> Media;
         public readonly CallCollect Collect;
 
-        private bool mDisposed;
         private TaskCompletionSource<bool> mFinished = new TaskCompletionSource<bool>();
-
-        public void Dispose()
-        {
-            if (!mDisposed)
-            {
-                mDisposed = true;
-                Call.OnCollect -= Call_OnCollect;
-            }
-        }
 
         public void Stop()
         {
@@ -60,6 +50,7 @@ namespace SignalWire.Relay.Calling
 
         private void Call_OnCollect(CallingAPI api, Call call, CallEventParams.CollectParams collectParams)
         {
+            Call.OnCollect -= Call_OnCollect;
             mFinished.SetResult(true);
         }
     }
