@@ -347,9 +347,24 @@ namespace SignalWire.Relay
             return ExecuteAsync<CallConnectParams, CallConnectResult>("call.connect", parameters);
         }
 
+        public Task<CallPlayResult> LL_CallPlayAsync(CallPlayParams parameters)
+        {
+            return ExecuteAsync<CallPlayParams, CallPlayResult>("call.play", parameters);
+        }
+
+        public Task<CallPlayStopResult> LL_CallPlayStopAsync(CallPlayStopParams parameters)
+        {
+            return ExecuteAsync<CallPlayStopParams, CallPlayStopResult>("call.play.stop", parameters);
+        }
+
         public Task<CallPlayAndCollectResult> LL_CallPlayAndCollectAsync(CallPlayAndCollectParams parameters)
         {
             return ExecuteAsync<CallPlayAndCollectParams, CallPlayAndCollectResult>("call.play_and_collect", parameters);
+        }
+
+        public Task<CallPlayAndCollectStopResult> LL_CallPlayAndCollectStopAsync(CallPlayAndCollectStopParams parameters)
+        {
+            return ExecuteAsync<CallPlayAndCollectStopParams, CallPlayAndCollectStopResult>("call.play_and_collect.stop", parameters);
         }
 
         public Task<CallRecordResult> LL_CallRecordAsync(CallRecordParams parameters)
@@ -360,16 +375,6 @@ namespace SignalWire.Relay
         public Task<CallRecordStopResult> LL_CallRecordStopAsync(CallRecordStopParams parameters)
         {
             return ExecuteAsync<CallRecordStopParams, CallRecordStopResult>("call.record.stop", parameters);
-        }
-
-        public Task<CallPlayResult> LL_CallPlayAsync(CallPlayParams parameters)
-        {
-            return ExecuteAsync<CallPlayParams, CallPlayResult>("call.play", parameters);
-        }
-
-        public Task<CallPlayStopResult> LL_CallPlayStopAsync(CallPlayStopParams parameters)
-        {
-            return ExecuteAsync<CallPlayStopParams, CallPlayStopResult>("call.play.stop", parameters);
         }
     }
 }

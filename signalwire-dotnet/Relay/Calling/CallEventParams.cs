@@ -69,6 +69,7 @@ namespace SignalWire.Relay.Calling
             {
                 public enum ResultType
                 {
+                    error,
                     no_input,
                     no_match,
                     digit,
