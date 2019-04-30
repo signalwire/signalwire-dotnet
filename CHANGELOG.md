@@ -8,3 +8,6 @@
 
 ## 1.2.1
 - Internal fix for ignoring certificate verification
+
+## 1.3.0
+- Adding PlayMedia and PlayAndCollectMedia, and convenience helpers

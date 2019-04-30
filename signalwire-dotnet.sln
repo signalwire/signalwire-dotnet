@@ -27,6 +27,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CallingCall_SimpleForwardin
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LaMLTests", "LaMLTests", "{F0492ADC-3034-4231-A36A-82AF477BCF03}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calling_PlayAndCollectStop", "RelayTests\Calling_PlayAndCollectStop\Calling_PlayAndCollectStop.csproj", "{3FD6C9E2-779E-46FC-9C7E-CDAFDEB52664}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{D67F4901-1330-439E-B428-7E2957072288}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D67F4901-1330-439E-B428-7E2957072288}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D67F4901-1330-439E-B428-7E2957072288}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FD6C9E2-779E-46FC-9C7E-CDAFDEB52664}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FD6C9E2-779E-46FC-9C7E-CDAFDEB52664}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FD6C9E2-779E-46FC-9C7E-CDAFDEB52664}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FD6C9E2-779E-46FC-9C7E-CDAFDEB52664}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -82,6 +88,7 @@ Global
 		{D91AE7CF-BEB3-40CB-ACAC-2B7065BA7F39} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
 		{CD5BA39E-9E6B-47DF-8A0E-17F88652A7B4} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
 		{D67F4901-1330-439E-B428-7E2957072288} = {CBE6F4FA-C7EC-45D6-82E2-5C2D97F55124}
+		{3FD6C9E2-779E-46FC-9C7E-CDAFDEB52664} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {07D95FE8-9E6B-4BC5-88AC-BAD3CAF4D2E7}
