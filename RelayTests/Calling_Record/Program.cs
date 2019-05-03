@@ -24,8 +24,6 @@ namespace Calling_Record
         private static CallingAPI sCallingAPI = null;
 
         private static string sCallReceiveContext = null;
-        private static string sCallToNumber = null;
-        private static string sCallFromNumber = null;
 
         public static int Main(string[] args)
         {
@@ -45,8 +43,6 @@ namespace Calling_Record
             string session_project = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_PROJECT");
             string session_token = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_TOKEN");
             sCallReceiveContext = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALLRECEIVE_CONTEXT");
-            sCallToNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_TO_NUMBER");
-            sCallFromNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_FROM_NUMBER");
 
             // Make sure we have mandatory options filled in
             if (session_host == null)
@@ -67,16 +63,6 @@ namespace Calling_Record
             if (sCallReceiveContext == null)
             {
                 Logger.LogError("Missing 'SWCLIENT_TEST_CALLRECEIVE_CONTEXT' environment variable");
-                return -1;
-            }
-            if (sCallToNumber == null)
-            {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_TO_NUMBER' environment variable");
-                return -1;
-            }
-            if (sCallFromNumber == null)
-            {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_FROM_NUMBER' environment variable");
                 return -1;
             }
 
@@ -160,9 +146,12 @@ namespace Calling_Record
                 {
                     call.OnRecordStateChange += OnCallRecordStateChange;
 
-                    call.StartRecord("bobs_your_uncle", CallRecordType.audio, new CallRecordAudio()
+                    call.Record(new CallRecord()
                     {
-                        // Default parameters
+                        Audio = new CallRecord.AudioParams()
+                        {
+                            // Default parameters
+                        }
                     });
                 }
                 catch (Exception exc)

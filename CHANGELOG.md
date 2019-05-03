@@ -14,3 +14,6 @@
 
 ## 1.3.1
 - Fixed cleanup of some internal temporary callback assignments
+
+## 1.4.0
+- Added Record

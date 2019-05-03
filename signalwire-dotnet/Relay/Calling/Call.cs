@@ -459,50 +459,31 @@ namespace SignalWire.Relay.Calling
             return new PlaySilenceAndCollectAction(playMediaAndCollectAction);
         }
 
-        public void StartRecord(string controlID, CallRecordType type, object parameters)
+        public RecordAction Record(CallRecord record)
         {
-            StartRecordAsync(controlID, type, parameters).Wait();
+            return RecordAsync(record).Result;
         }
 
-        public async Task StartRecordAsync(string controlID, CallRecordType type, object parameters)
+        public async Task<RecordAction> RecordAsync(CallRecord record)
         {
+            // Create the action first so it can hook events and not potentially miss anything
+            RecordAction action = new RecordAction(this, Guid.NewGuid().ToString(), record);
+
             Task<CallRecordResult> taskCallRecordResult = mAPI.LL_CallRecordAsync(new CallRecordParams()
             {
                 NodeID = mNodeID,
                 CallID = mCallID,
-                ControlID = controlID,
-                Type = type,
-                Parameters = parameters,
+                ControlID = action.ControlID,
+                Record = record
             });
-
 
             // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
             CallRecordResult callRecordResult = await taskCallRecordResult;
 
             // If there was an internal error of any kind then throw an exception
             mAPI.ThrowIfError(callRecordResult.Code, callRecordResult.Message);
-        }
 
-        public void StopRecord(string controlID)
-        {
-            StopRecordAsync(controlID).Wait();
-        }
-
-        public async Task StopRecordAsync(string controlID)
-        {
-            Task<CallRecordStopResult> taskCallRecordStopResult = mAPI.LL_CallRecordStopAsync(new CallRecordStopParams()
-            {
-                NodeID = mNodeID,
-                CallID = mCallID,
-                ControlID = controlID,
-            });
-
-
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallRecordStopResult callRecordStopResult = await taskCallRecordStopResult;
-
-            // If there was an internal error of any kind then throw an exception
-            mAPI.ThrowIfError(callRecordStopResult.Code, callRecordStopResult.Message);
+            return action;
         }
     }
 
