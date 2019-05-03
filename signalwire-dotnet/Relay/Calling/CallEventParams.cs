@@ -63,6 +63,29 @@ namespace SignalWire.Relay.Calling
             public CallState ConnectState { get; set; }
         }
 
+        public sealed class PlayParams
+        {
+            public enum PlayState
+            {
+                playing,
+                error,
+                paused,
+                finished,
+            }
+
+            [JsonProperty("node_id", Required = Required.Always)]
+            public string NodeID { get; set; }
+
+            [JsonProperty("call_id", Required = Required.Always)]
+            public string CallID { get; set; }
+
+            [JsonProperty("control_id", Required = Required.Always)]
+            public string ControlID { get; set; }
+
+            [JsonProperty("state", Required = Required.Always)]
+            public PlayState State { get; set; }
+        }
+
         public sealed class CollectParams
         {
             public sealed class ResultParams
@@ -125,16 +148,34 @@ namespace SignalWire.Relay.Calling
                 finished,
                 no_input
             }
-            public sealed class AudioParams
+            public sealed class RecordSettings
             {
-                [JsonProperty("format", Required = Required.Always)]
-                public string Format { get; set; }
+                public sealed class AudioParams
+                {
+                    public enum AudioFormat
+                    {
+                        mp3,
+                        wav
+                    }
+                    public enum AudioDirection
+                    {
+                        listen,
+                        speak,
+                        both
+                    }
 
-                [JsonProperty("stereo", Required = Required.Always)]
-                public bool Stereo { get; set; }
+                    [JsonProperty("format", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
+                    public AudioFormat Format { get; set; }
 
-                [JsonProperty("direction", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
-                public CallRecordAudioDirection Direction { get; set; }
+                    [JsonProperty("stereo", Required = Required.Always)]
+                    public bool Stereo { get; set; }
+
+                    [JsonProperty("direction", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
+                    public AudioDirection Direction { get; set; }
+                }
+
+                [JsonProperty("audio", NullValueHandling = NullValueHandling.Ignore)]
+                public AudioParams Audio { get; set; }
             }
 
             [JsonProperty("node_id", Required = Required.Always)]
@@ -158,36 +199,8 @@ namespace SignalWire.Relay.Calling
             [JsonProperty("size", NullValueHandling = NullValueHandling.Ignore)]
             public long? Size { get; set; }
 
-            [JsonProperty("type", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
-            public CallRecordType Type { get; set; }
-
-            [JsonProperty("params", NullValueHandling = NullValueHandling.Ignore)]
-            public JObject Parameters { get; set; }
-
-            public T ParametersAs<T>() { return Parameters == null ? default(T) : (Parameters as JObject).ToObject<T>(); }
-        }
-
-        public sealed class PlayParams
-        {
-            public enum PlayState
-            {
-                playing,
-                error,
-                paused,
-                finished,
-            }
-
-            [JsonProperty("node_id", Required = Required.Always)]
-            public string NodeID { get; set; }
-
-            [JsonProperty("call_id", Required = Required.Always)]
-            public string CallID { get; set; }
-
-            [JsonProperty("control_id", Required = Required.Always)]
-            public string ControlID { get; set; }
-
-            [JsonProperty("state", Required = Required.Always)]
-            public PlayState State { get; set; }
+            [JsonProperty("record", Required = Required.Always)]
+            public RecordSettings Record { get; set; }
         }
 
         [JsonProperty("event_type", Required = Required.Always)]

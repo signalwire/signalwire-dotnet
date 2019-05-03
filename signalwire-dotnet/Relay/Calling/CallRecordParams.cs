@@ -18,12 +18,7 @@ namespace SignalWire.Relay.Calling
         [JsonProperty("control_id", Required = Required.Always)]
         public string ControlID { get; set; }
 
-        [JsonProperty("type", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
-        public CallRecordType Type { get; set; }
-
-        [JsonProperty(PropertyName = "params", Required = Required.Always)]
-        public object Parameters { get; set; }
-
-        public T ParametersAs<T>() { return Parameters == null ? default(T) : (Parameters as JObject).ToObject<T>(); }
+        [JsonProperty("record", Required = Required.Always)]
+        public CallRecord Record { get; set; }
     }
 }
