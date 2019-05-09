@@ -144,7 +144,7 @@ index fcf88205..a8e33e7d 100644
 \ No newline at end of file
 +}
 diff --git a/src/Twilio/Twilio.cs b/src/Twilio/Twilio.cs
-index e6403598..8a0a19f0 100644
+index e6403598..19d6f041 100644
 --- a/src/Twilio/Twilio.cs
 +++ b/src/Twilio/Twilio.cs
 @@ -1,5 +1,8 @@
@@ -297,11 +297,11 @@ index e6403598..8a0a19f0 100644
              }
  
 -            if (_username == null || _password == null)
-+            if (_username == null || _password == null || _domain == null)
++            if (_username == null || _password == null || (_domain == null && _signalwireSpaceUrl == null))
              {
                  throw new AuthenticationException (
 -                    "TwilioRestClient was used before AccountSid and AuthToken were set, please call TwilioClient.init()"
-+                    "TwilioRestClient was used before AccountSid and AuthToken were set, please call TwilioClient.init() and TwilioClient.SetDomain"
++                    "TwilioRestClient was used before AccountSid, AuthToken, or SignalWire Space were set, please call TwilioClient.Init()"
                  );
              }
  
