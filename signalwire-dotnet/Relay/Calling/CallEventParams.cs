@@ -203,6 +203,43 @@ namespace SignalWire.Relay.Calling
             public RecordSettings Record { get; set; }
         }
 
+        public sealed class DetectParams
+        {
+            public enum DetectType
+            {
+                fax,
+                machine,
+                digit,
+            }
+
+            public sealed class DetectSettings
+            {
+                public sealed class Settings
+                {
+                    [JsonProperty("event", Required = Required.Always)]
+                    public string Event { get; set; }
+                }
+
+                [JsonProperty("type", Required = Required.Always)]
+                public DetectType Type { get; set; }
+
+                [JsonProperty("params", Required = Required.Always)]
+                public Settings Params { get; set; }
+            }
+
+            [JsonProperty("node_id", Required = Required.Always)]
+            public string NodeID { get; set; }
+
+            [JsonProperty("call_id", Required = Required.Always)]
+            public string CallID { get; set; }
+
+            [JsonProperty("control_id", Required = Required.Always)]
+            public string ControlID { get; set; }
+
+            [JsonProperty("detect", Required = Required.Always)]
+            public DetectSettings Detect { get; set; }
+        }
+
         [JsonProperty("event_type", Required = Required.Always)]
         public string EventType { get; set; }
 

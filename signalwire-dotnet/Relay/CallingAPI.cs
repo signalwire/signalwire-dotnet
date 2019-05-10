@@ -120,6 +120,9 @@ namespace SignalWire.Relay
                 case "calling.call.play":
                     OnEvent_CallingCallPlay(client, broadcastParams, callEventParams);
                     break;
+                case "calling.call.detect":
+                    OnEvent_CallingCallDetect(client, broadcastParams, callEventParams);
+                    break;
                 default: break;
             }
         }
@@ -307,6 +310,24 @@ namespace SignalWire.Relay
             call.PlayHandler(playParams);
         }
 
+        private void OnEvent_CallingCallDetect(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        {
+            CallEventParams.DetectParams detectParams = null;
+            try { detectParams = callEventParams.ParametersAs<CallEventParams.DetectParams>(); }
+            catch (Exception exc)
+            {
+                Logger.LogWarning(exc, "Failed to parse DetectParams");
+                return;
+            }
+            if (!mCalls.TryGetValue(detectParams.CallID, out Call call))
+            {
+                Logger.LogWarning("Received DetectParams with unknown CallID: {0}", detectParams.CallID);
+                return;
+            }
+
+            call.DetectHandler(detectParams);
+        }
+
         // Utility
         internal void ThrowIfError(string code, string message)
         {
@@ -375,6 +396,16 @@ namespace SignalWire.Relay
         public Task<CallRecordStopResult> LL_CallRecordStopAsync(CallRecordStopParams parameters)
         {
             return ExecuteAsync<CallRecordStopParams, CallRecordStopResult>("call.record.stop", parameters);
+        }
+
+        public async Task<CallDetectResult> LL_CallDetectAsync(CallDetectParams parameters)
+        {
+            return await ExecuteAsync<CallDetectParams, CallDetectResult>("call.detect", parameters);
+        }
+
+        public async Task<CallDetectStopResult> LL_CallDetectStopAsync(CallDetectStopParams parameters)
+        {
+            return await ExecuteAsync<CallDetectStopParams, CallDetectStopResult>("call.detect.stop", parameters);
         }
     }
 }

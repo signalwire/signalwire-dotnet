@@ -1,0 +1,18 @@
+{
+  "profiles": {
+    "Calling_Detect": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "SWCLIENT_TEST_CALL_FROM_NUMBER": "replaceme",
+        "SWCLIENT_TEST_SESSION_TOKEN": "replaceme",
+        "SWCLIENT_TEST_SESSION_PROJECT": "replaceme",
+        "SWCLIENT_TEST_CALLRECEIVE_CONTEXT": "replaceme",
+        "SWCLIENT_TEST_CALL_TO_MACHINE_NUMBER": "replaceme",
+        "SWCLIENT_TEST_CALL_TO_FAX_NUMBER": "replaceme",
+        "SWCLIENT_TEST_CALL_TO_HUMAN_NUMBER": "replaceme",
+        "SWCLIENT_TEST_CALL_TO_DIGIT_NUMBER": "replaceme",
+        "SWCLIENT_TEST_SESSION_HOST": "replaceme"
+      }
+    }
+  }
+}

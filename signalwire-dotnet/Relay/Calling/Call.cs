@@ -36,6 +36,8 @@ namespace SignalWire.Relay.Calling
         public delegate void RecordFinishedCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
         public delegate void RecordNoInputCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
 
+        public delegate void DetectCallback(CallingAPI api, Call call, CallEventParams.DetectParams detectParams);
+
         protected readonly ILogger mLogger = null;
 
         protected readonly CallingAPI mAPI = null;
@@ -71,6 +73,8 @@ namespace SignalWire.Relay.Calling
         public event RecordPausedCallback OnRecordPaused;
         public event RecordFinishedCallback OnRecordFinished;
         public event RecordNoInputCallback OnRecordNoInput;
+
+        public event DetectCallback OnDetect;
 
         protected Call(CallingAPI api, string temporaryCallID)
         {
@@ -221,6 +225,11 @@ namespace SignalWire.Relay.Calling
                     break;
                 default: break;
             }
+        }
+
+        internal void DetectHandler(CallEventParams.DetectParams detectParams)
+        {
+            OnDetect?.Invoke(mAPI, this, detectParams);
         }
 
         public void Begin()
@@ -482,6 +491,34 @@ namespace SignalWire.Relay.Calling
 
             // If there was an internal error of any kind then throw an exception
             mAPI.ThrowIfError(callRecordResult.Code, callRecordResult.Message);
+
+            return action;
+        }
+
+        public DetectAction Detect(CallDetect detect, double? timeout = null)
+        {
+            return DetectAsync(detect, timeout: timeout).Result;
+        }
+
+        public async Task<DetectAction> DetectAsync(CallDetect detect, double? timeout = null)
+        {
+            // Create the action first so it can hook events and not potentially miss anything
+            DetectAction action = new DetectAction(this, Guid.NewGuid().ToString(), detect);
+
+            Task<CallDetectResult> taskCallDetectResult = mAPI.LL_CallDetectAsync(new CallDetectParams()
+            {
+                NodeID = mNodeID,
+                CallID = mCallID,
+                ControlID = action.ControlID,
+                Detect = detect,
+                Timeout = timeout,
+            });
+
+            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
+            CallDetectResult callDetectResult = await taskCallDetectResult;
+
+            // If there was an internal error of any kind then throw an exception
+            mAPI.ThrowIfError(callDetectResult.Code, callDetectResult.Message);
 
             return action;
         }
