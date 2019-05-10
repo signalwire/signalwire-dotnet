@@ -11,7 +11,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Calling_Record
+namespace Calling_Play
 {
     internal class Program
     {
