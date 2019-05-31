@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Connect_Stress": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "SWCLIENT_TEST_SESSION_HOST": "replaceme",
+        "SWCLIENT_TEST_SESSION_PROJECT": "replaceme",
+        "SWCLIENT_TEST_SESSION_TOKEN": "replaceme"
+      }
+    }
+  }
+}

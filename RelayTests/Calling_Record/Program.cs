@@ -69,7 +69,7 @@ namespace Calling_Record
             try
             {
                 // Create the client
-                using (sClient = new Client(session_host, session_project, session_token))
+                using (sClient = new Client(session_project, session_token, host: session_host))
                 {
                     // Setup callbacks before the client is started
                     sClient.OnReady += Client_OnReady;

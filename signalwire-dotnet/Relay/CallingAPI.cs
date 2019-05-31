@@ -84,7 +84,7 @@ namespace SignalWire.Relay
 
         protected override void OnEvent(Client client, BroadcastParams broadcastParams)
         {
-            Logger.LogInformation("CallingAPI OnEvent");
+            Logger.LogDebug("CallingAPI OnEvent");
 
             CallEventParams callEventParams = null;
             try { callEventParams = broadcastParams.ParametersAs<CallEventParams>(); }

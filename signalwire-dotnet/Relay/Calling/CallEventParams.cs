@@ -121,7 +121,7 @@ namespace SignalWire.Relay.Calling
                 public ResultType Type { get; set; }
 
                 [JsonProperty("params", NullValueHandling = NullValueHandling.Ignore)]
-                public JObject Parameters { get; set; }
+                public object Parameters { get; set; }
 
                 public T ParametersAs<T>() { return Parameters == null ? default(T) : (Parameters as JObject).ToObject<T>(); }
             }

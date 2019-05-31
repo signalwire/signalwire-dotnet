@@ -42,20 +42,22 @@ namespace SignalWire.Relay
         private CallingAPI mCalling = null;
 
         public Client(
-            string host, string project, string token,
+            string project, string token,
+            string host = null,
             bool jwt = false,
             TimeSpan? connectDelay = null, TimeSpan? connectTimeout = null, TimeSpan? closeTimeout = null)
         {
-            if (string.IsNullOrWhiteSpace(host)) throw new ArgumentNullException("Must provide a host");
             if (string.IsNullOrWhiteSpace(project)) throw new ArgumentNullException("Must provide a project");
             if (string.IsNullOrWhiteSpace(token)) throw new ArgumentNullException("Must provide a token");
+            if (string.IsNullOrWhiteSpace(host)) host = "relay.signalwire.com";
+
             string authentication = null;
             if (!jwt) authentication = CreateAuthentication(project, token);
             else authentication = CreateJWTAuthentication(project, token);
 
             UpstreamSession.SessionOptions options = new UpstreamSession.SessionOptions()
             {
-                Bootstrap = new Uri("wss://" + host + ":443/api/relay/wss"),
+                Bootstrap = new Uri("wss://" + host),
                 Authentication = authentication,
             };
             if (connectDelay.HasValue) options.ConnectDelay = connectDelay.Value;
