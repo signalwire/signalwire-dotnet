@@ -541,6 +541,16 @@ namespace Blade
             return providers[new Random().Next(providers.Length - 1)].Value;
         }
 
+        public List<Protocol> FindProtocols(Predicate<Protocol> predicate)
+        {
+            List<Protocol> protocols = new List<Protocol>();
+            foreach (var kv in mProtocols)
+            {
+                if (predicate(kv.Value)) protocols.Add(kv.Value);
+            }
+            return protocols;
+        }
+
 
         private void AddSubscription(string protocol, string channel, string nodeid)
         {
