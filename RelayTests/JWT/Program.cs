@@ -85,7 +85,7 @@ namespace JWT
                 try
                 {
                     // Create the client
-                    using (sClient = new Client(sSessionHost, sSessionProject, sJWTTokenClient, jwt: true))
+                    using (sClient = new Client(sSessionProject, sJWTTokenClient, host: sSessionHost, jwt: true))
                     {
                         // Setup callbacks before the client is started
                         sClient.OnReady += Client_OnReady;
