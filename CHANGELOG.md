@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2019-06-17
+### Fixed
+- Fixed host no longer requiring the path suffix
+### Added
+- Added a helper function FindProtocols to Cache
+
+## [1.4.1] - 2019-05-08
+### Fixed
+- Fixed config detection throwing bad exception in TwilioClient.Init
+
 ## [1.4.0] - 2019-05-03
 ### Added
 - Calling Record API
