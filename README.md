@@ -1,49 +1,48 @@
-# signalwire-dotnet
+# SignalWire C#/.Net SDK
 
-Prerequisites: Git and .NET Core SDK
+[![Build Status](https://ci.signalwire.com/api/badges/signalwire/signalwire-dotnet/status.svg)](https://ci.signalwire.com/signalwire/signalwire-dotnet) [![NuGet version (SignalWire-DotNet)](https://img.shields.io/nuget/v/SignalWire-DotNet.svg?color=brightgreen)](https://www.nuget.org/packages/SignalWire-DotNet/)
 
-- Install Git for your system, for Windows install msysgit if not already installed.
+This library provides access to SignalWire APIs which allow you to do things like placing or receiving audio calls in .NET platform languages. For a full reference of capabilities, check out the [documentation](https://docs.signalwire.com/topics/relay-sdk-dotnet).
 
-- Install .NET Core for your system, see https://www.microsoft.com/net/download for more information.
+## Getting Started
 
+All of the documentation material can be found at the official [Relay SDK for C#/.Net Documentation](https://docs.signalwire.com/topics/relay-sdk-dotnet) site.
 
-To build from source, the bootstrap.sh script must be run before anything else.
+---
 
-For *nix, run the following from your shell:
+## Contributing
 
-```./bootstrap.sh```
+Relay SDK for C#/.Net is open source and maintained by the SignalWire team, but we are very grateful for everyone who has contributed and assisted so far.
 
-For Windows, run the git-bash and run the same above script
+If you'd like to contribute, feel free to visit our [Slack channel](https://signalwire.community/) and get set up.
 
+## Developers
 
-After bootstrapping, you do not need to run the bootstrap.sh again unless there are changes to the LaML source library.
+The SDK can be found at the [signalwire-dotnet](https://github.com/signalwire/signalwire-dotnet) repo. To set up the dev environment, follow these steps:
 
+1. Prerequisites: Git and .NET Core SDK
+ * Install Git for your system, for Windows install msysgit if not already installed.
+ * Install .NET Core for your system, see https://www.microsoft.com/net/download for more information.
 
-Building can then be achieved by running the following cross platform 'dotnet' toolchain commands:
+2. To build from source, the `bootstrap.sh` script must be run before anything else.
+ * For *nix, run the following from your shell: `./bootstrap.sh`
+ * For Windows, run the git-bash and run the same above script
 
-```dotnet build```
+3. After bootstrapping, you do not need to run `bootstrap.sh` again unless there are changes to the LaML source library.
 
-To create a complete set of files required including dependancies you can run the following:
+4. Building can then be performed by running the following cross-platform 'dotnet' toolchain commands: `dotnet build`
 
-```dotnet publish```
+5. To create a complete set of files including dependencies, you can run the following: `dotnet publish`
 
-To create a nuget package, with a complete set of files required including dependancies you can run the following:
+6. To create a nuget package with a complete set of files including dependencies, you can run the following: `dotnet pack`
 
-```dotnet pack```
+7. Under Windows you may open the solution file with VS2017 and immediately build the entire solution after `bootstrap.sh` has been run.
 
-Or under Windows you may open the solution file with VS2017 and immediately build the entire solution after bootstrap.sh has been run.
+## Versioning
 
+Relay SDK for C#/.Net follows Semantic Versioning 2.0 as defined at <http://semver.org>.
 
+## License
 
-Runtime Notes:
+Copyright (c) 2019 [SignalWire](http://signalwire.com). It is free software, and may be redistributed under the terms specified in the [MIT-LICENSE](https://github.com/signalwire/signalwire-dotnet/blob/master/LICENSE) file.
 
-Use nuget to add the reference to ```signalwire-dotnet``` project, found here: https://www.nuget.org/packages/SignalWire-DotNet/
-
-Calling ```TwilioClient.Init``` with your projectid and token for the username, password and signalwireSpaceUrl:
-
-```TwilioClient.Init("<username>", "<password>", new Dictionary<string, object> { ["signalwireSpaceUrl"] = "<yourdomain>.signalwire.com" });```
-
-Example:
-```
-TwilioClient.Init("<projectid>", "<token>", new Dictionary<string, object> { ["signalwireSpaceUrl"] = "<domain>.signalwire.com" });
-```
