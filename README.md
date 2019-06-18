@@ -1,10 +1,14 @@
 # SignalWire C#/.Net SDK
 
+[![Build Status](https://ci.signalwire.com/api/badges/signalwire/signalwire-dotnet/status.svg)](https://ci.signalwire.com/signalwire/signalwire-dotnet) [![NuGet version (SignalWire-DotNet)](https://img.shields.io/nuget/v/SignalWire-DotNet.svg?color=brightgreen)](https://www.nuget.org/packages/SignalWire-DotNet/)
+
 This library provides access to SignalWire APIs which allow you to do things like placing or receiving audio calls in .NET platform languages. For a full reference of capabilities, check out the [documentation](https://docs.signalwire.com/topics/relay-sdk-dotnet).
 
 ## Getting Started
 
 All of the documentation material can be found at the official [Relay SDK for C#/.Net Documentation](https://docs.signalwire.com/topics/relay-sdk-dotnet) site.
+
+---
 
 ## Contributing
 
