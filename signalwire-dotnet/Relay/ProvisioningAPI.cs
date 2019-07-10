@@ -1,21 +1,24 @@
-﻿using Blade;
-using Blade.Messages;
-using Microsoft.Extensions.Logging;
-using SignalWire.Relay.Provisioning;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace SignalWire.Relay
 {
-    public sealed class ProvisioningAPI : RelayAPI
+    public sealed class ProvisioningAPI
     {
-        public ProvisioningAPI(Client client) : base(client,  RelayService.provisioning) { }
+        private SignalwireAPI mAPI = null;
 
-        public async Task<ConfigureResult> ConfigureAsync(ConfigureParams parameters)
+        internal ProvisioningAPI(SignalwireAPI api)
         {
-            return await ExecuteAsync<ConfigureParams, ConfigureResult>("configure", parameters);
+            mAPI = api;
+        }
+
+        internal SignalwireAPI API { get { return mAPI; } }
+
+        public async Task<Provisioning.ConfigureResult> ConfigureAsync(Provisioning.ConfigureParams parameters)
+        {
+            return await mAPI.ExecuteAsync<Provisioning.ConfigureParams, Provisioning.ConfigureResult>("configure", parameters);
         }
     }
 }

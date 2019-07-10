@@ -8,8 +8,8 @@ namespace SignalWire.Relay
 {
     public sealed class SetupParams
     {
-        [JsonProperty("service", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
-        public RelayService Service { get; set; }
+        [JsonProperty("service", NullValueHandling = NullValueHandling.Ignore)]
+        public string Service { get; set; }
         [JsonProperty("protocol", NullValueHandling = NullValueHandling.Ignore)]
         public string Protocol { get; set; }
     }

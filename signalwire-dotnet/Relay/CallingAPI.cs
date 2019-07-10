@@ -11,18 +11,32 @@ using System.Threading.Tasks;
 
 namespace SignalWire.Relay
 {
-    public sealed class CallingAPI : RelayAPI
+    public sealed class CallingAPI
     {
         public delegate void CallCreatedCallback(CallingAPI api, Call call);
-        public delegate void CallReceivedCallback(CallingAPI api, Call call, CallEventParams.ReceiveParams receiveParams);
+        public delegate void CallReceivedCallback(CallingAPI api, Call call, CallingEventParams.ReceiveParams receiveParams);
 
-        private bool mHighLevelAPISetup = false;
+        private readonly ILogger mLogger = null;
+        private SignalwireAPI mAPI = null;
+
         private ConcurrentDictionary<string, Call> mCalls = new ConcurrentDictionary<string, Call>();
 
         public event CallCreatedCallback OnCallCreated;
         public event CallReceivedCallback OnCallReceived;
 
-        public CallingAPI(Client client) : base(client, RelayService.calling) { }
+        internal CallingAPI(SignalwireAPI api)
+        {
+            mLogger = SignalWireLogging.CreateLogger<Client>();
+            mAPI = api;
+            mAPI.OnNotification += OnNotification;
+        }
+
+        internal SignalwireAPI API {  get { return mAPI; } }
+
+        internal void Reset()
+        {
+            mCalls.Clear();
+        }
 
         // High Level API
 
@@ -34,10 +48,14 @@ namespace SignalWire.Relay
                 From = from,
                 Timeout = timeout,
             };
-            mCalls.TryAdd(call.TemporaryCallID, call);
+            mCalls.TryAdd(call.TemporaryID, call);
             OnCallCreated?.Invoke(this, call);
             return call;
         }
+
+        public DialResult DialPhone(string to, string from, int timeout = 30) { return NewPhoneCall(to, from, timeout).Dial(); }
+
+        public DialAction DialPhoneAsync(string to, string from, int timeout = 30) { return NewPhoneCall(to, from, timeout).DialAsync(); }
 
         // @TODO: NewSIPCall and NewWebRTCCall
 
@@ -52,85 +70,57 @@ namespace SignalWire.Relay
             mCalls.TryRemove(callid, out _);
         }
 
-        public async Task Setup()
+        private void OnNotification(Client client, BroadcastParams broadcastParams)
         {
-            // If setup hasn't been called yet, call it
-            if (!SetupCompleted) await LL_SetupAsync();
-            // If the high level event processing hasn't been hooked in yet then do so
-            if (!mHighLevelAPISetup)
-            {
-                mHighLevelAPISetup = true;
-            }
-        }
+            mLogger.LogDebug("CallingAPI OnNotification");
 
-        public void Receive(string context)
-        {
-            ReceiveAsync(context).Wait();
-        }
+            if (broadcastParams.Event != "queuing.relay.events" && broadcastParams.Event != "relay") return;
 
-        public async Task ReceiveAsync(string context)
-        {
-            await Setup();
-
-            Task<CallReceiveResult> taskCallReceiveResult = LL_CallReceiveAsync(new CallReceiveParams()
-            {
-                Context = context,
-            });
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallReceiveResult callReceiveResult = await taskCallReceiveResult;
-
-            ThrowIfError(callReceiveResult.Code, callReceiveResult.Message);
-        }
-
-        protected override void OnEvent(Client client, BroadcastParams broadcastParams)
-        {
-            Logger.LogDebug("CallingAPI OnEvent");
-
-            CallEventParams callEventParams = null;
-            try { callEventParams = broadcastParams.ParametersAs<CallEventParams>(); }
+            CallingEventParams callingEventParams = null;
+            try { callingEventParams = broadcastParams.ParametersAs<CallingEventParams>(); }
             catch (Exception exc)
             {
-                Logger.LogWarning(exc, "Failed to parse CallEventParams");
+                mLogger.LogWarning(exc, "Failed to parse CallingEventParams");
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(callEventParams.EventType))
+            if (string.IsNullOrWhiteSpace(callingEventParams.EventType))
             {
-                Logger.LogWarning("Received CallEventParams with empty EventType");
+                mLogger.LogWarning("Received CallingEventParams with empty EventType");
                 return;
             }
 
-            switch (callEventParams.EventType.ToLower())
+            switch (callingEventParams.EventType.ToLower())
             {
                 case "calling.call.state":
-                    OnEvent_CallingCallState(client, broadcastParams, callEventParams);
+                    OnCallingEvent_State(client, broadcastParams, callingEventParams);
                     break;
                 case "calling.call.receive":
-                    OnEvent_CallingCallReceive(client, broadcastParams, callEventParams);
+                    OnCallingEvent_Receive(client, broadcastParams, callingEventParams);
                     break;
                 case "calling.call.connect":
-                    OnEvent_CallingCallConnect(client, broadcastParams, callEventParams);
-                    break;
-                case "calling.call.collect":
-                    OnEvent_CallingCallCollect(client, broadcastParams, callEventParams);
-                    break;
-                case "calling.call.record":
-                    OnEvent_CallingCallRecord(client, broadcastParams, callEventParams);
+                    OnCallingEvent_Connect(client, broadcastParams, callingEventParams);
                     break;
                 case "calling.call.play":
-                    OnEvent_CallingCallPlay(client, broadcastParams, callEventParams);
+                    OnCallingEvent_Play(client, broadcastParams, callingEventParams);
+                    break;
+                case "calling.call.collect":
+                    OnCallingEvent_Collect(client, broadcastParams, callingEventParams);
+                    break;
+                case "calling.call.record":
+                    OnCallingEvent_Record(client, broadcastParams, callingEventParams);
                     break;
                 default: break;
             }
         }
 
-        private void OnEvent_CallingCallState(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnCallingEvent_State(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
         {
-            CallEventParams.StateParams stateParams = null;
-            try { stateParams = callEventParams.ParametersAs<CallEventParams.StateParams>(); }
+            CallingEventParams.StateParams stateParams = null;
+            try { stateParams = callEventParams.ParametersAs<CallingEventParams.StateParams>(); }
             catch (Exception exc)
             {
-                Logger.LogWarning(exc, "Failed to parse StateParams");
+                mLogger.LogWarning(exc, "Failed to parse StateParams");
                 return;
             }
 
@@ -142,7 +132,7 @@ namespace SignalWire.Relay
                 {
                     // Update the internal details for the call, including the real call id
                     call.NodeID = stateParams.NodeID;
-                    call.CallID = stateParams.CallID;
+                    call.ID = stateParams.CallID;
                 }
             }
             // If call is not null at this point, it means this is the first event for a call that was started with a temporary call id
@@ -157,7 +147,7 @@ namespace SignalWire.Relay
                         try { phoneParams = stateParams.Device.ParametersAs<CallDevice.PhoneParams>(); }
                         catch (Exception exc)
                         {
-                            Logger.LogWarning(exc, "Failed to parse PhoneParams");
+                            mLogger.LogWarning(exc, "Failed to parse PhoneParams");
                             return;
                         }
 
@@ -175,22 +165,22 @@ namespace SignalWire.Relay
                     }
                 // @TODO: sip and webrtc
                 default:
-                    Logger.LogWarning("Unknown device type: {0}", stateParams.Device.Type);
+                    mLogger.LogWarning("Unknown device type: {0}", stateParams.Device.Type);
                     return;
             }
 
             if (tmp == call) OnCallCreated?.Invoke(this, call);
 
-            call.StateChangeHandler(stateParams);
+            call.StateChangeHandler(callEventParams, stateParams);
         }
 
-        private void OnEvent_CallingCallReceive(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnCallingEvent_Receive(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
         {
-            CallEventParams.ReceiveParams receiveParams = null;
-            try { receiveParams = callEventParams.ParametersAs<CallEventParams.ReceiveParams>(); }
+            CallingEventParams.ReceiveParams receiveParams = null;
+            try { receiveParams = callEventParams.ParametersAs<CallingEventParams.ReceiveParams>(); }
             catch (Exception exc)
             {
-                Logger.LogWarning(exc, "Failed to parse ReceiveParams");
+                mLogger.LogWarning(exc, "Failed to parse ReceiveParams");
                 return;
             }
 
@@ -207,7 +197,7 @@ namespace SignalWire.Relay
                         try { phoneParams = receiveParams.Device.ParametersAs<CallDevice.PhoneParams>(); }
                         catch (Exception exc)
                         {
-                            Logger.LogWarning(exc, "Failed to parse PhoneParams");
+                            mLogger.LogWarning(exc, "Failed to parse PhoneParams");
                             return;
                         }
 
@@ -217,164 +207,151 @@ namespace SignalWire.Relay
                             To = phoneParams.ToNumber,
                             From = phoneParams.FromNumber,
                             Timeout = phoneParams.Timeout,
-                            // Capture the state, it may not always be created the first time we see the call
-                            State = receiveParams.CallState,
                         }));
                         break;
                     }
                 // @TODO: sip and webrtc
                 default:
-                    Logger.LogWarning("Unknown device type: {0}", receiveParams.Device.Type);
+                    mLogger.LogWarning("Unknown device type: {0}", receiveParams.Device.Type);
                     return;
             }
 
             if (tmp == call)
             {
+                call.Context = receiveParams.Context;
+
                 OnCallCreated?.Invoke(this, call);
                 OnCallReceived?.Invoke(this, call, receiveParams);
             }
+
+            call.ReceiveHandler(callEventParams, receiveParams);
         }
 
-        private void OnEvent_CallingCallConnect(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnCallingEvent_Connect(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
         {
-            CallEventParams.ConnectParams connectParams = null;
-            try { connectParams = callEventParams.ParametersAs<CallEventParams.ConnectParams>(); }
+            CallingEventParams.ConnectParams connectParams = null;
+            try { connectParams = callEventParams.ParametersAs<CallingEventParams.ConnectParams>(); }
             catch (Exception exc)
             {
-                Logger.LogWarning(exc, "Failed to parse ConnectParams");
+                mLogger.LogWarning(exc, "Failed to parse ConnectParams");
                 return;
             }
             if (!mCalls.TryGetValue(connectParams.CallID, out Call call))
             {
-                Logger.LogWarning("Received ConnectParams with unknown CallID: {0}, {1}", connectParams.CallID, connectParams.ConnectState);
+                mLogger.LogWarning("Received ConnectParams with unknown CallID: {0}, {1}", connectParams.CallID, connectParams.State);
                 return;
             }
 
-            call.ConnectHandler(connectParams);
+            call.ConnectHandler(callEventParams, connectParams);
         }
 
-        private void OnEvent_CallingCallCollect(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnCallingEvent_Play(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
         {
-            CallEventParams.CollectParams collectParams = null;
-            try { collectParams = callEventParams.ParametersAs<CallEventParams.CollectParams>(); }
+            CallingEventParams.PlayParams playParams = null;
+            try { playParams = callEventParams.ParametersAs<CallingEventParams.PlayParams>(); }
             catch (Exception exc)
             {
-                Logger.LogWarning(exc, "Failed to parse CollectParams");
-                return;
-            }
-            if (!mCalls.TryGetValue(collectParams.CallID, out Call call))
-            {
-                Logger.LogWarning("Received CollectParams with unknown CallID: {0}", collectParams.CallID);
-                return;
-            }
-
-            call.CollectHandler(collectParams);
-        }
-
-        private void OnEvent_CallingCallRecord(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
-        {
-            CallEventParams.RecordParams recordParams = null;
-            try { recordParams = callEventParams.ParametersAs<CallEventParams.RecordParams>(); }
-            catch (Exception exc)
-            {
-                Logger.LogWarning(exc, "Failed to parse RecordParams");
-                return;
-            }
-            if (!mCalls.TryGetValue(recordParams.CallID, out Call call))
-            {
-                Logger.LogWarning("Received RecordParams with unknown CallID: {0}", recordParams.CallID);
-                return;
-            }
-
-            call.RecordHandler(recordParams);
-        }
-
-        private void OnEvent_CallingCallPlay(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
-        {
-            CallEventParams.PlayParams playParams = null;
-            try { playParams = callEventParams.ParametersAs<CallEventParams.PlayParams>(); }
-            catch (Exception exc)
-            {
-                Logger.LogWarning(exc, "Failed to parse PlayParams");
+                mLogger.LogWarning(exc, "Failed to parse PlayParams");
                 return;
             }
             if (!mCalls.TryGetValue(playParams.CallID, out Call call))
             {
-                Logger.LogWarning("Received PlayParams with unknown CallID: {0}", playParams.CallID);
+                mLogger.LogWarning("Received PlayParams with unknown CallID: {0}", playParams.CallID);
                 return;
             }
 
-            call.PlayHandler(playParams);
+            call.PlayHandler(callEventParams, playParams);
+        }
+
+        private void OnCallingEvent_Collect(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
+        {
+            CallingEventParams.CollectParams collectParams = null;
+            try { collectParams = callEventParams.ParametersAs<CallingEventParams.CollectParams>(); }
+            catch (Exception exc)
+            {
+                mLogger.LogWarning(exc, "Failed to parse CollectParams");
+                return;
+            }
+            if (!mCalls.TryGetValue(collectParams.CallID, out Call call))
+            {
+                mLogger.LogWarning("Received CollectParams with unknown CallID: {0}", collectParams.CallID);
+                return;
+            }
+
+            call.CollectHandler(callEventParams, collectParams);
+        }
+
+        private void OnCallingEvent_Record(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
+        {
+            CallingEventParams.RecordParams recordParams = null;
+            try { recordParams = callEventParams.ParametersAs<CallingEventParams.RecordParams>(); }
+            catch (Exception exc)
+            {
+                mLogger.LogWarning(exc, "Failed to parse RecordParams");
+                return;
+            }
+            if (!mCalls.TryGetValue(recordParams.CallID, out Call call))
+            {
+                mLogger.LogWarning("Received RecordParams with unknown CallID: {0}", recordParams.CallID);
+                return;
+            }
+
+            call.RecordHandler(callEventParams, recordParams);
         }
 
         // Utility
-        internal void ThrowIfError(string code, string message)
-        {
-            if (code == "200") return;
-
-            Logger.LogWarning(message);
-            switch (code)
-            {
-                // @TODO: Convert error codes to appropriate exception types
-                default: throw new InvalidOperationException(message);
-            }
-        }
+        internal void ThrowIfError(string code, string message) { mAPI.ThrowIfError(code, message); }
 
         // Low Level API
 
-        public Task<CallBeginResult> LL_CallBeginAsync(CallBeginParams parameters)
+        public Task<LL_BeginResult> LL_BeginAsync(LL_BeginParams parameters)
         {
-            return ExecuteAsync<CallBeginParams, CallBeginResult>("call.begin", parameters);
+            return mAPI.ExecuteAsync<LL_BeginParams, LL_BeginResult>("call.begin", parameters);
         }
 
-        public Task<CallReceiveResult> LL_CallReceiveAsync(CallReceiveParams parameters)
+        public Task<LL_AnswerResult> LL_AnswerAsync(LL_AnswerParams parameters)
         {
-            return ExecuteAsync<CallReceiveParams, CallReceiveResult>("call.receive", parameters);
+            return mAPI.ExecuteAsync<LL_AnswerParams, LL_AnswerResult>("call.answer", parameters);
         }
 
-        public Task<CallAnswerResult> LL_CallAnswerAsync(CallAnswerParams parameters)
+        public Task<LL_EndResult> LL_EndAsync(LL_EndParams parameters)
         {
-            return ExecuteAsync<CallAnswerParams, CallAnswerResult>("call.answer", parameters);
+            return mAPI.ExecuteAsync<LL_EndParams, LL_EndResult>("call.end", parameters);
         }
 
-        public Task<CallEndResult> LL_CallEndAsync(CallEndParams parameters)
+        public Task<LL_ConnectResult> LL_ConnectAsync(LL_ConnectParams parameters)
         {
-            return ExecuteAsync<CallEndParams, CallEndResult>("call.end", parameters);
+            return mAPI.ExecuteAsync<LL_ConnectParams, LL_ConnectResult>("call.connect", parameters);
         }
 
-        public Task<CallConnectResult> LL_CallConnectAsync(CallConnectParams parameters)
+        public Task<LL_PlayResult> LL_PlayAsync(LL_PlayParams parameters)
         {
-            return ExecuteAsync<CallConnectParams, CallConnectResult>("call.connect", parameters);
+            return mAPI.ExecuteAsync<LL_PlayParams, LL_PlayResult>("call.play", parameters);
         }
 
-        public Task<CallPlayResult> LL_CallPlayAsync(CallPlayParams parameters)
+        public Task<LL_PlayStopResult> LL_PlayStopAsync(LL_PlayStopParams parameters)
         {
-            return ExecuteAsync<CallPlayParams, CallPlayResult>("call.play", parameters);
+            return mAPI.ExecuteAsync<LL_PlayStopParams, LL_PlayStopResult>("call.play.stop", parameters);
         }
 
-        public Task<CallPlayStopResult> LL_CallPlayStopAsync(CallPlayStopParams parameters)
+        public Task<LL_PlayAndCollectResult> LL_PlayAndCollectAsync(LL_PlayAndCollectParams parameters)
         {
-            return ExecuteAsync<CallPlayStopParams, CallPlayStopResult>("call.play.stop", parameters);
+            return mAPI.ExecuteAsync<LL_PlayAndCollectParams, LL_PlayAndCollectResult>("call.play_and_collect", parameters);
         }
 
-        public Task<CallPlayAndCollectResult> LL_CallPlayAndCollectAsync(CallPlayAndCollectParams parameters)
+        public Task<LL_PlayAndCollectStopResult> LL_PlayAndCollectStopAsync(LL_PlayAndCollectStopParams parameters)
         {
-            return ExecuteAsync<CallPlayAndCollectParams, CallPlayAndCollectResult>("call.play_and_collect", parameters);
+            return mAPI.ExecuteAsync<LL_PlayAndCollectStopParams, LL_PlayAndCollectStopResult>("call.play_and_collect.stop", parameters);
         }
 
-        public Task<CallPlayAndCollectStopResult> LL_CallPlayAndCollectStopAsync(CallPlayAndCollectStopParams parameters)
+        public Task<LL_RecordResult> LL_RecordAsync(LL_RecordParams parameters)
         {
-            return ExecuteAsync<CallPlayAndCollectStopParams, CallPlayAndCollectStopResult>("call.play_and_collect.stop", parameters);
+            return mAPI.ExecuteAsync<LL_RecordParams, LL_RecordResult>("call.record", parameters);
         }
 
-        public Task<CallRecordResult> LL_CallRecordAsync(CallRecordParams parameters)
+        public Task<LL_RecordStopResult> LL_RecordStopAsync(LL_RecordStopParams parameters)
         {
-            return ExecuteAsync<CallRecordParams, CallRecordResult>("call.record", parameters);
-        }
-
-        public Task<CallRecordStopResult> LL_CallRecordStopAsync(CallRecordStopParams parameters)
-        {
-            return ExecuteAsync<CallRecordStopParams, CallRecordStopResult>("call.record.stop", parameters);
+            return mAPI.ExecuteAsync<LL_RecordStopParams, LL_RecordStopResult>("call.record.stop", parameters);
         }
     }
 }

@@ -11,21 +11,47 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Calling_Record
+namespace Calling_Play
 {
+    internal class TestConsumer : Consumer
+    {
+        internal TestConsumer(string host, string project, string token, string context)
+        {
+            Host = host;
+            Project = project;
+            Token = token;
+            Contexts = new List<string> { context };
+        }
+
+        private ILogger Logger { get; } = SignalWireLogging.CreateLogger<TestConsumer>();
+
+        internal ManualResetEventSlim Completed { get; } = new ManualResetEventSlim();
+
+        internal bool Successful { get; private set; } = false;
+
+        // This is executed in a new thread each time, so it is safe to use blocking calls
+        protected override void OnIncomingCall(Call call)
+        {
+            AnswerResult resultAnswer = call.Answer();
+
+            if (!resultAnswer.Successful)
+            {
+                Completed.Set();
+                return;
+            }
+
+            PlayResult resultPlay = call.PlayTTS("I'm a little teapot.");
+
+            HangupResult resultHangup = call.Hangup();
+
+            Successful = resultPlay.Successful && resultHangup.Successful;
+            Completed.Set();
+        }
+    }
+
     internal class Program
     {
         private static ILogger Logger { get; set; }
-
-        private static ManualResetEventSlim sCompleted = new ManualResetEventSlim();
-        private static bool sSuccessful = false;
-
-        private static Client sClient = null;
-        private static CallingAPI sCallingAPI = null;
-
-        private static string sCallReceiveContext = null;
-        private static string sCallToNumber = null;
-        private static string sCallFromNumber = null;
 
         public static int Main(string[] args)
         {
@@ -41,148 +67,65 @@ namespace Calling_Record
             Stopwatch timer = Stopwatch.StartNew();
 
             // Use environment variables
-            string session_host = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_HOST");
-            string session_project = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_PROJECT");
-            string session_token = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_TOKEN");
-            sCallReceiveContext = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALLRECEIVE_CONTEXT");
-            sCallToNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_TO_NUMBER");
-            sCallFromNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_FROM_NUMBER");
+            string host = Environment.GetEnvironmentVariable("TEST_HOST");
+            string project = Environment.GetEnvironmentVariable("TEST_PROJECT");
+            string token = Environment.GetEnvironmentVariable("TEST_TOKEN");
+            string context = Environment.GetEnvironmentVariable("TEST_CONTEXT");
 
             // Make sure we have mandatory options filled in
-            if (session_host == null)
+            if (host == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_HOST' environment variable");
+                Logger.LogError("Missing 'TEST_HOST' environment variable");
                 return -1;
             }
-            if (session_project == null)
+            if (project == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_PROJECT' environment variable");
+                Logger.LogError("Missing 'TEST_PROJECT' environment variable");
                 return -1;
             }
-            if (session_token == null)
+            if (token == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_TOKEN' environment variable");
+                Logger.LogError("Missing 'TEST_TOKEN' environment variable");
                 return -1;
             }
-            if (sCallReceiveContext == null)
+            if (context == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALLRECEIVE_CONTEXT' environment variable");
+                Logger.LogError("Missing 'TEST_CONTEXT' environment variable");
                 return -1;
             }
-            if (sCallToNumber == null)
+
+            // Create the TestConsumer
+            TestConsumer consumer = new TestConsumer(host, project, token, context);
+
+            // Run a backgrounded task that will stop the consumer after 2 minutes
+            Task.Run(() =>
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_TO_NUMBER' environment variable");
-                return -1;
-            }
-            if (sCallFromNumber == null)
-            {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_FROM_NUMBER' environment variable");
-                return -1;
-            }
+                // Wait more than long enough for the test to be completed
+                if (!consumer.Completed.Wait(TimeSpan.FromMinutes(2))) Logger.LogError("Test timed out");
+                consumer.Stop();
+            });
 
             try
             {
-                // Create the client
-                using (sClient = new Client(session_project, session_token, host: session_host))
-                {
-                    // Setup callbacks before the client is started
-                    sClient.OnReady += Client_OnReady;
-
-                    // Start the client
-                    sClient.Connect();
-
-                    // Wait more than long enough for the test to be completed
-                    if (!sCompleted.Wait(TimeSpan.FromMinutes(15))) Logger.LogError("Test timed out");
-                }
+                // Run the TestConsumer which blocks until it is stopped
+                consumer.Run();
             }
             catch (Exception exc)
             {
-                Logger.LogError(exc, "Client startup failed");
+                Logger.LogError(exc, "Consumer run exception");
             }
 
             timer.Stop();
 
             // Report test outcome
-            if (!sSuccessful) Logger.LogError("Completed unsuccessfully: {0} elapsed", timer.Elapsed);
+            if (!consumer.Successful) Logger.LogError("Completed unsuccessfully: {0} elapsed", timer.Elapsed);
             else Logger.LogInformation("Completed successfully: {0} elapsed", timer.Elapsed);
 
 #if DEBUG
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey(true);
 #endif
-            return sSuccessful ? 0 : -1;
-        }
-
-        private static void Client_OnReady(Client client)
-        {
-            // This is called when the client has established a new session, this is NOT called when a session is restored
-            Logger.LogInformation("OnReady");
-
-            // Create the api associating it to the client for transport
-            sCallingAPI = new CallingAPI(client);
-
-            // Hook all the callbacks for testing
-            sCallingAPI.OnCallReceived += CallingAPI_OnCallReceived;
-
-            Task.Run(() =>
-            {
-                // Request that the inbound calls for the given context reach this client
-                try { sCallingAPI.Receive(sCallReceiveContext); }
-                catch (Exception exc)
-                {
-                    Logger.LogError(exc, "CallReceive failed");
-                    sCompleted.Set();
-                    return;
-                }
-            });
-        }
-
-        private static void CallingAPI_OnCallCreated(CallingAPI api, Call call)
-        {
-            Logger.LogInformation("OnCallCreated: {0}, {1}", call.CallID, call.State);
-        }
-
-        private static void CallingAPI_OnCallReceived(CallingAPI api, Call call, CallEventParams.ReceiveParams receiveParams)
-        {
-            Logger.LogInformation("OnCallReceived: {0}, {1}", call.CallID, call.State);
-
-            Task.Run(() =>
-            {
-                try { call.Answer(); }
-                catch (Exception exc)
-                {
-                    Logger.LogError(exc, "Answer failed");
-                    sCompleted.Set();
-                    return;
-                }
-
-                try
-                {
-                    call.OnPlayStateChange += OnCallPlayStateChange;
-                    call.PlayTTS(
-                        new CallMedia.TTSParams()
-                        {
-                            Text = "i'm a little teapot",
-                        });
-                }
-                catch (Exception exc)
-                {
-                    Logger.LogError(exc, "PlayTTS failed");
-                    sCompleted.Set();
-                    return;
-                }
-            });
-        }
-
-        private static void OnCallPlayStateChange(CallingAPI api, Call call, CallEventParams.PlayParams playParams)
-        {
-            Logger.LogInformation("OnCallPlayStateChange: {0}, {1} for {2}, {3}", call.CallID, call.State, playParams.ControlID, playParams.State);
-            if (playParams.State == CallEventParams.PlayParams.PlayState.finished)
-            {
-                Logger.LogInformation("OnCallPlayStateChange completed successfully");
-                sSuccessful = true;
-                sCompleted.Set();
-            }
+            return consumer.Successful ? 0 : -1;
         }
     }
 }

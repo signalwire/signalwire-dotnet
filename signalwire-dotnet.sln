@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RelayTests", "RelayTests", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_Play", "RelayTests\Calling_Play\Calling_Play.csproj", "{88F4EEF8-1DBF-4DCA-B779-E7802A7F8C93}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_PlayAndCollect", "RelayTests\Calling_PlayAndCollect\Calling_PlayAndCollect.csproj", "{F287CAC5-EC22-4C8C-BEF7-A666339E61A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_Prompt", "RelayTests\Calling_Prompt\Calling_Prompt.csproj", "{F287CAC5-EC22-4C8C-BEF7-A666339E61A4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_Record", "RelayTests\Calling_Record\Calling_Record.csproj", "{0AD108B5-EDB3-45AD-8283-C203F9F2E0FF}"
 EndProject
@@ -23,17 +23,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JWT", "RelayTests\JWT\JWT.c
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RelayExamples", "RelayExamples", "{CBE6F4FA-C7EC-45D6-82E2-5C2D97F55124}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CallingCall_SimpleForwarding", "RelayExamples\CallingCall_SimpleForwarding\CallingCall_SimpleForwarding.csproj", "{D67F4901-1330-439E-B428-7E2957072288}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_ConnectCall", "RelayExamples\Calling_ConnectCall\Calling_ConnectCall.csproj", "{D67F4901-1330-439E-B428-7E2957072288}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LaMLTests", "LaMLTests", "{F0492ADC-3034-4231-A36A-82AF477BCF03}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_PlayAndCollectStop", "RelayTests\Calling_PlayAndCollectStop\Calling_PlayAndCollectStop.csproj", "{3FD6C9E2-779E-46FC-9C7E-CDAFDEB52664}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_PromptStop", "RelayTests\Calling_PromptStop\Calling_PromptStop.csproj", "{3FD6C9E2-779E-46FC-9C7E-CDAFDEB52664}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Connect_Stress", "RelayTests\Connect_Stress\Connect_Stress.csproj", "{D46774E7-8998-4621-A40A-D5205DA0D746}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Connect_Stress", "RelayTests\Connect_Stress\Connect_Stress.csproj", "{D46774E7-8998-4621-A40A-D5205DA0D746}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calling_InboundCall", "RelayExamples\Calling_InboundCall\Calling_InboundCall.csproj", "{00C7338B-D720-4474-AA96-0D8B2DCAFABB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_InboundCall", "RelayExamples\Calling_InboundCall\Calling_InboundCall.csproj", "{00C7338B-D720-4474-AA96-0D8B2DCAFABB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calling_OutboundCall", "RelayExamples\Calling_OutboundCall\Calling_OutboundCall.csproj", "{68CE594E-CB6F-4C96-B794-18FDE4CAC7B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_OutboundCall", "RelayExamples\Calling_OutboundCall\Calling_OutboundCall.csproj", "{68CE594E-CB6F-4C96-B794-18FDE4CAC7B4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
