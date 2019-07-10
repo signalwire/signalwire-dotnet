@@ -34,6 +34,9 @@ namespace SignalWire.Relay
 
         public void Run()
         {
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => Stop();
+            Console.CancelKeyPress += (s, e) => { Stop(); e.Cancel = true; };
+
             Setup();
 
             if (string.IsNullOrWhiteSpace(Project)) throw new ArgumentNullException("Project");
