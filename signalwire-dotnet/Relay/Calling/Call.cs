@@ -10,47 +10,62 @@ namespace SignalWire.Relay.Calling
 {
     public abstract class Call
     {
-        public delegate void StateChangeCallback(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams);
-        public delegate void RingingCallback(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams);
-        public delegate void AnsweredCallback(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams);
-        public delegate void EndingCallback(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams);
-        public delegate void EndedCallback(CallingAPI api, Call call, CallState oldState, CallEventParams.StateParams stateParams);
+        public delegate void StateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.StateParams stateParams);
+        public delegate void RingingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.StateParams stateParams);
+        public delegate void AnsweredCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.StateParams stateParams);
+        public delegate void EndingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.StateParams stateParams);
+        public delegate void EndedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.StateParams stateParams);
 
-        public delegate void ConnectStateChangeCallback(CallingAPI api, Call call, CallEventParams.ConnectParams connectParams);
-        public delegate void ConnectFailedCallback(CallingAPI api, Call call, CallEventParams.ConnectParams connectParams);
-        public delegate void ConnectConnectingCallback(CallingAPI api, Call call, CallEventParams.ConnectParams connectParams);
-        public delegate void ConnectConnectedCallback(CallingAPI api, Call call, Call callConnected, CallEventParams.ConnectParams connectParams);
-        public delegate void ConnectDisconnectedCallback(CallingAPI api, Call call, CallEventParams.ConnectParams connectParams);
+        public delegate void ReceiveStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ReceiveParams receiveParams);
+        public delegate void ReceiveConnectingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ReceiveParams receiveParams);
+        public delegate void ReceiveConnectedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ReceiveParams receiveParams);
+        public delegate void ReceiveDisconnectingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ReceiveParams receiveParams);
+        public delegate void ReceiveDisconnectedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ReceiveParams receiveParams);
 
-        public delegate void PlayStateChangeCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
-        public delegate void PlayPlayingCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
-        public delegate void PlayErrorCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
-        public delegate void PlayPausedCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
-        public delegate void PlayFinishedCallback(CallingAPI api, Call call, CallEventParams.PlayParams playParams);
+        public delegate void ConnectStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ConnectParams connectParams);
+        public delegate void ConnectFailedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ConnectParams connectParams);
+        public delegate void ConnectConnectingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ConnectParams connectParams);
+        public delegate void ConnectConnectedCallback(CallingAPI api, Call call, Call callConnected, CallingEventParams eventParams, CallingEventParams.ConnectParams connectParams);
+        public delegate void ConnectDisconnectedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ConnectParams connectParams);
 
-        public delegate void CollectCallback(CallingAPI api, Call call, CallEventParams.CollectParams collectParams);
+        public delegate void PlayStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
+        public delegate void PlayPlayingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
+        public delegate void PlayErrorCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
+        public delegate void PlayPausedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
+        public delegate void PlayFinishedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
 
-        public delegate void RecordStateChangeCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
-        public delegate void RecordRecordingCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
-        public delegate void RecordPausedCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
-        public delegate void RecordFinishedCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
-        public delegate void RecordNoInputCallback(CallingAPI api, Call call, CallEventParams.RecordParams recordParams);
+        public delegate void PromptCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.CollectParams collectParams);
+
+        public delegate void RecordStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.RecordParams recordParams);
+        public delegate void RecordRecordingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.RecordParams recordParams);
+        public delegate void RecordPausedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.RecordParams recordParams);
+        public delegate void RecordFinishedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.RecordParams recordParams);
+        public delegate void RecordNoInputCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.RecordParams recordParams);
 
         protected readonly ILogger mLogger = null;
 
         protected readonly CallingAPI mAPI = null;
-        protected readonly string mTemporaryCallID = null;
+        protected readonly string mTemporaryID = null;
         private string mNodeID = null;
-        private string mCallID = null;
+        private string mID = null;
         private CallState mState = CallState.created;
+        private CallState mPreviousState = CallState.created;
+        private string mContext = null;
 
         private Call mPeer = null;
+        private bool mBusy = false;
 
         public event StateChangeCallback OnStateChange;
         public event RingingCallback OnRinging;
         public event AnsweredCallback OnAnswered;
         public event EndingCallback OnEnding;
         public event EndedCallback OnEnded;
+
+        public event ReceiveStateChangeCallback OnReceiveStateChange;
+        public event ReceiveConnectingCallback OnReceiveConnecting;
+        public event ReceiveConnectedCallback OnReceiveConnected;
+        public event ReceiveDisconnectingCallback OnReceiveDisconnecting;
+        public event ReceiveDisconnectedCallback OnReceiveDisconnected;
 
         public event ConnectStateChangeCallback OnConnectStateChange;
         public event ConnectFailedCallback OnConnectFailed;
@@ -64,7 +79,7 @@ namespace SignalWire.Relay.Calling
         public event PlayPausedCallback OnPlayPaused;
         public event PlayFinishedCallback OnPlayFinished;
 
-        public event CollectCallback OnCollect;
+        public event PromptCallback OnPrompt;
 
         public event RecordStateChangeCallback OnRecordStateChange;
         public event RecordRecordingCallback OnRecordRecording;
@@ -76,83 +91,133 @@ namespace SignalWire.Relay.Calling
         {
             mLogger = SignalWireLogging.CreateLogger<Client>();
             mAPI = api;
-            mTemporaryCallID = temporaryCallID;
+            mTemporaryID = temporaryCallID;
         }
         protected Call(CallingAPI api, string nodeID, string callID)
         {
             mLogger = SignalWireLogging.CreateLogger<Client>();
             mAPI = api;
             mNodeID = nodeID;
-            mCallID = callID;
+            mID = callID;
         }
 
         public CallingAPI API { get { return mAPI; } }
-        public string TemporaryCallID { get { return mTemporaryCallID; } }
+        public string TemporaryID { get { return mTemporaryID; } }
         public string NodeID { get { return mNodeID; } internal set { mNodeID = value; } }
-        public string CallID { get { return mCallID; } internal set { mCallID = value; } }
+        public string ID { get { return mID; } internal set { mID = value; } }
         public CallState State { get { return mState; } internal set { mState = value; } }
+        public CallState PreviousState { get { return mPreviousState; } internal set { mPreviousState = value; } }
+        public string Context { get { return mContext; } internal set { mContext = value; } }
         public Call Peer { get { return mPeer; } internal set { mPeer = value; } }
+        public bool Busy { get { return mBusy; } internal set { mBusy = value; } }
 
         public object UserData { get; set; }
 
-        public bool WaitForState(TimeSpan timeout, params CallState[] states)
+        public abstract string Type { get; }
+
+        public bool Active { get { return State != CallState.ended; } }
+        public bool Answered { get { return State == CallState.answered; } }
+        public bool Ended { get { return State == CallState.ended; } }
+
+        public bool WaitFor(TimeSpan? timeout, params CallState[] states)
         {
             if (Array.Exists(states, s => State == s)) return true;
 
-            DateTime expiration = DateTime.UtcNow.Add(timeout);
-            while (DateTime.UtcNow < expiration)
+            if (!timeout.HasValue) timeout = TimeSpan.FromMilliseconds(-1);
+
+            bool ret = false;
+            CancellationTokenSource cancelDelay = new CancellationTokenSource();
+            Client.ClientCallback disconnectedCallback = c =>
             {
-                if (Array.Exists(states, s => State == s)) return true;
-                Thread.Sleep(1);
-            }
-            return false;
+                cancelDelay.Cancel();
+            };
+            StateChangeCallback stateChangeCallback = (a, c, e, p) =>
+            {
+                ret = Array.Exists(states, s => p.CallState == s);
+                cancelDelay.Cancel();
+            };
+            API.API.Client.OnDisconnected += disconnectedCallback;
+            OnStateChange += stateChangeCallback;
+
+            Task.Delay(timeout.Value, cancelDelay.Token).Wait();
+
+            OnStateChange -= stateChangeCallback;
+            API.API.Client.OnDisconnected -= disconnectedCallback;
+
+            return ret;
         }
 
-        internal void StateChangeHandler(CallEventParams.StateParams stateParams)
+        public bool WaitForRinging(TimeSpan? timeout = null) { return WaitFor(timeout, CallState.ringing); }
+        public bool WaitForAnswered(TimeSpan? timeout = null) { return WaitFor(timeout, CallState.answered); }
+        public bool WaitForEnding(TimeSpan? timeout = null) { return WaitFor(timeout, CallState.ending); }
+        public bool WaitForEnded(TimeSpan? timeout = null) { return WaitFor(timeout, CallState.ended); }
+
+        internal void StateChangeHandler(CallingEventParams eventParams, CallingEventParams.StateParams stateParams)
         {
-            CallState oldState = State;
+            PreviousState = State;
             State = stateParams.CallState;
 
-            OnStateChange?.Invoke(mAPI, this, oldState, stateParams);
+            OnStateChange?.Invoke(mAPI, this, eventParams, stateParams);
 
             switch (stateParams.CallState)
             {
                 case CallState.ringing:
-                    OnRinging?.Invoke(mAPI, this, oldState, stateParams);
+                    OnRinging?.Invoke(mAPI, this, eventParams, stateParams);
                     break;
                 case CallState.answered:
-                    OnAnswered?.Invoke(mAPI, this, oldState, stateParams);
+                    OnAnswered?.Invoke(mAPI, this, eventParams, stateParams);
                     break;
                 case CallState.ending:
-                    OnEnding?.Invoke(mAPI, this, oldState, stateParams);
+                    OnEnding?.Invoke(mAPI, this, eventParams, stateParams);
                     break;
                 case CallState.ended:
                     mAPI.RemoveCall(stateParams.CallID);
-                    if (stateParams.Peer != null && Peer != null && Peer.CallID == stateParams.Peer.CallID)
+                    if (stateParams.Peer != null && Peer != null && Peer.ID == stateParams.Peer.CallID)
                     {
                         // Detach peer from this ended call
                         Peer.Peer = null;
                         Peer = null;
                     }
-                    OnEnded?.Invoke(mAPI, this, oldState, stateParams);
+                    if (stateParams.EndReason == DisconnectReason.busy) mBusy = true;
+                    OnEnded?.Invoke(mAPI, this, eventParams, stateParams);
                     break;
-                default: break;
             }
         }
 
-        internal void ConnectHandler(CallEventParams.ConnectParams connectParams)
+        internal void ReceiveHandler(CallingEventParams eventParams, CallingEventParams.ReceiveParams receiveParams)
         {
-            OnConnectStateChange?.Invoke(mAPI, this, connectParams);
+            OnReceiveStateChange?.Invoke(mAPI, this, eventParams, receiveParams);
 
-            switch (connectParams.ConnectState)
+            switch (receiveParams.CallState)
             {
-                case CallState.failed:
-                    OnConnectFailed?.Invoke(mAPI, this, connectParams);
+                case CallingEventParams.ReceiveParams.ReceiveState.connecting:
+                    OnReceiveConnecting?.Invoke(mAPI, this, eventParams, receiveParams);
                     break;
-                case CallState.connecting:
-                    OnConnectConnecting?.Invoke(mAPI, this, connectParams);
+                case CallingEventParams.ReceiveParams.ReceiveState.connected:
+                    OnReceiveConnected?.Invoke(mAPI, this, eventParams, receiveParams);
                     break;
-                case CallState.connected:
+                case CallingEventParams.ReceiveParams.ReceiveState.disconnecting:
+                    OnReceiveDisconnecting?.Invoke(mAPI, this, eventParams, receiveParams);
+                    break;
+                case CallingEventParams.ReceiveParams.ReceiveState.disconnected:
+                    OnReceiveDisconnected?.Invoke(mAPI, this, eventParams, receiveParams);
+                    break;
+            }
+        }
+
+        internal void ConnectHandler(CallingEventParams eventParams, CallingEventParams.ConnectParams connectParams)
+        {
+            OnConnectStateChange?.Invoke(mAPI, this, eventParams, connectParams);
+
+            switch (connectParams.State)
+            {
+                case CallConnectState.failed:
+                    OnConnectFailed?.Invoke(mAPI, this, eventParams, connectParams);
+                    break;
+                case CallConnectState.connecting:
+                    OnConnectConnecting?.Invoke(mAPI, this, eventParams, connectParams);
+                    break;
+                case CallConnectState.connected:
                     if (Peer != null)
                     {
                         mLogger.LogWarning("Received ConnectParams for Call that is already connected to a Peer");
@@ -166,324 +231,742 @@ namespace SignalWire.Relay.Calling
                     }
                     Peer = peer;
                     peer.Peer = this;
-                    OnConnectConnected?.Invoke(mAPI, this, peer, connectParams);
+                    OnConnectConnected?.Invoke(mAPI, this, peer, eventParams, connectParams);
                     break;
-                case CallState.disconnected:
-                    OnConnectDisconnected?.Invoke(mAPI, this, connectParams);
+                case CallConnectState.disconnected:
+                    OnConnectDisconnected?.Invoke(mAPI, this, eventParams, connectParams);
                     break;
             }
         }
 
-        internal void PlayHandler(CallEventParams.PlayParams playParams)
+        internal void PlayHandler(CallingEventParams eventParams, CallingEventParams.PlayParams playParams)
         {
-            OnPlayStateChange?.Invoke(mAPI, this, playParams);
+            OnPlayStateChange?.Invoke(mAPI, this, eventParams, playParams);
 
             switch (playParams.State)
             {
-                case CallEventParams.PlayParams.PlayState.playing:
-                    OnPlayPlaying?.Invoke(mAPI, this, playParams);
+                case CallPlayState.playing:
+                    OnPlayPlaying?.Invoke(mAPI, this, eventParams, playParams);
                     break;
-                case CallEventParams.PlayParams.PlayState.error:
-                    OnPlayError?.Invoke(mAPI, this, playParams);
+                case CallPlayState.error:
+                    OnPlayError?.Invoke(mAPI, this, eventParams, playParams);
                     break;
-                case CallEventParams.PlayParams.PlayState.paused:
-                    OnPlayPaused?.Invoke(mAPI, this, playParams);
+                case CallPlayState.paused:
+                    OnPlayPaused?.Invoke(mAPI, this, eventParams, playParams);
                     break;
-                case CallEventParams.PlayParams.PlayState.finished:
-                    OnPlayFinished?.Invoke(mAPI, this, playParams);
+                case CallPlayState.finished:
+                    OnPlayFinished?.Invoke(mAPI, this, eventParams, playParams);
                     break;
-                default: break;
             }
         }
 
-        internal void CollectHandler(CallEventParams.CollectParams collectParams)
+        internal void CollectHandler(CallingEventParams eventParams, CallingEventParams.CollectParams collectParams)
         {
-            OnCollect?.Invoke(mAPI, this, collectParams);
+            OnPrompt?.Invoke(mAPI, this, eventParams, collectParams);
         }
 
-        internal void RecordHandler(CallEventParams.RecordParams recordParams)
+        internal void RecordHandler(CallingEventParams eventParams, CallingEventParams.RecordParams recordParams)
         {
-            OnRecordStateChange?.Invoke(mAPI, this, recordParams);
+            OnRecordStateChange?.Invoke(mAPI, this, eventParams, recordParams);
 
             switch (recordParams.State)
             {
-                case CallEventParams.RecordParams.RecordState.recording:
-                    OnRecordRecording?.Invoke(mAPI, this, recordParams);
+                case CallRecordState.recording:
+                    OnRecordRecording?.Invoke(mAPI, this, eventParams, recordParams);
                     break;
-                case CallEventParams.RecordParams.RecordState.paused:
-                    OnRecordPaused?.Invoke(mAPI, this, recordParams);
+                case CallRecordState.paused:
+                    OnRecordPaused?.Invoke(mAPI, this, eventParams, recordParams);
                     break;
-                case CallEventParams.RecordParams.RecordState.finished:
-                    OnRecordFinished?.Invoke(mAPI, this, recordParams);
+                case CallRecordState.finished:
+                    OnRecordFinished?.Invoke(mAPI, this, eventParams, recordParams);
                     break;
-                case CallEventParams.RecordParams.RecordState.no_input:
-                    OnRecordNoInput?.Invoke(mAPI, this, recordParams);
+                case CallRecordState.no_input:
+                    OnRecordNoInput?.Invoke(mAPI, this, eventParams, recordParams);
                     break;
-                default: break;
             }
         }
 
-        public void Begin()
+        public DialResult Dial()
         {
-            BeginAsync().Wait();
+            return InternalDialAsync().Result;
         }
 
-        public abstract Task BeginAsync();
-
-        public void Answer()
+        public DialAction DialAsync()
         {
-            AnswerAsync().Wait();
-        }
-
-        public async Task AnswerAsync()
-        {
-            Task<CallAnswerResult> taskCallAnswerResult = mAPI.LL_CallAnswerAsync(new CallAnswerParams()
+            DialAction action = new DialAction
             {
-                NodeID = mNodeID,
-                CallID = mCallID,
-            });
-
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallAnswerResult callAnswerResult = await taskCallAnswerResult;
-
-            // If there was an internal error of any kind then throw an exception
-            mAPI.ThrowIfError(callAnswerResult.Code, callAnswerResult.Message);
-        }
-
-        public void Hangup()
-        {
-            HangupAsync().Wait();
-        }
-
-        public async Task HangupAsync()
-        {
-            Task<CallEndResult> taskCallEndResult = mAPI.LL_CallEndAsync(new CallEndParams()
+                Call = this,
+            };
+            Task.Run(async () =>
             {
-                NodeID = mNodeID,
-                CallID = mCallID,
-                Reason = "hangup",
+                action.Result = await InternalDialAsync();
+                action.Completed = true;
             });
-
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallEndResult callEndResult = await taskCallEndResult;
-
-            // If there was an internal error of any kind then throw an exception
-            mAPI.ThrowIfError(callEndResult.Code, callEndResult.Message);
+            return action;
         }
 
-        public Call Connect(List<List<CallDevice>> devices)
+        protected abstract Task<DialResult> InternalDialAsync();
+
+        public AnswerResult Answer()
         {
-            return ConnectAsync(devices).Result;
+            return InternalAnswerAsync().Result;
         }
 
-        public async Task<Call> ConnectAsync(List<List<CallDevice>> devices)
+        public AnswerAction AnswerAsync()
         {
-            await mAPI.Setup();
+            AnswerAction action = new AnswerAction
+            {
+                Call = this,
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalAnswerAsync();
+                action.Completed = true;
+            });
+            return action;
+        }
 
-            if (string.IsNullOrWhiteSpace(CallID)) throw new ArgumentNullException("CallID");
-            
+        private async Task<AnswerResult> InternalAnswerAsync()
+        {
+            await API.API.SetupAsync();
 
-            // Completion source and callbacks for detecting when an appropriate event is received
-            TaskCompletionSource<bool> connectFinished = new TaskCompletionSource<bool>();
-            ConnectConnectedCallback connectedCallback = (a, c, cc, cp) => connectFinished.SetResult(true);
-            ConnectFailedCallback failedCallback = (a, c, cp) => connectFinished.SetResult(false);
+            AnswerResult resultAnswer = new AnswerResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
-            // Hook temporary callbacks for the completion source
+            // Hook callbacks temporarily to catch required events
+            AnsweredCallback answeredCallback = (a, c, e, p) =>
+            {
+                resultAnswer.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(true);
+            };
+            EndedCallback endedCallback = (a, c, e, p) =>
+            {
+                resultAnswer.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(false);
+            };
+
+            OnAnswered += answeredCallback;
+            OnEnded += endedCallback;
+
+            try
+            {
+                Task<LL_AnswerResult> taskLLAnswer = mAPI.LL_AnswerAsync(new LL_AnswerParams()
+                {
+                    NodeID = mNodeID,
+                    CallID = mID,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_AnswerResult resultLLAnswer = await taskLLAnswer;
+                if (resultLLAnswer.Code == "200")
+                {
+                    mLogger.LogDebug("Answer for call {0} waiting for completion events", ID);
+
+                    resultAnswer.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("Answer for call {0} {1}", ID, resultAnswer.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Answer for call {0} exception", ID);
+            }
+
+            // Unhook temporary callbacks
+            OnAnswered -= answeredCallback;
+            OnEnded -= endedCallback;
+
+            return resultAnswer;
+        }
+
+        public HangupResult Hangup(DisconnectReason reason = DisconnectReason.hangup)
+        {
+            return InternalHangupAsync(reason: reason).Result;
+        }
+
+        public HangupAction HangupAsync(DisconnectReason reason = DisconnectReason.hangup)
+        {
+            HangupAction action = new HangupAction
+            {
+                Call = this,
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalHangupAsync(reason: reason);
+                action.Completed = true;
+            });
+            return action;
+        }
+
+        private async Task<HangupResult> InternalHangupAsync(DisconnectReason reason = DisconnectReason.hangup)
+        {
+            await API.API.SetupAsync();
+
+            HangupResult resultHangup = new HangupResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            EndedCallback endedCallback = (a, c, e, p) =>
+            {
+                resultHangup.Event = new Event(e.EventType, JObject.FromObject(p));
+                resultHangup.Reason = p.EndReason.GetValueOrDefault();
+                tcsCompletion.SetResult(true);
+            };
+
+            OnEnded += endedCallback;
+
+            try
+            {
+                Task<LL_EndResult> taskLLEnd = mAPI.LL_EndAsync(new LL_EndParams()
+                {
+                    NodeID = mNodeID,
+                    CallID = mID,
+                    Reason = reason,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_EndResult resultLLEnd = await taskLLEnd;
+                if (resultLLEnd.Code == "200")
+                {
+                    mLogger.LogDebug("Hangup for call {0} waiting for completion events", ID);
+
+                    resultHangup.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("Hangup for call {0} {1}", ID, resultHangup.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Hangup for call {0} exception", ID);
+            }
+
+            // Unhook temporary callbacks
+            OnEnded -= endedCallback;
+
+            return resultHangup;
+        }
+
+        public ConnectResult Connect(List<List<CallDevice>> devices)
+        {
+            return InternalConnectAsync(devices).Result;
+        }
+
+        public ConnectAction ConnectAsync(List<List<CallDevice>> devices)
+        {
+            ConnectAction action = new ConnectAction
+            {
+                Call = this,
+                Payload = devices,
+            };
+            Task.Run(async () =>
+            {
+                ConnectStateChangeCallback connectStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                OnConnectStateChange += connectStateChangeCallback;
+
+                action.Result = await InternalConnectAsync(devices);
+                action.Completed = true;
+
+                OnConnectStateChange -= connectStateChangeCallback;
+            });
+            return action;
+        }
+
+        private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices)
+        {
+            await API.API.SetupAsync();
+
+            ConnectResult resultConnect = new ConnectResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            ConnectConnectedCallback connectedCallback = (a, c, cp, e, p) =>
+            {
+                resultConnect.Event = new Event(e.EventType, JObject.FromObject(p));
+                resultConnect.Call = cp;
+                tcsCompletion.SetResult(true);
+            };
+            ConnectFailedCallback failedCallback = (a, c, e, p) =>
+            {
+                resultConnect.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(false);
+            };
+
             OnConnectConnected += connectedCallback;
             OnConnectFailed += failedCallback;
 
-            // TODO: Prevent connect on a call that is already being connected but may not yet have peer associated? or will FS error back if tried?
-
-            Task<CallConnectResult> taskCallConnectResult = mAPI.LL_CallConnectAsync(new CallConnectParams()
-            {
-                CallID = CallID,
-                NodeID = NodeID,
-                Devices = devices,
-            });
-
-            bool connected = false;
             try
             {
-                // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-                CallConnectResult callConnectResult = await taskCallConnectResult;
-                // If there was an internal error of any kind then throw an exception
-                mAPI.ThrowIfError(callConnectResult.Code, callConnectResult.Message);
-                // Wait for completion source, either connected or failed connect state
-                connected = await connectFinished.Task;
+                Task<LL_ConnectResult> taskLLConnect = mAPI.LL_ConnectAsync(new LL_ConnectParams()
+                {
+                    CallID = ID,
+                    NodeID = NodeID,
+                    Devices = devices,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_ConnectResult resultLLConnect = await taskLLConnect;
+                if (resultLLConnect.Code == "200")
+                {
+                    mLogger.LogDebug("Connect for call {0} waiting for completion events", ID);
+
+                    resultConnect.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("Connect for call {0} {1}", ID, resultConnect.Successful ? "successful" : "unsuccessful");
+                }
             }
-            catch
+            catch (Exception exc)
             {
-                // Rethrow the exception, we catch and throw to ensure the finally block is called in case the exception
-                // isn't caught up the stack otherwise, which can cause the finally block not to be called
-                throw;
-            }
-            finally
-            {
-                // Unhook the temporary callbacks whether an exception occurs or not
-                OnConnectConnected -= connectedCallback;
-                OnConnectFailed -= failedCallback;
+                mLogger.LogError(exc, "Connect for call {0} exception", ID);
             }
 
-            // We get here if no exceptions or errors occurred, this means it was connected and a peer will get returned,
-            // or it failed and null is returned which means the call could not be connected but no real errors occurred
-            if (!connected) mLogger.LogWarning("Call {0} connect failed", CallID);
+            // Unhook temporary callbacks
+            OnConnectConnected -= connectedCallback;
+            OnConnectFailed -= failedCallback;
 
-            return mPeer;
+            return resultConnect;
         }
 
-
-        public PlayMediaAction PlayMedia(List<CallMedia> media)
+        public PlayResult Play(List<CallMedia> play)
         {
-            return PlayMediaAsync(media).Result;
+            return InternalPlayAsync(Guid.NewGuid().ToString(), play).Result;
         }
 
-        public async Task<PlayMediaAction> PlayMediaAsync(List<CallMedia> media)
+        public PlayAction PlayAsync(List<CallMedia> play)
         {
-            // Create the action first so it can hook events and not potentially miss anything
-            PlayMediaAction action = new PlayMediaAction(this, Guid.NewGuid().ToString(), media);
-
-            Task<CallPlayResult> taskCallPlayResult = mAPI.LL_CallPlayAsync(new CallPlayParams()
+            PlayAction action = new PlayAction
             {
-                NodeID = mNodeID,
-                CallID = mCallID,
-                ControlID = action.ControlID,
-                Play = media,
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = play,
+            };
+            Task.Run(async () =>
+            {
+                PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                OnPlayStateChange += playStateChangeCallback;
+
+                action.Result = await InternalPlayAsync(action.ControlID, play);
+                action.Completed = true;
+
+                OnPlayStateChange -= playStateChangeCallback;
             });
-
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallPlayResult callPlayResult = await taskCallPlayResult;
-
-            // If there was an internal error of any kind then throw an exception
-            mAPI.ThrowIfError(callPlayResult.Code, callPlayResult.Message);
-
             return action;
         }
 
-        public PlayAudioAction PlayAudio(CallMedia.AudioParams audio)
+        private async Task<PlayResult> InternalPlayAsync(string controlID, List<CallMedia> play)
         {
-            return PlayAudioAsync(audio).Result;
-        }
+            await API.API.SetupAsync();
 
-        public async Task<PlayAudioAction> PlayAudioAsync(CallMedia.AudioParams audio)
-        {
-            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.audio, Parameters = JObject.FromObject(audio) };
-            PlayMediaAction playMediaAction = await PlayMediaAsync(new List<CallMedia> { media });
-            return new PlayAudioAction(playMediaAction);
-        }
+            PlayResult resultPlay = new PlayResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
-        public PlayTTSAction PlayTTS(CallMedia.TTSParams tts)
-        {
-            return PlayTTSAsync(tts).Result;
-        }
-
-        public async Task<PlayTTSAction> PlayTTSAsync(CallMedia.TTSParams tts)
-        {
-            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.tts, Parameters = JObject.FromObject(tts) };
-            PlayMediaAction playMediaAction = await PlayMediaAsync(new List<CallMedia> { media });
-            return new PlayTTSAction(playMediaAction);
-        }
-
-        public PlaySilenceAction PlaySilence(CallMedia.SilenceParams silence)
-        {
-            return PlaySilenceAsync(silence).Result;
-        }
-
-        public async Task<PlaySilenceAction> PlaySilenceAsync(CallMedia.SilenceParams silence)
-        {
-            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.silence, Parameters = JObject.FromObject(silence) };
-            PlayMediaAction playMediaAction = await PlayMediaAsync(new List<CallMedia> { media });
-            return new PlaySilenceAction(playMediaAction);
-        }
-
-        public PlayMediaAndCollectAction PlayMediaAndCollect(List<CallMedia> media, CallCollect collect)
-        {
-            return PlayMediaAndCollectAsync(media, collect).Result;
-        }
-
-        public async Task<PlayMediaAndCollectAction> PlayMediaAndCollectAsync(List<CallMedia> media, CallCollect collect)
-        {
-            // Create the action first so it can hook events and not potentially miss anything
-            PlayMediaAndCollectAction action = new PlayMediaAndCollectAction(this, Guid.NewGuid().ToString(), media, collect);
-
-            Task<CallPlayAndCollectResult> taskCallPlayAndCollectResult = mAPI.LL_CallPlayAndCollectAsync(new CallPlayAndCollectParams()
+            // Hook callbacks temporarily to catch required events
+            PlayFinishedCallback finishedCallback = (a, c, e, p) =>
             {
-                NodeID = mNodeID,
-                CallID = mCallID,
-                ControlID = action.ControlID,
-                Play = media,
-                Collect = collect,
+                resultPlay.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(true);
+            };
+            PlayErrorCallback errorCallback = (a, c, e, p) =>
+            {
+                resultPlay.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(false);
+            };
+
+            OnPlayFinished += finishedCallback;
+            OnPlayError += errorCallback;
+
+            try
+            {
+                Task<LL_PlayResult> taskLLPlay = mAPI.LL_PlayAsync(new LL_PlayParams()
+                {
+                    NodeID = mNodeID,
+                    CallID = mID,
+                    ControlID = controlID,
+                    Play = play,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_PlayResult resultLLPlay = await taskLLPlay;
+                if (resultLLPlay.Code == "200")
+                {
+                    mLogger.LogDebug("Play {0} for call {1} waiting for completion events", controlID, ID);
+
+                    resultPlay.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("Play {0} for call {1} {2}", controlID, ID, resultPlay.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Play {0} for call {1} exception", controlID, ID);
+            }
+
+            // Unhook temporary callbacks
+            OnPlayFinished -= finishedCallback;
+            OnPlayError -= errorCallback;
+
+            return resultPlay;
+        }
+
+        public PlayResult PlayAudio(string url)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.audio,
+                    Parameters = new CallMedia.AudioParams
+                    {
+                        URL = url,
+                    }
+                }
+            };
+            return Play(play);
+        }
+
+        public PlayAction PlayAudioAsync(string url)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.audio,
+                    Parameters = new CallMedia.AudioParams
+                    {
+                        URL = url,
+                    }
+                }
+            };
+            return PlayAsync(play);
+        }
+
+        public PlayResult PlayTTS(string text, string gender = null, string language = null)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.tts,
+                    Parameters = new CallMedia.TTSParams
+                    {
+                        Text = text,
+                        Gender = gender,
+                        Language = language,
+                    }
+                }
+            };
+            return Play(play);
+        }
+
+        public PlayAction PlayTTSAsync(string text, string gender = null, string language = null)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.tts,
+                    Parameters = new CallMedia.TTSParams
+                    {
+                        Text = text,
+                        Gender = gender,
+                        Language = language,
+                    }
+                }
+            };
+            return PlayAsync(play);
+        }
+
+        public PlayResult PlaySilence(double duration)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.silence,
+                    Parameters = new CallMedia.SilenceParams
+                    {
+                        Duration = duration,
+                    }
+                }
+            };
+            return Play(play);
+        }
+
+        public PlayAction PlaySilenceAsync(double duration)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.silence,
+                    Parameters = new CallMedia.SilenceParams
+                    {
+                        Duration = duration,
+                    }
+                }
+            };
+            return PlayAsync(play);
+        }
+
+        public PromptResult Prompt(List<CallMedia> play, CallCollect collect)
+        {
+            return InternalPromptAsync(Guid.NewGuid().ToString(), play, collect).Result;
+        }
+
+        public PromptAction PromptAsync(List<CallMedia> play, CallCollect collect)
+        {
+            PromptAction action = new PromptAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                PlayPayload = play,
+                CollectPayload = collect,
+            };
+            Task.Run(async () =>
+            {
+                PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                OnPlayStateChange += playStateChangeCallback;
+
+                action.Result = await InternalPromptAsync(action.ControlID, play, collect);
+                action.Completed = true;
+
+                OnPlayStateChange -= playStateChangeCallback;
             });
-
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallPlayAndCollectResult callPlayAndCollectResult = await taskCallPlayAndCollectResult;
-
-            // If there was an internal error of any kind then throw an exception
-            mAPI.ThrowIfError(callPlayAndCollectResult.Code, callPlayAndCollectResult.Message);
-
             return action;
         }
 
-        public PlayAudioAndCollectAction PlayAudioAndCollect(CallMedia.AudioParams audio, CallCollect collect)
+        private async Task<PromptResult> InternalPromptAsync(string controlID, List<CallMedia> play, CallCollect collect)
         {
-            return PlayAudioAndCollectAsync(audio, collect).Result;
-        }
+            await API.API.SetupAsync();
 
-        public async Task<PlayAudioAndCollectAction> PlayAudioAndCollectAsync(CallMedia.AudioParams audio, CallCollect collect)
-        {
-            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.audio, Parameters = JObject.FromObject(audio) };
-            PlayMediaAndCollectAction playMediaAndCollectAction = await PlayMediaAndCollectAsync(new List<CallMedia> { media }, collect);
-            return new PlayAudioAndCollectAction(playMediaAndCollectAction);
-        }
+            PromptResult resultPrompt = new PromptResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
-        public PlayTTSAndCollectAction PlayTTSAndCollect(CallMedia.TTSParams tts, CallCollect collect)
-        {
-            return PlayTTSAndCollectAsync(tts, collect).Result;
-        }
-
-        public async Task<PlayTTSAndCollectAction> PlayTTSAndCollectAsync(CallMedia.TTSParams tts, CallCollect collect)
-        {
-            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.tts, Parameters = JObject.FromObject(tts) };
-            PlayMediaAndCollectAction playMediaAndCollectAction = await PlayMediaAndCollectAsync(new List<CallMedia> { media }, collect);
-            return new PlayTTSAndCollectAction(playMediaAndCollectAction);
-        }
-
-        public PlaySilenceAndCollectAction PlaySilenceAndCollect(CallMedia.SilenceParams silence, CallCollect collect)
-        {
-            return PlaySilenceAndCollectAsync(silence, collect).Result;
-        }
-
-        public async Task<PlaySilenceAndCollectAction> PlaySilenceAndCollectAsync(CallMedia.SilenceParams silence, CallCollect collect)
-        {
-            CallMedia media = new CallMedia() { Type = CallMedia.MediaType.silence, Parameters = JObject.FromObject(silence) };
-            PlayMediaAndCollectAction playMediaAndCollectAction = await PlayMediaAndCollectAsync(new List<CallMedia> { media }, collect);
-            return new PlaySilenceAndCollectAction(playMediaAndCollectAction);
-        }
-
-        public RecordAction Record(CallRecord record)
-        {
-            return RecordAsync(record).Result;
-        }
-
-        public async Task<RecordAction> RecordAsync(CallRecord record)
-        {
-            // Create the action first so it can hook events and not potentially miss anything
-            RecordAction action = new RecordAction(this, Guid.NewGuid().ToString(), record);
-
-            Task<CallRecordResult> taskCallRecordResult = mAPI.LL_CallRecordAsync(new CallRecordParams()
+            // Hook callbacks temporarily to catch required events
+            PlayErrorCallback errorCallback = (a, c, e, p) =>
             {
-                NodeID = mNodeID,
-                CallID = mCallID,
-                ControlID = action.ControlID,
-                Record = record
+                resultPrompt.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(false);
+            };
+            PromptCallback promptCallback = (a, c, e, p) =>
+            {
+                resultPrompt.Event = new Event(e.EventType, JObject.FromObject(p));
+                resultPrompt.Type = p.Result.Type;
+                
+                switch (resultPrompt.Type)
+                {
+                    case CallCollectType.digit:
+                        {
+                            CallingEventParams.CollectParams.ResultParams.DigitParams digitParams = p.Result.ParametersAs<CallingEventParams.CollectParams.ResultParams.DigitParams>();
+                            resultPrompt.Result = digitParams.Digits;
+                            resultPrompt.Terminator = digitParams.Terminator;
+
+                            tcsCompletion.SetResult(true);
+                            break;
+                        }
+                    case CallCollectType.speech:
+                        {
+                            CallingEventParams.CollectParams.ResultParams.SpeechParams speechParams = p.Result.ParametersAs<CallingEventParams.CollectParams.ResultParams.SpeechParams>();
+                            resultPrompt.Result = speechParams.Text;
+                            resultPrompt.Confidence = speechParams.Confidence;
+
+                            tcsCompletion.SetResult(true);
+                            break;
+                        }
+                    default:
+                        {
+                            tcsCompletion.SetResult(false);
+                            break;
+                        }
+                }
+            };
+
+            OnPlayError += errorCallback;
+            OnPrompt += promptCallback;
+
+            try
+            {
+                Task<LL_PlayAndCollectResult> taskLLPlayAndCollect = mAPI.LL_PlayAndCollectAsync(new LL_PlayAndCollectParams()
+                {
+                    NodeID = mNodeID,
+                    CallID = mID,
+                    ControlID = controlID,
+                    Play = play,
+                    Collect = collect,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_PlayAndCollectResult resultLLPlayAndCollect = await taskLLPlayAndCollect;
+                if (resultLLPlayAndCollect.Code == "200")
+                {
+                    mLogger.LogDebug("Prompt {0} for call {1} waiting for completion events", controlID, ID);
+
+                    resultPrompt.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("Prompt {0} for call {1} {2}", controlID, ID, resultPrompt.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Prompt {0} for call {1} exception", controlID, ID);
+            }
+
+            // Unhook temporary callbacks
+            OnPlayError -= errorCallback;
+            OnPrompt -= promptCallback;
+
+            return resultPrompt;
+        }
+
+        public PromptResult PromptAudio(string url, CallCollect collect)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.audio,
+                    Parameters = new CallMedia.AudioParams
+                    {
+                        URL = url,
+                    }
+                }
+            };
+            return Prompt(play, collect);
+        }
+
+        public PromptAction PromptAudioAsync(string url, CallCollect collect)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.audio,
+                    Parameters = new CallMedia.AudioParams
+                    {
+                        URL = url,
+                    }
+                }
+            };
+            return PromptAsync(play, collect);
+        }
+
+        public PromptResult PromptTTS(string text, CallCollect collect, string gender = null, string language = null)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.tts,
+                    Parameters = new CallMedia.TTSParams
+                    {
+                        Text = text,
+                        Gender = gender,
+                        Language = language,
+                    }
+                }
+            };
+            return Prompt(play, collect);
+        }
+
+        public PromptAction PromptTTSAsync(string text, CallCollect collect, string gender = null, string language = null)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.tts,
+                    Parameters = new CallMedia.TTSParams
+                    {
+                        Text = text,
+                        Gender = gender,
+                        Language = language,
+                    }
+                }
+            };
+            return PromptAsync(play, collect);
+        }
+
+        public RecordResult Record(CallRecord record)
+        {
+            return InternalRecordAsync(Guid.NewGuid().ToString(), record).Result;
+        }
+
+        public RecordAction RecordAsync(CallRecord record)
+        {
+            RecordAction action = new RecordAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = record,
+            };
+            Task.Run(async () =>
+            {
+                RecordStateChangeCallback recordStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                OnRecordStateChange += recordStateChangeCallback;
+
+                action.Result = await InternalRecordAsync(action.ControlID, record);
+                action.Completed = true;
+
+                OnRecordStateChange -= recordStateChangeCallback;
             });
-
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallRecordResult callRecordResult = await taskCallRecordResult;
-
-            // If there was an internal error of any kind then throw an exception
-            mAPI.ThrowIfError(callRecordResult.Code, callRecordResult.Message);
-
             return action;
+        }
+
+        private async Task<RecordResult> InternalRecordAsync(string controlID, CallRecord record)
+        {
+            await API.API.SetupAsync();
+
+            RecordResult resultRecord = new RecordResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            RecordFinishedCallback finishedCallback = (a, c, e, p) =>
+            {
+                resultRecord.Event = new Event(e.EventType, JObject.FromObject(p));
+                resultRecord.Url = p.URL;
+                resultRecord.Duration = p.Duration;
+                resultRecord.Size = p.Size;
+                tcsCompletion.SetResult(true);
+            };
+            RecordNoInputCallback noinputCallback = (a, c, e, p) =>
+            {
+                resultRecord.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(false);
+            };
+
+            OnRecordFinished += finishedCallback;
+            OnRecordNoInput += noinputCallback;
+
+            try
+            {
+                Task<LL_RecordResult> taskLLRecord = mAPI.LL_RecordAsync(new LL_RecordParams()
+                {
+                    NodeID = mNodeID,
+                    CallID = mID,
+                    ControlID = controlID,
+                    Record = record,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_RecordResult resultLLRecord = await taskLLRecord;
+                if (resultLLRecord.Code == "200")
+                {
+                    mLogger.LogDebug("Record {0} for call {1} waiting for completion events", controlID, ID);
+
+                    resultRecord.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("Record {0} for call {1} {2}", controlID, ID, resultRecord.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Record {0} for call {1} exception", controlID, ID);
+            }
+
+            // Unhook temporary callbacks
+            OnRecordFinished -= finishedCallback;
+            OnRecordNoInput -= noinputCallback;
+
+            return resultRecord;
         }
     }
 
@@ -498,36 +981,69 @@ namespace SignalWire.Relay.Calling
         internal PhoneCall(CallingAPI api, string temporaryCallID)
             : base (api, temporaryCallID) { }
 
-        public override async Task BeginAsync()
+        public override string Type => "phone";
+
+        protected override async Task<DialResult> InternalDialAsync()
         {
-            await mAPI.Setup();
+            await API.API.SetupAsync();
 
-            // Send the request
-            Task<CallBeginResult> taskCallBeginResult = mAPI.LL_CallBeginAsync(new CallBeginParams()
+            DialResult resultDial = new DialResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            AnsweredCallback answeredCallback = (a, c, e, p) =>
             {
-                Device = new CallDevice()
+                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
+                resultDial.Call = c;
+                tcsCompletion.SetResult(true);
+            };
+            EndedCallback endedCallback = (a, c, e, p) =>
+            {
+                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(false);
+            };
+
+            OnAnswered += answeredCallback;
+            OnEnded += endedCallback;
+
+            try
+            {
+                Task<LL_BeginResult> taskLLBegin = mAPI.LL_BeginAsync(new LL_BeginParams()
                 {
-                    Type = CallDevice.DeviceType.phone,
-                    Parameters = new CallDevice.PhoneParams()
+                    Device = new CallDevice()
                     {
-                        ToNumber = To,
-                        FromNumber = From,
-                        Timeout = Timeout,
+                        Type = CallDevice.DeviceType.phone,
+                        Parameters = new CallDevice.PhoneParams()
+                        {
+                            ToNumber = To,
+                            FromNumber = From,
+                            Timeout = Timeout,
+                        },
                     },
-                },
-                TemporaryCallID = mTemporaryCallID,
-            });
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallBeginResult callBeginResult = await taskCallBeginResult;
+                    TemporaryCallID = mTemporaryID,
+                });
 
-            // If there was an internal error of any kind then throw an exception
-            mAPI.ThrowIfError(callBeginResult.Code, callBeginResult.Message);
+                // The use of await rethrows exceptions from the task
+                LL_BeginResult resultLLBegin = await taskLLBegin;
+                if (resultLLBegin.Code == "200")
+                {
+                    mLogger.LogDebug("Dial for call {0} waiting for completion events", ID);
 
-            if (string.IsNullOrWhiteSpace(callBeginResult.NodeID) || string.IsNullOrWhiteSpace(callBeginResult.CallID))
-            {
-                mLogger.LogWarning("Internal error, NodeID and CallID must be present on success");
-                throw new FormatException("Internal error, NodeID and CallID must be present on success");
+                    resultDial.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("Dial for call {0} {1}", ID, resultDial.Successful ? "successful" : "unsuccessful");
+                }
             }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Dial for call {0} exception", ID);
+            }
+
+            // Unhook temporary callbacks
+            OnAnswered -= answeredCallback;
+            OnEnded -= endedCallback;
+
+            return resultDial;
         }
     }
 }

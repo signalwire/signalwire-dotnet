@@ -1,5 +1,4 @@
 ﻿using Blade;
-using Blade.Messages;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -13,26 +12,131 @@ using System.Threading.Tasks;
 
 namespace Calling_Complex
 {
+    /* This complete test requires 2 phone numbers on signalwire, one bound as an inbound DID to relay
+     * and the other used for outbound from number validation.
+     * It will first Dial to the inbound DID as Call1-A.
+     * This will be received and answered as Call1-B.
+     * Then it will Connect to the inbound DID as Call2-A.
+     * This will also be received and answered as Call2-B.
+     * Upon seeing Call1-A and Call2-A connected as peers, the test succeeds.
+     */
+    internal class TestConsumer : Consumer
+    {
+        private ILogger Logger { get; } = SignalWireLogging.CreateLogger<TestConsumer>();
+
+        internal ManualResetEventSlim Completed { get; } = new ManualResetEventSlim();
+
+        internal bool Successful { get; private set; } = false;
+
+        private string ToNumber { get; set; }
+
+        private string FromNumber { get; set; }
+
+        protected override void Setup()
+        {
+            Host = Environment.GetEnvironmentVariable("TEST_HOST");
+            Project = Environment.GetEnvironmentVariable("TEST_PROJECT");
+            Token = Environment.GetEnvironmentVariable("TEST_TOKEN");
+            Contexts = new List<string> { Environment.GetEnvironmentVariable("TEST_CONTEXT") };
+            ToNumber = Environment.GetEnvironmentVariable("TEST_TO_NUMBER");
+            FromNumber = Environment.GetEnvironmentVariable("TEST_FROM_NUMBER");
+
+            if (string.IsNullOrWhiteSpace(Host))
+            {
+                Logger.LogError("Missing 'TEST_HOST' environment variable");
+                throw new ArgumentNullException("Host");
+            }
+            if (string.IsNullOrWhiteSpace(Project))
+            {
+                Logger.LogError("Missing 'TEST_PROJECT' environment variable");
+                throw new ArgumentNullException("Project");
+            }
+            if (string.IsNullOrWhiteSpace(Token))
+            {
+                Logger.LogError("Missing 'TEST_TOKEN' environment variable");
+                throw new ArgumentNullException("Token");
+            }
+            if (string.IsNullOrWhiteSpace(Contexts[0]))
+            {
+                Logger.LogError("Missing 'TEST_CONTEXT' environment variable");
+                throw new ArgumentNullException("Context");
+            }
+            if (string.IsNullOrWhiteSpace(ToNumber))
+            {
+                Logger.LogError("Missing 'TEST_TO_NUMBER' environment variable");
+                throw new ArgumentNullException("ToNumber");
+            }
+            if (string.IsNullOrWhiteSpace(FromNumber))
+            {
+                Logger.LogError("Missing 'TEST_FROM_NUMBER' environment variable");
+                throw new ArgumentNullException("FromNumber");
+            }
+        }
+
+        // This is executed in a new thread each time, so it is safe to use blocking calls
+        protected override void Ready()
+        {
+            // Create the first outbound call leg to the inbound DID associated to the context this client is receiving
+            // This will block until the call is answered, times out, busy, or an error occurred
+            DialResult resultDial = Client.Calling.DialPhone(ToNumber, FromNumber);
+
+            if (!resultDial.Successful)
+            {
+                Logger.LogError("Call1 was not answered");
+                Completed.Set();
+                return;
+            }
+
+            // The call was answered, try to connect another outbound call to it
+            // The top level list of the devices represents entries that will be called in serial,
+            // one at a time.  The inner list of devices represents a set of devices to call in
+            // parallel with each other.  Ultimately only one device wins by answering first.
+            ConnectResult resultConnect = resultDial.Call.Connect(new List<List<CallDevice>>
+                {
+                    new List<CallDevice>
+                    {
+                        new CallDevice
+                        {
+                            Type = CallDevice.DeviceType.phone,
+                            Parameters = new CallDevice.PhoneParams
+                            {
+                                ToNumber = ToNumber,
+                                FromNumber = FromNumber,
+                            }
+                        }
+                    }
+                });
+
+            if (!resultConnect.Successful)
+            {
+                Logger.LogError("Call2 was not connected");
+            }
+
+            // Hangup both calls
+            resultConnect.Call?.Hangup();
+            resultDial.Call.Hangup();
+
+            // Mark the test successful and terminate
+            Successful = resultConnect.Successful;
+            Completed.Set();
+        }
+
+        // This is executed in a new thread each time, so it is safe to use blocking calls
+        protected override void OnIncomingCall(Call call)
+        {
+            AnswerResult resultAnswer = call.Answer();
+
+            if (!resultAnswer.Successful)
+            {
+                // If answering fails, test stops
+                Completed.Set();
+            }
+        }
+    }
+
     internal class Program
     {
-        /* This complete test requires 2 phone numbers on signalwire, one bound as an inbound DID to relay
-         * and the other used for outbound from number validation.
-         * This test does the following:
-         * - Does a call.receive to receive inbound calls on a configurable receive context
-         * - Does a call.begin to the inbound DID as CallA, and does a call.answer on the call to the inbound DID as CallAR which is ignored otherwise
-         * - Does a call.connect to the inbound DID as CallB, and does a call.answer on the call to the inbound DID as CallBR which is ignored otherwise
-         * - Does a call.end on CallB then CallA
-         */
         private static ILogger Logger { get; set; }
-
-        private static ManualResetEventSlim sCompleted = new ManualResetEventSlim();
-        private static bool sSuccessful = false;
-
-        private static Client sClient = null;
-
-        private static string sCallReceiveContext = null;
-        private static string sCallToNumber = null;
-        private static string sCallFromNumber = null;
 
         public static int Main(string[] args)
         {
@@ -47,192 +151,40 @@ namespace Calling_Complex
 
             Stopwatch timer = Stopwatch.StartNew();
 
-            // Use environment variables
-            string session_host = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_HOST");
-            string session_project = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_PROJECT");
-            string session_token = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_TOKEN");
-            sCallReceiveContext = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALLRECEIVE_CONTEXT");
-            sCallToNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_TO_NUMBER");
-            sCallFromNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_FROM_NUMBER");
+            // Create the TestConsumer
+            TestConsumer consumer = null;
+            try { consumer = new TestConsumer(); }
+            catch(Exception) { return -1; }
 
-            // Make sure we have mandatory options filled in
-            if (session_host == null)
+            // Run a backgrounded task that will stop the consumer after 1 minute
+            Task.Run(() =>
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_HOST' environment variable");
-                return -1;
-            }
-            if (session_project == null)
-            {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_PROJECT' environment variable");
-                return -1;
-            }
-            if (session_token == null)
-            {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_TOKEN' environment variable");
-                return -1;
-            }
-            if (sCallReceiveContext == null)
-            {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALLRECEIVE_CONTEXT' environment variable");
-                return -1;
-            }
-            if (sCallToNumber == null)
-            {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_TO_NUMBER' environment variable");
-                return -1;
-            }
-            if (sCallFromNumber == null)
-            {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_FROM_NUMBER' environment variable");
-                return -1;
-            }
+                // Wait more than long enough for the test to be completed
+                if (!consumer.Completed.Wait(TimeSpan.FromMinutes(1))) Logger.LogError("Test timed out");
+                consumer.Stop();
+            });
 
             try
             {
-                // Create the client
-                using (sClient = new Client(session_project, session_token, host: session_host))
-                {
-                    // Setup callbacks before the client is started
-                    sClient.OnReady += Client_OnReady;
-
-                    // Start the client
-                    sClient.Connect();
-
-                    // Wait more than long enough for the test to be completed
-                    if (!sCompleted.Wait(TimeSpan.FromMinutes(2))) Logger.LogError("Test timed out");
-                }
+                // Run the TestConsumer which blocks until it is stopped
+                consumer.Run();
             }
             catch (Exception exc)
             {
-                Logger.LogError(exc, "Client startup failed");
+                Logger.LogError(exc, "Consumer run exception");
             }
 
             timer.Stop();
 
             // Report test outcome
-            if (!sSuccessful) Logger.LogError("Completed unsuccessfully: {0} elapsed", timer.Elapsed);
+            if (!consumer.Successful) Logger.LogError("Completed unsuccessfully: {0} elapsed", timer.Elapsed);
             else Logger.LogInformation("Completed successfully: {0} elapsed", timer.Elapsed);
 
 #if DEBUG
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey(true);
 #endif
-            return sSuccessful ? 0 : -1;
-        }
-
-        private static void Client_OnReady(Client client)
-        {
-            // This is called when the client has established a new session, this is NOT called when a session is restored
-            Logger.LogInformation("OnReady");
-
-            // Hook all the callbacks for testing
-            client.Calling.OnCallReceived += CallingAPI_OnCallReceived;
-
-            Task.Run(() =>
-            {
-                // Request that the inbound calls for the given context reach this client
-                try { client.Calling.Receive(sCallReceiveContext); }
-                catch (Exception exc)
-                {
-                    Logger.LogError(exc, "CallReceive failed");
-                    sCompleted.Set();
-                    return;
-                }
-
-                // Create the first outbound call leg to the inbound DID associated to the context this client is receiving
-                PhoneCall callA = null;
-                try
-                {
-                    callA = client.Calling.NewPhoneCall(sCallToNumber, sCallFromNumber);
-
-                    callA.Begin();
-                }
-                catch (Exception exc)
-                {
-                    Logger.LogError(exc, "CallBeginPhone failed");
-                    sCompleted.Set();
-                    return;
-                }
-
-                // Block waiting for a reasonable amount of time for the state to change to answered or ended, this will succeed
-                // after answering the call in CallingAPI_OnCallReceived
-                if (!callA.WaitForState(TimeSpan.FromSeconds(20), CallState.answered, CallState.ended))
-                {
-                    Logger.LogError("CallA was not answered or ended in a timely fashion: {0}", callA.State);
-                    sCompleted.Set();
-                    return;
-                }
-
-                // If it's not answered, it ended for some reason
-                if (callA.State != CallState.answered)
-                {
-                    Logger.LogError("CallA was not answered");
-                    sCompleted.Set();
-                    return;
-                }
-
-                // The call was answered, try to connect another outbound call to it
-                Call callB = null;
-                try
-                {
-                    // The top level list of the devices represents entries that will be called in serial,
-                    // one at a time.  The inner list of devices represents a set of devices to call in
-                    // parallel with each other.  Ultimately only one device wins by answering first.
-                    callB = callA.Connect(new List<List<CallDevice>>
-                    {
-                        new List<CallDevice>
-                        {
-                            new CallDevice
-                            {
-                                Type = CallDevice.DeviceType.phone,
-                                Parameters = new CallDevice.PhoneParams
-                                {
-                                    ToNumber = sCallToNumber,
-                                    FromNumber = sCallFromNumber,
-                                }
-                            }
-                        }
-                    });
-                }
-                catch (Exception exc)
-                {
-                    Logger.LogError(exc, "Connect failed");
-                    sCompleted.Set();
-                    return;
-                }
-
-                // If it was connected then we just hangup both calls
-                try
-                {
-                    callB.Hangup();
-                    callA.Hangup();
-                }
-                catch (Exception exc)
-                {
-                    Logger.LogError(exc, "Hangup failed");
-                    sCompleted.Set();
-                    return;
-                }
-
-                // Mark the test successful and terminate
-                sSuccessful = true;
-                sCompleted.Set();
-            });
-        }
-
-        private static void CallingAPI_OnCallReceived(CallingAPI api, Call call, CallEventParams.ReceiveParams receiveParams)
-        {
-            Logger.LogInformation("OnCallReceived: {0}, {1}", call.CallID, call.State);
-
-            Task.Run(() =>
-            {
-                try { call.Answer(); }
-                catch (Exception exc)
-                {
-                    Logger.LogError(exc, "Answer failed");
-                    sCompleted.Set();
-                }
-            });
+            return consumer.Successful ? 0 : -1;
         }
     }
 }

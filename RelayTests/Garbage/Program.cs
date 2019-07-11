@@ -118,8 +118,6 @@ namespace Garbage
             {
                 if (!Test1(client)) return;
                 if (!Test2(client)) return;
-                if (!Test3(client)) return;
-                if (!Test4(client)) return;
 
                 // Mark the test successful and terminate
                 sSuccessful = true;
@@ -132,6 +130,8 @@ namespace Garbage
             // Test execute of signalwire setup with no inner params object
             Task<ResponseTaskResult<ExecuteResult>> setupTask = null;
             ResponseTaskResult<ExecuteResult> setupTaskResult = null;
+
+            Logger.LogInformation("Started");
 
             try
             {
@@ -147,10 +147,10 @@ namespace Garbage
                     return false;
                 }
                 var inner = exc.InnerExceptions[0];
-                if (inner.GetType() != typeof(InvalidOperationException))
+                if (inner.GetType() != typeof(ArgumentException))
                 {
                     // Successful, it detected bad arguments and responded
-                    Logger.LogError(exc, "Received an exception that was not InvalidOperationException on signalwire setup");
+                    Logger.LogError(exc, "Received an exception that was not ArgumentException on signalwire setup");
                     sCompleted.Set();
                     return false;
                 }
@@ -182,119 +182,15 @@ namespace Garbage
 
         private static bool Test2(Client client)
         {
-            // Test execute of signalwire setup with an empty inner params object (no service field)
+            // Test execute of signalwire setup with an inner params object containing a protocol field that has an invalid value for restoring
             Task<ResponseTaskResult<ExecuteResult>> setupTask = null;
             ResponseTaskResult<ExecuteResult> setupTaskResult = null;
 
-            try
-            {
-                setupTask = client.Session.ExecuteAsync("signalwire", "setup", new JObject());
-                setupTaskResult = setupTask.Result;
-            }
-            catch (AggregateException exc)
-            {
-                if (exc.InnerExceptions.Count != 1)
-                {
-                    Logger.LogError(exc, "Received an unexpected count of errors on signalwire setup");
-                    sCompleted.Set();
-                    return false;
-                }
-                var inner = exc.InnerExceptions[0];
-                if (inner.GetType() != typeof(ArgumentException))
-                {
-                    // Successful, it detected bad arguments and responded
-                    Logger.LogError(exc, "Received an exception that was not ArgumentException on signalwire setup");
-                    sCompleted.Set();
-                    return false;
-                }
-            }
-            catch (TimeoutException exc)
-            {
-                // Timeout means there was no response, that's bad
-                Logger.LogError(exc, "Received a timeout on signalwire setup");
-                sCompleted.Set();
-                return false;
-            }
-            catch (Exception exc)
-            {
-                // Anything else failed in an unexpected way
-                Logger.LogError(exc, "Received a unexpected error on signalwire setup");
-                sCompleted.Set();
-                return false;
-            }
-
-            if (setupTaskResult != null)
-            {
-                Logger.LogError("Result is not null as expected");
-                sCompleted.Set();
-                return false;
-            }
-
-            return true;
-        }
-
-        private static bool Test3(Client client)
-        {
-            // Test execute of signalwire setup with an inner params object containing a service field that has an invalid value
-            Task<ResponseTaskResult<ExecuteResult>> setupTask = null;
-            ResponseTaskResult<ExecuteResult> setupTaskResult = null;
+            Logger.LogInformation("Started");
 
             try
             {
-                setupTask = client.Session.ExecuteAsync("signalwire", "setup", new JObject { ["service"] = "invalid" });
-                setupTaskResult = setupTask.Result;
-            }
-            catch (AggregateException exc)
-            {
-                if (exc.InnerExceptions.Count != 1)
-                {
-                    Logger.LogError(exc, "Received an unexpected count of errors on signalwire setup");
-                    sCompleted.Set();
-                    return false;
-                }
-                var inner = exc.InnerExceptions[0];
-                if (inner.GetType() != typeof(ArgumentException))
-                {
-                    // Successful, it detected bad arguments and responded
-                    Logger.LogError(exc, "Received an exception that was not ArgumentException on signalwire setup");
-                    sCompleted.Set();
-                    return false;
-                }
-            }
-            catch (TimeoutException exc)
-            {
-                // Timeout means there was no response, that's bad
-                Logger.LogError(exc, "Received a timeout on signalwire setup");
-                sCompleted.Set();
-                return false;
-            }
-            catch (Exception exc)
-            {
-                // Anything else failed in an unexpected way
-                Logger.LogError(exc, "Received a unexpected error on signalwire setup");
-                sCompleted.Set();
-                return false;
-            }
-
-            if (setupTaskResult != null)
-            {
-                Logger.LogError("Result is not null as expected");
-                sCompleted.Set();
-                return false;
-            }
-
-            return true;
-        }
-
-        private static bool Test4(Client client)
-        {
-            // Test execute of signalwire setup with an inner params object containing a service field that has a valid value but an invalid protocol for restoring
-            Task<ResponseTaskResult<ExecuteResult>> setupTask = null;
-            ResponseTaskResult<ExecuteResult> setupTaskResult = null;
-
-            try
-            {
-                setupTask = client.Session.ExecuteAsync("signalwire", "setup", new JObject { ["service"] = "calling", ["protocol"] = "invalid" });
+                setupTask = client.Session.ExecuteAsync("signalwire", "setup", new JObject { ["protocol"] = "invalid" });
                 setupTaskResult = setupTask.Result;
             }
             catch (AggregateException exc)

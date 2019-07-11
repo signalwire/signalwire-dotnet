@@ -39,7 +39,8 @@ namespace SignalWire.Relay
         public delegate void ClientCallback(Client client);
 
         private bool mDisposed = false;
-        private CallingAPI mCalling = null;
+        private SignalwireAPI mSignalwireAPI = null;
+        private CallingAPI mCallingAPI = null;
 
         public Client(
             string project, string token,
@@ -68,17 +69,16 @@ namespace SignalWire.Relay
 
             Session.OnReady += s => OnReady?.Invoke(this);
             Session.OnDisconnected += s => OnDisconnected?.Invoke(this);
+
+            mSignalwireAPI = new SignalwireAPI(this);
+            mCallingAPI = new CallingAPI(mSignalwireAPI);
         }
 
         public UpstreamSession Session { get; private set; }
-        public CallingAPI Calling
-        {
-            get
-            {
-                if (mCalling == null) mCalling = new CallingAPI(this);
-                return mCalling;
-            }
-        }
+
+        public SignalwireAPI Signalwire {  get { return mSignalwireAPI; } }
+
+        public CallingAPI Calling { get { return mCallingAPI; } }
 
         public event ClientCallback OnReady;
         public event ClientCallback OnDisconnected;
@@ -107,6 +107,12 @@ namespace SignalWire.Relay
             }
         }
         #endregion
+
+        public void Reset()
+        {
+            mSignalwireAPI.Reset();
+            mCallingAPI.Reset();
+        }
 
         public void Connect()
         {

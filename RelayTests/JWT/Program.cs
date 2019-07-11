@@ -140,8 +140,7 @@ namespace JWT
                         return;
                     }
 
-                    CallingAPI api = new CallingAPI(client);
-                    api.Setup().ContinueWith(t =>
+                    client.Signalwire.SetupAsync().ContinueWith(t =>
                     {
                         if (t.IsCompletedSuccessfully)
                         {
