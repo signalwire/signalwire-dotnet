@@ -1,4 +1,5 @@
 ﻿using SignalWire.Relay.Calling;
+using SignalWire.Relay.Tasking;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,6 +17,8 @@ namespace SignalWire.Relay
 
         public string Host { get; set; }
 
+        public string Space { get; set; }
+
         public string Project { get; set; }
 
         public string Token { get; set; }
@@ -30,6 +33,8 @@ namespace SignalWire.Relay
 
         protected virtual void OnIncomingCall(Call call) { }
 
+        protected virtual void OnTask(TaskingEventParams eventParams) { }
+
         public void Stop() { mShutdown.Set(); }
 
         public void Run()
@@ -42,7 +47,7 @@ namespace SignalWire.Relay
             if (string.IsNullOrWhiteSpace(Project)) throw new ArgumentNullException("Project");
             if (string.IsNullOrWhiteSpace(Token)) throw new ArgumentNullException("Token");
 
-            using (mClient = new Client(Project, Token, host: Host))
+            using (mClient = new Client(Project, Token, host: Host, space: Space))
             {
                 mClient.OnReady += c =>
                 {
@@ -58,6 +63,7 @@ namespace SignalWire.Relay
                     });
                 };
                 mClient.Calling.OnCallReceived += (a, c, p) => Task.Run(() => OnIncomingCall(c));
+                mClient.Tasking.OnTaskReceived += (c, p) => Task.Run(() => OnTask(p));
 
                 mClient.Connect();
 

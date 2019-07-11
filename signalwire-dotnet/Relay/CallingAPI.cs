@@ -72,9 +72,9 @@ namespace SignalWire.Relay
 
         private void OnNotification(Client client, BroadcastParams broadcastParams)
         {
-            mLogger.LogDebug("CallingAPI OnNotification");
-
             if (broadcastParams.Event != "queuing.relay.events" && broadcastParams.Event != "relay") return;
+
+            mLogger.LogDebug("CallingAPI OnNotification");
 
             CallingEventParams callingEventParams = null;
             try { callingEventParams = broadcastParams.ParametersAs<CallingEventParams>(); }
