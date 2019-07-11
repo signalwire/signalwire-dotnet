@@ -40,9 +40,9 @@ namespace SignalWire.Relay
 
         private bool mDisposed = false;
 
+        private string mHost = null;
         private string mProjectID = null;
         private string mToken = null;
-        private string mSpace = null;
 
         private SignalwireAPI mSignalwireAPI = null;
         private CallingAPI mCallingAPI = null;
@@ -51,7 +51,6 @@ namespace SignalWire.Relay
         public Client(
             string project, string token,
             string host = null,
-            string space = null,
             bool jwt = false,
             TimeSpan? connectDelay = null, TimeSpan? connectTimeout = null, TimeSpan? closeTimeout = null)
         {
@@ -59,9 +58,9 @@ namespace SignalWire.Relay
             if (string.IsNullOrWhiteSpace(token)) throw new ArgumentNullException("Must provide a token");
             if (string.IsNullOrWhiteSpace(host)) host = "relay.signalwire.com";
 
+            mHost = host;
             mProjectID = project;
             mToken = token;
-            mSpace = space;
 
             string authentication = null;
             if (!jwt) authentication = CreateAuthentication(project, token);
@@ -88,9 +87,9 @@ namespace SignalWire.Relay
 
         public UpstreamSession Session { get; private set; }
 
+        public string Host { get { return mHost; } }
         public string ProjectID { get { return mProjectID; } }
         public string Token { get { return mToken; } }
-        public string Space { get { return mSpace; } }
 
         public SignalwireAPI Signalwire {  get { return mSignalwireAPI; } }
 

@@ -53,11 +53,9 @@ namespace SignalWire.Relay
 
         public bool Deliver(string context, JObject message)
         {
-            if (string.IsNullOrWhiteSpace(API.Client.Space)) throw new ArgumentNullException("Must configure a space to use task delivery");
-
             bool successful = true;
 
-            WebRequest webRequest = WebRequest.Create("https://" + API.Client.Space + "/api/relay/rest/tasks");
+            WebRequest webRequest = WebRequest.Create("https://" + API.Client.Host + "/api/relay/private/tasks");
             webRequest.Timeout = 5000;
 
             webRequest.Method = "POST";

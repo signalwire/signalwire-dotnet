@@ -16,10 +16,9 @@ namespace Task_Basic
 {
     internal class TestConsumer : Consumer
     {
-        internal TestConsumer(string host, string space, string project, string token, string context)
+        internal TestConsumer(string host, string project, string token, string context)
         {
             Host = host;
-            Space = space;
             Project = project;
             Token = token;
             Contexts = new List<string> { context };
@@ -65,7 +64,6 @@ namespace Task_Basic
 
             // Use environment variables
             string host = Environment.GetEnvironmentVariable("TEST_HOST");
-            string space = Environment.GetEnvironmentVariable("TEST_SPACE");
             string project = Environment.GetEnvironmentVariable("TEST_PROJECT");
             string token = Environment.GetEnvironmentVariable("TEST_TOKEN");
             string context = Environment.GetEnvironmentVariable("TEST_CONTEXT");
@@ -74,11 +72,6 @@ namespace Task_Basic
             if (host == null)
             {
                 Logger.LogError("Missing 'TEST_HOST' environment variable");
-                return -1;
-            }
-            if (space == null)
-            {
-                Logger.LogError("Missing 'TEST_SPACE' environment variable");
                 return -1;
             }
             if (project == null)
@@ -98,7 +91,7 @@ namespace Task_Basic
             }
 
             // Create the TestConsumer
-            TestConsumer consumer = new TestConsumer(host, space, project, token, context);
+            TestConsumer consumer = new TestConsumer(host, project, token, context);
 
             // Run a backgrounded task that will stop the consumer after 2 minutes
             Task.Run(() =>
