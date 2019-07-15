@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SignalWire.Relay.Calling
+namespace SignalWire.Relay
 {
     public sealed class Event
     {
