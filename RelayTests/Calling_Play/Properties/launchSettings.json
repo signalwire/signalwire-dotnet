@@ -3,12 +3,10 @@
     "Calling_Play": {
       "commandName": "Project",
       "environmentVariables": {
-        "SWCLIENT_TEST_SESSION_HOST": "replaceme",
-        "SWCLIENT_TEST_SESSION_PROJECT": "replaceme",
-        "SWCLIENT_TEST_SESSION_TOKEN": "replaceme",
-        "SWCLIENT_TEST_CALLRECEIVE_CONTEXT": "replaceme",
-        "SWCLIENT_TEST_CALL_FROM_NUMBER": "replaceme",
-        "SWCLIENT_TEST_CALL_TO_NUMBER": "replaceme"
+        "TEST_HOST": "replaceme",
+        "TEST_PROJECT": "replaceme",
+        "TEST_TOKEN": "replaceme",
+        "TEST_CONTEXT": "replaceme"
       }
     }
   }
