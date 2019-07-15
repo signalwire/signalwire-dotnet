@@ -59,60 +59,60 @@ namespace Calling_Detect
             Stopwatch timer = Stopwatch.StartNew();
 
             // Use environment variables
-            string session_host = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_HOST");
-            string session_project = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_PROJECT");
-            string session_token = Environment.GetEnvironmentVariable("SWCLIENT_TEST_SESSION_TOKEN");
-            sCallReceiveContext = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALLRECEIVE_CONTEXT");
-            sCallToHumanNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_TO_HUMAN_NUMBER");
-            sCallToMachineNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_TO_MACHINE_NUMBER");
-            sCallToFaxNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_TO_FAX_NUMBER");
-            sCallToDigitNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_TO_DIGIT_NUMBER");
-            sCallFromNumber = Environment.GetEnvironmentVariable("SWCLIENT_TEST_CALL_FROM_NUMBER");
+            string session_host = Environment.GetEnvironmentVariable("TEST_SESSION_HOST");
+            string session_project = Environment.GetEnvironmentVariable("TEST_SESSION_PROJECT");
+            string session_token = Environment.GetEnvironmentVariable("TEST_SESSION_TOKEN");
+            sCallReceiveContext = Environment.GetEnvironmentVariable("TEST_CONTEXT");
+            sCallToHumanNumber = Environment.GetEnvironmentVariable("TEST_TO_HUMAN_NUMBER");
+            sCallToMachineNumber = Environment.GetEnvironmentVariable("TEST_TO_MACHINE_NUMBER");
+            sCallToFaxNumber = Environment.GetEnvironmentVariable("TEST_TO_FAX_NUMBER");
+            sCallToDigitNumber = Environment.GetEnvironmentVariable("TEST_TO_DIGIT_NUMBER");
+            sCallFromNumber = Environment.GetEnvironmentVariable("TEST_FROM_NUMBER");
 
             // Make sure we have mandatory options filled in
             if (session_host == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_HOST' environment variable");
+                Logger.LogError("Missing 'TEST_SESSION_HOST' environment variable");
                 return -1;
             }
             if (session_project == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_PROJECT' environment variable");
+                Logger.LogError("Missing 'TEST_SESSION_PROJECT' environment variable");
                 return -1;
             }
             if (session_token == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_SESSION_TOKEN' environment variable");
+                Logger.LogError("Missing 'TEST_SESSION_TOKEN' environment variable");
                 return -1;
             }
             if (sCallReceiveContext == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALLRECEIVE_CONTEXT' environment variable");
+                Logger.LogError("Missing 'TEST_CONTEXT' environment variable");
                 return -1;
             }
             if (sCallToHumanNumber == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_TO_HUMAN_NUMBER' environment variable");
+                Logger.LogError("Missing 'TEST_TO_HUMAN_NUMBER' environment variable");
                 return -1;
             }
             if (sCallToMachineNumber == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_TO_MACHINE_NUMBER' environment variable");
+                Logger.LogError("Missing 'TEST_TO_MACHINE_NUMBER' environment variable");
                 return -1;
             }
             if (sCallToFaxNumber == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_TO_FAX_NUMBER' environment variable");
+                Logger.LogError("Missing 'TEST_TO_FAX_NUMBER' environment variable");
                 return -1;
             }
             if (sCallToDigitNumber == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_TO_DIGIT_NUMBER' environment variable");
+                Logger.LogError("Missing 'TEST_TO_DIGIT_NUMBER' environment variable");
                 return -1;
             }
             if (sCallFromNumber == null)
             {
-                Logger.LogError("Missing 'SWCLIENT_TEST_CALL_FROM_NUMBER' environment variable");
+                Logger.LogError("Missing 'TEST_FROM_NUMBER' environment variable");
                 return -1;
             }
 
