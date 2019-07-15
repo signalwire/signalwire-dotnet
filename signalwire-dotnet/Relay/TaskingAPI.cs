@@ -55,7 +55,7 @@ namespace SignalWire.Relay
         {
             bool successful = true;
 
-            WebRequest webRequest = WebRequest.Create("https://" + API.Client.Host + "/api/relay/private/tasks");
+            WebRequest webRequest = WebRequest.Create("https://" + API.Client.Host + "/api/relay/rest/tasks");
             webRequest.Timeout = 5000;
 
             webRequest.Method = "POST";
