@@ -36,6 +36,7 @@ namespace Calling_Detect
 
         private static Client sClient = null;
         private static CallingAPI sCallingAPI = null;
+        private static DetectAction sDetect = null;
 
         private static string sCallReceiveContext = null;
         private static string sCallToHumanNumber = null;
@@ -118,7 +119,7 @@ namespace Calling_Detect
             try
             {
                 // Create the client
-                using (sClient = new Client(session_host, session_project, session_token))
+                using (sClient = new Client(session_project, session_token, host: session_host))
                 {
                     // Setup callbacks before the client is started
                     sClient.OnReady += Client_OnReady;
@@ -175,7 +176,7 @@ namespace Calling_Detect
             Logger.LogInformation("OnReady");
 
             // Create the api associating it to the client for transport
-            sCallingAPI = new CallingAPI(client);
+            sCallingAPI = client.Calling;
 
             Task.Run(() =>
             {
@@ -250,22 +251,24 @@ namespace Calling_Detect
             string toNumber,
             bool shouldRun,
             ManualResetEventSlim waitHandle,
-            Func<CallEventParams.DetectParams, bool> isDetectValid,
+            Func<CallingEventParams.DetectParams, bool> isDetectValid,
             Action setSuccessfulDetection,
             CallDetect detect)
         {
             if (!shouldRun)
             {
                 waitHandle.Set();
+                sDetect = null;
                 return;
             }
  
             Logger.LogInformation("[{0}] Beginning setup for call to {1}", tag, toNumber);
             PhoneCall call = sCallingAPI.NewPhoneCall(toNumber, sCallFromNumber);
             Logger.LogInformation("[{0}] Call created, associating events", tag);
-            call.OnDetect += (CallingAPI api, Call detectedCall, CallEventParams.DetectParams detectParams) =>
+            call.OnDetect += (CallingAPI api, Call detectedCall, CallingEventParams detectEventParams, CallingEventParams.DetectParams detectParams) =>
             {
-                Logger.LogInformation("[{0}] OnDetect with ID: {1}, {2} for {3}", tag, detectedCall.CallID, detectParams.Detect.Type, detectParams.ControlID);
+                if (detectParams.Detect.Params.Event == "READY") return;
+                Logger.LogInformation("[{0}] OnDetect with ID: {1}, {2} for {3}", tag, detectedCall.ID, detectParams.Detect.Type, detectParams.ControlID);
                 if (isDetectValid(detectParams))
                 {
                     Logger.LogInformation("[{0}] Completed successfully", tag);
@@ -275,30 +278,38 @@ namespace Calling_Detect
                 {
                     Logger.LogError("[{0}] Unsuccessful", tag);
                 }
+
+                Task.Run(() =>
+                {
+                    sDetect.Stop();
+                    sDetect = null;
+                });
             };
             Logger.LogInformation("[{0}] OnDetect associated", tag);
-            call.OnEnded += (CallingAPI api, Call endedCall, CallState oldState, CallEventParams.StateParams stateParams) =>
+            call.OnEnded += (CallingAPI api, Call endedCall, CallingEventParams stateEventParams, CallingEventParams.StateParams stateParams) =>
             {
-                Logger.LogInformation("[{0}] OnEnded with ID: {1}", tag, endedCall.CallID);
+                Logger.LogInformation("[{0}] OnEnded with ID: {1}", tag, endedCall.ID);
                 waitHandle.Set();
+                sDetect = null;
             };
             Logger.LogInformation("[{0}] OnEnded associated", tag);
-            call.OnAnswered += (CallingAPI api, Call answeredCall, CallState oldState, CallEventParams.StateParams stateParams) =>
+            call.OnAnswered += (CallingAPI api, Call answeredCall, CallingEventParams answerEventParams, CallingEventParams.StateParams stateParams) =>
             {
-                Logger.LogInformation("[{0}] OnAnswered with ID: {1}", tag, answeredCall.CallID);
+                Logger.LogInformation("[{0}] OnAnswered with ID: {1}", tag, answeredCall.ID);
 
                 Task.Run(() =>
                 {
                     try
                     {
                         Logger.LogInformation("[{0}] Performing detect", tag);
-                        answeredCall.Detect(detect);
+                        sDetect = answeredCall.DetectAsync(detect);
                         Logger.LogInformation("[{0}] Detect performed", tag);
                     }
                     catch (Exception exc)
                     {
                         Logger.LogError(exc, $"[{tag}] call.Detect failed");
                         waitHandle.Set();
+                        sDetect = null;
                         return;
                     }
                 });
@@ -308,41 +319,42 @@ namespace Calling_Detect
             try
             {
                 Logger.LogInformation("[{0}] Executing call", tag);
-                call.Begin();
+                var dialAction = call.Dial();
                 Logger.LogInformation("[{0}] Call executed", tag);
             }
             catch (Exception exc)
             {
-                Logger.LogError(exc, $"[{tag}] call.Begin failed");
+                Logger.LogError(exc, $"[{tag}] call.DialAsync failed");
                 waitHandle.Set();
+                sDetect = null;
                 return;
             }
         }
 
-        private static bool OnCallDetectHuman(CallEventParams.DetectParams detectParams)
+        private static bool OnCallDetectHuman(CallingEventParams.DetectParams detectParams)
         {
             return
-                detectParams.Detect.Type == CallEventParams.DetectParams.DetectType.machine &&
+                detectParams.Detect.Type == CallingEventParams.DetectParams.DetectType.machine &&
                 detectParams.Detect.Params.Event == "HUMAN";
         }
 
-        private static bool OnCallDetectMachine(CallEventParams.DetectParams detectParams)
+        private static bool OnCallDetectMachine(CallingEventParams.DetectParams detectParams)
         {
             return
-                detectParams.Detect.Type == CallEventParams.DetectParams.DetectType.machine &&
+                detectParams.Detect.Type == CallingEventParams.DetectParams.DetectType.machine &&
                 detectParams.Detect.Params.Event == "MACHINE";
         }
 
-        private static bool OnCallDetectFax(CallEventParams.DetectParams detectParams)
+        private static bool OnCallDetectFax(CallingEventParams.DetectParams detectParams)
         {
-            return detectParams.Detect.Type == CallEventParams.DetectParams.DetectType.fax;
+            return detectParams.Detect.Type == CallingEventParams.DetectParams.DetectType.fax;
         }
 
-        private static bool OnCallDetectDigit(CallEventParams.DetectParams detectParams)
+        private static bool OnCallDetectDigit(CallingEventParams.DetectParams detectParams)
         {
             // TODO
             // Improve detection by looking for specific digit sequence or whatever
-            return detectParams.Detect.Type == CallEventParams.DetectParams.DetectType.digit;
+            return detectParams.Detect.Type == CallingEventParams.DetectParams.DetectType.digit;
         }
     }
 }

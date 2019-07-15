@@ -42,7 +42,7 @@ namespace SignalWire.Relay.Calling
         public delegate void RecordFinishedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.RecordParams recordParams);
         public delegate void RecordNoInputCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.RecordParams recordParams);
 
-        public delegate void DetectCallback(CallingAPI api, Call call, CallEventParams.DetectParams detectParams);
+        public delegate void DetectCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DetectParams detectParams);
 
         protected readonly ILogger mLogger = null;
 
@@ -290,9 +290,9 @@ namespace SignalWire.Relay.Calling
             }
         }
 
-        internal void DetectHandler(CallEventParams.DetectParams detectParams)
+        internal void DetectHandler(CallingEventParams eventParams, CallingEventParams.DetectParams detectParams)
         {
-            OnDetect?.Invoke(mAPI, this, detectParams);
+            OnDetect?.Invoke(mAPI, this, eventParams, detectParams);
         }
 
         public DialResult Dial()
@@ -977,33 +977,73 @@ namespace SignalWire.Relay.Calling
 
             return resultRecord;
         }
-
-        public DetectAction Detect(CallDetect detect, double? timeout = null)
+        public DetectResult Detect(CallDetect detect)
         {
-            return DetectAsync(detect, timeout: timeout).Result;
+            return InternalDetectAsync(Guid.NewGuid().ToString(), detect).Result;
         }
 
-        public async Task<DetectAction> DetectAsync(CallDetect detect, double? timeout = null)
+        public DetectAction DetectAsync(CallDetect detect)
         {
-            // Create the action first so it can hook events and not potentially miss anything
-            DetectAction action = new DetectAction(this, Guid.NewGuid().ToString(), detect);
-
-            Task<CallDetectResult> taskCallDetectResult = mAPI.LL_CallDetectAsync(new CallDetectParams()
+            DetectAction action = new DetectAction
             {
-                NodeID = mNodeID,
-                CallID = mCallID,
-                ControlID = action.ControlID,
-                Detect = detect,
-                Timeout = timeout,
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = detect,
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalDetectAsync(action.ControlID, detect);
+                action.Completed = true;
             });
-
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallDetectResult callDetectResult = await taskCallDetectResult;
-
-            // If there was an internal error of any kind then throw an exception
-            mAPI.ThrowIfError(callDetectResult.Code, callDetectResult.Message);
-
             return action;
+        }
+
+        private async Task<DetectResult> InternalDetectAsync(string controlID, CallDetect detect)
+        {
+            await API.API.SetupAsync();
+
+            DetectResult resultDetect = new DetectResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            DetectCallback callback = (a, c, e, p) =>
+            {
+                resultDetect.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(true);
+            };
+
+            OnDetect += callback;
+
+            try
+            {
+                Task<LL_DetectResult> taskLLDetect = mAPI.LL_DetectAsync(new LL_DetectParams()
+                {
+                    NodeID = mNodeID,
+                    CallID = mID,
+                    ControlID = controlID,
+                    Detect = detect,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_DetectResult resultLLDetect = await taskLLDetect;
+                if (resultLLDetect.Code == "200")
+                {
+                    mLogger.LogDebug("Detect {0} for call {1} waiting for completion events", controlID, ID);
+
+                    resultDetect.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("Detect {0} for call {1} {2}", controlID, ID, resultDetect.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Detect {0} for call {1} exception", controlID, ID);
+            }
+
+            // Unhook temporary callbacks
+            OnDetect -= callback;
+
+            return resultDetect;
         }
     }
 

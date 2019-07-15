@@ -7,7 +7,7 @@ using System.Text;
 
 namespace SignalWire.Relay.Calling
 {
-    public sealed class CallDetectStopParams
+    public sealed class LL_DetectParams
     {
         [JsonProperty("node_id", Required = Required.Always)]
         public string NodeID { get; set; }
@@ -17,5 +17,8 @@ namespace SignalWire.Relay.Calling
 
         [JsonProperty("control_id", Required = Required.Always)]
         public string ControlID { get; set; }
+
+        [JsonProperty("detect", Required = Required.Always)]
+        public CallDetect Detect { get; set; }
     }
 }

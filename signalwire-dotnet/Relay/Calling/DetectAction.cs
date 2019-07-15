@@ -8,42 +8,29 @@ namespace SignalWire.Relay.Calling
 {
     public sealed class DetectAction
     {
-        internal DetectAction(Call call, string controlID, CallDetect detect)
-        {
-            Call = call;
-            ControlID = controlID;
-            Detect = detect;
-        }
+        internal Call Call { get; set; }
 
-        public readonly Call Call;
-        public readonly string ControlID;
-        public readonly CallDetect Detect;
+        public string ControlID { get; internal set; }
 
-        private TaskCompletionSource<bool> mFinished = new TaskCompletionSource<bool>();
+        public bool Completed { get; internal set; }
+
+        public DetectResult Result { get; internal set; }
+
+        public CallDetect Payload { get; internal set; }
 
         public void Stop()
         {
-            StopAsync().Wait();
-        }
-
-        public async Task StopAsync()
-        {
-            Task<CallDetectStopResult> taskCallDetectStopResult = Call.API.LL_CallDetectStopAsync(new CallDetectStopParams()
+            Task<LL_DetectStopResult> taskLLDetectStop = Call.API.LL_DetectStopAsync(new LL_DetectStopParams()
             {
                 NodeID = Call.NodeID,
-                CallID = Call.CallID,
+                CallID = Call.ID,
                 ControlID = ControlID,
             });
 
-
-            // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            CallDetectStopResult callDetectStopResult = await taskCallDetectStopResult;
+            LL_DetectStopResult resultLLDetectStop = taskLLDetectStop.Result;
 
             // If there was an internal error of any kind then throw an exception
-            Call.API.ThrowIfError(callDetectStopResult.Code, callDetectStopResult.Message);
-
-            // Wait for completion sources, received an error or finished event for play
-            await mFinished.Task;
+            Call.API.ThrowIfError(resultLLDetectStop.Code, resultLLDetectStop.Message);
         }
     }
 }

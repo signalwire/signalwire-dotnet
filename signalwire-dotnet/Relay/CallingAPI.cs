@@ -111,7 +111,7 @@ namespace SignalWire.Relay
                     OnCallingEvent_Record(client, broadcastParams, callingEventParams);
                     break;
                 case "calling.call.detect":
-                    OnEvent_CallingCallDetect(client, broadcastParams, callEventParams);
+                    OnCallingEvent_Detect(client, broadcastParams, callingEventParams);
                     break;
                 default: break;
             }
@@ -302,22 +302,22 @@ namespace SignalWire.Relay
             call.RecordHandler(callEventParams, recordParams);
         }
 
-        private void OnEvent_CallingCallDetect(Client client, BroadcastParams broadcastParams, CallEventParams callEventParams)
+        private void OnCallingEvent_Detect(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
         {
-            CallEventParams.DetectParams detectParams = null;
-            try { detectParams = callEventParams.ParametersAs<CallEventParams.DetectParams>(); }
+            CallingEventParams.DetectParams detectParams = null;
+            try { detectParams = callEventParams.ParametersAs<CallingEventParams.DetectParams>(); }
             catch (Exception exc)
             {
-                Logger.LogWarning(exc, "Failed to parse DetectParams");
+                mLogger.LogWarning(exc, "Failed to parse DetectParams");
                 return;
             }
             if (!mCalls.TryGetValue(detectParams.CallID, out Call call))
             {
-                Logger.LogWarning("Received DetectParams with unknown CallID: {0}", detectParams.CallID);
+                mLogger.LogWarning("Received DetectParams with unknown CallID: {0}", detectParams.CallID);
                 return;
             }
 
-            call.DetectHandler(detectParams);
+            call.DetectHandler(callEventParams, detectParams);
         }
 
         // Utility
@@ -375,14 +375,14 @@ namespace SignalWire.Relay
             return mAPI.ExecuteAsync<LL_RecordStopParams, LL_RecordStopResult>("call.record.stop", parameters);
         }
 
-        public async Task<CallDetectResult> LL_CallDetectAsync(CallDetectParams parameters)
+        public Task<LL_DetectResult> LL_DetectAsync(LL_DetectParams parameters)
         {
-            return await ExecuteAsync<CallDetectParams, CallDetectResult>("call.detect", parameters);
+            return mAPI.ExecuteAsync<LL_DetectParams, LL_DetectResult>("call.detect", parameters);
         }
 
-        public async Task<CallDetectStopResult> LL_CallDetectStopAsync(CallDetectStopParams parameters)
+        public Task<LL_DetectStopResult> LL_DetectStopAsync(LL_DetectStopParams parameters)
         {
-            return await ExecuteAsync<CallDetectStopParams, CallDetectStopResult>("call.detect.stop", parameters);
+            return mAPI.ExecuteAsync<LL_DetectStopParams, LL_DetectStopResult>("call.detect.stop", parameters);
         }
     }
 }
