@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-rc2] - 2019-07-15
+### Fixed
+- Moved SignalWire.Relay.Calling.Event to SignalWire.Relay.Event
+- Adjusted Call.WaitFor to wait properly for state requested, Ended, or	client disconnected
+
 ## [2.0.0-rc1] - 2019-07-11
 ### Added
 - Major rewrite on front facing API for the new 2.x Consumer model

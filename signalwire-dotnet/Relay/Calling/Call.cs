@@ -138,7 +138,7 @@ namespace SignalWire.Relay.Calling
             StateChangeCallback stateChangeCallback = (a, c, e, p) =>
             {
                 ret = Array.Exists(states, s => p.CallState == s);
-                cancelDelay.Cancel();
+                if (ret || p.CallState == CallState.ended) cancelDelay.Cancel();
             };
             API.API.Client.OnDisconnected += disconnectedCallback;
             OnStateChange += stateChangeCallback;
