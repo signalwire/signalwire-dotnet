@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SignalWire.Relay.Tasking;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +13,7 @@ namespace SignalWire.Relay
 {
     public sealed class TaskingAPI
     {
-        public delegate void TaskReceivedCallback(TaskingAPI api, TaskingEventParams eventParams);
+        public delegate void TaskReceivedCallback(TaskingAPI api, RelayTask eventParams);
 
         private readonly ILogger mLogger = null;
         private SignalwireAPI mAPI = null;
@@ -40,8 +39,8 @@ namespace SignalWire.Relay
 
             mLogger.LogDebug("TaskingAPI OnNotification");
 
-            TaskingEventParams taskingEventParams = null;
-            try { taskingEventParams = broadcastParams.ParametersAs<TaskingEventParams>(); }
+            RelayTask taskingEventParams = null;
+            try { taskingEventParams = broadcastParams.ParametersAs<RelayTask>(); }
             catch (Exception exc)
             {
                 mLogger.LogWarning(exc, "Failed to parse TaskingEventParams");
@@ -54,39 +53,15 @@ namespace SignalWire.Relay
         public bool Deliver(string context, JObject message)
         {
             bool successful = true;
-
-            WebRequest webRequest = WebRequest.Create("https://" + API.Client.Host + "/api/relay/rest/tasks");
-            webRequest.Timeout = 5000;
-
-            webRequest.Method = "POST";
-            webRequest.Headers.Add(HttpRequestHeader.ContentType, "application/json");
-            webRequest.Headers.Add(HttpRequestHeader.Accept, "application/json");
-            webRequest.Headers.Add(HttpRequestHeader.AcceptCharset, "utf-8");
-            webRequest.Headers.Add(HttpRequestHeader.Authorization, "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(API.Client.ProjectID + ":" + API.Client.Token)));
-            webRequest.Headers.Add(HttpRequestHeader.UserAgent, "Blade.Auth/1");
-
-            //JObject authorization = null;
             try
             {
-                using (StreamWriter writer = new StreamWriter(webRequest.GetRequestStream(), new UTF8Encoding(false)))
-                {
-                    writer.Write(new JObject { ["context"] = context, ["message"] = message }.ToString(Formatting.None));
-                }
-                using (HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse())
-                {
-                    if ((int)webResponse.StatusCode < 200 || (int)webResponse.StatusCode >= 300)
-                    {
-                        mLogger.LogError("Task delivery failed with status code: {0} {1}, {2}", (int)webResponse.StatusCode, webResponse.StatusCode, webResponse.StatusDescription);
-                        successful = false;
-                    }
-                }
+                RelayTask.Deliver(API.Client.Host, API.Client.ProjectID, API.Client.Token, context, message);
             }
             catch (Exception exc)
             {
                 mLogger.LogWarning(exc, "Failed task delivery");
                 successful = false;
             }
-
             return successful;
         }
     }

@@ -1,5 +1,4 @@
 ﻿using SignalWire.Relay.Calling;
-using SignalWire.Relay.Tasking;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -31,7 +30,7 @@ namespace SignalWire.Relay
 
         protected virtual void OnIncomingCall(Call call) { }
 
-        protected virtual void OnTask(TaskingEventParams eventParams) { }
+        protected virtual void OnTask(RelayTask eventParams) { }
 
         public void Stop() { mShutdown.Set(); }
 

@@ -4,8 +4,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SignalWire.Relay;
-using SignalWire.Relay.Calling;
-using SignalWire.Relay.Tasking;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -32,15 +30,19 @@ namespace Task_Basic
 
         protected override void Ready()
         {
-            Client.Tasking.Deliver(Contexts[0], new JObject { ["foo"] = 123 });
+            if (!Client.Tasking.Deliver(Contexts[0], new JObject { ["foo"] = 123 }))
+            {
+                Logger.LogWarning("Delivering task failed");
+                Completed.Set();
+            }
         }
 
         // This is executed in a new thread each time, so it is safe to use blocking calls
-        protected override void OnTask(TaskingEventParams eventParams)
+        protected override void OnTask(RelayTask task)
         {
-            Logger.LogInformation("Received task successfully!\n{0}", eventParams.Message.ToString(Formatting.Indented));
+            Logger.LogInformation("Received task successfully!\n{0}", task.Message.ToString(Formatting.Indented));
 
-            Successful = eventParams.Message != null && eventParams.Message.Value<int>("foo") == 123;
+            Successful = task.Message != null && task.Message.Value<int>("foo") == 123;
             Completed.Set();
         }
     }
