@@ -31,7 +31,7 @@ namespace Calling_Detect
         private static bool sFaxSuccessful = !sRunFax;
 
         private static ManualResetEventSlim sDigitCompleted = new ManualResetEventSlim();
-        private static bool sRunDigit = false;
+        private static bool sRunDigit = true;
         private static bool sDigitSuccessful = !sRunDigit;
 
         private static Client sClient = null;
@@ -268,29 +268,49 @@ namespace Calling_Detect
             call.OnDetect += (CallingAPI api, Call detectedCall, CallingEventParams detectEventParams, CallingEventParams.DetectParams detectParams) =>
             {
                 if (detectParams.Detect.Params.Event == "READY") return;
+                if (detectParams.Detect.Params.Event == "finished")
+                {
+                    if (isDetectValid(detectParams))
+                    {
+                        Logger.LogInformation("[{0}] Completed successfully", tag);
+                        setSuccessfulDetection();
+
+                        Task.Run(() =>
+                        {
+                            sDetect.Stop();
+                            sDetect = null;
+                        });
+                    }
+                    else
+                    {
+                        Logger.LogError("[{0}] Unsuccessful", tag);
+                    }
+                    return;
+                }
+
                 Logger.LogInformation("[{0}] OnDetect with ID: {1}, {2} for {3}", tag, detectedCall.ID, detectParams.Detect.Type, detectParams.ControlID);
                 if (isDetectValid(detectParams))
                 {
                     Logger.LogInformation("[{0}] Completed successfully", tag);
                     setSuccessfulDetection();
+
+                    Task.Run(() =>
+                    {
+                        sDetect.Stop();
+                        sDetect = null;
+                    });
                 }
                 else
                 {
                     Logger.LogError("[{0}] Unsuccessful", tag);
                 }
-
-                Task.Run(() =>
-                {
-                    sDetect.Stop();
-                    sDetect = null;
-                });
             };
             Logger.LogInformation("[{0}] OnDetect associated", tag);
             call.OnEnded += (CallingAPI api, Call endedCall, CallingEventParams stateEventParams, CallingEventParams.StateParams stateParams) =>
             {
                 Logger.LogInformation("[{0}] OnEnded with ID: {1}", tag, endedCall.ID);
-                waitHandle.Set();
                 sDetect = null;
+                waitHandle.Set();
             };
             Logger.LogInformation("[{0}] OnEnded associated", tag);
             call.OnAnswered += (CallingAPI api, Call answeredCall, CallingEventParams answerEventParams, CallingEventParams.StateParams stateParams) =>
@@ -353,7 +373,7 @@ namespace Calling_Detect
         private static bool OnCallDetectDigit(CallingEventParams.DetectParams detectParams)
         {
             // TODO
-            // Improve detection by looking for specific digit sequence or whatever
+            // Improve test by looking for specific digit sequence or whatever
             return detectParams.Detect.Type == CallingEventParams.DetectParams.DetectType.digit;
         }
     }
