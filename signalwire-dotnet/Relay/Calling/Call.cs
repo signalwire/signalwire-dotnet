@@ -42,6 +42,10 @@ namespace SignalWire.Relay.Calling
         public delegate void RecordFinishedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.RecordParams recordParams);
         public delegate void RecordNoInputCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.RecordParams recordParams);
 
+        public delegate void TapStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.TapParams tapParams);
+        public delegate void TapTappingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.TapParams tapParams);
+        public delegate void TapFinishedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.TapParams tapParams);
+
         protected readonly ILogger mLogger = null;
 
         protected readonly CallingAPI mAPI = null;
@@ -86,6 +90,10 @@ namespace SignalWire.Relay.Calling
         public event RecordPausedCallback OnRecordPaused;
         public event RecordFinishedCallback OnRecordFinished;
         public event RecordNoInputCallback OnRecordNoInput;
+
+        public event TapStateChangeCallback OnTapStateChange;
+        public event TapTappingCallback OnTapTapping;
+        public event TapFinishedCallback OnTapFinished;
 
         protected Call(CallingAPI api, string temporaryCallID)
         {
@@ -282,6 +290,21 @@ namespace SignalWire.Relay.Calling
                     break;
                 case CallRecordState.no_input:
                     OnRecordNoInput?.Invoke(mAPI, this, eventParams, recordParams);
+                    break;
+            }
+        }
+
+        internal void TapHandler(CallingEventParams eventParams, CallingEventParams.TapParams tapParams)
+        {
+            OnTapStateChange?.Invoke(mAPI, this, eventParams, tapParams);
+
+            switch (tapParams.State)
+            {
+                case CallTapState.tapping:
+                    OnTapTapping?.Invoke(mAPI, this, eventParams, tapParams);
+                    break;
+                case CallTapState.finished:
+                    OnTapFinished?.Invoke(mAPI, this, eventParams, tapParams);
                     break;
             }
         }
@@ -967,6 +990,86 @@ namespace SignalWire.Relay.Calling
             OnRecordNoInput -= noinputCallback;
 
             return resultRecord;
+        }
+
+        public TapResult Tap(CallTap tap, CallTapDevice device)
+        {
+            return InternalTapAsync(Guid.NewGuid().ToString(), tap, device).Result;
+        }
+
+        public TapAction TapAsync(CallTap tap, CallTapDevice device)
+        {
+            TapAction action = new TapAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = tap,
+                SourceDevice = device,
+            };
+            Task.Run(async () =>
+            {
+                TapStateChangeCallback tapStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                OnTapStateChange += tapStateChangeCallback;
+
+                action.Result = await InternalTapAsync(action.ControlID, tap, device);
+                action.SourceDevice = action.Result.SourceDevice;
+                action.Completed = true;
+
+                OnTapStateChange -= tapStateChangeCallback;
+            });
+            return action;
+        }
+
+        private async Task<TapResult> InternalTapAsync(string controlID, CallTap tap, CallTapDevice device)
+        {
+            await API.API.SetupAsync();
+
+            TapResult resultTap = new TapResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            TapFinishedCallback finishedCallback = (a, c, e, p) =>
+            {
+                resultTap.Event = new Event(e.EventType, JObject.FromObject(p));
+                resultTap.Tap = p.Tap;
+                resultTap.DestinationDevice = p.Device;
+                tcsCompletion.SetResult(true);
+            };
+
+            OnTapFinished += finishedCallback;
+
+            try
+            {
+                Task<LL_TapResult> taskLLTap = mAPI.LL_TapAsync(new LL_TapParams()
+                {
+                    NodeID = mNodeID,
+                    CallID = mID,
+                    ControlID = controlID,
+                    Tap = tap,
+                    Device = device,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_TapResult resultLLTap = await taskLLTap;
+                if (resultLLTap.Code == "200")
+                {
+                    mLogger.LogDebug("Tap {0} for call {1} waiting for completion events", controlID, ID);
+
+                    resultTap.Successful = await tcsCompletion.Task;
+                    resultTap.SourceDevice = resultLLTap.SourceDevice;
+
+                    mLogger.LogDebug("Tap {0} for call {1} {2}", controlID, ID, resultTap.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Tap {0} for call {1} exception", controlID, ID);
+            }
+
+            // Unhook temporary callbacks
+            OnTapFinished -= finishedCallback;
+
+            return resultTap;
         }
     }
 

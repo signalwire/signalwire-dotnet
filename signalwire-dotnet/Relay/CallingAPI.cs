@@ -110,6 +110,9 @@ namespace SignalWire.Relay
                 case "calling.call.record":
                     OnCallingEvent_Record(client, broadcastParams, callingEventParams);
                     break;
+                case "calling.call.tap":
+                    OnCallingEvent_Tap(client, broadcastParams, callingEventParams);
+                    break;
                 default: break;
             }
         }
@@ -299,6 +302,24 @@ namespace SignalWire.Relay
             call.RecordHandler(callEventParams, recordParams);
         }
 
+        private void OnCallingEvent_Tap(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
+        {
+            CallingEventParams.TapParams tapParams = null;
+            try { tapParams = callEventParams.ParametersAs<CallingEventParams.TapParams>(); }
+            catch (Exception exc)
+            {
+                mLogger.LogWarning(exc, "Failed to parse TapParams");
+                return;
+            }
+            if (!mCalls.TryGetValue(tapParams.CallID, out Call call))
+            {
+                mLogger.LogWarning("Received TapParams with unknown CallID: {0}", tapParams.CallID);
+                return;
+            }
+
+            call.TapHandler(callEventParams, tapParams);
+        }
+
         // Utility
         internal void ThrowIfError(string code, string message) { mAPI.ThrowIfError(code, message); }
 
@@ -352,6 +373,16 @@ namespace SignalWire.Relay
         public Task<LL_RecordStopResult> LL_RecordStopAsync(LL_RecordStopParams parameters)
         {
             return mAPI.ExecuteAsync<LL_RecordStopParams, LL_RecordStopResult>("call.record.stop", parameters);
+        }
+
+        public Task<LL_TapResult> LL_TapAsync(LL_TapParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_TapParams, LL_TapResult>("call.tap", parameters);
+        }
+
+        public Task<LL_TapStopResult> LL_TapStopAsync(LL_TapStopParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_TapStopParams, LL_TapStopResult>("call.tap.stop", parameters);
         }
     }
 }
