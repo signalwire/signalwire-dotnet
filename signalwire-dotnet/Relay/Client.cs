@@ -39,8 +39,14 @@ namespace SignalWire.Relay
         public delegate void ClientCallback(Client client);
 
         private bool mDisposed = false;
+
+        private string mHost = null;
+        private string mProjectID = null;
+        private string mToken = null;
+
         private SignalwireAPI mSignalwireAPI = null;
         private CallingAPI mCallingAPI = null;
+        private TaskingAPI mTaskingAPI = null;
 
         public Client(
             string project, string token,
@@ -51,6 +57,10 @@ namespace SignalWire.Relay
             if (string.IsNullOrWhiteSpace(project)) throw new ArgumentNullException("Must provide a project");
             if (string.IsNullOrWhiteSpace(token)) throw new ArgumentNullException("Must provide a token");
             if (string.IsNullOrWhiteSpace(host)) host = "relay.signalwire.com";
+
+            mHost = host;
+            mProjectID = project;
+            mToken = token;
 
             string authentication = null;
             if (!jwt) authentication = CreateAuthentication(project, token);
@@ -72,13 +82,20 @@ namespace SignalWire.Relay
 
             mSignalwireAPI = new SignalwireAPI(this);
             mCallingAPI = new CallingAPI(mSignalwireAPI);
+            mTaskingAPI = new TaskingAPI(mSignalwireAPI);
         }
 
         public UpstreamSession Session { get; private set; }
 
+        public string Host { get { return mHost; } }
+        public string ProjectID { get { return mProjectID; } }
+        public string Token { get { return mToken; } }
+
         public SignalwireAPI Signalwire {  get { return mSignalwireAPI; } }
 
         public CallingAPI Calling { get { return mCallingAPI; } }
+
+        public TaskingAPI Tasking {  get { return mTaskingAPI; } }
 
         public event ClientCallback OnReady;
         public event ClientCallback OnDisconnected;
@@ -112,6 +129,7 @@ namespace SignalWire.Relay
         {
             mSignalwireAPI.Reset();
             mCallingAPI.Reset();
+            mTaskingAPI.Reset();
         }
 
         public void Connect()

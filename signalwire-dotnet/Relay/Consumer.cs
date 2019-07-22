@@ -30,6 +30,8 @@ namespace SignalWire.Relay
 
         protected virtual void OnIncomingCall(Call call) { }
 
+        protected virtual void OnTask(RelayTask eventParams) { }
+
         public void Stop() { mShutdown.Set(); }
 
         public void Run()
@@ -58,6 +60,7 @@ namespace SignalWire.Relay
                     });
                 };
                 mClient.Calling.OnCallReceived += (a, c, p) => Task.Run(() => OnIncomingCall(c));
+                mClient.Tasking.OnTaskReceived += (c, p) => Task.Run(() => OnTask(p));
 
                 mClient.Connect();
 
