@@ -191,6 +191,27 @@ namespace SignalWire.Relay.Calling
             public RecordSettings Record { get; set; }
         }
 
+        public sealed class TapParams
+        {
+            [JsonProperty("node_id", Required = Required.Always)]
+            public string NodeID { get; set; }
+
+            [JsonProperty("call_id", Required = Required.Always)]
+            public string CallID { get; set; }
+
+            [JsonProperty("control_id", Required = Required.Always)]
+            public string ControlID { get; set; }
+
+            [JsonProperty("state", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
+            public CallTapState State { get; set; }
+
+            [JsonProperty("tap", Required = Required.Always)]
+            public CallTap Tap { get; set; }
+
+            [JsonProperty("device", Required = Required.Always)]
+            public CallTapDevice Device { get; set; }
+        }
+
         public sealed class DetectParams
         {
             public enum DetectType
