@@ -134,7 +134,7 @@ namespace Calling_Detect
                         sFaxCompleted.WaitHandle,
                         sDigitCompleted.WaitHandle,
                     };
-                    if (!WaitHandle.WaitAll(handles, TimeSpan.FromMinutes(5))) Logger.LogError("At least one test timed out");
+                    if (!WaitHandle.WaitAll(handles, TimeSpan.FromMinutes(2))) Logger.LogError("At least one test timed out");
                 }
             }
             catch (Exception exc)
@@ -274,31 +274,25 @@ namespace Calling_Detect
                     {
                         Logger.LogInformation("[{0}] Completed successfully", tag);
                         setSuccessfulDetection();
-
-                        Task.Run(() =>
-                        {
-                            sDetect.Stop();
-                            sDetect = null;
-                        });
                     }
                     else
                     {
                         Logger.LogError("[{0}] Unsuccessful", tag);
                     }
+                    sDetect = null;
                     return;
                 }
 
                 Logger.LogInformation("[{0}] OnDetect with ID: {1}, {2} for {3}", tag, detectedCall.ID, detectParams.Detect.Type, detectParams.ControlID);
                 if (isDetectValid(detectParams))
                 {
-                    Logger.LogInformation("[{0}] Completed successfully", tag);
                     setSuccessfulDetection();
-
                     Task.Run(() =>
                     {
                         sDetect.Stop();
                         sDetect = null;
                     });
+                    Logger.LogInformation("[{0}] Completed successfully", tag);
                 }
                 else
                 {
@@ -311,6 +305,7 @@ namespace Calling_Detect
                 Logger.LogInformation("[{0}] OnEnded with ID: {1}", tag, endedCall.ID);
                 sDetect = null;
                 waitHandle.Set();
+                Logger.LogInformation("[{0}] OnEnded complete", tag);
             };
             Logger.LogInformation("[{0}] OnEnded associated", tag);
             call.OnAnswered += (CallingAPI api, Call answeredCall, CallingEventParams answerEventParams, CallingEventParams.StateParams stateParams) =>
@@ -335,6 +330,21 @@ namespace Calling_Detect
                 });
             };
             Logger.LogInformation("[{0}] OnAnswered associated", tag);
+            call.OnConnectStateChange += (CallingAPI api, Call connectStateChangeCall, CallingEventParams connectStateChangeEventParams, CallingEventParams.ConnectParams connectStateChangeParams) =>
+            {
+                Logger.LogInformation("[{0}] OnConnectStateChange: {1}", tag, connectStateChangeParams.State);
+            };
+            Logger.LogInformation("[{0}] OnConnectStateChange associated", tag);
+            call.OnReceiveStateChange += (CallingAPI api, Call receiveStateChangeCall, CallingEventParams receiveStateChangeEventParams, CallingEventParams.ReceiveParams receiveStateChangeParams) =>
+            {
+                Logger.LogInformation("[{0}] OnReceiveStateChange: {1}", tag, receiveStateChangeParams.CallState);
+            };
+            Logger.LogInformation("[{0}] OnReceiveStateChange associated", tag);
+            call.OnStateChange += (CallingAPI api, Call stateChangeCall, CallingEventParams stateChangeEventParams, CallingEventParams.StateParams stateChangeParams) =>
+            {
+                Logger.LogInformation("[{0}] OnStateChange: {1}", tag, stateChangeParams.CallState);
+            };
+            Logger.LogInformation("[{0}] OnStateChange associated", tag);
 
             try
             {
