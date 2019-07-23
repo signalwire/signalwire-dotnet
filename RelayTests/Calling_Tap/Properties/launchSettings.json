@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "Calling_Tap": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "TEST_HOST": "replaceme",
+        "TEST_PROJECT": "replaceme",
+        "TEST_TOKEN": "replaceme",
+        "TEST_CONTEXT": "replaceme",
+        "TEST_RTPADDR": "replaceme",
+        "TEST_RTPPORT": "replaceme"
+      }
+    }
+  }
+}
