@@ -113,6 +113,9 @@ namespace SignalWire.Relay
                 case "calling.call.tap":
                     OnCallingEvent_Tap(client, broadcastParams, callingEventParams);
                     break;
+                case "calling.call.detect":
+                    OnCallingEvent_Detect(client, broadcastParams, callingEventParams);
+                    break;
                 default: break;
             }
         }
@@ -320,6 +323,24 @@ namespace SignalWire.Relay
             call.TapHandler(callEventParams, tapParams);
         }
 
+        private void OnCallingEvent_Detect(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
+        {
+            CallingEventParams.DetectParams detectParams = null;
+            try { detectParams = callEventParams.ParametersAs<CallingEventParams.DetectParams>(); }
+            catch (Exception exc)
+            {
+                mLogger.LogWarning(exc, "Failed to parse DetectParams");
+                return;
+            }
+            if (!mCalls.TryGetValue(detectParams.CallID, out Call call))
+            {
+                mLogger.LogWarning("Received DetectParams with unknown CallID: {0}", detectParams.CallID);
+                return;
+            }
+
+            call.DetectHandler(callEventParams, detectParams);
+        }
+
         // Utility
         internal void ThrowIfError(string code, string message) { mAPI.ThrowIfError(code, message); }
 
@@ -383,6 +404,16 @@ namespace SignalWire.Relay
         public Task<LL_TapStopResult> LL_TapStopAsync(LL_TapStopParams parameters)
         {
             return mAPI.ExecuteAsync<LL_TapStopParams, LL_TapStopResult>("call.tap.stop", parameters);
+        }
+
+        public Task<LL_DetectResult> LL_DetectAsync(LL_DetectParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_DetectParams, LL_DetectResult>("call.detect", parameters);
+        }
+
+        public Task<LL_DetectStopResult> LL_DetectStopAsync(LL_DetectStopParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_DetectStopParams, LL_DetectStopResult>("call.detect.stop", parameters);
         }
     }
 }
