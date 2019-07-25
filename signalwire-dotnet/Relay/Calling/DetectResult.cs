@@ -11,5 +11,9 @@ namespace SignalWire.Relay.Calling
         public Event Event { get; internal set; }
 
         public bool Successful { get; internal set; }
+
+        public string Result { get; internal set; }
+
+        public DetectResultType Type { get; internal set; }
    }
 }

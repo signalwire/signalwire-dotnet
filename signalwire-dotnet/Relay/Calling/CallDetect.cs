@@ -24,6 +24,7 @@ namespace SignalWire.Relay.Calling
                 CNG,
                 all,
             }
+
             [JsonProperty("tone", NullValueHandling = NullValueHandling.Ignore), JsonConverter(typeof(StringEnumConverter))]
             public FaxTone? Tone { get; set; }
         }
@@ -32,10 +33,13 @@ namespace SignalWire.Relay.Calling
         {
             [JsonProperty("initial_timeout", NullValueHandling = NullValueHandling.Ignore)]
             public double? InitialTimeout { get; set; }
+
             [JsonProperty("end_silence_timeout", NullValueHandling = NullValueHandling.Ignore)]
             public double? EndSilenceTimeout { get; set; }
+
             [JsonProperty("machine_voice_threshold", NullValueHandling = NullValueHandling.Ignore)]
             public double? MachineVoiceThreshold { get; set; }
+
             [JsonProperty("machine_words_threshold", NullValueHandling = NullValueHandling.Ignore)]
             public int? MachineWordsThreshold { get; set; }
         }

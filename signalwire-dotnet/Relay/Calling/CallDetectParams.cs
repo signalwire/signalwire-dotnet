@@ -20,6 +20,7 @@ namespace SignalWire.Relay.Calling
 
         [JsonProperty("detect", Required = Required.Always)]
         public CallDetect Detect { get; set; }
+
         [JsonProperty("timeout", NullValueHandling = NullValueHandling.Ignore)]
         public double? Timeout { get; set; }
     }

@@ -1113,6 +1113,54 @@ namespace SignalWire.Relay.Calling
             DetectCallback callback = (a, c, e, p) =>
             {
                 resultDetect.Event = new Event(e.EventType, JObject.FromObject(p));
+                if (p.Detect.Params.Event == "finished")
+                {
+                    resultDetect.Type = DetectResultType.Finished;
+                }
+                else if (p.Detect.Params.Event == "error")
+                {
+                    resultDetect.Type = DetectResultType.Error;
+                }
+                else
+                {
+                    switch (p.Detect.Type)
+                    {
+                        case CallingEventParams.DetectParams.DetectType.digit:
+                            resultDetect.Type = DetectResultType.DTMF;
+                            resultDetect.Result = p.Detect.Params.Event;
+                            break;
+                        case CallingEventParams.DetectParams.DetectType.fax:
+                            resultDetect.Type = DetectResultType.Fax;
+                            resultDetect.Result = p.Detect.Params.Event;
+                            break;
+                        case CallingEventParams.DetectParams.DetectType.machine:
+                            if (p.Detect.Params.Event == "HUMAN")
+                            {
+                                resultDetect.Type = DetectResultType.Human;
+                            }
+                            else if (p.Detect.Params.Event == "MACHINE")
+                            {
+                                resultDetect.Type = DetectResultType.Machine;
+                            }
+                            else if (p.Detect.Params.Event == "READY" || p.Detect.Params.Event == "NOT_READY")
+                            {
+                                resultDetect.Type = DetectResultType.Machine;
+                                resultDetect.Result = p.Detect.Params.Event;
+                            }
+                            else if (p.Detect.Params.Event == "UNKNOWN")
+                            {
+                                resultDetect.Type = DetectResultType.Unknown;
+                            }
+                            else
+                            {
+                                throw new NotSupportedException();
+                            }
+                            break;
+                        default:
+                            throw new NotSupportedException();
+                    }
+                }
+
                 tcsCompletion.SetResult(true);
             };
 

@@ -229,7 +229,7 @@ namespace SignalWire.Relay.Calling
                     public string Event { get; set; }
                 }
 
-                [JsonProperty("type", Required = Required.Always)]
+                [JsonProperty("type", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
                 public DetectType Type { get; set; }
 
                 [JsonProperty("params", Required = Required.Always)]
