@@ -22,7 +22,6 @@ namespace SignalWire.Relay.Calling
             {
                 CED,
                 CNG,
-                all,
             }
 
             [JsonProperty("tone", NullValueHandling = NullValueHandling.Ignore), JsonConverter(typeof(StringEnumConverter))]
