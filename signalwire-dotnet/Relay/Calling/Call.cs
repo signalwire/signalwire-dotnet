@@ -46,6 +46,8 @@ namespace SignalWire.Relay.Calling
         public delegate void TapTappingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.TapParams tapParams);
         public delegate void TapFinishedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.TapParams tapParams);
 
+        public delegate void DetectCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DetectParams detectParams);
+
         protected readonly ILogger mLogger = null;
 
         protected readonly CallingAPI mAPI = null;
@@ -94,6 +96,8 @@ namespace SignalWire.Relay.Calling
         public event TapStateChangeCallback OnTapStateChange;
         public event TapTappingCallback OnTapTapping;
         public event TapFinishedCallback OnTapFinished;
+
+        public event DetectCallback OnDetect;
 
         protected Call(CallingAPI api, string temporaryCallID)
         {
@@ -307,6 +311,11 @@ namespace SignalWire.Relay.Calling
                     OnTapFinished?.Invoke(mAPI, this, eventParams, tapParams);
                     break;
             }
+        }
+
+        internal void DetectHandler(CallingEventParams eventParams, CallingEventParams.DetectParams detectParams)
+        {
+            OnDetect?.Invoke(mAPI, this, eventParams, detectParams);
         }
 
         public DialResult Dial()
@@ -1070,6 +1079,123 @@ namespace SignalWire.Relay.Calling
             OnTapFinished -= finishedCallback;
 
             return resultTap;
+        }
+
+        public DetectResult Detect(CallDetect detect)
+        {
+            return InternalDetectAsync(Guid.NewGuid().ToString(), detect).Result;
+        }
+
+        public DetectAction DetectAsync(CallDetect detect)
+        {
+            DetectAction action = new DetectAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = detect,
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalDetectAsync(action.ControlID, detect);
+                action.Completed = true;
+            });
+            return action;
+        }
+
+        private async Task<DetectResult> InternalDetectAsync(string controlID, CallDetect detect)
+        {
+            await API.API.SetupAsync();
+
+            DetectResult resultDetect = new DetectResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            DetectCallback callback = (a, c, e, p) =>
+            {
+                resultDetect.Event = new Event(e.EventType, JObject.FromObject(p));
+                if (p.Detect.Params.Event == "finished")
+                {
+                    resultDetect.Type = DetectResultType.Finished;
+                }
+                else if (p.Detect.Params.Event == "error")
+                {
+                    resultDetect.Type = DetectResultType.Error;
+                }
+                else
+                {
+                    switch (p.Detect.Type)
+                    {
+                        case CallingEventParams.DetectParams.DetectType.digit:
+                            resultDetect.Type = DetectResultType.DTMF;
+                            resultDetect.Result = p.Detect.Params.Event;
+                            break;
+                        case CallingEventParams.DetectParams.DetectType.fax:
+                            resultDetect.Type = DetectResultType.Fax;
+                            resultDetect.Result = p.Detect.Params.Event;
+                            break;
+                        case CallingEventParams.DetectParams.DetectType.machine:
+                            if (p.Detect.Params.Event == "HUMAN")
+                            {
+                                resultDetect.Type = DetectResultType.Human;
+                            }
+                            else if (p.Detect.Params.Event == "MACHINE")
+                            {
+                                resultDetect.Type = DetectResultType.Machine;
+                            }
+                            else if (p.Detect.Params.Event == "READY" || p.Detect.Params.Event == "NOT_READY")
+                            {
+                                resultDetect.Type = DetectResultType.Machine;
+                                resultDetect.Result = p.Detect.Params.Event;
+                            }
+                            else if (p.Detect.Params.Event == "UNKNOWN")
+                            {
+                                resultDetect.Type = DetectResultType.Unknown;
+                            }
+                            else
+                            {
+                                throw new NotSupportedException();
+                            }
+                            break;
+                        default:
+                            throw new NotSupportedException();
+                    }
+                }
+
+                tcsCompletion.SetResult(true);
+            };
+
+            OnDetect += callback;
+
+            try
+            {
+                Task<LL_DetectResult> taskLLDetect = mAPI.LL_DetectAsync(new LL_DetectParams()
+                {
+                    NodeID = mNodeID,
+                    CallID = mID,
+                    ControlID = controlID,
+                    Detect = detect,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_DetectResult resultLLDetect = await taskLLDetect;
+                if (resultLLDetect.Code == "200")
+                {
+                    mLogger.LogDebug("Detect {0} for call {1} waiting for completion events", controlID, ID);
+
+                    resultDetect.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("Detect {0} for call {1} {2}", controlID, ID, resultDetect.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Detect {0} for call {1} exception", controlID, ID);
+            }
+
+            // Unhook temporary callbacks
+            OnDetect -= callback;
+
+            return resultDetect;
         }
     }
 
