@@ -165,20 +165,20 @@ namespace SignalWire.Relay
             // If setup hasn't been called yet, call it
             await SetupAsync();
 
-            Task<LL_ReceiveResult> taskCallReceiveResult = LL_ReceiveAsync(new LL_ReceiveParams()
+            Task<LL_ReceiveResult> taskSignalwireReceiveResult = LL_ReceiveAsync(new LL_ReceiveParams()
             {
                 Contexts = new List<string>(contexts),
             });
             // The use of await ensures that exceptions are rethrown, or OperationCancelledException is thrown
-            LL_ReceiveResult callReceiveResult = await taskCallReceiveResult;
+            LL_ReceiveResult signalwireReceiveResult = await taskSignalwireReceiveResult;
 
-            ThrowIfError(callReceiveResult.Code, callReceiveResult.Message);
+            ThrowIfError(signalwireReceiveResult.Code, signalwireReceiveResult.Message);
         }
 
         public Task<LL_ReceiveResult> LL_ReceiveAsync(LL_ReceiveParams parameters)
         {
             // TODO: Update to "signalwire.receive" when server side supports it
-            return ExecuteAsync<LL_ReceiveParams, LL_ReceiveResult>("call.receive", parameters);
+            return ExecuteAsync<LL_ReceiveParams, LL_ReceiveResult>("signalwire.receive", parameters);
         }
     }
 }
