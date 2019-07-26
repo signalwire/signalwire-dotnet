@@ -233,7 +233,7 @@ namespace SignalWire.Relay.Calling
                 public DetectType Type { get; set; }
 
                 [JsonProperty("params", Required = Required.Always)]
-                public Settings Params { get; set; }
+                public Settings Parameters { get; set; }
             }
 
             [JsonProperty("node_id", Required = Required.Always)]
@@ -247,6 +247,75 @@ namespace SignalWire.Relay.Calling
 
             [JsonProperty("detect", Required = Required.Always)]
             public DetectSettings Detect { get; set; }
+        }
+
+        public sealed class FaxParams
+        {
+            public enum FaxType
+            {
+                error,
+                page,
+                finished,
+            }
+
+            public sealed class FaxSettings
+            {
+                public sealed class PageSettings
+                {
+                    [JsonProperty("direction", Required = Required.Always)]
+                    public Direction Direction { get; set; }
+
+                    [JsonProperty("number", Required = Required.Always)]
+                    public int PageNumber { get; set; }
+                }
+
+                public sealed class FinishedSettings
+                {
+                    [JsonProperty("direction", Required = Required.Always)]
+                    public Direction Direction { get; set; }
+
+                    [JsonProperty("pages", Required = Required.Always)]
+                    public int Pages { get; set; }
+
+                    [JsonProperty("document", Required = Required.Always)]
+                    public string Document { get; set; }
+
+                    [JsonProperty("identity", Required = Required.Always)]
+                    public string Identity { get; set; }
+
+                    [JsonProperty("remote_identity", Required = Required.Always)]
+                    public string RemoteIdentity { get; set; }
+
+                    [JsonProperty("success", Required = Required.Always)]
+                    public bool Success { get; set; }
+
+                    [JsonProperty("result", NullValueHandling = NullValueHandling.Ignore)]
+                    public string Result { get; set; }
+
+                    [JsonProperty("result_text", NullValueHandling = NullValueHandling.Ignore)]
+                    public string ResultText { get; set; }
+                }
+
+                [JsonProperty("type", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
+                public FaxType Type { get; set; }
+
+                [JsonProperty("params", Required = Required.Always)]
+                public object Parameters { get; set; }
+
+                public T ParametersAs<T>() { return Parameters == null ? default(T) : (Parameters as JObject).ToObject<T>(); }
+            }
+
+            [JsonProperty("node_id", Required = Required.Always)]
+            public string NodeID { get; set; }
+
+            [JsonProperty("call_id", Required = Required.Always)]
+            public string CallID { get; set; }
+
+            [JsonProperty("control_id", Required = Required.Always)]
+            public string ControlID { get; set; }
+
+            [JsonProperty("fax", Required = Required.Always)]
+            public FaxSettings Fax { get; set; }
         }
 
         [JsonProperty("event_type", Required = Required.Always)]
