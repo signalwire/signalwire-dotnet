@@ -47,12 +47,16 @@ namespace SignalWire.Relay
         private SignalwireAPI mSignalwireAPI = null;
         private CallingAPI mCallingAPI = null;
         private TaskingAPI mTaskingAPI = null;
+        private MessagingAPI mMessagingAPI = null;
 
         public Client(
-            string project, string token,
+            string project,
+            string token,
             string host = null,
             bool jwt = false,
-            TimeSpan? connectDelay = null, TimeSpan? connectTimeout = null, TimeSpan? closeTimeout = null)
+            TimeSpan? connectDelay = null,
+            TimeSpan? connectTimeout = null,
+            TimeSpan? closeTimeout = null)
         {
             if (string.IsNullOrWhiteSpace(project)) throw new ArgumentNullException("Must provide a project");
             if (string.IsNullOrWhiteSpace(token)) throw new ArgumentNullException("Must provide a token");
@@ -83,6 +87,7 @@ namespace SignalWire.Relay
             mSignalwireAPI = new SignalwireAPI(this);
             mCallingAPI = new CallingAPI(mSignalwireAPI);
             mTaskingAPI = new TaskingAPI(mSignalwireAPI);
+            mMessagingAPI = new MessagingAPI(mSignalwireAPI);
         }
 
         public UpstreamSession Session { get; private set; }
@@ -96,6 +101,9 @@ namespace SignalWire.Relay
         public CallingAPI Calling { get { return mCallingAPI; } }
 
         public TaskingAPI Tasking {  get { return mTaskingAPI; } }
+
+        public MessagingAPI Messaging { get { return mMessagingAPI; } }
+
 
         public event ClientCallback OnReady;
         public event ClientCallback OnDisconnected;
@@ -130,6 +138,7 @@ namespace SignalWire.Relay
             mSignalwireAPI.Reset();
             mCallingAPI.Reset();
             mTaskingAPI.Reset();
+            mMessagingAPI.Reset();
         }
 
         public void Connect()
