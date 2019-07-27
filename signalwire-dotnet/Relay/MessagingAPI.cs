@@ -67,26 +67,6 @@ namespace SignalWire.Relay
             return result;
         }
 
-        public SendAction SendAsync(string context, string to, string from, SendSource source, List<string> tags = null, string region = null)
-        {
-            var action = new SendAction();
-            Task.Run(async () =>
-            {
-                action.Result = await InternalSendAsync(new LL_SendParams()
-                {
-                    Context = context,
-                    ToNumber = to,
-                    FromNumber = from,
-                    Body = source.Body,
-                    Media = source.Media,
-                    Tags = tags,
-                    Region = region,
-                });
-                action.Completed = true;
-            });
-            return action;
-        }
-
         internal void MessageStateChangeHandler(MessagingEventParams eventParams, MessagingEventParams.StateParams stateParams)
         {
             Message message = new Message()
