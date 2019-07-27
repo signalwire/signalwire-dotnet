@@ -51,7 +51,7 @@ namespace Calling_ReceiveFax
 
             Call call = resultDial.Call;
 
-            FaxResult sendResult = call.SendFax(Document);
+            FaxResult sendResult = call.FaxSend(Document);
 
             if (!sendResult.Successful)
             {
@@ -72,32 +72,41 @@ namespace Calling_ReceiveFax
                 return;
             }
 
-            call.OnFax += (a, c, e, p) =>
+            TaskCompletionSource<bool> eventing = new TaskCompletionSource<bool>();
+            call.OnFaxError += (a, c, e, p) =>
             {
-                if (p.Fax.Type == CallingEventParams.FaxParams.FaxType.finished)
+                Logger.LogError("Actual fax receive had an error");
+                eventing.SetResult(true);
+            };
+            call.OnFaxFinished += (a, c, e, p) =>
+            {
+                var settings = p.Fax.ParametersAs<CallingEventParams.FaxParams.FaxSettings.FinishedSettings>();
+                if (settings.Success)
                 {
-                    var settings = p.Fax.ParametersAs<CallingEventParams.FaxParams.FaxSettings.FinishedSettings>();
-                    if (settings.Success)
-                    {
-                        Successful = true;
-                    }
-                    else
-                    {
-                        Logger.LogError("Actual fax receive had an issue: {0}", settings.ResultText);
-                    }
-                }                
+                    Successful = true;
+                }
+                else
+                {
+                    Logger.LogError("Actual fax receive had an issue: {0}", settings.ResultText);
+                }
+                eventing.SetResult(true);
             };
 
-            FaxResult receiveResult = call.ReceiveFax();
+            FaxResult receiveResult = call.FaxReceive();
 
-            if (!Successful)
-            {
-                Logger.LogError("Fax receive did not give a finished event");
-            }
             if (!receiveResult.Successful)
             {
                 Successful = false;
                 Logger.LogError("Receive fax was unsuccessful");
+                eventing.SetResult(true);
+            }
+            else
+            {
+                eventing.Task.Wait();
+                if (!Successful)
+                {
+                    Logger.LogError("Fax receive did not give a successful finished event");
+                }
             }
 
             Completed.Set();
