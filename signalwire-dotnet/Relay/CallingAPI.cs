@@ -116,6 +116,9 @@ namespace SignalWire.Relay
                 case "calling.call.detect":
                     OnCallingEvent_Detect(client, broadcastParams, callingEventParams);
                     break;
+                case "calling.call.fax":
+                    OnCallingEvent_Fax(client, broadcastParams, callingEventParams);
+                    break;
                 default: break;
             }
         }
@@ -341,6 +344,24 @@ namespace SignalWire.Relay
             call.DetectHandler(callEventParams, detectParams);
         }
 
+        private void OnCallingEvent_Fax(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
+        {
+            CallingEventParams.FaxParams faxParams = null;
+            try { faxParams = callEventParams.ParametersAs<CallingEventParams.FaxParams>(); }
+            catch (Exception exc)
+            {
+                mLogger.LogWarning(exc, "Failed to parse FaxParams");
+                return;
+            }
+            if (!mCalls.TryGetValue(faxParams.CallID, out Call call))
+            {
+                mLogger.LogWarning("Received FaxParams with unknown CallID: {0}", faxParams.CallID);
+                return;
+            }
+
+            call.FaxHandler(callEventParams, faxParams);
+        }
+
         // Utility
         internal void ThrowIfError(string code, string message) { mAPI.ThrowIfError(code, message); }
 
@@ -414,6 +435,26 @@ namespace SignalWire.Relay
         public Task<LL_DetectStopResult> LL_DetectStopAsync(LL_DetectStopParams parameters)
         {
             return mAPI.ExecuteAsync<LL_DetectStopParams, LL_DetectStopResult>("call.detect.stop", parameters);
+        }
+
+        public Task<LL_SendFaxResult> LL_SendFaxAsync(LL_SendFaxParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_SendFaxParams, LL_SendFaxResult>("call.send_fax", parameters);
+        }
+
+        public Task<LL_SendFaxStopResult> LL_SendFaxStopAsync(LL_SendFaxStopParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_SendFaxStopParams, LL_SendFaxStopResult>("call.send_fax.stop", parameters);
+        }
+
+        public Task<LL_ReceiveFaxResult> LL_ReceiveFaxAsync(LL_ReceiveFaxParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_ReceiveFaxParams, LL_ReceiveFaxResult>("call.receive_fax", parameters);
+        }
+
+        public Task<LL_ReceiveFaxStopResult> LL_ReceiveFaxStopAsync(LL_ReceiveFaxStopParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_ReceiveFaxStopParams, LL_ReceiveFaxStopResult>("call.receive_fax.stop", parameters);
         }
     }
 }

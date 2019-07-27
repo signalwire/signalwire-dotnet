@@ -48,6 +48,8 @@ namespace SignalWire.Relay.Calling
 
         public delegate void DetectCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DetectParams detectParams);
 
+        public delegate void FaxCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.FaxParams faxParams);
+
         protected readonly ILogger mLogger = null;
 
         protected readonly CallingAPI mAPI = null;
@@ -98,6 +100,8 @@ namespace SignalWire.Relay.Calling
         public event TapFinishedCallback OnTapFinished;
 
         public event DetectCallback OnDetect;
+
+        public event FaxCallback OnFax;
 
         protected Call(CallingAPI api, string temporaryCallID)
         {
@@ -316,6 +320,11 @@ namespace SignalWire.Relay.Calling
         internal void DetectHandler(CallingEventParams eventParams, CallingEventParams.DetectParams detectParams)
         {
             OnDetect?.Invoke(mAPI, this, eventParams, detectParams);
+        }
+
+        internal void FaxHandler(CallingEventParams eventParams, CallingEventParams.FaxParams faxParams)
+        {
+            OnFax?.Invoke(mAPI, this, eventParams, faxParams);
         }
 
         public DialResult Dial()
@@ -1113,11 +1122,11 @@ namespace SignalWire.Relay.Calling
             DetectCallback callback = (a, c, e, p) =>
             {
                 resultDetect.Event = new Event(e.EventType, JObject.FromObject(p));
-                if (p.Detect.Params.Event == "finished")
+                if (p.Detect.Parameters.Event == "finished")
                 {
                     resultDetect.Type = DetectResultType.Finished;
                 }
-                else if (p.Detect.Params.Event == "error")
+                else if (p.Detect.Parameters.Event == "error")
                 {
                     resultDetect.Type = DetectResultType.Error;
                 }
@@ -1127,27 +1136,27 @@ namespace SignalWire.Relay.Calling
                     {
                         case CallingEventParams.DetectParams.DetectType.digit:
                             resultDetect.Type = DetectResultType.DTMF;
-                            resultDetect.Result = p.Detect.Params.Event;
+                            resultDetect.Result = p.Detect.Parameters.Event;
                             break;
                         case CallingEventParams.DetectParams.DetectType.fax:
                             resultDetect.Type = DetectResultType.Fax;
-                            resultDetect.Result = p.Detect.Params.Event;
+                            resultDetect.Result = p.Detect.Parameters.Event;
                             break;
                         case CallingEventParams.DetectParams.DetectType.machine:
-                            if (p.Detect.Params.Event == "HUMAN")
+                            if (p.Detect.Parameters.Event == "HUMAN")
                             {
                                 resultDetect.Type = DetectResultType.Human;
                             }
-                            else if (p.Detect.Params.Event == "MACHINE")
+                            else if (p.Detect.Parameters.Event == "MACHINE")
                             {
                                 resultDetect.Type = DetectResultType.Machine;
                             }
-                            else if (p.Detect.Params.Event == "READY" || p.Detect.Params.Event == "NOT_READY")
+                            else if (p.Detect.Parameters.Event == "READY" || p.Detect.Parameters.Event == "NOT_READY")
                             {
                                 resultDetect.Type = DetectResultType.Machine;
-                                resultDetect.Result = p.Detect.Params.Event;
+                                resultDetect.Result = p.Detect.Parameters.Event;
                             }
-                            else if (p.Detect.Params.Event == "UNKNOWN")
+                            else if (p.Detect.Parameters.Event == "UNKNOWN")
                             {
                                 resultDetect.Type = DetectResultType.Unknown;
                             }
@@ -1196,6 +1205,189 @@ namespace SignalWire.Relay.Calling
             OnDetect -= callback;
 
             return resultDetect;
+        }
+
+        public FaxResult SendFax(string document, string identity = null, string headerInfo = null)
+        {
+            return InternalSendFaxAsync(Guid.NewGuid().ToString(), document, identity, headerInfo).Result;
+        }
+
+        public FaxAction SendFaxAsync(string document, string identity = null, string headerInfo = null)
+        {
+            FaxAction action = new FaxAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = new SendFaxPayload()
+                {
+                    Document = document,
+                    Identity = identity,
+                    HeaderInfo = headerInfo,
+                },
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalSendFaxAsync(action.ControlID, action.Payload.Document, action.Payload.Identity, action.Payload.HeaderInfo);
+                action.Completed = true;
+            });
+            return action;
+        }
+
+        private async Task<FaxResult> InternalSendFaxAsync(string controlID, string document, string identity, string headerInfo)
+        {
+            await API.API.SetupAsync();
+
+            FaxResult resultSendFax = new FaxResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            FaxCallback faxCallback = (a, c, e, p) =>
+            {
+                resultSendFax.Event = new Event(e.EventType, JObject.FromObject(p));
+                switch (p.Fax.Type)
+                {
+                    case CallingEventParams.FaxParams.FaxType.error:
+                        tcsCompletion.SetResult(false);
+                        break;
+
+                    case CallingEventParams.FaxParams.FaxType.page:
+                        // Do nothing
+                        break;
+
+                    case CallingEventParams.FaxParams.FaxType.finished: {
+                        var settings = p.Fax.ParametersAs<CallingEventParams.FaxParams.FaxSettings.FinishedSettings>();
+                        resultSendFax.Direction = settings.Direction;
+                        resultSendFax.Document = settings.Document;
+                        resultSendFax.Identity = settings.Identity;
+                        resultSendFax.RemoteIdentity = settings.RemoteIdentity;
+                        resultSendFax.Pages = settings.Pages;
+                        tcsCompletion.SetResult(true);
+                        break;
+                    }
+                }
+            };
+
+            OnFax += faxCallback;
+
+            try
+            {
+                Task<LL_SendFaxResult> taskLLSendFax = mAPI.LL_SendFaxAsync(new LL_SendFaxParams()
+                {
+                    NodeID = mNodeID,
+                    CallID = mID,
+                    ControlID = controlID,
+                    Document = document,
+                    Identity = identity,
+                    HeaderInfo = headerInfo,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_SendFaxResult resultLLSendFax = await taskLLSendFax;
+                if (resultLLSendFax.Code == "200")
+                {
+                    mLogger.LogDebug("SendFax {0} for call {1} waiting for completion events", controlID, ID);
+
+                    resultSendFax.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("SendFax {0} for call {1} {2}", controlID, ID, resultSendFax.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "SendFax {0} for call {1} exception", controlID, ID);
+            }
+
+            // Unhook temporary callbacks
+            OnFax -= faxCallback;
+
+            return resultSendFax;
+        }
+
+        public FaxResult ReceiveFax()
+        {
+            return InternalReceiveFaxAsync(Guid.NewGuid().ToString()).Result;
+        }
+
+        public FaxAction ReceiveFaxAsync()
+        {
+            FaxAction action = new FaxAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalReceiveFaxAsync(action.ControlID);
+                action.Completed = true;
+            });
+            return action;
+        }
+
+        private async Task<FaxResult> InternalReceiveFaxAsync(string controlID)
+        {
+            await API.API.SetupAsync();
+
+            FaxResult resultReceiveFax = new FaxResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            FaxCallback faxCallback = (a, c, e, p) =>
+            {
+                resultReceiveFax.Event = new Event(e.EventType, JObject.FromObject(p));
+                switch (p.Fax.Type)
+                {
+                    case CallingEventParams.FaxParams.FaxType.error:
+                        tcsCompletion.SetResult(false);
+                        break;
+
+                    case CallingEventParams.FaxParams.FaxType.page:
+                        // Do nothing
+                        break;
+
+                    case CallingEventParams.FaxParams.FaxType.finished: {
+                        var settings = p.Fax.ParametersAs<CallingEventParams.FaxParams.FaxSettings.FinishedSettings>();
+                        resultReceiveFax.Direction = settings.Direction;
+                        resultReceiveFax.Document = settings.Document;
+                        resultReceiveFax.Identity = settings.Identity;
+                        resultReceiveFax.RemoteIdentity = settings.RemoteIdentity;
+                        resultReceiveFax.Pages = settings.Pages;
+                        tcsCompletion.SetResult(true);
+                        break;
+                    }
+                }
+            };
+
+            OnFax += faxCallback;
+
+            try
+            {
+                Task<LL_ReceiveFaxResult> taskLLReceiveFax = mAPI.LL_ReceiveFaxAsync(new LL_ReceiveFaxParams()
+                {
+                    NodeID = mNodeID,
+                    CallID = mID,
+                    ControlID = controlID,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_ReceiveFaxResult resultLLReceiveFax = await taskLLReceiveFax;
+                if (resultLLReceiveFax.Code == "200")
+                {
+                    mLogger.LogDebug("ReceiveFax {0} for call {1} waiting for completion events", controlID, ID);
+
+                    resultReceiveFax.Successful = await tcsCompletion.Task;
+
+                    mLogger.LogDebug("ReceiveFax {0} for call {1} {2}", controlID, ID, resultReceiveFax.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "ReceiveFax {0} for call {1} exception", controlID, ID);
+            }
+
+            // Unhook temporary callbacks
+            OnFax -= faxCallback;
+
+            return resultReceiveFax;
         }
     }
 

@@ -267,8 +267,8 @@ namespace Calling_Detect
             Logger.LogInformation("[{0}] Call created, associating events", tag);
             call.OnDetect += (CallingAPI api, Call detectedCall, CallingEventParams detectEventParams, CallingEventParams.DetectParams detectParams) =>
             {
-                if (detectParams.Detect.Params.Event == "READY") return;
-                if (detectParams.Detect.Params.Event == "finished")
+                if (detectParams.Detect.Parameters.Event == "READY") return;
+                if (detectParams.Detect.Parameters.Event == "finished")
                 {
                     if (isDetectValid(detectParams))
                     {
@@ -365,14 +365,14 @@ namespace Calling_Detect
         {
             return
                 detectParams.Detect.Type == CallingEventParams.DetectParams.DetectType.machine &&
-                detectParams.Detect.Params.Event == "HUMAN";
+                detectParams.Detect.Parameters.Event == "HUMAN";
         }
 
         private static bool OnCallDetectMachine(CallingEventParams.DetectParams detectParams)
         {
             return
                 detectParams.Detect.Type == CallingEventParams.DetectParams.DetectType.machine &&
-                detectParams.Detect.Params.Event == "MACHINE";
+                detectParams.Detect.Parameters.Event == "MACHINE";
         }
 
         private static bool OnCallDetectFax(CallingEventParams.DetectParams detectParams)
