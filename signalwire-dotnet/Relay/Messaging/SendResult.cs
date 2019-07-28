@@ -9,8 +9,6 @@ namespace SignalWire.Relay.Messaging
 {
     public sealed class SendResult
     {
-        public Event Event { get; internal set; }
-
         public bool Successful { get; internal set; }
 
         public string MessageID { get; internal set; }
