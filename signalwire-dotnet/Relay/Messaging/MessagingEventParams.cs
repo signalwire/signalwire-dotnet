@@ -80,9 +80,12 @@ namespace SignalWire.Relay.Messaging
 
         [JsonProperty("event_type", Required = Required.Always)]
         public string EventType { get; set; }
-        
+
         [JsonProperty("context", Required = Required.Always)]
         public string Context { get; set; }
+
+        [JsonProperty("timestamp", Required = Required.Always)]
+        public double Timestamp { get; set; }
 
         [JsonProperty("space_id", Required = Required.Always)]
         public string SpaceID { get; set; }
