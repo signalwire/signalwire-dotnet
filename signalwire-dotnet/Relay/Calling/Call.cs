@@ -46,9 +46,14 @@ namespace SignalWire.Relay.Calling
         public delegate void TapTappingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.TapParams tapParams);
         public delegate void TapFinishedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.TapParams tapParams);
 
-        public delegate void DetectCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DetectParams detectParams);
+        public delegate void DetectUpdateCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DetectParams detectParams);
+        public delegate void DetectErrorCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DetectParams detectParams);
+        public delegate void DetectFinishedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DetectParams detectParams);
 
-        public delegate void FaxCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.FaxParams faxParams);
+        public delegate void FaxStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.FaxParams faxParams);
+        public delegate void FaxErrorCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.FaxParams faxParams);
+        public delegate void FaxFinishedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.FaxParams faxParams);
+        public delegate void FaxPageCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.FaxParams faxParams);
 
         protected readonly ILogger mLogger = null;
 
@@ -99,9 +104,14 @@ namespace SignalWire.Relay.Calling
         public event TapTappingCallback OnTapTapping;
         public event TapFinishedCallback OnTapFinished;
 
-        public event DetectCallback OnDetect;
+        public event DetectUpdateCallback OnDetectUpdate;
+        public event DetectErrorCallback OnDetectError;
+        public event DetectFinishedCallback OnDetectFinished;
 
-        public event FaxCallback OnFax;
+        public event FaxStateChangeCallback OnFaxStateChange;
+        public event FaxErrorCallback OnFaxError;
+        public event FaxFinishedCallback OnFaxFinished;
+        public event FaxPageCallback OnFaxPage;
 
         protected Call(CallingAPI api, string temporaryCallID)
         {
@@ -319,12 +329,35 @@ namespace SignalWire.Relay.Calling
 
         internal void DetectHandler(CallingEventParams eventParams, CallingEventParams.DetectParams detectParams)
         {
-            OnDetect?.Invoke(mAPI, this, eventParams, detectParams);
+            OnDetectUpdate?.Invoke(mAPI, this, eventParams, detectParams);
+
+            string @event = detectParams.Detect.Parameters.Event;
+            if (@event == "finished")
+            {
+                OnDetectFinished?.Invoke(mAPI, this, eventParams, detectParams);
+            }
+            else if (@event == "error")
+            {
+                OnDetectError?.Invoke(mAPI, this, eventParams, detectParams);
+            }
         }
 
         internal void FaxHandler(CallingEventParams eventParams, CallingEventParams.FaxParams faxParams)
         {
-            OnFax?.Invoke(mAPI, this, eventParams, faxParams);
+            OnFaxStateChange?.Invoke(mAPI, this, eventParams, faxParams);
+
+            switch (faxParams.Fax.Type)
+            {
+                case CallingEventParams.FaxParams.FaxType.finished:
+                    OnFaxFinished?.Invoke(mAPI, this, eventParams, faxParams);
+                    break;
+                case CallingEventParams.FaxParams.FaxType.page:
+                    OnFaxPage?.Invoke(mAPI, this, eventParams, faxParams);
+                    break;
+                case CallingEventParams.FaxParams.FaxType.error:
+                    OnFaxError?.Invoke(mAPI, this, eventParams, faxParams);
+                    break;
+            }
         }
 
         public DialResult Dial()
@@ -1111,6 +1144,177 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
+        public DetectResult DetectMachine(
+            double? initialTimeout = null,
+            double? endSilenceTimeout = null,
+            double? machineVoiceThreshold = null,
+            int? machineWordsThreshold = null)
+        {
+            return InternalDetectAsync(Guid.NewGuid().ToString(), new CallDetect()
+            {
+                Type = CallDetect.DetectType.machine,
+                Parameters = new CallDetect.MachineParams()
+                {
+                    InitialTimeout = initialTimeout,
+                    EndSilenceTimeout = endSilenceTimeout,
+                    MachineVoiceThreshold = machineVoiceThreshold,
+                    MachineWordsThreshold = machineWordsThreshold,
+                },
+            }).Result;
+        }
+
+        public DetectAction DetectMachineAsync(
+            double? initialTimeout = null,
+            double? endSilenceTimeout = null,
+            double? machineVoiceThreshold = null,
+            int? machineWordsThreshold = null)
+        {
+            var payload = new CallDetect()
+            {
+                Type = CallDetect.DetectType.machine,
+                Parameters = new CallDetect.MachineParams()
+                {
+                    InitialTimeout = initialTimeout,
+                    EndSilenceTimeout = endSilenceTimeout,
+                    MachineVoiceThreshold = machineVoiceThreshold,
+                    MachineWordsThreshold = machineWordsThreshold,
+                },
+            };
+            DetectAction action = new DetectAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = payload,
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalDetectAsync(action.ControlID, payload);
+                action.Completed = true;
+            });
+            return action;
+        }
+
+        public DetectResult DetectHuman(
+            double? initialTimeout = null,
+            double? endSilenceTimeout = null,
+            double? machineVoiceThreshold = null,
+            int? machineWordsThreshold = null)
+        {
+            return InternalDetectAsync(Guid.NewGuid().ToString(), new CallDetect()
+            {
+                Type = CallDetect.DetectType.machine,
+                Parameters = new CallDetect.MachineParams()
+                {
+                    InitialTimeout = initialTimeout,
+                    EndSilenceTimeout = endSilenceTimeout,
+                    MachineVoiceThreshold = machineVoiceThreshold,
+                    MachineWordsThreshold = machineWordsThreshold,
+                },
+            }).Result;
+        }
+
+        public DetectAction DetectHumanAsync(
+            double? initialTimeout = null,
+            double? endSilenceTimeout = null,
+            double? machineVoiceThreshold = null,
+            int? machineWordsThreshold = null)
+        {
+            var payload = new CallDetect()
+            {
+                Type = CallDetect.DetectType.machine,
+                Parameters = new CallDetect.MachineParams()
+                {
+                    InitialTimeout = initialTimeout,
+                    EndSilenceTimeout = endSilenceTimeout,
+                    MachineVoiceThreshold = machineVoiceThreshold,
+                    MachineWordsThreshold = machineWordsThreshold,
+                },
+            };
+            DetectAction action = new DetectAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = payload,
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalDetectAsync(action.ControlID, payload);
+                action.Completed = true;
+            });
+            return action;
+        }
+
+        public DetectResult DetectFax(CallDetect.FaxParams.FaxTone? tone = null)
+        {
+            return InternalDetectAsync(Guid.NewGuid().ToString(), new CallDetect()
+            {
+                Type = CallDetect.DetectType.fax,
+                Parameters = new CallDetect.FaxParams()
+                {
+                    Tone = tone,
+                },
+            }).Result;
+        }
+
+        public DetectAction DetectFaxAsync(CallDetect.FaxParams.FaxTone? tone = null) {
+            var payload = new CallDetect()
+            {
+                Type = CallDetect.DetectType.fax,
+                Parameters = new CallDetect.FaxParams()
+                {
+                    Tone = tone,
+                },
+            };
+            DetectAction action = new DetectAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = payload,
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalDetectAsync(action.ControlID, payload);
+                action.Completed = true;
+            });
+            return action;
+        }
+
+        public DetectResult DetectDigit(string digits = null)
+        {
+            return InternalDetectAsync(Guid.NewGuid().ToString(), new CallDetect()
+            {
+                Type = CallDetect.DetectType.digit,
+                Parameters = new CallDetect.DigitParams()
+                {
+                    Digits = digits,
+                },
+            }).Result;
+        }
+
+        public DetectAction DetectDigitAsync(string digits = null)
+        {
+            var payload = new CallDetect()
+            {
+                Type = CallDetect.DetectType.digit,
+                Parameters = new CallDetect.DigitParams()
+                {
+                    Digits = digits,
+                },
+            };
+            DetectAction action = new DetectAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = payload,
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalDetectAsync(action.ControlID, payload);
+                action.Completed = true;
+            });
+            return action;
+        }
+
         private async Task<DetectResult> InternalDetectAsync(string controlID, CallDetect detect)
         {
             await API.API.SetupAsync();
@@ -1119,7 +1323,7 @@ namespace SignalWire.Relay.Calling
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
             // Hook callbacks temporarily to catch required events
-            DetectCallback callback = (a, c, e, p) =>
+            DetectUpdateCallback callback = (a, c, e, p) =>
             {
                 resultDetect.Event = new Event(e.EventType, JObject.FromObject(p));
                 if (p.Detect.Parameters.Event == "finished")
@@ -1173,7 +1377,7 @@ namespace SignalWire.Relay.Calling
                 tcsCompletion.SetResult(true);
             };
 
-            OnDetect += callback;
+            OnDetectUpdate += callback;
 
             try
             {
@@ -1202,17 +1406,17 @@ namespace SignalWire.Relay.Calling
             }
 
             // Unhook temporary callbacks
-            OnDetect -= callback;
+            OnDetectUpdate -= callback;
 
             return resultDetect;
         }
 
-        public FaxResult SendFax(string document, string identity = null, string headerInfo = null)
+        public FaxResult FaxSend(string document, string identity = null, string headerInfo = null)
         {
-            return InternalSendFaxAsync(Guid.NewGuid().ToString(), document, identity, headerInfo).Result;
+            return InternalFaxSendAsync(Guid.NewGuid().ToString(), document, identity, headerInfo).Result;
         }
 
-        public FaxAction SendFaxAsync(string document, string identity = null, string headerInfo = null)
+        public FaxAction FaxSendAsync(string document, string identity = null, string headerInfo = null)
         {
             FaxAction action = new FaxAction
             {
@@ -1227,13 +1431,13 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                action.Result = await InternalSendFaxAsync(action.ControlID, action.Payload.Document, action.Payload.Identity, action.Payload.HeaderInfo);
+                action.Result = await InternalFaxSendAsync(action.ControlID, action.Payload.Document, action.Payload.Identity, action.Payload.HeaderInfo);
                 action.Completed = true;
             });
             return action;
         }
 
-        private async Task<FaxResult> InternalSendFaxAsync(string controlID, string document, string identity, string headerInfo)
+        private async Task<FaxResult> InternalFaxSendAsync(string controlID, string document, string identity, string headerInfo)
         {
             await API.API.SetupAsync();
 
@@ -1241,7 +1445,7 @@ namespace SignalWire.Relay.Calling
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
             // Hook callbacks temporarily to catch required events
-            FaxCallback faxCallback = (a, c, e, p) =>
+            FaxStateChangeCallback faxCallback = (a, c, e, p) =>
             {
                 resultSendFax.Event = new Event(e.EventType, JObject.FromObject(p));
                 switch (p.Fax.Type)
@@ -1267,7 +1471,7 @@ namespace SignalWire.Relay.Calling
                 }
             };
 
-            OnFax += faxCallback;
+            OnFaxStateChange += faxCallback;
 
             try
             {
@@ -1298,17 +1502,17 @@ namespace SignalWire.Relay.Calling
             }
 
             // Unhook temporary callbacks
-            OnFax -= faxCallback;
+            OnFaxStateChange -= faxCallback;
 
             return resultSendFax;
         }
 
-        public FaxResult ReceiveFax()
+        public FaxResult FaxReceive()
         {
-            return InternalReceiveFaxAsync(Guid.NewGuid().ToString()).Result;
+            return InternalFaxReceiveAsync(Guid.NewGuid().ToString()).Result;
         }
 
-        public FaxAction ReceiveFaxAsync()
+        public FaxAction FaxReceiveAsync()
         {
             FaxAction action = new FaxAction
             {
@@ -1317,13 +1521,13 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                action.Result = await InternalReceiveFaxAsync(action.ControlID);
+                action.Result = await InternalFaxReceiveAsync(action.ControlID);
                 action.Completed = true;
             });
             return action;
         }
 
-        private async Task<FaxResult> InternalReceiveFaxAsync(string controlID)
+        private async Task<FaxResult> InternalFaxReceiveAsync(string controlID)
         {
             await API.API.SetupAsync();
 
@@ -1331,7 +1535,7 @@ namespace SignalWire.Relay.Calling
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
             // Hook callbacks temporarily to catch required events
-            FaxCallback faxCallback = (a, c, e, p) =>
+            FaxStateChangeCallback faxCallback = (a, c, e, p) =>
             {
                 resultReceiveFax.Event = new Event(e.EventType, JObject.FromObject(p));
                 switch (p.Fax.Type)
@@ -1357,7 +1561,7 @@ namespace SignalWire.Relay.Calling
                 }
             };
 
-            OnFax += faxCallback;
+            OnFaxStateChange += faxCallback;
 
             try
             {
@@ -1385,7 +1589,7 @@ namespace SignalWire.Relay.Calling
             }
 
             // Unhook temporary callbacks
-            OnFax -= faxCallback;
+            OnFaxStateChange -= faxCallback;
 
             return resultReceiveFax;
         }

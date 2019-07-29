@@ -51,33 +51,43 @@ namespace Calling_SendFax
             }
 
             Call call = resultDial.Call;
-            call.OnFax += (a, c, e, p) =>
+            TaskCompletionSource<bool> eventing = new TaskCompletionSource<bool>();
+
+            call.OnFaxError += (a, c, e, p) =>
             {
-                if (p.Fax.Type == CallingEventParams.FaxParams.FaxType.finished)
+                Logger.LogError("Actual fax send had an error");
+                eventing.SetResult(true);
+            };
+            call.OnFaxFinished += (a, c, e, p) =>
+            {
+                var settings = p.Fax.ParametersAs<CallingEventParams.FaxParams.FaxSettings.FinishedSettings>();
+                if (settings.Success)
                 {
-                    var settings = p.Fax.ParametersAs<CallingEventParams.FaxParams.FaxSettings.FinishedSettings>();
-                    if (settings.Success)
-                    {
-                        Successful = true;
-                    }
-                    else
-                    {
-                        Logger.LogError("Actual fax delivery had an issue: {0}", settings.ResultText);
-                    }
+                    Successful = true;
                 }
+                else
+                {
+                    Logger.LogError("Actual fax delivery had an issue: {0}", settings.ResultText);
+                }
+                eventing.SetResult(true);
             };
 
-            FaxResult sendResult = call.SendFax(Document);
-
-            if (!Successful)
-            {
-                Logger.LogError("Fax send did not give a finished event");
-            }
+            FaxResult sendResult = call.FaxSend(Document);
+  
             if (!sendResult.Successful)
             {
                 Successful = false;
                 Logger.LogError("Send fax was unsuccessful");
             }
+            else
+            {
+                eventing.Task.Wait();
+                if (!Successful)
+                {
+                    Logger.LogError("Fax send did not give a successful finished event");
+                }
+            }
+
             Completed.Set();
         }
     }

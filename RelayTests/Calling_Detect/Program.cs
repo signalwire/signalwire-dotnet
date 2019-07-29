@@ -265,7 +265,7 @@ namespace Calling_Detect
             Logger.LogInformation("[{0}] Beginning setup for call to {1}", tag, toNumber);
             PhoneCall call = sCallingAPI.NewPhoneCall(toNumber, sCallFromNumber);
             Logger.LogInformation("[{0}] Call created, associating events", tag);
-            call.OnDetect += (CallingAPI api, Call detectedCall, CallingEventParams detectEventParams, CallingEventParams.DetectParams detectParams) =>
+            call.OnDetectUpdate += (CallingAPI api, Call detectedCall, CallingEventParams detectEventParams, CallingEventParams.DetectParams detectParams) =>
             {
                 if (detectParams.Detect.Parameters.Event == "READY") return;
                 if (detectParams.Detect.Parameters.Event == "finished")
@@ -275,10 +275,8 @@ namespace Calling_Detect
                         Logger.LogInformation("[{0}] Completed successfully", tag);
                         setSuccessfulDetection();
                     }
-                    else
-                    {
-                        Logger.LogError("[{0}] Unsuccessful", tag);
-                    }
+                    // Not necessarily unsuccessful in the else case, e.g.
+                    // Human detection gives an event of HUMAN under machine detection, but it can't be "finished" and "HUMAN" at the same time
                     sDetect = null;
                     return;
                 }
