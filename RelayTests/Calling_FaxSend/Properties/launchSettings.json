@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Calling_ReceiveFax": {
+    "Calling_FaxSend": {
       "commandName": "Project",
       "environmentVariables": {
         "TEST_HOST": "replaceme",
