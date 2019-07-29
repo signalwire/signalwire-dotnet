@@ -8,6 +8,7 @@ namespace SignalWire.Relay
     {
         none,
         provisioning,
-        calling
+        calling,
+        messaging,
     }
 }
