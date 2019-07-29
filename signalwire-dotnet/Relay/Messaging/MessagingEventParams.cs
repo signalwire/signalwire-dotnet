@@ -35,7 +35,7 @@ namespace SignalWire.Relay.Messaging
             [JsonProperty("media", NullValueHandling = NullValueHandling.Ignore)]
             public List<string> Media { get; set; }
 
-            [JsonProperty("segments", NullValueHandling = NullValueHandling.Ignore)]
+            [JsonProperty("segments", Required = Required.Always)]
             public int Segments { get; set; }
 
             [JsonProperty("message_state", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
@@ -71,7 +71,7 @@ namespace SignalWire.Relay.Messaging
             [JsonProperty("media", NullValueHandling = NullValueHandling.Ignore)]
             public List<string> Media { get; set; }
 
-            [JsonProperty("segments", NullValueHandling = NullValueHandling.Ignore)]
+            [JsonProperty("segments", Required = Required.Always)]
             public int Segments { get; set; }
 
             [JsonProperty("message_state", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]

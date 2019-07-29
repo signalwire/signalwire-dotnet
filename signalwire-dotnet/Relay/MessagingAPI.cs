@@ -133,7 +133,7 @@ namespace SignalWire.Relay
         {
             mLogger.LogDebug("MessagingAPI OnNotification: {0}", broadcastParams.Event);
 
-            if (broadcastParams.Event != "queuing.relay.messaging" && broadcastParams.Event != "relay") return;
+            if (broadcastParams.Event != "queuing.relay.messaging") return;
 
             MessagingEventParams messagingEventParams = null;
             try { messagingEventParams = broadcastParams.ParametersAs<MessagingEventParams>(); }
