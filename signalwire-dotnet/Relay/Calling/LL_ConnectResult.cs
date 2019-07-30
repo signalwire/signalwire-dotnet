@@ -14,8 +14,5 @@ namespace SignalWire.Relay.Calling
 
         [JsonProperty("message", NullValueHandling = NullValueHandling.Ignore)]
         public string Message { get; set; }
-
-        [JsonProperty("message_data", NullValueHandling = NullValueHandling.Ignore)]
-        public JObject MessageData { get; set; }
     }
 }

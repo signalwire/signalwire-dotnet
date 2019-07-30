@@ -6,6 +6,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 ### Fixed
 - Fixed Call.WaitFor to not throw exception
+### Removed
+- MessageData from low level results
 
 ## [2.1.0] - 2019-07-29
 ### Added
