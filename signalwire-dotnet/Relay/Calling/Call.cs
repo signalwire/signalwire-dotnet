@@ -165,7 +165,12 @@ namespace SignalWire.Relay.Calling
             API.API.Client.OnDisconnected += disconnectedCallback;
             OnStateChange += stateChangeCallback;
 
-            Task.Delay(timeout.Value, cancelDelay.Token).Wait();
+            try
+            {
+                Task.Delay(timeout.Value, cancelDelay.Token).Wait();
+            }
+            catch { }
+
 
             OnStateChange -= stateChangeCallback;
             API.API.Client.OnDisconnected -= disconnectedCallback;

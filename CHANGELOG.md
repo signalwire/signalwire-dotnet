@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- Fixed Call.WaitFor to not throw exception
+
 ## [2.1.0] - 2019-07-29
 ### Added
 - Added Task API
