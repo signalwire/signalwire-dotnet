@@ -33,7 +33,7 @@ namespace SignalWire.Relay
 
         protected virtual void OnIncomingMessage(Message message) { }
 
-        protected virtual void OnMessageStateChange(Message message, MessagingEventParams.StateParams stateParams) { }
+        protected virtual void OnMessageStateChange(Message message) { }
 
         protected virtual void OnTask(RelayTask eventParams) { }
 
@@ -66,7 +66,7 @@ namespace SignalWire.Relay
                 };
                 mClient.Calling.OnCallReceived += (a, c, p) => Task.Run(() => OnIncomingCall(c));
                 mClient.Messaging.OnMessageReceived += (a, m, e, p) => Task.Run(() => OnIncomingMessage(m));
-                mClient.Messaging.OnMessageStateChange += (a, m, e, p) => Task.Run(() => OnMessageStateChange(m, p));
+                mClient.Messaging.OnMessageStateChange += (a, m, e, p) => Task.Run(() => OnMessageStateChange(m));
                 mClient.Tasking.OnTaskReceived += (c, p) => Task.Run(() => OnTask(p));
 
                 mClient.Connect();
