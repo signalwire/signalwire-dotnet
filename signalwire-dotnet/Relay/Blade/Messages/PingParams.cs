@@ -8,7 +8,7 @@ namespace Blade.Messages
     public sealed class PingParams
     {
         [JsonProperty("timestamp", NullValueHandling = NullValueHandling.Ignore)]
-        public string Timestamp { get; set; }
+        public double? Timestamp { get; set; }
 
         [JsonProperty("payload", NullValueHandling = NullValueHandling.Ignore)]
         public string Payload { get; set; }
