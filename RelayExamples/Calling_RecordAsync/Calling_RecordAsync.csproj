@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\signalwire-dotnet\signalwire-dotnet.csproj" />
+    <ProjectReference Include="..\..\signalwire-dotnet\signalwire-dotnet.csproj" />
   </ItemGroup>
 
 </Project>
