@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Agent in blade.connect
+- Responding to blade.ping
+- Support for external authorizations event passing
+
 ## [2.1.1] - 2019-08-02
 ### Fixed
 - Fixed Call.WaitFor to not throw exception
