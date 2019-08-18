@@ -24,6 +24,7 @@ namespace Blade
             public Uri Bootstrap { get; set; }
             public string ClientCertificate { get; set; }
             public string Authentication { get; set; }
+            public string Agent { get; set; }
             public TimeSpan ConnectDelay { get; set; } = TimeSpan.FromSeconds(5);
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(5);
             public TimeSpan CloseTimeout { get; set; } = TimeSpan.FromSeconds(5);
@@ -405,6 +406,7 @@ namespace Blade
             Request request = Request.Create("blade.connect", out Blade.Messages.ConnectParams param, OnBladeConnectResponse);
             if (SessionID != null) param.SessionID = SessionID;
             if (mOptions.Authentication != null) param.Authentication = JsonConvert.DeserializeObject(mOptions.Authentication);
+            param.Agent = string.Format(".NET Core/{0}/{1}.{2}.{3}", mOptions.Agent, ConnectParams.VersionParam.MAJOR, ConnectParams.VersionParam.MINOR, ConnectParams.VersionParam.REVISION);
             Send(request, true);
         }
 
@@ -657,6 +659,17 @@ namespace Blade
 
                 switch (request.Method)
                 {
+                    case "blade.ping":
+                        try
+                        {
+                            OnBladePingRequest(request, request.ParametersAs<Blade.Messages.PingParams>());
+                        }
+                        catch (Exception exc)
+                        {
+                            mLogger.LogWarning(exc, "Failed to parse PingParams");
+                            Send(Response.CreateError(request, -32602, "Failed to parse PingParams", null, null));
+                        }
+                        break;
                     case "blade.disconnect":
                         try
                         {
@@ -741,6 +754,17 @@ namespace Blade
             }
         }
 
+        private void OnBladePingRequest(Request request, Blade.Messages.PingParams pingParams)
+        {
+            mLogger.LogDebug("Session '{0}' has pinged", SessionID);
+
+            Response response = Response.Create(request.ID, out PingResult pingResult);
+            pingResult.Timestamp = pingParams.Timestamp;
+            pingResult.Payload = pingParams.Payload;
+
+            Send(response);
+        }
+
         private void OnBladeDisconnectRequest(Request request, Blade.Messages.DisconnectParams disconnectParams)
         {
             mLogger.LogInformation("Disconnect requested by remote session, pausing sending");
@@ -783,8 +807,10 @@ namespace Blade
         }
 
 #region "Authenticate Management"
-        public void SendAuthenticateResult(Request request, Blade.Messages.AuthenticateParams authenticateParams, JObject authorization)
+        public void SendAuthenticateResult(Request request, Blade.Messages.AuthenticateParams authenticateParams, JObject authorization, bool netcast, out Request netcastRequest)
         {
+            netcastRequest = null;
+
             Response response = Response.Create(request.ID, out Blade.Messages.AuthenticateResult result);
             result.RequesterNodeID = authenticateParams.RequesterNodeID;
             result.ResponderNodeID = authenticateParams.ResponderNodeID;
@@ -798,7 +824,7 @@ namespace Blade
             {
                 byte[] authenticationData = Encoding.UTF8.GetBytes(authenticateParams.Authentication.ToString(Formatting.None));
                 string authenticationKey = BitConverter.ToString(SHA1.Create().ComputeHash(authenticationData)).Replace("-", "").ToLower();
-                NetcastAuthorizationAdd(authenticationKey, result.Authorization, authenticateParams.NodeID);
+                NetcastAuthorizationAdd(authenticationKey, result.Authorization, authenticateParams.NodeID, netcast, out netcastRequest);
             }
 
             Send(response);
@@ -1165,9 +1191,9 @@ namespace Blade
 #endregion
 
 #region "Netcast Authorization Management"
-        public void NetcastAuthorizationAdd(string authentication, JObject authorization, string nodeid)
+        public void NetcastAuthorizationAdd(string authentication, JObject authorization, string nodeid, bool netcast, out Request netcastRequest)
         {
-            Request request = Request.CreateWithoutResponse("blade.netcast", out NetcastParams netcastParameters);
+            netcastRequest = Request.CreateWithoutResponse("blade.netcast", out NetcastParams netcastParameters);
 
             netcastParameters.Command = "authorization.add";
             netcastParameters.NetcasterNodeID = NodeID;
@@ -1175,11 +1201,11 @@ namespace Blade
 
             Cache.Update(netcastParameters);
 
-            Send(request);
+            if (netcast) Send(netcastRequest);
         }
-        public void NetcastAuthorizationRemove(string authentication)
+        public void NetcastAuthorizationRemove(string authentication, bool netcast, out Request netcastRequest)
         {
-            Request request = Request.CreateWithoutResponse("blade.netcast", out NetcastParams netcastParameters);
+            netcastRequest = Request.CreateWithoutResponse("blade.netcast", out NetcastParams netcastParameters);
 
             netcastParameters.Command = "authorization.remove";
             netcastParameters.NetcasterNodeID = NodeID;
@@ -1187,7 +1213,7 @@ namespace Blade
 
             Cache.Update(netcastParameters);
 
-            Send(request);
+            if (netcast) Send(netcastRequest);
         }
 #endregion
     }

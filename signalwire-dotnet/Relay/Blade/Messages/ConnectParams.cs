@@ -10,7 +10,7 @@ namespace Blade.Messages
         public sealed class VersionParam
         {
             public const int MAJOR = 2;
-            public const int MINOR = 2;
+            public const int MINOR = 4;
             public const int REVISION = 0;
 
             [JsonProperty("major", Required = Required.Always)]
@@ -27,6 +27,8 @@ namespace Blade.Messages
         public string SessionID { get; set; }
         [JsonProperty("authentication", NullValueHandling = NullValueHandling.Ignore)]
         public object Authentication { get; set; }
-    }
 
+        [JsonProperty("agent", NullValueHandling = NullValueHandling.Ignore)]
+        public string Agent { get; set; }
+    }
 }

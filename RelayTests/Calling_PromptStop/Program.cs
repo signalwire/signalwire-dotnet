@@ -50,7 +50,7 @@ namespace Calling_PromptStop
                     }
                 });
 
-            Thread.Sleep(3000);
+            Thread.Sleep(5000);
             actionPrompt.Stop();
 
             Logger.LogDebug("Waiting for prompt to complete");

@@ -53,6 +53,7 @@ namespace SignalWire.Relay
             string project,
             string token,
             string host = null,
+            string agent = "unknown",
             bool jwt = false,
             TimeSpan? connectDelay = null,
             TimeSpan? connectTimeout = null,
@@ -74,6 +75,7 @@ namespace SignalWire.Relay
             {
                 Bootstrap = new Uri("wss://" + host),
                 Authentication = authentication,
+                Agent = agent,
             };
             if (connectDelay.HasValue) options.ConnectDelay = connectDelay.Value;
             if (connectTimeout.HasValue) options.ConnectTimeout = connectTimeout.Value;
