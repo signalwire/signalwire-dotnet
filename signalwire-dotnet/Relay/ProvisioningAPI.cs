@@ -18,7 +18,7 @@ namespace SignalWire.Relay
 
         public async Task<Provisioning.ConfigureResult> ConfigureAsync(Provisioning.ConfigureParams parameters)
         {
-            return await mAPI.ExecuteAsync<Provisioning.ConfigureParams, Provisioning.ConfigureResult>("configure", parameters);
+            return await mAPI.ExecuteAsync<Provisioning.ConfigureParams, Provisioning.ConfigureResult>("provisioning.configure", parameters);
         }
     }
 }
