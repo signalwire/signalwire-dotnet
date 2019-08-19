@@ -3,7 +3,9 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.2] - 2019-08-19
+### Fixed
+- Fixed websocket buffers to 64kb max to satisfy .NET Framework limits
 ### Added
 - Constructors for Relay.Messaging.SendSource that accept both a body string and media URLs
 - OnIncomingMessage and OnMessageStateChange events to Consumer
