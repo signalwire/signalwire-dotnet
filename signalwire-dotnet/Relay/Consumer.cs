@@ -1,4 +1,5 @@
 ﻿using SignalWire.Relay.Calling;
+using SignalWire.Relay.Messaging;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -30,6 +31,10 @@ namespace SignalWire.Relay
 
         protected virtual void OnIncomingCall(Call call) { }
 
+        protected virtual void OnIncomingMessage(Message message) { }
+
+        protected virtual void OnMessageStateChange(Message message) { }
+
         protected virtual void OnTask(RelayTask eventParams) { }
 
         public void Stop() { mShutdown.Set(); }
@@ -60,6 +65,8 @@ namespace SignalWire.Relay
                     });
                 };
                 mClient.Calling.OnCallReceived += (a, c, p) => Task.Run(() => OnIncomingCall(c));
+                mClient.Messaging.OnMessageReceived += (a, m, e, p) => Task.Run(() => OnIncomingMessage(m));
+                mClient.Messaging.OnMessageStateChange += (a, m, e, p) => Task.Run(() => OnMessageStateChange(m));
                 mClient.Tasking.OnTaskReceived += (c, p) => Task.Run(() => OnTask(p));
 
                 mClient.Connect();
