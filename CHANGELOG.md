@@ -9,6 +9,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Responding to blade.ping
 - Support for external authorizations event passing
 
+## [2.1.2] - 2019-08-19
+### Fixed
+- Fixed websocket buffers to 64kb max to satisfy .NET Framework limits
+### Added
+- Constructors for Relay.Messaging.SendSource that accept both a body string and media URLs
+- OnIncomingMessage and OnMessageStateChange events to Consumer
+
 ## [2.1.1] - 2019-08-02
 ### Fixed
 - Fixed Call.WaitFor to not throw exception
