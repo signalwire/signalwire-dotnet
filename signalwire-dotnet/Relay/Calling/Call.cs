@@ -136,6 +136,7 @@ namespace SignalWire.Relay.Calling
         public string Context { get { return mContext; } internal set { mContext = value; } }
         public Call Peer { get { return mPeer; } internal set { mPeer = value; } }
         public bool Busy { get { return mBusy; } internal set { mBusy = value; } }
+        public bool Failed { get; internal set; }
 
         public object UserData { get; set; }
 
@@ -210,6 +211,8 @@ namespace SignalWire.Relay.Calling
                         Peer = null;
                     }
                     if (stateParams.EndReason == DisconnectReason.busy) mBusy = true;
+                    else if (stateParams.EndReason == DisconnectReason.error) Failed = true;
+
                     OnEnded?.Invoke(mAPI, this, eventParams, stateParams);
                     break;
             }
