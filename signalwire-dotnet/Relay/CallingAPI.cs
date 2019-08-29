@@ -119,6 +119,9 @@ namespace SignalWire.Relay
                 case "calling.call.fax":
                     OnCallingEvent_Fax(client, broadcastParams, callingEventParams);
                     break;
+                case "calling.call.send_digits":
+                    OnCallingEvent_SendDigits(client, broadcastParams, callingEventParams);
+                    break;
                 default: break;
             }
         }
@@ -362,6 +365,24 @@ namespace SignalWire.Relay
             call.FaxHandler(callEventParams, faxParams);
         }
 
+        private void OnCallingEvent_SendDigits(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
+        {
+            CallingEventParams.SendDigitsParams sendDigitsParams = null;
+            try { sendDigitsParams = callEventParams.ParametersAs<CallingEventParams.SendDigitsParams>(); }
+            catch (Exception exc)
+            {
+                mLogger.LogWarning(exc, "Failed to parse SendDigitsParams");
+                return;
+            }
+            if (!mCalls.TryGetValue(sendDigitsParams.CallID, out Call call))
+            {
+                mLogger.LogWarning("Received FaxParams with unknown CallID: {0}", sendDigitsParams.CallID);
+                return;
+            }
+
+            call.SendDigitsStateChangeHandler(callEventParams, sendDigitsParams);
+        }
+
         // Utility
         internal void ThrowIfError(string code, string message) { mAPI.ThrowIfError(code, message); }
 
@@ -455,6 +476,11 @@ namespace SignalWire.Relay
         public Task<LL_ReceiveFaxStopResult> LL_ReceiveFaxStopAsync(LL_ReceiveFaxStopParams parameters)
         {
             return mAPI.ExecuteAsync<LL_ReceiveFaxStopParams, LL_ReceiveFaxStopResult>("call.receive_fax.stop", parameters);
+        }
+
+        public Task<LL_SendDigitsResult> LL_SendDigitsAsync(LL_SendDigitsParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_SendDigitsParams, LL_SendDigitsResult>("call.send_digits", parameters);
         }
     }
 }
