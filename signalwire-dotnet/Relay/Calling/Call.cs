@@ -1171,6 +1171,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
+        [Obsolete("Using DetectAnsweringMachine is preferred")]
         public DetectResult DetectMachine(
             double? initialTimeout = null,
             double? endSilenceTimeout = null,
@@ -1190,6 +1191,7 @@ namespace SignalWire.Relay.Calling
             }).Result;
         }
 
+        [Obsolete("Using DetectAnsweringMachineAsync is preferred")]
         public DetectAction DetectMachineAsync(
             double? initialTimeout = null,
             double? endSilenceTimeout = null,
@@ -1221,6 +1223,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
+        [Obsolete("Using DetectAnsweringMachine is preferred")]
         public DetectResult DetectHuman(
             double? initialTimeout = null,
             double? endSilenceTimeout = null,
@@ -1240,7 +1243,84 @@ namespace SignalWire.Relay.Calling
             }).Result;
         }
 
+        [Obsolete("Using DetectAnsweringMachineAsync is preferred")]
         public DetectAction DetectHumanAsync(
+            double? initialTimeout = null,
+            double? endSilenceTimeout = null,
+            double? machineVoiceThreshold = null,
+            int? machineWordsThreshold = null)
+        {
+            var payload = new CallDetect()
+            {
+                Type = CallDetect.DetectType.machine,
+                Parameters = new CallDetect.MachineParams()
+                {
+                    InitialTimeout = initialTimeout,
+                    EndSilenceTimeout = endSilenceTimeout,
+                    MachineVoiceThreshold = machineVoiceThreshold,
+                    MachineWordsThreshold = machineWordsThreshold,
+                },
+            };
+            DetectAction action = new DetectAction
+            {
+                Call = this,
+                ControlID = Guid.NewGuid().ToString(),
+                Payload = payload,
+            };
+            Task.Run(async () =>
+            {
+                action.Result = await InternalDetectAsync(action.ControlID, payload);
+                action.Completed = true;
+            });
+            return action;
+        }
+
+        public DetectResult AMD(
+            double? initialTimeout = null,
+            double? endSilenceTimeout = null,
+            double? machineVoiceThreshold = null,
+            int? machineWordsThreshold = null)
+        {
+            return DetectAnsweringMachine(
+                initialTimeout: initialTimeout,
+                endSilenceTimeout: endSilenceTimeout,
+                machineVoiceThreshold: machineVoiceThreshold,
+                machineWordsThreshold: machineWordsThreshold);
+        }
+
+        public DetectResult DetectAnsweringMachine(
+            double? initialTimeout = null,
+            double? endSilenceTimeout = null,
+            double? machineVoiceThreshold = null,
+            int? machineWordsThreshold = null)
+        {
+            return InternalDetectAsync(Guid.NewGuid().ToString(), new CallDetect()
+            {
+                Type = CallDetect.DetectType.machine,
+                Parameters = new CallDetect.MachineParams()
+                {
+                    InitialTimeout = initialTimeout,
+                    EndSilenceTimeout = endSilenceTimeout,
+                    MachineVoiceThreshold = machineVoiceThreshold,
+                    MachineWordsThreshold = machineWordsThreshold,
+                },
+            }).Result;
+        }
+
+        public DetectAction AMDAsync(
+            double? initialTimeout = null,
+            double? endSilenceTimeout = null,
+            double? machineVoiceThreshold = null,
+            int? machineWordsThreshold = null)
+        {
+            return DetectAnsweringMachineAsync(
+                initialTimeout: initialTimeout,
+                endSilenceTimeout: endSilenceTimeout,
+                machineVoiceThreshold: machineVoiceThreshold,
+                machineWordsThreshold: machineWordsThreshold);
+        }
+
+        public DetectAction DetectAnsweringMachineAsync(
             double? initialTimeout = null,
             double? endSilenceTimeout = null,
             double? machineVoiceThreshold = null,
