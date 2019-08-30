@@ -15,9 +15,8 @@ namespace Calling_PlayConnectPlay
             BladeLogging.LoggerFactory.AddSimpleConsole(LogLevel.Trace);
             SignalWireLogging.LoggerFactory.AddSimpleConsole(LogLevel.Trace);
 
-            Host = "relay.swire.io";
-            Project = "0eb389ac-ec50-4c44-9da8-8594f1d1593c";
-            Token = "PT2cc964eca64905ca023f087f29f704c0e4595db0a57f6a52";
+            Project = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX";
+            Token = "PTXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
             Contexts = new List<string> { "test" };
         }
 
