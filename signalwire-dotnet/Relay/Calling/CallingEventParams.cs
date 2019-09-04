@@ -318,6 +318,21 @@ namespace SignalWire.Relay.Calling
             public FaxSettings Fax { get; set; }
         }
 
+        public sealed class SendDigitsParams
+        {
+            [JsonProperty("node_id", Required = Required.Always)]
+            public string NodeID { get; set; }
+
+            [JsonProperty("call_id", Required = Required.Always)]
+            public string CallID { get; set; }
+
+            [JsonProperty("control_id", Required = Required.Always)]
+            public string ControlID { get; set; }
+
+            [JsonProperty("state", Required = Required.Always)]
+            public CallSendDigitsState State { get; set; }
+        }
+
         [JsonProperty("event_type", Required = Required.Always)]
         public string EventType { get; set; }
 
