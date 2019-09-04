@@ -320,10 +320,6 @@ namespace SignalWire.Relay.Calling
 
         public sealed class SendDigitsParams
         {
-            public enum SendDigitsState {
-                finished,
-            }
-
             [JsonProperty("node_id", Required = Required.Always)]
             public string NodeID { get; set; }
 
@@ -334,7 +330,7 @@ namespace SignalWire.Relay.Calling
             public string ControlID { get; set; }
 
             [JsonProperty("state", Required = Required.Always)]
-            public SendDigitsState State { get; set; }
+            public CallSendDigitsState State { get; set; }
         }
 
         [JsonProperty("event_type", Required = Required.Always)]

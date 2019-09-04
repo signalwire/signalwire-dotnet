@@ -376,7 +376,7 @@ namespace SignalWire.Relay
             }
             if (!mCalls.TryGetValue(sendDigitsParams.CallID, out Call call))
             {
-                mLogger.LogWarning("Received FaxParams with unknown CallID: {0}", sendDigitsParams.CallID);
+                mLogger.LogWarning("Received SendDigitsParams with unknown CallID: {0}", sendDigitsParams.CallID);
                 return;
             }
 

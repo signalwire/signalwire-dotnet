@@ -381,7 +381,7 @@ namespace SignalWire.Relay.Calling
 
             switch (sendDigitsParams.State)
             {
-                case CallingEventParams.SendDigitsParams.SendDigitsState.finished:
+                case CallSendDigitsState.finished:
                     OnSendDigitsFinished?.Invoke(mAPI, this, eventParams, sendDigitsParams);
                     break;
             }
@@ -1638,6 +1638,7 @@ namespace SignalWire.Relay.Calling
             {
                 action.Result = await InternalSendDigitsAsync(action.ControlID, action.Payload);
                 action.Completed = true;
+                action.State = action.Result.Event.Payload.ToObject<CallingEventParams.SendDigitsParams>().State;
             });
             return action;
         }
@@ -1655,7 +1656,7 @@ namespace SignalWire.Relay.Calling
                 resultSendDigits.Event = new Event(e.EventType, JObject.FromObject(p));
                 switch (p.State)
                 {
-                    case CallingEventParams.SendDigitsParams.SendDigitsState.finished:
+                    case CallSendDigitsState.finished:
                         tcsCompletion.SetResult(true);
                         break;
                 }
