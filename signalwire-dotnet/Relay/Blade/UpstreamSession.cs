@@ -403,10 +403,14 @@ namespace Blade
             }
             AddTask("OnConnect OnPulse Delay", Task.Delay(TimeSpan.FromSeconds(1)).ContinueWith(OnPulse));
 
+            Version version = GetType().Assembly.GetName().Version;
+            string agent = string.Format(".NET SDK/{0}.{1}.{2}", version.Major, version.Minor, version.Build);
+            if (!string.IsNullOrWhiteSpace(mOptions.Agent)) agent += "/" + mOptions.Agent;
+
             Request request = Request.Create("blade.connect", out Blade.Messages.ConnectParams param, OnBladeConnectResponse);
             if (SessionID != null) param.SessionID = SessionID;
             if (mOptions.Authentication != null) param.Authentication = JsonConvert.DeserializeObject(mOptions.Authentication);
-            param.Agent = string.Format(".NET Core/{0}/{1}.{2}.{3}", mOptions.Agent, ConnectParams.VersionParam.MAJOR, ConnectParams.VersionParam.MINOR, ConnectParams.VersionParam.REVISION);
+            param.Agent = agent;
             Send(request, true);
         }
 

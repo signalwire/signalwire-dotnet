@@ -53,7 +53,7 @@ namespace SignalWire.Relay
             string project,
             string token,
             string host = null,
-            string agent = "unknown",
+            string agent = null,
             bool jwt = false,
             TimeSpan? connectDelay = null,
             TimeSpan? connectTimeout = null,
