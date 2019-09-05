@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Unreleased
 - Added Send Digits API (DTMF)
 - Deprecated DetectMachine, DetectMachineAsync, DetectHuman, and DetectHumanAsync
-- Introduced AMD, AMDAsync, DetectAnsweringMachine, and DetectAnsweringMachineAsync as replacements
+- Added AMD, AMDAsync, DetectAnsweringMachine, and DetectAnsweringMachineAsync as replacements
 
 ## [2.1.2] - 2019-08-19
 ### Fixed
