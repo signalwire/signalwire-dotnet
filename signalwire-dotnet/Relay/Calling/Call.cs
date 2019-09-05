@@ -1152,7 +1152,7 @@ namespace SignalWire.Relay.Calling
 
         public DetectResult Detect(CallDetect detect)
         {
-            return InternalDetectAsync(Guid.NewGuid().ToString(), detect).Result;
+            return InternalDetectAsync(Guid.NewGuid().ToString(), null as bool?, detect).Result;
         }
 
         public DetectAction DetectAsync(CallDetect detect)
@@ -1165,7 +1165,7 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                action.Result = await InternalDetectAsync(action.ControlID, detect);
+                action.Result = await InternalDetectAsync(action.ControlID, null as bool?, detect);
                 action.Completed = true;
             });
             return action;
@@ -1178,7 +1178,7 @@ namespace SignalWire.Relay.Calling
             double? machineVoiceThreshold = null,
             int? machineWordsThreshold = null)
         {
-            return InternalDetectAsync(Guid.NewGuid().ToString(), new CallDetect()
+            return InternalDetectAsync(Guid.NewGuid().ToString(), null as bool?, new CallDetect()
             {
                 Type = CallDetect.DetectType.machine,
                 Parameters = new CallDetect.MachineParams()
@@ -1217,7 +1217,7 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                action.Result = await InternalDetectAsync(action.ControlID, payload);
+                action.Result = await InternalDetectAsync(action.ControlID, null as bool?, payload);
                 action.Completed = true;
             });
             return action;
@@ -1230,7 +1230,7 @@ namespace SignalWire.Relay.Calling
             double? machineVoiceThreshold = null,
             int? machineWordsThreshold = null)
         {
-            return InternalDetectAsync(Guid.NewGuid().ToString(), new CallDetect()
+            return InternalDetectAsync(Guid.NewGuid().ToString(), null as bool?, new CallDetect()
             {
                 Type = CallDetect.DetectType.machine,
                 Parameters = new CallDetect.MachineParams()
@@ -1269,7 +1269,7 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                action.Result = await InternalDetectAsync(action.ControlID, payload);
+                action.Result = await InternalDetectAsync(action.ControlID, null as bool?, payload);
                 action.Completed = true;
             });
             return action;
@@ -1279,22 +1279,25 @@ namespace SignalWire.Relay.Calling
             double? initialTimeout = null,
             double? endSilenceTimeout = null,
             double? machineVoiceThreshold = null,
-            int? machineWordsThreshold = null)
+            int? machineWordsThreshold = null,
+            bool? waitForBeep = null)
         {
             return DetectAnsweringMachine(
                 initialTimeout: initialTimeout,
                 endSilenceTimeout: endSilenceTimeout,
                 machineVoiceThreshold: machineVoiceThreshold,
-                machineWordsThreshold: machineWordsThreshold);
+                machineWordsThreshold: machineWordsThreshold,
+                waitForBeep: waitForBeep);
         }
 
         public DetectResult DetectAnsweringMachine(
             double? initialTimeout = null,
             double? endSilenceTimeout = null,
             double? machineVoiceThreshold = null,
-            int? machineWordsThreshold = null)
+            int? machineWordsThreshold = null,
+            bool? waitForBeep = null)
         {
-            return InternalDetectAsync(Guid.NewGuid().ToString(), new CallDetect()
+            return InternalDetectAsync(Guid.NewGuid().ToString(), waitForBeep, new CallDetect()
             {
                 Type = CallDetect.DetectType.machine,
                 Parameters = new CallDetect.MachineParams()
@@ -1324,7 +1327,8 @@ namespace SignalWire.Relay.Calling
             double? initialTimeout = null,
             double? endSilenceTimeout = null,
             double? machineVoiceThreshold = null,
-            int? machineWordsThreshold = null)
+            int? machineWordsThreshold = null,
+            bool? waitForBeep = null)
         {
             var payload = new CallDetect()
             {
@@ -1345,7 +1349,7 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                action.Result = await InternalDetectAsync(action.ControlID, payload);
+                action.Result = await InternalDetectAsync(action.ControlID, waitForBeep, payload);
                 action.Completed = true;
             });
             return action;
@@ -1353,7 +1357,7 @@ namespace SignalWire.Relay.Calling
 
         public DetectResult DetectFax(CallDetect.FaxParams.FaxTone? tone = null)
         {
-            return InternalDetectAsync(Guid.NewGuid().ToString(), new CallDetect()
+            return InternalDetectAsync(Guid.NewGuid().ToString(), null as bool?, new CallDetect()
             {
                 Type = CallDetect.DetectType.fax,
                 Parameters = new CallDetect.FaxParams()
@@ -1380,7 +1384,7 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                action.Result = await InternalDetectAsync(action.ControlID, payload);
+                action.Result = await InternalDetectAsync(action.ControlID, null as bool?, payload);
                 action.Completed = true;
             });
             return action;
@@ -1388,7 +1392,7 @@ namespace SignalWire.Relay.Calling
 
         public DetectResult DetectDigit(string digits = null)
         {
-            return InternalDetectAsync(Guid.NewGuid().ToString(), new CallDetect()
+            return InternalDetectAsync(Guid.NewGuid().ToString(), null as bool?, new CallDetect()
             {
                 Type = CallDetect.DetectType.digit,
                 Parameters = new CallDetect.DigitParams()
@@ -1416,13 +1420,13 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                action.Result = await InternalDetectAsync(action.ControlID, payload);
+                action.Result = await InternalDetectAsync(action.ControlID, null as bool?, payload);
                 action.Completed = true;
             });
             return action;
         }
 
-        private async Task<DetectResult> InternalDetectAsync(string controlID, CallDetect detect)
+        private async Task<DetectResult> InternalDetectAsync(string controlID, bool? waitForBeep, CallDetect detect)
         {
             await API.API.SetupAsync();
 
@@ -1432,14 +1436,18 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             DetectUpdateCallback callback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
+
                 resultDetect.Event = new Event(e.EventType, JObject.FromObject(p));
                 if (p.Detect.Parameters.Event == "finished")
                 {
                     resultDetect.Type = DetectResultType.Finished;
+                    tcsCompletion.SetResult(false);
                 }
                 else if (p.Detect.Parameters.Event == "error")
                 {
                     resultDetect.Type = DetectResultType.Error;
+                    tcsCompletion.SetResult(false);
                 }
                 else
                 {
@@ -1448,28 +1456,40 @@ namespace SignalWire.Relay.Calling
                         case CallingEventParams.DetectParams.DetectType.digit:
                             resultDetect.Type = DetectResultType.DTMF;
                             resultDetect.Result = p.Detect.Parameters.Event;
+                            tcsCompletion.SetResult(detect.Type == CallDetect.DetectType.digit);
                             break;
                         case CallingEventParams.DetectParams.DetectType.fax:
                             resultDetect.Type = DetectResultType.Fax;
                             resultDetect.Result = p.Detect.Parameters.Event;
+                            tcsCompletion.SetResult(detect.Type == CallDetect.DetectType.fax);
                             break;
                         case CallingEventParams.DetectParams.DetectType.machine:
                             if (p.Detect.Parameters.Event == "HUMAN")
                             {
                                 resultDetect.Type = DetectResultType.Human;
+                                tcsCompletion.SetResult(detect.Type == CallDetect.DetectType.machine);
                             }
                             else if (p.Detect.Parameters.Event == "MACHINE")
                             {
-                                resultDetect.Type = DetectResultType.Machine;
+                                if (waitForBeep != true)
+                                {
+                                    resultDetect.Type = DetectResultType.Machine;
+                                    tcsCompletion.SetResult(detect.Type == CallDetect.DetectType.machine);
+                                }
                             }
-                            else if (p.Detect.Parameters.Event == "READY" || p.Detect.Parameters.Event == "NOT_READY")
+                            else if (p.Detect.Parameters.Event == "READY")
                             {
                                 resultDetect.Type = DetectResultType.Machine;
                                 resultDetect.Result = p.Detect.Parameters.Event;
                             }
+                            else if (p.Detect.Parameters.Event == "NOT_READY")
+                            {
+                                // Intentionally blank
+                            }
                             else if (p.Detect.Parameters.Event == "UNKNOWN")
                             {
                                 resultDetect.Type = DetectResultType.Unknown;
+                                tcsCompletion.SetResult(false);
                             }
                             else
                             {
@@ -1480,8 +1500,6 @@ namespace SignalWire.Relay.Calling
                             throw new NotSupportedException();
                     }
                 }
-
-                tcsCompletion.SetResult(true);
             };
 
             OnDetectUpdate += callback;
