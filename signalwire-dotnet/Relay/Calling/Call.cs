@@ -1481,6 +1481,7 @@ namespace SignalWire.Relay.Calling
                             {
                                 resultDetect.Type = DetectResultType.Machine;
                                 resultDetect.Result = p.Detect.Parameters.Event;
+                                tcsCompletion.SetResult(detect.Type == CallDetect.DetectType.machine);
                             }
                             else if (p.Detect.Parameters.Event == "NOT_READY")
                             {
