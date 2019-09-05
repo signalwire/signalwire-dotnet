@@ -26,6 +26,10 @@ namespace Calling_Detect
         private static bool sRunMachine = true;
         private static bool sMachineSuccessful = !sRunMachine;
 
+        private static ManualResetEventSlim sMachineReadyCompleted = new ManualResetEventSlim();
+        private static bool sRunMachineReady = true;
+        private static bool sMachineReadySuccessful = !sRunMachineReady;
+
         private static ManualResetEventSlim sFaxCompleted = new ManualResetEventSlim();
         private static bool sRunFax = false;
         private static bool sFaxSuccessful = !sRunFax;
@@ -131,6 +135,7 @@ namespace Calling_Detect
                     var handles = new[] {
                         sHumanCompleted.WaitHandle,
                         sMachineCompleted.WaitHandle,
+                        sMachineReadyCompleted.WaitHandle,
                         sFaxCompleted.WaitHandle,
                         sDigitCompleted.WaitHandle,
                     };
@@ -154,6 +159,7 @@ namespace Calling_Detect
             };
             if (sRunHuman) report("Human", sHumanSuccessful);
             if (sRunMachine) report("Machine", sMachineSuccessful);
+            if (sRunMachineReady) report("Machine Ready", sMachineReadySuccessful);
             if (sRunFax) report("Fax", sFaxSuccessful);
             if (sRunDigit) report("Digit", sDigitSuccessful);
 
@@ -165,6 +171,7 @@ namespace Calling_Detect
                 new[] {
                     sHumanSuccessful,
                     sMachineSuccessful,
+                    sMachineReadySuccessful,
                     sFaxSuccessful,
                     sDigitSuccessful,
                 }.All(b => b) ? 0 : -1;
@@ -243,6 +250,12 @@ namespace Calling_Detect
 
                         },
                     });
+
+                if (sRunMachineReady)
+                {
+                    // Machine ready requires us to do a custom implementation because you can't access it directly through a CallDetect
+                    CallMachineReady(sCallToMachineNumber);
+                }
             });
         }
 
@@ -267,7 +280,6 @@ namespace Calling_Detect
             Logger.LogInformation("[{0}] Call created, associating events", tag);
             call.OnDetectUpdate += (CallingAPI api, Call detectedCall, CallingEventParams detectEventParams, CallingEventParams.DetectParams detectParams) =>
             {
-                if (detectParams.Detect.Parameters.Event == "READY") return;
                 if (detectParams.Detect.Parameters.Event == "finished")
                 {
                     if (isDetectValid(detectParams))
@@ -359,6 +371,98 @@ namespace Calling_Detect
             }
         }
 
+        private static void CallMachineReady(string toNumber)
+        {
+            const string tag = "Machine Ready";
+
+            Logger.LogInformation("[{0}] Beginning setup for call to {1}", tag, toNumber);
+            PhoneCall call = sCallingAPI.NewPhoneCall(toNumber, sCallFromNumber);
+            Logger.LogInformation("[{0}] Call created, associating events", tag);
+            call.OnDetectUpdate += (CallingAPI api, Call detectedCall, CallingEventParams detectEventParams, CallingEventParams.DetectParams detectParams) =>
+            {
+                if (detectParams.Detect.Parameters.Event == "READY")
+                {
+                    Logger.LogInformation("[{0}] Completed successfully", tag);
+                    sMachineReadySuccessful = true;
+                    sMachineReadyCompleted.Set();
+                    return;
+                }
+                if (detectParams.Detect.Parameters.Event == "MACHINE")
+                {
+                    // We do expect one of these since usually MACHINE occurs before READY
+                    return;
+                }
+
+                Logger.LogInformation("[{0}] OnDetect with ID: {1}, {2} for {3}", tag, detectedCall.ID, detectParams.Detect.Type, detectParams.ControlID);
+                Logger.LogError("[{0}] Unsuccessful", tag);
+            };
+            Logger.LogInformation("[{0}] OnDetect associated", tag);
+
+            call.OnEnded += (CallingAPI api, Call endedCall, CallingEventParams stateEventParams, CallingEventParams.StateParams stateParams) =>
+            {
+                Logger.LogInformation("[{0}] OnEnded with ID: {1}", tag, endedCall.ID);
+                sDetect = null;
+                sMachineReadyCompleted.Set();
+                Logger.LogInformation("[{0}] OnEnded complete", tag);
+            };
+            Logger.LogInformation("[{0}] OnEnded associated", tag);
+
+            call.OnAnswered += (CallingAPI api, Call answeredCall, CallingEventParams answerEventParams, CallingEventParams.StateParams stateParams) =>
+            {
+                Logger.LogInformation("[{0}] OnAnswered with ID: {1}", tag, answeredCall.ID);
+
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        Logger.LogInformation("[{0}] Performing detect", tag);
+                        var detectResult = answeredCall.DetectAnsweringMachine(waitForBeep: true);
+                        Logger.LogInformation("[{0}] Detect performed", tag);
+                    }
+                    catch (Exception exc)
+                    {
+                        Logger.LogError(exc, $"[{tag}] call.Detect failed");
+                        sMachineReadyCompleted.Set();
+                        sDetect = null;
+                        return;
+                    }
+                });
+            };
+            Logger.LogInformation("[{0}] OnAnswered associated", tag);
+
+            call.OnConnectStateChange += (CallingAPI api, Call connectStateChangeCall, CallingEventParams connectStateChangeEventParams, CallingEventParams.ConnectParams connectStateChangeParams) =>
+            {
+                Logger.LogInformation("[{0}] OnConnectStateChange: {1}", tag, connectStateChangeParams.State);
+            };
+            Logger.LogInformation("[{0}] OnConnectStateChange associated", tag);
+
+            call.OnReceiveStateChange += (CallingAPI api, Call receiveStateChangeCall, CallingEventParams receiveStateChangeEventParams, CallingEventParams.ReceiveParams receiveStateChangeParams) =>
+            {
+                Logger.LogInformation("[{0}] OnReceiveStateChange: {1}", tag, receiveStateChangeParams.CallState);
+            };
+            Logger.LogInformation("[{0}] OnReceiveStateChange associated", tag);
+
+            call.OnStateChange += (CallingAPI api, Call stateChangeCall, CallingEventParams stateChangeEventParams, CallingEventParams.StateParams stateChangeParams) =>
+            {
+                Logger.LogInformation("[{0}] OnStateChange: {1}", tag, stateChangeParams.CallState);
+            };
+            Logger.LogInformation("[{0}] OnStateChange associated", tag);
+
+            try
+            {
+                Logger.LogInformation("[{0}] Executing call", tag);
+                var dialAction = call.Dial();
+                Logger.LogInformation("[{0}] Call executed", tag);
+            }
+            catch (Exception exc)
+            {
+                Logger.LogError(exc, $"[{tag}] call.DialAsync failed");
+                sMachineReadyCompleted.Set();
+                sDetect = null;
+                return;
+            }
+        }
+
         private static bool OnCallDetectHuman(CallingEventParams.DetectParams detectParams)
         {
             return
@@ -370,7 +474,8 @@ namespace Calling_Detect
         {
             return
                 detectParams.Detect.Type == CallingEventParams.DetectParams.DetectType.machine &&
-                detectParams.Detect.Parameters.Event == "MACHINE";
+                detectParams.Detect.Parameters.Event == "MACHINE" ||
+                detectParams.Detect.Parameters.Event == "READY";
         }
 
         private static bool OnCallDetectFax(CallingEventParams.DetectParams detectParams)
