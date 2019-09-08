@@ -49,8 +49,8 @@ namespace Calling_PlayConnectPlay
                         Type = CallDevice.DeviceType.phone,
                         Parameters = new CallDevice.PhoneParams
                         {
-                            ToNumber = "+17807286467",
-                            FromNumber = "+12089001404",
+                            ToNumber = "+1555XXXXXXX",
+                            FromNumber = "+1555XXXXXXX",
                         }
                     }
                 }
