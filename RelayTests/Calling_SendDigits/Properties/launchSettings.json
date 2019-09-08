@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "Calling_SendDigits": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "TEST_HOST": "replaceme",
+        "TEST_PROJECT": "replaceme",
+        "TEST_TOKEN": "replaceme",
+        "TEST_CONTEXT": "replaceme",
+        "TEST_DIGIT_STRING": "replaceme",
+        "TEST_TO_NUMBER": "replaceme",
+        "TEST_FROM_NUMBER": "replaceme"
+      }
+    }
+  }
+}

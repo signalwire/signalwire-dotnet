@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Agent in blade.connect
 - Responding to blade.ping
 - Support for external authorizations event passing
+- Added AMD, AMDAsync, DetectAnsweringMachine, and DetectAnsweringMachineAsync as replacements
+- Added Send Digits API (DTMF)
+### Deprecated
+- Deprecated DetectMachine, DetectMachineAsync, DetectHuman, and DetectHumanAsync
 
 ## [2.1.2] - 2019-08-19
 ### Fixed
