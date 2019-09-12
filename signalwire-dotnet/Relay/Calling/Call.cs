@@ -988,7 +988,7 @@ namespace SignalWire.Relay.Calling
 
         public RecordResult Record(CallRecord record)
         {
-            return InternalRecordAsync(Guid.NewGuid().ToString(), record).Result;
+            return InternalRecordAsync(null, Guid.NewGuid().ToString(), record).Result;
         }
 
         public RecordAction RecordAsync(CallRecord record)
@@ -1004,7 +1004,7 @@ namespace SignalWire.Relay.Calling
                 RecordStateChangeCallback recordStateChangeCallback = (a, c, e, p) => action.State = p.State;
                 OnRecordStateChange += recordStateChangeCallback;
 
-                action.Result = await InternalRecordAsync(action.ControlID, record);
+                action.Result = await InternalRecordAsync(action, action.ControlID, record);
                 action.Completed = true;
 
                 OnRecordStateChange -= recordStateChangeCallback;
@@ -1012,7 +1012,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-        private async Task<RecordResult> InternalRecordAsync(string controlID, CallRecord record)
+        private async Task<RecordResult> InternalRecordAsync(RecordAction action, string controlID, CallRecord record)
         {
             await API.API.SetupAsync();
 
@@ -1053,8 +1053,11 @@ namespace SignalWire.Relay.Calling
                 {
                     mLogger.LogDebug("Record {0} for call {1} waiting for completion events", controlID, ID);
 
-                    resultRecord.Successful = await tcsCompletion.Task;
+                    // We pass in the async action, so that we can assign the url before we wait for the events
+                    if (action != null) action.Url = resultLLRecord.Url;
                     resultRecord.Url = resultLLRecord.Url;
+
+                    resultRecord.Successful = await tcsCompletion.Task;
 
                     mLogger.LogDebug("Record {0} for call {1} {2}", controlID, ID, resultRecord.Successful ? "successful" : "unsuccessful");
                 }

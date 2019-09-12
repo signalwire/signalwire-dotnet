@@ -21,6 +21,8 @@ namespace SignalWire.Relay.Calling
 
         public CallRecord Payload { get; internal set; }
 
+        public string Url { get; internal set; }
+
         public void Stop()
         {
             Task<LL_RecordStopResult> taskLLRecordStop = Call.API.LL_RecordStopAsync(new LL_RecordStopParams()
