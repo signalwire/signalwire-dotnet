@@ -1054,6 +1054,7 @@ namespace SignalWire.Relay.Calling
                     mLogger.LogDebug("Record {0} for call {1} waiting for completion events", controlID, ID);
 
                     resultRecord.Successful = await tcsCompletion.Task;
+                    resultRecord.Url = resultLLRecord.Url;
 
                     mLogger.LogDebug("Record {0} for call {1} {2}", controlID, ID, resultRecord.Successful ? "successful" : "unsuccessful");
                 }
