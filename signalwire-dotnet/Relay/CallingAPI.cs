@@ -390,92 +390,92 @@ namespace SignalWire.Relay
 
         public Task<LL_BeginResult> LL_BeginAsync(LL_BeginParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_BeginParams, LL_BeginResult>("call.begin", parameters);
+            return mAPI.ExecuteAsync<LL_BeginParams, LL_BeginResult>("calling.begin", parameters);
         }
 
         public Task<LL_AnswerResult> LL_AnswerAsync(LL_AnswerParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_AnswerParams, LL_AnswerResult>("call.answer", parameters);
+            return mAPI.ExecuteAsync<LL_AnswerParams, LL_AnswerResult>("calling.answer", parameters);
         }
 
         public Task<LL_EndResult> LL_EndAsync(LL_EndParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_EndParams, LL_EndResult>("call.end", parameters);
+            return mAPI.ExecuteAsync<LL_EndParams, LL_EndResult>("calling.end", parameters);
         }
 
         public Task<LL_ConnectResult> LL_ConnectAsync(LL_ConnectParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_ConnectParams, LL_ConnectResult>("call.connect", parameters);
+            return mAPI.ExecuteAsync<LL_ConnectParams, LL_ConnectResult>("calling.connect", parameters);
         }
 
         public Task<LL_PlayResult> LL_PlayAsync(LL_PlayParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_PlayParams, LL_PlayResult>("call.play", parameters);
+            return mAPI.ExecuteAsync<LL_PlayParams, LL_PlayResult>("calling.play", parameters);
         }
 
         public Task<LL_PlayStopResult> LL_PlayStopAsync(LL_PlayStopParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_PlayStopParams, LL_PlayStopResult>("call.play.stop", parameters);
+            return mAPI.ExecuteAsync<LL_PlayStopParams, LL_PlayStopResult>("calling.play.stop", parameters);
         }
 
         public Task<LL_PlayAndCollectResult> LL_PlayAndCollectAsync(LL_PlayAndCollectParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_PlayAndCollectParams, LL_PlayAndCollectResult>("call.play_and_collect", parameters);
+            return mAPI.ExecuteAsync<LL_PlayAndCollectParams, LL_PlayAndCollectResult>("calling.play_and_collect", parameters);
         }
 
         public Task<LL_PlayAndCollectStopResult> LL_PlayAndCollectStopAsync(LL_PlayAndCollectStopParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_PlayAndCollectStopParams, LL_PlayAndCollectStopResult>("call.play_and_collect.stop", parameters);
+            return mAPI.ExecuteAsync<LL_PlayAndCollectStopParams, LL_PlayAndCollectStopResult>("calling.play_and_collect.stop", parameters);
         }
 
         public Task<LL_RecordResult> LL_RecordAsync(LL_RecordParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_RecordParams, LL_RecordResult>("call.record", parameters);
+            return mAPI.ExecuteAsync<LL_RecordParams, LL_RecordResult>("calling.record", parameters);
         }
 
         public Task<LL_RecordStopResult> LL_RecordStopAsync(LL_RecordStopParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_RecordStopParams, LL_RecordStopResult>("call.record.stop", parameters);
+            return mAPI.ExecuteAsync<LL_RecordStopParams, LL_RecordStopResult>("calling.record.stop", parameters);
         }
 
         public Task<LL_TapResult> LL_TapAsync(LL_TapParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_TapParams, LL_TapResult>("call.tap", parameters);
+            return mAPI.ExecuteAsync<LL_TapParams, LL_TapResult>("calling.tap", parameters);
         }
 
         public Task<LL_TapStopResult> LL_TapStopAsync(LL_TapStopParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_TapStopParams, LL_TapStopResult>("call.tap.stop", parameters);
+            return mAPI.ExecuteAsync<LL_TapStopParams, LL_TapStopResult>("calling.tap.stop", parameters);
         }
 
         public Task<LL_DetectResult> LL_DetectAsync(LL_DetectParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_DetectParams, LL_DetectResult>("call.detect", parameters);
+            return mAPI.ExecuteAsync<LL_DetectParams, LL_DetectResult>("calling.detect", parameters);
         }
 
         public Task<LL_DetectStopResult> LL_DetectStopAsync(LL_DetectStopParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_DetectStopParams, LL_DetectStopResult>("call.detect.stop", parameters);
+            return mAPI.ExecuteAsync<LL_DetectStopParams, LL_DetectStopResult>("calling.detect.stop", parameters);
         }
 
         public Task<LL_SendFaxResult> LL_SendFaxAsync(LL_SendFaxParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_SendFaxParams, LL_SendFaxResult>("call.send_fax", parameters);
+            return mAPI.ExecuteAsync<LL_SendFaxParams, LL_SendFaxResult>("calling.send_fax", parameters);
         }
 
         public Task<LL_SendFaxStopResult> LL_SendFaxStopAsync(LL_SendFaxStopParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_SendFaxStopParams, LL_SendFaxStopResult>("call.send_fax.stop", parameters);
+            return mAPI.ExecuteAsync<LL_SendFaxStopParams, LL_SendFaxStopResult>("calling.send_fax.stop", parameters);
         }
 
         public Task<LL_ReceiveFaxResult> LL_ReceiveFaxAsync(LL_ReceiveFaxParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_ReceiveFaxParams, LL_ReceiveFaxResult>("call.receive_fax", parameters);
+            return mAPI.ExecuteAsync<LL_ReceiveFaxParams, LL_ReceiveFaxResult>("calling.receive_fax", parameters);
         }
 
         public Task<LL_ReceiveFaxStopResult> LL_ReceiveFaxStopAsync(LL_ReceiveFaxStopParams parameters)
         {
-            return mAPI.ExecuteAsync<LL_ReceiveFaxStopParams, LL_ReceiveFaxStopResult>("call.receive_fax.stop", parameters);
+            return mAPI.ExecuteAsync<LL_ReceiveFaxStopParams, LL_ReceiveFaxStopResult>("calling.receive_fax.stop", parameters);
         }
 
         public Task<LL_SendDigitsResult> LL_SendDigitsAsync(LL_SendDigitsParams parameters)

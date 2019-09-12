@@ -8,6 +8,7 @@ namespace SignalWire.Relay
 {
     public sealed class SetupParams
     {
+        [Obsolete("The service field is no longer used")]
         [JsonProperty("service", NullValueHandling = NullValueHandling.Ignore)]
         public string Service { get; set; }
         [JsonProperty("protocol", NullValueHandling = NullValueHandling.Ignore)]

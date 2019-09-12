@@ -3,8 +3,11 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unrealeased]
+## [Unreleased]
 ### Added
+- Agent in blade.connect
+- Responding to blade.ping
+- Support for external authorizations event passing
 - Added Url to RecordAction
 
 ## [2.2.0] - 2019-09-09
