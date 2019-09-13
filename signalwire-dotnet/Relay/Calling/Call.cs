@@ -627,12 +627,12 @@ namespace SignalWire.Relay.Calling
             return resultConnect;
         }
 
-        public PlayResult Play(List<CallMedia> play)
+        public PlayResult Play(List<CallMedia> play, double? volume = null)
         {
-            return InternalPlayAsync(Guid.NewGuid().ToString(), play).Result;
+            return InternalPlayAsync(Guid.NewGuid().ToString(), play, volume: volume).Result;
         }
 
-        public PlayAction PlayAsync(List<CallMedia> play)
+        public PlayAction PlayAsync(List<CallMedia> play, double? volume = null)
         {
             PlayAction action = new PlayAction
             {
@@ -645,7 +645,7 @@ namespace SignalWire.Relay.Calling
                 PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) => action.State = p.State;
                 OnPlayStateChange += playStateChangeCallback;
 
-                action.Result = await InternalPlayAsync(action.ControlID, play);
+                action.Result = await InternalPlayAsync(action.ControlID, play, volume: volume);
                 action.Completed = true;
 
                 OnPlayStateChange -= playStateChangeCallback;
@@ -653,7 +653,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-        private async Task<PlayResult> InternalPlayAsync(string controlID, List<CallMedia> play)
+        private async Task<PlayResult> InternalPlayAsync(string controlID, List<CallMedia> play, double? volume = null)
         {
             await API.API.SetupAsync();
 
@@ -682,6 +682,7 @@ namespace SignalWire.Relay.Calling
                     NodeID = mNodeID,
                     CallID = mID,
                     ControlID = controlID,
+                    Volume = volume,
                     Play = play,
                 });
 
@@ -708,7 +709,7 @@ namespace SignalWire.Relay.Calling
             return resultPlay;
         }
 
-        public PlayResult PlayAudio(string url)
+        public PlayResult PlayAudio(string url, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -721,10 +722,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return Play(play);
+            return Play(play, volume: volume);
         }
 
-        public PlayAction PlayAudioAsync(string url)
+        public PlayAction PlayAudioAsync(string url, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -737,10 +738,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return PlayAsync(play);
+            return PlayAsync(play, volume: volume);
         }
 
-        public PlayResult PlayTTS(string text, string gender = null, string language = null)
+        public PlayResult PlayTTS(string text, string gender = null, string language = null, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -755,10 +756,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return Play(play);
+            return Play(play, volume: volume);
         }
 
-        public PlayAction PlayTTSAsync(string text, string gender = null, string language = null)
+        public PlayAction PlayTTSAsync(string text, string gender = null, string language = null, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -773,7 +774,7 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return PlayAsync(play);
+            return PlayAsync(play, volume: volume);
         }
 
         public PlayResult PlaySilence(double duration)
@@ -808,12 +809,12 @@ namespace SignalWire.Relay.Calling
             return PlayAsync(play);
         }
 
-        public PromptResult Prompt(List<CallMedia> play, CallCollect collect)
+        public PromptResult Prompt(List<CallMedia> play, CallCollect collect, double? volume = null)
         {
-            return InternalPromptAsync(Guid.NewGuid().ToString(), play, collect).Result;
+            return InternalPromptAsync(Guid.NewGuid().ToString(), play, collect, volume: volume).Result;
         }
 
-        public PromptAction PromptAsync(List<CallMedia> play, CallCollect collect)
+        public PromptAction PromptAsync(List<CallMedia> play, CallCollect collect, double? volume = null)
         {
             PromptAction action = new PromptAction
             {
@@ -827,7 +828,7 @@ namespace SignalWire.Relay.Calling
                 PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) => action.State = p.State;
                 OnPlayStateChange += playStateChangeCallback;
 
-                action.Result = await InternalPromptAsync(action.ControlID, play, collect);
+                action.Result = await InternalPromptAsync(action.ControlID, play, collect, volume: volume);
                 action.Completed = true;
 
                 OnPlayStateChange -= playStateChangeCallback;
@@ -835,7 +836,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-        private async Task<PromptResult> InternalPromptAsync(string controlID, List<CallMedia> play, CallCollect collect)
+        private async Task<PromptResult> InternalPromptAsync(string controlID, List<CallMedia> play, CallCollect collect, double? volume = null)
         {
             await API.API.SetupAsync();
 
@@ -891,6 +892,7 @@ namespace SignalWire.Relay.Calling
                     NodeID = mNodeID,
                     CallID = mID,
                     ControlID = controlID,
+                    Volume = volume,
                     Play = play,
                     Collect = collect,
                 });
@@ -918,7 +920,7 @@ namespace SignalWire.Relay.Calling
             return resultPrompt;
         }
 
-        public PromptResult PromptAudio(string url, CallCollect collect)
+        public PromptResult PromptAudio(string url, CallCollect collect, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -931,10 +933,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return Prompt(play, collect);
+            return Prompt(play, collect, volume: volume);
         }
 
-        public PromptAction PromptAudioAsync(string url, CallCollect collect)
+        public PromptAction PromptAudioAsync(string url, CallCollect collect, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -947,10 +949,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return PromptAsync(play, collect);
+            return PromptAsync(play, collect, volume: volume);
         }
 
-        public PromptResult PromptTTS(string text, CallCollect collect, string gender = null, string language = null)
+        public PromptResult PromptTTS(string text, CallCollect collect, string gender = null, string language = null, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -965,10 +967,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return Prompt(play, collect);
+            return Prompt(play, collect, volume: volume);
         }
 
-        public PromptAction PromptTTSAsync(string text, CallCollect collect, string gender = null, string language = null)
+        public PromptAction PromptTTSAsync(string text, CallCollect collect, string gender = null, string language = null, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -983,7 +985,7 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return PromptAsync(play, collect);
+            return PromptAsync(play, collect, volume: volume);
         }
 
         public RecordResult Record(CallRecord record)
