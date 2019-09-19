@@ -9,8 +9,6 @@ namespace SignalWire.Relay.Calling
 {
     public sealed class PlayResumeResult
     {
-        public Event Event { get; internal set; }
-
         public bool Successful { get; internal set; }
     }
 }

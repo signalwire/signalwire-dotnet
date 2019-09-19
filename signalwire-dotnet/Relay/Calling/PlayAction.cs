@@ -40,30 +40,6 @@ namespace SignalWire.Relay.Calling
 
         public PlayPauseResult Pause()
         {
-            PlayPauseResult resultPlayPause = new PlayPauseResult();
-            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
-
-            // Hook callbacks temporarily to catch required events
-            PlayPausedCallback pausedCallback = (a, c, e, p) =>
-            {
-                resultPlayPause.Event = new Event(e.EventType, JObject.FromObject(p));
-                tcsCompletion.SetResult(true);
-            };
-            PlayFinishedCallback finishedCallback = (a, c, e, p) =>
-            {
-                resultPlayPause.Event = new Event(e.EventType, JObject.FromObject(p));
-                tcsCompletion.SetResult(false);
-            };
-            PlayErrorCallback errorCallback = (a, c, e, p) =>
-            {
-                resultPlayPause.Event = new Event(e.EventType, JObject.FromObject(p));
-                tcsCompletion.SetResult(false);
-            };
-
-            Call.OnPlayPaused += pausedCallback;
-            Call.OnPlayFinished += finishedCallback;
-            Call.OnPlayError += errorCallback;
-
             Task<LL_PlayPauseResult> taskLLPlayPause = Call.API.LL_PlayPauseAsync(new LL_PlayPauseParams()
             {
                 NodeID = Call.NodeID,
@@ -73,45 +49,14 @@ namespace SignalWire.Relay.Calling
 
             LL_PlayPauseResult resultLLPlayPause = taskLLPlayPause.Result;
 
-            if (resultLLPlayPause.Code == "200")
+            return new PlayPauseResult()
             {
-                resultPlayPause.Successful = tcsCompletion.Task.Result;
-            }
-
-            // Unhook temporary callbacks
-            Call.OnPlayPaused -= pausedCallback;
-            Call.OnPlayFinished -= finishedCallback;
-            Call.OnPlayError -= errorCallback;
-
-            return resultPlayPause;
+                Successful = resultLLPlayPause.Code == "200",
+            };
         }
 
         public PlayResumeResult Resume()
         {
-            PlayResumeResult resultPlayResume = new PlayResumeResult();
-            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
-
-            // Hook callbacks temporarily to catch required events
-            PlayPlayingCallback playingCallback = (a, c, e, p) =>
-            {
-                resultPlayResume.Event = new Event(e.EventType, JObject.FromObject(p));
-                tcsCompletion.SetResult(true);
-            };
-            PlayFinishedCallback finishedCallback = (a, c, e, p) =>
-            {
-                resultPlayResume.Event = new Event(e.EventType, JObject.FromObject(p));
-                tcsCompletion.SetResult(false);
-            };
-            PlayErrorCallback errorCallback = (a, c, e, p) =>
-            {
-                resultPlayResume.Event = new Event(e.EventType, JObject.FromObject(p));
-                tcsCompletion.SetResult(false);
-            };
-
-            Call.OnPlayPlaying += playingCallback;
-            Call.OnPlayFinished += finishedCallback;
-            Call.OnPlayError += errorCallback;
-
             Task<LL_PlayResumeResult> taskLLPlayResume = Call.API.LL_PlayResumeAsync(new LL_PlayResumeParams()
             {
                 NodeID = Call.NodeID,
@@ -121,17 +66,10 @@ namespace SignalWire.Relay.Calling
 
             LL_PlayResumeResult resultLLPlayResume = taskLLPlayResume.Result;
 
-            if (resultLLPlayResume.Code == "200")
+            return new PlayResumeResult()
             {
-                resultPlayResume.Successful = tcsCompletion.Task.Result;
-            }
-
-            // Unhook temporary callbacks
-            Call.OnPlayPlaying -= playingCallback;
-            Call.OnPlayFinished -= finishedCallback;
-            Call.OnPlayError -= errorCallback;
-
-            return resultPlayResume;
+                Successful = resultLLPlayResume.Code == "200",
+            };
         }
     }
 }
