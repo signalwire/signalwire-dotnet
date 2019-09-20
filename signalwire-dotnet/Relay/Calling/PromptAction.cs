@@ -23,7 +23,7 @@ namespace SignalWire.Relay.Calling
 
         public CallPlayState State { get; internal set; }
 
-        public void Stop()
+        public StopResult Stop()
         {
             Task<LL_PlayAndCollectStopResult> taskLLPlayAndCollectStop = Call.API.LL_PlayAndCollectStopAsync(new LL_PlayAndCollectStopParams()
             {
@@ -34,8 +34,10 @@ namespace SignalWire.Relay.Calling
 
             LL_PlayAndCollectStopResult resultLLPlayAndCollectStop = taskLLPlayAndCollectStop.Result;
 
-            // If there was an internal error of any kind then throw an exception
-            Call.API.ThrowIfError(resultLLPlayAndCollectStop.Code, resultLLPlayAndCollectStop.Message);
+            return new StopResult()
+            {
+                Successful = resultLLPlayAndCollectStop.Code == "200",
+            };
         }
     }
 }

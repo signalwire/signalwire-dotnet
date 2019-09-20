@@ -23,7 +23,7 @@ namespace SignalWire.Relay.Calling
 
         public string Url { get; internal set; }
 
-        public void Stop()
+        public StopResult Stop()
         {
             Task<LL_RecordStopResult> taskLLRecordStop = Call.API.LL_RecordStopAsync(new LL_RecordStopParams()
             {
@@ -34,8 +34,10 @@ namespace SignalWire.Relay.Calling
 
             LL_RecordStopResult resultLLRecordStop = taskLLRecordStop.Result;
 
-            // If there was an internal error of any kind then throw an exception
-            Call.API.ThrowIfError(resultLLRecordStop.Code, resultLLRecordStop.Message);
+            return new StopResult()
+            {
+                Successful = resultLLRecordStop.Code == "200",
+            };
         }
     }
 }
