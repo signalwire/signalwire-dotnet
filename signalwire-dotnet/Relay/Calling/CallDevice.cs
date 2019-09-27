@@ -26,6 +26,8 @@ namespace SignalWire.Relay.Calling
 
             [JsonProperty("timeout", NullValueHandling = NullValueHandling.Ignore)]
             public int Timeout { get; set; } = 30;
+
+   
         }
 
         [JsonProperty("type", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]

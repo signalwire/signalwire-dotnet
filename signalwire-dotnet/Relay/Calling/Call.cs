@@ -64,6 +64,7 @@ namespace SignalWire.Relay.Calling
         protected readonly string mTemporaryID = null;
         private string mNodeID = null;
         private string mID = null;
+        private string mRingback = null;
         private CallState mState = CallState.created;
         private CallState mPreviousState = CallState.created;
         private string mContext = null;
@@ -137,6 +138,7 @@ namespace SignalWire.Relay.Calling
         public CallingAPI API { get { return mAPI; } }
         public string TemporaryID { get { return mTemporaryID; } }
         public string NodeID { get { return mNodeID; } internal set { mNodeID = value; } }
+        public string Ringback { get { return mRingback; } internal set { mRingback = value; } }
         public string ID { get { return mID; } internal set { mID = value; } }
         public CallState State { get { return mState; } internal set { mState = value; } }
         public CallState PreviousState { get { return mPreviousState; } internal set { mPreviousState = value; } }
@@ -1850,7 +1852,8 @@ namespace SignalWire.Relay.Calling
                             Timeout = Timeout,
                         },
                     },
-                    TemporaryCallID = mTemporaryID,
+                    TemporaryCallID = mTemporaryID, 
+                    Ringback = Ringback
                 });
 
                 // The use of await rethrows exceptions from the task
