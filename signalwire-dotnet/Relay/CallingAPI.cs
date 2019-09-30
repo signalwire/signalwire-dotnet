@@ -53,9 +53,9 @@ namespace SignalWire.Relay
             return call;
         }
 
-        public DialResult DialPhone(string to, string from, int timeout = 30 ) { return NewPhoneCall(to, from, timeout).Dial(); }
+        public DialResult DialPhone(string to, string from, int timeout = 30) { return NewPhoneCall(to, from, timeout).Dial(); }
 
-        public DialAction DialPhoneAsync(string to, string from, int timeout = 30 ) { return NewPhoneCall(to, from, timeout).DialAsync(); }
+        public DialAction DialPhoneAsync(string to, string from, int timeout = 30) { return NewPhoneCall(to, from, timeout).DialAsync(); }
 
         // @TODO: NewSIPCall and NewWebRTCCall
 
@@ -382,7 +382,7 @@ namespace SignalWire.Relay
 
             call.SendDigitsStateChangeHandler(callEventParams, sendDigitsParams);
         }
-         
+
         // Utility
         internal void ThrowIfError(string code, string message) { mAPI.ThrowIfError(code, message); }
 

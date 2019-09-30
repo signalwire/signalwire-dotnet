@@ -10,12 +10,9 @@ namespace SignalWire.Relay.Calling
     public sealed class LL_BeginParams
     {
         [JsonProperty("device", Required = Required.Always)]
-        public CallDevice Device { get; set; } 
+        public CallDevice Device { get; set; }
 
         [JsonProperty("tag", NullValueHandling = NullValueHandling.Ignore)]
         public string TemporaryCallID { get; set; }
-
-        [JsonProperty("ringback", NullValueHandling = NullValueHandling.Ignore)]
-        public CallRingback Ringback { get; set; }
     }
 }

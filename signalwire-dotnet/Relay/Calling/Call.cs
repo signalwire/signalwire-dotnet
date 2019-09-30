@@ -1853,7 +1853,7 @@ namespace SignalWire.Relay.Calling
                         },
                     },
                     TemporaryCallID = mTemporaryID
-                }); 
+                });
 
                 // The use of await rethrows exceptions from the task
                 LL_BeginResult resultLLBegin = await taskLLBegin;

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SwitchBlade.Plugins.Relay.Calling
+namespace Plugins.Relay.Calling
 {
     public sealed class CallRingback
     {
