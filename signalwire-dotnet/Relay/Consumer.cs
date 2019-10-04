@@ -17,6 +17,8 @@ namespace SignalWire.Relay
 
         public string Host { get; set; }
 
+        public string Certificate { get; set; }
+
         public string Project { get; set; }
 
         public string Token { get; set; }
@@ -51,7 +53,7 @@ namespace SignalWire.Relay
             if (string.IsNullOrWhiteSpace(Project)) throw new ArgumentNullException("Project");
             if (string.IsNullOrWhiteSpace(Token)) throw new ArgumentNullException("Token");
 
-            using (mClient = new Client(Project, Token, host: Host))
+            using (mClient = new Client(Project, Token, host: Host, certificate: Certificate))
             {
                 mClient.OnReady += c =>
                 {
