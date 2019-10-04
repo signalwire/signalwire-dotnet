@@ -27,6 +27,8 @@ namespace SignalWire.Relay
 
         protected virtual void Ready() { }
 
+        protected virtual void Restored() { }
+
         protected virtual void Teardown() { }
 
         protected virtual void OnIncomingCall(Call call) { }
@@ -64,6 +66,7 @@ namespace SignalWire.Relay
                         Ready();
                     });
                 };
+                mClient.OnRestored += c => Task.Run(() => Restored());
                 mClient.Calling.OnCallReceived += (a, c, p) => Task.Run(() => OnIncomingCall(c));
                 mClient.Messaging.OnMessageReceived += (a, m, e, p) => Task.Run(() => OnIncomingMessage(m));
                 mClient.Messaging.OnMessageStateChange += (a, m, e, p) => Task.Run(() => OnMessageStateChange(m));

@@ -84,6 +84,7 @@ namespace SignalWire.Relay
             Session = new UpstreamSession(options);
 
             Session.OnReady += s => OnReady?.Invoke(this);
+            Session.OnRestored += s => OnRestored?.Invoke(this);
             Session.OnDisconnected += s => OnDisconnected?.Invoke(this);
 
             mSignalwireAPI = new SignalwireAPI(this);
@@ -108,6 +109,7 @@ namespace SignalWire.Relay
 
 
         public event ClientCallback OnReady;
+        public event ClientCallback OnRestored;
         public event ClientCallback OnDisconnected;
 
         #region Disposable

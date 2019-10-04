@@ -551,7 +551,6 @@ namespace Blade
             return protocols;
         }
 
-
         private void AddSubscription(string protocol, string channel, string nodeid)
         {
             Subscription subscription = new Subscription() { NodeID = nodeid, Protocol = protocol, Channel = channel };
@@ -591,6 +590,11 @@ namespace Blade
                 Logger.LogInformation("Authority removed '{0}'", nodeid);
                 OnAuthorityRemove?.Invoke(mSession, authority);
             }
+        }
+
+        public List<Authority> GetAuthorities()
+        {
+            return new List<Authority>(mAuthorities.Values);
         }
 
         public Authority GetRandomAuthority()
