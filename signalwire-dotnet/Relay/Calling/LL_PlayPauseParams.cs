@@ -7,7 +7,7 @@ using System.Text;
 
 namespace SignalWire.Relay.Calling
 {
-    public sealed class LL_PlayParams
+    public sealed class LL_PlayPauseParams
     {
         [JsonProperty("node_id", Required = Required.Always)]
         public string NodeID { get; set; }
@@ -17,11 +17,5 @@ namespace SignalWire.Relay.Calling
 
         [JsonProperty("control_id", Required = Required.Always)]
         public string ControlID { get; set; }
-
-        [JsonProperty("volume", NullValueHandling = NullValueHandling.Ignore)]
-        public double? Volume { get; set; }
-
-        [JsonProperty("play", Required = Required.Always)]
-        public List<CallMedia> Play { get; set; }
     }
 }

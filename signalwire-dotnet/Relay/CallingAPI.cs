@@ -418,6 +418,21 @@ namespace SignalWire.Relay
             return mAPI.ExecuteAsync<LL_PlayStopParams, LL_PlayStopResult>("calling.play.stop", parameters);
         }
 
+        public Task<LL_PlayVolumeResult> LL_PlayVolumeAsync(LL_PlayVolumeParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_PlayVolumeParams, LL_PlayVolumeResult>("calling.play.volume", parameters);
+        }
+
+        public Task<LL_PlayPauseResult> LL_PlayPauseAsync(LL_PlayPauseParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_PlayPauseParams, LL_PlayPauseResult>("calling.play.pause", parameters);
+        }
+
+        public Task<LL_PlayResumeResult> LL_PlayResumeAsync(LL_PlayResumeParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_PlayResumeParams, LL_PlayResumeResult>("calling.play.resume", parameters);
+        }
+
         public Task<LL_PlayAndCollectResult> LL_PlayAndCollectAsync(LL_PlayAndCollectParams parameters)
         {
             return mAPI.ExecuteAsync<LL_PlayAndCollectParams, LL_PlayAndCollectResult>("calling.play_and_collect", parameters);
@@ -426,6 +441,11 @@ namespace SignalWire.Relay
         public Task<LL_PlayAndCollectStopResult> LL_PlayAndCollectStopAsync(LL_PlayAndCollectStopParams parameters)
         {
             return mAPI.ExecuteAsync<LL_PlayAndCollectStopParams, LL_PlayAndCollectStopResult>("calling.play_and_collect.stop", parameters);
+        }
+
+        public Task<LL_PlayAndCollectVolumeResult> LL_PlayAndCollectVolumeAsync(LL_PlayAndCollectVolumeParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_PlayAndCollectVolumeParams, LL_PlayAndCollectVolumeResult>("calling.play_and_collect.volume", parameters);
         }
 
         public Task<LL_RecordResult> LL_RecordAsync(LL_RecordParams parameters)

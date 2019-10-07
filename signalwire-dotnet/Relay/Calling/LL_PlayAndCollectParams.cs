@@ -18,6 +18,9 @@ namespace SignalWire.Relay.Calling
         [JsonProperty("control_id", Required = Required.Always)]
         public string ControlID { get; set; }
 
+        [JsonProperty("volume", NullValueHandling = NullValueHandling.Ignore)]
+        public double? Volume { get; set; }
+
         [JsonProperty("play", Required = Required.Always)]
         public List<CallMedia> Play { get; set; }
 

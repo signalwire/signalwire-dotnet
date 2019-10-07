@@ -39,5 +39,23 @@ namespace SignalWire.Relay.Calling
                 Successful = resultLLPlayAndCollectStop.Code == "200",
             };
         }
+
+        public PromptVolumeResult Volume(double volume)
+        {
+            Task<LL_PlayAndCollectVolumeResult> taskLLPlayAndCollectVolume = Call.API.LL_PlayAndCollectVolumeAsync(new LL_PlayAndCollectVolumeParams()
+            {
+                NodeID = Call.NodeID,
+                CallID = Call.ID,
+                ControlID = ControlID,
+                Volume = volume,
+            });
+
+            LL_PlayAndCollectVolumeResult resultLLPlayAndCollectVolume = taskLLPlayAndCollectVolume.Result;
+
+            return new PromptVolumeResult()
+            {
+                Successful = resultLLPlayAndCollectVolume.Code == "200",
+            };
+        }
     }
 }
