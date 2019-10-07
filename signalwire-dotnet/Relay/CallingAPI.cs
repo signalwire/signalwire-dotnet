@@ -423,6 +423,16 @@ namespace SignalWire.Relay
             return mAPI.ExecuteAsync<LL_PlayVolumeParams, LL_PlayVolumeResult>("calling.play.volume", parameters);
         }
 
+        public Task<LL_PlayPauseResult> LL_PlayPauseAsync(LL_PlayPauseParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_PlayPauseParams, LL_PlayPauseResult>("calling.play.pause", parameters);
+        }
+
+        public Task<LL_PlayResumeResult> LL_PlayResumeAsync(LL_PlayResumeParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_PlayResumeParams, LL_PlayResumeResult>("calling.play.resume", parameters);
+        }
+
         public Task<LL_PlayAndCollectResult> LL_PlayAndCollectAsync(LL_PlayAndCollectParams parameters)
         {
             return mAPI.ExecuteAsync<LL_PlayAndCollectParams, LL_PlayAndCollectResult>("calling.play_and_collect", parameters);
