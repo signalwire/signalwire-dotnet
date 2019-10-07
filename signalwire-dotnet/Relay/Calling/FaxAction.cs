@@ -19,7 +19,7 @@ namespace SignalWire.Relay.Calling
 
         public SendFaxPayload Payload { get; internal set; }
 
-        public void Stop()
+        public StopResult Stop()
         {
             if (Payload != null)
             {
@@ -32,8 +32,10 @@ namespace SignalWire.Relay.Calling
 
                 LL_SendFaxStopResult resultLLFaxStop = taskLLSendFaxStop.Result;
 
-                // If there was an internal error of any kind then throw an exception
-                Call.API.ThrowIfError(resultLLFaxStop.Code, resultLLFaxStop.Message);
+                return new StopResult()
+                {
+                    Successful = resultLLFaxStop.Code == "200",
+                };
             }
             else
             {
@@ -46,8 +48,10 @@ namespace SignalWire.Relay.Calling
 
                 LL_ReceiveFaxStopResult resultLLFaxStop = taskLLReceiveFaxStop.Result;
 
-                // If there was an internal error of any kind then throw an exception
-                Call.API.ThrowIfError(resultLLFaxStop.Code, resultLLFaxStop.Message);
+                return new StopResult()
+                {
+                    Successful = resultLLFaxStop.Code == "200",
+                };
             }
         }
     }
