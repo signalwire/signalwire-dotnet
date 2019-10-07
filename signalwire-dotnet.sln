@@ -55,6 +55,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_SendDigits", "Relay
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calling_PlayPauseResume", "RelayTests\Calling_PlayPauseResume\Calling_PlayPauseResume.csproj", "{4C3CD70C-0CCE-4A1F-95B7-4A7F99ACED92}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calling_PlayVolume", "RelayTests\Calling_PlayVolume\Calling_PlayVolume.csproj", "{8C0443DB-35F7-44BF-B26C-DCCC35DF14C6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +155,10 @@ Global
 		{4C3CD70C-0CCE-4A1F-95B7-4A7F99ACED92}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C3CD70C-0CCE-4A1F-95B7-4A7F99ACED92}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C3CD70C-0CCE-4A1F-95B7-4A7F99ACED92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C0443DB-35F7-44BF-B26C-DCCC35DF14C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C0443DB-35F7-44BF-B26C-DCCC35DF14C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C0443DB-35F7-44BF-B26C-DCCC35DF14C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C0443DB-35F7-44BF-B26C-DCCC35DF14C6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -180,6 +186,7 @@ Global
 		{5B086D13-7E2B-429D-AF5C-E791709CA031} = {CBE6F4FA-C7EC-45D6-82E2-5C2D97F55124}
 		{D4EB3007-976D-4B30-ACD4-139C29E88C1E} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
 		{4C3CD70C-0CCE-4A1F-95B7-4A7F99ACED92} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
+		{8C0443DB-35F7-44BF-B26C-DCCC35DF14C6} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {07D95FE8-9E6B-4BC5-88AC-BAD3CAF4D2E7}
