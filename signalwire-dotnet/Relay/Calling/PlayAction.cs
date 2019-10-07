@@ -38,6 +38,24 @@ namespace SignalWire.Relay.Calling
             Call.API.ThrowIfError(resultLLPlayStop.Code, resultLLPlayStop.Message);
         }
 
+        public PlayVolumeResult Volume(double volume)
+        {
+            Task<LL_PlayVolumeResult> taskLLPlayVolume = Call.API.LL_PlayVolumeAsync(new LL_PlayVolumeParams()
+            {
+                NodeID = Call.NodeID,
+                CallID = Call.ID,
+                ControlID = ControlID,
+                Volume = volume,
+            });
+
+            LL_PlayVolumeResult resultLLPlayVolume = taskLLPlayVolume.Result;
+
+            return new PlayVolumeResult()
+            {
+                Successful = resultLLPlayVolume.Code == "200",
+            };
+        }
+
         public PlayPauseResult Pause()
         {
             Task<LL_PlayPauseResult> taskLLPlayPause = Call.API.LL_PlayPauseAsync(new LL_PlayPauseParams()

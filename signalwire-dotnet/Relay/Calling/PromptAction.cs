@@ -37,5 +37,23 @@ namespace SignalWire.Relay.Calling
             // If there was an internal error of any kind then throw an exception
             Call.API.ThrowIfError(resultLLPlayAndCollectStop.Code, resultLLPlayAndCollectStop.Message);
         }
+
+        public PromptVolumeResult Volume(double volume)
+        {
+            Task<LL_PlayAndCollectVolumeResult> taskLLPlayAndCollectVolume = Call.API.LL_PlayAndCollectVolumeAsync(new LL_PlayAndCollectVolumeParams()
+            {
+                NodeID = Call.NodeID,
+                CallID = Call.ID,
+                ControlID = ControlID,
+                Volume = volume,
+            });
+
+            LL_PlayAndCollectVolumeResult resultLLPlayAndCollectVolume = taskLLPlayAndCollectVolume.Result;
+
+            return new PromptVolumeResult()
+            {
+                Successful = resultLLPlayAndCollectVolume.Code == "200",
+            };
+        }
     }
 }
