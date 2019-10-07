@@ -40,19 +40,21 @@ namespace Calling_PlayVolume
                 return;
             }
 
-            PlayAction actionPlay = call.PlayAudioAsync("https://cdn.signalwire.com/default-music/welcome.mp3");
+            PlayAction actionPlay = call.PlayTTSAsync("I'm a little teapot, short and stout.  Here is my handle, here is my spout.", volume: 16);
+
+            Thread.Sleep(1000);
 
             bool increase = false;
             PlayVolumeResult resultPlayVolume = null;
-            while (!call.Ended && !actionPlay.Completed)
+            while (!actionPlay.Completed)
             {
                 increase = !increase;
-                resultPlayVolume = actionPlay.Volume(increase ? 4 : 0);
+                resultPlayVolume = actionPlay.Volume(increase ? 8 : 0);
                 if (!resultPlayVolume.Successful) break;
-                Thread.Sleep(2000);
+                Thread.Sleep(3000);
             }
 
-            call.WaitForEnded();
+            call.Hangup();
 
             Successful = actionPlay.Result.Successful && resultPlayVolume.Successful;
             Completed.Set();
