@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Plugins.Relay.Calling
+namespace SignalWire.Relay.Calling
 {
     public sealed class CallRingback
     {
