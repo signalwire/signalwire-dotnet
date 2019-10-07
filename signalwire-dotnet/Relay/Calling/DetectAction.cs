@@ -18,7 +18,7 @@ namespace SignalWire.Relay.Calling
 
         public CallDetect Payload { get; internal set; }
 
-        public void Stop()
+        public StopResult Stop()
         {
             Task<LL_DetectStopResult> taskLLDetectStop = Call.API.LL_DetectStopAsync(new LL_DetectStopParams()
             {
@@ -29,8 +29,10 @@ namespace SignalWire.Relay.Calling
 
             LL_DetectStopResult resultLLDetectStop = taskLLDetectStop.Result;
 
-            // If there was an internal error of any kind then throw an exception
-            Call.API.ThrowIfError(resultLLDetectStop.Code, resultLLDetectStop.Message);
+            return new StopResult()
+            {
+                Successful = resultLLDetectStop.Code == "200",
+            };
         }
     }
 }
