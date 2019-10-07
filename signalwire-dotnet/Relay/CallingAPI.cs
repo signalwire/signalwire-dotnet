@@ -46,7 +46,7 @@ namespace SignalWire.Relay
             {
                 To = to,
                 From = from,
-                Timeout = timeout,
+                Timeout = timeout
             };
             mCalls.TryAdd(call.TemporaryID, call);
             OnCallCreated?.Invoke(this, call);
