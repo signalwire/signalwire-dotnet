@@ -644,7 +644,11 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) =>
+                {
+                    if (p.ControlID != action.ControlID) return;
+                    action.State = p.State;
+                };
                 OnPlayStateChange += playStateChangeCallback;
 
                 action.Result = await InternalPlayAsync(action.ControlID, play, volume: volume);
@@ -665,11 +669,13 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             PlayFinishedCallback finishedCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultPlay.Event = new Event(e.EventType, JObject.FromObject(p));
                 tcsCompletion.SetResult(true);
             };
             PlayErrorCallback errorCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultPlay.Event = new Event(e.EventType, JObject.FromObject(p));
                 tcsCompletion.SetResult(false);
             };
@@ -827,7 +833,11 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) =>
+                {
+                    if (p.ControlID != action.ControlID) return;
+                    action.State = p.State;
+                };
                 OnPlayStateChange += playStateChangeCallback;
 
                 action.Result = await InternalPromptAsync(action.ControlID, play, collect, volume: volume);
@@ -848,14 +858,16 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             PlayErrorCallback errorCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultPrompt.Event = new Event(e.EventType, JObject.FromObject(p));
                 tcsCompletion.SetResult(false);
             };
             PromptCallback promptCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultPrompt.Event = new Event(e.EventType, JObject.FromObject(p));
                 resultPrompt.Type = p.Result.Type;
-                
+
                 switch (resultPrompt.Type)
                 {
                     case CallCollectType.digit:
@@ -1005,7 +1017,11 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                RecordStateChangeCallback recordStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                RecordStateChangeCallback recordStateChangeCallback = (a, c, e, p) =>
+                {
+                    if (p.ControlID != action.ControlID) return;
+                    action.State = p.State;
+                };
                 OnRecordStateChange += recordStateChangeCallback;
 
                 action.Result = await InternalRecordAsync(action, action.ControlID, record);
@@ -1026,6 +1042,7 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             RecordFinishedCallback finishedCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultRecord.Event = new Event(e.EventType, JObject.FromObject(p));
                 resultRecord.Url = p.URL;
                 resultRecord.Duration = p.Duration;
@@ -1034,6 +1051,7 @@ namespace SignalWire.Relay.Calling
             };
             RecordNoInputCallback noinputCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultRecord.Event = new Event(e.EventType, JObject.FromObject(p));
                 tcsCompletion.SetResult(false);
             };
@@ -1094,7 +1112,11 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                TapStateChangeCallback tapStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                TapStateChangeCallback tapStateChangeCallback = (a, c, e, p) =>
+                {
+                    if (p.ControlID != action.ControlID) return;
+                    action.State = p.State;
+                };
                 OnTapStateChange += tapStateChangeCallback;
 
                 action.Result = await InternalTapAsync(action.ControlID, tap, device);
@@ -1116,6 +1138,7 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             TapFinishedCallback finishedCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultTap.Event = new Event(e.EventType, JObject.FromObject(p));
                 resultTap.Tap = p.Tap;
                 resultTap.DestinationDevice = p.Device;
@@ -1581,6 +1604,7 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             FaxStateChangeCallback faxCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultSendFax.Event = new Event(e.EventType, JObject.FromObject(p));
                 switch (p.Fax.Type)
                 {
@@ -1671,6 +1695,7 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             FaxStateChangeCallback faxCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultReceiveFax.Event = new Event(e.EventType, JObject.FromObject(p));
                 switch (p.Fax.Type)
                 {
@@ -1760,6 +1785,7 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             SendDigitsStateChangeCallback DigitsCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultSendDigits.Event = new Event(e.EventType, JObject.FromObject(p));
                 switch (p.State)
                 {
