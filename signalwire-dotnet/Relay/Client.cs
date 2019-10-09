@@ -43,6 +43,7 @@ namespace SignalWire.Relay
         private string mHost = null;
         private string mProjectID = null;
         private string mToken = null;
+        private string mCertificate = null;
 
         private SignalwireAPI mSignalwireAPI = null;
         private CallingAPI mCallingAPI = null;
@@ -53,6 +54,7 @@ namespace SignalWire.Relay
             string project,
             string token,
             string host = null,
+            string certificate = null,
             string agent = null,
             bool jwt = false,
             TimeSpan? connectDelay = null,
@@ -66,6 +68,7 @@ namespace SignalWire.Relay
             mHost = host;
             mProjectID = project;
             mToken = token;
+            mCertificate = certificate;
 
             string authentication = null;
             if (!jwt) authentication = CreateAuthentication(project, token);
@@ -80,10 +83,12 @@ namespace SignalWire.Relay
             if (connectDelay.HasValue) options.ConnectDelay = connectDelay.Value;
             if (connectTimeout.HasValue) options.ConnectTimeout = connectTimeout.Value;
             if (closeTimeout.HasValue) options.CloseTimeout = closeTimeout.Value;
+            if (!string.IsNullOrWhiteSpace(certificate)) options.ClientCertificate = certificate;
 
             Session = new UpstreamSession(options);
 
             Session.OnReady += s => OnReady?.Invoke(this);
+            Session.OnRestored += s => OnRestored?.Invoke(this);
             Session.OnDisconnected += s => OnDisconnected?.Invoke(this);
 
             mSignalwireAPI = new SignalwireAPI(this);
@@ -108,6 +113,7 @@ namespace SignalWire.Relay
 
 
         public event ClientCallback OnReady;
+        public event ClientCallback OnRestored;
         public event ClientCallback OnDisconnected;
 
         #region Disposable

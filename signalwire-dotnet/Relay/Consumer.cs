@@ -17,6 +17,8 @@ namespace SignalWire.Relay
 
         public string Host { get; set; }
 
+        public string Certificate { get; set; }
+
         public string Project { get; set; }
 
         public string Token { get; set; }
@@ -26,6 +28,8 @@ namespace SignalWire.Relay
         protected virtual void Setup() { }
 
         protected virtual void Ready() { }
+
+        protected virtual void Restored() { }
 
         protected virtual void Teardown() { }
 
@@ -49,7 +53,7 @@ namespace SignalWire.Relay
             if (string.IsNullOrWhiteSpace(Project)) throw new ArgumentNullException("Project");
             if (string.IsNullOrWhiteSpace(Token)) throw new ArgumentNullException("Token");
 
-            using (mClient = new Client(Project, Token, host: Host))
+            using (mClient = new Client(Project, Token, host: Host, certificate: Certificate))
             {
                 mClient.OnReady += c =>
                 {
@@ -64,6 +68,7 @@ namespace SignalWire.Relay
                         Ready();
                     });
                 };
+                mClient.OnRestored += c => Task.Run(() => Restored());
                 mClient.Calling.OnCallReceived += (a, c, p) => Task.Run(() => OnIncomingCall(c));
                 mClient.Messaging.OnMessageReceived += (a, m, e, p) => Task.Run(() => OnIncomingMessage(m));
                 mClient.Messaging.OnMessageStateChange += (a, m, e, p) => Task.Run(() => OnMessageStateChange(m));
