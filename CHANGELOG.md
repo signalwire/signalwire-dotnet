@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Responding to blade.ping
 - Support for external authorizations event passing
 - Added Url to RecordAction
+- Ringback added for call.connect
 
 ## [2.2.0] - 2019-09-09
 ### Deprecated

@@ -20,5 +20,8 @@ namespace SignalWire.Relay.Calling
 
         [JsonProperty("tag", NullValueHandling = NullValueHandling.Ignore)]
         public string Tag { get; set; }
+
+        [JsonProperty("ringback", NullValueHandling = NullValueHandling.Ignore)]
+        public CallRingback Ringback { get; set; }
     }
 }

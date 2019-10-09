@@ -64,6 +64,7 @@ namespace SignalWire.Relay.Calling
         protected readonly string mTemporaryID = null;
         private string mNodeID = null;
         private string mID = null;
+
         private CallState mState = CallState.created;
         private CallState mPreviousState = CallState.created;
         private string mContext = null;
@@ -137,6 +138,7 @@ namespace SignalWire.Relay.Calling
         public CallingAPI API { get { return mAPI; } }
         public string TemporaryID { get { return mTemporaryID; } }
         public string NodeID { get { return mNodeID; } internal set { mNodeID = value; } }
+      
         public string ID { get { return mID; } internal set { mID = value; } }
         public CallState State { get { return mState; } internal set { mState = value; } }
         public CallState PreviousState { get { return mPreviousState; } internal set { mPreviousState = value; } }
@@ -627,12 +629,12 @@ namespace SignalWire.Relay.Calling
             return resultConnect;
         }
 
-        public PlayResult Play(List<CallMedia> play)
+        public PlayResult Play(List<CallMedia> play, double? volume = null)
         {
-            return InternalPlayAsync(Guid.NewGuid().ToString(), play).Result;
+            return InternalPlayAsync(Guid.NewGuid().ToString(), play, volume: volume).Result;
         }
 
-        public PlayAction PlayAsync(List<CallMedia> play)
+        public PlayAction PlayAsync(List<CallMedia> play, double? volume = null)
         {
             PlayAction action = new PlayAction
             {
@@ -642,10 +644,14 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) =>
+                {
+                    if (p.ControlID != action.ControlID) return;
+                    action.State = p.State;
+                };
                 OnPlayStateChange += playStateChangeCallback;
 
-                action.Result = await InternalPlayAsync(action.ControlID, play);
+                action.Result = await InternalPlayAsync(action.ControlID, play, volume: volume);
                 action.Completed = true;
 
                 OnPlayStateChange -= playStateChangeCallback;
@@ -653,7 +659,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-        private async Task<PlayResult> InternalPlayAsync(string controlID, List<CallMedia> play)
+        private async Task<PlayResult> InternalPlayAsync(string controlID, List<CallMedia> play, double? volume = null)
         {
             await API.API.SetupAsync();
 
@@ -663,11 +669,13 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             PlayFinishedCallback finishedCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultPlay.Event = new Event(e.EventType, JObject.FromObject(p));
                 tcsCompletion.SetResult(true);
             };
             PlayErrorCallback errorCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultPlay.Event = new Event(e.EventType, JObject.FromObject(p));
                 tcsCompletion.SetResult(false);
             };
@@ -682,6 +690,7 @@ namespace SignalWire.Relay.Calling
                     NodeID = mNodeID,
                     CallID = mID,
                     ControlID = controlID,
+                    Volume = volume,
                     Play = play,
                 });
 
@@ -708,7 +717,7 @@ namespace SignalWire.Relay.Calling
             return resultPlay;
         }
 
-        public PlayResult PlayAudio(string url)
+        public PlayResult PlayAudio(string url, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -721,10 +730,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return Play(play);
+            return Play(play, volume: volume);
         }
 
-        public PlayAction PlayAudioAsync(string url)
+        public PlayAction PlayAudioAsync(string url, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -737,10 +746,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return PlayAsync(play);
+            return PlayAsync(play, volume: volume);
         }
 
-        public PlayResult PlayTTS(string text, string gender = null, string language = null)
+        public PlayResult PlayTTS(string text, string gender = null, string language = null, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -755,10 +764,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return Play(play);
+            return Play(play, volume: volume);
         }
 
-        public PlayAction PlayTTSAsync(string text, string gender = null, string language = null)
+        public PlayAction PlayTTSAsync(string text, string gender = null, string language = null, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -773,7 +782,7 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return PlayAsync(play);
+            return PlayAsync(play, volume: volume);
         }
 
         public PlayResult PlaySilence(double duration)
@@ -808,12 +817,12 @@ namespace SignalWire.Relay.Calling
             return PlayAsync(play);
         }
 
-        public PromptResult Prompt(List<CallMedia> play, CallCollect collect)
+        public PromptResult Prompt(List<CallMedia> play, CallCollect collect, double? volume = null)
         {
-            return InternalPromptAsync(Guid.NewGuid().ToString(), play, collect).Result;
+            return InternalPromptAsync(Guid.NewGuid().ToString(), play, collect, volume: volume).Result;
         }
 
-        public PromptAction PromptAsync(List<CallMedia> play, CallCollect collect)
+        public PromptAction PromptAsync(List<CallMedia> play, CallCollect collect, double? volume = null)
         {
             PromptAction action = new PromptAction
             {
@@ -824,10 +833,14 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                PlayStateChangeCallback playStateChangeCallback = (a, c, e, p) =>
+                {
+                    if (p.ControlID != action.ControlID) return;
+                    action.State = p.State;
+                };
                 OnPlayStateChange += playStateChangeCallback;
 
-                action.Result = await InternalPromptAsync(action.ControlID, play, collect);
+                action.Result = await InternalPromptAsync(action.ControlID, play, collect, volume: volume);
                 action.Completed = true;
 
                 OnPlayStateChange -= playStateChangeCallback;
@@ -835,7 +848,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-        private async Task<PromptResult> InternalPromptAsync(string controlID, List<CallMedia> play, CallCollect collect)
+        private async Task<PromptResult> InternalPromptAsync(string controlID, List<CallMedia> play, CallCollect collect, double? volume = null)
         {
             await API.API.SetupAsync();
 
@@ -845,14 +858,16 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             PlayErrorCallback errorCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultPrompt.Event = new Event(e.EventType, JObject.FromObject(p));
                 tcsCompletion.SetResult(false);
             };
             PromptCallback promptCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultPrompt.Event = new Event(e.EventType, JObject.FromObject(p));
                 resultPrompt.Type = p.Result.Type;
-                
+
                 switch (resultPrompt.Type)
                 {
                     case CallCollectType.digit:
@@ -891,6 +906,7 @@ namespace SignalWire.Relay.Calling
                     NodeID = mNodeID,
                     CallID = mID,
                     ControlID = controlID,
+                    Volume = volume,
                     Play = play,
                     Collect = collect,
                 });
@@ -918,7 +934,7 @@ namespace SignalWire.Relay.Calling
             return resultPrompt;
         }
 
-        public PromptResult PromptAudio(string url, CallCollect collect)
+        public PromptResult PromptAudio(string url, CallCollect collect, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -931,10 +947,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return Prompt(play, collect);
+            return Prompt(play, collect, volume: volume);
         }
 
-        public PromptAction PromptAudioAsync(string url, CallCollect collect)
+        public PromptAction PromptAudioAsync(string url, CallCollect collect, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -947,10 +963,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return PromptAsync(play, collect);
+            return PromptAsync(play, collect, volume: volume);
         }
 
-        public PromptResult PromptTTS(string text, CallCollect collect, string gender = null, string language = null)
+        public PromptResult PromptTTS(string text, CallCollect collect, string gender = null, string language = null, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -965,10 +981,10 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return Prompt(play, collect);
+            return Prompt(play, collect, volume: volume);
         }
 
-        public PromptAction PromptTTSAsync(string text, CallCollect collect, string gender = null, string language = null)
+        public PromptAction PromptTTSAsync(string text, CallCollect collect, string gender = null, string language = null, double? volume = null)
         {
             List<CallMedia> play = new List<CallMedia>
             {
@@ -983,7 +999,7 @@ namespace SignalWire.Relay.Calling
                     }
                 }
             };
-            return PromptAsync(play, collect);
+            return PromptAsync(play, collect, volume: volume);
         }
 
         public RecordResult Record(CallRecord record)
@@ -1001,7 +1017,11 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                RecordStateChangeCallback recordStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                RecordStateChangeCallback recordStateChangeCallback = (a, c, e, p) =>
+                {
+                    if (p.ControlID != action.ControlID) return;
+                    action.State = p.State;
+                };
                 OnRecordStateChange += recordStateChangeCallback;
 
                 action.Result = await InternalRecordAsync(action, action.ControlID, record);
@@ -1022,6 +1042,7 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             RecordFinishedCallback finishedCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultRecord.Event = new Event(e.EventType, JObject.FromObject(p));
                 resultRecord.Url = p.URL;
                 resultRecord.Duration = p.Duration;
@@ -1030,6 +1051,7 @@ namespace SignalWire.Relay.Calling
             };
             RecordNoInputCallback noinputCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultRecord.Event = new Event(e.EventType, JObject.FromObject(p));
                 tcsCompletion.SetResult(false);
             };
@@ -1090,7 +1112,11 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                TapStateChangeCallback tapStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                TapStateChangeCallback tapStateChangeCallback = (a, c, e, p) =>
+                {
+                    if (p.ControlID != action.ControlID) return;
+                    action.State = p.State;
+                };
                 OnTapStateChange += tapStateChangeCallback;
 
                 action.Result = await InternalTapAsync(action.ControlID, tap, device);
@@ -1112,6 +1138,7 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             TapFinishedCallback finishedCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultTap.Event = new Event(e.EventType, JObject.FromObject(p));
                 resultTap.Tap = p.Tap;
                 resultTap.DestinationDevice = p.Device;
@@ -1577,6 +1604,7 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             FaxStateChangeCallback faxCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultSendFax.Event = new Event(e.EventType, JObject.FromObject(p));
                 switch (p.Fax.Type)
                 {
@@ -1667,6 +1695,7 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             FaxStateChangeCallback faxCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultReceiveFax.Event = new Event(e.EventType, JObject.FromObject(p));
                 switch (p.Fax.Type)
                 {
@@ -1756,6 +1785,7 @@ namespace SignalWire.Relay.Calling
             // Hook callbacks temporarily to catch required events
             SendDigitsStateChangeCallback DigitsCallback = (a, c, e, p) =>
             {
+                if (p.ControlID != controlID) return;
                 resultSendDigits.Event = new Event(e.EventType, JObject.FromObject(p));
                 switch (p.State)
                 {
@@ -1850,7 +1880,7 @@ namespace SignalWire.Relay.Calling
                             Timeout = Timeout,
                         },
                     },
-                    TemporaryCallID = mTemporaryID,
+                    TemporaryCallID = mTemporaryID
                 });
 
                 // The use of await rethrows exceptions from the task

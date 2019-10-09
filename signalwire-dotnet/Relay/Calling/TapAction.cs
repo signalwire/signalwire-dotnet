@@ -23,7 +23,7 @@ namespace SignalWire.Relay.Calling
 
         public CallTapDevice SourceDevice { get; internal set; }
 
-        public void Stop()
+        public StopResult Stop()
         {
             Task<LL_TapStopResult> taskLLTapStop = Call.API.LL_TapStopAsync(new LL_TapStopParams()
             {
@@ -34,8 +34,10 @@ namespace SignalWire.Relay.Calling
 
             LL_TapStopResult resultLLTapStop = taskLLTapStop.Result;
 
-            // If there was an internal error of any kind then throw an exception
-            Call.API.ThrowIfError(resultLLTapStop.Code, resultLLTapStop.Message);
+            return new StopResult()
+            {
+                Successful = resultLLTapStop.Code == "200",
+            };
         }
     }
 }

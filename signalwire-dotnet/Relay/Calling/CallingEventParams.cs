@@ -336,7 +336,7 @@ namespace SignalWire.Relay.Calling
         [JsonProperty("event_type", Required = Required.Always)]
         public string EventType { get; set; }
 
-        [JsonProperty("event_channel", Required = Required.Always)]
+        [JsonProperty("event_channel", NullValueHandling = NullValueHandling.Ignore)]
         public string EventChannel { get; set; }
 
         [JsonProperty("timestamp", Required = Required.Always)]
@@ -347,6 +347,9 @@ namespace SignalWire.Relay.Calling
 
         [JsonProperty("project_id", Required = Required.Always)]
         public string ProjectID { get; set; }
+
+        [JsonProperty("context", NullValueHandling = NullValueHandling.Ignore)]
+        public string Context { get; set; }
 
         [JsonProperty(PropertyName = "params", NullValueHandling = NullValueHandling.Ignore)]
         public object Parameters { get; set; }
