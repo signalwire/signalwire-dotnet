@@ -10,6 +10,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Support for external authorizations event passing
 - Added Url to RecordAction
 - Ringback added for call.connect
+- Added play and prompt volume control and API's
+- Added play pause and resume API's
+- Added StopResult to all Stop API's
 
 ## [2.2.0] - 2019-09-09
 ### Deprecated
