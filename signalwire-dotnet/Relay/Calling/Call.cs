@@ -817,6 +817,40 @@ namespace SignalWire.Relay.Calling
             return PlayAsync(play);
         }
 
+        public PlayResult PlayRingtone(string name, double? duration = null, double? volume = null)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.ringtone,
+                    Parameters = new CallMedia.RingtoneParams
+                    {
+                        Name = name,
+                        Duration = duration,
+                    }
+                }
+            };
+            return Play(play, volume: volume);
+        }
+
+        public PlayAction PlayRingtoneAsync(string name, double? duration = null, double? volume = null)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.ringtone,
+                    Parameters = new CallMedia.RingtoneParams
+                    {
+                        Name  = name,
+                        Duration = duration,
+                    }
+                }
+            };
+            return PlayAsync(play, volume: volume);
+        }
+
         public PromptResult Prompt(List<CallMedia> play, CallCollect collect, double? volume = null)
         {
             return InternalPromptAsync(Guid.NewGuid().ToString(), play, collect, volume: volume).Result;
@@ -996,6 +1030,40 @@ namespace SignalWire.Relay.Calling
                         Text = text,
                         Gender = gender,
                         Language = language,
+                    }
+                }
+            };
+            return PromptAsync(play, collect, volume: volume);
+        }
+
+        public PromptResult PromptRingtone(string name, CallCollect collect, double? duration = null, double? volume = null)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.ringtone,
+                    Parameters = new CallMedia.RingtoneParams
+                    {
+                        Name = name,
+                        Duration = duration
+                    }
+                }
+            };
+            return Prompt(play, collect, volume: volume);
+        }
+
+        public PromptAction PromptRingtoneAsync(string name, CallCollect collect, double? duration = null, double? volume = null)
+        {
+            List<CallMedia> play = new List<CallMedia>
+            {
+                new CallMedia
+                {
+                    Type = CallMedia.MediaType.ringtone,
+                    Parameters = new CallMedia.RingtoneParams
+                    {
+                        Name = name,
+                        Duration  = duration
                     }
                 }
             };
