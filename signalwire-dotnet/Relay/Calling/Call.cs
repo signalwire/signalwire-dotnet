@@ -549,12 +549,12 @@ namespace SignalWire.Relay.Calling
             return resultHangup;
         }
 
-        public ConnectResult Connect(List<List<CallDevice>> devices)
+        public ConnectResult Connect(List<List<CallDevice>> devices, List<CallRingback> ringback = null)
         {
-            return InternalConnectAsync(devices).Result;
+            return InternalConnectAsync(devices, ringback).Result;
         }
 
-        public ConnectAction ConnectAsync(List<List<CallDevice>> devices)
+        public ConnectAction ConnectAsync(List<List<CallDevice>> devices, List<CallRingback> ringback = null)
         {
             ConnectAction action = new ConnectAction
             {
@@ -566,7 +566,7 @@ namespace SignalWire.Relay.Calling
                 ConnectStateChangeCallback connectStateChangeCallback = (a, c, e, p) => action.State = p.State;
                 OnConnectStateChange += connectStateChangeCallback;
 
-                action.Result = await InternalConnectAsync(devices);
+                action.Result = await InternalConnectAsync(devices, ringback);
                 action.Completed = true;
 
                 OnConnectStateChange -= connectStateChangeCallback;
@@ -574,7 +574,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-        private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices)
+        private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices, List<CallRingback> ringback)
         {
             await API.API.SetupAsync();
 
@@ -604,6 +604,7 @@ namespace SignalWire.Relay.Calling
                     CallID = ID,
                     NodeID = NodeID,
                     Devices = devices,
+                    Ringback = ringback
                 });
 
                 // The use of await rethrows exceptions from the task
