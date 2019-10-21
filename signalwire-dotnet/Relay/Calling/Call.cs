@@ -549,12 +549,12 @@ namespace SignalWire.Relay.Calling
             return resultHangup;
         }
 
-        public ConnectResult Connect(List<List<CallDevice>> devices, List<CallRingback> ringback = null)
+        public ConnectResult Connect(List<List<CallDevice>> devices, List<CallMedia> ringback = null)
         {
             return InternalConnectAsync(devices, ringback).Result;
         }
 
-        public ConnectAction ConnectAsync(List<List<CallDevice>> devices, List<CallRingback> ringback = null)
+        public ConnectAction ConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback = null)
         {
             ConnectAction action = new ConnectAction
             {
@@ -574,7 +574,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-        private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices, List<CallRingback> ringback)
+        private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback)
         {
             await API.API.SetupAsync();
 
