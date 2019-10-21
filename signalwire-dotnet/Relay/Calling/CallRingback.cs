@@ -43,11 +43,11 @@ namespace SignalWire.Relay.Calling
 
         public sealed class RingtoneParams
         {
-            [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
+            [JsonProperty("name", Required = Required.Always)]
             public string Name { get; set; }
 
-            [JsonProperty("duration", Required = Required.Always)]
-            public double Duration { get; set; } // >0
+            [JsonProperty("duration", NullValueHandling = NullValueHandling.Ignore)]
+            public double? Duration { get; set; } // >0
         }
 
         [JsonProperty("type", Required = Required.Always)]
