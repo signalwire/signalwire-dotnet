@@ -13,7 +13,8 @@ namespace SignalWire.Relay.Calling
         {
             audio,
             tts,
-            silence
+            silence,
+            ringtone
         }
 
         public sealed class AudioParams
@@ -38,6 +39,15 @@ namespace SignalWire.Relay.Calling
         {
             [JsonProperty("duration", Required = Required.Always)]
             public double Duration { get; set; }
+        }
+
+        public sealed class RingtoneParams
+        {
+            [JsonProperty("name", Required = Required.Always)]
+            public string Name { get; set; }
+
+            [JsonProperty("duration", NullValueHandling = NullValueHandling.Ignore)]
+            public double? Duration { get; set; }
         }
 
         [JsonProperty("type", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
