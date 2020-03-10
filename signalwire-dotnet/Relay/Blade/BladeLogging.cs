@@ -59,7 +59,7 @@ namespace Blade
                 StackFrame frame = new StackFrame(frameOffset);
                 MethodBase method = frame.GetMethod();
                 Console.WriteLine("{0} [{1,11}] ({2}.{3}) {4}", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff"), logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
-                if (LogLevel == LogLevel.Trace && exception != null)
+                if (exception != null)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkCyan;
                     Console.WriteLine(exception.ToString());
