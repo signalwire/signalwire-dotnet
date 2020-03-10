@@ -28,6 +28,8 @@ namespace Blade
             public TimeSpan ConnectDelay { get; set; } = TimeSpan.FromSeconds(5);
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(5);
             public TimeSpan CloseTimeout { get; set; } = TimeSpan.FromSeconds(5);
+            public string AutoIdentity { get; set; } = null;
+            public ConnectParams.NetworkParam NetworkData { get; set; } = null;
         }
 
         private sealed class SessionProtocolMetrics
@@ -411,6 +413,8 @@ namespace Blade
             Request request = Request.Create("blade.connect", out Blade.Messages.ConnectParams param, OnBladeConnectResponse);
             if (SessionID != null) param.SessionID = SessionID;
             if (mOptions.Authentication != null) param.Authentication = JsonConvert.DeserializeObject(mOptions.Authentication);
+            if (mOptions.NetworkData != null) param.Network = mOptions.NetworkData;
+            if (mOptions.AutoIdentity != null) param.Identity = mOptions.AutoIdentity;
             param.Agent = agent;
             Send(request, true);
         }
