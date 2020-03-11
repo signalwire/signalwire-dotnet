@@ -350,7 +350,9 @@ namespace Blade
 
                     mSocket.Dispose();
                     mSocket = null;
-                    mConnectAt = DateTime.Now.Add(mOptions.ConnectDelay);
+
+                    // Fuzzy reconnection logic by +- 10% of total delay
+                    mConnectAt = DateTime.Now.Add(TimeSpan.FromTicks(mOptions.ConnectDelay.Ticks + (mOptions.ConnectDelay.Ticks * (new Random().Next(-10, 10) / 100))));
 
                     State = SessionState.Offline;
 
