@@ -29,6 +29,12 @@ namespace Blade.Messages
             public bool RouteAdd { get; set; } = false;
             [JsonProperty("route_remove", Required = Required.Always)]
             public bool RouteRemove { get; set; } = false;
+            [JsonProperty("authority_data", Required = Required.Always)]
+            public bool AuthorityData { get; set; } = false;
+            [JsonProperty("authority_add", Required = Required.Always)]
+            public bool AuthorityAdd { get; set; } = false;
+            [JsonProperty("authority_remove", Required = Required.Always)]
+            public bool AuthorityRemove { get; set; } = false;
             [JsonProperty("filtered_protocols", Required = Required.Always)]
             public bool FilteredProtocols { get; set; } = false;
             [JsonProperty("protocols", Required = Required.Always)]
