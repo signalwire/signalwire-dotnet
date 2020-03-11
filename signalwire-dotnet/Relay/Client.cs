@@ -56,6 +56,7 @@ namespace SignalWire.Relay
             string host = null,
             string certificate = null,
             string agent = null,
+            ConnectParams.NetworkParam network = null,
             bool jwt = false,
             TimeSpan? connectDelay = null,
             TimeSpan? connectTimeout = null,
@@ -79,6 +80,7 @@ namespace SignalWire.Relay
                 Bootstrap = new Uri("wss://" + host),
                 Authentication = authentication,
                 Agent = agent,
+                NetworkData = network,
             };
             if (connectDelay.HasValue) options.ConnectDelay = connectDelay.Value;
             if (connectTimeout.HasValue) options.ConnectTimeout = connectTimeout.Value;
@@ -110,6 +112,8 @@ namespace SignalWire.Relay
         public TaskingAPI Tasking {  get { return mTaskingAPI; } }
 
         public MessagingAPI Messaging { get { return mMessagingAPI; } }
+
+        public object UserData { get; set; }
 
 
         public event ClientCallback OnReady;

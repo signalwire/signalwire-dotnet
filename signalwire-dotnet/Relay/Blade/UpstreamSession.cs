@@ -185,6 +185,8 @@ namespace Blade
         public string NodeID { get; private set; }
         public string MasterNodeID { get; private set; }
 
+        public object UserData { get; set; }
+
         public Cache Cache { get; }
 
         #region Subscription Registry
