@@ -343,7 +343,10 @@ namespace Blade
                         System.Diagnostics.Debug.Assert(false, "Tasks did not finish, asserted to check what remains instead of hanging indefinately");
                     }
 
-                    mTasks.Clear();
+                    lock (mTasks)
+                    {
+                        mTasks.Clear();
+                    }
 
                     NodeID = null;
                     MasterNodeID = null;
@@ -359,7 +362,13 @@ namespace Blade
                     OnDisconnected?.Invoke(this);
                 }
 
-                int completedIndex = Task.WaitAny(mTasks.ToArray());
+                Task[] tasks = null;
+                lock (mTasks)
+                {
+                    tasks = mTasks.ToArray();
+                }
+
+                int completedIndex = Task.WaitAny(tasks);
                 if (completedIndex < 0) continue;
                 RemoveTask(mTasks[completedIndex]);
             }
