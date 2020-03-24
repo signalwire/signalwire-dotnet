@@ -277,6 +277,7 @@ namespace Blade
 
         private void TaskWorker()
         {
+            Task[] tasks = null;
             mLogger.LogDebug("TaskWorker Started");
             while (State != SessionState.Shutdown)
             {
@@ -330,7 +331,11 @@ namespace Blade
                     // completed successfully
 
                     // TODO: Check how we can get stuck here? Seen once when gandalf disconnected during a setup, never proceeded to offline
-                    Task.WaitAll(mTasks.ToArray(), 10000);
+                    lock (mTasks)
+                    {
+                        tasks = mTasks.ToArray();
+                    }
+                    Task.WaitAll(tasks, 10000);
 
                     List<Task> unfinished = mTasks.FindAll(t => t.Status != TaskStatus.RanToCompletion);
                     if (unfinished.Count > 0)
@@ -339,7 +344,10 @@ namespace Blade
                         System.Diagnostics.Debug.Assert(false, "Tasks did not finish, asserted to check what remains instead of hanging indefinately");
                     }
 
-                    mTasks.Clear();
+                    lock (mTasks)
+                    {
+                        mTasks.Clear();
+                    }
 
                     NodeID = null;
                     MasterNodeID = null;
@@ -353,7 +361,12 @@ namespace Blade
                     OnDisconnected?.Invoke(this);
                 }
 
-                int completedIndex = Task.WaitAny(mTasks.ToArray());
+                lock (mTasks)
+                {
+                    tasks = mTasks.ToArray();
+                }
+
+                int completedIndex = Task.WaitAny(tasks);
                 if (completedIndex < 0) continue;
                 RemoveTask(mTasks[completedIndex]);
             }
