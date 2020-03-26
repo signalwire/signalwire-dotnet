@@ -28,6 +28,8 @@ namespace Blade
             public TimeSpan ConnectDelay { get; set; } = TimeSpan.FromSeconds(5);
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(5);
             public TimeSpan CloseTimeout { get; set; } = TimeSpan.FromSeconds(5);
+            public string AutoIdentity { get; set; } = null;
+            public ConnectParams.NetworkParam NetworkData { get; set; } = null;
         }
 
         private sealed class SessionProtocolMetrics
@@ -182,6 +184,8 @@ namespace Blade
         public string SessionID { get; private set; }
         public string NodeID { get; private set; }
         public string MasterNodeID { get; private set; }
+
+        public object UserData { get; set; }
 
         public Cache Cache { get; }
 
@@ -354,7 +358,9 @@ namespace Blade
 
                     mSocket.Dispose();
                     mSocket = null;
-                    mConnectAt = DateTime.Now.Add(mOptions.ConnectDelay);
+
+                    // Fuzzy reconnection logic by +- 10% of total delay
+                    mConnectAt = DateTime.Now.Add(TimeSpan.FromTicks(mOptions.ConnectDelay.Ticks + (mOptions.ConnectDelay.Ticks * (new Random().Next(-10, 10) / 100))));
 
                     State = SessionState.Offline;
 
@@ -424,6 +430,8 @@ namespace Blade
             Request request = Request.Create("blade.connect", out Blade.Messages.ConnectParams param, OnBladeConnectResponse);
             if (SessionID != null) param.SessionID = SessionID;
             if (mOptions.Authentication != null) param.Authentication = JsonConvert.DeserializeObject(mOptions.Authentication);
+            if (mOptions.NetworkData != null) param.Network = mOptions.NetworkData;
+            if (mOptions.AutoIdentity != null) param.Identity = mOptions.AutoIdentity;
             param.Agent = agent;
             Send(request, true);
         }
@@ -508,8 +516,11 @@ namespace Blade
 
             if (json.Length > mSendBuffer.Length) throw new IndexOutOfRangeException("Request is too large");
 
-            mLogger.LogDebug("Sending Request Frame: {0} for {1}", request.ID, request.Method);
-            mLogger.LogDebug(request.ToJSON(Formatting.Indented));
+            if (mLogger.IsEnabled(LogLevel.Debug))
+            {
+                mLogger.LogDebug("Sending Request Frame: {0} for {1}", request.ID, request.Method);
+                mLogger.LogDebug(request.ToJSON(Formatting.Indented));
+            }
 
             if (request.ResponseExpected && !mRequests.TryAdd(request.ID, request)) throw new ArgumentException("Request id already exists in pending requests");
 
@@ -547,8 +558,11 @@ namespace Blade
 
             if (json.Length > mSendBuffer.Length) throw new IndexOutOfRangeException("Response is too large");
 
-            mLogger.LogDebug("Sending Response Frame: {0}", response.ID);
-            mLogger.LogDebug(response.ToJSON(Formatting.Indented));
+            if (mLogger.IsEnabled(LogLevel.Debug))
+            {
+                mLogger.LogDebug("Sending Response Frame: {0}", response.ID);
+                mLogger.LogDebug(response.ToJSON(Formatting.Indented));
+            }
 
             mSendQueue.Enqueue(json);
 
@@ -672,8 +686,11 @@ namespace Blade
                 while (State == SessionState.Connecting) Thread.Sleep(1);
 
                 Request request = Request.Parse(obj);
-                mLogger.LogDebug("Received Request Frame: {0} for {1}", request.ID, request.Method);
-                mLogger.LogDebug(obj.ToString());
+                if (mLogger.IsEnabled(LogLevel.Debug))
+                {
+                    mLogger.LogDebug("Received Request Frame: {0} for {1}", request.ID, request.Method);
+                    mLogger.LogDebug(obj.ToString());
+                }
 
                 switch (request.Method)
                 {
@@ -757,8 +774,11 @@ namespace Blade
             else
             {
                 Response response = Response.Parse(obj);
-                mLogger.LogDebug("Received Response Frame: {0}", response.ID);
-                mLogger.LogDebug(obj.ToString());
+                if (mLogger.IsEnabled(LogLevel.Debug))
+                {
+                    mLogger.LogDebug("Received Response Frame: {0}", response.ID);
+                    mLogger.LogDebug(obj.ToString());
+                }
 
                 if (!mRequests.TryRemove(response.ID, out Request request))
                 {
