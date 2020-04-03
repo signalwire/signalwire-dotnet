@@ -10,9 +10,9 @@ namespace Blade
     public sealed class Cache
     {
         public delegate void RouteAddCallback(UpstreamSession session, Route route);
-        public delegate void RouteRemoveCallback(UpstreamSession session, Route route);
+        public delegate void RouteRemoveCallback(UpstreamSession session, string nodeID, Route route);
         public delegate void IdentityAddCallback(UpstreamSession session, Route route, string identity);
-        public delegate void IdentityRemoveCallback(UpstreamSession session, Route route, string identity);
+        public delegate void IdentityRemoveCallback(UpstreamSession session, string nodeID, Route route, string identity);
         public delegate void ProtocolAddCallback(UpstreamSession session, string protocol);
         public delegate void ProtocolRemoveCallback(UpstreamSession session, string protocol);
         public delegate void ProtocolProviderAddCallback(UpstreamSession session, Protocol protocol, Protocol.Provider provider);
@@ -26,7 +26,7 @@ namespace Blade
         public delegate void SubscriptionAddCallback(UpstreamSession session, Subscription subscription);
         public delegate void SubscriptionRemoveCallback(UpstreamSession session, Subscription subscription);
         public delegate void AuthorityAddCallback(UpstreamSession session, Authority authority);
-        public delegate void AuthorityRemoveCallback(UpstreamSession session, Authority authority);
+        public delegate void AuthorityRemoveCallback(UpstreamSession session, string nodeID, Authority authority);
         public delegate void AuthorizationAddCallback(UpstreamSession session, Authorization authorization);
         public delegate void AuthorizationRemoveCallback(UpstreamSession session, Authorization authorization);
         public delegate void AccessAddCallback(UpstreamSession session, Access access);
@@ -339,11 +339,9 @@ namespace Blade
 
         private void RemoveRoute(string nodeid)
         {
-            if (mRoutes.TryRemove(nodeid, out Route route))
-            {
-                Logger.LogInformation("Route removed '{0}'", nodeid);
-                OnRouteRemove?.Invoke(mSession, route);
-            }
+            mRoutes.TryRemove(nodeid, out Route route);
+            Logger.LogInformation("Route removed '{0}'", nodeid);
+            OnRouteRemove?.Invoke(mSession, nodeid, route);
             Array.ForEach(mProtocols.ToArray(), kv => RemoveProtocolProvider(kv.Value.Name, nodeid));
             RemoveAuthority(nodeid);
             Array.ForEach(mSubscriptions.ToArray(), kv => { if (kv.Value.NodeID == nodeid) RemoveSubscription(kv.Value.Protocol, kv.Value.Channel, nodeid); });
@@ -367,12 +365,10 @@ namespace Blade
         {
             if (mRoutes.TryGetValue(nodeid, out Route route))
             {
-                if (route.InternalIdentities.TryRemove(identity, out bool unused))
-                {
-                    Logger.LogInformation("Identity removed '{0}' from '{1}'", identity, nodeid);
-                    OnIdentityRemove?.Invoke(mSession, route, identity);
-                }
+                route.InternalIdentities.TryRemove(identity, out bool unused);
             }
+            Logger.LogInformation("Identity removed '{0}' from '{1}'", identity, nodeid);
+            OnIdentityRemove?.Invoke(mSession, nodeid, route, identity);
         }
 
         public bool CheckRouteAvailable(string nodeid)
@@ -585,11 +581,9 @@ namespace Blade
 
         private void RemoveAuthority(string nodeid)
         {
-            if (mAuthorities.TryRemove(nodeid, out Authority authority))
-            {
-                Logger.LogInformation("Authority removed '{0}'", nodeid);
-                OnAuthorityRemove?.Invoke(mSession, authority);
-            }
+            mAuthorities.TryRemove(nodeid, out Authority authority);
+            Logger.LogInformation("Authority removed '{0}'", nodeid);
+            OnAuthorityRemove?.Invoke(mSession, nodeid, authority);
         }
 
         public List<Authority> GetAuthorities()
