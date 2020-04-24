@@ -630,6 +630,40 @@ namespace SignalWire.Relay.Calling
             return resultConnect;
         }
 
+        public DisconnectResult Disconnect()
+        {
+            return InternalDisconnectAsync().Result;
+        }
+
+        private async Task<DisconnectResult> InternalDisconnectAsync()
+        {
+            await API.API.SetupAsync();
+
+            DisconnectResult resultDisconnect = new DisconnectResult();
+
+            try
+            {
+                Task<LL_DisconnectResult> taskLLDisconnect = mAPI.LL_DisconnectAsync(new LL_DisconnectParams()
+                {
+                    CallID = ID,
+                    NodeID = NodeID
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_DisconnectResult resultLLDisconnect = await taskLLDisconnect;
+                if (resultLLDisconnect.Code == "200")
+                {
+                    mLogger.LogDebug("Disconnect for call {0} {1}", ID, resultDisconnect.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Disconnect for call {0} exception", ID);
+            }
+
+            return resultDisconnect;
+        }
+
         public PlayResult Play(List<CallMedia> play, double? volume = null)
         {
             return InternalPlayAsync(Guid.NewGuid().ToString(), play, volume: volume).Result;
