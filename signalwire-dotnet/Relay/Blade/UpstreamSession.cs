@@ -1087,11 +1087,11 @@ namespace Blade
 #endregion
 
 #region "Execute Protocol Method"
-        public async Task<ResponseTaskResult<ExecuteResult>> ExecuteAsync(string protocol, string method, object parameters)
+        public async Task<ResponseTaskResult<ExecuteResult>> ExecuteAsync(string protocol, string method, object parameters, string responderNodeID = null)
         {
-            return await ExecuteAsync(protocol, method, parameters, TimeSpan.FromSeconds(Request.DEFAULT_RESPONSE_TIMEOUT_SECONDS));
+            return await ExecuteAsync(protocol, method, parameters, TimeSpan.FromSeconds(Request.DEFAULT_RESPONSE_TIMEOUT_SECONDS), responderNodeID: responderNodeID);
         }
-        public async Task<ResponseTaskResult<ExecuteResult>> ExecuteAsync(string protocol, string method, object parameters, TimeSpan ttl)
+        public async Task<ResponseTaskResult<ExecuteResult>> ExecuteAsync(string protocol, string method, object parameters, TimeSpan ttl, string responderNodeID = null)
         {
             TaskCompletionSource<ResponseTaskResult<ExecuteResult>> tcs = new TaskCompletionSource<ResponseTaskResult<ExecuteResult>>();
             Request request = Request.Create("blade.execute", out ExecuteParams executeParameters, (s, req, res) =>
@@ -1106,6 +1106,7 @@ namespace Blade
             });
             request.ResponseTimeout = DateTime.Now.Add(ttl);
 
+            executeParameters.ResponderNodeID = responderNodeID;
             executeParameters.Protocol = protocol;
             executeParameters.Method = method;
             executeParameters.Parameters = parameters;
