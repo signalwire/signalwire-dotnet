@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Text;
 
 namespace Blade.Messages
@@ -10,8 +11,8 @@ namespace Blade.Messages
         public sealed class VersionParam
         {
             public const int MAJOR = 2;
-            public const int MINOR = 4;
-            public const int REVISION = 1;
+            public const int MINOR = 5;
+            public const int REVISION = 0;
 
             [JsonProperty("major", Required = Required.Always)]
             public int Major { get; set; } = MAJOR;
@@ -41,6 +42,14 @@ namespace Blade.Messages
             public List<string> Protocols { get; } = new List<string>();
         }
 
+        public sealed class ProtocolParam
+        {
+            [JsonProperty("protocol", Required = Required.Always)]
+            public string Protocol { get; set; }
+            [JsonProperty("rank", Required = Required.Always)]
+            public int Rank { get; set; }
+        }
+
         [JsonProperty("version", Required = Required.Always)]
         public VersionParam Version { get; set; } = new VersionParam();
         [JsonProperty("sessionid", NullValueHandling = NullValueHandling.Ignore)]
@@ -53,7 +62,10 @@ namespace Blade.Messages
         [JsonProperty("identity", NullValueHandling = NullValueHandling.Ignore)]
         public string Identity { get; set; }
 
-        [JsonProperty("network", NullValueHandling = NullValueHandling.Ignore)]
-        public NetworkParam Network { get; set; } = null;
+        [JsonProperty("host", NullValueHandling = NullValueHandling.Ignore)]
+        public string Host { get; set; } = null;
+
+        [JsonProperty("protocols", NullValueHandling = NullValueHandling.Ignore)]
+        public List<ProtocolParam> Protocols { get; set; } = null;
     }
 }
