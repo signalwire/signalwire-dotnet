@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -67,5 +68,10 @@ namespace Blade.Messages
 
         [JsonProperty("protocols", NullValueHandling = NullValueHandling.Ignore)]
         public List<ProtocolParam> Protocols { get; set; } = null;
+
+        [JsonProperty("params", NullValueHandling = NullValueHandling.Ignore)]
+        public JObject Parameters { get; set; } = null;
+
+        public T ParametersAs<T>() { return Parameters == null ? default(T) : (Parameters as JObject).ToObject<T>(); }
     }
 }

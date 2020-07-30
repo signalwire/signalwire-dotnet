@@ -112,5 +112,10 @@ namespace Blade.Messages
         public List<AccessResult> Accesses { get; set; }
         [JsonProperty("protocols_uncertified", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> ProtocolsUncertified { get; set; }
+
+        [JsonProperty("result", NullValueHandling = NullValueHandling.Ignore)]
+        public object Result { get; set; } = null;
+
+        public T ResultAs<T>() { return Result == null ? default(T) : (Result as JObject).ToObject<T>(); }
     }
 }
