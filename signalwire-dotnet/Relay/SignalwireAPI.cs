@@ -32,11 +32,13 @@ namespace SignalWire.Relay
         protected ILogger Logger {  get { return mLogger; } }
 
         public Client Client { get { return mClient; } }
-        public string Protocol { get { return mProtocol; } }
+        public string Protocol { get { return mProtocol; } internal set { mProtocol = value; } }
 
         protected bool SetupCompleted { get { return mSetupCompleted; } }
 
         public event NotificationCallback OnNotification;
+
+        internal void ExecuteNotificationCallback(BroadcastParams broadcastParams) { OnNotification?.Invoke(mClient, broadcastParams); }
 
         internal void Reset()
         {
@@ -94,6 +96,7 @@ namespace SignalWire.Relay
             }
         }
 
+        [Obsolete("Explicit setup is no longer required")]
         public async Task<string> SetupAsync()
         {
             if (SetupCompleted) return mProtocol;
@@ -160,11 +163,9 @@ namespace SignalWire.Relay
             ReceiveAsync(contexts).Wait();
         }
 
+        [Obsolete("Explicit call of receive for contexts is no longer required")]
         public async Task ReceiveAsync(params string[] contexts)
         {
-            // If setup hasn't been called yet, call it
-            await SetupAsync();
-
             Task<LL_ReceiveResult> taskSignalwireReceiveResult = LL_ReceiveAsync(new LL_ReceiveParams()
             {
                 Contexts = new List<string>(contexts),

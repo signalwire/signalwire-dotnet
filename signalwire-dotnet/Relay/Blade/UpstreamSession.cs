@@ -85,6 +85,7 @@ namespace Blade
         private readonly ILogger mLogger = null;
 
         private readonly SessionOptions mOptions = null;
+        internal SessionOptions Options { get { return mOptions; } }
 
         private bool mDisposed = false;
 
