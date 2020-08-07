@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -18,6 +20,8 @@ namespace Blade
 
     public class SimpleConsoleLogger : ILogger
     {
+        public static bool JsonOutput = false;
+
         public SimpleConsoleLogger(LogLevel logLevel)
         {
             LogLevel = logLevel;
@@ -39,32 +43,50 @@ namespace Blade
         {
             if (!IsEnabled(logLevel)) return;
 
+            int frameOffset = 4;
+#if DEBUG
+            frameOffset = 5;
+#endif
+            StackFrame frame = new StackFrame(frameOffset);
+            MethodBase method = frame.GetMethod();
+
+            string timestamp = DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss.fff");
             lock (this)
             {
-                var color = Console.ForegroundColor;
-                switch (logLevel)
+                if (JsonOutput)
                 {
-                    case LogLevel.Trace: Console.ForegroundColor = ConsoleColor.DarkCyan; break;
-                    case LogLevel.Debug: Console.ForegroundColor = ConsoleColor.DarkGreen; break;
-                    case LogLevel.Information: Console.ForegroundColor = ConsoleColor.White; break;
-                    case LogLevel.Warning: Console.ForegroundColor = ConsoleColor.Yellow; break;
-                    case LogLevel.Error: Console.ForegroundColor = ConsoleColor.Red; break;
-                    case LogLevel.Critical: Console.ForegroundColor = ConsoleColor.Magenta; break;
-                    default: break;
+                    JObject output = new JObject()
+                    {
+                        ["level"] = logLevel.ToString(),
+                        ["message"] = string.Format("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception)),
+                        ["timestamp"] = timestamp
+                    };
+                    if (exception != null) output["exception"] = exception.ToString();
+
+                    Console.WriteLine(output.ToString(Formatting.None));
                 }
-                int frameOffset = 4;
-#if DEBUG
-                frameOffset = 5;
-#endif
-                StackFrame frame = new StackFrame(frameOffset);
-                MethodBase method = frame.GetMethod();
-                Console.WriteLine("{0} [{1,11}] ({2}.{3}) {4}", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff"), logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
-                if (exception != null)
+                else
                 {
-                    Console.ForegroundColor = ConsoleColor.DarkCyan;
-                    Console.WriteLine(exception.ToString());
+                    var color = Console.ForegroundColor;
+                    switch (logLevel)
+                    {
+                        case LogLevel.Trace: Console.ForegroundColor = ConsoleColor.DarkCyan; break;
+                        case LogLevel.Debug: Console.ForegroundColor = ConsoleColor.DarkGreen; break;
+                        case LogLevel.Information: Console.ForegroundColor = ConsoleColor.White; break;
+                        case LogLevel.Warning: Console.ForegroundColor = ConsoleColor.Yellow; break;
+                        case LogLevel.Error: Console.ForegroundColor = ConsoleColor.Red; break;
+                        case LogLevel.Critical: Console.ForegroundColor = ConsoleColor.Magenta; break;
+                        default: break;
+                    }
+
+                    Console.WriteLine("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+                    if (exception != null)
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkCyan;
+                        Console.WriteLine(exception.ToString());
+                    }
+                    Console.ForegroundColor = color;
                 }
-                Console.ForegroundColor = color;
             }
         }
     }
