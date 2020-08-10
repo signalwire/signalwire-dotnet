@@ -9,6 +9,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -29,7 +30,9 @@ namespace Blade
             public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(5);
             public TimeSpan CloseTimeout { get; set; } = TimeSpan.FromSeconds(5);
             public string AutoIdentity { get; set; } = null;
-            public ConnectParams.NetworkParam NetworkData { get; set; } = null;
+            [Obsolete("Network data filtering is no longer supported")]
+            public UncertifiedConnectParams UncertifiedConnectParams { get; set; } = null;
+            public List<ConnectParams.ProtocolParam> AutoProtocolProviders { get; set; } = null;
         }
 
         private sealed class SessionProtocolMetrics
@@ -82,6 +85,7 @@ namespace Blade
         private readonly ILogger mLogger = null;
 
         private readonly SessionOptions mOptions = null;
+        internal SessionOptions Options { get { return mOptions; } }
 
         private bool mDisposed = false;
 
@@ -430,8 +434,9 @@ namespace Blade
             Request request = Request.Create("blade.connect", out Blade.Messages.ConnectParams param, OnBladeConnectResponse);
             if (SessionID != null) param.SessionID = SessionID;
             if (mOptions.Authentication != null) param.Authentication = JsonConvert.DeserializeObject(mOptions.Authentication);
-            if (mOptions.NetworkData != null) param.Network = mOptions.NetworkData;
             if (mOptions.AutoIdentity != null) param.Identity = mOptions.AutoIdentity;
+            if (mOptions.AutoProtocolProviders != null) param.Protocols = mOptions.AutoProtocolProviders;
+            if (mOptions.UncertifiedConnectParams != null) param.Parameters = JObject.FromObject(mOptions.UncertifiedConnectParams);
             param.Agent = agent;
             Send(request, true);
         }
@@ -460,6 +465,14 @@ namespace Blade
 
                 mProtocolMetrics.Clear();
                 Cache.Populate(result);
+            }
+
+            string protocol = null;
+            if (result.Result != null)
+            {
+                Blade.Messages.UncertifiedConnectResult uncertifiedConnectResult = result.ResultAs<Blade.Messages.UncertifiedConnectResult>();
+                mOptions.UncertifiedConnectParams.Protocol = uncertifiedConnectResult.Protocol;
+                protocol = uncertifiedConnectResult.Protocol;
             }
 
             mRemoteDisconnect = false;

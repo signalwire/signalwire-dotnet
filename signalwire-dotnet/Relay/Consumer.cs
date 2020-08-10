@@ -55,21 +55,9 @@ namespace SignalWire.Relay
             if (string.IsNullOrWhiteSpace(Project)) throw new ArgumentNullException("Project");
             if (string.IsNullOrWhiteSpace(Token)) throw new ArgumentNullException("Token");
 
-            using (mClient = new Client(Project, Token, host: Host, certificate: Certificate, jwt: JWT))
+            using (mClient = new Client(Project, Token, host: Host, certificate: Certificate, jwt: JWT, uncertifiedConnectParams: new Blade.Messages.UncertifiedConnectParams { Contexts = Contexts }))
             {
-                mClient.OnReady += c =>
-                {
-                    Task.Run(() =>
-                    {
-                        mClient.Signalwire.SetupAsync().Wait();
-
-                        if (Contexts != null)
-                        {
-                            mClient.Signalwire.Receive(Contexts.ToArray());
-                        }
-                        Ready();
-                    });
-                };
+                mClient.OnReady += c => Task.Run(() => Ready());
                 mClient.OnRestored += c => Task.Run(() => Restored());
                 mClient.Calling.OnCallReceived += (a, c, p) => Task.Run(() => OnIncomingCall(c));
                 mClient.Messaging.OnMessageReceived += (a, m, e, p) => Task.Run(() => OnIncomingMessage(m));

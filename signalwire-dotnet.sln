@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29926.136
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "signalwire-dotnet", "signalwire-dotnet\signalwire-dotnet.csproj", "{349C0884-4FBE-4388-8078-C9DC4B4D35FB}"
 EndProject
@@ -57,7 +57,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_PlayPauseResume", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_PlayVolume", "RelayTests\Calling_PlayVolume\Calling_PlayVolume.csproj", "{8C0443DB-35F7-44BF-B26C-DCCC35DF14C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calling_PlayTwice", "RelayTests\Calling_PlayTwice\Calling_PlayTwice.csproj", "{A1E9671C-7099-4EC1-95DD-D4CE96AE34AD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_PlayTwice", "RelayTests\Calling_PlayTwice\Calling_PlayTwice.csproj", "{A1E9671C-7099-4EC1-95DD-D4CE96AE34AD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

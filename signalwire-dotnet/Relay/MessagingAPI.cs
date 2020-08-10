@@ -194,8 +194,6 @@ namespace SignalWire.Relay
 
         private async Task<SendResult> InternalSendAsync(LL_SendParams @params)
         {
-            await mAPI.SetupAsync();
-
             SendResult resultSend  = new SendResult();
 
             try

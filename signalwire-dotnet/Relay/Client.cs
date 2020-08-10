@@ -56,7 +56,7 @@ namespace SignalWire.Relay
             string host = null,
             string certificate = null,
             string agent = null,
-            ConnectParams.NetworkParam network = null,
+            UncertifiedConnectParams uncertifiedConnectParams = null,
             bool jwt = false,
             TimeSpan? connectDelay = null,
             TimeSpan? connectTimeout = null,
@@ -80,7 +80,7 @@ namespace SignalWire.Relay
                 Bootstrap = new Uri("wss://" + host),
                 Authentication = authentication,
                 Agent = agent,
-                NetworkData = network,
+                UncertifiedConnectParams = uncertifiedConnectParams
             };
             if (connectDelay.HasValue) options.ConnectDelay = connectDelay.Value;
             if (connectTimeout.HasValue) options.ConnectTimeout = connectTimeout.Value;
@@ -89,14 +89,20 @@ namespace SignalWire.Relay
 
             Session = new UpstreamSession(options);
 
-            Session.OnReady += s => OnReady?.Invoke(this);
-            Session.OnRestored += s => OnRestored?.Invoke(this);
-            Session.OnDisconnected += s => OnDisconnected?.Invoke(this);
-
             mSignalwireAPI = new SignalwireAPI(this);
             mCallingAPI = new CallingAPI(mSignalwireAPI);
             mTaskingAPI = new TaskingAPI(mSignalwireAPI);
             mMessagingAPI = new MessagingAPI(mSignalwireAPI);
+
+            Session.OnReady += s =>
+            {
+                // A little bit hacky, but this ensures the protocol is propagated correctly to where it's needed further down the road, and that we register a handler for events
+                mSignalwireAPI.Protocol = s.Options.UncertifiedConnectParams.Protocol;
+                Session.RegisterSubscriptionHandler(s.Options.UncertifiedConnectParams.Protocol, "notifications", (s2, r, p) => mSignalwireAPI.ExecuteNotificationCallback(p));
+                OnReady?.Invoke(this);
+            };
+            Session.OnRestored += s => OnRestored?.Invoke(this);
+            Session.OnDisconnected += s => OnDisconnected?.Invoke(this);
         }
 
         public UpstreamSession Session { get; private set; }

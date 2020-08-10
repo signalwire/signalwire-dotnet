@@ -431,8 +431,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<AnswerResult> InternalAnswerAsync()
         {
-            await API.API.SetupAsync();
-
             AnswerResult resultAnswer = new AnswerResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -503,8 +501,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<HangupResult> InternalHangupAsync(DisconnectReason reason = DisconnectReason.hangup)
         {
-            await API.API.SetupAsync();
-
             HangupResult resultHangup = new HangupResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -576,8 +572,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback)
         {
-            await API.API.SetupAsync();
-
             ConnectResult resultConnect = new ConnectResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -662,8 +656,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<PlayResult> InternalPlayAsync(string controlID, List<CallMedia> play, double? volume = null)
         {
-            await API.API.SetupAsync();
-
             PlayResult resultPlay = new PlayResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -885,8 +877,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<PromptResult> InternalPromptAsync(string controlID, List<CallMedia> play, CallCollect collect, double? volume = null)
         {
-            await API.API.SetupAsync();
-
             PromptResult resultPrompt = new PromptResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -1103,8 +1093,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<RecordResult> InternalRecordAsync(RecordAction action, string controlID, CallRecord record)
         {
-            await API.API.SetupAsync();
-
             RecordResult resultRecord = new RecordResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -1199,8 +1187,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<TapResult> InternalTapAsync(string controlID, CallTap tap, CallTapDevice device)
         {
-            await API.API.SetupAsync();
-
             TapResult resultTap = new TapResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -1528,8 +1514,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<DetectResult> InternalDetectAsync(string controlID, bool? waitForBeep, CallDetect detect)
         {
-            await API.API.SetupAsync();
-
             DetectResult resultDetect = new DetectResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -1665,8 +1649,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<FaxResult> InternalFaxSendAsync(string controlID, string document, string identity, string headerInfo)
         {
-            await API.API.SetupAsync();
-
             FaxResult resultSendFax = new FaxResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -1756,8 +1738,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<FaxResult> InternalFaxReceiveAsync(string controlID)
         {
-            await API.API.SetupAsync();
-
             FaxResult resultReceiveFax = new FaxResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -1846,8 +1826,6 @@ namespace SignalWire.Relay.Calling
 
         private async Task<SendDigitsResult> InternalSendDigitsAsync(string controlID, string digits)
         {
-            await API.API.SetupAsync();
-
             SendDigitsResult resultSendDigits = new SendDigitsResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 
@@ -1914,8 +1892,6 @@ namespace SignalWire.Relay.Calling
 
         protected override async Task<DialResult> InternalDialAsync()
         {
-            await API.API.SetupAsync();
-
             DialResult resultDial = new DialResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
 

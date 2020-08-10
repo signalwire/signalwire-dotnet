@@ -140,15 +140,8 @@ namespace JWT
                         return;
                     }
 
-                    client.Signalwire.SetupAsync().ContinueWith(t =>
-                    {
-                        if (t.IsCompletedSuccessfully)
-                        {
-                            sSuccessful = true;
-                        }
-                        sCompleted.Set();
-                    });
-
+                    sSuccessful = true;
+                    sCompleted.Set();
                 });
 
             }
