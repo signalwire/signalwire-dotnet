@@ -55,13 +55,21 @@ namespace Blade
             {
                 if (JsonOutput)
                 {
-                    JObject output = new JObject()
-                    {
-                        ["level"] = logLevel.ToString(),
-                        ["message"] = string.Format("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception)),
-                        ["timestamp"] = timestamp
-                    };
-                    if (exception != null) output["exception"] = exception.ToString();
+                    // parse state data as json output if possible
+                    JObject output = null;
+                    if (state != null && typeof(Newtonsoft.Json.Linq.JObject).IsAssignableFrom(state.GetType()))
+                        output = state as JObject;
+                    else
+                        output = new JObject();
+
+                    output["level"] = logLevel.ToString();
+                    output["timestamp"] = timestamp;
+                    
+                    if (!output.ContainsKey("message"))
+                        output["message"] = string.Format("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+
+                    if (exception != null)
+                        output["exception"] = exception.ToString();
 
                     Console.WriteLine(output.ToString(Formatting.None));
                 }
