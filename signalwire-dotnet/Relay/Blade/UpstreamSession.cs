@@ -1120,6 +1120,7 @@ namespace Blade
             request.ResponseTimeout = DateTime.Now.Add(ttl);
 
             executeParameters.ResponderNodeID = responderNodeID;
+            executeParameters.ResponderIdentity = responderNodeID;
             executeParameters.Protocol = protocol;
             executeParameters.Method = method;
             executeParameters.Parameters = parameters;
@@ -1132,15 +1133,17 @@ namespace Blade
         {
             Response response = Response.Create(request.ID, out ExecuteResult executeResult);
 
-            executeResult.RequesterNodeID = executeParameters.RequesterNodeID;
-            executeResult.ResponderNodeID = executeParameters.ResponderNodeID;
+            executeResult.RequesterNodeID = executeParameters.RequesterNodeID ?? executeParameters.RequesterIdentity;
+            executeResult.RequesterIdentity = executeParameters.RequesterIdentity ?? executeParameters.RequesterNodeID;
+            executeResult.ResponderNodeID = executeParameters.ResponderNodeID ?? executeParameters.ResponderIdentity;
+            executeResult.ResponderIdentity = executeParameters.ResponderIdentity ?? executeParameters.ResponderNodeID;
             executeResult.Result = result;
 
             Send(response);
         }
         public void SendExecuteError(Request request, ExecuteParams executeParameters, int code, string message)
         {
-            Send(Response.CreateError(request, code, message, executeParameters.RequesterNodeID, executeParameters.ResponderNodeID));
+            Send(Response.CreateError(request, code, message, executeParameters.RequesterIdentity ?? executeParameters.RequesterNodeID, executeParameters.ResponderIdentity ?? executeParameters.ResponderNodeID));
         }
 #endregion
 

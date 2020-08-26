@@ -10,8 +10,13 @@ namespace Blade.Messages
     {
         [JsonProperty("requester_nodeid", Required = Required.Always)]
         public string RequesterNodeID { get; set; }
+        [JsonProperty("requester_identity", Required = Required.Always)]
+        public string RequesterIdentity { get; set; }
         [JsonProperty("responder_nodeid", Required = Required.Always)]
         public string ResponderNodeID { get; set; }
+        [JsonProperty("responder_identity", Required = Required.Always)]
+        public string ResponderIdentity { get; set; }
+
         [JsonProperty("result", NullValueHandling = NullValueHandling.Ignore)]
         public object Result { get; set; }
 
