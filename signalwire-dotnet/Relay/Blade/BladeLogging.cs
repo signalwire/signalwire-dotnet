@@ -56,23 +56,20 @@ namespace Blade
                 if (JsonOutput)
                 {
                     // parse state data as json output if possible
-                    JObject output = null;
-                    if (state != null && typeof(JObject).IsAssignableFrom(state.GetType()))
-                        output = state as JObject;
-                    else
-                        output = new JObject();
+                    JObject output = new JObject();
 
                     output["level"] = logLevel.ToString();
                     output["timestamp"] = timestamp;
-
-                    if (!output.ContainsKey("message"))
-                        output["message"] = string.Format("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+                    output["message"] = string.Format("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
 
                     if (exception != null)
                         output["exception"] = exception.ToString();
 
                     output["calling-class"] = method.DeclaringType.FullName;
                     output["calling-method"] = method.Name;
+
+                    if (state != null && typeof(JObject).IsAssignableFrom(state.GetType()))
+                        output.Merge((state as JObject), new JsonMergeSettings() { PropertyNameComparison = StringComparison.InvariantCulture, MergeArrayHandling = MergeArrayHandling.Replace, MergeNullValueHandling = MergeNullValueHandling.Merge });
 
                     Console.WriteLine(output.ToString(Formatting.None));
                 }
