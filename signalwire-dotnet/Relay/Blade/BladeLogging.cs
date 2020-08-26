@@ -47,6 +47,7 @@ namespace Blade
 #if DEBUG
             frameOffset = 5;
 #endif
+
             StackFrame frame = new StackFrame(frameOffset);
             MethodBase method = frame.GetMethod();
 
@@ -55,22 +56,37 @@ namespace Blade
             {
                 if (JsonOutput)
                 {
-                    // parse state data as json output if possible
+                    // start building log output object
                     JObject output = new JObject();
-
                     output["level"] = logLevel.ToString();
                     output["timestamp"] = timestamp;
-                    output["message"] = string.Format("{0} [{1,11}] ({2}.{3}:{4}) {5}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, frame.GetFileLineNumber(), formatter(state, exception));
 
-                    if (exception != null)
-                        output["exception"] = exception.ToString();
+                    // attempt to get the log state as json
+                    if (state != null && state is JObject logState)
+                    {
+                        output["message"] = string.Format("{0} [{1,11}] ({2}.{3}:{4}) {5}",
+                            timestamp,
+                            logLevel,
+                            logState["calling-class"] ?? method.DeclaringType.FullName,
+                            logState["calling-method"] ?? method.Name,
+                            logState["calling-line-number"] ?? 0,
+                            formatter(state, exception));
 
-                    output["calling-class"] = method.DeclaringType.FullName;
-                    output["calling-method"] = method.Name;
+                        if (exception != null)
+                            output["exception"] = exception.ToString();
 
-                    if (state != null && typeof(JObject).IsAssignableFrom(state.GetType()))
-                        output.Merge((state as JObject), new JsonMergeSettings() { PropertyNameComparison = StringComparison.InvariantCulture, MergeArrayHandling = MergeArrayHandling.Replace, MergeNullValueHandling = MergeNullValueHandling.Merge });
+                        // merge log state fields into output object, so they're tacked onto the end, and not at the beginning
+                        output.Merge(logState,
+                            new JsonMergeSettings() { PropertyNameComparison = StringComparison.InvariantCulture, MergeArrayHandling = MergeArrayHandling.Replace, MergeNullValueHandling = MergeNullValueHandling.Merge });
+                    }
+                    else
+                    {
+                        // no json log state, work with what we have
+                        output["message"] = string.Format("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
 
+                        if (exception != null)
+                            output["exception"] = exception.ToString();
+                    }
                     Console.WriteLine(output.ToString(Formatting.None));
                 }
                 else
@@ -87,7 +103,7 @@ namespace Blade
                         default: break;
                     }
 
-                    Console.WriteLine("{0} [{1,11}] ({2}.{3}:{4}) {5}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, frame.GetFileLineNumber(), formatter(state, exception));
+                    Console.WriteLine("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
                     if (exception != null)
                     {
                         Console.ForegroundColor = ConsoleColor.DarkCyan;
