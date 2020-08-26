@@ -64,7 +64,7 @@ namespace Blade
 
                     output["level"] = logLevel.ToString();
                     output["timestamp"] = timestamp;
-                    output["calling-type"] = method.DeclaringType.FullName;
+                    output["calling-class"] = method.DeclaringType.FullName;
                     output["calling-method"] = method.Name;
 
                     if (!output.ContainsKey("message"))
