@@ -60,7 +60,7 @@ namespace Blade
 
                     output["level"] = logLevel.ToString();
                     output["timestamp"] = timestamp;
-                    output["message"] = string.Format("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+                    output["message"] = string.Format("{0} [{1,11}] ({2}.{3}:{4}) {5}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, frame.GetFileLineNumber(), formatter(state, exception));
 
                     if (exception != null)
                         output["exception"] = exception.ToString();
