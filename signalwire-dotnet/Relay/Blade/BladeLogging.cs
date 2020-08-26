@@ -87,7 +87,7 @@ namespace Blade
                         default: break;
                     }
 
-                    Console.WriteLine("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+                    Console.WriteLine("{0} [{1,11}] ({2}.{3}:{4}) {5}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, frame.GetFileLineNumber(), formatter(state, exception));
                     if (exception != null)
                     {
                         Console.ForegroundColor = ConsoleColor.DarkCyan;
