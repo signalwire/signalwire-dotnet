@@ -64,14 +64,15 @@ namespace Blade
 
                     output["level"] = logLevel.ToString();
                     output["timestamp"] = timestamp;
-                    output["calling-class"] = method.DeclaringType.FullName;
-                    output["calling-method"] = method.Name;
 
                     if (!output.ContainsKey("message"))
                         output["message"] = string.Format("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
 
                     if (exception != null)
                         output["exception"] = exception.ToString();
+
+                    output["calling-class"] = method.DeclaringType.FullName;
+                    output["calling-method"] = method.Name;
 
                     Console.WriteLine(output.ToString(Formatting.None));
                 }
