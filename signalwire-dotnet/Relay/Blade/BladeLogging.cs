@@ -21,6 +21,12 @@ namespace Blade
     public class SimpleConsoleLogger : ILogger
     {
         public static bool JsonOutput = false;
+        
+#if DEBUG
+        private const int FRAME_OFFSET = 5;
+#else
+        private const int FRAME_OFFSET = 4;
+#endif
 
         public SimpleConsoleLogger(LogLevel logLevel)
         {
@@ -43,16 +49,6 @@ namespace Blade
         {
             if (!IsEnabled(logLevel)) return;
 
-            int frameOffset = 4;
-#if DEBUG
-            frameOffset = 5;
-#endif
-
-            StackFrame frame = new StackFrame(frameOffset);
-            MethodBase method = frame.GetMethod();
-            var callingClass = method.DeclaringType.FullName;
-            var callingMethod = method.Name;
-
             string timestamp = DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss.fff");
             lock (this)
             {
@@ -66,14 +62,6 @@ namespace Blade
                     // attempt to get the log state as json
                     if (state != null && state is JObject logState)
                     {
-                        // fill in trace info only if missing
-                        if(!logState.ContainsKey("calling-file"))
-                        {
-                            logState["calling-file"] = callingClass;
-                            logState["calling-method"] = callingMethod;
-                            logState["calling-line-number"] = "0";
-                        }
-
                         output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}:{4}) {5}",
                             timestamp,
                             logLevel,
@@ -91,7 +79,12 @@ namespace Blade
                             new JsonMergeSettings() { PropertyNameComparison = StringComparison.InvariantCulture, MergeArrayHandling = MergeArrayHandling.Replace, MergeNullValueHandling = MergeNullValueHandling.Ignore });
                     }
                     else
-                        output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}:0) {4}", timestamp, logLevel, callingClass, callingMethod, formatter(state, exception));
+                    {
+                        StackFrame frame = new StackFrame(FRAME_OFFSET);
+                        MethodBase method = frame.GetMethod();
+
+                        output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}:0) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+                    }
 
                     if (exception != null)
                         output["exception"] = exception.ToString();
@@ -100,6 +93,9 @@ namespace Blade
                 }
                 else
                 {
+                    StackFrame frame = new StackFrame(FRAME_OFFSET);
+                    MethodBase method = frame.GetMethod();
+
                     var color = Console.ForegroundColor;
                     switch (logLevel)
                     {
@@ -112,7 +108,7 @@ namespace Blade
                         default: break;
                     }
 
-                    Console.WriteLine("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, callingClass, callingMethod, formatter(state, exception));
+                    Console.WriteLine("{0} [{1,11}] ({3} @ {2}:0) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
                     if (exception != null)
                     {
                         Console.ForegroundColor = ConsoleColor.DarkCyan;
