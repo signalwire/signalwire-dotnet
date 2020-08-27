@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -82,8 +83,14 @@ namespace Blade
                     {
                         StackFrame frame = new StackFrame(FRAME_OFFSET);
                         MethodBase method = frame.GetMethod();
+                        var callingFile = method.DeclaringType.FullName;
+                        var callingMethod = method.Name;
 
-                        output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}:0) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+                        output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}:0) {4}", timestamp, logLevel, callingFile, callingMethod, formatter(state, exception));
+
+                        output["calling-file"] = method.DeclaringType.FullName;
+                        output["calling-method"] = method.Name;
+                        output["calling-line-number"] = "0";
                     }
 
                     if (exception != null)
