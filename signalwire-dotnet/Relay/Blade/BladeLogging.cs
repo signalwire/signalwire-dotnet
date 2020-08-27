@@ -64,7 +64,7 @@ namespace Blade
                     // attempt to get the log state as json
                     if (state != null && state is JObject logState)
                     {
-                        output["message"] = string.Format("{0} [{1,11}] ({2}.{3}:{4}) {5}",
+                        output["message"] = string.Format("{0} [{1,11}] ({2}/{3}:{4}) {5}",
                             timestamp,
                             logLevel,
                             logState["calling-class"] ?? method.DeclaringType.FullName,
