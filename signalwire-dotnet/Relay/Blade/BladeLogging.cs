@@ -56,6 +56,9 @@ namespace Blade
             {
                 if (JsonOutput)
                 {
+                    var callingClassName = method.DeclaringType.FullName;
+                    var callingMethodName = method.Name;
+
                     // start building log output object
                     JObject output = new JObject();
                     output["level"] = logLevel.ToString();
@@ -64,35 +67,31 @@ namespace Blade
                     // attempt to get the log state as json
                     if (state != null && state is JObject logState)
                     {
-                        output["message"] = string.Format("{0} [{1,11}] ({2}/{3}:{4}) {5}",
+                        output["message"] = string.Format("{0} [{1,11}] ({3}@{2}:{4}) {5}",
                             timestamp,
                             logLevel,
-                            logState["calling-class"] ?? method.DeclaringType.FullName,
-                            logState["calling-method"] ?? method.Name,
+                            logState["calling-file"] ?? callingClassName,
+                            logState["calling-method"] ?? callingMethodName,
                             logState["calling-line-number"] ?? 0,
                             formatter(state, exception));
 
                         // *prevents overwriting again accidentally when merging
                         logState.Remove("message");
-
-                        if (exception != null)
-                            output["exception"] = exception.ToString();
+                        logState.Remove("exception");
 
                         // merge log state fields into output object, so they're tacked onto the end, and not at the beginning
                         output.Merge(logState,
-                            new JsonMergeSettings() { PropertyNameComparison = StringComparison.InvariantCulture, MergeArrayHandling = MergeArrayHandling.Replace, MergeNullValueHandling = MergeNullValueHandling.Merge });
+                            new JsonMergeSettings() { PropertyNameComparison = StringComparison.InvariantCulture, MergeArrayHandling = MergeArrayHandling.Replace, MergeNullValueHandling = MergeNullValueHandling.Ignore });
                     }
                     else
-                    {
-                        // no json log state, work with what we have
-                        output["message"] = string.Format("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+                        output["message"] = string.Format("{0} [{1,11}] ({3}@{2}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
 
-                        if (exception != null)
-                            output["exception"] = exception.ToString();
+                    output["calling-class"] = callingClassName;
+                    output["calling-method"] = callingMethodName;
 
-                        output["calling-class"] = method.DeclaringType.FullName;
-                        output["calling-method"] = method.Name;
-                    }
+                    if (exception != null)
+                        output["exception"] = exception.ToString();
+
                     Console.WriteLine(output.ToString(Formatting.None));
                 }
                 else
