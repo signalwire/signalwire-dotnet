@@ -72,6 +72,9 @@ namespace Blade
                             logState["calling-line-number"] ?? 0,
                             formatter(state, exception));
 
+                        // *prevents overwriting again accidentally when merging
+                        logState.Remove("message");
+
                         if (exception != null)
                             output["exception"] = exception.ToString();
 
