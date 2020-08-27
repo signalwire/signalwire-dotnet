@@ -50,15 +50,14 @@ namespace Blade
 
             StackFrame frame = new StackFrame(frameOffset);
             MethodBase method = frame.GetMethod();
+            var callingClass = method.DeclaringType.FullName;
+            var callingMethod = method.Name;
 
             string timestamp = DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss.fff");
             lock (this)
             {
                 if (JsonOutput)
                 {
-                    var callingClassName = method.DeclaringType.FullName;
-                    var callingMethodName = method.Name;
-
                     // start building log output object
                     JObject output = new JObject();
                     output["level"] = logLevel.ToString();
@@ -67,12 +66,20 @@ namespace Blade
                     // attempt to get the log state as json
                     if (state != null && state is JObject logState)
                     {
-                        output["message"] = string.Format("{0} [{1,11}] ({3}@{2}:{4}) {5}",
+                        // fill in trace info only if missing
+                        if(!logState.ContainsKey("calling-file"))
+                        {
+                            logState["calling-file"] = callingClass;
+                            logState["calling-method"] = callingMethod;
+                            logState["calling-line-number"] = "0";
+                        }
+
+                        output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}:{4}) {5}",
                             timestamp,
                             logLevel,
-                            logState["calling-file"] ?? callingClassName,
-                            logState["calling-method"] ?? callingMethodName,
-                            logState["calling-line-number"] ?? 0,
+                            logState["calling-file"],
+                            logState["calling-method"],
+                            logState["calling-line-number"],
                             formatter(state, exception));
 
                         // *prevents overwriting again accidentally when merging
@@ -84,10 +91,7 @@ namespace Blade
                             new JsonMergeSettings() { PropertyNameComparison = StringComparison.InvariantCulture, MergeArrayHandling = MergeArrayHandling.Replace, MergeNullValueHandling = MergeNullValueHandling.Ignore });
                     }
                     else
-                        output["message"] = string.Format("{0} [{1,11}] ({3}@{2}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
-
-                    output["calling-class"] = callingClassName;
-                    output["calling-method"] = callingMethodName;
+                        output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}:0) {4}", timestamp, logLevel, callingClass, callingMethod, formatter(state, exception));
 
                     if (exception != null)
                         output["exception"] = exception.ToString();
@@ -108,7 +112,7 @@ namespace Blade
                         default: break;
                     }
 
-                    Console.WriteLine("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+                    Console.WriteLine("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, callingClass, callingMethod, formatter(state, exception));
                     if (exception != null)
                     {
                         Console.ForegroundColor = ConsoleColor.DarkCyan;
