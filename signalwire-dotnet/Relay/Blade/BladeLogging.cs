@@ -89,6 +89,9 @@ namespace Blade
 
                         if (exception != null)
                             output["exception"] = exception.ToString();
+
+                        output["calling-class"] = method.DeclaringType.FullName;
+                        output["calling-method"] = method.Name;
                     }
                     Console.WriteLine(output.ToString(Formatting.None));
                 }
