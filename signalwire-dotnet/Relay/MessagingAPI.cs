@@ -6,6 +6,7 @@ using SignalWire.Relay.Messaging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -131,7 +132,7 @@ namespace SignalWire.Relay
 
         private void OnNotification(Client client, BroadcastParams broadcastParams)
         {
-            mLogger.LogDebug("MessagingAPI OnNotification: {0}", broadcastParams.Event);
+            Log(LogLevel.Debug, string.Format("MessagingAPI OnNotification: {0}", broadcastParams.Event));
 
             if (broadcastParams.Event != "queuing.relay.messaging") return;
 
@@ -139,13 +140,13 @@ namespace SignalWire.Relay
             try { messagingEventParams = broadcastParams.ParametersAs<MessagingEventParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse MessagingEventParams");
+                Log(LogLevel.Warning, exc, "Failed to parse MessagingEventParams");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(messagingEventParams.EventType))
             {
-                mLogger.LogWarning("Received MessagingEventParams with empty EventType");
+                Log(LogLevel.Warning, "Received MessagingEventParams with empty EventType");
                 return;
             }
 
@@ -158,7 +159,7 @@ namespace SignalWire.Relay
                     OnMessagingEvent_MessageReceive(client, broadcastParams, messagingEventParams);
                     break;
                 default:
-                    mLogger.LogDebug("Received unknown messaging EventType: {0}", messagingEventParams.EventType);
+                    Log(LogLevel.Debug, string.Format("Received unknown messaging EventType: {0}", messagingEventParams.EventType));
                     break;
             }
         }
@@ -169,7 +170,7 @@ namespace SignalWire.Relay
             try { stateParams = messagingEventParams.ParametersAs<MessagingEventParams.StateParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse StateParams");
+                Log(LogLevel.Warning, exc, "Failed to parse StateParams");
                 return;
             }
 
@@ -182,7 +183,7 @@ namespace SignalWire.Relay
             try { receiveParams = messagingEventParams.ParametersAs<MessagingEventParams.ReceiveParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse ReceiveParams");
+                Log(LogLevel.Warning, exc, "Failed to parse ReceiveParams");
                 return;
             }
 
@@ -205,17 +206,17 @@ namespace SignalWire.Relay
                 ThrowIfError(resultLLSend.Code, resultLLSend.Message);
                 if (resultLLSend.Code == "200")
                 {
-                    mLogger.LogDebug("Send for context {0} waiting for completion events", @params.Context);
+                    Log(LogLevel.Debug, string.Format("Send for context {0} waiting for completion events", @params.Context));
 
                     resultSend.Successful = true;
                     resultSend.MessageID = resultLLSend.MessageID;
 
-                    mLogger.LogDebug("Send for context {0} {1}", @params.Context, resultSend.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("Send for context {0} {1}", @params.Context, resultSend.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "Send for context {0} exception", @params.Context);
+                Log(LogLevel.Error, exc, "Send for context {0} exception", @params.Context);
             }
 
             return resultSend;
@@ -226,6 +227,32 @@ namespace SignalWire.Relay
         public Task<LL_SendResult> LL_SendAsync(LL_SendParams parameters)
         {
             return mAPI.ExecuteAsync<LL_SendParams, LL_SendResult>("messaging.send", parameters);
+        }
+
+        private void Log(LogLevel level, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, null, BladeLogging.DefaultLogStateFormatter);
+        }
+
+        private void Log(LogLevel level, Exception exception, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, exception, BladeLogging.DefaultLogStateFormatter);
         }
     }
 }

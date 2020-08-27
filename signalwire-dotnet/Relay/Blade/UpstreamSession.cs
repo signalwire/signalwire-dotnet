@@ -177,7 +177,7 @@ namespace Blade
             {
                 if (mState != value)
                 {
-                    mLogger.LogInformation("Session state changing from '{0}' to '{1}'", mState, value);
+                    Log(LogLevel.Information, string.Format("Session state changing from '{0}' to '{1}'", mState, value));
                     mState = value;
                     OnStateChanged?.Invoke(this);
                 }
@@ -200,14 +200,14 @@ namespace Blade
         {
             if (mSubscriptionHandlers.TryAdd(MakeSubscriptionKey(protocol, channel), callback))
             {
-                mLogger.LogInformation("Added subscription handler for protocol '{0}', channel '{1}'", protocol, channel);
+                Log(LogLevel.Information, string.Format("Added subscription handler for protocol '{0}', channel '{1}'", protocol, channel));
             }
         }
         public void UnregisterSubscriptionHandler(string protocol, string channel)
         {
             if (mSubscriptionHandlers.TryRemove(MakeSubscriptionKey(protocol, channel), out SessionBroadcastRequestCallback callback))
             {
-                mLogger.LogInformation("Removed subscription handler for protocol '{0}', channel '{1}'", protocol, channel);
+                Log(LogLevel.Information, string.Format("Removed subscription handler for protocol '{0}', channel '{1}'", protocol, channel));
             }
         }
         #endregion
@@ -219,14 +219,14 @@ namespace Blade
         {
             if (mMethodHandlers.TryAdd(MakeMethodKey(protocol, method), callback))
             {
-                mLogger.LogInformation("Added method handler for protocol '{0}', method '{1}'", protocol, method);
+                Log(LogLevel.Information, string.Format("Added method handler for protocol '{0}', method '{1}'", protocol, method));
             }
         }
         public void UnregisterMethodHandler(string protocol, string method)
         {
             if (mMethodHandlers.TryRemove(MakeMethodKey(protocol, method), out SessionExecuteRequestCallback callback))
             {
-                mLogger.LogInformation("Removed method handler for protocol '{0}', method '{1}'", protocol, method);
+                Log(LogLevel.Information, string.Format("Removed method handler for protocol '{0}', method '{1}'", protocol, method));
             }
         }
         #endregion
@@ -239,19 +239,19 @@ namespace Blade
             metrics.Interval = interval;
             if (added)
             {
-                mLogger.LogInformation("Added metrics monitor for protocol '{0}'", protocol);
+                Log(LogLevel.Information, string.Format("Added metrics monitor for protocol '{0}'", protocol));
             }
             else
             {
                 metrics.Interval = interval;
-                mLogger.LogInformation("Updated metrics monitor for protocol '{0}'", protocol);
+                Log(LogLevel.Information, string.Format("Updated metrics monitor for protocol '{0}'", protocol));
             }
         }
         public void UnregisterProtocolMetrics(string protocol)
         {
             if (mProtocolMetrics.TryRemove(protocol, out SessionProtocolMetrics metrics))
             {
-                mLogger.LogInformation("Removed metrics monitor for protocol '{0}'", protocol);
+                Log(LogLevel.Information, string.Format("Removed metrics monitor for protocol '{0}'", protocol));
             }
         }
         public bool UpdateProtocolMetrics(string protocol, int rank)
@@ -286,7 +286,7 @@ namespace Blade
         private void TaskWorker()
         {
             Task[] tasks = null;
-            mLogger.LogDebug("TaskWorker Started");
+            Log(LogLevel.Debug, "TaskWorker Started");
             while (State != SessionState.Shutdown)
             {
                 if (State == SessionState.Offline)
@@ -299,14 +299,14 @@ namespace Blade
 
                     if (DateTime.Now >= mConnectAt)
                     {
-                        mLogger.LogInformation("Connecting");
+                        Log(LogLevel.Information, "Connecting");
 
                         mSocket = new ClientWebSocket();
                         
                         // @todo support inline conversion of individual PEM to PKCS12 combined
                         if (mOptions.ClientCertificate != null)
                         {
-                            mLogger.LogInformation("Using ClientCertificate: " + mOptions.ClientCertificate);
+                            Log(LogLevel.Information, string.Format("Using ClientCertificate: {0}", mOptions.ClientCertificate));
                             mSocket.Options.ClientCertificates.Add(new X509Certificate2(mOptions.ClientCertificate));
                         }
 
@@ -324,14 +324,14 @@ namespace Blade
                         }
                         catch (Exception exc)
                         {
-                            mLogger.LogError(exc, "ConnectAsync Exception");
+                            Log(LogLevel.Error, exc, "ConnectAsync Exception");
                             State = SessionState.Closed;
                         }
                     }
                 }
                 else if (State == SessionState.Closed)
                 {
-                    mLogger.LogInformation("Closed");
+                    Log(LogLevel.Information, "Closed");
 
                     // @todo detect if the SendAsync task failed, if so then capture this knowledge for
                     // a restored reconnect and attempt to send the buffer again so no messages can be
@@ -348,7 +348,7 @@ namespace Blade
                     List<Task> unfinished = mTasks.FindAll(t => t.Status != TaskStatus.RanToCompletion);
                     if (unfinished.Count > 0)
                     {
-                        foreach (Task t in unfinished) mLogger.LogError("Unfinished task: {0}, {1}", t.Id, mTaskNames[t.Id]);
+                        foreach (Task t in unfinished) Log(LogLevel.Error, string.Format("Unfinished task: {0}, {1}", t.Id, mTaskNames[t.Id]));
                         System.Diagnostics.Debug.Assert(false, "Tasks did not finish, asserted to check what remains instead of hanging indefinately");
                     }
 
@@ -392,14 +392,14 @@ namespace Blade
                 {
                     if (mSocket.State == WebSocketState.Open || mSocket.State == WebSocketState.CloseReceived)
                     {
-                        mLogger.LogInformation("Closing");
+                        Log(LogLevel.Information, "Closing");
                         AddTask("CloseAsync", mSocket.CloseAsync(status, description, new CancellationTokenSource(mOptions.CloseTimeout).Token).ContinueWith(t => State = SessionState.Closed));
                     }
                     else State = SessionState.Closed;
                 }
                 catch (Exception exc)
                 {
-                    mLogger.LogError(exc, "CloseAsync Exception");
+                    Log(LogLevel.Error, exc, "CloseAsync Exception");
                     State = SessionState.Closed;
                 }
             }
@@ -409,12 +409,12 @@ namespace Blade
         {
             if (task.Status == TaskStatus.Faulted)
             {
-                mLogger.LogWarning(task.Exception, "Connect failed");
+                Log(LogLevel.Warning, task.Exception, "Connect failed");
                 State = SessionState.Closed;
                 return;
             }
 
-            mLogger.LogInformation("Connected");
+            Log(LogLevel.Information, "Connected");
 
             try
             {
@@ -422,7 +422,7 @@ namespace Blade
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "ReceiveAsync Exception");
+                Log(LogLevel.Error, exc, "ReceiveAsync Exception");
                 Close(WebSocketCloseStatus.InternalServerError, "Server dropped connection ungracefully");
             }
             AddTask("OnConnect OnPulse Delay", Task.Delay(TimeSpan.FromSeconds(1)).ContinueWith(OnPulse));
@@ -445,7 +445,7 @@ namespace Blade
         {
             if (response.IsError)
             {
-                mLogger.LogError("Error occurred during blade.connect: {0}, {1}", response.Error.Code, response.Error.Message);
+                Log(LogLevel.Error, string.Format("Error occurred during blade.connect: {0}, {1}", response.Error.Code, response.Error.Message));
                 Close(WebSocketCloseStatus.NormalClosure, "Error occurred during blade.connect");
                 return;
             }
@@ -496,7 +496,7 @@ namespace Blade
 
                 if (mRequests.TryRemove(kv.Key, out Request request))
                 {
-                    mLogger.LogInformation("Pending request removed due to timeout: {0}, {1}", request.ID, request.Method);
+                    Log(LogLevel.Information, string.Format("Pending request removed due to timeout: {0}, {1}", request.ID, request.Method));
                     request.Callback?.Invoke(this, request, Response.CreateError(request, -32000, "Timeout", null, null));
                 }
             }
@@ -521,7 +521,7 @@ namespace Blade
             // TODO: This may need to change, if a session is offline but can be restored still then it should be queued
             if (State != SessionState.Connecting && State != SessionState.Running)
             {
-                mLogger.LogDebug("Send request failed, session is inactive");
+                Log(LogLevel.Debug, "Send request failed, session is inactive");
                 return false;
             }
 
@@ -529,11 +529,8 @@ namespace Blade
 
             if (json.Length > mSendBuffer.Length) throw new IndexOutOfRangeException("Request is too large");
 
-            if (mLogger.IsEnabled(LogLevel.Debug))
-            {
-                mLogger.LogDebug("Sending Request Frame: {0} for {1}", request.ID, request.Method);
-                mLogger.LogDebug(request.ToJSON(Formatting.Indented));
-            }
+            Log(LogLevel.Debug, string.Format("Sending Request Frame: {0} for {1}", request.ID, request.Method));
+            Log(LogLevel.Debug, request.ToJSON(Formatting.Indented));
 
             if (request.ResponseExpected && !mRequests.TryAdd(request.ID, request)) throw new ArgumentException("Request id already exists in pending requests");
 
@@ -552,7 +549,7 @@ namespace Blade
                 int length = Encoding.UTF8.GetBytes(json, 0, json.Length, mSendBuffer, 0);
 
                 // output directly from the buffer back to a string to know exactly what we will be sending
-                mLogger.LogDebug("Sending WebSocket Frame: {0}/{1}", length, mSendBuffer.Length);
+                Log(LogLevel.Debug, string.Format("Sending WebSocket Frame: {0}/{1}", length, mSendBuffer.Length));
 
                 InternalSendImmediate(new ArraySegment<byte>(mSendBuffer, 0, length));
             }
@@ -563,7 +560,7 @@ namespace Blade
         {
             if (State != SessionState.Connecting && State != SessionState.Running)
             {
-                mLogger.LogError("Send response failed, session is inactive");
+                Log(LogLevel.Error, "Send response failed, session is inactive");
                 return false;
             }
 
@@ -571,11 +568,8 @@ namespace Blade
 
             if (json.Length > mSendBuffer.Length) throw new IndexOutOfRangeException("Response is too large");
 
-            if (mLogger.IsEnabled(LogLevel.Debug))
-            {
-                mLogger.LogDebug("Sending Response Frame: {0}", response.ID);
-                mLogger.LogDebug(response.ToJSON(Formatting.Indented));
-            }
+            Log(LogLevel.Debug, string.Format("Sending Response Frame: {0}", response.ID));
+            Log(LogLevel.Debug, response.ToJSON(Formatting.Indented));
 
             mSendQueue.Enqueue(json);
 
@@ -612,7 +606,7 @@ namespace Blade
             int length = Encoding.UTF8.GetBytes(json, 0, json.Length, mSendBuffer, 0);
 
             // output directly from the buffer back to a string to know exactly what we will be sending
-            mLogger.LogDebug("Sending WebSocket Frame: {0}/{1}", length, mSendBuffer.Length);
+            Log(LogLevel.Debug, string.Format("Sending WebSocket Frame: {0}/{1}", length, mSendBuffer.Length));
 
             InternalSendImmediate(new ArraySegment<byte>(mSendBuffer, 0, length));
         }
@@ -621,11 +615,11 @@ namespace Blade
         {
             try
             {
-                AddTask("SendAsync", mSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None).ContinueWith(t => { mLogger.LogDebug("SendAsync Task Finished {0}", t.Id); InternalSend(); }));
+                AddTask("SendAsync", mSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None).ContinueWith(t => { Log(LogLevel.Debug, string.Format("SendAsync Task Finished {0}", t.Id)); InternalSend(); }));
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "SendAsync Exception");
+                Log(LogLevel.Error, exc, "SendAsync Exception");
                 mSending = 0;
                 Close(WebSocketCloseStatus.InternalServerError, "Server dropped connection ungracefully");
             }
@@ -647,7 +641,7 @@ namespace Blade
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "ReceiveAsync Exception");
+                Log(LogLevel.Error, exc, "ReceiveAsync Exception");
                 Close(WebSocketCloseStatus.InternalServerError, "Server dropped connection ungracefully");
                 return;
             }
@@ -660,18 +654,18 @@ namespace Blade
                         // resize buffer back to preferred size (1MB?) when finished with larger frames?
                         if (!wsrr.EndOfMessage) throw new NotSupportedException("Not yet supporting continuation frames");
                         string frame = Encoding.UTF8.GetString(mReceiveBuffer, 0, wsrr.Count);
-                        mLogger.LogDebug("Received WebSocket Frame: {0}/{1}", wsrr.Count, mReceiveBuffer.Length);
+                        Log(LogLevel.Debug, string.Format("Received WebSocket Frame: {0}/{1}", wsrr.Count, mReceiveBuffer.Length));
 
                         //AddTask("OnFrame", Task.Run(() => OnFrame(frame)));
                         OnFrame(frame);
                         break;
                     }
                 case WebSocketMessageType.Close:
-                    mLogger.LogWarning("WebSocket closed by remote host: {0}, {1}, {2}", wsrr.CloseStatus, wsrr.CloseStatusDescription, mSocket.State);
+                    Log(LogLevel.Warning, string.Format("WebSocket closed by remote host: {0}, {1}, {2}", wsrr.CloseStatus, wsrr.CloseStatusDescription, mSocket.State));
                     Close(WebSocketCloseStatus.NormalClosure, "Closing due to server initiated close");
                     break;
                 default:
-                    mLogger.LogError("Unhandled MessageType '{0}' from ReceiveAsync", wsrr.MessageType);
+                    Log(LogLevel.Error, string.Format("Unhandled MessageType '{0}' from ReceiveAsync", wsrr.MessageType));
                     break;
             }
 
@@ -683,7 +677,7 @@ namespace Blade
                 }
                 catch (Exception exc)
                 {
-                    mLogger.LogError(exc, "ReceiveAsync Exception");
+                    Log(LogLevel.Error, exc, "ReceiveAsync Exception");
                     Close(WebSocketCloseStatus.InternalServerError, "Server dropped connection ungracefully");
                 }
             }
@@ -699,11 +693,8 @@ namespace Blade
                 while (State == SessionState.Connecting) Thread.Sleep(1);
 
                 Request request = Request.Parse(obj);
-                if (mLogger.IsEnabled(LogLevel.Debug))
-                {
-                    mLogger.LogDebug("Received Request Frame: {0} for {1}", request.ID, request.Method);
-                    mLogger.LogDebug(obj.ToString());
-                }
+                Log(LogLevel.Debug, string.Format("Received Request Frame: {0} for {1}", request.ID, request.Method));
+                Log(LogLevel.Debug, obj.ToString());
 
                 switch (request.Method)
                 {
@@ -714,7 +705,7 @@ namespace Blade
                         }
                         catch (Exception exc)
                         {
-                            mLogger.LogWarning(exc, "Failed to parse PingParams");
+                            Log(LogLevel.Warning, exc, "Failed to parse PingParams");
                             Send(Response.CreateError(request, -32602, "Failed to parse PingParams", null, null));
                         }
                         break;
@@ -725,7 +716,7 @@ namespace Blade
                         }
                         catch (Exception exc)
                         {
-                            mLogger.LogWarning(exc, "Failed to parse DisconnectParams");
+                            Log(LogLevel.Warning, exc, "Failed to parse DisconnectParams");
                             Send(Response.CreateError(request, -32602, "Failed to parse DisconnectParams", null, null));
                         }
                         break;
@@ -736,7 +727,7 @@ namespace Blade
                         }
                         catch (Exception exc)
                         {
-                            mLogger.LogWarning(exc, "Failed to parse NetcastParams");
+                            Log(LogLevel.Warning, exc, "Failed to parse NetcastParams");
                         }
                         break;
                     case "blade.broadcast":
@@ -746,7 +737,7 @@ namespace Blade
                         }
                         catch (Exception exc)
                         {
-                            mLogger.LogWarning(exc, "Failed to parse BroadcastParams");
+                            Log(LogLevel.Warning, exc, "Failed to parse BroadcastParams");
                         }
                         break;
                     case "blade.unicast":
@@ -756,7 +747,7 @@ namespace Blade
                         }
                         catch (Exception exc)
                         {
-                            mLogger.LogWarning(exc, "Failed to parse UnicastParams");
+                            Log(LogLevel.Warning, exc, "Failed to parse UnicastParams");
                         }
                         break;
                     case "blade.execute":
@@ -766,7 +757,7 @@ namespace Blade
                         }
                         catch (Exception exc)
                         {
-                            mLogger.LogWarning(exc, "Failed to parse ExecuteParams");
+                            Log(LogLevel.Warning, exc, "Failed to parse ExecuteParams");
                             Send(Response.CreateError(request, -32602, "Failed to parse ExecuteParams", null, null));
                         }
                         break;
@@ -777,29 +768,26 @@ namespace Blade
                         }
                         catch (Exception exc)
                         {
-                            mLogger.LogWarning(exc, "Failed to parse AuthenticateParams");
+                            Log(LogLevel.Warning, exc, "Failed to parse AuthenticateParams");
                             Send(Response.CreateError(request, -32602, "Failed to parse AuthenticateParams", null, null));
                         }
                         break;
-                    default: mLogger.LogWarning("Unhandled inbound request method '{0}'", request.Method); break;
+                    default: Log(LogLevel.Warning, string.Format("Unhandled inbound request method '{0}'", request.Method)); break;
                 }
             }
             else
             {
                 Response response = Response.Parse(obj);
-                if (mLogger.IsEnabled(LogLevel.Debug))
-                {
-                    mLogger.LogDebug("Received Response Frame: {0}", response.ID);
-                    mLogger.LogDebug(obj.ToString());
-                }
+                Log(LogLevel.Debug, string.Format("Received Response Frame: {0}", response.ID));
+                Log(LogLevel.Debug, obj.ToString());
 
                 if (!mRequests.TryRemove(response.ID, out Request request))
                 {
-                    mLogger.LogWarning("Ignoring response for unexpected id '{0}'", response.ID);
+                    Log(LogLevel.Warning, string.Format("Ignoring response for unexpected id '{0}'", response.ID));
                 }
                 else
                 {
-                    mLogger.LogInformation("Pending request removed due to received response: {0}, {1}", request.ID, request.Method);
+                    Log(LogLevel.Information, string.Format("Pending request removed due to received response: {0}, {1}", request.ID, request.Method));
                     request.Callback?.Invoke(this, request, response);
                 }
             }
@@ -807,7 +795,7 @@ namespace Blade
 
         private void OnBladePingRequest(Request request, Blade.Messages.PingParams pingParams)
         {
-            mLogger.LogDebug("Session '{0}' has pinged", SessionID);
+            Log(LogLevel.Debug, string.Format("Session '{0}' has pinged", SessionID));
 
             Response response = Response.Create(request.ID, out PingResult pingResult);
             pingResult.Timestamp = pingParams.Timestamp;
@@ -818,7 +806,7 @@ namespace Blade
 
         private void OnBladeDisconnectRequest(Request request, Blade.Messages.DisconnectParams disconnectParams)
         {
-            mLogger.LogInformation("Disconnect requested by remote session, pausing sending");
+            Log(LogLevel.Information, "Disconnect requested by remote session, pausing sending");
             mRemoteDisconnect = true;
         }
 
@@ -831,7 +819,7 @@ namespace Blade
         {
             if (mSubscriptionHandlers.TryGetValue(MakeSubscriptionKey(broadcastParams.Protocol, broadcastParams.Channel), out SessionBroadcastRequestCallback callback))
             {
-                mLogger.LogDebug("Invoking subscription handler for protocol '{0}', channel '{1}'", broadcastParams.Protocol, broadcastParams.Channel);
+                Log(LogLevel.Debug, string.Format("Invoking subscription handler for protocol '{0}', channel '{1}'", broadcastParams.Protocol, broadcastParams.Channel));
                 callback?.Invoke(this, request, broadcastParams);
             }
         }
@@ -845,7 +833,7 @@ namespace Blade
         {
             if (mMethodHandlers.TryGetValue(MakeMethodKey(executeParams.Protocol, executeParams.Method), out SessionExecuteRequestCallback callback))
             {
-                mLogger.LogDebug("Invoking method handler for protocol '{0}', method '{1}'", executeParams.Protocol, executeParams.Method);
+                Log(LogLevel.Debug, string.Format("Invoking method handler for protocol '{0}', method '{1}'", executeParams.Protocol, executeParams.Method));
                 callback?.Invoke(this, request, executeParams);
             }
         }
@@ -853,7 +841,7 @@ namespace Blade
         private void OnBladeAuthenticateRequest(Request request, Blade.Messages.AuthenticateParams authenticateParams)
         {
             string authKey = BitConverter.ToString(SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(authenticateParams.Authentication.ToString(Formatting.None)))).Replace("-", "").ToLower();
-            mLogger.LogDebug("Invoking authenticate handler for '{0}' = {1}", authKey, authenticateParams.Authentication);
+            Log(LogLevel.Debug, string.Format("Invoking authenticate handler for '{0}' = {1}", authKey, authenticateParams.Authentication));
             OnAuthenticate?.Invoke(this, request, authenticateParams);
         }
 
@@ -1271,5 +1259,31 @@ namespace Blade
             if (netcast) Send(netcastRequest);
         }
 #endregion
+
+        public void Log(LogLevel level, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, null, BladeLogging.DefaultLogStateFormatter);
+        }
+
+        public void Log(LogLevel level, Exception exception, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, exception, BladeLogging.DefaultLogStateFormatter);
+        }
     }
 }

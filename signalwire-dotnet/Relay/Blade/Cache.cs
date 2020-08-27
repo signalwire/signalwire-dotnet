@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Blade
@@ -136,11 +137,11 @@ namespace Blade
 
         public Cache(UpstreamSession session)
         {
-            Logger = BladeLogging.CreateLogger<Cache>();
+            mLogger = BladeLogging.CreateLogger<Cache>();
             mSession = session;
         }
 
-        private ILogger Logger { get; set; }
+        private ILogger mLogger { get; set; }
 
         internal void Populate(Blade.Messages.ConnectResult connect)
         {
@@ -150,7 +151,7 @@ namespace Blade
             mAuthorities.Clear();
             mAuthorizations.Clear();
             mAccesses.Clear();
-            Logger.LogDebug("Cache cleared");
+            Log(LogLevel.Debug, "Cache cleared");
 
             connect.Routes?.ForEach(r => AddRoute(r.NodeID, r.Identities));
             connect.Protocols?.ForEach(proto =>
@@ -312,7 +313,7 @@ namespace Blade
                         break;
                     }
                 default:
-                    Logger.LogWarning("Unhandled blade.netcast command '{0}'", netcast.Command);
+                    Log(LogLevel.Warning, string.Format("Unhandled blade.netcast command '{0}'", netcast.Command));
                     break;
             }
         }
@@ -323,7 +324,7 @@ namespace Blade
 
             if (mRoutes.TryAdd(nodeid, route))
             {
-                Logger.LogInformation("Route added '{0}'", nodeid);
+                Log(LogLevel.Information, string.Format("Route added '{0}'", nodeid));
                 OnRouteAdd?.Invoke(mSession, route);
             }
 
@@ -331,7 +332,7 @@ namespace Blade
             {
                 if (route.InternalIdentities.TryAdd(i, true))
                 {
-                    Logger.LogInformation("Identity added '{0}' for '{1}'", i, nodeid);
+                    Log(LogLevel.Information, string.Format("Identity added '{0}' for '{1}'", i, nodeid));
                     OnIdentityAdd?.Invoke(mSession, route, i);
                 }
             });
@@ -340,7 +341,7 @@ namespace Blade
         private void RemoveRoute(string nodeid)
         {
             mRoutes.TryRemove(nodeid, out Route route);
-            Logger.LogInformation("Route removed '{0}'", nodeid);
+            Log(LogLevel.Information, string.Format("Route removed '{0}'", nodeid));
             OnRouteRemove?.Invoke(mSession, nodeid, route);
             Array.ForEach(mProtocols.ToArray(), kv => RemoveProtocolProvider(kv.Value.Name, nodeid));
             RemoveAuthority(nodeid);
@@ -355,7 +356,7 @@ namespace Blade
             {
                 if (route.InternalIdentities.TryAdd(identity, true))
                 {
-                    Logger.LogInformation("Identity added '{0}' for '{1}'", identity, nodeid);
+                    Log(LogLevel.Information, string.Format("Identity added '{0}' for '{1}'", identity, nodeid));
                     OnIdentityAdd?.Invoke(mSession, route, identity);
                 }
             }
@@ -367,7 +368,7 @@ namespace Blade
             {
                 route.InternalIdentities.TryRemove(identity, out bool unused);
             }
-            Logger.LogInformation("Identity removed '{0}' from '{1}'", identity, nodeid);
+            Log(LogLevel.Information, string.Format("Identity removed '{0}' from '{1}'", identity, nodeid));
             OnIdentityRemove?.Invoke(mSession, nodeid, route, identity);
         }
 
@@ -380,7 +381,7 @@ namespace Blade
         {
             if (mProtocolsUncertified.TryAdd(protocol, true))
             {
-                Logger.LogInformation("Protocol added '{0}'", protocol);
+                Log(LogLevel.Information, string.Format("Protocol added '{0}'", protocol));
                 OnProtocolAdd?.Invoke(mSession, protocol);
             }
         }
@@ -389,7 +390,7 @@ namespace Blade
         {
             if (mProtocolsUncertified.TryRemove(protocol, out bool unused))
             {
-                Logger.LogInformation("Protocol removed '{0}'", protocol);
+                Log(LogLevel.Information, string.Format("Protocol removed '{0}'", protocol));
                 OnProtocolRemove?.Invoke(mSession, protocol);
             }
         }
@@ -402,7 +403,7 @@ namespace Blade
                 Protocol proto = mProtocols.GetOrAdd(protocol, s =>
                 {
                     OnProtocolAdd?.Invoke(mSession, protocol);
-                    Logger.LogInformation("Protocol added '{0}'", protocol);
+                    Log(LogLevel.Information, string.Format("Protocol added '{0}'", protocol));
                     return new Protocol()
                     {
                         Name = protocol,
@@ -415,7 +416,7 @@ namespace Blade
                 Protocol.Provider provider = new Protocol.Provider() { NodeID = nodeid, Data = data, Rank = rank };
                 if (proto.InternalProviders.TryAdd(nodeid, provider))
                 {
-                    Logger.LogInformation("Protocol provider added '{0}' to '{1}'", nodeid, protocol);
+                    Log(LogLevel.Information, string.Format("Protocol provider added '{0}' to '{1}'", nodeid, protocol));
                     OnProtocolProviderAdd?.Invoke(mSession, proto, provider);
                 }
             }
@@ -427,7 +428,7 @@ namespace Blade
             {
                 if (proto.InternalProviders.TryGetValue(nodeid, out Protocol.Provider provider))
                 {
-                    Logger.LogInformation("Protocol provider rank updated '{0}' from '{1}' to '{2}'", nodeid, protocol, rank);
+                    Log(LogLevel.Information, string.Format("Protocol provider rank updated '{0}' from '{1}' to '{2}'", nodeid, protocol, rank));
                     provider.Rank = rank;
                     OnProtocolProviderRankUpdate?.Invoke(mSession, proto, rank);
                 }
@@ -440,7 +441,7 @@ namespace Blade
             {
                 if (proto.InternalProviders.TryGetValue(nodeid, out Protocol.Provider provider))
                 {
-                    Logger.LogInformation("Protocol provider data updated '{0}' from '{1}'", nodeid, protocol);
+                    Log(LogLevel.Information, string.Format("Protocol provider data updated '{0}' from '{1}'", nodeid, protocol));
                     provider.Data = data;
                     OnProtocolProviderDataUpdate?.Invoke(mSession, proto, provider);
                 }
@@ -456,7 +457,7 @@ namespace Blade
                 {
                     if (proto.InternalProviders.TryRemove(nodeid, out Protocol.Provider provider))
                     {
-                        Logger.LogInformation("Protocol provider removed '{0}' from '{1}'", nodeid, protocol);
+                        Log(LogLevel.Information, string.Format("Protocol provider removed '{0}' from '{1}'", nodeid, protocol));
                         OnProtocolProviderRemove?.Invoke(mSession, proto, provider);
 
                         if (proto.InternalProviders.Count == 0)
@@ -464,7 +465,7 @@ namespace Blade
                             // @note possible race condition here if we don't lock mProtocols on entire add/remove processes
                             if (mProtocols.TryRemove(protocol, out proto))
                             {
-                                Logger.LogInformation("Protocol removed '{0}'", protocol);
+                                Log(LogLevel.Information, string.Format("Protocol removed '{0}'", protocol));
                                 OnProtocolRemove?.Invoke(mSession, protocol);
                             }
                         }
@@ -480,7 +481,7 @@ namespace Blade
                 Protocol.Method meth = new Protocol.Method() { Name = method, ExecuteAccess = execute_access };
                 if (proto.InternalMethods.TryAdd(method, meth))
                 {
-                    Logger.LogInformation("Protocol method added '{0}' to '{1}'", method, protocol);
+                    Log(LogLevel.Information, string.Format("Protocol method added '{0}' to '{1}'", method, protocol));
                     OnProtocolMethodAdd?.Invoke(mSession, proto, meth);
                 }
             }
@@ -492,7 +493,7 @@ namespace Blade
             {
                 if (proto.InternalMethods.TryRemove(method, out Protocol.Method meth))
                 {
-                    Logger.LogInformation("Protocol method removed '{0}' from '{1}'", method, protocol);
+                    Log(LogLevel.Information, string.Format("Protocol method removed '{0}' from '{1}'", method, protocol));
                     OnProtocolMethodRemove?.Invoke(mSession, proto, meth);
                 }
             }
@@ -505,7 +506,7 @@ namespace Blade
                 Protocol.Channel chan = new Protocol.Channel() { Name = channel, BroadcastAccess = broadcast_access, SubscribeAccess = subscribe_access };
                 if (proto.InternalChannels.TryAdd(channel, chan))
                 {
-                    Logger.LogInformation("Protocol channel added '{0}' to '{1}'", channel, protocol);
+                    Log(LogLevel.Information, string.Format("Protocol channel added '{0}' to '{1}'", channel, protocol));
                     OnProtocolChannelAdd?.Invoke(mSession, proto, chan);
                 }
             }
@@ -517,7 +518,7 @@ namespace Blade
             {
                 if (proto.InternalChannels.TryRemove(channel, out Protocol.Channel chan))
                 {
-                    Logger.LogInformation("Protocol channel removed '{0}' from '{1}'", channel, protocol);
+                    Log(LogLevel.Information, string.Format("Protocol channel removed '{0}' from '{1}'", channel, protocol));
                     OnProtocolChannelRemove?.Invoke(mSession, proto, chan);
                 }
             }
@@ -553,7 +554,7 @@ namespace Blade
 
             if (mSubscriptions.TryAdd(nodeid, subscription))
             {
-                Logger.LogInformation("Subscription added '{0}' to channel '{1}' of protocol '{2}'", nodeid, channel, protocol);
+                Log(LogLevel.Information, string.Format("Subscription added '{0}' to channel '{1}' of protocol '{2}'", nodeid, channel, protocol));
                 OnSubscriptionAdd?.Invoke(mSession, subscription);
             }
         }
@@ -562,7 +563,7 @@ namespace Blade
         {
             if (mSubscriptions.TryRemove(nodeid, out Subscription subscription))
             {
-                Logger.LogInformation("Subscription removed '{0}' from channel '{1}' of protocol '{2}'", nodeid, channel, protocol);
+                Log(LogLevel.Information, string.Format("Subscription removed '{0}' from channel '{1}' of protocol '{2}'", nodeid, channel, protocol));
                 OnSubscriptionRemove?.Invoke(mSession, subscription);
             }
         }
@@ -574,7 +575,7 @@ namespace Blade
 
             if (mAuthorities.TryAdd(nodeid, authority))
             {
-                Logger.LogInformation("Authority added '{0}'", nodeid);
+                Log(LogLevel.Information, string.Format("Authority added '{0}'", nodeid));
                 OnAuthorityAdd?.Invoke(mSession, authority);
             }
         }
@@ -582,7 +583,7 @@ namespace Blade
         private void RemoveAuthority(string nodeid)
         {
             mAuthorities.TryRemove(nodeid, out Authority authority);
-            Logger.LogInformation("Authority removed '{0}'", nodeid);
+            Log(LogLevel.Information, string.Format("Authority removed '{0}'", nodeid));
             OnAuthorityRemove?.Invoke(mSession, nodeid, authority);
         }
 
@@ -605,7 +606,7 @@ namespace Blade
 
             if (mAuthorizations.TryAdd(authentication, auth))
             {
-                Logger.LogInformation("Authorization added '{0}'", authentication);
+                Log(LogLevel.Information, string.Format("Authorization added '{0}'", authentication));
                 OnAuthorizationAdd?.Invoke(mSession, auth);
             }
         }
@@ -614,7 +615,7 @@ namespace Blade
         {
             if (mAuthorizations.TryRemove(authentication, out Authorization authorization))
             {
-                Logger.LogInformation("Authorization removed '{0}'", authentication);
+                Log(LogLevel.Information, string.Format("Authorization removed '{0}'", authentication));
                 OnAuthorizationRemove?.Invoke(mSession, authorization);
             }
             Array.ForEach(mAccesses.ToArray(), kv => { if (kv.Value.AuthenticationKey == authentication) RemoveAccess(kv.Value.NodeID); });
@@ -627,7 +628,7 @@ namespace Blade
 
             if (mAccesses.TryAdd(nodeid, access))
             {
-                Logger.LogInformation("Access added '{0}' for '{1}'", authentication, nodeid);
+                Log(LogLevel.Information, string.Format("Access added '{0}' for '{1}'", authentication, nodeid));
                 OnAccessAdd?.Invoke(mSession, access);
             }
         }
@@ -636,9 +637,35 @@ namespace Blade
         {
             if (mAccesses.TryRemove(nodeid, out Access access))
             {
-                Logger.LogInformation("Access removed '{0}' from '{1}'", access.AuthenticationKey, nodeid);
+                Log(LogLevel.Information, string.Format("Access removed '{0}' from '{1}'", access.AuthenticationKey, nodeid));
                 OnAccessRemove?.Invoke(mSession, access);
             }
+        }
+
+        private void Log(LogLevel level, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, null, BladeLogging.DefaultLogStateFormatter);
+        }
+
+        private void Log(LogLevel level, Exception exception, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, exception, BladeLogging.DefaultLogStateFormatter);
         }
     }
 }

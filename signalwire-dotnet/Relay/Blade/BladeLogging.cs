@@ -17,6 +17,21 @@ namespace Blade
     {
         public static ILoggerFactory LoggerFactory { get; } = new LoggerFactory();
         public static ILogger CreateLogger<T>() => LoggerFactory.CreateLogger<T>();
+
+        internal static string DefaultLogStateFormatter(JObject state, Exception exc)
+        {
+            if (state != null)
+            {
+                if (state.TryGetValue("message", out var msg) && msg.Type == JTokenType.String)
+                {
+                    if (exc != null)
+                        return string.Format(msg.ToString(), '\n', exc.ToString());
+
+                    return msg.ToString();
+                }
+            }
+            return exc?.ToString();
+        }
     }
 
     public class SimpleConsoleLogger : ILogger

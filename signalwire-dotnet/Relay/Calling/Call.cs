@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -263,13 +264,13 @@ namespace SignalWire.Relay.Calling
                 case CallConnectState.connected:
                     if (Peer != null)
                     {
-                        mLogger.LogWarning("Received ConnectParams for Call that is already connected to a Peer");
+                        Log(LogLevel.Warning, "Received ConnectParams for Call that is already connected to a Peer");
                         return;
                     }
                     Call peer = mAPI.GetCall(connectParams.Peer.CallID);
                     if (peer == null)
                     {
-                        mLogger.LogWarning("Received ConnectParams with unknown Peer.CallID: {0}", connectParams.Peer.CallID);
+                        Log(LogLevel.Warning, string.Format("Received ConnectParams with unknown Peer.CallID: {0}", connectParams.Peer.CallID));
                         return;
                     }
                     Peer = peer;
@@ -461,16 +462,16 @@ namespace SignalWire.Relay.Calling
                 LL_AnswerResult resultLLAnswer = await taskLLAnswer;
                 if (resultLLAnswer.Code == "200")
                 {
-                    mLogger.LogDebug("Answer for call {0} waiting for completion events", ID);
+                    Log(LogLevel.Debug, string.Format("Answer for call {0} waiting for completion events", ID));
 
                     resultAnswer.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("Answer for call {0} {1}", ID, resultAnswer.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("Answer for call {0} {1}", ID, resultAnswer.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "Answer for call {0} exception", ID);
+                Log(LogLevel.Error, exc, string.Format("Answer for call {0} exception", ID));
             }
 
             // Unhook temporary callbacks
@@ -527,16 +528,16 @@ namespace SignalWire.Relay.Calling
                 LL_EndResult resultLLEnd = await taskLLEnd;
                 if (resultLLEnd.Code == "200")
                 {
-                    mLogger.LogDebug("Hangup for call {0} waiting for completion events", ID);
+                    Log(LogLevel.Debug, string.Format("Hangup for call {0} waiting for completion events", ID));
 
                     resultHangup.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("Hangup for call {0} {1}", ID, resultHangup.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("Hangup for call {0} {1}", ID, resultHangup.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "Hangup for call {0} exception", ID);
+                Log(LogLevel.Error, exc, string.Format("Hangup for call {0} exception", ID));
             }
 
             // Unhook temporary callbacks
@@ -605,16 +606,16 @@ namespace SignalWire.Relay.Calling
                 LL_ConnectResult resultLLConnect = await taskLLConnect;
                 if (resultLLConnect.Code == "200")
                 {
-                    mLogger.LogDebug("Connect for call {0} waiting for completion events", ID);
+                    Log(LogLevel.Debug, string.Format("Connect for call {0} waiting for completion events", ID));
 
                     resultConnect.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("Connect for call {0} {1}", ID, resultConnect.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("Connect for call {0} {1}", ID, resultConnect.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "Connect for call {0} exception", ID);
+                Log(LogLevel.Error, exc, string.Format("Connect for call {0} exception", ID));
             }
 
             // Unhook temporary callbacks
@@ -691,16 +692,16 @@ namespace SignalWire.Relay.Calling
                 LL_PlayResult resultLLPlay = await taskLLPlay;
                 if (resultLLPlay.Code == "200")
                 {
-                    mLogger.LogDebug("Play {0} for call {1} waiting for completion events", controlID, ID);
+                    Log(LogLevel.Debug, string.Format("Play {0} for call {1} waiting for completion events", controlID, ID));
 
                     resultPlay.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("Play {0} for call {1} {2}", controlID, ID, resultPlay.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("Play {0} for call {1} {2}", controlID, ID, resultPlay.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "Play {0} for call {1} exception", controlID, ID);
+                Log(LogLevel.Error, exc, string.Format("Play {0} for call {1} exception", controlID, ID));
             }
 
             // Unhook temporary callbacks
@@ -940,16 +941,16 @@ namespace SignalWire.Relay.Calling
                 LL_PlayAndCollectResult resultLLPlayAndCollect = await taskLLPlayAndCollect;
                 if (resultLLPlayAndCollect.Code == "200")
                 {
-                    mLogger.LogDebug("Prompt {0} for call {1} waiting for completion events", controlID, ID);
+                    Log(LogLevel.Debug, string.Format("Prompt {0} for call {1} waiting for completion events", controlID, ID));
 
                     resultPrompt.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("Prompt {0} for call {1} {2}", controlID, ID, resultPrompt.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("Prompt {0} for call {1} {2}", controlID, ID, resultPrompt.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "Prompt {0} for call {1} exception", controlID, ID);
+                Log(LogLevel.Error, exc, string.Format("Prompt {0} for call {1} exception", controlID, ID));
             }
 
             // Unhook temporary callbacks
@@ -1130,7 +1131,7 @@ namespace SignalWire.Relay.Calling
                 LL_RecordResult resultLLRecord = await taskLLRecord;
                 if (resultLLRecord.Code == "200")
                 {
-                    mLogger.LogDebug("Record {0} for call {1} waiting for completion events", controlID, ID);
+                    Log(LogLevel.Debug, string.Format("Record {0} for call {1} waiting for completion events", controlID, ID));
 
                     // We pass in the async action, so that we can assign the url before we wait for the events
                     if (action != null) action.Url = resultLLRecord.Url;
@@ -1138,12 +1139,12 @@ namespace SignalWire.Relay.Calling
 
                     resultRecord.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("Record {0} for call {1} {2}", controlID, ID, resultRecord.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("Record {0} for call {1} {2}", controlID, ID, resultRecord.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "Record {0} for call {1} exception", controlID, ID);
+                Log(LogLevel.Error, exc, string.Format("Record {0} for call {1} exception", controlID, ID));
             }
 
             // Unhook temporary callbacks
@@ -1217,17 +1218,17 @@ namespace SignalWire.Relay.Calling
                 LL_TapResult resultLLTap = await taskLLTap;
                 if (resultLLTap.Code == "200")
                 {
-                    mLogger.LogDebug("Tap {0} for call {1} waiting for completion events", controlID, ID);
+                    Log(LogLevel.Debug, string.Format("Tap {0} for call {1} waiting for completion events", controlID, ID));
 
                     resultTap.Successful = await tcsCompletion.Task;
                     resultTap.SourceDevice = resultLLTap.SourceDevice;
 
-                    mLogger.LogDebug("Tap {0} for call {1} {2}", controlID, ID, resultTap.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("Tap {0} for call {1} {2}", controlID, ID, resultTap.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "Tap {0} for call {1} exception", controlID, ID);
+                Log(LogLevel.Error, exc, string.Format("Tap {0} for call {1} exception", controlID, ID));
             }
 
             // Unhook temporary callbacks
@@ -1603,16 +1604,16 @@ namespace SignalWire.Relay.Calling
                 LL_DetectResult resultLLDetect = await taskLLDetect;
                 if (resultLLDetect.Code == "200")
                 {
-                    mLogger.LogDebug("Detect {0} for call {1} waiting for completion events", controlID, ID);
+                    Log(LogLevel.Debug, string.Format("Detect {0} for call {1} waiting for completion events", controlID, ID));
 
                     resultDetect.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("Detect {0} for call {1} {2}", controlID, ID, resultDetect.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("Detect {0} for call {1} {2}", controlID, ID, resultDetect.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "Detect {0} for call {1} exception", controlID, ID);
+                Log(LogLevel.Error, exc, string.Format("Detect {0} for call {1} exception", controlID, ID));
             }
 
             // Unhook temporary callbacks
@@ -1698,16 +1699,16 @@ namespace SignalWire.Relay.Calling
                 LL_SendFaxResult resultLLSendFax = await taskLLSendFax;
                 if (resultLLSendFax.Code == "200")
                 {
-                    mLogger.LogDebug("SendFax {0} for call {1} waiting for completion events", controlID, ID);
+                    Log(LogLevel.Debug, string.Format("SendFax {0} for call {1} waiting for completion events", controlID, ID));
 
                     resultSendFax.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("SendFax {0} for call {1} {2}", controlID, ID, resultSendFax.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("SendFax {0} for call {1} {2}", controlID, ID, resultSendFax.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "SendFax {0} for call {1} exception", controlID, ID);
+                Log(LogLevel.Error, exc, string.Format("SendFax {0} for call {1} exception", controlID, ID));
             }
 
             // Unhook temporary callbacks
@@ -1784,16 +1785,16 @@ namespace SignalWire.Relay.Calling
                 LL_ReceiveFaxResult resultLLReceiveFax = await taskLLReceiveFax;
                 if (resultLLReceiveFax.Code == "200")
                 {
-                    mLogger.LogDebug("ReceiveFax {0} for call {1} waiting for completion events", controlID, ID);
+                    Log(LogLevel.Debug, string.Format("ReceiveFax {0} for call {1} waiting for completion events", controlID, ID));
 
                     resultReceiveFax.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("ReceiveFax {0} for call {1} {2}", controlID, ID, resultReceiveFax.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("ReceiveFax {0} for call {1} {2}", controlID, ID, resultReceiveFax.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "ReceiveFax {0} for call {1} exception", controlID, ID);
+                Log(LogLevel.Error, exc, string.Format("ReceiveFax {0} for call {1} exception", controlID, ID));
             }
 
             // Unhook temporary callbacks
@@ -1858,22 +1859,48 @@ namespace SignalWire.Relay.Calling
                 LL_SendDigitsResult resultLLSendDigits = await taskLLSendDigits;
                 if (resultLLSendDigits.Code == "200")
                 {
-                    mLogger.LogDebug("SendDigits {0} for call {1} waiting for completion events", controlID, ID);
+                    Log(LogLevel.Debug, string.Format("SendDigits {0} for call {1} waiting for completion events", controlID, ID));
 
                     resultSendDigits.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("SendDigits {0} for call {1} {2}", controlID, ID, resultSendDigits.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("SendDigits {0} for call {1} {2}", controlID, ID, resultSendDigits.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "SendDigits {0} for call {1} exception", controlID, ID);
+                Log(LogLevel.Error, exc, string.Format("SendDigits {0} for call {1} exception", controlID, ID));
             }
 
             // Unhook temporary callbacks
             OnSendDigitsStateChange -= DigitsCallback;
 
             return resultSendDigits;
+        }
+
+        internal void Log(LogLevel level, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, null, Blade.BladeLogging.DefaultLogStateFormatter);
+        }
+
+        internal void Log(LogLevel level, Exception exception, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, exception, Blade.BladeLogging.DefaultLogStateFormatter);
         }
     }
 
@@ -1932,16 +1959,16 @@ namespace SignalWire.Relay.Calling
                 LL_BeginResult resultLLBegin = await taskLLBegin;
                 if (resultLLBegin.Code == "200")
                 {
-                    mLogger.LogDebug("Dial for call {0} waiting for completion events", ID);
+                    Log(LogLevel.Debug, string.Format("Dial for call {0} waiting for completion events", ID));
 
                     resultDial.Successful = await tcsCompletion.Task;
 
-                    mLogger.LogDebug("Dial for call {0} {1}", ID, resultDial.Successful ? "successful" : "unsuccessful");
+                    Log(LogLevel.Debug, string.Format("Dial for call {0} {1}", ID, resultDial.Successful ? "successful" : "unsuccessful"));
                 }
             }
             catch (Exception exc)
             {
-                mLogger.LogError(exc, "Dial for call {0} exception", ID);
+                Log(LogLevel.Error, exc, string.Format("Dial for call {0} exception", ID));
             }
 
             // Unhook temporary callbacks
