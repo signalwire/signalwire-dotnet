@@ -86,13 +86,9 @@ namespace Blade
                             logState["calling-line-number"],
                             formatter(state, exception));
 
-                        // *prevents overwriting again accidentally when merging
-                        logState.Remove("message");
-                        logState.Remove("exception");
-
                         // merge log state fields into output object, so they're tacked onto the end, and not at the beginning
                         output.Merge(logState,
-                            new JsonMergeSettings() { PropertyNameComparison = StringComparison.InvariantCulture, MergeArrayHandling = MergeArrayHandling.Replace, MergeNullValueHandling = MergeNullValueHandling.Ignore });
+                            new JsonMergeSettings() { PropertyNameComparison = StringComparison.InvariantCulture, MergeArrayHandling = MergeArrayHandling.Union, MergeNullValueHandling = MergeNullValueHandling.Ignore });
                     }
                     else
                     {
@@ -101,11 +97,10 @@ namespace Blade
                         var callingFile = method.DeclaringType.FullName;
                         var callingMethod = method.Name;
 
-                        output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}:0) {4}", timestamp, logLevel, callingFile, callingMethod, formatter(state, exception));
+                        output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}) {4}", timestamp, logLevel, callingFile, callingMethod, formatter(state, exception));
 
                         output["calling-file"] = method.DeclaringType.FullName;
                         output["calling-method"] = method.Name;
-                        output["calling-line-number"] = "0";
                     }
 
                     if (exception != null)
@@ -130,7 +125,7 @@ namespace Blade
                         default: break;
                     }
 
-                    Console.WriteLine("{0} [{1,11}] ({3} @ {2}:0) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+                    Console.WriteLine("{0} [{1,11}] ({3} @ {2}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
                     if (exception != null)
                     {
                         Console.ForegroundColor = ConsoleColor.DarkCyan;
