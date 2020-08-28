@@ -76,8 +76,10 @@ namespace Blade
                     output["timestamp"] = timestamp;
 
                     // attempt to get the log state as json
-                    if (state != null && state is JObject logState)
+                    if (state != null && typeof(JObject).IsAssignableFrom(state.GetType()))
                     {
+                        var logState = (JObject)(state as JObject).DeepClone();
+
                         output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}:{4}) {5}",
                             timestamp,
                             logLevel,
@@ -85,6 +87,10 @@ namespace Blade
                             logState["calling-method"],
                             logState["calling-line-number"],
                             formatter(state, exception));
+
+                        // *prevents overwriting again accidentally when merging
+                        logState.Remove("message");
+                        logState.Remove("exception");
 
                         // merge log state fields into output object, so they're tacked onto the end, and not at the beginning
                         output.Merge(logState,
