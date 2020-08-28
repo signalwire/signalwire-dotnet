@@ -1,9 +1,11 @@
 ﻿using Blade;
 using Blade.Messages;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using SignalWire.Relay.Signalwire;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,7 +72,7 @@ namespace SignalWire.Relay
             {
                 string message = string.Format("Setup has not been performed");
                 tcs.SetException(new KeyNotFoundException(message));
-                mLogger.LogError(message);
+                Log(LogLevel.Error, message);
                 return await tcs.Task;
             }
 
@@ -88,7 +90,7 @@ namespace SignalWire.Relay
         {
             if (code == "200") return;
 
-            mLogger.LogWarning(message);
+            Log(LogLevel.Warning, message);
             switch (code)
             {
                 // @TODO: Convert error codes to appropriate exception types
@@ -106,14 +108,14 @@ namespace SignalWire.Relay
                 if (mClient.Session.State != UpstreamSession.SessionState.Running)
                 {
                     string message = string.Format("Setup failed because the session is not running");
-                    mLogger.LogError(message);
+                    Log(LogLevel.Error, message);
                     throw new InvalidOperationException(message);
                 }
 
                 if (!await CheckProtocolAvailableAsync("signalwire", TimeSpan.FromSeconds(5)))
                 {
                     string message = string.Format("Setup failed due to timeout waiting for protocol 'signalwire'");
-                    mLogger.LogError(message);
+                    Log(LogLevel.Error, message);
                     throw new TimeoutException(message);
                 }
                 SetupParams setupParams = new SetupParams();
@@ -125,7 +127,7 @@ namespace SignalWire.Relay
 
                 if (setupTask.IsFaulted)
                 {
-                    mLogger.LogError("Setup Faulted\n{0}", setupTask.Exception);
+                    Log(LogLevel.Error, string.Format("Setup Faulted\n{0}", setupTask.Exception));
                     throw setupTask.Exception;
                 }
 
@@ -134,7 +136,7 @@ namespace SignalWire.Relay
                 if (!await CheckProtocolAvailableAsync(setupResult.Protocol, TimeSpan.FromSeconds(5)))
                 {
                     string message = string.Format("Setup failed due to timeout waiting for protocol '{0}'", setupResult.Protocol);
-                    mLogger.LogError(message);
+                    Log(LogLevel.Error, message);
                     throw new TimeoutException(message);
                 }
 
@@ -145,7 +147,7 @@ namespace SignalWire.Relay
 
                 if (subscriptionTask.IsFaulted)
                 {
-                    mLogger.LogError("Setup subscription faulted\n{0}", subscriptionTask.Exception);
+                    Log(LogLevel.Error, string.Format("Setup subscription faulted\n{0}", subscriptionTask.Exception));
                     throw subscriptionTask.Exception;
                 }
 
@@ -180,6 +182,32 @@ namespace SignalWire.Relay
         {
             // TODO: Update to "signalwire.receive" when server side supports it
             return ExecuteAsync<LL_ReceiveParams, LL_ReceiveResult>("signalwire.receive", parameters);
+        }
+
+        internal void Log(LogLevel level, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, null, BladeLogging.DefaultLogStateFormatter);
+        }
+
+        internal void Log(LogLevel level, Exception exception, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, exception, BladeLogging.DefaultLogStateFormatter);
         }
     }
 }

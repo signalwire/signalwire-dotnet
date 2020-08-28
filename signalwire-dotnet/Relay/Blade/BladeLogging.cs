@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -16,11 +17,32 @@ namespace Blade
     {
         public static ILoggerFactory LoggerFactory { get; } = new LoggerFactory();
         public static ILogger CreateLogger<T>() => LoggerFactory.CreateLogger<T>();
+
+        internal static string DefaultLogStateFormatter(JObject state, Exception exc)
+        {
+            if (state != null)
+            {
+                if (state.TryGetValue("message", out var msg) && msg.Type == JTokenType.String)
+                {
+                    if (exc != null)
+                        return string.Format(msg.ToString(), '\n', exc.ToString());
+
+                    return msg.ToString();
+                }
+            }
+            return exc?.ToString();
+        }
     }
 
     public class SimpleConsoleLogger : ILogger
     {
         public static bool JsonOutput = false;
+        
+#if DEBUG
+        private const int FRAME_OFFSET = 5;
+#else
+        private const int FRAME_OFFSET = 4;
+#endif
 
         public SimpleConsoleLogger(LogLevel logLevel)
         {
@@ -43,30 +65,49 @@ namespace Blade
         {
             if (!IsEnabled(logLevel)) return;
 
-            int frameOffset = 4;
-#if DEBUG
-            frameOffset = 5;
-#endif
-            StackFrame frame = new StackFrame(frameOffset);
-            MethodBase method = frame.GetMethod();
-
             string timestamp = DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss.fff");
             lock (this)
             {
                 if (JsonOutput)
                 {
-                    // parse state data as json output if possible
-                    JObject output = null;
-                    if (state != null && typeof(Newtonsoft.Json.Linq.JObject).IsAssignableFrom(state.GetType()))
-                        output = state as JObject;
-                    else
-                        output = new JObject();
-
+                    // start building log output object
+                    JObject output = new JObject();
                     output["level"] = logLevel.ToString();
                     output["timestamp"] = timestamp;
-                    
-                    if (!output.ContainsKey("message"))
-                        output["message"] = string.Format("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+
+                    // attempt to get the log state as json
+                    if (state != null && typeof(JObject).IsAssignableFrom(state.GetType()))
+                    {
+                        var logState = (JObject)(state as JObject).DeepClone();
+
+                        output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}:{4}) {5}",
+                            timestamp,
+                            logLevel,
+                            logState["calling-file"],
+                            logState["calling-method"],
+                            logState["calling-line-number"],
+                            formatter(state, exception));
+
+                        // *prevents overwriting again accidentally when merging
+                        logState.Remove("message");
+                        logState.Remove("exception");
+
+                        // merge log state fields into output object, so they're tacked onto the end, and not at the beginning
+                        output.Merge(logState,
+                            new JsonMergeSettings() { PropertyNameComparison = StringComparison.InvariantCulture, MergeArrayHandling = MergeArrayHandling.Union, MergeNullValueHandling = MergeNullValueHandling.Ignore });
+                    }
+                    else
+                    {
+                        StackFrame frame = new StackFrame(FRAME_OFFSET);
+                        MethodBase method = frame.GetMethod();
+                        var callingFile = method.DeclaringType.FullName;
+                        var callingMethod = method.Name;
+
+                        output["message"] = string.Format("{0} [{1,11}] ({3} @ {2}) {4}", timestamp, logLevel, callingFile, callingMethod, formatter(state, exception));
+
+                        output["calling-file"] = method.DeclaringType.FullName;
+                        output["calling-method"] = method.Name;
+                    }
 
                     if (exception != null)
                         output["exception"] = exception.ToString();
@@ -75,6 +116,9 @@ namespace Blade
                 }
                 else
                 {
+                    StackFrame frame = new StackFrame(FRAME_OFFSET);
+                    MethodBase method = frame.GetMethod();
+
                     var color = Console.ForegroundColor;
                     switch (logLevel)
                     {
@@ -87,7 +131,7 @@ namespace Blade
                         default: break;
                     }
 
-                    Console.WriteLine("{0} [{1,11}] ({2}.{3}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
+                    Console.WriteLine("{0} [{1,11}] ({3} @ {2}) {4}", timestamp, logLevel, method.DeclaringType.FullName, method.Name, formatter(state, exception));
                     if (exception != null)
                     {
                         Console.ForegroundColor = ConsoleColor.DarkCyan;

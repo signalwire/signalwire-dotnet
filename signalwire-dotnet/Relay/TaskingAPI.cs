@@ -1,4 +1,5 @@
-﻿using Blade.Messages;
+﻿using Blade;
+using Blade.Messages;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -6,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -37,13 +39,13 @@ namespace SignalWire.Relay
         {
             if (broadcastParams.Event != "queuing.relay.tasks") return;
 
-            mLogger.LogDebug("TaskingAPI OnNotification");
+            Log(LogLevel.Debug, string.Format("TaskingAPI OnNotification"));
 
             RelayTask taskingEventParams = null;
             try { taskingEventParams = broadcastParams.ParametersAs<RelayTask>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse TaskingEventParams");
+                Log(LogLevel.Warning, exc, "Failed to parse TaskingEventParams");
                 return;
             }
 
@@ -59,10 +61,36 @@ namespace SignalWire.Relay
             }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed task delivery");
+                Log(LogLevel.Warning, exc, "Failed task delivery");
                 successful = false;
             }
             return successful;
+        }
+
+        internal void Log(LogLevel level, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, null, BladeLogging.DefaultLogStateFormatter);
+        }
+
+        internal void Log(LogLevel level, Exception exception, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, exception, BladeLogging.DefaultLogStateFormatter);
         }
     }
 }

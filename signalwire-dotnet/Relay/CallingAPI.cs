@@ -6,6 +6,7 @@ using SignalWire.Relay.Calling;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -74,19 +75,19 @@ namespace SignalWire.Relay
         {
             if (broadcastParams.Event != "queuing.relay.events" && broadcastParams.Event != "relay") return;
 
-            mLogger.LogDebug("CallingAPI OnNotification");
+            Log(LogLevel.Debug, "CallingAPI OnNotification");
 
             CallingEventParams callingEventParams = null;
             try { callingEventParams = broadcastParams.ParametersAs<CallingEventParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse CallingEventParams");
+                Log(LogLevel.Warning, exc, "Failed to parse CallingEventParams");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(callingEventParams.EventType))
             {
-                mLogger.LogWarning("Received CallingEventParams with empty EventType");
+                Log(LogLevel.Warning, "Received CallingEventParams with empty EventType");
                 return;
             }
 
@@ -132,7 +133,7 @@ namespace SignalWire.Relay
             try { stateParams = callEventParams.ParametersAs<CallingEventParams.StateParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse StateParams");
+                Log(LogLevel.Warning, exc, "Failed to parse StateParams");
                 return;
             }
 
@@ -159,7 +160,7 @@ namespace SignalWire.Relay
                         try { phoneParams = stateParams.Device.ParametersAs<CallDevice.PhoneParams>(); }
                         catch (Exception exc)
                         {
-                            mLogger.LogWarning(exc, "Failed to parse PhoneParams");
+                            Log(LogLevel.Warning, exc, "Failed to parse PhoneParams");
                             return;
                         }
 
@@ -177,7 +178,7 @@ namespace SignalWire.Relay
                     }
                 // @TODO: sip and webrtc
                 default:
-                    mLogger.LogWarning("Unknown device type: {0}", stateParams.Device.Type);
+                    Log(LogLevel.Warning, string.Format("Unknown device type: {0}", stateParams.Device.Type));
                     return;
             }
 
@@ -192,7 +193,7 @@ namespace SignalWire.Relay
             try { receiveParams = callEventParams.ParametersAs<CallingEventParams.ReceiveParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse ReceiveParams");
+                Log(LogLevel.Warning, exc, "Failed to parse ReceiveParams");
                 return;
             }
 
@@ -209,7 +210,7 @@ namespace SignalWire.Relay
                         try { phoneParams = receiveParams.Device.ParametersAs<CallDevice.PhoneParams>(); }
                         catch (Exception exc)
                         {
-                            mLogger.LogWarning(exc, "Failed to parse PhoneParams");
+                            Log(LogLevel.Warning, exc, "Failed to parse PhoneParams");
                             return;
                         }
 
@@ -224,7 +225,7 @@ namespace SignalWire.Relay
                     }
                 // @TODO: sip and webrtc
                 default:
-                    mLogger.LogWarning("Unknown device type: {0}", receiveParams.Device.Type);
+                    Log(LogLevel.Warning, string.Format("Unknown device type: {0}", receiveParams.Device.Type));
                     return;
             }
 
@@ -245,12 +246,12 @@ namespace SignalWire.Relay
             try { connectParams = callEventParams.ParametersAs<CallingEventParams.ConnectParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse ConnectParams");
+                Log(LogLevel.Warning, exc, "Failed to parse ConnectParams");
                 return;
             }
             if (!mCalls.TryGetValue(connectParams.CallID, out Call call))
             {
-                mLogger.LogWarning("Received ConnectParams with unknown CallID: {0}, {1}", connectParams.CallID, connectParams.State);
+                Log(LogLevel.Warning, string.Format("Received ConnectParams with unknown CallID: {0}, {1}", connectParams.CallID, connectParams.State));
                 return;
             }
 
@@ -263,12 +264,12 @@ namespace SignalWire.Relay
             try { playParams = callEventParams.ParametersAs<CallingEventParams.PlayParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse PlayParams");
+                Log(LogLevel.Warning, exc, "Failed to parse PlayParams");
                 return;
             }
             if (!mCalls.TryGetValue(playParams.CallID, out Call call))
             {
-                mLogger.LogWarning("Received PlayParams with unknown CallID: {0}", playParams.CallID);
+                Log(LogLevel.Warning, string.Format("Received PlayParams with unknown CallID: {0}", playParams.CallID));
                 return;
             }
 
@@ -281,12 +282,12 @@ namespace SignalWire.Relay
             try { collectParams = callEventParams.ParametersAs<CallingEventParams.CollectParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse CollectParams");
+                Log(LogLevel.Warning, exc, "Failed to parse CollectParams");
                 return;
             }
             if (!mCalls.TryGetValue(collectParams.CallID, out Call call))
             {
-                mLogger.LogWarning("Received CollectParams with unknown CallID: {0}", collectParams.CallID);
+                Log(LogLevel.Warning, string.Format("Received CollectParams with unknown CallID: {0}", collectParams.CallID));
                 return;
             }
 
@@ -299,12 +300,12 @@ namespace SignalWire.Relay
             try { recordParams = callEventParams.ParametersAs<CallingEventParams.RecordParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse RecordParams");
+                Log(LogLevel.Warning, exc, "Failed to parse RecordParams");
                 return;
             }
             if (!mCalls.TryGetValue(recordParams.CallID, out Call call))
             {
-                mLogger.LogWarning("Received RecordParams with unknown CallID: {0}", recordParams.CallID);
+                Log(LogLevel.Warning, string.Format("Received RecordParams with unknown CallID: {0}", recordParams.CallID));
                 return;
             }
 
@@ -317,12 +318,12 @@ namespace SignalWire.Relay
             try { tapParams = callEventParams.ParametersAs<CallingEventParams.TapParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse TapParams");
+                Log(LogLevel.Warning, exc, "Failed to parse TapParams");
                 return;
             }
             if (!mCalls.TryGetValue(tapParams.CallID, out Call call))
             {
-                mLogger.LogWarning("Received TapParams with unknown CallID: {0}", tapParams.CallID);
+                Log(LogLevel.Warning, string.Format("Received TapParams with unknown CallID: {0}", tapParams.CallID));
                 return;
             }
 
@@ -335,12 +336,12 @@ namespace SignalWire.Relay
             try { detectParams = callEventParams.ParametersAs<CallingEventParams.DetectParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse DetectParams");
+                Log(LogLevel.Warning, exc, "Failed to parse DetectParams");
                 return;
             }
             if (!mCalls.TryGetValue(detectParams.CallID, out Call call))
             {
-                mLogger.LogWarning("Received DetectParams with unknown CallID: {0}", detectParams.CallID);
+                Log(LogLevel.Warning, string.Format("Received DetectParams with unknown CallID: {0}", detectParams.CallID));
                 return;
             }
 
@@ -353,12 +354,12 @@ namespace SignalWire.Relay
             try { faxParams = callEventParams.ParametersAs<CallingEventParams.FaxParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse FaxParams");
+                Log(LogLevel.Warning, exc, "Failed to parse FaxParams");
                 return;
             }
             if (!mCalls.TryGetValue(faxParams.CallID, out Call call))
             {
-                mLogger.LogWarning("Received FaxParams with unknown CallID: {0}", faxParams.CallID);
+                Log(LogLevel.Warning, string.Format("Received FaxParams with unknown CallID: {0}", faxParams.CallID));
                 return;
             }
 
@@ -371,12 +372,12 @@ namespace SignalWire.Relay
             try { sendDigitsParams = callEventParams.ParametersAs<CallingEventParams.SendDigitsParams>(); }
             catch (Exception exc)
             {
-                mLogger.LogWarning(exc, "Failed to parse SendDigitsParams");
+                Log(LogLevel.Warning, exc, "Failed to parse SendDigitsParams");
                 return;
             }
             if (!mCalls.TryGetValue(sendDigitsParams.CallID, out Call call))
             {
-                mLogger.LogWarning("Received SendDigitsParams with unknown CallID: {0}", sendDigitsParams.CallID);
+                Log(LogLevel.Warning, string.Format("Received SendDigitsParams with unknown CallID: {0}", sendDigitsParams.CallID));
                 return;
             }
 
@@ -501,6 +502,32 @@ namespace SignalWire.Relay
         public Task<LL_SendDigitsResult> LL_SendDigitsAsync(LL_SendDigitsParams parameters)
         {
             return mAPI.ExecuteAsync<LL_SendDigitsParams, LL_SendDigitsResult>("call.send_digits", parameters);
+        }
+
+        internal void Log(LogLevel level, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, null, BladeLogging.DefaultLogStateFormatter);
+        }
+
+        internal void Log(LogLevel level, Exception exception, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            JObject logParamsObj = new JObject();
+            logParamsObj["calling-file"] = System.IO.Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+
+            logParamsObj["message"] = message;
+
+            mLogger.Log(level, new EventId(), logParamsObj, exception, BladeLogging.DefaultLogStateFormatter);
         }
     }
 }
