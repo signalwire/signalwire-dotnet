@@ -31,7 +31,15 @@ namespace Blade
         public static Response CreateError(Request request, int code, string message, string requester_nodeid, string responder_nodeid)
         {
             Response response = Create(request.ID);
-            response.Error = new RPCResponseError() { Code = code, Message = message, RequesterNodeID = requester_nodeid, ResponderNodeID = responder_nodeid };
+            response.Error = new RPCResponseError()
+            {
+                Code = code,
+                Message = message,
+                RequesterNodeID = requester_nodeid,
+                RequesterIdentity = requester_nodeid,
+                ResponderNodeID = responder_nodeid,
+                ResponderIdentity = responder_nodeid
+            };
             return response;
         }
         public static Response Parse(string frame)
@@ -61,8 +69,12 @@ namespace Blade
     {
         [JsonProperty("requester_nodeid", NullValueHandling = NullValueHandling.Ignore)]
         public string RequesterNodeID { get; set; }
+        [JsonProperty("requester_identity", NullValueHandling = NullValueHandling.Ignore)]
+        public string RequesterIdentity { get; set; }
         [JsonProperty("responder_nodeid", NullValueHandling = NullValueHandling.Ignore)]
         public string ResponderNodeID { get; set; }
+        [JsonProperty("responder_identity", NullValueHandling = NullValueHandling.Ignore)]
+        public string ResponderIdentity { get; set; }
         [JsonProperty("code", Required = Required.Always)]
         public int Code { get; set; }
         [JsonProperty("message")]
