@@ -287,98 +287,107 @@ namespace Blade
         {
             Task[] tasks = null;
             Log(LogLevel.Debug, "TaskWorker Started");
-            while (State != SessionState.Shutdown)
+            try
             {
-                if (State == SessionState.Offline)
+                while (State != SessionState.Shutdown)
                 {
-                    if (mShutdown)
+                    if (State == SessionState.Offline)
                     {
-                        State = SessionState.Shutdown;
-                        break;
-                    }
-
-                    if (DateTime.Now >= mConnectAt)
-                    {
-                        Log(LogLevel.Information, "Connecting");
-
-                        mSocket = new ClientWebSocket();
-                        
-                        // @todo support inline conversion of individual PEM to PKCS12 combined
-                        if (mOptions.ClientCertificate != null)
+                        if (mShutdown)
                         {
-                            Log(LogLevel.Information, string.Format("Using ClientCertificate: {0}", mOptions.ClientCertificate));
-                            mSocket.Options.ClientCertificates.Add(new X509Certificate2(mOptions.ClientCertificate));
+                            State = SessionState.Shutdown;
+                            break;
                         }
+
+                        if (DateTime.Now >= mConnectAt)
+                        {
+                            Log(LogLevel.Information, "Connecting to " + mOptions.Bootstrap);
+
+                            mSocket = new ClientWebSocket();
+
+                            // @todo support inline conversion of individual PEM to PKCS12 combined
+                            if (mOptions.ClientCertificate != null)
+                            {
+                                Log(LogLevel.Information, string.Format("Using ClientCertificate: {0}", mOptions.ClientCertificate));
+                                mSocket.Options.ClientCertificates.Add(new X509Certificate2(mOptions.ClientCertificate));
+                            }
 
 #if NETCOREAPP2_1
-                        mSocket.Options.RemoteCertificateValidationCallback += (s, c, ch, e) => true;
+                    mSocket.Options.RemoteCertificateValidationCallback += (s, c, ch, e) => true;
 #endif
-                        mSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(5); // 5 second ping/pong check
-                        mSocket.Options.SetBuffer(64 * 1024, 64 * 1024); // 64kb buffers before continuation is used, per .NET Framework limit
-                        
+                            mSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(5); // 5 second ping/pong check
+                            mSocket.Options.SetBuffer(64 * 1024, 64 * 1024); // 64kb buffers before continuation is used, per .NET Framework limit
 
-                        try
-                        {
-                            State = SessionState.Connecting;
-                            AddTask("ConnectAsync", mSocket.ConnectAsync(mOptions.Bootstrap, new CancellationTokenSource(mOptions.ConnectTimeout).Token).ContinueWith(OnConnect));
-                        }
-                        catch (Exception exc)
-                        {
-                            Log(LogLevel.Error, exc, "ConnectAsync Exception");
-                            State = SessionState.Closed;
+
+                            try
+                            {
+                                State = SessionState.Connecting;
+                                AddTask("ConnectAsync", mSocket.ConnectAsync(mOptions.Bootstrap, new CancellationTokenSource(mOptions.ConnectTimeout).Token).ContinueWith(OnConnect));
+                            }
+                            catch (Exception exc)
+                            {
+                                Log(LogLevel.Error, exc, "ConnectAsync Exception");
+                                State = SessionState.Closed;
+                            }
                         }
                     }
-                }
-                else if (State == SessionState.Closed)
-                {
-                    Log(LogLevel.Information, "Closed");
+                    else if (State == SessionState.Closed)
+                    {
+                        Log(LogLevel.Information, "Closed");
 
-                    // @todo detect if the SendAsync task failed, if so then capture this knowledge for
-                    // a restored reconnect and attempt to send the buffer again so no messages can be
-                    // lost on a restored session unless they were in the system buffers but the send
-                    // completed successfully
+                        // @todo detect if the SendAsync task failed, if so then capture this knowledge for
+                        // a restored reconnect and attempt to send the buffer again so no messages can be
+                        // lost on a restored session unless they were in the system buffers but the send
+                        // completed successfully
 
-                    // TODO: Check how we can get stuck here? Seen once when gandalf disconnected during a setup, never proceeded to offline
+                        // TODO: Check how we can get stuck here? Seen once when gandalf disconnected during a setup, never proceeded to offline
+                        lock (mTasks)
+                        {
+                            tasks = mTasks.ToArray();
+                        }
+                        Task.WaitAll(tasks, 10000);
+
+                        List<Task> unfinished = mTasks.FindAll(t => t.Status != TaskStatus.RanToCompletion);
+                        if (unfinished.Count > 0)
+                        {
+                            foreach (Task t in unfinished) Log(LogLevel.Error, string.Format("Unfinished task: {0}, {1}", t.Id, mTaskNames[t.Id]));
+                            System.Diagnostics.Debug.Assert(false, "Tasks did not finish, asserted to check what remains instead of hanging indefinately");
+                        }
+
+                        lock (mTasks)
+                        {
+                            mTasks.Clear();
+                        }
+
+                        NodeID = null;
+                        MasterNodeID = null;
+
+                        mSocket.Dispose();
+                        mSocket = null;
+
+                        // Fuzzy reconnection logic by +- 10% of total delay
+                        mConnectAt = DateTime.Now.Add(TimeSpan.FromTicks(mOptions.ConnectDelay.Ticks + (mOptions.ConnectDelay.Ticks * (new Random().Next(-10, 10) / 100))));
+
+                        State = SessionState.Offline;
+
+                        OnDisconnected?.Invoke(this);
+                    }
+
                     lock (mTasks)
                     {
                         tasks = mTasks.ToArray();
                     }
-                    Task.WaitAll(tasks, 10000);
 
-                    List<Task> unfinished = mTasks.FindAll(t => t.Status != TaskStatus.RanToCompletion);
-                    if (unfinished.Count > 0)
-                    {
-                        foreach (Task t in unfinished) Log(LogLevel.Error, string.Format("Unfinished task: {0}, {1}", t.Id, mTaskNames[t.Id]));
-                        System.Diagnostics.Debug.Assert(false, "Tasks did not finish, asserted to check what remains instead of hanging indefinately");
-                    }
-
-                    lock (mTasks)
-                    {
-                        mTasks.Clear();
-                    }
-
-                    NodeID = null;
-                    MasterNodeID = null;
-
-                    mSocket.Dispose();
-                    mSocket = null;
-
-                    // Fuzzy reconnection logic by +- 10% of total delay
-                    mConnectAt = DateTime.Now.Add(TimeSpan.FromTicks(mOptions.ConnectDelay.Ticks + (mOptions.ConnectDelay.Ticks * (new Random().Next(-10, 10) / 100))));
-
-                    State = SessionState.Offline;
-
-                    OnDisconnected?.Invoke(this);
+                    int completedIndex = Task.WaitAny(tasks);
+                    if (completedIndex < 0) continue;
+                    RemoveTask(mTasks[completedIndex]);
                 }
-
-                lock (mTasks)
-                {
-                    tasks = mTasks.ToArray();
-                }
-
-                int completedIndex = Task.WaitAny(tasks);
-                if (completedIndex < 0) continue;
-                RemoveTask(mTasks[completedIndex]);
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, "Critical issue!!! Caught exception that would have caused the task worker to be terminated for the upstream session");
+                mSocket.Abort();
+                State = SessionState.Closed;
             }
         }
 
