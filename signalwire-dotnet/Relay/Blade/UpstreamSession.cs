@@ -599,7 +599,11 @@ namespace Blade
 
             string json = response.ToJSON();
 
-            if (json.Length > mSendBuffer.Length) throw new IndexOutOfRangeException("Response is too large");
+            if (json.Length > mSendBuffer.Length)
+            {
+                Log(LogLevel.Error, "Response is too large");
+                return false;
+            }
 
             Log(LogLevel.Debug, string.Format("Sending Response Frame: {0}", response.ID));
             Log(LogLevel.Debug, response.ToJSON(Formatting.Indented));
