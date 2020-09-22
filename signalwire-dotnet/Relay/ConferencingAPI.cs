@@ -2,13 +2,14 @@
 using Blade.Messages;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using SignalWire.Relay.Messaging;
+using SignalWire.Relay.Conferencing;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using Twilio.TwiML.Voice;
 
 namespace SignalWire.Relay
 {
@@ -37,20 +38,15 @@ namespace SignalWire.Relay
 
         // High Level API
 
-        //public SendResult Send(string context, string to, string from, SendSource source, List<string> tags = null, string region = null)
-        //{
-        //    var result = InternalSendAsync(new LL_SendParams()
-        //    {
-        //        Context = context,
-        //        ToNumber = to,
-        //        FromNumber = from,
-        //        Body = source.Body,
-        //        Media = source.Media,
-        //        Tags = tags,
-        //        Region = region,
-        //    }).Result;
-        //    return result;
-        //}
+        public SubscribeResult Subscribe(string conference, List<string> channels)
+        {
+            var result = InternalSubscribeAsync(new LL_SubscribeParams()
+            {
+                Conference = conference,
+                Channels = channels,
+            }).Result;
+            return result;
+        }
 
         //internal void MessageStateChangeHandler(MessagingEventParams eventParams, MessagingEventParams.StateParams stateParams)
         //{
@@ -68,7 +64,7 @@ namespace SignalWire.Relay
         //        Tags = stateParams.Tags,
         //        To = stateParams.ToNumber,
         //    };
-            
+
         //    OnMessageStateChange?.Invoke(this, message, eventParams, stateParams);
 
         //    switch (stateParams.MessageState)
@@ -131,41 +127,42 @@ namespace SignalWire.Relay
         // Utility
         internal void ThrowIfError(string code, string message) { mAPI.ThrowIfError(code, message); }
 
-        //private async Task<SendResult> InternalSendAsync(LL_SendParams @params)
-        //{
-        //    SendResult resultSend  = new SendResult();
+        private async Task<SubscribeResult> InternalSubscribeAsync(LL_SubscribeParams @params)
+        {
+            SubscribeResult resultSubscribe = new SubscribeResult();
 
-        //    try
-        //    {
-        //        Task<LL_SendResult> taskLLSend = LL_SendAsync(@params);
+            try
+            {
+                Task<LL_SubscribeResult> taskLLSubscribe = LL_SubscribeAsync(@params);
 
-        //        // The use of await rethrows exceptions from the task
-        //        LL_SendResult resultLLSend  = await taskLLSend;
-        //        ThrowIfError(resultLLSend.Code, resultLLSend.Message);
-        //        if (resultLLSend.Code == "200")
-        //        {
-        //            Log(LogLevel.Debug, string.Format("Send for context {0} waiting for completion events", @params.Context));
+                // The use of await rethrows exceptions from the task
+                LL_SubscribeResult resultLLSubscribe = await taskLLSubscribe;
+                ThrowIfError(resultLLSubscribe.Code, resultLLSubscribe.Message);
+                if (resultLLSubscribe.Code == "200")
+                {
+                    Log(LogLevel.Debug, string.Format("Subscribe for conference {0} waiting for completion events", @params.Conference));
 
-        //            resultSend.Successful = true;
-        //            resultSend.MessageID = resultLLSend.MessageID;
+                    resultSubscribe.Successful = true;
+                    resultSubscribe.Conference = resultLLSubscribe.Result.Conference;
+                    resultSubscribe.Accepted = resultLLSubscribe.Result.Accepted;
+                    resultSubscribe.Rejected = resultLLSubscribe.Result.Rejected;
+                }
+                Log(LogLevel.Debug, string.Format("Subscribe for conference {0} {1}", @params.Conference, resultSubscribe.Successful ? "successful" : "unsuccessful"));
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, "Subscribe for conference {0} exception", @params.Conference);
+            }
 
-        //            Log(LogLevel.Debug, string.Format("Send for context {0} {1}", @params.Context, resultSend.Successful ? "successful" : "unsuccessful"));
-        //        }
-        //    }
-        //    catch (Exception exc)
-        //    {
-        //        Log(LogLevel.Error, exc, "Send for context {0} exception", @params.Context);
-        //    }
-
-        //    return resultSend;
-        //}
+            return resultSubscribe;
+        }
 
         // Low Level API
 
-        //public Task<LL_SendResult> LL_SendAsync(LL_SendParams parameters)
-        //{
-        //    return mAPI.ExecuteAsync<LL_SendParams, LL_SendResult>("messaging.send", parameters);
-        //}
+        public Task<LL_SubscribeResult> LL_SubscribeAsync(LL_SubscribeParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_SubscribeParams, LL_SubscribeResult>("conference.subscribe", parameters);
+        }
 
         private void Log(LogLevel level, string message,
             [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)

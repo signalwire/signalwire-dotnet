@@ -1,5 +1,5 @@
 ﻿using SignalWire.Relay;
-using SignalWire.Relay.Calling;
+using SignalWire.Relay.Conferencing;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -18,20 +18,14 @@ namespace Conference_Subscribe
         protected override void Ready()
         {
             // Create a new phone call and dial it immediately, block until it's answered, times out, busy, or another error occurs
-            DialResult resultDial = Client.Calling.DialPhone("+1XXXXXXXXXX", "+1YYYYYYYYYY");
+            SubscribeResult resultSubscribe = Client.Conferencing.Subscribe("test", new List<string> { "info" });
 
-            if (!resultDial.Successful)
+            if (!resultSubscribe.Successful)
             {
-                // The call was not answered successfully, stop the consumer and bail out
+                // The conference was not subscribed to successfully, stop the consumer and bail out
                 Stop();
                 return;
             }
-
-            // Play an audio file, block until it's finished or an error occurs
-            resultDial.Call.PlayAudio("https://cdn.signalwire.com/default-music/welcome.mp3");
-
-            // Hangup
-            resultDial.Call.Hangup();
 
             // Stop the consumer
             Stop();
