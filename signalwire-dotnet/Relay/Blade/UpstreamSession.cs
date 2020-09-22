@@ -672,7 +672,8 @@ namespace Blade
         {
             try
             {
-                Task task = mSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None).ContinueWith(t => { Log(LogLevel.Debug, string.Format("SendAsync Task Finished {0} for message {1}", t.Id, id)); InternalSend(); });
+                Log(LogLevel.Debug, string.Format("SendAsync Task Starting for message {0}", id));
+                Task task = mSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None).ContinueWith(t => { Log(LogLevel.Debug, string.Format("SendAsync Task Finished {0}, {1} for message {2}", t.Status, t.Id, id)); InternalSend(); });
                 Log(LogLevel.Debug, string.Format("SendAsync Task Started {0} for message {1}", task.Id, id));
                 AddTask("SendAsync", task);
             }
