@@ -541,26 +541,50 @@ namespace Blade
             Log(LogLevel.Debug, string.Format("Sending Request Frame: {0} for {1}", request.ID, request.Method));
             Log(LogLevel.Debug, request.ToJSON(Formatting.Indented));
 
-            if (request.ResponseExpected && !mRequests.TryAdd(request.ID, request)) throw new ArgumentException("Request id already exists in pending requests");
-
-            if (!immediate) mSendQueue.Enqueue(json);
-            
-            if (Interlocked.CompareExchange(ref mSending, 1, 0) == 1)
+            if (request.ResponseExpected && !mRequests.TryAdd(request.ID, request))
             {
-                // if we are already sending, then we're done
-                return true;
+                Log(LogLevel.Error, string.Format("Request already exists in pending requests: {0}", request.ID));
+                return false;
             }
 
-            // kick off an internal send from the queue
-            if (!immediate) InternalSend();
-            else
+            try
             {
-                int length = Encoding.UTF8.GetBytes(json, 0, json.Length, mSendBuffer, 0);
+                if (!immediate) mSendQueue.Enqueue(json);
 
-                // output directly from the buffer back to a string to know exactly what we will be sending
-                Log(LogLevel.Debug, string.Format("Sending WebSocket Frame: {0}/{1}", length, mSendBuffer.Length));
+                if (Interlocked.CompareExchange(ref mSending, 1, 0) == 1)
+                {
+                    // if we are already sending, then we're done
+                    return true;
+                }
 
-                InternalSendImmediate(new ArraySegment<byte>(mSendBuffer, 0, length));
+                // kick off an internal send from the queue
+                if (!immediate) InternalSend();
+                else
+                {
+                    int length = Encoding.UTF8.GetBytes(json, 0, json.Length, mSendBuffer, 0);
+
+                    // This is exclusively for association of the log output to the message id being sent
+                    string id = null;
+                    try
+                    {
+                        JObject jobj = JObject.Parse(json);
+                        id = jobj.Value<string>("id");
+                    }
+                    catch (Exception exc)
+                    {
+                        Log(LogLevel.Error, exc, "Unable to parse websocket frame prior to sending");
+                    }
+
+                    // output directly from the buffer back to a string to know exactly what we will be sending
+                    Log(LogLevel.Debug, string.Format("Sending WebSocket Frame: {0}, {1}", id, length));
+
+                    InternalSendImmediate(new ArraySegment<byte>(mSendBuffer, 0, length), id);
+                }
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, string.Format("Exception occurred while sending request frame: {0}", request.ID));
+                return false;
             }
 
             return true;
@@ -575,21 +599,33 @@ namespace Blade
 
             string json = response.ToJSON();
 
-            if (json.Length > mSendBuffer.Length) throw new IndexOutOfRangeException("Response is too large");
+            if (json.Length > mSendBuffer.Length)
+            {
+                Log(LogLevel.Error, "Response is too large");
+                return false;
+            }
 
             Log(LogLevel.Debug, string.Format("Sending Response Frame: {0}", response.ID));
             Log(LogLevel.Debug, response.ToJSON(Formatting.Indented));
 
-            mSendQueue.Enqueue(json);
-
-            if (Interlocked.CompareExchange(ref mSending, 1, 0) == 1)
+            try
             {
-                // if we are already sending, then we're done
-                return true;
-            }
+                mSendQueue.Enqueue(json);
 
-            // kick off an internal send from the queue
-            InternalSend();
+                if (Interlocked.CompareExchange(ref mSending, 1, 0) == 1)
+                {
+                    // if we are already sending, then we're done
+                    return true;
+                }
+
+                // kick off an internal send from the queue
+                InternalSend();
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, string.Format("Exception occurred while sending response frame: {0}", response.ID));
+                return false;
+            }
 
             return true;
         }
@@ -614,21 +650,36 @@ namespace Blade
             // stuff whatever is next into the send buffer
             int length = Encoding.UTF8.GetBytes(json, 0, json.Length, mSendBuffer, 0);
 
-            // output directly from the buffer back to a string to know exactly what we will be sending
-            Log(LogLevel.Debug, string.Format("Sending WebSocket Frame: {0}/{1}", length, mSendBuffer.Length));
-
-            InternalSendImmediate(new ArraySegment<byte>(mSendBuffer, 0, length));
-        }
-
-        private void InternalSendImmediate(ArraySegment<byte> segment)
-        {
+            // This is exclusively for association of the log output to the message id being sent
+            string id = null;
             try
             {
-                AddTask("SendAsync", mSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None).ContinueWith(t => { Log(LogLevel.Debug, string.Format("SendAsync Task Finished {0}", t.Id)); InternalSend(); }));
+                JObject jobj = JObject.Parse(json);
+                id = jobj.Value<string>("id");
             }
             catch (Exception exc)
             {
-                Log(LogLevel.Error, exc, "SendAsync Exception");
+                Log(LogLevel.Error, exc, "Unable to parse websocket frame prior to sending");
+            }
+
+            // output directly from the buffer back to a string to know exactly what we will be sending
+            Log(LogLevel.Debug, string.Format("Sending WebSocket Frame: {0}, {1}", id, length));
+
+            InternalSendImmediate(new ArraySegment<byte>(mSendBuffer, 0, length), id);
+        }
+
+        private void InternalSendImmediate(ArraySegment<byte> segment, string id)
+        {
+            try
+            {
+                Log(LogLevel.Debug, string.Format("SendAsync Task Starting for message {0}", id));
+                Task task = mSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None).ContinueWith(t => { Log(LogLevel.Debug, string.Format("SendAsync Task Finished {0}, {1} for message {2}", t.Status, t.Id, id)); InternalSend(); });
+                Log(LogLevel.Debug, string.Format("SendAsync Task Started {0} for message {1}", task.Id, id));
+                AddTask("SendAsync", task);
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, string.Format("SendAsync Exception for message {0}", id));
                 mSending = 0;
                 Close(WebSocketCloseStatus.InternalServerError, "Server dropped connection ungracefully");
             }
@@ -666,7 +717,14 @@ namespace Blade
                         Log(LogLevel.Debug, string.Format("Received WebSocket Frame: {0}/{1}", wsrr.Count, mReceiveBuffer.Length));
 
                         //AddTask("OnFrame", Task.Run(() => OnFrame(frame)));
-                        OnFrame(frame);
+                        try
+                        {
+                            OnFrame(frame);
+                        }
+                        catch (Exception exc)
+                        {
+                            Log(LogLevel.Error, exc, "OnFrame exception");
+                        }
                         break;
                     }
                 case WebSocketMessageType.Close:
