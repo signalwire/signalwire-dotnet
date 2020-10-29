@@ -312,7 +312,7 @@ namespace Blade
                                 mSocket.Options.ClientCertificates.Add(new X509Certificate2(mOptions.ClientCertificate));
                             }
 
-#if NETCOREAPP2_1
+#if NETSTANDARD2_1
                     mSocket.Options.RemoteCertificateValidationCallback += (s, c, ch, e) => true;
 #endif
                             mSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(5); // 5 second ping/pong check
