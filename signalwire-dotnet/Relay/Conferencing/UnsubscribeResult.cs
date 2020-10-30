@@ -7,7 +7,7 @@ using System.Text;
 
 namespace SignalWire.Relay.Conferencing
 {
-    public sealed class SubscribeResult
+    public sealed class UnsubscribeResult
     {
         public sealed class AcceptedResult
         {

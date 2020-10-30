@@ -7,9 +7,9 @@ using System.Text;
 
 namespace SignalWire.Relay.Conferencing
 {
-    public sealed class LL_SubscribeResult
+    public sealed class LL_UnsubscribeResult
     {
-        public sealed class SubscribeResult
+        public sealed class UnsubscribeResult
         {
             public sealed class AcceptedResult
             {
@@ -43,6 +43,6 @@ namespace SignalWire.Relay.Conferencing
         public string Message { get; set; }
 
         [JsonProperty("result", NullValueHandling = NullValueHandling.Ignore)]
-        public SubscribeResult Result { get; set; }
+        public UnsubscribeResult Result { get; set; }
     }
 }

@@ -48,6 +48,16 @@ namespace SignalWire.Relay
             return result;
         }
 
+        public UnsubscribeResult Unsubscribe(string conference, List<string> channels)
+        {
+            var result = InternalUnsubscribeAsync(new LL_UnsubscribeParams()
+            {
+                Conference = conference,
+                Channels = channels,
+            }).Result;
+            return result;
+        }
+
         //internal void MessageStateChangeHandler(MessagingEventParams eventParams, MessagingEventParams.StateParams stateParams)
         //{
         //    Message message = new Message()
@@ -140,12 +150,10 @@ namespace SignalWire.Relay
                 ThrowIfError(resultLLSubscribe.Code, resultLLSubscribe.Message);
                 if (resultLLSubscribe.Code == "200")
                 {
-                    Log(LogLevel.Debug, string.Format("Subscribe for conference {0} waiting for completion events", @params.Conference));
-
                     resultSubscribe.Successful = true;
                     resultSubscribe.Conference = resultLLSubscribe.Result.Conference;
-                    resultSubscribe.Accepted = resultLLSubscribe.Result.Accepted;
-                    resultSubscribe.Rejected = resultLLSubscribe.Result.Rejected;
+                    if (resultLLSubscribe.Result.Accepted != null) resultSubscribe.Accepted = resultLLSubscribe.Result.Accepted.ConvertAll<SubscribeResult.AcceptedResult>(a => new SubscribeResult.AcceptedResult() { Name = a.Name });
+                    if (resultLLSubscribe.Result.Rejected != null) resultSubscribe.Rejected = resultLLSubscribe.Result.Rejected.ConvertAll<SubscribeResult.RejectedResult>(a => new SubscribeResult.RejectedResult() { Name = a.Name, Reason = a.Reason });
                 }
                 Log(LogLevel.Debug, string.Format("Subscribe for conference {0} {1}", @params.Conference, resultSubscribe.Successful ? "successful" : "unsuccessful"));
             }
@@ -157,11 +165,44 @@ namespace SignalWire.Relay
             return resultSubscribe;
         }
 
+        private async Task<UnsubscribeResult> InternalUnsubscribeAsync(LL_UnsubscribeParams @params)
+        {
+            UnsubscribeResult resultUnsubscribe = new UnsubscribeResult();
+
+            try
+            {
+                Task<LL_UnsubscribeResult> taskLLUnsubscribe = LL_UnsubscribeAsync(@params);
+
+                // The use of await rethrows exceptions from the task
+                LL_UnsubscribeResult resultLLUnsubscribe = await taskLLUnsubscribe;
+                ThrowIfError(resultLLUnsubscribe.Code, resultLLUnsubscribe.Message);
+                if (resultLLUnsubscribe.Code == "200")
+                {
+                    resultUnsubscribe.Successful = true;
+                    resultUnsubscribe.Conference = resultLLUnsubscribe.Result.Conference;
+                    if (resultLLUnsubscribe.Result.Accepted != null) resultUnsubscribe.Accepted = resultLLUnsubscribe.Result.Accepted.ConvertAll<UnsubscribeResult.AcceptedResult>(a => new UnsubscribeResult.AcceptedResult() { Name = a.Name });
+                    if (resultLLUnsubscribe.Result.Rejected != null) resultUnsubscribe.Rejected = resultLLUnsubscribe.Result.Rejected.ConvertAll<UnsubscribeResult.RejectedResult>(a => new UnsubscribeResult.RejectedResult() { Name = a.Name, Reason = a.Reason });
+                }
+                Log(LogLevel.Debug, string.Format("Unsubscribe for conference {0} {1}", @params.Conference, resultUnsubscribe.Successful ? "successful" : "unsuccessful"));
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, "Unsubscribe for conference {0} exception", @params.Conference);
+            }
+
+            return resultUnsubscribe;
+        }
+
         // Low Level API
 
         public Task<LL_SubscribeResult> LL_SubscribeAsync(LL_SubscribeParams parameters)
         {
             return mAPI.ExecuteAsync<LL_SubscribeParams, LL_SubscribeResult>("conference.subscribe", parameters);
+        }
+
+        public Task<LL_UnsubscribeResult> LL_UnsubscribeAsync(LL_UnsubscribeParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_UnsubscribeParams, LL_UnsubscribeResult>("conference.unsubscribe", parameters);
         }
 
         private void Log(LogLevel level, string message,
