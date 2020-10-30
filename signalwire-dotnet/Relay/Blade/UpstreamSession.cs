@@ -312,8 +312,8 @@ namespace Blade
                                 mSocket.Options.ClientCertificates.Add(new X509Certificate2(mOptions.ClientCertificate));
                             }
 
-#if NETSTANDARD2_1
-                    mSocket.Options.RemoteCertificateValidationCallback += (s, c, ch, e) => true;
+#if NETCOREAPP2_1 || NETSTANDARD2_1
+                            mSocket.Options.RemoteCertificateValidationCallback += (s, c, ch, e) => true;
 #endif
                             mSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(5); // 5 second ping/pong check
                             mSocket.Options.SetBuffer(64 * 1024, 64 * 1024); // 64kb buffers before continuation is used, per .NET Framework limit
