@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>netstandard2.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
     <RootNamespace>SignalWire</RootNamespace>
     <NoWarn>$(NoWarn);CS0618;</NoWarn>
 
@@ -18,10 +18,6 @@
     <PackageLicenseUrl>http://github.com/signalwire/signalwire-dotnet/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/signalwire/signalwire-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1'">
-    <DefineConstants>NETCOREAPP3_1</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

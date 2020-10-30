@@ -37,6 +37,7 @@ namespace Blade
     public class SimpleConsoleLogger : ILogger
     {
         public static bool JsonOutput = false;
+        private static object Locker = new object();
         
 #if DEBUG
         private const int FRAME_OFFSET = 5;
@@ -66,7 +67,7 @@ namespace Blade
             if (!IsEnabled(logLevel)) return;
 
             string timestamp = DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss.fff");
-            lock (this)
+            lock (Locker)
             {
                 if (JsonOutput)
                 {
