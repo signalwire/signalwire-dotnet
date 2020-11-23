@@ -163,11 +163,11 @@ namespace SignalWire.Relay
                     if (resultLLSubscribe.Result.Accepted != null) resultSubscribe.Accepted = resultLLSubscribe.Result.Accepted.ConvertAll<SubscribeResult.AcceptedResult>(a => new SubscribeResult.AcceptedResult() { Name = a.Name });
                     if (resultLLSubscribe.Result.Rejected != null) resultSubscribe.Rejected = resultLLSubscribe.Result.Rejected.ConvertAll<SubscribeResult.RejectedResult>(a => new SubscribeResult.RejectedResult() { Name = a.Name, Reason = a.Reason });
                 }
-                Log(LogLevel.Debug, string.Format("Subscribe for conference {0} {1}", @params.Conference, resultSubscribe.Successful ? "successful" : "unsuccessful"));
+                Log(LogLevel.Debug, string.Format("Subscribe for conference '{0}' {1}", @params.Conference, resultSubscribe.Successful ? "successful" : "unsuccessful"));
             }
             catch (Exception exc)
             {
-                Log(LogLevel.Error, exc, "Subscribe for conference {0} exception", @params.Conference);
+                Log(LogLevel.Error, exc, "Subscribe for conference '{0}' exception", @params.Conference);
             }
 
             return resultSubscribe;
@@ -191,11 +191,11 @@ namespace SignalWire.Relay
                     if (resultLLUnsubscribe.Result.Accepted != null) resultUnsubscribe.Accepted = resultLLUnsubscribe.Result.Accepted.ConvertAll<UnsubscribeResult.AcceptedResult>(a => new UnsubscribeResult.AcceptedResult() { Name = a.Name });
                     if (resultLLUnsubscribe.Result.Rejected != null) resultUnsubscribe.Rejected = resultLLUnsubscribe.Result.Rejected.ConvertAll<UnsubscribeResult.RejectedResult>(a => new UnsubscribeResult.RejectedResult() { Name = a.Name, Reason = a.Reason });
                 }
-                Log(LogLevel.Debug, string.Format("Unsubscribe for conference {0} {1}", @params.Conference, resultUnsubscribe.Successful ? "successful" : "unsuccessful"));
+                Log(LogLevel.Debug, string.Format("Unsubscribe for conference '{0}' {1}", @params.Conference, resultUnsubscribe.Successful ? "successful" : "unsuccessful"));
             }
             catch (Exception exc)
             {
-                Log(LogLevel.Error, exc, "Unsubscribe for conference {0} exception", @params.Conference);
+                Log(LogLevel.Error, exc, "Unsubscribe for conference '{0}' exception", @params.Conference);
             }
 
             return resultUnsubscribe;
