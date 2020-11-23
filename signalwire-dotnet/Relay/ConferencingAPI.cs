@@ -58,6 +58,14 @@ namespace SignalWire.Relay
             return result;
         }
 
+        public ListBootstrapResult ListBootstrap()
+        {
+            var result = InternalListBootstrapAsync(new LL_ListBootstrapParams()
+            {
+            }).Result;
+            return result;
+        }
+
         //internal void MessageStateChangeHandler(MessagingEventParams eventParams, MessagingEventParams.StateParams stateParams)
         //{
         //    Message message = new Message()
@@ -193,6 +201,31 @@ namespace SignalWire.Relay
             return resultUnsubscribe;
         }
 
+        private async Task<ListBootstrapResult> InternalListBootstrapAsync(LL_ListBootstrapParams @params)
+        {
+            ListBootstrapResult resultListBoostrap = new ListBootstrapResult();
+
+            try
+            {
+                Task<LL_ListBootstrapResult> taskLLListBootstrap = LL_ListBootstrapAsync(@params);
+
+                // The use of await rethrows exceptions from the task
+                LL_ListBootstrapResult resultLLListBootstrap = await taskLLListBootstrap;
+                ThrowIfError(resultLLListBootstrap.Code, resultLLListBootstrap.Message);
+                if (resultLLListBootstrap.Code == "200")
+                {
+                    resultListBoostrap.Successful = true;
+                }
+                Log(LogLevel.Debug, string.Format("List Bootstrap {0}", resultListBoostrap.Successful ? "successful" : "unsuccessful"));
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, "List Bootstrap exception");
+            }
+
+            return resultListBoostrap;
+        }
+
         // Low Level API
 
         public Task<LL_SubscribeResult> LL_SubscribeAsync(LL_SubscribeParams parameters)
@@ -203,6 +236,11 @@ namespace SignalWire.Relay
         public Task<LL_UnsubscribeResult> LL_UnsubscribeAsync(LL_UnsubscribeParams parameters)
         {
             return mAPI.ExecuteAsync<LL_UnsubscribeParams, LL_UnsubscribeResult>("conference.unsubscribe", parameters);
+        }
+
+        public Task<LL_ListBootstrapResult> LL_ListBootstrapAsync(LL_ListBootstrapParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_ListBootstrapParams, LL_ListBootstrapResult>("conference.list.bootstrap", parameters);
         }
 
         private void Log(LogLevel level, string message,

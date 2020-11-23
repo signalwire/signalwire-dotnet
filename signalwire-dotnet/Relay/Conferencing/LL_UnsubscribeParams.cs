@@ -9,7 +9,7 @@ namespace SignalWire.Relay.Conferencing
 {
     public sealed class LL_UnsubscribeParams
     {
-        [JsonProperty("conference", Required = Required.Always)]
+        [JsonProperty("conference", NullValueHandling = NullValueHandling.Ignore)]
         public string Conference { get; set; }
 
         [JsonProperty("channels", Required = Required.Always)]

@@ -10,37 +10,42 @@ namespace Conference_Subscribe
 {
     internal class TestConsumer : Consumer
     {
-        private const string CONFERENCE = "conf:3472";
-        private const string CHANNEL = "conference-liveArray";
+        private const string CHANNEL = "conference-list";
 
         protected override void Setup()
         {
             Host = "relay.swire.io";
             Project = "0eb389ac-ec50-4c44-9da8-8594f1d1593c";
-            Token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE2MDI4ODA4NzAsImlzcyI6IlNpZ25hbFdpcmUgSldUIiwianRpIjoid2Q1VGZ0eTlpLUhNMjIyMlBuRlM2WFRVNjk0Iiwic2NvcGUiOiJ3ZWJydGMiLCJzdWIiOiIwZWIzODlhYy1lYzUwLTRjNDQtOWRhOC04NTk0ZjFkMTU5M2MiLCJyZXNvdXJjZSI6ImJhM2MyYWYyLTMwN2YtNGI3ZC05ZDc0LWQ5ZjFjZDljNDYzYyIsImV4cCI6MTYwMjg4MTc3MH0.aCnDdyu5smCA-ZJTVF3LxdbWG5XFXzuId-Twkz2BGa2wT_V2AwPBLxspBFYtg1refEG40UnSjO25rqYRx3lSPA";
-            //Contexts = new List<string> { "test" };
+            Token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE2MDYxNTUwNjQsImlzcyI6IlNpZ25hbFdpcmUgSldUIiwianRpIjoiU0ZRRDdUUWxVZGxremhSMlhBTk8tQm0xZk5RIiwic2NvcGUiOiJ3ZWJydGMiLCJzdWIiOiIwZWIzODlhYy1lYzUwLTRjNDQtOWRhOC04NTk0ZjFkMTU5M2MiLCJyZXNvdXJjZSI6IjA2NTMyOWYyLWQ1MGMtNDA0Ni04OTE5LTMyMDdjNGVjMTA5YSIsImV4cCI6MTYwNjE1NTk2NH0.7PQ9gI6qKcQqB1od8VY50fKeo4JzsUJ_r9QtQwwXex2sq6cWfxfFqOEnnUGLMS0RwJInpCjCLnvMc9aIp95-8w";
             JWT = true;
         }
 
         protected override void Ready()
         {
-            // Create a new phone call and dial it immediately, block until it's answered, times out, busy, or another error occurs
-            SubscribeResult resultSubscribe = Client.Conferencing.Subscribe(CONFERENCE, new List<string> { CHANNEL });
+            SubscribeResult resultSubscribe = Client.Conferencing.Subscribe(null, new List<string> { CHANNEL });
 
             if (!resultSubscribe.Successful)
             {
-                // The conference was not subscribed to successfully, stop the consumer and bail out
                 Stop();
                 return;
             }
 
-            Thread.Sleep(10000);
+            Thread.Sleep(5000);
 
-            //UnsubscribeResult resultUnsubscribe = Client.Conferencing.Unsubscribe(CONFERENCE, new List<string> { CHANNEL });
+            ListBootstrapResult resultListBootstrap = Client.Conferencing.ListBootstrap();
+
+            if (!resultListBootstrap.Successful)
+            {
+                Stop();
+                return;
+            }
+
+            Thread.Sleep(5000);
+
+            //UnsubscribeResult resultUnsubscribe = Client.Conferencing.Unsubscribe(null, new List<string> { CHANNEL });
 
             //if (!resultSubscribe.Successful)
             //{
-            //    // The conference was not unsubscribed from successfully, stop the consumer and bail out
             //    Stop();
             //    return;
             //}
