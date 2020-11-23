@@ -26,7 +26,7 @@ namespace SignalWire.Relay.Conferencing
                 public string Reason { get; set; }
             }
 
-            [JsonProperty("conference", Required = Required.Always)]
+            [JsonProperty("conference", NullValueHandling = NullValueHandling.Ignore)]
             public string Conference { get; set; }
 
             [JsonProperty("accepted", NullValueHandling = NullValueHandling.Ignore)]
