@@ -14,5 +14,8 @@ namespace SignalWire.Relay.Calling
 
         [JsonProperty("call_id", Required = Required.Always)]
         public string CallID { get; set; }
+
+        [JsonProperty("max_duration", NullValueHandling = NullValueHandling.Ignore)]
+        public int? MaxDuration { get; set; }
     }
 }

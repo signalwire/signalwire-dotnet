@@ -41,22 +41,23 @@ namespace SignalWire.Relay
 
         // High Level API
 
-        public PhoneCall NewPhoneCall(string to, string from, int timeout = 30)
+        public PhoneCall NewPhoneCall(string to, string from, int timeout = 30, int? maxDuration = null)
         {
             PhoneCall call = new PhoneCall(this, Guid.NewGuid().ToString())
             {
                 To = to,
                 From = from,
-                Timeout = timeout
+                Timeout = timeout,
+                MaxDuration = maxDuration
             };
             mCalls.TryAdd(call.TemporaryID, call);
             OnCallCreated?.Invoke(this, call);
             return call;
         }
 
-        public DialResult DialPhone(string to, string from, int timeout = 30) { return NewPhoneCall(to, from, timeout).Dial(); }
+        public DialResult DialPhone(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).Dial(); }
 
-        public DialAction DialPhoneAsync(string to, string from, int timeout = 30) { return NewPhoneCall(to, from, timeout).DialAsync(); }
+        public DialAction DialPhoneAsync(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).DialAsync(); }
 
         // @TODO: NewSIPCall and NewWebRTCCall
 
