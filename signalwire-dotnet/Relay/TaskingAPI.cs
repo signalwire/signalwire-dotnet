@@ -39,7 +39,7 @@ namespace SignalWire.Relay
         {
             if (broadcastParams.Event != "queuing.relay.tasks") return;
 
-            Log(LogLevel.Debug, string.Format("TaskingAPI OnNotification"));
+            Log(LogLevel.Debug, "TaskingAPI OnNotification");
 
             RelayTask taskingEventParams = null;
             try { taskingEventParams = broadcastParams.ParametersAs<RelayTask>(); }
