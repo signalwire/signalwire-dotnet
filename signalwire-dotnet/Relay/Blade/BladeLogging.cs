@@ -25,7 +25,7 @@ namespace Blade
                 if (state.TryGetValue("message", out var msg) && msg.Type == JTokenType.String)
                 {
                     if (exc != null)
-                        return string.Format(msg.ToString(), '\n', exc.ToString());
+                        return msg.ToString() + "\n" + exc.ToString();
 
                     return msg.ToString();
                 }
