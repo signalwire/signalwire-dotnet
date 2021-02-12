@@ -70,7 +70,7 @@ namespace SignalWire.Relay
             TaskCompletionSource<TResult> tcs = new TaskCompletionSource<TResult>();
             if (mProtocol == null)
             {
-                string message = string.Format("Setup has not been performed");
+                string message = "Setup has not been performed";
                 tcs.SetException(new KeyNotFoundException(message));
                 Log(LogLevel.Error, message);
                 return await tcs.Task;
@@ -107,14 +107,14 @@ namespace SignalWire.Relay
             {
                 if (mClient.Session.State != UpstreamSession.SessionState.Running)
                 {
-                    string message = string.Format("Setup failed because the session is not running");
+                    string message = "Setup failed because the session is not running";
                     Log(LogLevel.Error, message);
                     throw new InvalidOperationException(message);
                 }
 
                 if (!await CheckProtocolAvailableAsync("signalwire", TimeSpan.FromSeconds(5)))
                 {
-                    string message = string.Format("Setup failed due to timeout waiting for protocol 'signalwire'");
+                    string message = "Setup failed due to timeout waiting for protocol 'signalwire'";
                     Log(LogLevel.Error, message);
                     throw new TimeoutException(message);
                 }
