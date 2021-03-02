@@ -66,7 +66,9 @@ namespace Blade
         {
             if (!IsEnabled(logLevel)) return;
 
-            string timestamp = DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss.fff");
+            DateTime utcNow = DateTime.UtcNow;
+            string timestamp = utcNow.ToString("yyyy/MM/dd HH:mm:ss.fff");
+            double ts = utcNow.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
             lock (Locker)
             {
                 if (JsonOutput)
@@ -74,7 +76,7 @@ namespace Blade
                     // start building log output object
                     JObject output = new JObject();
                     output["level"] = logLevel.ToString();
-                    output["timestamp"] = timestamp;
+                    output["timestamp"] = ts; // Elastic indexing requires floating value of seconds since unix epoch
 
                     // attempt to get the log state as json
                     if (state != null && typeof(JObject).IsAssignableFrom(state.GetType()))
