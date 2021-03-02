@@ -189,6 +189,8 @@ namespace Blade
         public string NodeID { get; private set; }
         public string MasterNodeID { get; private set; }
 
+        public List<UncertifiedConnectResult.IceServer> IceServers { get; private set; } = new List<UncertifiedConnectResult.IceServer>();
+
         public object UserData { get; set; }
 
         public Cache Cache { get; }
@@ -482,6 +484,11 @@ namespace Blade
                 Blade.Messages.UncertifiedConnectResult uncertifiedConnectResult = result.ResultAs<Blade.Messages.UncertifiedConnectResult>();
                 mOptions.UncertifiedConnectParams.Protocol = uncertifiedConnectResult.Protocol;
                 protocol = uncertifiedConnectResult.Protocol;
+                if (uncertifiedConnectResult.IceServers != null)
+                {
+                    IceServers.Clear();
+                    IceServers.AddRange(uncertifiedConnectResult.IceServers);
+                }
             }
 
             mRemoteDisconnect = false;
