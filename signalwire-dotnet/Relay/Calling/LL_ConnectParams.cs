@@ -23,5 +23,8 @@ namespace SignalWire.Relay.Calling
 
         [JsonProperty("ringback", NullValueHandling = NullValueHandling.Ignore)]
         public List<CallMedia> Ringback { get; set; }
+
+        [JsonProperty("max_duration", NullValueHandling = NullValueHandling.Ignore)]
+        public int? MaxDuration { get; set; }
     }
 }

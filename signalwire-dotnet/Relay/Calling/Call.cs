@@ -156,6 +156,8 @@ namespace SignalWire.Relay.Calling
         public bool Answered { get { return State == CallState.answered; } }
         public bool Ended { get { return State == CallState.ended; } }
 
+        public int? MaxDuration { get; set; }
+
         public bool WaitFor(TimeSpan? timeout, params CallState[] states)
         {
             if (Array.Exists(states, s => State == s)) return true;
@@ -411,12 +413,12 @@ namespace SignalWire.Relay.Calling
 
         protected abstract Task<DialResult> InternalDialAsync();
 
-        public AnswerResult Answer()
+        public AnswerResult Answer(int? maxDuration = null)
         {
-            return InternalAnswerAsync().Result;
+            return InternalAnswerAsync(maxDuration).Result;
         }
 
-        public AnswerAction AnswerAsync()
+        public AnswerAction AnswerAsync(int? maxDuration = null)
         {
             AnswerAction action = new AnswerAction
             {
@@ -424,13 +426,13 @@ namespace SignalWire.Relay.Calling
             };
             Task.Run(async () =>
             {
-                action.Result = await InternalAnswerAsync();
+                action.Result = await InternalAnswerAsync(maxDuration);
                 action.Completed = true;
             });
             return action;
         }
 
-        private async Task<AnswerResult> InternalAnswerAsync()
+        private async Task<AnswerResult> InternalAnswerAsync(int? maxDuration = null)
         {
             AnswerResult resultAnswer = new AnswerResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
@@ -456,6 +458,7 @@ namespace SignalWire.Relay.Calling
                 {
                     NodeID = mNodeID,
                     CallID = mID,
+                    MaxDuration = maxDuration,
                 });
 
                 // The use of await rethrows exceptions from the task
@@ -546,12 +549,12 @@ namespace SignalWire.Relay.Calling
             return resultHangup;
         }
 
-        public ConnectResult Connect(List<List<CallDevice>> devices, List<CallMedia> ringback = null)
+        public ConnectResult Connect(List<List<CallDevice>> devices, List<CallMedia> ringback = null, int? maxDuration = null)
         {
-            return InternalConnectAsync(devices, ringback).Result;
+            return InternalConnectAsync(devices, ringback, maxDuration).Result;
         }
 
-        public ConnectAction ConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback = null)
+        public ConnectAction ConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback = null, int? maxDuration = null)
         {
             ConnectAction action = new ConnectAction
             {
@@ -563,7 +566,7 @@ namespace SignalWire.Relay.Calling
                 ConnectStateChangeCallback connectStateChangeCallback = (a, c, e, p) => action.State = p.State;
                 OnConnectStateChange += connectStateChangeCallback;
 
-                action.Result = await InternalConnectAsync(devices, ringback);
+                action.Result = await InternalConnectAsync(devices, ringback, maxDuration);
                 action.Completed = true;
 
                 OnConnectStateChange -= connectStateChangeCallback;
@@ -571,7 +574,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-        private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback)
+        private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback, int? maxDuration = null)
         {
             ConnectResult resultConnect = new ConnectResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
@@ -599,7 +602,8 @@ namespace SignalWire.Relay.Calling
                     CallID = ID,
                     NodeID = NodeID,
                     Devices = devices,
-                    Ringback = ringback
+                    Ringback = ringback,
+                    MaxDuration = maxDuration
                 });
 
                 // The use of await rethrows exceptions from the task
@@ -1952,7 +1956,8 @@ namespace SignalWire.Relay.Calling
                             Timeout = Timeout,
                         },
                     },
-                    TemporaryCallID = mTemporaryID
+                    TemporaryCallID = mTemporaryID,
+                    MaxDuration = MaxDuration,
                 });
 
                 // The use of await rethrows exceptions from the task
