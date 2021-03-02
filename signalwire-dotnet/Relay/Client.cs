@@ -49,6 +49,7 @@ namespace SignalWire.Relay
         private CallingAPI mCallingAPI = null;
         private TaskingAPI mTaskingAPI = null;
         private MessagingAPI mMessagingAPI = null;
+        private ConferencingAPI mConferencingAPI = null;
 
         public Client(
             string project,
@@ -93,6 +94,7 @@ namespace SignalWire.Relay
             mCallingAPI = new CallingAPI(mSignalwireAPI);
             mTaskingAPI = new TaskingAPI(mSignalwireAPI);
             mMessagingAPI = new MessagingAPI(mSignalwireAPI);
+            mConferencingAPI = new ConferencingAPI(mSignalwireAPI);
 
             Session.OnReady += s =>
             {
@@ -118,6 +120,8 @@ namespace SignalWire.Relay
         public TaskingAPI Tasking {  get { return mTaskingAPI; } }
 
         public MessagingAPI Messaging { get { return mMessagingAPI; } }
+
+        public ConferencingAPI Conferencing { get { return mConferencingAPI;  } }
 
         public object UserData { get; set; }
 
