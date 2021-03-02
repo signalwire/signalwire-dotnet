@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 - Network data filtering
 - Fuzzy reconnect delay
+- Max duration support for calls
 
 ## [2.3.0] - 2019-10-22
 ### Added
