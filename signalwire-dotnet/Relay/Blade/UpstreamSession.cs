@@ -435,6 +435,7 @@ namespace Blade
             {
                 Log(LogLevel.Error, exc, "ReceiveAsync Exception");
                 Close(WebSocketCloseStatus.InternalServerError, "Server dropped connection ungracefully");
+                return;
             }
             AddTask("OnConnect OnPulse Delay", Task.Delay(TimeSpan.FromSeconds(1)).ContinueWith(OnPulse));
 
