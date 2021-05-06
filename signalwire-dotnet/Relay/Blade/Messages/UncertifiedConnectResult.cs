@@ -10,8 +10,8 @@ namespace Blade.Messages
     {
         public sealed class IceServer
         {
-            [JsonProperty("url", Required = Required.Always)]
-            public string URL { get; set; }
+            [JsonProperty("urls", Required = Required.Always)]
+            public List<string> URLs { get; set; } = new List<string>();
 
             [JsonProperty("credential", Required = Required.Always)]
             public string Credential { get; set; }
