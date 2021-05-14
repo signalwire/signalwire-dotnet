@@ -224,6 +224,26 @@ namespace SignalWire.Relay
                         }));
                         break;
                     }
+                    case CallDevice.DeviceType.sip:
+                    {
+                        CallDevice.SipParams sipParams = null;
+                        try { sipParams = receiveParams.Device.ParametersAs<CallDevice.SipParams>(); }
+                        catch (Exception exc)
+                        {
+                            Log(LogLevel.Warning, exc, "Failed to parse SipParams");
+                            return;
+                        }
+
+                        // If the call already exists under the real call id simply obtain the call, otherwise create a new call
+                        call = mCalls.GetOrAdd(receiveParams.CallID, k => (tmp = new PhoneCall(this, receiveParams.NodeID, receiveParams.CallID)
+                        {
+                            To = sipParams.To,
+                            From = sipParams.From,
+                            Headers = sipParams.Headers,
+                        }));
+                        break;
+                    }
+
                 // @TODO: sip and webrtc
                 default:
                     Log(LogLevel.Warning, string.Format("Unknown device type: {0}", receiveParams.Device.Type));

@@ -12,7 +12,7 @@ namespace SignalWire.Relay.Calling
         public enum DeviceType
         {
             phone,
-            //sip,
+            sip,
             //webrtc,
         }
 
@@ -26,6 +26,18 @@ namespace SignalWire.Relay.Calling
 
             [JsonProperty("timeout", NullValueHandling = NullValueHandling.Ignore)]
             public int Timeout { get; set; } = 30;
+        }
+
+        public sealed class SipParams
+        {
+            [JsonProperty("to", Required = Required.Always)]
+            public string To { get; set; }
+
+            [JsonProperty("from", Required = Required.Always)]
+            public string From { get; set; }
+
+            [JsonProperty("headers", NullValueHandling = NullValueHandling.Ignore)]
+            public JObject Headers { get; set; }
         }
 
         [JsonProperty("type", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
