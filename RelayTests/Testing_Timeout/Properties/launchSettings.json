@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Testing_TimeoutRetry": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "TEST_HOST": "relay.swire.io",
+        "TEST_PROJECT": "0eb389ac-ec50-4c44-9da8-8594f1d1593c",
+        "TEST_TOKEN": "PT2cc964eca64905ca023f087f29f704c0e4595db0a57f6a52"
+      }
+    }
+  }
+}
