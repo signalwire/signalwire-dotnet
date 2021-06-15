@@ -235,7 +235,7 @@ namespace SignalWire.Relay
                         }
 
                         // If the call already exists under the real call id simply obtain the call, otherwise create a new call
-                        call = mCalls.GetOrAdd(receiveParams.CallID, k => (tmp = new PhoneCall(this, receiveParams.NodeID, receiveParams.CallID)
+                        call = mCalls.GetOrAdd(receiveParams.CallID, k => (tmp = new SipCall(this, receiveParams.NodeID, receiveParams.CallID)
                         {
                             To = sipParams.To,
                             From = sipParams.From,
