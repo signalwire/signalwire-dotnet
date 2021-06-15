@@ -244,7 +244,7 @@ namespace SignalWire.Relay
                         break;
                     }
 
-                // @TODO: sip and webrtc
+                // @TODO: webrtc
                 default:
                     Log(LogLevel.Warning, string.Format("Unknown device type: {0}", receiveParams.Device.Type));
                     return;
