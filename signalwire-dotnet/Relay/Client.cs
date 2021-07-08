@@ -49,6 +49,7 @@ namespace SignalWire.Relay
         private CallingAPI mCallingAPI = null;
         private TaskingAPI mTaskingAPI = null;
         private MessagingAPI mMessagingAPI = null;
+        private TestingAPI mTestingAPI = null;
 
         public Client(
             string project,
@@ -93,12 +94,16 @@ namespace SignalWire.Relay
             mCallingAPI = new CallingAPI(mSignalwireAPI);
             mTaskingAPI = new TaskingAPI(mSignalwireAPI);
             mMessagingAPI = new MessagingAPI(mSignalwireAPI);
+            mTestingAPI = new TestingAPI(mSignalwireAPI);
 
             Session.OnReady += s =>
             {
-                // A little bit hacky, but this ensures the protocol is propagated correctly to where it's needed further down the road, and that we register a handler for events
-                mSignalwireAPI.Protocol = s.Options.UncertifiedConnectParams.Protocol;
-                Session.RegisterSubscriptionHandler(s.Options.UncertifiedConnectParams.Protocol, "notifications", (s2, r, p) => mSignalwireAPI.ExecuteNotificationCallback(p));
+                if (s.Options.UncertifiedConnectParams?.Protocol != null)
+                {
+                    // A little bit hacky, but this ensures the protocol is propagated correctly to where it's needed further down the road, and that we register a handler for events
+                    mSignalwireAPI.Protocol = s.Options.UncertifiedConnectParams.Protocol;
+                    Session.RegisterSubscriptionHandler(s.Options.UncertifiedConnectParams.Protocol, "notifications", (s2, r, p) => mSignalwireAPI.ExecuteNotificationCallback(p));
+                }
                 OnReady?.Invoke(this);
             };
             Session.OnRestored += s => OnRestored?.Invoke(this);
@@ -118,6 +123,8 @@ namespace SignalWire.Relay
         public TaskingAPI Tasking {  get { return mTaskingAPI; } }
 
         public MessagingAPI Messaging { get { return mMessagingAPI; } }
+
+        public TestingAPI Testing { get { return mTestingAPI; } }
 
         public object UserData { get; set; }
 
@@ -157,6 +164,7 @@ namespace SignalWire.Relay
             mCallingAPI.Reset();
             mTaskingAPI.Reset();
             mMessagingAPI.Reset();
+            mTestingAPI.Reset();
         }
 
         public void Connect()

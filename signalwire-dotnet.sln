@@ -61,6 +61,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_PlayVolume", "Relay
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calling_PlayTwice", "RelayTests\Calling_PlayTwice\Calling_PlayTwice.csproj", "{A1E9671C-7099-4EC1-95DD-D4CE96AE34AD}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing_TimeoutRetry", "RelayTests\Testing_Timeout\Testing_TimeoutRetry.csproj", "{8B745706-5B2E-41EB-8EC1-99AB84AADDCB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -171,6 +173,10 @@ Global
 		{A1E9671C-7099-4EC1-95DD-D4CE96AE34AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1E9671C-7099-4EC1-95DD-D4CE96AE34AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1E9671C-7099-4EC1-95DD-D4CE96AE34AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B745706-5B2E-41EB-8EC1-99AB84AADDCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B745706-5B2E-41EB-8EC1-99AB84AADDCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B745706-5B2E-41EB-8EC1-99AB84AADDCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B745706-5B2E-41EB-8EC1-99AB84AADDCB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -201,6 +207,7 @@ Global
 		{4C3CD70C-0CCE-4A1F-95B7-4A7F99ACED92} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
 		{8C0443DB-35F7-44BF-B26C-DCCC35DF14C6} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
 		{A1E9671C-7099-4EC1-95DD-D4CE96AE34AD} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
+		{8B745706-5B2E-41EB-8EC1-99AB84AADDCB} = {1861F546-601F-40C5-87F9-90904AEF3FFC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {07D95FE8-9E6B-4BC5-88AC-BAD3CAF4D2E7}
