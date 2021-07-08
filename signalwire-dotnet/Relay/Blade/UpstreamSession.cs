@@ -769,7 +769,7 @@ namespace Blade
 
                 Request request = Request.Parse(obj);
                 Log(LogLevel.Debug, string.Format("Received Request Frame: {0} for {1}", request.ID, request.Method));
-                Log(LogLevel.Debug, obj.ToString());
+                Log(LogLevel.Debug, obj.ToString(Formatting.None));
 
                 switch (request.Method)
                 {
@@ -854,7 +854,7 @@ namespace Blade
             {
                 Response response = Response.Parse(obj);
                 Log(LogLevel.Debug, string.Format("Received Response Frame: {0}", response.ID));
-                Log(LogLevel.Debug, obj.ToString());
+                Log(LogLevel.Debug, obj.ToString(Formatting.None));
 
                 if (!mRequests.TryRemove(response.ID, out Request request))
                 {
