@@ -1908,6 +1908,81 @@ namespace SignalWire.Relay.Calling
         }
     }
 
+public sealed class SipCall : Call
+    {
+        public string To { get; set; }
+        public string From { get; set; }
+        public JObject Headers { get; set; }
+
+        internal SipCall(CallingAPI api, string nodeID, string callID)
+            : base(api, nodeID, callID) { }
+        internal SipCall(CallingAPI api, string temporaryCallID)
+            : base (api, temporaryCallID) { }
+
+        public override string Type => "sip";
+
+        protected override async Task<DialResult> InternalDialAsync()
+        {
+            DialResult resultDial = new DialResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            AnsweredCallback answeredCallback = (a, c, e, p) =>
+            {
+                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
+                resultDial.Call = c;
+                tcsCompletion.SetResult(true);
+            };
+            EndedCallback endedCallback = (a, c, e, p) =>
+            {
+                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(false);
+            };
+
+            OnAnswered += answeredCallback;
+            OnEnded += endedCallback;
+
+            try
+            {
+                Task<LL_BeginResult> taskLLBegin = mAPI.LL_BeginAsync(new LL_BeginParams()
+                {
+                    Device = new CallDevice()
+                    {
+                        Type = CallDevice.DeviceType.sip,
+                        Parameters = new CallDevice.SipParams()
+                        {
+                            To = To,
+                            From = From,
+                            Headers = Headers,
+                        },
+                    },
+                    TemporaryCallID = mTemporaryID,
+                    MaxDuration = MaxDuration,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_BeginResult resultLLBegin = await taskLLBegin;
+                if (resultLLBegin.Code == "200")
+                {
+                    Log(LogLevel.Debug, string.Format("Dial for call {0} waiting for completion events", ID));
+
+                    resultDial.Successful = await tcsCompletion.Task;
+
+                    Log(LogLevel.Debug, string.Format("Dial for call {0} {1}", ID, resultDial.Successful ? "successful" : "unsuccessful"));
+                }
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, string.Format("Dial for call {0} exception", ID));
+            }
+
+            // Unhook temporary callbacks
+            OnAnswered -= answeredCallback;
+            OnEnded -= endedCallback;
+
+            return resultDial;
+        }
+    }
     public sealed class PhoneCall : Call
     {
         public string To { get; set; }
