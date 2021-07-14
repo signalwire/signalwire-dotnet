@@ -65,7 +65,7 @@ namespace SignalWire.Relay
             });
         }
 
-        internal async Task<TResult> ExecuteAsync<TParams, TResult>(string method, TParams parameters)
+        internal async Task<TResult> ExecuteAsync<TParams, TResult>(string method, TParams parameters, int ttl = Request.DEFAULT_RESPONSE_TIMEOUT_SECONDS)
         {
             TaskCompletionSource<TResult> tcs = new TaskCompletionSource<TResult>();
             if (mProtocol == null)
@@ -75,8 +75,9 @@ namespace SignalWire.Relay
                 Log(LogLevel.Error, message);
                 return await tcs.Task;
             }
+            if (ttl < 1) ttl = Request.DEFAULT_RESPONSE_TIMEOUT_SECONDS;
 
-            Task<ResponseTaskResult<ExecuteResult>> task = mClient.Session.ExecuteAsync(mProtocol, method, parameters);
+            Task<ResponseTaskResult<ExecuteResult>> task = mClient.Session.ExecuteAsync(mProtocol, method, parameters, TimeSpan.FromSeconds(ttl));
             ResponseTaskResult<ExecuteResult> result = await task;
 
             if (task.IsFaulted) tcs.SetException(task.Exception);
