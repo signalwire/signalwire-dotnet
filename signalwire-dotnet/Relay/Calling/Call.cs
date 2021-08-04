@@ -1908,10 +1908,12 @@ namespace SignalWire.Relay.Calling
         }
     }
 
-public sealed class SipCall : Call
+    public sealed class SipCall : Call
     {
         public string To { get; set; }
         public string From { get; set; }
+        public string FromName { get; set; }
+        public string Codecs { get; set; }
         public JObject Headers { get; set; }
 
         internal SipCall(CallingAPI api, string nodeID, string callID)

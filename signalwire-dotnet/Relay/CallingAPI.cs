@@ -55,9 +55,30 @@ namespace SignalWire.Relay
             return call;
         }
 
+        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JObject headers = null, int? maxDuration = null)
+        {
+            SipCall call = new SipCall(this, Guid.NewGuid().ToString())
+            {
+                To = to,
+                From = from,
+                MaxDuration = maxDuration,
+                Headers = headers,
+                FromName = fromName,
+                Codecs = codecs
+            
+            };
+            mCalls.TryAdd(call.TemporaryID, call);
+            OnCallCreated?.Invoke(this, call);
+            return call;
+        }
+
         public DialResult DialPhone(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).Dial(); }
 
         public DialAction DialPhoneAsync(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).DialAsync(); }
+
+        public DialResult DialSip(string to, string from, string fromName = null, string codecs = null, JObject headers = null, int? maxDuration = null) { return NewSipCall(to, from, fromName,codecs, headers, maxDuration).Dial(); }
+
+        public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, JObject headers = null, int timeout = 30, int? maxDuration = null) { return NewSipCall(to, from, fromName, codecs, headers, maxDuration).DialAsync(); }
 
         // @TODO: NewSIPCall and NewWebRTCCall
 

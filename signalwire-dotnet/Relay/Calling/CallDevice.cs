@@ -35,9 +35,16 @@ namespace SignalWire.Relay.Calling
 
             [JsonProperty("from", Required = Required.Always)]
             public string From { get; set; }
+            [JsonProperty("from_name", NullValueHandling = NullValueHandling.Ignore)]
+            public string from_name { get; set; }
 
             [JsonProperty("headers", NullValueHandling = NullValueHandling.Ignore)]
             public JObject Headers { get; set; }
+            [JsonProperty("codecs", NullValueHandling = NullValueHandling.Ignore)]
+            public List<string> Codecs { get; set; }
+
+            [JsonProperty("webrtc_media", NullValueHandling = NullValueHandling.Ignore)]
+            public bool? WebRTCMedia { get; set; }
         }
 
         [JsonProperty("type", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
