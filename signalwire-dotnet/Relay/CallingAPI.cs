@@ -55,7 +55,7 @@ namespace SignalWire.Relay
             return call;
         }
 
-        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JObject headers = null, int? maxDuration = null)
+        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int? maxDuration = null)
         {
             SipCall call = new SipCall(this, Guid.NewGuid().ToString())
             {
@@ -76,9 +76,9 @@ namespace SignalWire.Relay
 
         public DialAction DialPhoneAsync(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).DialAsync(); }
 
-        public DialResult DialSip(string to, string from, string fromName = null, string codecs = null, JObject headers = null, int? maxDuration = null) { return NewSipCall(to, from, fromName,codecs, headers, maxDuration).Dial(); }
+        public DialResult DialSip(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int? maxDuration = null) { return NewSipCall(to, from, fromName,codecs, headers, maxDuration).Dial(); }
 
-        public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, JObject headers = null, int timeout = 30, int? maxDuration = null) { return NewSipCall(to, from, fromName, codecs, headers, maxDuration).DialAsync(); }
+        public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30, int? maxDuration = null) { return NewSipCall(to, from, fromName, codecs, headers, maxDuration).DialAsync(); }
 
         // @TODO: NewSIPCall and NewWebRTCCall
 
@@ -193,6 +193,31 @@ namespace SignalWire.Relay
                             To = phoneParams.ToNumber,
                             From = phoneParams.FromNumber,
                             Timeout = phoneParams.Timeout,
+                            // Capture the state, it may not always be created the first time we see the call
+                            State = stateParams.CallState,
+                        }));
+                        break;
+                    }
+                 case CallDevice.DeviceType.sip:
+                    {
+                        CallDevice.SipParams sipParams = null;
+                        try { sipParams = stateParams.Device.ParametersAs<CallDevice.SipParams>(); }
+                        catch (Exception exc)
+                        {
+                            Log(LogLevel.Warning, exc, "Failed to parse SipParams");
+                            return;
+                        }
+
+                        // If the call already exists under the real call id simply obtain the call, however if the call was found under
+                        // a temporary call id then readd it here under the real call id, otherwise create a new call
+                        call = mCalls.GetOrAdd(stateParams.CallID, k => call ?? (tmp = new SipCall(this, stateParams.NodeID, stateParams.CallID)
+                        {
+                            To = sipParams.To,
+                            From = sipParams.From,
+                            FromName = sipParams.FromName,
+                            Headers = sipParams.Headers,
+
+                            
                             // Capture the state, it may not always be created the first time we see the call
                             State = stateParams.CallState,
                         }));

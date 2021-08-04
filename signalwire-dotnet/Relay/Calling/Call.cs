@@ -1914,7 +1914,7 @@ namespace SignalWire.Relay.Calling
         public string From { get; set; }
         public string FromName { get; set; }
         public string Codecs { get; set; }
-        public JObject Headers { get; set; }
+        public JArray Headers { get; set; }
 
         internal SipCall(CallingAPI api, string nodeID, string callID)
             : base(api, nodeID, callID) { }

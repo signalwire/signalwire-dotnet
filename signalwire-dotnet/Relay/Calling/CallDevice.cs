@@ -30,18 +30,21 @@ namespace SignalWire.Relay.Calling
 
         public sealed class SipParams
         {
-            [JsonProperty("to", Required = Required.Always)]
+             [JsonProperty("to", NullValueHandling = NullValueHandling.Ignore)]
+            //[JsonProperty("to", Required = Required.Always)]
             public string To { get; set; }
 
             [JsonProperty("from", Required = Required.Always)]
             public string From { get; set; }
+
             [JsonProperty("from_name", NullValueHandling = NullValueHandling.Ignore)]
-            public string from_name { get; set; }
+            public string FromName { get; set; }
 
             [JsonProperty("headers", NullValueHandling = NullValueHandling.Ignore)]
-            public JObject Headers { get; set; }
+            public JArray Headers { get; set; }
+
             [JsonProperty("codecs", NullValueHandling = NullValueHandling.Ignore)]
-            public List<string> Codecs { get; set; }
+            public string Codecs { get; set; }
 
             [JsonProperty("webrtc_media", NullValueHandling = NullValueHandling.Ignore)]
             public bool? WebRTCMedia { get; set; }
