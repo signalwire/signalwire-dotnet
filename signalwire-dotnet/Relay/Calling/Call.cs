@@ -29,6 +29,12 @@ namespace SignalWire.Relay.Calling
         public delegate void ConnectConnectedCallback(CallingAPI api, Call call, Call callConnected, CallingEventParams eventParams, CallingEventParams.ConnectParams connectParams);
         public delegate void ConnectDisconnectedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ConnectParams connectParams);
 
+        //public delegate void DisconnectStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DisconnectParams disconnectParams);
+        public delegate void DisconnectFailedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DisconnectParams disconnectParams);
+        //public delegate void DisconnectConnectingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DisconnectParams disconnectParams);
+        //public delegate void DisconnectConnectConnectedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DisconnectParams disconnectParams);
+        //public delegate void DisconnectDisconnectedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DisconnectParams disconnectParams);
+
         public delegate void PlayStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
         public delegate void PlayPlayingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
         public delegate void PlayErrorCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
@@ -90,6 +96,12 @@ namespace SignalWire.Relay.Calling
         public event ConnectConnectingCallback OnConnectConnecting;
         public event ConnectConnectedCallback OnConnectConnected;
         public event ConnectDisconnectedCallback OnConnectDisconnected;
+
+        //public event DisconnectStateChangeCallback OnDisconnectStateChange;
+        public event DisconnectFailedCallback OnDisconnectFailed;
+        //public event DisconnectConnectingCallback OnDisconnectConnecting;
+        //public event DisconnectConnectConnectedCallback OnDisconnectConnected;
+       // public event DisconnectDisconnectedCallback OnDisconnectDisconnected;
 
         public event PlayStateChangeCallback OnPlayStateChange;
         public event PlayPlayingCallback OnPlayPlaying;
@@ -574,7 +586,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-        private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback, int? maxDuration = null)
+         private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback, int? maxDuration = null)
         {
             ConnectResult resultConnect = new ConnectResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
@@ -627,6 +639,83 @@ namespace SignalWire.Relay.Calling
             OnConnectFailed -= failedCallback;
 
             return resultConnect;
+        }
+
+        public DisconnectResult Disconnect()
+        {
+            return InternalDisconnectAsync().Result;
+        }
+
+        public DisconnectAction DisconnectAsync()
+        {
+            DisconnectAction action = new DisconnectAction
+            {
+                Call = this,
+               // Payload = devices,
+            };
+            Task.Run(async () =>
+            {
+               // DisconnectStateChangeCallback disconnectStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                //OnDisconnectStateChange += disconnectStateChangeCallback;
+
+                action.Result = await InternalDisconnectAsync();
+                action.Completed = true;
+
+               // OnDisconnectStateChange -= disconnectStateChangeCallback;
+            });
+            return action;
+        }
+
+        private async Task<DisconnectResult> InternalDisconnectAsync()
+        {
+            DisconnectResult resultDisconnect = new DisconnectResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            /*DisconnectDisconnectedCallback disconnectedCallback = (a, c, cp, e, p) =>
+            {
+                resultDisconnect.Event = new Event(e.EventType, JObject.FromObject(p));
+                resultDisconnect.Call = cp;
+                tcsCompletion.SetResult(true);
+            };*/
+            DisconnectFailedCallback failedCallback = (a, c, e, p) =>
+            {
+                resultDisconnect.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(false);
+            };
+
+           // OnDisconnectDisconnected += disconnectedCallback;
+            OnDisconnectFailed += failedCallback;
+
+            try
+            {
+                Task<LL_DisconnectResult> taskLLDisconnect = mAPI.LL_DisconnectAsync(new LL_DisconnectParams()
+                {
+                    CallID = ID,
+                    NodeID = NodeID,
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_DisconnectResult resultLLDisconnect = await taskLLDisconnect;
+                if (resultLLDisconnect.Code == "200")
+                {
+                    Log(LogLevel.Debug, string.Format("Disconnect for call {0} waiting for completion events", ID));
+
+                    resultDisconnect.Successful = await tcsCompletion.Task;
+
+                    Log(LogLevel.Debug, string.Format("Disconnect for call {0} {1}", ID, resultDisconnect.Successful ? "successful" : "unsuccessful"));
+                }
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, string.Format("Disconnect for call {0} exception", ID));
+            }
+
+            // Unhook temporary callbacks
+            //OnDisconnectDisconnected -= disconnectedCallback;
+            OnDisconnectFailed -= failedCallback;
+
+            return resultDisconnect;
         }
 
         public PlayResult Play(List<CallMedia> play, double? volume = null)

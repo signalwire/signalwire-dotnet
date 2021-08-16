@@ -75,6 +75,15 @@ namespace SignalWire.Relay.Calling
             public CallConnectState State { get; set; }
         }
 
+        public sealed class DisconnectParams
+        {
+            [JsonProperty("node_id", Required = Required.Always)]
+            public string NodeID { get; set; }
+
+            [JsonProperty("call_id", Required = Required.Always)]
+            public string CallID { get; set; }
+        }
+
         public sealed class PlayParams
         {
             [JsonProperty("node_id", Required = Required.Always)]

@@ -476,6 +476,11 @@ namespace SignalWire.Relay
             return mAPI.ExecuteAsync<LL_ConnectParams, LL_ConnectResult>("calling.connect", parameters);
         }
 
+        public Task<LL_DisconnectResult> LL_DisconnectAsync(LL_DisconnectParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_DisconnectParams, LL_DisconnectResult>("calling.disconnect", parameters);
+        }
+
         public Task<LL_PlayResult> LL_PlayAsync(LL_PlayParams parameters)
         {
             return mAPI.ExecuteAsync<LL_PlayParams, LL_PlayResult>("calling.play", parameters);
