@@ -2004,11 +2004,10 @@ namespace SignalWire.Relay.Calling
         public string FromName { get; set; }
         public string Codecs { get; set; }
         public JArray Headers { get; set; }
+        public string Region { get; set; }
 
-        internal SipCall(CallingAPI api, string nodeID, string callID)
-            : base(api, nodeID, callID) { }
-        internal SipCall(CallingAPI api, string temporaryCallID)
-            : base (api, temporaryCallID) { }
+        internal SipCall(CallingAPI api, string temporaryCallID, string region = null)
+            : base (api, temporaryCallID, region) { }
 
         public override string Type => "sip";
 
@@ -2035,25 +2034,32 @@ namespace SignalWire.Relay.Calling
 
             try
             {
-                Task<LL_BeginResult> taskLLBegin = mAPI.LL_BeginAsync(new LL_BeginParams()
+
+                Task<LL_DialResult> taskLLDial = mAPI.LL_DialAsync(new LL_DialParams()
                 {
-                    Device = new CallDevice()
-                    {
-                        Type = CallDevice.DeviceType.sip,
-                        Parameters = new CallDevice.SipParams()
-                        {
-                            To = To,
-                            From = From,
-                            Headers = Headers,
-                        },
-                    },
-                    TemporaryCallID = mTemporaryID,
-                    MaxDuration = MaxDuration,
+                    Devices = new List<List<CallDevice>>
+                                {
+                                    new List<CallDevice>
+                                    {
+                                        new CallDevice
+                                        {
+                                            Type = CallDevice.DeviceType.sip,
+                                            Parameters = new CallDevice.SipParams
+                                            {
+                                                To = To,
+                                                From = From,
+                                                Headers = Headers,
+                                            }
+                                        }
+                                    }
+                                },
+                    Region = region,
+                    Tag = temporaryCallID
                 });
 
                 // The use of await rethrows exceptions from the task
-                LL_BeginResult resultLLBegin = await taskLLBegin;
-                if (resultLLBegin.Code == "200")
+                LL_DialResult resultLLDial = await taskLLDial;
+                if (resultLLDial.Code == "200")
                 {
                     Log(LogLevel.Debug, string.Format("Dial for call {0} waiting for completion events", ID));
 
@@ -2079,11 +2085,10 @@ namespace SignalWire.Relay.Calling
         public string To { get; set; }
         public string From { get; set; }
         public int Timeout { get; set; }
+        public string Region {get;set; }
 
-        internal PhoneCall(CallingAPI api, string nodeID, string callID)
-            : base(api, nodeID, callID) { }
-        internal PhoneCall(CallingAPI api, string temporaryCallID)
-            : base (api, temporaryCallID) { }
+        internal PhoneCall(CallingAPI api, string temporaryCallID, string region = null)
+            : base (api, temporaryCallID, region) { }
 
         public override string Type => "phone";
 
@@ -2110,25 +2115,30 @@ namespace SignalWire.Relay.Calling
 
             try
             {
-                Task<LL_BeginResult> taskLLBegin = mAPI.LL_BeginAsync(new LL_BeginParams()
+                Task<LL_DialResult> taskLLDial = mAPI.LL_DialAsync(new LL_DialParams()
                 {
-                    Device = new CallDevice()
-                    {
-                        Type = CallDevice.DeviceType.phone,
-                        Parameters = new CallDevice.PhoneParams()
-                        {
-                            ToNumber = To,
-                            FromNumber = From,
-                            Timeout = Timeout,
-                        },
-                    },
-                    TemporaryCallID = mTemporaryID,
-                    MaxDuration = MaxDuration,
+                    Devices = new List<List<CallDevice>>
+                                {
+                                    new List<CallDevice>
+                                    {
+                                        new CallDevice
+                                        {
+                                            Type = CallDevice.DeviceType.phone,
+                                            Parameters = new CallDevice.PhoneParams
+                                            {
+                                                ToNumber = To,
+                                                FromNumber = From,
+                                            }
+                                        }
+                                    }
+                                },
+                    Region = region,
+                    Tag = temporaryCallID
                 });
 
                 // The use of await rethrows exceptions from the task
-                LL_BeginResult resultLLBegin = await taskLLBegin;
-                if (resultLLBegin.Code == "200")
+                LL_DialResult resultLLDial = await taskLLDial;
+                if (resultLLDial.Code == "200")
                 {
                     Log(LogLevel.Debug, string.Format("Dial for call {0} waiting for completion events", ID));
 

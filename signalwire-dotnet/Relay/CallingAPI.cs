@@ -41,27 +41,27 @@ namespace SignalWire.Relay
 
         // High Level API
 
-        public PhoneCall NewPhoneCall(string to, string from, int timeout = 30, int? maxDuration = null)
+        public PhoneCall NewPhoneCall(string to, string from, string region = null)
         {
             PhoneCall call = new PhoneCall(this, Guid.NewGuid().ToString())
             {
                 To = to,
                 From = from,
-                Timeout = timeout,
-                MaxDuration = maxDuration
+                //Timeout = timeout,
+                //MaxDuration = maxDuration
             };
             mCalls.TryAdd(call.TemporaryID, call);
             OnCallCreated?.Invoke(this, call);
             return call;
         }
 
-        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int? maxDuration = null)
+        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JArray headers = null, string region = null)
         {
             SipCall call = new SipCall(this, Guid.NewGuid().ToString())
             {
                 To = to,
                 From = from,
-                MaxDuration = maxDuration,
+                //MaxDuration = maxDuration,
                 Headers = headers,
                 FromName = fromName,
                 Codecs = codecs
@@ -72,13 +72,13 @@ namespace SignalWire.Relay
             return call;
         }
 
-        public DialResult DialPhone(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).Dial(); }
+        public DialResult DialPhone(string to, string from, string region = null) { return NewPhoneCall(to, from, region).Dial(); }
 
-        public DialAction DialPhoneAsync(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).DialAsync(); }
+        public DialAction DialPhoneAsync(string to, string from, string region = null) { return NewPhoneCall(to, from, region).DialAsync(); }
 
-        public DialResult DialSip(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int? maxDuration = null) { return NewSipCall(to, from, fromName,codecs, headers, maxDuration).Dial(); }
+        public DialResult DialSip(string to, string from, string fromName = null, string codecs = null, JArray headers = null, string region = null) { return NewSipCall(to, from, fromName,codecs, headers, region).Dial(); }
 
-        public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30, int? maxDuration = null) { return NewSipCall(to, from, fromName, codecs, headers, maxDuration).DialAsync(); }
+        public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, JArray headers = null, string region = null) { return NewSipCall(to, from, fromName, codecs, headers, region).DialAsync(); }
 
         // @TODO: NewSIPCall and NewWebRTCCall
 
@@ -456,11 +456,6 @@ namespace SignalWire.Relay
 
         // Low Level API
 
-        public Task<LL_BeginResult> LL_BeginAsync(LL_BeginParams parameters)
-        {
-            return mAPI.ExecuteAsync<LL_BeginParams, LL_BeginResult>("calling.begin", parameters);
-        }
-
         public Task<LL_AnswerResult> LL_AnswerAsync(LL_AnswerParams parameters)
         {
             return mAPI.ExecuteAsync<LL_AnswerParams, LL_AnswerResult>("calling.answer", parameters);
@@ -474,6 +469,11 @@ namespace SignalWire.Relay
         public Task<LL_ConnectResult> LL_ConnectAsync(LL_ConnectParams parameters)
         {
             return mAPI.ExecuteAsync<LL_ConnectParams, LL_ConnectResult>("calling.connect", parameters);
+        }
+
+        public Task<LL_DialResult> LL_DialAsync(LL_DialParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_DialParams, LL_DialResult>("calling.dial", parameters);
         }
 
         public Task<LL_DisconnectResult> LL_DisconnectAsync(LL_DisconnectParams parameters)
