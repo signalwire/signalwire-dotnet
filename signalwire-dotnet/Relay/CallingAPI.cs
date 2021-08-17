@@ -41,46 +41,45 @@ namespace SignalWire.Relay
 
         // High Level API
 
-        public PhoneCall NewPhoneCall(string to, string from, string region = null)
+        public PhoneCall NewPhoneCall(string to, string from, int timeout = 30)
         {
             PhoneCall call = new PhoneCall(this, Guid.NewGuid().ToString())
             {
                 To = to,
                 From = from,
-                //Timeout = timeout,
-                //MaxDuration = maxDuration
+                Timeout = timeout
             };
             mCalls.TryAdd(call.TemporaryID, call);
             OnCallCreated?.Invoke(this, call);
             return call;
         }
 
-        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JArray headers = null, string region = null)
+        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30, bool? webRTCMedia = null)
         {
             SipCall call = new SipCall(this, Guid.NewGuid().ToString())
             {
                 To = to,
                 From = from,
-                //MaxDuration = maxDuration,
-                Headers = headers,
                 FromName = fromName,
-                Codecs = codecs
-            
+                Headers = headers,
+                Codecs = codecs,
+                Timeout = timeout,
+                WebRTCMedia = webRTCMedia
             };
             mCalls.TryAdd(call.TemporaryID, call);
             OnCallCreated?.Invoke(this, call);
             return call;
         }
 
-        public DialResult DialPhone(string to, string from, string region = null) { return NewPhoneCall(to, from, region).Dial(); }
+        public DialResult DialPhone(string to, string from, int timeout = 30) { return NewPhoneCall(to, from, timeout).Dial(); }
 
-        public DialAction DialPhoneAsync(string to, string from, string region = null) { return NewPhoneCall(to, from, region).DialAsync(); }
+        public DialAction DialPhoneAsync(string to, string from, int timeout = 30) { return NewPhoneCall(to, from, timeout).DialAsync(); }
 
-        public DialResult DialSip(string to, string from, string fromName = null, string codecs = null, JArray headers = null, string region = null) { return NewSipCall(to, from, fromName,codecs, headers, region).Dial(); }
+        public DialResult DialSip(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30) { return NewSipCall(to, from, fromName,codecs, headers, timeout).Dial(); }
 
-        public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, JArray headers = null, string region = null) { return NewSipCall(to, from, fromName, codecs, headers, region).DialAsync(); }
+        public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30) { return NewSipCall(to, from, fromName, codecs, headers, timeout).DialAsync(); }
 
-        // @TODO: NewSIPCall and NewWebRTCCall
+        // @TODO: NewWebRTCCall
 
         internal Call GetCall(string callid)
         {

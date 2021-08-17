@@ -2004,10 +2004,15 @@ namespace SignalWire.Relay.Calling
         public string FromName { get; set; }
         public string Codecs { get; set; }
         public JArray Headers { get; set; }
-        public string Region { get; set; }
+        public string Region {get;set;}
+        public string Tag {get;set;} = Guid.NewGuid().ToString();
+        public bool? WebRTCMedia {get;set;}
+        public int Timeout {get;set;}
 
-        internal SipCall(CallingAPI api, string temporaryCallID, string region = null)
-            : base (api, temporaryCallID, region) { }
+        internal SipCall(CallingAPI api, string nodeID, string callID)
+            : base(api, nodeID, callID) { }
+        internal SipCall(CallingAPI api, string temporaryCallID)
+            : base (api, temporaryCallID) { }
 
         public override string Type => "sip";
 
@@ -2048,13 +2053,17 @@ namespace SignalWire.Relay.Calling
                                             {
                                                 To = To,
                                                 From = From,
+                                                FromName = FromName,
+                                                Timeout = Timeout,
                                                 Headers = Headers,
+                                                Codecs = Codecs,
+                                                WebRTCMedia = WebRTCMedia
                                             }
                                         }
                                     }
                                 },
-                    Region = region,
-                    Tag = temporaryCallID
+                    Region = Region,
+                    Tag = Tag
                 });
 
                 // The use of await rethrows exceptions from the task
@@ -2085,10 +2094,13 @@ namespace SignalWire.Relay.Calling
         public string To { get; set; }
         public string From { get; set; }
         public int Timeout { get; set; }
-        public string Region {get;set; }
+        public string Tag { get;set; } = Guid.NewGuid().ToString();
+        public string Region {get;set;}
 
-        internal PhoneCall(CallingAPI api, string temporaryCallID, string region = null)
-            : base (api, temporaryCallID, region) { }
+        internal PhoneCall(CallingAPI api, string nodeID, string callID)
+            : base(api, nodeID, callID) { }
+        internal PhoneCall(CallingAPI api, string temporaryCallID)
+            : base (api, temporaryCallID) { }
 
         public override string Type => "phone";
 
@@ -2128,12 +2140,13 @@ namespace SignalWire.Relay.Calling
                                             {
                                                 ToNumber = To,
                                                 FromNumber = From,
+                                                Timeout = Timeout
                                             }
                                         }
                                     }
                                 },
-                    Region = region,
-                    Tag = temporaryCallID
+                                Tag = Tag,
+                                Region = Region
                 });
 
                 // The use of await rethrows exceptions from the task

@@ -30,8 +30,7 @@ namespace SignalWire.Relay.Calling
 
         public sealed class SipParams
         {
-             [JsonProperty("to", NullValueHandling = NullValueHandling.Ignore)]
-            //[JsonProperty("to", Required = Required.Always)]
+            [JsonProperty("to", Required = Required.Always)]
             public string To { get; set; }
 
             [JsonProperty("from", Required = Required.Always)]
@@ -45,6 +44,9 @@ namespace SignalWire.Relay.Calling
 
             [JsonProperty("codecs", NullValueHandling = NullValueHandling.Ignore)]
             public string Codecs { get; set; }
+
+            [JsonProperty("timeout", NullValueHandling = NullValueHandling.Ignore)]
+            public int Timeout { get; set; } = 30;
 
             [JsonProperty("webrtc_media", NullValueHandling = NullValueHandling.Ignore)]
             public bool? WebRTCMedia { get; set; }
