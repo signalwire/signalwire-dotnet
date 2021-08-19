@@ -443,7 +443,7 @@ namespace SignalWire.Relay.Calling
             }
         }
 
-        public DialResult Dial()
+        /*public DialResult Dial()
         {
             return InternalDialAsync().Result;
         }
@@ -460,17 +460,91 @@ namespace SignalWire.Relay.Calling
                 action.Completed = true;
             });
             return action;
-        }
+        }*/
 
-        protected abstract Task<DialResult> InternalDialAsync();
+        //protected abstract Task<DialResult> InternalDialAsync();
 
-/*
-        public DialResult Dial(List<List<CallDevice>> devices, List<CallMedia> ringback = null, int? maxDuration = null)
+        /*protected async Task<DialResult> InternalDialAsync(List<List<CallDevice>> devices, int? maxDuration = null)
         {
-            return InternalDialAsync(devices, ringback, maxDuration).Result;
+            DialResult resultDial = new DialResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            AnsweredCallback answeredCallback = (a, c, e, p) =>
+            {
+                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
+                resultDial.Call = c;
+                tcsCompletion.SetResult(true);
+            };
+            EndedCallback endedCallback = (a, c, e, p) =>
+            {
+                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(false);
+            };
+
+            OnAnswered += answeredCallback;
+            OnEnded += endedCallback;
+
+            try
+            {
+
+                Task<LL_DialResult> taskLLDial = mAPI.LL_DialAsync(new LL_DialParams()
+                {
+                    Devices = new List<List<CallDevice>>
+                                {
+                                    new List<CallDevice>
+                                    {
+                                        new CallDevice
+                                        {
+                                            Type = CallDevice.DeviceType.sip,
+                                            Parameters = new CallDevice.SipParams
+                                            {
+                                                To = To,
+                                                From = From,
+                                                FromName = FromName,
+                                                Timeout = Timeout,
+                                                MaxDuration = MaxDuration,
+                                                Headers = Headers,
+                                                Codecs = Codecs,
+                                                WebRTCMedia = WebRTCMedia
+                                            }
+                                        }
+                                    }
+                                },
+                    Region = Region,
+                    Tag = Tag
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_DialResult resultLLDial = await taskLLDial;
+                if (resultLLDial.Code == "200")
+                {
+                    Log(LogLevel.Debug, string.Format("Dial for call {0} waiting for completion events", ID));
+
+                    resultDial.Successful = await tcsCompletion.Task;
+
+                    Log(LogLevel.Debug, string.Format("Dial for call {0} {1}", ID, resultDial.Successful ? "successful" : "unsuccessful"));
+                }
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, string.Format("Dial for call {0} exception", ID));
+            }
+
+            // Unhook temporary callbacks
+            OnAnswered -= answeredCallback;
+            OnEnded -= endedCallback;
+
+            return resultDial;
         }
 
-        public DialAction DialAsync(List<List<CallDevice>> devices, List<CallMedia> ringback = null, int? maxDuration = null)
+*/
+        public DialResult Dial(List<List<CallDevice>> devices, string tag = null, string region = null)
+        {
+            return InternalDialAsync(devices, tag, region).Result;
+        }
+
+        public DialAction DialAsync(List<List<CallDevice>> devices, string tag = null, string region = null)
         {
             DialAction action = new DialAction
             {
@@ -482,7 +556,7 @@ namespace SignalWire.Relay.Calling
                 DialStateChangeCallback dialStateChangeCallback = (a, c, e, p) => action.State = p.State;
                 OnDialStateChange += dialStateChangeCallback;
 
-                action.Result = await InternalDialAsync(devices, ringback, maxDuration);
+                action.Result = await InternalDialAsync(devices, tag, region);
                 action.Completed = true;
 
                 OnDialStateChange -= dialStateChangeCallback;
@@ -490,7 +564,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-         private async Task<DialResult> InternalDialAsync(List<List<CallDevice>> devices, List<CallMedia> ringback, int? maxDuration = null)
+         private async Task<DialResult> InternalDialAsync(List<List<CallDevice>> devices, string tag = null, string region = null)
          {
             DialResult resultDial = new DialResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
@@ -513,13 +587,15 @@ namespace SignalWire.Relay.Calling
 
             try
             {
+                string myId = tag;
+                if(myId == null){
+                    myId = Guid.NewGuid().ToString();
+                }
                 Task<LL_DialResult> taskLLDial = mAPI.LL_DialAsync(new LL_DialParams()
                 {
-                    CallID = ID,
-                    NodeID = NodeID,
                     Devices = devices,
-                    Ringback = ringback,
-                    MaxDuration = maxDuration
+                    Tag = myId,
+                    Region = region
                 });
 
                 // The use of await rethrows exceptions from the task
@@ -545,7 +621,7 @@ namespace SignalWire.Relay.Calling
             return resultDial;
         }
         /////
-*/
+
         public AnswerResult Answer(int? maxDuration = null)
         {
             return InternalAnswerAsync(maxDuration).Result;
@@ -2094,7 +2170,7 @@ namespace SignalWire.Relay.Calling
 
         public override string Type => "sip";
 
-        protected override async Task<DialResult> InternalDialAsync()
+        /*protected override async Task<DialResult> InternalDialAsync()
         {
             DialResult resultDial = new DialResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
@@ -2166,7 +2242,7 @@ namespace SignalWire.Relay.Calling
             OnEnded -= endedCallback;
 
             return resultDial;
-        }
+        }*/
     }
     public sealed class PhoneCall : Call
     {
@@ -2183,7 +2259,7 @@ namespace SignalWire.Relay.Calling
 
         public override string Type => "phone";
 
-        protected override async Task<DialResult> InternalDialAsync()
+       /* protected override async Task<DialResult> InternalDialAsync()
         {
             DialResult resultDial = new DialResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
@@ -2250,6 +2326,6 @@ namespace SignalWire.Relay.Calling
             OnEnded -= endedCallback;
 
             return resultDial;
-        }
+        } */
     }
 }

@@ -75,25 +75,69 @@ namespace SignalWire.Relay.Calling
             public CallConnectState State { get; set; }
         }
 
-        public sealed class DialParams
+
+        public sealed class DialCallParams 
         {
+            [JsonProperty("call_id", Required = Required.Always)]
+            public string CallID { get; set; }
+
             [JsonProperty("node_id", Required = Required.Always)]
             public string NodeID { get; set; }
 
-            [JsonProperty("call_id", Required = Required.Always)]
-            public string CallID { get; set; }
+            [JsonProperty("segment_id", Required = Required.Always)]
+            public string SegmentID { get; set; }
 
             [JsonProperty("tag", NullValueHandling = NullValueHandling.Ignore)]
             public string Tag { get; set; }
 
-            [JsonProperty("call", NullValueHandling = NullValueHandling.Ignore)]
-            public Call Call { get; set; }
+            [JsonProperty("call_state", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
+            public CallState State { get; set; }
+
+            [JsonProperty("direction", NullValueHandling = NullValueHandling.Ignore)]
+            public string Direction { get; set; }
+
+            [JsonProperty("device", NullValueHandling = NullValueHandling.Ignore)]
+            public CallDevice Device { get; set; }
+        }
+        public sealed class DialParams
+        {
+            /*
+        "tag": "db956fee-7c7f-4dd8-888b-df873e804e16",
+        "node_id": "cba313ec-0e6b-4641-9dc7-5e885571850e@west-us",
+        "dial_state": "answered",
+        "call": {
+          "call_id": "8d307554-c175-4fcf-815c-91b03af534cb",
+          "node_id": "cba313ec-0e6b-4641-9dc7-5e885571850e@west-us",
+          "segment_id": "8d307554-c175-4fcf-815c-91b03af534cb",
+          "tag": "db956fee-7c7f-4dd8-888b-df873e804e16",
+          "call_state": "answered",
+          "direction": "outbound",
+          "device": {
+            "type": "phone",
+            "params": {
+              "from_number": "+15182173542",
+              "to_number": "+15184307855"
+            }
+          },
+          "dial_winner": "true"
+        }
+            */
+
+            [JsonProperty("tag", NullValueHandling = NullValueHandling.Ignore)]
+            public string Tag { get; set; }
+
+            [JsonProperty("node_id", Required = Required.Always)]
+            public string NodeID { get; set; }
+
+            [JsonProperty("dial_state", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
+            public CallDialState State { get; set; }
 
             [JsonProperty("dial_winner", NullValueHandling = NullValueHandling.Ignore)]
             public bool DialWinner { get; set; }
 
-            [JsonProperty("dial_state", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
-            public CallDialState State { get; set; }
+            [JsonProperty("call", NullValueHandling = NullValueHandling.Ignore)]
+            public DialCallParams Call { get; set; }
+
         }
 
         public sealed class DisconnectParams
