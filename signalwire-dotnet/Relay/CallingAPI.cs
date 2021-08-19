@@ -41,20 +41,21 @@ namespace SignalWire.Relay
 
         // High Level API
 
-        public PhoneCall NewPhoneCall(string to, string from, int timeout = 30)
+        public PhoneCall NewPhoneCall(string to, string from, int timeout = 30, int? maxDuration = null)
         {
             PhoneCall call = new PhoneCall(this, Guid.NewGuid().ToString())
             {
                 To = to,
                 From = from,
-                Timeout = timeout
+                Timeout = timeout,
+                MaxDuration = maxDuration
             };
             mCalls.TryAdd(call.TemporaryID, call);
             OnCallCreated?.Invoke(this, call);
             return call;
         }
 
-        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30, bool? webRTCMedia = null)
+        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30, int? maxDuration = null, bool? webRTCMedia = null)
         {
             SipCall call = new SipCall(this, Guid.NewGuid().ToString())
             {
@@ -64,6 +65,7 @@ namespace SignalWire.Relay
                 Headers = headers,
                 Codecs = codecs,
                 Timeout = timeout,
+                MaxDuration = maxDuration,
                 WebRTCMedia = webRTCMedia
             };
             mCalls.TryAdd(call.TemporaryID, call);
@@ -71,13 +73,13 @@ namespace SignalWire.Relay
             return call;
         }
 
-        public DialResult DialPhone(string to, string from, int timeout = 30) { return NewPhoneCall(to, from, timeout).Dial(); }
+        public DialResult DialPhone(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).Dial(); }
 
-        public DialAction DialPhoneAsync(string to, string from, int timeout = 30) { return NewPhoneCall(to, from, timeout).DialAsync(); }
+        public DialAction DialPhoneAsync(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).DialAsync(); }
 
-        public DialResult DialSip(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30) { return NewSipCall(to, from, fromName,codecs, headers, timeout).Dial(); }
+        public DialResult DialSip(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30, int? maxDuration = null) { return NewSipCall(to, from, fromName,codecs, headers, timeout, maxDuration).Dial(); }
 
-        public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30) { return NewSipCall(to, from, fromName, codecs, headers, timeout).DialAsync(); }
+        public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30, int? maxDuration = null) { return NewSipCall(to, from, fromName, codecs, headers, timeout, maxDuration).DialAsync(); }
 
         // @TODO: NewWebRTCCall
 
