@@ -14,8 +14,5 @@ namespace SignalWire.Relay.Calling
 
         [JsonProperty("call_id", Required = Required.Always)]
         public string CallID { get; set; }
-
-        [JsonProperty("reason", NullValueHandling = NullValueHandling.Ignore), JsonConverter(typeof(StringEnumConverter))]
-        public DisconnectReason? Reason { get; set; }
     }
 }

@@ -4,8 +4,10 @@ using System.Text;
 
 namespace SignalWire.Relay.Calling
 {
-    public enum CallConnectState
+    public enum CallDialState
     {
-        dialing, answered, failed
+        dialing, 
+        answered, 
+        failed
     }
 }
