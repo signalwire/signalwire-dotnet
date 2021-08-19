@@ -125,6 +125,9 @@ namespace SignalWire.Relay
                 case "calling.call.connect":
                     OnCallingEvent_Connect(client, broadcastParams, callingEventParams);
                     break;
+                case "calling.call.dial":
+                    OnCallingEvent_Dial(client, broadcastParams, callingEventParams);
+                    break;
                 case "calling.call.play":
                     OnCallingEvent_Play(client, broadcastParams, callingEventParams);
                     break;
@@ -324,6 +327,24 @@ namespace SignalWire.Relay
             }
 
             call.ConnectHandler(callEventParams, connectParams);
+        }
+
+        private void OnCallingEvent_Dial(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
+        {
+            CallingEventParams.DialParams dialParams = null;
+            try { dialParams = callEventParams.ParametersAs<CallingEventParams.DialParams>(); }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Warning, exc, "Failed to parse DialParams");
+                return;
+            }
+            if (!mCalls.TryGetValue(dialParams.CallID, out Call call))
+            {
+                Log(LogLevel.Warning, string.Format("Received DialParams with unknown CallID: {0}, {1}", dialParams.CallID, dialParams.State));
+                return;
+            }
+
+            call.DialHandler(callEventParams, dialParams);
         }
 
         private void OnCallingEvent_Play(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)

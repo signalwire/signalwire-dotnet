@@ -14,5 +14,9 @@ namespace SignalWire.Relay.Calling
         public bool Completed { get; internal set; }
 
         public DialResult Result { get; internal set; }
+
+        public CallDialState State { get; internal set; }
+
+        public List<List<CallDevice>> Payload { get; internal set; }
     }
 }
