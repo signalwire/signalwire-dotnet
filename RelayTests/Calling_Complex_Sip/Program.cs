@@ -83,7 +83,7 @@ namespace Calling_Complex_Sip
         {
             // Create the first outbound call leg to the inbound DID associated to the context this client is receiving
             // This will block until the call is answered, times out, busy, or an error occurred
-            DialResult resultDial = Client.Calling.DialSip(ToNumber, FromNumber);
+            DialResult resultDial = Client.Calling.DialSip(ToSip, FromSip);
 
             if (!resultDial.Successful)
             {
