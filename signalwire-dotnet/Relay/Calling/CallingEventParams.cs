@@ -75,6 +75,27 @@ namespace SignalWire.Relay.Calling
             public CallConnectState State { get; set; }
         }
 
+        public sealed class DialParams
+        {
+            [JsonProperty("node_id", Required = Required.Always)]
+            public string NodeID { get; set; }
+
+            [JsonProperty("call_id", Required = Required.Always)]
+            public string CallID { get; set; }
+
+            [JsonProperty("tag", NullValueHandling = NullValueHandling.Ignore)]
+            public string Tag { get; set; }
+
+            [JsonProperty("call", NullValueHandling = NullValueHandling.Ignore)]
+            public Call Call { get; set; }
+
+            [JsonProperty("dial_winner", NullValueHandling = NullValueHandling.Ignore)]
+            public bool DialWinner { get; set; }
+
+            [JsonProperty("dial_state", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
+            public CallDialState State { get; set; }
+        }
+
         public sealed class DisconnectParams
         {
             [JsonProperty("node_id", Required = Required.Always)]

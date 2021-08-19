@@ -2068,13 +2068,16 @@ namespace SignalWire.Relay.Calling
 
                 // The use of await rethrows exceptions from the task
                 LL_DialResult resultLLDial = await taskLLDial;
+                 Log(LogLevel.Debug, "did the task start....");
                 if (resultLLDial.Code == "200")
                 {
-                    Log(LogLevel.Debug, string.Format("Dial for call {0} waiting for completion events", ID));
+                    Log(LogLevel.Debug, string.Format("Dial kevinfor call {0} waiting for completion events", ID));
 
                     resultDial.Successful = await tcsCompletion.Task;
 
                     Log(LogLevel.Debug, string.Format("Dial for call {0} {1}", ID, resultDial.Successful ? "successful" : "unsuccessful"));
+
+                    Log(LogLevel.Debug, "did the task complete....");
                 }
             }
             catch (Exception exc)
@@ -2151,13 +2154,16 @@ namespace SignalWire.Relay.Calling
 
                 // The use of await rethrows exceptions from the task
                 LL_DialResult resultLLDial = await taskLLDial;
+                 Log(LogLevel.Debug, "did the task start....");
                 if (resultLLDial.Code == "200")
                 {
-                    Log(LogLevel.Debug, string.Format("Dial for call {0} waiting for completion events", ID));
+                    Log(LogLevel.Debug, string.Format("Dial kevinfor call {0} waiting for completion events", ID));
 
                     resultDial.Successful = await tcsCompletion.Task;
 
                     Log(LogLevel.Debug, string.Format("Dial for call {0} {1}", ID, resultDial.Successful ? "successful" : "unsuccessful"));
+
+                    Log(LogLevel.Debug, "did the task complete....");
                 }
             }
             catch (Exception exc)
