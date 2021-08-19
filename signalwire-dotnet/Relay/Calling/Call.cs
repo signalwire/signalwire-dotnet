@@ -443,7 +443,7 @@ namespace SignalWire.Relay.Calling
             }
         }
 
-        /*public DialResult Dial()
+        public DialResult Dial()
         {
             return InternalDialAsync().Result;
         }
@@ -462,8 +462,9 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-        protected abstract Task<DialResult> InternalDialAsync();*/
+        protected abstract Task<DialResult> InternalDialAsync();
 
+/*
         public DialResult Dial(List<List<CallDevice>> devices, List<CallMedia> ringback = null, int? maxDuration = null)
         {
             return InternalDialAsync(devices, ringback, maxDuration).Result;
@@ -544,7 +545,7 @@ namespace SignalWire.Relay.Calling
             return resultDial;
         }
         /////
-
+*/
         public AnswerResult Answer(int? maxDuration = null)
         {
             return InternalAnswerAsync(maxDuration).Result;
@@ -2093,7 +2094,7 @@ namespace SignalWire.Relay.Calling
 
         public override string Type => "sip";
 
-       /* protected override async Task<DialResult> InternalDialAsync()
+        protected override async Task<DialResult> InternalDialAsync()
         {
             DialResult resultDial = new DialResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
@@ -2132,6 +2133,7 @@ namespace SignalWire.Relay.Calling
                                                 From = From,
                                                 FromName = FromName,
                                                 Timeout = Timeout,
+                                                MaxDuration = MaxDuration,
                                                 Headers = Headers,
                                                 Codecs = Codecs,
                                                 WebRTCMedia = WebRTCMedia
@@ -2165,7 +2167,6 @@ namespace SignalWire.Relay.Calling
 
             return resultDial;
         }
-        */
     }
     public sealed class PhoneCall : Call
     {
@@ -2182,7 +2183,7 @@ namespace SignalWire.Relay.Calling
 
         public override string Type => "phone";
 
-        /*protected override async Task<DialResult> InternalDialAsync()
+        protected override async Task<DialResult> InternalDialAsync()
         {
             DialResult resultDial = new DialResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
@@ -2218,7 +2219,8 @@ namespace SignalWire.Relay.Calling
                                             {
                                                 ToNumber = To,
                                                 FromNumber = From,
-                                                Timeout = Timeout
+                                                Timeout = Timeout,
+                                                MaxDuration = MaxDuration
                                             }
                                         }
                                     }
@@ -2249,6 +2251,5 @@ namespace SignalWire.Relay.Calling
 
             return resultDial;
         }
-        */
     }
 }
