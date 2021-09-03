@@ -41,7 +41,7 @@ namespace SignalWire.Relay
 
         // High Level API
 
-        public PhoneCall NewPhoneCall(string to, string from, int timeout = 30, int? maxDuration = null, string region = null, string tag = null)
+        public PhoneCall NewPhoneCall(string to, string from, int timeout = 30, int? maxDuration = null)
         {
             PhoneCall call = new PhoneCall(this, Guid.NewGuid().ToString())
             {
@@ -55,7 +55,7 @@ namespace SignalWire.Relay
             return call;
         }
 
-        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30, int? maxDuration = null, bool? webRTCMedia = null, string region = null, string tag = null)
+        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30, int? maxDuration = null, bool? webRTCMedia = null)
         {
             SipCall call = new SipCall(this, Guid.NewGuid().ToString())
             {
@@ -73,116 +73,27 @@ namespace SignalWire.Relay
             return call;
         }
 
-        public DialResult DialPhone(string to, string from, int timeout = 30, int? maxDuration = null, 
-        string region = null, string tag = null) { 
-            if(tag == null){
-                tag = Guid.NewGuid().ToString();
-            }
-            return NewPhoneCall(to, from, timeout, maxDuration, region, tag).Dial(
-                new List<List<CallDevice>>
-                                {
-                                    new List<CallDevice>
-                                    {
-                                        new CallDevice
-                                        {
-                                            Type = CallDevice.DeviceType.phone,
-                                            Parameters = new CallDevice.PhoneParams
-                                            {
-                                                ToNumber = to,
-                                                FromNumber = from,
-                                                Timeout = timeout,
-                                                MaxDuration = maxDuration
-                                            }
-                                        }
-                                    },
-                                },
-                                tag,
-                                region
-            );
+        public DialResult DialPhone(string to, string from, int timeout = 30, int? maxDuration = null)
+        {
+            return NewPhoneCall(to, from, timeout, maxDuration).Dial();
         }
 
-        public DialAction DialPhoneAsync(string to, string from, int timeout = 30, int? maxDuration = null, string region = null, string tag = null) { 
-            return NewPhoneCall(to, from, timeout, maxDuration, region, tag).DialAsync(
-             new List<List<CallDevice>>
-                                {
-                                    new List<CallDevice>
-                                    {
-                                        new CallDevice
-                                        {
-                                            Type = CallDevice.DeviceType.phone,
-                                            Parameters = new CallDevice.PhoneParams
-                                            {
-                                                ToNumber = to,
-                                                FromNumber = from,
-                                                Timeout = timeout,
-                                                MaxDuration = maxDuration
-                                            }
-                                        }
-                                    },
-                                },
-                                tag,
-                                region
-        ); }
+        public DialAction DialPhoneAsync(string to, string from, int timeout = 30, int? maxDuration = null)
+        {
+            return NewPhoneCall(to, from, timeout, maxDuration).DialAsync();
+        }
+
 
         public DialResult DialSip(string to, string from, string fromName = null, 
         string codecs = null, JArray headers = null, int timeout = 30, int? maxDuration = null, 
-        bool? webRTCMedia = null, string region = null, string tag = null) 
-        { 
-            return NewSipCall(to, from, fromName, codecs, headers, timeout, maxDuration, webRTCMedia, region, tag).Dial(
-                new List<List<CallDevice>>
-                                {
-                                    new List<CallDevice>
-                                    {
-                                        new CallDevice
-                                        {
-                                            Type = CallDevice.DeviceType.sip,
-                                            Parameters = new CallDevice.SipParams
-                                            {
-                                                To = to,
-                                                From = from,
-                                                FromName = fromName,
-                                                Timeout = timeout,
-                                                MaxDuration = maxDuration,
-                                                Headers = headers,
-                                                Codecs = codecs,
-                                                WebRTCMedia = webRTCMedia
-                                            }
-                                        }
-                                    },
-                                },
-                                tag,
-                                region
-            ); 
+        bool? webRTCMedia = null) 
+        {
+            return NewSipCall(to, from, fromName, codecs, headers, timeout, maxDuration, webRTCMedia).Dial();
         }
 
         public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, 
-        JArray headers = null, int timeout = 30, int? maxDuration = null, bool? webRTCMedia = null, 
-        string region = null, string tag = null) { 
-            return NewSipCall(to, from, fromName, codecs, headers, timeout, maxDuration, webRTCMedia, region, tag).DialAsync(
-             new List<List<CallDevice>>
-                                {
-                                    new List<CallDevice>
-                                    {
-                                        new CallDevice
-                                        {
-                                            Type = CallDevice.DeviceType.sip,
-                                            Parameters = new CallDevice.SipParams
-                                            {
-                                                To = to,
-                                                From = from,
-                                                FromName = fromName,
-                                                Timeout = timeout,
-                                                MaxDuration = maxDuration,
-                                                Headers = headers,
-                                                Codecs = codecs,
-                                                WebRTCMedia = webRTCMedia
-                                            }
-                                        }
-                                    },
-                                },
-                                tag,
-                                region
-        ); 
+        JArray headers = null, int timeout = 30, int? maxDuration = null, bool? webRTCMedia = null) {
+            return NewSipCall(to, from, fromName, codecs, headers, timeout, maxDuration, webRTCMedia).DialAsync();
         }
 
         // @TODO: NewWebRTCCall
@@ -268,16 +179,16 @@ namespace SignalWire.Relay
             }
 
             Call call = null;
-            if (!string.IsNullOrWhiteSpace(stateParams.TemporaryCallID))
-            {
-                // Remove the call keyed by the temporary call id if it exists
-                if (mCalls.TryRemove(stateParams.TemporaryCallID, out call))
-                {
-                    // Update the internal details for the call, including the real call id
-                    call.NodeID = stateParams.NodeID;
-                    call.ID = stateParams.CallID;
-                }
-            }
+            //if (!string.IsNullOrWhiteSpace(stateParams.TemporaryCallID))
+            //{
+            //    // Remove the call keyed by the temporary call id if it exists
+            //    if (mCalls.TryRemove(stateParams.TemporaryCallID, out call))
+            //    {
+            //        // Update the internal details for the call, including the real call id
+            //        call.NodeID = stateParams.NodeID;
+            //        call.ID = stateParams.CallID;
+            //    }
+            //}
             // If call is not null at this point, it means this is the first event for a call that was started with a temporary call id
             // and the call should be readded under the real call id
 
@@ -441,9 +352,10 @@ namespace SignalWire.Relay
                 Log(LogLevel.Warning, exc, "Failed to parse DialParams");
                 return;
             }
-            if (!mCalls.TryGetValue(dialParams.Call.CallID, out Call call))
+
+            if (!mCalls.TryGetValue(dialParams.Tag, out Call call))
             {
-                Log(LogLevel.Warning, string.Format("Received DialParams with unknown CallID: {0}, {1}", dialParams.Call.CallID, dialParams.State));
+                Log(LogLevel.Warning, string.Format("Received DialParams with unknown Tag: {0}, {1}", dialParams.Tag, dialParams.State));
                 return;
             }
             

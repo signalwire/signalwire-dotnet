@@ -769,7 +769,7 @@ namespace Blade
 
                 Request request = Request.Parse(obj);
                 Log(LogLevel.Debug, string.Format("Received Request Frame: {0} for {1}", request.ID, request.Method));
-                Log(LogLevel.Debug, obj.ToString(Formatting.None));
+                Log(LogLevel.Debug, obj.ToString(Formatting.Indented));
 
                 switch (request.Method)
                 {

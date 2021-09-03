@@ -76,6 +76,16 @@ namespace Calling_Complex_Sip
                 Logger.LogError("Missing 'TEST_FROM_NUMBER' environment variable");
                 throw new ArgumentNullException("FromNumber");
             }
+            if (string.IsNullOrWhiteSpace(ToSip))
+            {
+                Logger.LogError("Missing 'TEST_TO_SIP' environment variable");
+                throw new ArgumentNullException("ToSip");
+            }
+            if (string.IsNullOrWhiteSpace(FromSip))
+            {
+                Logger.LogError("Missing 'TEST_FROM_SIP' environment variable");
+                throw new ArgumentNullException("FromSip");
+            }
         }
 
         // This is executed in a new thread each time, so it is safe to use blocking calls
