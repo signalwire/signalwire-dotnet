@@ -682,7 +682,7 @@ namespace SignalWire.Relay.Calling
             return action;
         }
 
-         private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback, int? maxDuration = null)
+        private async Task<ConnectResult> InternalConnectAsync(List<List<CallDevice>> devices, List<CallMedia> ringback, int? maxDuration = null)
         {
             ConnectResult resultConnect = new ConnectResult();
             TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
