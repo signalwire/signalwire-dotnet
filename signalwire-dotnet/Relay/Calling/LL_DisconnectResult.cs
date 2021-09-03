@@ -10,6 +10,7 @@ namespace SignalWire.Relay.Calling
     {
         [JsonProperty("code", Required = Required.Always)]
         public string Code { get; set; }
+
         [JsonProperty("message", NullValueHandling = NullValueHandling.Ignore)]
         public string Message { get; set; }
     }
