@@ -13,7 +13,7 @@ namespace SignalWire.Relay.Calling
 
         public bool Completed { get; internal set; }
 
-        public CallConnectState State {get;set;}
+        public CallConnectState State { get; internal set; }
 
         public DisconnectResult Result { get; internal set; }
     }
