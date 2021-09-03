@@ -33,9 +33,6 @@ namespace SignalWire.Relay.Calling
         public delegate void DialFailedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DialParams dialParams);
         public delegate void DialConnectingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DialParams dialParams);
         public delegate void DialConnectedCallback(CallingAPI api, Call call, Call callConnected, CallingEventParams eventParams, CallingEventParams.DialParams dialParams);
-        public delegate void DialDisconnectedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DialParams dialParams);
-
-        public delegate void DisconnectFailedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DisconnectParams disconnectParams);
 
         public delegate void PlayStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
         public delegate void PlayPlayingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
