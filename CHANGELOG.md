@@ -10,7 +10,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Max duration support for calls
 - Added Disconnect API
 - Added Dial API
-- Added Connect API
 
 ## [2.3.0] - 2019-10-22
 ### Added
