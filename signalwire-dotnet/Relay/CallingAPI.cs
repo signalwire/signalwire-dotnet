@@ -179,19 +179,6 @@ namespace SignalWire.Relay
             }
 
             Call call = null;
-            //if (!string.IsNullOrWhiteSpace(stateParams.TemporaryCallID))
-            //{
-            //    // Remove the call keyed by the temporary call id if it exists
-            //    if (mCalls.TryRemove(stateParams.TemporaryCallID, out call))
-            //    {
-            //        // Update the internal details for the call, including the real call id
-            //        call.NodeID = stateParams.NodeID;
-            //        call.ID = stateParams.CallID;
-            //    }
-            //}
-            // If call is not null at this point, it means this is the first event for a call that was started with a temporary call id
-            // and the call should be readded under the real call id
-
             Call tmp = null;
             switch (stateParams.Device.Type)
             {
