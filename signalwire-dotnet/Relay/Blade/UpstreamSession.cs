@@ -854,7 +854,7 @@ namespace Blade
             {
                 Response response = Response.Parse(obj);
                 Log(LogLevel.Debug, string.Format("Received Response Frame: {0}", response.ID));
-                Log(LogLevel.Debug, obj.ToString(Formatting.None));
+                Log(LogLevel.Debug, obj.ToString(Formatting.Indented));
 
                 if (!mRequests.TryRemove(response.ID, out Request request))
                 {
