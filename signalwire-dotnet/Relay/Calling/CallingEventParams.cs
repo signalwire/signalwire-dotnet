@@ -101,28 +101,6 @@ namespace SignalWire.Relay.Calling
         }
         public sealed class DialParams
         {
-            /*
-        "tag": "db956fee-7c7f-4dd8-888b-df873e804e16",
-        "node_id": "cba313ec-0e6b-4641-9dc7-5e885571850e@west-us",
-        "dial_state": "answered",
-        "call": {
-          "call_id": "8d307554-c175-4fcf-815c-91b03af534cb",
-          "node_id": "cba313ec-0e6b-4641-9dc7-5e885571850e@west-us",
-          "segment_id": "8d307554-c175-4fcf-815c-91b03af534cb",
-          "tag": "db956fee-7c7f-4dd8-888b-df873e804e16",
-          "call_state": "answered",
-          "direction": "outbound",
-          "device": {
-            "type": "phone",
-            "params": {
-              "from_number": "+15182173542",
-              "to_number": "+15184307855"
-            }
-          },
-          "dial_winner": "true"
-        }
-            */
-
             [JsonProperty("tag", NullValueHandling = NullValueHandling.Ignore)]
             public string Tag { get; set; }
 
