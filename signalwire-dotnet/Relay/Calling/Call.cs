@@ -2054,8 +2054,8 @@ namespace SignalWire.Relay.Calling
         public string FromName { get; set; }
         public string Codecs { get; set; }
         public JArray Headers { get; set; }
-        public bool? WebRTCMedia {get;set;}
-        public int Timeout {get;set;}
+        public bool? WebRTCMedia { get; set; }
+        public int Timeout { get; set; }
 
         internal SipCall(CallingAPI api, string nodeID, string callID)
             : base(api, nodeID, callID) { }
