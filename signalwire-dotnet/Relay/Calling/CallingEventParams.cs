@@ -75,32 +75,32 @@ namespace SignalWire.Relay.Calling
             public CallConnectState State { get; set; }
         }
 
-
-        public sealed class DialCallParams 
-        {
-            [JsonProperty("call_id", Required = Required.Always)]
-            public string CallID { get; set; }
-
-            [JsonProperty("node_id", Required = Required.Always)]
-            public string NodeID { get; set; }
-
-            [JsonProperty("segment_id", Required = Required.Always)]
-            public string SegmentID { get; set; }
-
-            [JsonProperty("tag", NullValueHandling = NullValueHandling.Ignore)]
-            public string Tag { get; set; }
-
-            [JsonProperty("call_state", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
-            public CallState State { get; set; }
-
-            [JsonProperty("direction", NullValueHandling = NullValueHandling.Ignore)]
-            public string Direction { get; set; }
-
-            [JsonProperty("device", NullValueHandling = NullValueHandling.Ignore)]
-            public CallDevice Device { get; set; }
-        }
         public sealed class DialParams
         {
+            public sealed class CallParams
+            {
+                [JsonProperty("call_id", Required = Required.Always)]
+                public string CallID { get; set; }
+
+                [JsonProperty("node_id", Required = Required.Always)]
+                public string NodeID { get; set; }
+
+                [JsonProperty("segment_id", Required = Required.Always)]
+                public string SegmentID { get; set; }
+
+                [JsonProperty("tag", NullValueHandling = NullValueHandling.Ignore)]
+                public string Tag { get; set; }
+
+                [JsonProperty("call_state", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]
+                public CallState State { get; set; }
+
+                [JsonProperty("direction", NullValueHandling = NullValueHandling.Ignore)]
+                public string Direction { get; set; }
+
+                [JsonProperty("device", NullValueHandling = NullValueHandling.Ignore)]
+                public CallDevice Device { get; set; }
+            }
+
             [JsonProperty("tag", NullValueHandling = NullValueHandling.Ignore)]
             public string Tag { get; set; }
 
@@ -114,7 +114,7 @@ namespace SignalWire.Relay.Calling
             public bool DialWinner { get; set; }
 
             [JsonProperty("call", NullValueHandling = NullValueHandling.Ignore)]
-            public DialCallParams Call { get; set; }
+            public CallParams Call { get; set; }
 
         }
 
