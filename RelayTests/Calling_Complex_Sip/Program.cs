@@ -122,9 +122,41 @@ namespace Calling_Complex_Sip
                     }
                 });
 
-            if (!resultConnect.Successful)
+            bool successful = false;
+            if (!(successful = resultConnect.Successful))
             {
                 Logger.LogError("Call2 was not connected");
+            }
+            else
+            {
+                DisconnectResult resultDisconnect = resultDial.Call.Disconnect();
+                if (!(successful = resultDisconnect.Successful))
+                {
+                    Logger.LogError("Call was not disconnected");
+                }
+                else
+                {
+                    resultConnect = resultDial.Call.Connect(new List<List<CallDevice>>
+                    {
+                        new List<CallDevice>
+                        {
+                            new CallDevice
+                            {
+                                Type = CallDevice.DeviceType.phone,
+                                Parameters = new CallDevice.PhoneParams
+                                {
+                                    ToNumber = ToNumber,
+                                    FromNumber = FromNumber,
+                                }
+                            }
+                        }
+                    });
+
+                    if (!(successful = resultConnect.Successful))
+                    {
+                        Logger.LogError("Call3 was not reconnected");
+                    }
+                }
             }
 
             // Hangup both calls
@@ -132,7 +164,7 @@ namespace Calling_Complex_Sip
             resultDial.Call.Hangup();
 
             // Mark the test successful and terminate
-            Successful = resultConnect.Successful;
+            Successful = successful;
             Completed.Set();
         }
 
