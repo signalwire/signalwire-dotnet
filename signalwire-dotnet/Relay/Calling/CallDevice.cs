@@ -26,6 +26,9 @@ namespace SignalWire.Relay.Calling
 
             [JsonProperty("timeout", NullValueHandling = NullValueHandling.Ignore)]
             public int Timeout { get; set; } = 30;
+
+            [JsonProperty("max_duration", NullValueHandling = NullValueHandling.Ignore)]
+            public int? MaxDuration { get; set; }
         }
 
         public sealed class SipParams
@@ -36,8 +39,23 @@ namespace SignalWire.Relay.Calling
             [JsonProperty("from", Required = Required.Always)]
             public string From { get; set; }
 
+            [JsonProperty("from_name", NullValueHandling = NullValueHandling.Ignore)]
+            public string FromName { get; set; }
+
             [JsonProperty("headers", NullValueHandling = NullValueHandling.Ignore)]
-            public JObject Headers { get; set; }
+            public JArray Headers { get; set; }
+
+            [JsonProperty("codecs", NullValueHandling = NullValueHandling.Ignore)]
+            public string Codecs { get; set; }
+
+            [JsonProperty("timeout", NullValueHandling = NullValueHandling.Ignore)]
+            public int Timeout { get; set; } = 30;
+
+            [JsonProperty("max_duration", NullValueHandling = NullValueHandling.Ignore)]
+            public int? MaxDuration { get; set; }
+
+            [JsonProperty("webrtc_media", NullValueHandling = NullValueHandling.Ignore)]
+            public bool? WebRTCMedia { get; set; }
         }
 
         [JsonProperty("type", Required = Required.Always), JsonConverter(typeof(StringEnumConverter))]

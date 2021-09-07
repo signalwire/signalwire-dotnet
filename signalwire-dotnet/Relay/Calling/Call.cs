@@ -29,6 +29,11 @@ namespace SignalWire.Relay.Calling
         public delegate void ConnectConnectedCallback(CallingAPI api, Call call, Call callConnected, CallingEventParams eventParams, CallingEventParams.ConnectParams connectParams);
         public delegate void ConnectDisconnectedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.ConnectParams connectParams);
 
+        public delegate void DialStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DialParams dialParams);
+        public delegate void DialFailedCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DialParams dialParams);
+        public delegate void DialConnectingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.DialParams dialParams);
+        public delegate void DialConnectedCallback(CallingAPI api, Call call, Call callConnected, CallingEventParams eventParams, CallingEventParams.DialParams dialParams);
+
         public delegate void PlayStateChangeCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
         public delegate void PlayPlayingCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
         public delegate void PlayErrorCallback(CallingAPI api, Call call, CallingEventParams eventParams, CallingEventParams.PlayParams playParams);
@@ -90,6 +95,11 @@ namespace SignalWire.Relay.Calling
         public event ConnectConnectingCallback OnConnectConnecting;
         public event ConnectConnectedCallback OnConnectConnected;
         public event ConnectDisconnectedCallback OnConnectDisconnected;
+
+        public event DialStateChangeCallback OnDialStateChange;
+        public event DialFailedCallback OnDialFailed;
+        public event DialConnectingCallback OnDialConnecting;
+        public event DialConnectedCallback OnDialConnected;
 
         public event PlayStateChangeCallback OnPlayStateChange;
         public event PlayPlayingCallback OnPlayPlaying;
@@ -285,6 +295,24 @@ namespace SignalWire.Relay.Calling
             }
         }
 
+        internal void DialHandler(CallingEventParams eventParams, CallingEventParams.DialParams dialParams)
+        {
+            OnDialStateChange?.Invoke(mAPI, this, eventParams, dialParams);
+
+            switch (dialParams.State)
+            {
+                case CallDialState.failed:
+                    OnDialFailed?.Invoke(mAPI, this, eventParams, dialParams);
+                    break;
+                case CallDialState.dialing:
+                    OnDialConnecting?.Invoke(mAPI, this, eventParams, dialParams);
+                    break;
+                case CallDialState.answered:
+                    OnDialConnected?.Invoke(mAPI, this, null, eventParams, dialParams);
+                    break;
+            }
+        }
+
         internal void PlayHandler(CallingEventParams eventParams, CallingEventParams.PlayParams playParams)
         {
             OnPlayStateChange?.Invoke(mAPI, this, eventParams, playParams);
@@ -412,6 +440,83 @@ namespace SignalWire.Relay.Calling
         }
 
         protected abstract Task<DialResult> InternalDialAsync();
+
+        public DialResult Dial(List<List<CallDevice>> devices)
+        {
+            return InternalDialAsync(devices).Result;
+        }
+
+        public DialAction DialAsync(List<List<CallDevice>> devices)
+        {
+            DialAction action = new DialAction
+            {
+                Call = this,
+                Payload = devices,
+            };
+            Task.Run(async () =>
+            {
+                DialStateChangeCallback dialStateChangeCallback = (a, c, e, p) => action.State = p.State;
+                OnDialStateChange += dialStateChangeCallback;
+
+                action.Result = await InternalDialAsync(devices);
+                action.Completed = true;
+
+                OnDialStateChange -= dialStateChangeCallback;
+            });
+            return action;
+        }
+
+         protected async Task<DialResult> InternalDialAsync(List<List<CallDevice>> devices)
+         {
+            DialResult resultDial = new DialResult();
+            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
+
+            // Hook callbacks temporarily to catch required events
+            DialConnectedCallback connectedCallback = (a, c, cp, e, p) =>
+            {
+                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
+                resultDial.Call = API.GetCall(p.Call.CallID);
+                tcsCompletion.SetResult(true);
+            };
+            DialFailedCallback failedCallback = (a, c, e, p) =>
+            {
+                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
+                tcsCompletion.SetResult(false);
+            };
+
+            OnDialConnected += connectedCallback;
+            OnDialFailed += failedCallback;
+
+            try
+            {
+                Task<LL_DialResult> taskLLDial = mAPI.LL_DialAsync(new LL_DialParams()
+                {
+                    Devices = devices,
+                    Tag = TemporaryID
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_DialResult resultLLDial = await taskLLDial;
+                if (resultLLDial.Code == "200")
+                {
+                    Log(LogLevel.Debug, string.Format("Dial for call {0} waiting for completion events", ID));
+
+                    resultDial.Successful = await tcsCompletion.Task;
+
+                    Log(LogLevel.Debug, string.Format("Dial for call {0} {1}", ID, resultDial.Successful ? "successful" : "unsuccessful"));
+                }
+            }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Error, exc, string.Format("Dial for call {0} exception", ID));
+            }
+
+            // Unhook temporary callbacks
+            OnDialConnected -= connectedCallback;
+            OnDialFailed -= failedCallback;
+
+            return resultDial;
+        }
 
         public AnswerResult Answer(int? maxDuration = null)
         {
@@ -627,6 +732,46 @@ namespace SignalWire.Relay.Calling
             OnConnectFailed -= failedCallback;
 
             return resultConnect;
+        }
+
+        public DisconnectResult Disconnect()
+        {
+            return InternalDisconnectAsync().Result;
+        }
+
+        private async Task<DisconnectResult> InternalDisconnectAsync()
+        {
+            DisconnectResult resultDisconnect = new DisconnectResult();
+
+            try
+            {
+                Task<LL_DisconnectResult> taskLLDisconnect = mAPI.LL_DisconnectAsync(new LL_DisconnectParams()
+                {
+                    CallID = ID,
+                    NodeID = NodeID
+                });
+
+                // The use of await rethrows exceptions from the task
+                LL_DisconnectResult resultLLDisconnect = await taskLLDisconnect;
+                if (resultLLDisconnect.Code == "200")
+                {
+                    // Since there are no disconnect events, this ends the successful checks
+                    if (Peer != null)
+                    {
+                        Peer.Peer = null;
+                        Peer = null;
+                    }
+                    resultDisconnect.Successful = true;
+
+                    mLogger.LogDebug("Disconnect for call {0} {1}", ID, resultDisconnect.Successful ? "successful" : "unsuccessful");
+                }
+            }
+            catch (Exception exc)
+            {
+                mLogger.LogError(exc, "Disconnect for call {0} exception", ID);
+            }
+
+            return resultDisconnect;
         }
 
         public PlayResult Play(List<CallMedia> play, double? volume = null)
@@ -1908,11 +2053,15 @@ namespace SignalWire.Relay.Calling
         }
     }
 
-public sealed class SipCall : Call
+    public sealed class SipCall : Call
     {
         public string To { get; set; }
         public string From { get; set; }
-        public JObject Headers { get; set; }
+        public string FromName { get; set; }
+        public string Codecs { get; set; }
+        public JArray Headers { get; set; }
+        public bool? WebRTCMedia { get; set; }
+        public int Timeout { get; set; }
 
         internal SipCall(CallingAPI api, string nodeID, string callID)
             : base(api, nodeID, callID) { }
@@ -1923,64 +2072,27 @@ public sealed class SipCall : Call
 
         protected override async Task<DialResult> InternalDialAsync()
         {
-            DialResult resultDial = new DialResult();
-            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
-
-            // Hook callbacks temporarily to catch required events
-            AnsweredCallback answeredCallback = (a, c, e, p) =>
+            return await InternalDialAsync(new List<List<CallDevice>>
             {
-                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
-                resultDial.Call = c;
-                tcsCompletion.SetResult(true);
-            };
-            EndedCallback endedCallback = (a, c, e, p) =>
-            {
-                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
-                tcsCompletion.SetResult(false);
-            };
-
-            OnAnswered += answeredCallback;
-            OnEnded += endedCallback;
-
-            try
-            {
-                Task<LL_BeginResult> taskLLBegin = mAPI.LL_BeginAsync(new LL_BeginParams()
+                new List<CallDevice>
                 {
-                    Device = new CallDevice()
+                    new CallDevice
                     {
                         Type = CallDevice.DeviceType.sip,
-                        Parameters = new CallDevice.SipParams()
+                        Parameters = new CallDevice.SipParams
                         {
                             To = To,
                             From = From,
+                            FromName = FromName,
+                            Timeout = Timeout,
+                            MaxDuration = MaxDuration,
                             Headers = Headers,
-                        },
-                    },
-                    TemporaryCallID = mTemporaryID,
-                    MaxDuration = MaxDuration,
-                });
-
-                // The use of await rethrows exceptions from the task
-                LL_BeginResult resultLLBegin = await taskLLBegin;
-                if (resultLLBegin.Code == "200")
-                {
-                    Log(LogLevel.Debug, string.Format("Dial for call {0} waiting for completion events", ID));
-
-                    resultDial.Successful = await tcsCompletion.Task;
-
-                    Log(LogLevel.Debug, string.Format("Dial for call {0} {1}", ID, resultDial.Successful ? "successful" : "unsuccessful"));
+                            Codecs = Codecs,
+                            WebRTCMedia = WebRTCMedia
+                        }
+                    }
                 }
-            }
-            catch (Exception exc)
-            {
-                Log(LogLevel.Error, exc, string.Format("Dial for call {0} exception", ID));
-            }
-
-            // Unhook temporary callbacks
-            OnAnswered -= answeredCallback;
-            OnEnded -= endedCallback;
-
-            return resultDial;
+            });
         }
     }
     public sealed class PhoneCall : Call
@@ -1998,64 +2110,23 @@ public sealed class SipCall : Call
 
         protected override async Task<DialResult> InternalDialAsync()
         {
-            DialResult resultDial = new DialResult();
-            TaskCompletionSource<bool> tcsCompletion = new TaskCompletionSource<bool>();
-
-            // Hook callbacks temporarily to catch required events
-            AnsweredCallback answeredCallback = (a, c, e, p) =>
+            return await InternalDialAsync(new List<List<CallDevice>>
             {
-                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
-                resultDial.Call = c;
-                tcsCompletion.SetResult(true);
-            };
-            EndedCallback endedCallback = (a, c, e, p) =>
-            {
-                resultDial.Event = new Event(e.EventType, JObject.FromObject(p));
-                tcsCompletion.SetResult(false);
-            };
-
-            OnAnswered += answeredCallback;
-            OnEnded += endedCallback;
-
-            try
-            {
-                Task<LL_BeginResult> taskLLBegin = mAPI.LL_BeginAsync(new LL_BeginParams()
+                new List<CallDevice>
                 {
-                    Device = new CallDevice()
+                    new CallDevice
                     {
                         Type = CallDevice.DeviceType.phone,
-                        Parameters = new CallDevice.PhoneParams()
+                        Parameters = new CallDevice.PhoneParams
                         {
                             ToNumber = To,
                             FromNumber = From,
                             Timeout = Timeout,
-                        },
-                    },
-                    TemporaryCallID = mTemporaryID,
-                    MaxDuration = MaxDuration,
-                });
-
-                // The use of await rethrows exceptions from the task
-                LL_BeginResult resultLLBegin = await taskLLBegin;
-                if (resultLLBegin.Code == "200")
-                {
-                    Log(LogLevel.Debug, string.Format("Dial for call {0} waiting for completion events", ID));
-
-                    resultDial.Successful = await tcsCompletion.Task;
-
-                    Log(LogLevel.Debug, string.Format("Dial for call {0} {1}", ID, resultDial.Successful ? "successful" : "unsuccessful"));
+                            MaxDuration = MaxDuration
+                        }
+                    }
                 }
-            }
-            catch (Exception exc)
-            {
-                Log(LogLevel.Error, exc, string.Format("Dial for call {0} exception", ID));
-            }
-
-            // Unhook temporary callbacks
-            OnAnswered -= answeredCallback;
-            OnEnded -= endedCallback;
-
-            return resultDial;
+            });
         }
     }
 }

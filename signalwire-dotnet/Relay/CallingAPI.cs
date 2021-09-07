@@ -55,11 +55,48 @@ namespace SignalWire.Relay
             return call;
         }
 
-        public DialResult DialPhone(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).Dial(); }
+        public SipCall NewSipCall(string to, string from, string fromName = null, string codecs = null, JArray headers = null, int timeout = 30, int? maxDuration = null, bool? webRTCMedia = null)
+        {
+            SipCall call = new SipCall(this, Guid.NewGuid().ToString())
+            {
+                To = to,
+                From = from,
+                FromName = fromName,
+                Headers = headers,
+                Codecs = codecs,
+                Timeout = timeout,
+                MaxDuration = maxDuration,
+                WebRTCMedia = webRTCMedia
+            };
+            mCalls.TryAdd(call.TemporaryID, call);
+            OnCallCreated?.Invoke(this, call);
+            return call;
+        }
 
-        public DialAction DialPhoneAsync(string to, string from, int timeout = 30, int? maxDuration = null) { return NewPhoneCall(to, from, timeout, maxDuration).DialAsync(); }
+        public DialResult DialPhone(string to, string from, int timeout = 30, int? maxDuration = null)
+        {
+            return NewPhoneCall(to, from, timeout, maxDuration).Dial();
+        }
 
-        // @TODO: NewSIPCall and NewWebRTCCall
+        public DialAction DialPhoneAsync(string to, string from, int timeout = 30, int? maxDuration = null)
+        {
+            return NewPhoneCall(to, from, timeout, maxDuration).DialAsync();
+        }
+
+
+        public DialResult DialSip(string to, string from, string fromName = null, 
+        string codecs = null, JArray headers = null, int timeout = 30, int? maxDuration = null, 
+        bool? webRTCMedia = null) 
+        {
+            return NewSipCall(to, from, fromName, codecs, headers, timeout, maxDuration, webRTCMedia).Dial();
+        }
+
+        public DialAction DialSipAsync(string to, string from, string fromName = null, string codecs = null, 
+        JArray headers = null, int timeout = 30, int? maxDuration = null, bool? webRTCMedia = null) {
+            return NewSipCall(to, from, fromName, codecs, headers, timeout, maxDuration, webRTCMedia).DialAsync();
+        }
+
+        // @TODO: NewWebRTCCall
 
         internal Call GetCall(string callid)
         {
@@ -103,6 +140,9 @@ namespace SignalWire.Relay
                 case "calling.call.connect":
                     OnCallingEvent_Connect(client, broadcastParams, callingEventParams);
                     break;
+                case "calling.call.dial":
+                    OnCallingEvent_Dial(client, broadcastParams, callingEventParams);
+                    break;
                 case "calling.call.play":
                     OnCallingEvent_Play(client, broadcastParams, callingEventParams);
                     break;
@@ -139,19 +179,6 @@ namespace SignalWire.Relay
             }
 
             Call call = null;
-            if (!string.IsNullOrWhiteSpace(stateParams.TemporaryCallID))
-            {
-                // Remove the call keyed by the temporary call id if it exists
-                if (mCalls.TryRemove(stateParams.TemporaryCallID, out call))
-                {
-                    // Update the internal details for the call, including the real call id
-                    call.NodeID = stateParams.NodeID;
-                    call.ID = stateParams.CallID;
-                }
-            }
-            // If call is not null at this point, it means this is the first event for a call that was started with a temporary call id
-            // and the call should be readded under the real call id
-
             Call tmp = null;
             switch (stateParams.Device.Type)
             {
@@ -177,7 +204,31 @@ namespace SignalWire.Relay
                         }));
                         break;
                     }
-                // @TODO: sip and webrtc
+                 case CallDevice.DeviceType.sip:
+                    {
+                        CallDevice.SipParams sipParams = null;
+                        try { sipParams = stateParams.Device.ParametersAs<CallDevice.SipParams>(); }
+                        catch (Exception exc)
+                        {
+                            Log(LogLevel.Warning, exc, "Failed to parse SipParams");
+                            return;
+                        }
+
+                        // If the call already exists under the real call id simply obtain the call, however if the call was found under
+                        // a temporary call id then readd it here under the real call id, otherwise create a new call
+                        call = mCalls.GetOrAdd(stateParams.CallID, k => call ?? (tmp = new SipCall(this, stateParams.NodeID, stateParams.CallID)
+                        {
+                            To = sipParams.To,
+                            From = sipParams.From,
+                            FromName = sipParams.FromName,
+                            Headers = sipParams.Headers,
+
+                            // Capture the state, it may not always be created the first time we see the call
+                            State = stateParams.CallState,
+                        }));
+                        break;
+                    }
+                // @TODO: webrtc
                 default:
                     Log(LogLevel.Warning, string.Format("Unknown device type: {0}", stateParams.Device.Type));
                     return;
@@ -277,6 +328,25 @@ namespace SignalWire.Relay
             }
 
             call.ConnectHandler(callEventParams, connectParams);
+        }
+
+        private void OnCallingEvent_Dial(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
+        {
+            CallingEventParams.DialParams dialParams = null;
+            try { dialParams = callEventParams.ParametersAs<CallingEventParams.DialParams>(); }
+            catch (Exception exc)
+            {
+                Log(LogLevel.Warning, exc, "Failed to parse DialParams");
+                return;
+            }
+
+            if (!mCalls.TryGetValue(dialParams.Tag, out Call call))
+            {
+                Log(LogLevel.Warning, string.Format("Received DialParams with unknown Tag: {0}, {1}", dialParams.Tag, dialParams.State));
+                return;
+            }
+            
+            call.DialHandler(callEventParams, dialParams);
         }
 
         private void OnCallingEvent_Play(Client client, BroadcastParams broadcastParams, CallingEventParams callEventParams)
@@ -410,11 +480,6 @@ namespace SignalWire.Relay
 
         // Low Level API
 
-        public Task<LL_BeginResult> LL_BeginAsync(LL_BeginParams parameters)
-        {
-            return mAPI.ExecuteAsync<LL_BeginParams, LL_BeginResult>("calling.begin", parameters);
-        }
-
         public Task<LL_AnswerResult> LL_AnswerAsync(LL_AnswerParams parameters)
         {
             return mAPI.ExecuteAsync<LL_AnswerParams, LL_AnswerResult>("calling.answer", parameters);
@@ -428,6 +493,16 @@ namespace SignalWire.Relay
         public Task<LL_ConnectResult> LL_ConnectAsync(LL_ConnectParams parameters)
         {
             return mAPI.ExecuteAsync<LL_ConnectParams, LL_ConnectResult>("calling.connect", parameters);
+        }
+
+        public Task<LL_DialResult> LL_DialAsync(LL_DialParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_DialParams, LL_DialResult>("calling.dial", parameters);
+        }
+
+        public Task<LL_DisconnectResult> LL_DisconnectAsync(LL_DisconnectParams parameters)
+        {
+            return mAPI.ExecuteAsync<LL_DisconnectParams, LL_DisconnectResult>("calling.disconnect", parameters);
         }
 
         public Task<LL_PlayResult> LL_PlayAsync(LL_PlayParams parameters)

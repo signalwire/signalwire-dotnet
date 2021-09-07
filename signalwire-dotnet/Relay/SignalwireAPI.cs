@@ -34,7 +34,7 @@ namespace SignalWire.Relay
         protected ILogger Logger {  get { return mLogger; } }
 
         public Client Client { get { return mClient; } }
-        public string Protocol { get { return mProtocol; } internal set { mProtocol = value; } }
+        public string Protocol { get { return mProtocol; } internal set { mProtocol = value; mSetupCompleted = true; } }
 
         protected bool SetupCompleted { get { return mSetupCompleted; } }
 
