@@ -23,7 +23,7 @@ namespace Blade
         public sealed class SessionOptions
         {
             public Uri Bootstrap { get; set; }
-            public string ClientCertificate { get; set; }
+            public string CertifiedClientToken { get; set; }
             public string Authentication { get; set; }
             public string Agent { get; set; }
             public TimeSpan ConnectDelay { get; set; } = TimeSpan.FromSeconds(5);
@@ -122,8 +122,7 @@ namespace Blade
             mLogger = BladeLogging.CreateLogger<UpstreamSession>();
             mOptions = options ?? throw new ArgumentNullException("options");
             if (options.Bootstrap == null) throw new ArgumentNullException("Options.Bootstrap");
-            if (options.ClientCertificate == null && options.Authentication == null) throw new ArgumentNullException("Options.Authentication");
-            if (options.ClientCertificate != null && !File.Exists(options.ClientCertificate)) throw new FileNotFoundException("ClientCertificate not found", options.ClientCertificate);
+            if (options.CertifiedClientToken == null && options.Authentication == null) throw new ArgumentNullException("Options.Authentication");
             Cache = new Cache(this);
             
             mTaskThread = new Thread(TaskWorker);
@@ -307,11 +306,10 @@ namespace Blade
 
                             mSocket = new ClientWebSocket();
 
-                            // @todo support inline conversion of individual PEM to PKCS12 combined
-                            if (mOptions.ClientCertificate != null)
+                            if (mOptions.CertifiedClientToken != null)
                             {
-                                Log(LogLevel.Information, string.Format("Using ClientCertificate: {0}", mOptions.ClientCertificate));
-                                mSocket.Options.ClientCertificates.Add(new X509Certificate2(mOptions.ClientCertificate));
+                                Log(LogLevel.Information, string.Format("Using Certified Client Token: {0}", mOptions.CertifiedClientToken));
+                                mSocket.Options.SetRequestHeader("Authorization", "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes($"{mOptions.CertifiedClientToken}:")));
                             }
 
 #if NETCOREAPP2_1 || NETSTANDARD2_1
@@ -319,7 +317,6 @@ namespace Blade
 #endif
                             mSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(5); // 5 second ping/pong check
                             mSocket.Options.SetBuffer(64 * 1024, 64 * 1024); // 64kb buffers before continuation is used, per .NET Framework limit
-
 
                             try
                             {

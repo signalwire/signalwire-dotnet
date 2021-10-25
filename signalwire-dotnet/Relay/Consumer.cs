@@ -17,7 +17,7 @@ namespace SignalWire.Relay
 
         public string Host { get; set; }
 
-        public string Certificate { get; set; }
+        public string CertifiedClientToken { get; set; }
 
         public string Project { get; set; }
 
@@ -55,7 +55,7 @@ namespace SignalWire.Relay
             if (string.IsNullOrWhiteSpace(Project)) throw new ArgumentNullException("Project");
             if (string.IsNullOrWhiteSpace(Token)) throw new ArgumentNullException("Token");
 
-            using (mClient = new Client(Project, Token, host: Host, certificate: Certificate, jwt: JWT, uncertifiedConnectParams: new Blade.Messages.UncertifiedConnectParams { Contexts = Contexts }))
+            using (mClient = new Client(Project, Token, host: Host, certifiedClientToken: CertifiedClientToken, jwt: JWT, uncertifiedConnectParams: new Blade.Messages.UncertifiedConnectParams { Contexts = Contexts }))
             {
                 mClient.OnReady += c => Task.Run(() => Ready());
                 mClient.OnRestored += c => Task.Run(() => Restored());
