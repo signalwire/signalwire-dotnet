@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\signalwire-dotnet\signalwire-dotnet.csproj">
-      <SetTargetFramework>TargetFramework=netstandard2.1</SetTargetFramework>
+      <SetTargetFramework>TargetFramework=netcoreapp3.1</SetTargetFramework>
     </ProjectReference>
   </ItemGroup>
 
