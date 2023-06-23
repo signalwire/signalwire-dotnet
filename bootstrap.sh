@@ -1,6 +1,6 @@
 echo Bootstrapping...
 rm -rf laml
-git clone --branch 5.39.1 https://github.com/twilio/twilio-csharp.git laml
+git clone --branch 5.56.0 https://github.com/twilio/twilio-csharp.git laml
 echo Patching...
 sed 's/^M$//' laml.patch > laml.clean.patch
 git apply --directory laml laml.clean.patch
