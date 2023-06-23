@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.1] - 2023-06-23
+### Changed
+- Update dependencies
+
 ## [2.4.0] - 2021-09-08
 ### Added
 - Network data filtering
