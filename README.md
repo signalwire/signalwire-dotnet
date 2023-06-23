@@ -1,3 +1,5 @@
+# This repository is deprecated, please use https://github.com/signalwire/signalwire-dotnet-lite for public packaged nuget client libraries.
+
 # SignalWire C#/.Net SDK
 
 [![Build Status](https://ci.signalwire.com/api/badges/signalwire/signalwire-dotnet/status.svg)](https://ci.signalwire.com/signalwire/signalwire-dotnet) [![NuGet version (SignalWire-DotNet)](https://img.shields.io/nuget/v/SignalWire-DotNet.svg?color=brightgreen)](https://www.nuget.org/packages/SignalWire-DotNet/)
