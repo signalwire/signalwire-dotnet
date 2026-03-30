@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>SignalWire</RootNamespace>
+    <AssemblyName>SignalWire</AssemblyName>
+    <PackageId>SignalWire.Sdk</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>SignalWire</Authors>
+    <Description>SignalWire AI Agents SDK for .NET — build AI voice agents, control live calls over WebSocket, and manage resources over REST.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/signalwire/signalwire-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/signalwire/signalwire-dotnet</RepositoryUrl>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="SWML/schema.json" LogicalName="SignalWire.SWML.schema.json" />
+  </ItemGroup>
+
+</Project>
