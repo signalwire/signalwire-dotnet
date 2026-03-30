@@ -1,0 +1,505 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using SignalWire.Logging;
+
+namespace SignalWire.SWML;
+
+/// <summary>Configuration options for a SWML service.</summary>
+public sealed class ServiceOptions
+{
+    public required string Name { get; init; }
+    public string Route { get; init; } = "/";
+    public string Host { get; init; } = "0.0.0.0";
+    public int? Port { get; init; }
+    public string? BasicAuthUser { get; init; }
+    public string? BasicAuthPassword { get; init; }
+}
+
+/// <summary>
+/// A SWML service that manages a Document, provides schema-driven verb methods,
+/// handles HTTP requests with Basic authentication, and supports routing callbacks.
+/// </summary>
+public class Service
+{
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
+    private static readonly Regex SipUsernamePattern = new(
+        @"^[a-zA-Z0-9._-]+$",
+        RegexOptions.Compiled);
+
+    private const int MaxBodySize = 1_048_576; // 1 MB
+
+    private readonly Logger _logger;
+    private readonly string _basicAuthUser;
+    private readonly string _basicAuthPassword;
+    private readonly Dictionary<string, Func<Dictionary<string, object?>?, Dictionary<string, string>, object>> _routingCallbacks = new();
+
+    public string Name { get; }
+    public string Route { get; }
+    public string Host { get; }
+    public int Port { get; }
+    public Document Document { get; }
+
+    public Service(ServiceOptions options)
+    {
+        Name = options.Name;
+
+        var route = options.Route.TrimEnd('/');
+        Route = string.IsNullOrEmpty(route) ? "/" : route;
+
+        Host = options.Host;
+        Port = options.Port ?? ParsePortFromEnv() ?? 3000;
+        Document = new Document();
+        _logger = Logger.GetLogger("swml_service");
+
+        // Auth: explicit > env > auto-generated
+        if (options.BasicAuthUser is not null && options.BasicAuthPassword is not null)
+        {
+            _basicAuthUser = options.BasicAuthUser;
+            _basicAuthPassword = options.BasicAuthPassword;
+        }
+        else
+        {
+            var envUser = Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_USER");
+            var envPass = Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_PASSWORD");
+
+            if (envUser is not null && envPass is not null)
+            {
+                _basicAuthUser = envUser;
+                _basicAuthPassword = envPass;
+            }
+            else
+            {
+                _basicAuthUser = RandomHex(16);
+                _basicAuthPassword = RandomHex(32);
+            }
+        }
+
+        _logger.Info($"Service '{Name}' initialised (route={Route}, port={Port})");
+    }
+
+    // ------------------------------------------------------------------
+    // Dynamic verb methods
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Add a verb to the specified section. Validates the verb name against the schema.
+    /// Returns this service for fluent chaining.
+    /// </summary>
+    public Service Verb(string verbName, string section, object? config)
+    {
+        var schema = Schema.Instance;
+        if (!schema.IsValidVerb(verbName))
+        {
+            throw new ArgumentException($"Unknown SWML verb: {verbName}", nameof(verbName));
+        }
+
+        Document.AddVerbToSection(section, verbName, config);
+        return this;
+    }
+
+    /// <summary>
+    /// Add a verb to the main section. Validates the verb name against the schema.
+    /// Returns this service for fluent chaining.
+    /// </summary>
+    public Service Verb(string verbName, object? config)
+    {
+        return Verb(verbName, "main", config);
+    }
+
+    /// <summary>
+    /// Add a sleep verb with a duration in milliseconds to the specified section.
+    /// </summary>
+    public Service Sleep(int milliseconds, string section = "main")
+    {
+        var schema = Schema.Instance;
+        if (!schema.IsValidVerb("sleep"))
+        {
+            throw new InvalidOperationException("'sleep' verb not found in schema");
+        }
+
+        Document.AddVerbToSection(section, "sleep", milliseconds);
+        return this;
+    }
+
+    // ------------------------------------------------------------------
+    // Auth helpers
+    // ------------------------------------------------------------------
+
+    /// <summary>Get the Basic Auth credentials as a tuple.</summary>
+    public (string User, string Password) GetBasicAuthCredentials()
+    {
+        return (_basicAuthUser, _basicAuthPassword);
+    }
+
+    /// <summary>Build the full URL for this service.</summary>
+    public string GetFullUrl(bool includeAuth = false)
+    {
+        var auth = includeAuth
+            ? $"{_basicAuthUser}:{_basicAuthPassword}@"
+            : "";
+        return $"http://{auth}{Host}:{Port}{Route}";
+    }
+
+    // ------------------------------------------------------------------
+    // Routing callbacks
+    // ------------------------------------------------------------------
+
+    /// <summary>Register a callback for a sub-path under the service route.</summary>
+    public void RegisterRoutingCallback(
+        string path,
+        Func<Dictionary<string, object?>?, Dictionary<string, string>, object> callback)
+    {
+        _routingCallbacks[path] = callback;
+    }
+
+    // ------------------------------------------------------------------
+    // SWML rendering
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Render the SWML document for a request. Override in subclasses to customise.
+    /// </summary>
+    public virtual Dictionary<string, object> RenderSwml()
+    {
+        return Document.ToDict();
+    }
+
+    // ------------------------------------------------------------------
+    // HTTP handling
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Handle an HTTP request. Returns a tuple of (status, headers, body).
+    /// </summary>
+    public (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
+        string method,
+        string path,
+        Dictionary<string, string> headers,
+        string? body)
+    {
+        // Health/ready: no auth required
+        if (path == "/health")
+        {
+            return JsonResponse(200, new { status = "healthy" });
+        }
+        if (path == "/ready")
+        {
+            return JsonResponse(200, new { status = "ready" });
+        }
+
+        // Determine if path matches our route
+        string? subPath = null;
+
+        if (Route == "/")
+        {
+            subPath = path;
+        }
+        else if (path == Route || path.StartsWith(Route + "/", StringComparison.Ordinal))
+        {
+            subPath = path[Route.Length..];
+            if (string.IsNullOrEmpty(subPath))
+            {
+                subPath = "/";
+            }
+        }
+
+        if (subPath is null)
+        {
+            return JsonResponse(404, new { error = "Not found" });
+        }
+
+        // Auth required for everything under the route
+        if (!CheckBasicAuth(headers))
+        {
+            var authHeaders = SecurityHeaders();
+            authHeaders["Content-Type"] = "text/plain";
+            authHeaders["WWW-Authenticate"] = "Basic realm=\"SignalWire SWML Service\"";
+            return (401, authHeaders, "Unauthorized");
+        }
+
+        // Parse body
+        Dictionary<string, object?>? requestData = null;
+        if (body is not null && body.Length > 0)
+        {
+            if (body.Length > MaxBodySize)
+            {
+                return JsonResponse(413, new { error = "Request body too large" });
+            }
+            try
+            {
+                requestData = JsonSerializer.Deserialize<Dictionary<string, object?>>(body);
+            }
+            catch (JsonException)
+            {
+                // Treat unparseable body as null
+            }
+        }
+
+        // Route dispatch
+        if (subPath is "/" or "")
+        {
+            return HandleSwmlRequest(method, requestData, headers);
+        }
+        if (subPath == "/swaig")
+        {
+            return HandleSwaigRequest(requestData, headers);
+        }
+        if (subPath == "/post_prompt")
+        {
+            return HandlePostPrompt(requestData, headers);
+        }
+
+        // Check routing callbacks
+        if (_routingCallbacks.TryGetValue(subPath, out var callback))
+        {
+            var result = callback(requestData, headers);
+            return JsonResponse(200, result);
+        }
+
+        return JsonResponse(404, new { error = "Not found" });
+    }
+
+    /// <summary>Handle SWML document request.</summary>
+    protected virtual (int, Dictionary<string, string>, string) HandleSwmlRequest(
+        string method,
+        Dictionary<string, object?>? requestData,
+        Dictionary<string, string> headers)
+    {
+        var swml = RenderSwml();
+        return JsonResponse(200, swml);
+    }
+
+    /// <summary>Handle SWAIG function dispatch. Override in AgentBase.</summary>
+    protected virtual (int, Dictionary<string, string>, string) HandleSwaigRequest(
+        Dictionary<string, object?>? requestData,
+        Dictionary<string, string> headers)
+    {
+        return JsonResponse(200, Array.Empty<object>());
+    }
+
+    /// <summary>Handle post-prompt callback. Override in AgentBase.</summary>
+    protected virtual (int, Dictionary<string, string>, string) HandlePostPrompt(
+        Dictionary<string, object?>? requestData,
+        Dictionary<string, string> headers)
+    {
+        return JsonResponse(200, Array.Empty<object>());
+    }
+
+    // ------------------------------------------------------------------
+    // SIP username extraction
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Extract SIP username from a request body.
+    /// Validates format: only [a-zA-Z0-9._-], max 64 chars.
+    /// </summary>
+    public static string? ExtractSipUsername(Dictionary<string, object?>? body)
+    {
+        if (body is null)
+        {
+            return null;
+        }
+
+        // Look for SIP URI in common locations
+        string? sipUri = null;
+
+        if (body.TryGetValue("call", out var callObj))
+        {
+            if (callObj is JsonElement callEl && callEl.ValueKind == JsonValueKind.Object
+                && callEl.TryGetProperty("to", out var toProp))
+            {
+                sipUri = toProp.GetString();
+            }
+            else if (callObj is IDictionary<string, object> callDict
+                && callDict.TryGetValue("to", out var toVal) && toVal is string toStr)
+            {
+                sipUri = toStr;
+            }
+        }
+        else if (body.TryGetValue("to", out var toObj))
+        {
+            sipUri = toObj switch
+            {
+                string s => s,
+                JsonElement { ValueKind: JsonValueKind.String } el => el.GetString(),
+                _ => null,
+            };
+        }
+
+        if (sipUri is null)
+        {
+            return null;
+        }
+
+        // Extract username from sip:username@host
+        string username;
+        if (sipUri.StartsWith("sip:", StringComparison.OrdinalIgnoreCase))
+        {
+            var afterPrefix = sipUri[4..];
+            var atIdx = afterPrefix.IndexOf('@');
+            username = atIdx >= 0 ? afterPrefix[..atIdx] : afterPrefix;
+        }
+        else
+        {
+            username = sipUri;
+        }
+
+        // Validate format
+        if (username.Length > 64 || !SipUsernamePattern.IsMatch(username))
+        {
+            return null;
+        }
+
+        return username;
+    }
+
+    // ------------------------------------------------------------------
+    // Proxy URL
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Detect or construct the proxy URL base from request headers.
+    /// Priority: SWML_PROXY_URL_BASE env > X-Forwarded-Proto+Host > X-Original-URL > fallback.
+    /// </summary>
+    public string GetProxyUrlBase(Dictionary<string, string>? headers = null)
+    {
+        // 1. Explicit env var
+        var envProxy = Environment.GetEnvironmentVariable("SWML_PROXY_URL_BASE");
+        if (!string.IsNullOrEmpty(envProxy))
+        {
+            return envProxy.TrimEnd('/');
+        }
+
+        headers ??= new Dictionary<string, string>();
+
+        // 2. X-Forwarded-Proto + X-Forwarded-Host
+        var proto = GetHeaderCaseInsensitive(headers, "X-Forwarded-Proto");
+        var fwdHost = GetHeaderCaseInsensitive(headers, "X-Forwarded-Host");
+        if (proto is not null && fwdHost is not null)
+        {
+            return $"{proto}://{fwdHost}";
+        }
+
+        // 3. X-Original-URL
+        var origUrl = GetHeaderCaseInsensitive(headers, "X-Original-URL");
+        if (origUrl is not null)
+        {
+            return origUrl.TrimEnd('/');
+        }
+
+        // 4. Fallback to server config
+        return $"http://{Host}:{Port}";
+    }
+
+    // ------------------------------------------------------------------
+    // Private helpers
+    // ------------------------------------------------------------------
+
+    /// <summary>Check Basic Auth from request headers using timing-safe comparison.</summary>
+    private bool CheckBasicAuth(Dictionary<string, string> headers)
+    {
+        var authHeader = GetHeaderCaseInsensitive(headers, "Authorization");
+        if (authHeader is null)
+        {
+            return false;
+        }
+
+        if (!authHeader.StartsWith("Basic ", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        byte[] decoded;
+        try
+        {
+            decoded = Convert.FromBase64String(authHeader[6..]);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        var decodedStr = Encoding.UTF8.GetString(decoded);
+        var colonIdx = decodedStr.IndexOf(':');
+        if (colonIdx < 0)
+        {
+            return false;
+        }
+
+        var inputUser = decodedStr[..colonIdx];
+        var inputPass = decodedStr[(colonIdx + 1)..];
+
+        // Timing-safe comparison
+        var expectedUserBytes = Encoding.UTF8.GetBytes(_basicAuthUser);
+        var inputUserBytes = Encoding.UTF8.GetBytes(inputUser);
+        var expectedPassBytes = Encoding.UTF8.GetBytes(_basicAuthPassword);
+        var inputPassBytes = Encoding.UTF8.GetBytes(inputPass);
+
+        var userOk = CryptographicOperations.FixedTimeEquals(expectedUserBytes, inputUserBytes);
+        var passOk = CryptographicOperations.FixedTimeEquals(expectedPassBytes, inputPassBytes);
+
+        return userOk && passOk;
+    }
+
+    /// <summary>Security headers applied to all authenticated responses.</summary>
+    private static Dictionary<string, string> SecurityHeaders()
+    {
+        return new Dictionary<string, string>
+        {
+            ["X-Content-Type-Options"] = "nosniff",
+            ["X-Frame-Options"] = "DENY",
+            ["Cache-Control"] = "no-store",
+        };
+    }
+
+    /// <summary>Build a JSON response tuple.</summary>
+    private static (int, Dictionary<string, string>, string) JsonResponse(int status, object data)
+    {
+        var body = JsonSerializer.Serialize(data, JsonOptions);
+        var responseHeaders = SecurityHeaders();
+        responseHeaders["Content-Type"] = "application/json";
+        return (status, responseHeaders, body);
+    }
+
+    /// <summary>Generate cryptographically secure random hex string.</summary>
+    private static string RandomHex(int bytes)
+    {
+        var buffer = new byte[bytes];
+        RandomNumberGenerator.Fill(buffer);
+        return Convert.ToHexString(buffer).ToLowerInvariant();
+    }
+
+    /// <summary>Case-insensitive header lookup.</summary>
+    private static string? GetHeaderCaseInsensitive(Dictionary<string, string> headers, string name)
+    {
+        if (headers.TryGetValue(name, out var value))
+        {
+            return value;
+        }
+        // Try lowercase
+        if (headers.TryGetValue(name.ToLowerInvariant(), out value))
+        {
+            return value;
+        }
+        return null;
+    }
+
+    /// <summary>Parse PORT from environment variable.</summary>
+    private static int? ParsePortFromEnv()
+    {
+        var portStr = Environment.GetEnvironmentVariable("PORT");
+        if (portStr is not null && int.TryParse(portStr, out var port))
+        {
+            return port;
+        }
+        return null;
+    }
+}
