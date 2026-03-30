@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using SignalWire.Contexts;
 using SignalWire.Logging;
 using SignalWire.Security;
+using SignalWire.Skills;
 using SignalWire.SWAIG;
 using SignalWire.SWML;
 
@@ -100,6 +101,7 @@ public class AgentBase : Service
     private SessionManager _sessionManager;
     private ContextBuilder? _contextBuilder;
     private List<string> _skillsList;
+    private SkillManager? _skillManager;
 
     // ======================================================================
     //  Constructor
@@ -178,6 +180,7 @@ public class AgentBase : Service
         _sessionManager = new SessionManager();
         _contextBuilder = null;
         _skillsList = [];
+        _skillManager = null;
 
         _agentLogger.Info($"Agent '{Name}' initialised");
     }
@@ -563,29 +566,70 @@ public class AgentBase : Service
     }
 
     // ======================================================================
-    //  Skill Methods (stubs)
+    //  Skill Methods
     // ======================================================================
 
+    /// <summary>Return the skill manager, creating it lazily on first access.</summary>
+    public SkillManager GetSkillManager()
+    {
+        _skillManager ??= new SkillManager(this);
+        return _skillManager;
+    }
+
+    /// <summary>
+    /// Load and activate a skill by name. Resolves through <see cref="SkillRegistry"/>,
+    /// validates env vars, calls Setup/RegisterTools, and merges hints/globalData/prompts.
+    /// </summary>
     public AgentBase AddSkill(string name, Dictionary<string, object>? parameters = null)
     {
-        if (!_skillsList.Contains(name))
+        var manager = GetSkillManager();
+        var (success, error) = manager.LoadSkill(name, parameters);
+
+        if (success)
         {
-            _skillsList.Add(name);
+            if (!_skillsList.Contains(name))
+            {
+                _skillsList.Add(name);
+            }
+            _agentLogger.Debug($"Skill '{name}' loaded");
         }
-        _agentLogger.Debug($"Skill '{name}' added (stub)");
+        else
+        {
+            _agentLogger.Warn($"Skill '{name}' load failed: {error}");
+        }
+
         return this;
     }
 
+    /// <summary>Remove a loaded skill by its instance key.</summary>
     public AgentBase RemoveSkill(string name)
     {
+        var manager = GetSkillManager();
+        manager.UnloadSkill(name);
         _skillsList.Remove(name);
-        _agentLogger.Debug($"Skill '{name}' removed (stub)");
+        _agentLogger.Debug($"Skill '{name}' removed");
         return this;
     }
 
-    public List<string> ListSkills() => [.. _skillsList];
+    /// <summary>List all loaded skill instance keys.</summary>
+    public List<string> ListSkills()
+    {
+        if (_skillManager is not null)
+        {
+            return _skillManager.ListSkills();
+        }
+        return [.. _skillsList];
+    }
 
-    public bool HasSkill(string name) => _skillsList.Contains(name);
+    /// <summary>Check if a skill is loaded by instance key.</summary>
+    public bool HasSkill(string name)
+    {
+        if (_skillManager is not null)
+        {
+            return _skillManager.HasSkill(name);
+        }
+        return _skillsList.Contains(name);
+    }
 
     // ======================================================================
     //  Web / Callback Methods
@@ -1020,6 +1064,7 @@ public class AgentBase : Service
         clone._swaigQueryParams = new Dictionary<string, string>(_swaigQueryParams);
         clone._functionIncludes = DeepCopyList(_functionIncludes);
         clone._skillsList = [.. _skillsList];
+        clone._skillManager = null; // Fresh manager for clone
 
         // Deep-copy objects
         clone._sessionManager = new SessionManager();
