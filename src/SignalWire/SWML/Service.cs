@@ -179,7 +179,7 @@ public class Service
     /// <summary>
     /// Handle an HTTP request. Returns a tuple of (status, headers, body).
     /// </summary>
-    public (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
+    public virtual (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
         string method,
         string path,
         Dictionary<string, string> headers,

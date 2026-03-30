@@ -1,0 +1,323 @@
+#!/usr/bin/env dotnet-script
+// swaig-test -- CLI tool for testing SWAIG endpoints
+//
+// Usage:
+//   dotnet script swaig-test -- --url <url> [options]
+//
+// Options:
+//   --url <url>           SWAIG endpoint URL (required for most commands)
+//   --dump-swml           Fetch and display the SWML document
+//   --list-tools          List available SWAIG tools
+//   --exec <tool>         Execute a specific SWAIG tool
+//   --param <key=value>   Pass a parameter (repeatable)
+//   --raw                 Output raw JSON without formatting
+//   --verbose             Enable verbose output
+//   --help                Show this help message
+//
+// URL auth extraction: if the URL contains user:pass@host, the credentials
+// are extracted and used for Basic Auth.
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+
+var options = ParseArgs(Args.ToArray());
+
+if (options.Help || (!options.HasUrl && string.IsNullOrEmpty(options.Exec)))
+{
+    PrintHelp();
+    return;
+}
+
+if (!options.HasUrl)
+{
+    Console.Error.WriteLine("Error: --url is required");
+    Environment.Exit(1);
+}
+
+using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+
+// Apply auth if extracted from URL
+if (options.AuthUser is not null && options.AuthPassword is not null)
+{
+    var creds = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{options.AuthUser}:{options.AuthPassword}"));
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", creds);
+}
+
+client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+try
+{
+    if (options.DumpSwml)
+    {
+        await DumpSwml(client, options);
+    }
+    else if (options.ListTools)
+    {
+        await ListTools(client, options);
+    }
+    else if (!string.IsNullOrEmpty(options.Exec))
+    {
+        await ExecTool(client, options);
+    }
+    else
+    {
+        await DumpSwml(client, options);
+    }
+}
+catch (HttpRequestException ex)
+{
+    Console.Error.WriteLine($"HTTP error: {ex.Message}");
+    Environment.Exit(1);
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"Error: {ex.Message}");
+    if (options.Verbose)
+        Console.Error.WriteLine(ex.StackTrace);
+    Environment.Exit(1);
+}
+
+// ======================================================================
+// Commands
+// ======================================================================
+
+static async Task DumpSwml(HttpClient client, CliOptions opts)
+{
+    if (opts.Verbose) Console.Error.WriteLine($"GET {opts.BaseUrl}");
+
+    var response = await client.GetAsync(opts.BaseUrl);
+    response.EnsureSuccessStatusCode();
+
+    var body = await response.Content.ReadAsStringAsync();
+    OutputJson(body, opts.Raw);
+}
+
+static async Task ListTools(HttpClient client, CliOptions opts)
+{
+    var swaigUrl = opts.BaseUrl.TrimEnd('/') + "/swaig";
+    if (opts.Verbose) Console.Error.WriteLine($"POST {swaigUrl}");
+
+    var payload = JsonSerializer.Serialize(new { action = "get_signature" });
+    var content = new StringContent(payload, Encoding.UTF8, "application/json");
+    var response = await client.PostAsync(swaigUrl, content);
+    response.EnsureSuccessStatusCode();
+
+    var body = await response.Content.ReadAsStringAsync();
+
+    if (opts.Raw)
+    {
+        Console.WriteLine(body);
+        return;
+    }
+
+    try
+    {
+        using var doc = JsonDocument.Parse(body);
+        var root = doc.RootElement;
+
+        if (root.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var tool in root.EnumerateArray())
+            {
+                var name = tool.TryGetProperty("function", out var fn)
+                    ? fn.TryGetProperty("name", out var n) ? n.GetString() : "?"
+                    : "?";
+                var desc = tool.TryGetProperty("function", out var fn2)
+                    ? fn2.TryGetProperty("description", out var d) ? d.GetString() : ""
+                    : "";
+                Console.WriteLine($"  {name,-30} {desc}");
+            }
+        }
+        else
+        {
+            OutputJson(body, false);
+        }
+    }
+    catch (JsonException)
+    {
+        Console.WriteLine(body);
+    }
+}
+
+static async Task ExecTool(HttpClient client, CliOptions opts)
+{
+    var swaigUrl = opts.BaseUrl.TrimEnd('/') + "/swaig";
+    if (opts.Verbose) Console.Error.WriteLine($"POST {swaigUrl} (exec: {opts.Exec})");
+
+    var arguments = new Dictionary<string, object>();
+    foreach (var kvp in opts.Params)
+    {
+        arguments[kvp.Key] = kvp.Value;
+    }
+
+    var payload = JsonSerializer.Serialize(new
+    {
+        action = "execute",
+        function = opts.Exec,
+        argument = new { parsed = new List<Dictionary<string, object>> { arguments } },
+    });
+
+    var content = new StringContent(payload, Encoding.UTF8, "application/json");
+    var response = await client.PostAsync(swaigUrl, content);
+    response.EnsureSuccessStatusCode();
+
+    var body = await response.Content.ReadAsStringAsync();
+    OutputJson(body, opts.Raw);
+}
+
+static void OutputJson(string json, bool raw)
+{
+    if (raw)
+    {
+        Console.WriteLine(json);
+        return;
+    }
+
+    try
+    {
+        using var doc = JsonDocument.Parse(json);
+        var formatted = JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
+        Console.WriteLine(formatted);
+    }
+    catch (JsonException)
+    {
+        Console.WriteLine(json);
+    }
+}
+
+// ======================================================================
+// Argument parsing
+// ======================================================================
+
+static CliOptions ParseArgs(string[] args)
+{
+    var opts = new CliOptions();
+
+    for (int i = 0; i < args.Length; i++)
+    {
+        switch (args[i])
+        {
+            case "--url":
+                if (i + 1 < args.Length)
+                {
+                    ParseUrl(args[++i], opts);
+                }
+                break;
+            case "--dump-swml":
+                opts.DumpSwml = true;
+                break;
+            case "--list-tools":
+                opts.ListTools = true;
+                break;
+            case "--exec":
+                if (i + 1 < args.Length)
+                    opts.Exec = args[++i];
+                break;
+            case "--param":
+                if (i + 1 < args.Length)
+                {
+                    var param = args[++i];
+                    var eqIdx = param.IndexOf('=');
+                    if (eqIdx > 0)
+                    {
+                        opts.Params[param[..eqIdx]] = param[(eqIdx + 1)..];
+                    }
+                }
+                break;
+            case "--raw":
+                opts.Raw = true;
+                break;
+            case "--verbose":
+                opts.Verbose = true;
+                break;
+            case "--help":
+            case "-h":
+                opts.Help = true;
+                break;
+        }
+    }
+
+    return opts;
+}
+
+static void ParseUrl(string url, CliOptions opts)
+{
+    try
+    {
+        var uri = new Uri(url);
+
+        // Extract auth from userinfo if present
+        if (!string.IsNullOrEmpty(uri.UserInfo))
+        {
+            var parts = uri.UserInfo.Split(':', 2);
+            opts.AuthUser = Uri.UnescapeDataString(parts[0]);
+            opts.AuthPassword = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : "";
+
+            // Rebuild URL without auth
+            var builder = new UriBuilder(uri) { UserName = "", Password = "" };
+            opts.BaseUrl = builder.Uri.ToString().TrimEnd('/');
+        }
+        else
+        {
+            opts.BaseUrl = url.TrimEnd('/');
+        }
+        opts.HasUrl = true;
+    }
+    catch (UriFormatException)
+    {
+        opts.BaseUrl = url.TrimEnd('/');
+        opts.HasUrl = true;
+    }
+}
+
+static void PrintHelp()
+{
+    Console.WriteLine(@"swaig-test -- CLI tool for testing SWAIG endpoints
+
+Usage:
+  dotnet script swaig-test -- --url <url> [options]
+
+Options:
+  --url <url>           SWAIG endpoint URL (required)
+  --dump-swml           Fetch and display the SWML document
+  --list-tools          List available SWAIG tools
+  --exec <tool>         Execute a specific SWAIG tool
+  --param <key=value>   Pass a parameter (repeatable)
+  --raw                 Output raw JSON without formatting
+  --verbose             Enable verbose output
+  --help                Show this help message
+
+URL Authentication:
+  If the URL contains user:pass@host, the credentials are
+  extracted and used for Basic Auth automatically.
+
+Examples:
+  swaig-test --url http://user:pass@localhost:3000 --dump-swml
+  swaig-test --url http://localhost:3000 --list-tools
+  swaig-test --url http://localhost:3000 --exec lookup --param name=John");
+}
+
+// ======================================================================
+// Options model
+// ======================================================================
+
+class CliOptions
+{
+    public string BaseUrl { get; set; } = "";
+    public bool HasUrl { get; set; }
+    public string? AuthUser { get; set; }
+    public string? AuthPassword { get; set; }
+    public bool DumpSwml { get; set; }
+    public bool ListTools { get; set; }
+    public string? Exec { get; set; }
+    public Dictionary<string, string> Params { get; } = new();
+    public bool Raw { get; set; }
+    public bool Verbose { get; set; }
+    public bool Help { get; set; }
+}
