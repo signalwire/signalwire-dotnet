@@ -862,7 +862,7 @@ public class AgentBaseTests : IDisposable
         Assert.Same(agent, agent.SetGlobalData(new Dictionary<string, object>()));
         Assert.Same(agent, agent.UpdateGlobalData(new Dictionary<string, object>()));
         Assert.Same(agent, agent.SetNativeFunctions([]));
-        Assert.Same(agent, agent.SetInternalFillers([]));
+        Assert.Same(agent, agent.SetInternalFillers(new List<string>()));
         Assert.Same(agent, agent.AddInternalFiller("f"));
         Assert.Same(agent, agent.EnableDebugEvents());
         Assert.Same(agent, agent.AddFunctionInclude(new Dictionary<string, object>()));

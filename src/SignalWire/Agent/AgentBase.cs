@@ -293,7 +293,64 @@ public class AgentBase : Service
     //  Tool Methods
     // ======================================================================
 
-    /// <summary>Define a tool with a delegate handler.</summary>
+    /// <summary>
+    /// Register a SWAIG tool (function) that the AI can invoke during a
+    /// call.
+    ///
+    /// <para><b>How this becomes a tool the model sees.</b> A SWAIG
+    /// function is <i>exactly the same concept</i> as a "tool" in native
+    /// OpenAI / Anthropic tool calling. On every LLM turn, the SDK
+    /// renders each registered SWAIG function into the OpenAI tool
+    /// schema:</para>
+    ///
+    /// <code>
+    /// {
+    ///   "type": "function",
+    ///   "function": {
+    ///     "name":        "your_name_here",
+    ///     "description": "your description text",
+    ///     "parameters":  { ... your JSON schema ... }
+    ///   }
+    /// }
+    /// </code>
+    ///
+    /// <para>That schema is sent to the model as part of the same API
+    /// call that produces the next assistant message. The model reads:
+    /// <list type="bullet">
+    /// <item>the function <c>description</c> to decide WHEN to call this
+    /// tool</item>
+    /// <item>each parameter <c>description</c> (inside
+    /// <c>parameters</c>) to decide HOW to fill in that argument from
+    /// the user's utterance</item>
+    /// </list>
+    /// </para>
+    ///
+    /// <para>This means <b>descriptions are prompt engineering</b>, not
+    /// developer comments. A vague description is the #1 cause of "the
+    /// model has the right tool but doesn't call it" failures.</para>
+    ///
+    /// <para><b>Bad vs good descriptions:</b></para>
+    /// <code>
+    /// BAD : description: "Lookup function"
+    /// GOOD: description: "Look up a customer's account details by "
+    ///                  + "account number. Use this BEFORE quoting any "
+    ///                  + "account-specific info (balance, plan, status). "
+    ///                  + "Do not use for general product questions."
+    ///
+    /// BAD : parameters: { ["id"] = new { type = "string",
+    ///                                    description = "the id" } }
+    /// GOOD: parameters: { ["account_number"] = new { type = "string",
+    ///         description = "The customer's 8-digit account number, "
+    ///                     + "no dashes or spaces. Ask the user if they "
+    ///                     + "don't provide it." } }
+    /// </code>
+    ///
+    /// <para><b>Tool count matters.</b> LLM tool selection accuracy
+    /// degrades past ~7-8 simultaneously-active tools per call. Use
+    /// <see cref="SignalWire.Contexts.Step.SetFunctions"/> to partition
+    /// tools across steps so only the relevant subset is active at any
+    /// moment.</para>
+    /// </summary>
     public AgentBase DefineTool(
         string name,
         string description,
@@ -460,15 +517,120 @@ public class AgentBase : Service
         return this;
     }
 
+    /// <summary>
+    /// The complete set of internal SWAIG function names that accept
+    /// fillers, matching the SWAIGInternalFiller schema definition. Any
+    /// name outside this set is silently ignored by the runtime —
+    /// <see cref="SetInternalFillers(Dictionary{string, Dictionary{string, List{string}}})"/>
+    /// and <see cref="AddInternalFiller(string, string, List{string})"/>
+    /// warn if you pass an unknown name.
+    ///
+    /// Notable absences: <c>change_step</c>, <c>gather_submit</c>, or
+    /// arbitrary user-defined SWAIG function names are NOT supported.
+    /// </summary>
+    public static readonly IReadOnlySet<string> SupportedInternalFillerNames = new HashSet<string>
+    {
+        "hangup",                   // AI is hanging up the call
+        "check_time",               // AI is checking the time
+        "wait_for_user",            // AI is waiting for user input
+        "wait_seconds",             // deliberate pause / wait period
+        "adjust_response_latency",  // AI is adjusting response timing
+        "next_step",                // transitioning between steps in prompt.contexts
+        "change_context",           // switching between contexts in prompt.contexts
+        "get_visual_input",         // processing visual input (enable_vision)
+        "get_ideal_strategy",       // thinking (enable_thinking)
+    };
+
     public AgentBase SetInternalFillers(List<string> fillers)
     {
         _internalFillers = fillers;
         return this;
     }
 
+    // Map<functionName, Map<languageCode, List<phrases>>> mirroring the
+    // Python API. Separate from the legacy _internalFillers list above to
+    // preserve backward compatibility.
+    private readonly Dictionary<string, Dictionary<string, List<string>>> _internalFillersMap = [];
+
+    /// <summary>
+    /// Set internal fillers for native SWAIG functions.
+    ///
+    /// <para>Internal fillers are short phrases the AI agent speaks (via
+    /// TTS) while an internal/native function is running, so the caller
+    /// doesn't hear dead air during transitions or background work.</para>
+    ///
+    /// <para>Supported function names (match the SWAIGInternalFiller
+    /// schema): <c>hangup</c>, <c>check_time</c>, <c>wait_for_user</c>,
+    /// <c>wait_seconds</c>, <c>adjust_response_latency</c>,
+    /// <c>next_step</c>, <c>change_context</c>, <c>get_visual_input</c>,
+    /// <c>get_ideal_strategy</c>. See
+    /// <see cref="SupportedInternalFillerNames"/>.</para>
+    ///
+    /// <para>Notably NOT supported: <c>change_step</c>,
+    /// <c>gather_submit</c>, or arbitrary user-defined SWAIG function
+    /// names. The runtime only honors fillers for the names listed above;
+    /// everything else is silently ignored at the SWML level. This method
+    /// warns at registration time if you pass an unknown name so you
+    /// catch the typo early.</para>
+    /// </summary>
+    public AgentBase SetInternalFillers(Dictionary<string, Dictionary<string, List<string>>> fillers)
+    {
+        if (fillers is null) return this;
+        var unknown = fillers.Keys
+            .Where(k => !SupportedInternalFillerNames.Contains(k))
+            .OrderBy(k => k)
+            .ToList();
+        if (unknown.Count > 0)
+        {
+            var unknownStr = "[" + string.Join(", ", unknown.Select(u => $"'{u}'")) + "]";
+            var supportedStr = "[" + string.Join(", ",
+                SupportedInternalFillerNames.OrderBy(n => n).Select(n => $"'{n}'")) + "]";
+            _agentLogger.Warn(
+                $"unknown_internal_filler_names: {unknownStr}. SetInternalFillers " +
+                "received names that the SWML schema does not recognize. Those " +
+                "entries will be ignored by the runtime. Supported names: " +
+                supportedStr);
+        }
+        _internalFillersMap.Clear();
+        foreach (var (name, langMap) in fillers)
+        {
+            _internalFillersMap[name] = new Dictionary<string, List<string>>(langMap);
+        }
+        return this;
+    }
+
     public AgentBase AddInternalFiller(string filler)
     {
         _internalFillers.Add(filler);
+        return this;
+    }
+
+    /// <summary>
+    /// Add internal fillers for a single internal function and language.
+    ///
+    /// <para>See
+    /// <see cref="SetInternalFillers(Dictionary{string, Dictionary{string, List{string}}})"/>
+    /// for the complete list of supported function names and what fillers
+    /// do. Names outside the supported set log a warning.</para>
+    /// </summary>
+    public AgentBase AddInternalFiller(string functionName, string languageCode, List<string> fillers)
+    {
+        if (!SupportedInternalFillerNames.Contains(functionName))
+        {
+            var supportedStr = "[" + string.Join(", ",
+                SupportedInternalFillerNames.OrderBy(n => n).Select(n => $"'{n}'")) + "]";
+            _agentLogger.Warn(
+                $"unknown_internal_filler_name: '{functionName}'. AddInternalFiller " +
+                "received a function name the SWML schema does not recognize. The " +
+                "entry will be stored but the runtime will not play these fillers. " +
+                $"Supported names: {supportedStr}");
+        }
+        if (!_internalFillersMap.TryGetValue(functionName, out var langMap))
+        {
+            langMap = [];
+            _internalFillersMap[functionName] = langMap;
+        }
+        langMap[languageCode] = fillers;
         return this;
     }
 
@@ -552,10 +714,20 @@ public class AgentBase : Service
     //  Context Methods
     // ======================================================================
 
-    /// <summary>Return the ContextBuilder, creating it lazily on first access.</summary>
+    /// <summary>
+    /// Return the ContextBuilder, creating it lazily on first access.
+    /// The builder is wired to report registered SWAIG tool names back
+    /// so its <see cref="ContextBuilder.Validate"/> can check for
+    /// collisions with reserved native tool names (<c>next_step</c>,
+    /// <c>change_context</c>, <c>gather_submit</c>).
+    /// </summary>
     public ContextBuilder DefineContexts()
     {
-        _contextBuilder ??= new ContextBuilder();
+        if (_contextBuilder is null)
+        {
+            _contextBuilder = new ContextBuilder();
+            _contextBuilder.AttachToolNameSupplier(ListToolNames);
+        }
         return _contextBuilder;
     }
 
@@ -564,6 +736,13 @@ public class AgentBase : Service
     {
         return DefineContexts();
     }
+
+    /// <summary>
+    /// Return the names of every registered SWAIG tool in insertion
+    /// order. Used by <see cref="ContextBuilder.Validate"/> to detect
+    /// collisions with reserved native tool names.
+    /// </summary>
+    public IEnumerable<string> ListToolNames() => _toolOrder.ToList();
 
     // ======================================================================
     //  Skill Methods

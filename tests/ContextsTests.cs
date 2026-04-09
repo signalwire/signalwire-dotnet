@@ -828,7 +828,7 @@ public class ContextsTests : IDisposable
         var errors = builder.Validate();
         Assert.NotEmpty(errors);
         Assert.Contains("unknown_step", errors[0]);
-        Assert.Contains("does not exist", errors[0]);
+        Assert.Contains("is not a step", errors[0]);
     }
 
     // -- ContextBuilder toDict --

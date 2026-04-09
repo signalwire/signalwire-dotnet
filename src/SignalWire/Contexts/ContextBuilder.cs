@@ -1,5 +1,30 @@
 namespace SignalWire.Contexts;
 
+/// <summary>
+/// Reserved tool names auto-injected by the runtime when contexts/steps are
+/// present. User-defined SWAIG tools must not collide with these names.
+///
+/// <list type="bullet">
+/// <item><c>next_step</c> / <c>change_context</c> are injected when
+/// valid_steps or valid_contexts is set so the model can navigate the flow.</item>
+/// <item><c>gather_submit</c> is injected while a step's gather_info is
+/// collecting answers.</item>
+/// </list>
+///
+/// <see cref="ContextBuilder.Validate"/> rejects any agent that registers a
+/// user tool sharing one of these names — the runtime would never call the
+/// user tool because the native one wins.
+/// </summary>
+public static class ReservedToolNames
+{
+    public static readonly IReadOnlySet<string> Reserved = new HashSet<string>
+    {
+        "next_step",
+        "change_context",
+        "gather_submit",
+    };
+}
+
 // -- GatherQuestion --
 
 public class GatherQuestion
@@ -132,10 +157,65 @@ public class Step
     }
 
     public Step SetStepCriteria(string criteria) { _stepCriteria = criteria; return this; }
+
+    /// <summary>
+    /// Set which non-internal functions are callable while this step is
+    /// active.
+    ///
+    /// <para><b>IMPORTANT — inheritance behavior:</b> If you do NOT call
+    /// this method, the step inherits whichever function set was active on
+    /// the previous step (or the previous context's last step). The
+    /// server-side runtime only resets the active set when a step
+    /// explicitly declares its <c>functions</c> field. This is the most
+    /// common source of bugs in multi-step agents: forgetting
+    /// <see cref="SetFunctions"/> on a later step lets the previous step's
+    /// tools leak through. Best practice is to call
+    /// <see cref="SetFunctions"/> explicitly on every step that should
+    /// differ from the previous one.</para>
+    ///
+    /// <para>Keep the per-step active set small: LLM tool selection
+    /// accuracy degrades noticeably past ~7-8 simultaneously-active tools
+    /// per call. Use per-step whitelisting to partition large tool
+    /// collections.</para>
+    ///
+    /// <para>Internal functions (e.g. <c>gather_submit</c>, hangup hook)
+    /// are ALWAYS protected and cannot be deactivated by this whitelist.
+    /// The native navigation tools <c>next_step</c> and
+    /// <c>change_context</c> are injected automatically when
+    /// <see cref="SetValidSteps"/> / <see cref="SetValidContexts"/> is
+    /// used; they are not affected by this list.</para>
+    ///
+    /// </summary>
+    /// <param name="functions">One of:
+    /// <list type="bullet">
+    /// <item><c>List&lt;string&gt;</c> — whitelist of function names
+    /// allowed in this step.</item>
+    /// <item>An empty list — explicit disable-all (no user functions
+    /// callable).</item>
+    /// <item>The string <c>"none"</c> — synonym for the empty list.</item>
+    /// </list>
+    /// </param>
     public Step SetFunctions(object functions) { _functions = functions; return this; }
+
     public Step SetValidSteps(List<string> steps) { _validSteps = steps; return this; }
     public Step SetValidContexts(List<string> contexts) { _validContexts = contexts; return this; }
+
+    /// <summary>
+    /// Mark this step as terminal for the step flow.
+    ///
+    /// <para><b>IMPORTANT:</b> <paramref name="end"/> = true does NOT end
+    /// the conversation or hang up the call. It exits step mode entirely
+    /// after this step executes — clearing the steps list, current step
+    /// index, valid_steps, and valid_contexts. The agent keeps running,
+    /// but operates only under the base system prompt and the
+    /// context-level prompt; no more step instructions are injected and
+    /// no more <c>next_step</c> tool is offered.</para>
+    ///
+    /// <para>To actually end the call, call a hangup tool or define a
+    /// hangup hook.</para>
+    /// </summary>
     public Step SetEnd(bool end) { _end = end; return this; }
+
     public Step SetSkipUserTurn(bool skip) { _skipUserTurn = skip; return this; }
     public Step SetSkipToNextStep(bool skip) { _skipToNextStep = skip; return this; }
 
@@ -148,6 +228,31 @@ public class Step
         return this;
     }
 
+    /// <summary>
+    /// Add a question to this step's gather_info. Initializes gather_info
+    /// if not yet set.
+    ///
+    /// <para><b>IMPORTANT — gather mode locks function access:</b> While
+    /// the model is asking gather questions, the runtime forcibly
+    /// deactivates ALL of the step's other functions. The only callable
+    /// tools during a gather question are:</para>
+    ///
+    /// <list type="bullet">
+    /// <item><c>gather_submit</c> (the native answer-submission tool)</item>
+    /// <item>Whatever names you pass in this question's <c>"functions"</c>
+    /// option</item>
+    /// </list>
+    ///
+    /// <para><c>next_step</c> and <c>change_context</c> are also filtered
+    /// out — the model cannot navigate away until the gather completes.
+    /// This is by design: it forces a tight ask → submit → next-question
+    /// loop.</para>
+    ///
+    /// <para>If a question needs to call out to a tool (e.g. validate an
+    /// email, geocode a ZIP), list that tool name in this question's
+    /// <c>"functions"</c> option. Functions listed here are active ONLY
+    /// for this question.</para>
+    /// </summary>
     public Step AddGatherQuestion(Dictionary<string, object> opts)
     {
         _gatherInfo ??= new GatherInfo();
@@ -347,6 +452,27 @@ public class Context
     public Context SetConsolidate(bool consolidate) { _consolidate = consolidate; return this; }
     public Context SetFullReset(bool fullReset) { _fullReset = fullReset; return this; }
     public Context SetUserPrompt(string userPrompt) { _userPrompt = userPrompt; return this; }
+    /// <summary>
+    /// Mark this context as isolated — entering it wipes conversation
+    /// history.
+    ///
+    /// <para>When <paramref name="isolated"/> = true and the context is
+    /// entered via change_context, the runtime wipes the conversation
+    /// array. The model starts fresh with only the new context's
+    /// system_prompt + step instructions, with no memory of prior
+    /// turns.</para>
+    ///
+    /// <para><b>EXCEPTION — reset overrides the wipe:</b> If the context
+    /// also has a reset configuration (via <see cref="SetConsolidate"/>
+    /// or <see cref="SetFullReset"/>), the wipe is skipped in favor of
+    /// the reset behavior. Use reset with consolidate=true to summarize
+    /// prior history into a single message instead of dropping it
+    /// entirely.</para>
+    ///
+    /// <para>Use cases: switching to a sensitive billing flow that
+    /// should not see prior small-talk; handing off to a different agent
+    /// persona; resetting after a long off-topic detour.</para>
+    /// </summary>
     public Context SetIsolated(bool isolated) { _isolated = isolated; return this; }
 
     // -- Fillers --
@@ -425,11 +551,48 @@ public class Context
 
 // -- ContextBuilder --
 
+/// <summary>
+/// Builder for multi-step, multi-context AI agent workflows.
+///
+/// <para>A ContextBuilder owns one or more <see cref="Context"/>s; each
+/// context owns an ordered list of <see cref="Step"/>s. Only one context
+/// and one step is active at a time. Per chat turn, the runtime injects
+/// the current step's instructions as a system message, then asks the LLM
+/// for a response.</para>
+///
+/// <para><b>Native tools auto-injected by the runtime:</b> When a step
+/// (or its enclosing context) declares valid_steps or valid_contexts, the
+/// runtime auto-injects two native tools so the model can navigate the
+/// flow: <c>next_step</c> and <c>change_context</c>. A third native tool,
+/// <c>gather_submit</c>, is injected during gather_info questioning.
+/// These three names are reserved: <see cref="Validate"/> rejects any
+/// agent that defines a SWAIG tool with one of them. See
+/// <see cref="ReservedToolNames.Reserved"/>.</para>
+///
+/// <para><b>Function whitelisting (<see cref="Step.SetFunctions"/>):</b>
+/// Each step may declare a functions whitelist. The whitelist is applied
+/// in-memory at the start of each LLM turn. CRITICALLY: if a step does
+/// NOT declare a functions field, it INHERITS the previous step's active
+/// set. See <see cref="Step.SetFunctions"/> for details and examples.</para>
+/// </summary>
 public class ContextBuilder
 {
     private const int MaxContexts = 50;
     private readonly Dictionary<string, Context> _contexts = [];
     private readonly List<string> _contextOrder = [];
+    private Func<IEnumerable<string>>? _toolNameSupplier;
+
+    /// <summary>
+    /// Attach a supplier that returns registered SWAIG tool names so
+    /// <see cref="Validate"/> can check them against
+    /// <see cref="ReservedToolNames.Reserved"/>. Called internally by
+    /// <c>AgentBase.DefineContexts()</c>.
+    /// </summary>
+    public ContextBuilder AttachToolNameSupplier(Func<IEnumerable<string>> supplier)
+    {
+        _toolNameSupplier = supplier;
+        return this;
+    }
 
     public Context AddContext(string name)
     {
@@ -532,12 +695,55 @@ public class ContextBuilder
                     {
                         var idx = stepOrder.IndexOf(stepName);
                         if (idx >= stepOrder.Count - 1)
-                            errors.Add($"Step '{stepName}' in context '{contextName}' has gather_info completion_action='next_step' but it is the last step");
+                            errors.Add(
+                                $"Step '{stepName}' in context '{contextName}' has " +
+                                "gather_info completion_action='next_step' but it is " +
+                                $"the last step in the context. Either (1) add another " +
+                                $"step after '{stepName}', (2) set completion_action to " +
+                                "the name of an existing step in this context to jump " +
+                                "to it, or (3) set completion_action=null (default) to " +
+                                $"stay in '{stepName}' after gathering completes.");
                     }
                     else if (!context.GetSteps().ContainsKey(action))
                     {
-                        errors.Add($"Step '{stepName}' in context '{contextName}' has gather_info completion_action='{action}' but step '{action}' does not exist");
+                        var available = context.GetSteps().Keys.OrderBy(k => k).ToList();
+                        var availableStr = "[" + string.Join(", ", available.Select(k => $"'{k}'")) + "]";
+                        errors.Add(
+                            $"Step '{stepName}' in context '{contextName}' has " +
+                            $"gather_info completion_action='{action}' but '{action}' " +
+                            "is not a step in this context. Valid options: 'next_step' " +
+                            "(advance to the next sequential step), null (stay in the " +
+                            $"current step), or one of {availableStr}.");
                     }
+                }
+            }
+        }
+
+        // Validate that user-defined tools do not collide with reserved
+        // native tool names. The runtime auto-injects next_step /
+        // change_context / gather_submit when contexts/steps are present,
+        // so user tools sharing those names would never be called.
+        if (_toolNameSupplier is not null)
+        {
+            var registered = _toolNameSupplier();
+            if (registered is not null)
+            {
+                var colliding = registered
+                    .Where(name => ReservedToolNames.Reserved.Contains(name))
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToList();
+                if (colliding.Count > 0)
+                {
+                    var collidingStr = "[" + string.Join(", ", colliding.Select(c => $"'{c}'")) + "]";
+                    var reservedStr = "[" + string.Join(", ",
+                        ReservedToolNames.Reserved.OrderBy(r => r).Select(r => $"'{r}'")) + "]";
+                    errors.Add(
+                        $"Tool name(s) {collidingStr} collide with reserved native " +
+                        $"tools auto-injected by contexts/steps. The names {reservedStr} " +
+                        "are reserved and cannot be used for user-defined SWAIG tools " +
+                        "when contexts/steps are in use. Rename your tool(s) to avoid " +
+                        "the collision.");
                 }
             }
         }

@@ -25,14 +25,60 @@ public class DataMap
         _functionName = functionName;
     }
 
+    /// <summary>
+    /// Set the LLM-facing tool description (the "purpose"). PROMPT
+    /// ENGINEERING, not developer documentation.
+    ///
+    /// <para>The description string is rendered into the OpenAI tool
+    /// schema <c>description</c> field on every LLM turn. The model
+    /// reads it to decide WHEN to call this tool. A vague
+    /// <see cref="Purpose"/> is the #1 cause of "the model has the
+    /// right tool but doesn't call it" failures with data-map tools.</para>
+    ///
+    /// <para><b>Bad vs good:</b></para>
+    /// <code>
+    /// BAD : .Purpose("weather api")
+    /// GOOD: .Purpose("Get the current weather conditions and "
+    ///              + "forecast for a specific city. Use this "
+    ///              + "whenever the user asks about weather, "
+    ///              + "temperature, rain, or similar conditions in a "
+    ///              + "named location.")
+    /// </code>
+    /// </summary>
     public DataMap Purpose(string desc)
     {
         _purpose = desc;
         return this;
     }
 
+    /// <summary>
+    /// Alias for <see cref="Purpose"/>. Sets the LLM-facing tool
+    /// description. This string is read by the model to decide WHEN
+    /// to call this tool. See <see cref="Purpose"/> for bad-vs-good
+    /// examples.
+    /// </summary>
     public DataMap Description(string desc) => Purpose(desc);
 
+    /// <summary>
+    /// Add a parameter to this data-map tool — the <paramref name="description"/>
+    /// is LLM-FACING.
+    ///
+    /// <para>Each parameter description is rendered into the OpenAI
+    /// tool schema under <c>parameters.properties.&lt;name&gt;.description</c>
+    /// and sent to the model. The model uses it to decide HOW to fill
+    /// in the argument from user speech. It is prompt engineering, not
+    /// developer FYI.</para>
+    ///
+    /// <para><b>Bad vs good:</b></para>
+    /// <code>
+    /// BAD : .Parameter("city", "string", "the city")
+    /// GOOD: .Parameter("city", "string",
+    ///           "The name of the city to get weather for, e.g. "
+    ///           + "'San Francisco'. Ask the user if they did not "
+    ///           + "provide one. Include the state or country if the "
+    ///           + "city name is ambiguous.")
+    /// </code>
+    /// </summary>
     public DataMap Parameter(
         string name,
         string type,
