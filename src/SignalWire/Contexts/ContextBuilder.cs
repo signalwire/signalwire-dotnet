@@ -330,6 +330,7 @@ public class Context
     private readonly List<string> _stepOrder = [];
     private List<string>? _validContexts;
     private List<string>? _validSteps;
+    private string? _initialStep;
     private string? _postPrompt;
     private string? _systemPrompt;
     private bool _consolidate;
@@ -446,6 +447,18 @@ public class Context
 
     // -- Config setters --
 
+    /// <summary>
+    /// Set which step the context starts on when entered.
+    ///
+    /// <para>By default, a context starts on its first step (index 0). Use
+    /// this to skip a preamble step on re-entry via
+    /// <c>change_context</c>.</para>
+    /// </summary>
+    /// <param name="stepName">Name of the step to start on (must exist in this context).</param>
+    public Context SetInitialStep(string stepName) { _initialStep = stepName; return this; }
+
+    public string? GetInitialStep() => _initialStep;
+
     public Context SetValidContexts(List<string> contexts) { _validContexts = contexts; return this; }
     public Context SetValidSteps(List<string> steps) { _validSteps = steps; return this; }
     public Context SetPostPrompt(string postPrompt) { _postPrompt = postPrompt; return this; }
@@ -529,6 +542,7 @@ public class Context
 
         if (_validContexts is not null) map["valid_contexts"] = _validContexts;
         if (_validSteps is not null) map["valid_steps"] = _validSteps;
+        if (_initialStep is not null) map["initial_step"] = _initialStep;
         if (_postPrompt is not null) map["post_prompt"] = _postPrompt;
 
         if (_systemPromptSections.Count > 0) map["system_prompt"] = RenderSections(_systemPromptSections);
@@ -594,6 +608,18 @@ public class ContextBuilder
         return this;
     }
 
+    /// <summary>
+    /// Remove all contexts, returning the builder to its initial state.
+    /// Use this in a dynamic config callback when you need to rebuild
+    /// contexts from scratch for a specific request.
+    /// </summary>
+    public ContextBuilder Reset()
+    {
+        _contexts.Clear();
+        _contextOrder.Clear();
+        return this;
+    }
+
     public Context AddContext(string name)
     {
         if (_contexts.ContainsKey(name))
@@ -626,6 +652,20 @@ public class ContextBuilder
         {
             if (context.GetSteps().Count == 0)
                 errors.Add($"Context '{contextName}' must have at least one step");
+        }
+
+        // Validate initial_step references a real step in the context
+        foreach (var (contextName, context) in _contexts)
+        {
+            var initialStep = context.GetInitialStep();
+            if (initialStep is not null && !context.GetSteps().ContainsKey(initialStep))
+            {
+                var available = context.GetSteps().Keys.OrderBy(k => k).ToList();
+                var availableStr = "[" + string.Join(", ", available.Select(k => $"'{k}'")) + "]";
+                errors.Add(
+                    $"Context '{contextName}' has initial_step='{initialStep}' but that step does " +
+                    $"not exist. Available steps: {availableStr}");
+            }
         }
 
         foreach (var (contextName, context) in _contexts)

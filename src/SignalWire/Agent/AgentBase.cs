@@ -738,6 +738,18 @@ public class AgentBase : Service
     }
 
     /// <summary>
+    /// Remove all contexts, returning the agent to a no-contexts state.
+    /// This is a convenience wrapper around <c>DefineContexts().Reset()</c>.
+    /// Use it in a dynamic config callback when you need to rebuild
+    /// contexts from scratch for a specific request.
+    /// </summary>
+    public AgentBase ResetContexts()
+    {
+        _contextBuilder?.Reset();
+        return this;
+    }
+
+    /// <summary>
     /// Return the names of every registered SWAIG tool in insertion
     /// order. Used by <see cref="ContextBuilder.Validate"/> to detect
     /// collisions with reserved native tool names.
