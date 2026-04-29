@@ -90,6 +90,8 @@ dotnet run -- examples/SimpleAgent.cs
 | [DynamicSwmlService.cs](DynamicSwmlService.cs) | Dynamic SWML based on POST data (VIP routing, departments) |
 | [SwmlServiceExample.cs](SwmlServiceExample.cs) | Simple SWML service with prompt and switch |
 | [SwmlServiceRoutingExample.cs](SwmlServiceRoutingExample.cs) | Multiple SWML routes: sales, support, after-hours |
+| [SwmlServiceSwaigStandalone.cs](SwmlServiceSwaigStandalone.cs) | SWAIG tool host on plain Service (no AgentBase) |
+| [SwmlServiceAiSidecar.cs](SwmlServiceAiSidecar.cs) | ai_sidecar verb + SWAIG tool + event sink on Service |
 
 ## Prefab Examples
 
