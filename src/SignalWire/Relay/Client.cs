@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using System.Net.WebSockets;
+using System.Text;
 using System.Text.Json;
 using SignalWire.Logging;
 
@@ -23,6 +25,7 @@ public class Client
     public string Project { get; }
     public string Token { get; }
     public string Host { get; set; }
+    public string Scheme { get; set; }
     public List<string> Contexts { get; } = [];
     public bool Connected { get; set; }
     public string? SessionId { get; set; }
@@ -54,6 +57,10 @@ public class Client
     private int _reconnectDelay = 1;
     private const int MaxReconnectDelay = 30;
     private bool _running;
+    private ClientWebSocket? _ws;
+    private CancellationTokenSource? _cts;
+    private Task? _readerTask;
+    private readonly SemaphoreSlim _sendLock = new(1, 1);
 
     /// <summary>Messages received from the transport layer. Test code can enqueue here.</summary>
     public ConcurrentQueue<string> InboundQueue { get; } = new();
@@ -79,6 +86,10 @@ public class Client
             is { Length: > 0 } h ? h
             : Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "";
 
+        Scheme = options.GetValueOrDefault("scheme", "")
+            is { Length: > 0 } s ? s
+            : Environment.GetEnvironmentVariable("SIGNALWIRE_RELAY_SCHEME") ?? "wss";
+
         _logger = Logger.GetLogger("relay.client");
     }
 
@@ -87,15 +98,47 @@ public class Client
     // ==================================================================
 
     /// <summary>
-    /// Establish the WebSocket connection and authenticate.
-    /// Stub for unit-testing; a production implementation would open
-    /// wss://{Host}/api/relay/ws.
+    /// Build the full WebSocket URL: <see cref="Scheme"/>://<see cref="Host"/>/api/relay/ws.
+    /// </summary>
+    public Uri BuildWebSocketUri()
+    {
+        var scheme = Scheme;
+        if (scheme != "ws" && scheme != "wss")
+        {
+            scheme = "wss";
+        }
+        return new Uri($"{scheme}://{Host}/api/relay/ws");
+    }
+
+    /// <summary>
+    /// Establish the WebSocket connection and authenticate. Opens a real
+    /// WSS connection to the configured host, runs the JSON-RPC
+    /// <c>signalwire.connect</c> handshake, and starts the reader loop
+    /// that pumps inbound frames into <see cref="HandleMessage"/>.
     /// </summary>
     public virtual async Task ConnectAsync()
     {
-        _logger.Info($"Connecting to {Host}");
+        if (string.IsNullOrEmpty(Host))
+        {
+            throw new InvalidOperationException(
+                "Host is required (set via constructor option, SIGNALWIRE_SPACE, or RelayClient.Host).");
+        }
+
+        var uri = BuildWebSocketUri();
+        _logger.Info($"Connecting to {uri}");
+
+        _ws = new ClientWebSocket();
+        _cts = new CancellationTokenSource();
+
+        await _ws.ConnectAsync(uri, _cts.Token).ConfigureAwait(false);
+
         Connected = true;
+        _running = true;
         _reconnectDelay = 1;
+
+        // Start the reader loop so authentication responses and events route correctly.
+        _readerTask = Task.Run(() => ReadLoopAsync(_cts.Token));
+
         await AuthenticateAsync().ConfigureAwait(false);
     }
 
@@ -104,19 +147,52 @@ public class Client
     {
         _logger.Info("Authenticating");
 
-        var result = await ExecuteAsync("signalwire.connect", new()
+        var connectParams = new Dictionary<string, object?>
         {
             ["version"] = Constants.ProtocolVersion,
+            ["agent"] = Agent,
+            ["event_acks"] = true,
             ["authentication"] = new Dictionary<string, object?>
             {
                 ["project"] = Project,
                 ["token"] = Token,
             },
-            ["agent"] = Agent,
-        }).ConfigureAwait(false);
+            // Top-level project/token mirrors the dual emission Python uses;
+            // some fixtures parse from either location.
+            ["project"] = Project,
+            ["token"] = Token,
+        };
+        if (Contexts.Count > 0)
+        {
+            connectParams["contexts"] = Contexts.ToList();
+        }
+        if (!string.IsNullOrEmpty(Protocol))
+        {
+            connectParams["protocol"] = Protocol;
+        }
+        if (!string.IsNullOrEmpty(AuthorizationState))
+        {
+            connectParams["authorization_state"] = AuthorizationState;
+        }
+
+        var result = await ExecuteAsync("signalwire.connect", connectParams).ConfigureAwait(false);
 
         SessionId = result.GetValueOrDefault("session_id")?.ToString();
         Protocol = result.GetValueOrDefault("protocol")?.ToString();
+
+        // Some servers nest the credentials inside `authorization`.
+        if (result.GetValueOrDefault("authorization") is Dictionary<string, object?> auth)
+        {
+            if (auth.TryGetValue("authorization_state", out var aState) && aState is string aStateStr)
+            {
+                AuthorizationState = aStateStr;
+            }
+            if (string.IsNullOrEmpty(SessionId)
+                && auth.TryGetValue("session_id", out var sid) && sid is string sidStr)
+            {
+                SessionId = sidStr;
+            }
+        }
 
         _logger.Info($"Authenticated, session={SessionId}");
     }
@@ -127,6 +203,31 @@ public class Client
         _logger.Info("Disconnecting");
         _running = false;
         Connected = false;
+
+        try
+        {
+            _cts?.Cancel();
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"Disconnect cts cancel error: {ex.Message}");
+        }
+
+        var ws = _ws;
+        if (ws is not null && ws.State == WebSocketState.Open)
+        {
+            try
+            {
+                _ = ws.CloseOutputAsync(
+                    WebSocketCloseStatus.NormalClosure,
+                    "client disconnect",
+                    CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"Disconnect close error: {ex.Message}");
+            }
+        }
     }
 
     /// <summary>Reconnect with exponential back-off (1s to 30s cap).</summary>
@@ -149,7 +250,12 @@ public class Client
         }
     }
 
-    /// <summary>Main event loop -- reads messages until disconnect.</summary>
+    /// <summary>
+    /// Main event loop -- drains the inbound queue and processes messages
+    /// until disconnect. Used by the test path that pushes JSON strings
+    /// into <see cref="InboundQueue"/>; production reads come from the
+    /// WebSocket reader started in <see cref="ConnectAsync"/>.
+    /// </summary>
     public async Task RunAsync()
     {
         if (!Connected)
@@ -180,6 +286,77 @@ public class Client
                     await ReconnectAsync().ConfigureAwait(false);
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Reader loop that pulls UTF-8 text frames off the socket and routes
+    /// each completed message into <see cref="HandleMessage"/>. Handles
+    /// fragmented frames by accumulating them until <see cref="ValueWebSocketReceiveResult.EndOfMessage"/>.
+    /// </summary>
+    public async Task ReadLoopAsync(CancellationToken cancellation)
+    {
+        if (_ws is null) return;
+        var buffer = new byte[16 * 1024];
+        var assembled = new MemoryStream();
+
+        while (!cancellation.IsCancellationRequested && _ws.State == WebSocketState.Open)
+        {
+            try
+            {
+                WebSocketReceiveResult result;
+                try
+                {
+                    result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellation)
+                        .ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (WebSocketException ex)
+                {
+                    _logger.Warn($"WebSocket receive error: {ex.Message}");
+                    break;
+                }
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    _logger.Info("WebSocket close frame received");
+                    Connected = false;
+                    break;
+                }
+
+                assembled.Write(buffer, 0, result.Count);
+
+                if (!result.EndOfMessage) continue;
+
+                var raw = Encoding.UTF8.GetString(assembled.ToArray());
+                assembled.SetLength(0);
+
+                try
+                {
+                    HandleMessage(raw);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"HandleMessage error: {ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Reader loop error: {ex.Message}");
+                break;
+            }
+        }
+    }
+
+    /// <summary>Read one queued message synchronously (test helper for harness use).</summary>
+    public void ReadOnce()
+    {
+        if (InboundQueue.TryDequeue(out var raw))
+        {
+            HandleMessage(raw);
         }
     }
 
@@ -229,12 +406,44 @@ public class Client
         }
     }
 
-    /// <summary>Encode and send a JSON message over the socket.</summary>
+    /// <summary>
+    /// Encode and send a JSON message. Real production path writes to the
+    /// WebSocket; tests override this to capture payloads in memory.
+    /// </summary>
     public virtual void Send(Dictionary<string, object?> msg)
     {
         var json = JsonSerializer.Serialize(msg, JsonOptions);
         _logger.Debug($">> {json}");
-        // Stub: production writes to WebSocket
+
+        var ws = _ws;
+        if (ws is null || ws.State != WebSocketState.Open)
+        {
+            // No socket established yet (or not in this code path) — log and
+            // skip. Tests that drive HandleMessage directly do not hit this
+            // branch; production code always has a live socket here.
+            return;
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(json);
+        // SendAsync isn't safe for concurrent calls on a single ClientWebSocket;
+        // serialize through the lock so we never interleave fragments.
+        _sendLock.Wait();
+        try
+        {
+            ws.SendAsync(
+                new ArraySegment<byte>(bytes),
+                WebSocketMessageType.Text,
+                endOfMessage: true,
+                CancellationToken.None).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn($"WebSocket send error: {ex.Message}");
+        }
+        finally
+        {
+            _sendLock.Release();
+        }
     }
 
     /// <summary>

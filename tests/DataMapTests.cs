@@ -4,10 +4,8 @@ using DM = SignalWire.DataMap.DataMap;
 
 namespace SignalWire.Tests;
 
-public class DataMapTests : IDisposable
+public class DataMapTests
 {
-    public DataMapTests() { }
-    public void Dispose() { }
 
     // =================================================================
     //  Construction

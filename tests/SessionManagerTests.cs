@@ -3,7 +3,7 @@ using SignalWire.Security;
 
 namespace SignalWire.Tests;
 
-public class SessionManagerTests : IDisposable
+public class SessionManagerTests
 {
     private readonly SessionManager _manager;
 
@@ -11,8 +11,6 @@ public class SessionManagerTests : IDisposable
     {
         _manager = new SessionManager();
     }
-
-    public void Dispose() { }
 
     // =================================================================
     //  Construction

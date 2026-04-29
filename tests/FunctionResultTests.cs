@@ -3,11 +3,8 @@ using SignalWire.SWAIG;
 
 namespace SignalWire.Tests;
 
-public class FunctionResultTests : IDisposable
+public class FunctionResultTests
 {
-    public FunctionResultTests() { }
-
-    public void Dispose() { }
 
     // =================================================================
     //  Construction

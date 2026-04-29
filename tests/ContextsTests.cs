@@ -3,10 +3,8 @@ using SignalWire.Contexts;
 
 namespace SignalWire.Tests;
 
-public class ContextsTests : IDisposable
+public class ContextsTests
 {
-    public ContextsTests() { }
-    public void Dispose() { }
 
     // =================================================================
     //  GatherQuestion
