@@ -23,8 +23,13 @@ rules:
 - **`signalwire.search.*`** — Vector / embedding indexing (Python ML
   stack: sentence-transformers, pgvector, faiss). Per the porting-sdk
   skip list, search is Python-only.
-- **`signalwire.skills.native_vector_search.*`** — Search-related skill;
-  not ported.
+- **`signalwire.skills.native_vector_search.*`** — Local-mode indexing
+  (SQLite/pgvector + sentence-transformers + FAISS) is the bulk of this
+  skill and is not portable to the .NET BCL. The .NET port ships the
+  remote-mode HTTP path (POSTs queries to a SignalWire search server)
+  so agents that already use the centralised search service still work;
+  configuring the skill without `remote_url` returns an explanatory
+  error rather than an empty stub.
 - **`signalwire.skills.<name>.skill_original` / `skill_improved`** —
   Python-experimental skill variants; .NET ships the canonical skill.
 - **`signalwire.agents.bedrock.*`** — Bedrock/AmazonBedrock prefab is
