@@ -5,7 +5,7 @@
 // or behind an AWS Lambda HTTP adapter (e.g.
 // Amazon.Lambda.AspNetCoreServer); the Lambda adapter slots in at the
 // top of the request pipeline and forwards the API Gateway event into
-// AgentBase.AsRouter() / Run() unchanged. This file shows the agent
+// AgentBase.HandleRequest(...) unchanged. This file shows the agent
 // configuration; the deployment topology is the user's choice.
 
 using SignalWire.Agent;
@@ -60,6 +60,6 @@ agent.DefineTool(
 
 Console.WriteLine("Starting Lambda Agent");
 Console.WriteLine("Available at: http://localhost:3000/");
-Console.WriteLine("Behind a Lambda HTTP adapter, mount agent.AsRouter() instead of Run().");
+Console.WriteLine("Behind a Lambda HTTP adapter, route into agent.HandleRequest(...) instead of Run().");
 
 agent.Run();

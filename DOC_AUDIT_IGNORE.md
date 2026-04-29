@@ -55,6 +55,12 @@ ToUpperInvariant: System.String.ToUpperInvariant
 TrimEnd: System.String.TrimEnd
 TryCreate: System.Uri.TryCreate
 Trim: System.String.Trim
+EnumerateObject: System.Text.Json.JsonElement.EnumerateObject
+EscapeDataString: System.Uri.EscapeDataString
+GetAwaiter: System.Threading.Tasks.Task<T>.GetAwaiter
+GetResult: System.Runtime.CompilerServices.TaskAwaiter.GetResult
+TryGetProperty: System.Text.Json.JsonElement.TryGetProperty
+ParseAdd: System.Net.Http.Headers.HttpHeaderValueCollection<T>.ParseAdd
 
 ## Phantom APIs in docs/examples (TRACKED — examples need cleanup)
 
