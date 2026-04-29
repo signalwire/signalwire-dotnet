@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ c2bad2160d85ff93ffb965ac849ad9e89256f9bf",
+  "generated_from": "signalwire-dotnet @ 06bb9151a8714de23fce0639b4193cfc418f4f8b",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -26,6 +26,10 @@
           "get_agent",
           "get_agents",
           "get_sip_username_mapping",
+          "handle_request",
+          "host",
+          "is_sip_routing_enabled",
+          "port",
           "register",
           "register_sip_username",
           "serve_static",
@@ -81,6 +85,7 @@
           "get_steps",
           "get_valid_contexts",
           "move_step",
+          "name",
           "remove_step",
           "set_consolidate",
           "set_enter_fillers",
@@ -109,10 +114,13 @@
         "GatherInfo": [
           "__init__",
           "add_question",
+          "completion_action",
+          "questions",
           "to_dict"
         ],
         "GatherQuestion": [
           "__init__",
+          "key",
           "to_dict"
         ],
         "Step": [
@@ -121,6 +129,8 @@
           "add_gather_question",
           "add_section",
           "clear_sections",
+          "gather_info_data",
+          "name",
           "set_end",
           "set_functions",
           "set_gather_info",
@@ -134,7 +144,9 @@
           "set_text",
           "set_valid_contexts",
           "set_valid_steps",
-          "to_dict"
+          "to_dict",
+          "valid_contexts",
+          "valid_steps"
         ]
       },
       "functions": []
@@ -318,6 +330,7 @@
           "__init__",
           "create_session",
           "create_token",
+          "token_expiry_secs",
           "validate_token"
         ]
       },
@@ -335,8 +348,11 @@
           "get_prompt_sections",
           "name",
           "register_tools",
+          "required_env_vars",
           "setup",
+          "supports_multiple_instances",
           "validate_env_vars",
+          "version",
           "wire"
         ]
       },
@@ -349,6 +365,7 @@
           "get_skill",
           "has_skill",
           "list_skills",
+          "load_skill",
           "unload_skill"
         ]
       },
@@ -362,8 +379,10 @@
           "define_tools",
           "document",
           "extract_sip_username",
+          "get_basic_auth_credentials",
           "get_full_url",
           "get_proxy_url_base",
+          "handle_request",
           "host",
           "list_tool_names",
           "name",
@@ -458,6 +477,7 @@
           "get_node_id",
           "get_stop_method",
           "handle_event",
+          "is_done",
           "on_completed",
           "payload",
           "resolve",
@@ -591,6 +611,7 @@
       "classes": {
         "CollectAction": [
           "__init__",
+          "collect_result",
           "get_stop_method",
           "handle_event",
           "start_input_timers"
@@ -602,6 +623,7 @@
       "classes": {
         "DetectAction": [
           "__init__",
+          "detect_result",
           "get_stop_method"
         ]
       },
@@ -611,9 +633,14 @@
       "classes": {
         "Event": [
           "__init__",
+          "call_id",
+          "control_id",
           "event_type",
+          "node_id",
           "params",
           "parse",
+          "state",
+          "tag",
           "timestamp",
           "to_dict"
         ]
@@ -640,6 +667,7 @@
           "direction",
           "dispatch_event",
           "from_number",
+          "is_done",
           "media",
           "message_id",
           "on",
@@ -680,9 +708,12 @@
       "classes": {
         "RecordAction": [
           "__init__",
+          "duration",
           "get_stop_method",
           "pause",
-          "resume"
+          "resume",
+          "size",
+          "url"
         ]
       },
       "functions": []
@@ -732,12 +763,16 @@
       "classes": {
         "HttpClient": [
           "__init__",
+          "auth_header",
+          "base_url",
           "delete",
           "get",
           "list_all",
           "patch",
           "post",
-          "put"
+          "project_id",
+          "put",
+          "token"
         ]
       },
       "functions": []
@@ -750,6 +785,7 @@
           "ai_message",
           "ai_stop",
           "ai_unhold",
+          "client",
           "collect",
           "collect_start_input_timers",
           "collect_stop",
@@ -768,6 +804,7 @@
           "play_resume",
           "play_stop",
           "play_volume",
+          "project_id",
           "receive_fax_stop",
           "record",
           "record_pause",
@@ -791,7 +828,21 @@
     "signalwire.rest.namespaces.fabric": {
       "classes": {
         "Fabric": [
-          "__init__"
+          "__init__",
+          "addresses",
+          "ai_agents",
+          "call_flows",
+          "call_queues",
+          "client",
+          "conference_rooms",
+          "conversations",
+          "dial_plans",
+          "freeclimb_apps",
+          "phone_numbers",
+          "sip_endpoints",
+          "sip_profiles",
+          "subscribers",
+          "swml_scripts"
         ]
       },
       "functions": []
@@ -799,7 +850,33 @@
     "signalwire.rest.rest_client": {
       "classes": {
         "RestClient": [
-          "__init__"
+          "__init__",
+          "addresses",
+          "base_url",
+          "calling",
+          "chat",
+          "compat",
+          "datasphere",
+          "fabric",
+          "http",
+          "imported_numbers",
+          "logs",
+          "lookup",
+          "mfa",
+          "number_groups",
+          "phone_numbers",
+          "project",
+          "project_id",
+          "pubsub",
+          "queues",
+          "recordings",
+          "registry",
+          "short_codes",
+          "sip_profile",
+          "space",
+          "token",
+          "verified_callers",
+          "video"
         ]
       },
       "functions": []
@@ -828,8 +905,11 @@
     "signalwire.skills.api_ninjas_trivia.skill": {
       "classes": {
         "ApiNinjasTriviaSkill": [
+          "description",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances"
         ]
       },
       "functions": []
@@ -837,10 +917,13 @@
     "signalwire.skills.claude_skills.skill": {
       "classes": {
         "ClaudeSkillsSkill": [
+          "description",
           "get_hints",
           "get_prompt_sections",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances"
         ]
       },
       "functions": []
@@ -848,8 +931,11 @@
     "signalwire.skills.custom_skills.skill": {
       "classes": {
         "CustomSkillsSkill": [
+          "description",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances"
         ]
       },
       "functions": []
@@ -857,10 +943,13 @@
     "signalwire.skills.datasphere.skill": {
       "classes": {
         "DataSphereSkill": [
+          "description",
           "get_global_data",
           "get_prompt_sections",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances"
         ]
       },
       "functions": []
@@ -868,10 +957,13 @@
     "signalwire.skills.datasphere_serverless.skill": {
       "classes": {
         "DataSphereServerlessSkill": [
+          "description",
           "get_global_data",
           "get_prompt_sections",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances"
         ]
       },
       "functions": []
@@ -879,7 +971,9 @@
     "signalwire.skills.datetime.skill": {
       "classes": {
         "DatetimeSkill": [
+          "description",
           "get_prompt_sections",
+          "name",
           "register_tools",
           "setup"
         ]
@@ -889,8 +983,10 @@
     "signalwire.skills.google_maps.skill": {
       "classes": {
         "GoogleMapsSkill": [
+          "description",
           "get_hints",
           "get_prompt_sections",
+          "name",
           "register_tools",
           "setup"
         ]
@@ -900,10 +996,13 @@
     "signalwire.skills.info_gatherer.skill": {
       "classes": {
         "InfoGathererSkill": [
+          "description",
           "get_global_data",
           "get_prompt_sections",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances"
         ]
       },
       "functions": []
@@ -911,8 +1010,10 @@
     "signalwire.skills.joke.skill": {
       "classes": {
         "JokeSkill": [
+          "description",
           "get_global_data",
           "get_prompt_sections",
+          "name",
           "register_tools",
           "setup"
         ]
@@ -922,7 +1023,9 @@
     "signalwire.skills.math.skill": {
       "classes": {
         "MathSkill": [
+          "description",
           "get_prompt_sections",
+          "name",
           "register_tools",
           "setup"
         ]
@@ -932,9 +1035,11 @@
     "signalwire.skills.mcp_gateway.skill": {
       "classes": {
         "MCPGatewaySkill": [
+          "description",
           "get_global_data",
           "get_hints",
           "get_prompt_sections",
+          "name",
           "register_tools",
           "setup"
         ]
@@ -944,9 +1049,12 @@
     "signalwire.skills.native_vector_search.skill": {
       "classes": {
         "NativeVectorSearchSkill": [
+          "description",
           "get_hints",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances"
         ]
       },
       "functions": []
@@ -954,8 +1062,11 @@
     "signalwire.skills.play_background_file.skill": {
       "classes": {
         "PlayBackgroundFileSkill": [
+          "description",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances"
         ]
       },
       "functions": []
@@ -974,9 +1085,12 @@
     "signalwire.skills.spider.skill": {
       "classes": {
         "SpiderSkill": [
+          "description",
           "get_hints",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances"
         ]
       },
       "functions": []
@@ -984,10 +1098,13 @@
     "signalwire.skills.swml_transfer.skill": {
       "classes": {
         "SWMLTransferSkill": [
+          "description",
           "get_hints",
           "get_prompt_sections",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances"
         ]
       },
       "functions": []
@@ -995,6 +1112,8 @@
     "signalwire.skills.weather_api.skill": {
       "classes": {
         "WeatherApiSkill": [
+          "description",
+          "name",
           "register_tools",
           "setup"
         ]
@@ -1004,10 +1123,14 @@
     "signalwire.skills.web_search.skill": {
       "classes": {
         "WebSearchSkill": [
+          "description",
           "get_global_data",
           "get_prompt_sections",
+          "name",
           "register_tools",
-          "setup"
+          "setup",
+          "supports_multiple_instances",
+          "version"
         ]
       },
       "functions": []
@@ -1015,7 +1138,9 @@
     "signalwire.skills.wikipedia_search.skill": {
       "classes": {
         "WikipediaSearchSkill": [
+          "description",
           "get_prompt_sections",
+          "name",
           "register_tools",
           "setup"
         ]
@@ -1048,7 +1173,8 @@
           "get_verb",
           "get_verb_names",
           "is_valid_verb",
-          "reset"
+          "reset",
+          "verb_count"
         ]
       },
       "functions": []

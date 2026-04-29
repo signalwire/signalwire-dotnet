@@ -227,22 +227,32 @@ METHOD_RE = re.compile(
     r"^\s*public\s+"
     # Optional modifiers between `public` and the return type
     r"(?:(?:override|virtual|static|async|sealed|new|extern|unsafe|readonly|partial)\s+)*"
-    # Return type (possibly generic, possibly with array/nullable). Greedy until method name.
-    r"(?:[A-Za-z_][\w<>?,.\[\] *&]*\s+)?"
+    # Return type. Two shapes:
+    #   plain identifier with generics/arrays/nullable, OR
+    #   parenthesised tuple type like `(string User, string Password)`.
+    r"(?:[A-Za-z_][\w<>?,.\[\] *&]*\s+|\([^)]+\)\s+)?"
     r"(?P<name>[A-Z][A-Za-z0-9_]*)"
     # Optional generic parameter list, then mandatory opening paren.
     r"(?:\s*<[^>]*>)?\s*\("
 )
 
-# Property declaration:
-#   public string Foo { get; }
-#   public List<string> Bar { get; set; }
-#   public string? Baz { get; init; }
+# Property declaration. Two shapes:
+#   1. Block-bodied:        public string Foo { get; set; } = "x";
+#   2. Expression-bodied:   public Fabric Fabric => _fabric ??= new Fabric(_http);
+# Both terminate the property header before any `(`. We match the property
+# name by requiring the line is NOT a method (no `(` before the property
+# accessor).
 PROPERTY_RE = re.compile(
     r"^\s*public\s+"
     r"(?:(?:override|virtual|static|new|sealed|readonly|required)\s+)*"
     r"[A-Za-z_][\w<>?,.\[\] *&]*\s+"
-    r"(?P<name>[A-Z][A-Za-z0-9_]*)\s*\{[^}]*\}"
+    r"(?P<name>[A-Z][A-Za-z0-9_]*)"
+    # Three accepted shapes:
+    #   { get; ... }                -- block-bodied (single line)
+    #   => <expression>;            -- expression-bodied (single line)
+    #   =>                           -- expression-bodied with body on next line
+    #   { ... at EOL                -- block-bodied with body across lines
+    r"\s*(?:\{[^}]*\}|=>\s*[^;]*;|=>\s*$|\{\s*$)"
 )
 
 

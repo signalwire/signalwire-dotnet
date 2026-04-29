@@ -57,6 +57,10 @@ signalwire.agent.agent_options.AgentOptions.record_stereo: .NET options data cla
 signalwire.agent.agent_options.AgentOptions.route: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
 signalwire.agent.agent_options.AgentOptions.use_pom: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
 signalwire.agent_server.AgentServer.get_sip_username_mapping: Public helper added in .NET; Python equivalents are register_global_routing_callback / serve_static_files
+signalwire.agent_server.AgentServer.handle_request: Public dispatch entry point on AgentServer; Python uses Flask/FastAPI request objects directly
+signalwire.agent_server.AgentServer.host: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.agent_server.AgentServer.is_sip_routing_enabled: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.agent_server.AgentServer.port: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.agent_server.AgentServer.serve_static: Public helper added in .NET; Python equivalents are register_global_routing_callback / serve_static_files
 signalwire.core.agent_base.AgentBase.build_ai_verb: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
 signalwire.core.agent_base.AgentBase.clone_for_request: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
@@ -71,11 +75,23 @@ signalwire.core.contexts.Context.get_initial_step: Public helper added in .NET; 
 signalwire.core.contexts.Context.get_step_order: Public helper added in .NET; Python ships equivalents at module level
 signalwire.core.contexts.Context.get_steps: Public helper added in .NET; Python ships equivalents at module level
 signalwire.core.contexts.Context.get_valid_contexts: Public helper added in .NET; Python ships equivalents at module level
+signalwire.core.contexts.Context.name: Public read-only property surface; Python @property accessor with the same name
+signalwire.core.contexts.GatherInfo.completion_action: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.core.contexts.GatherInfo.questions: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.core.contexts.GatherQuestion.key: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.core.contexts.Step.gather_info_data: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.core.contexts.Step.name: Public read-only property surface; Python @property accessor with the same name
+signalwire.core.contexts.Step.valid_contexts: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.core.contexts.Step.valid_steps: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.data_map.DataMap.create_expression_tool: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.data_map.DataMap.create_simple_api_tool: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.security.session_manager.SessionManager.create_token: Public method on SessionManager ported from Python; .NET groups them with simpler signatures
+signalwire.core.security.session_manager.SessionManager.token_expiry_secs: Public property exposing the token expiry; Python uses a class constant
 signalwire.core.skill_base.SkillBase.description: Public abstract/virtual properties on SkillBase; Python uses class-level constants instead
 signalwire.core.skill_base.SkillBase.name: Public read-only property surface; Python @property accessor with the same name
+signalwire.core.skill_base.SkillBase.required_env_vars: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.core.skill_base.SkillBase.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.core.skill_base.SkillBase.version: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.skill_base.SkillBase.wire: Public abstract/virtual properties on SkillBase; Python uses class-level constants instead
 signalwire.core.skill_manager.SkillManager.list_skills: .NET method; Python ships equivalent functionality via list_loaded_skills
 signalwire.core.swml_service.SWMLService.define_tool: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
@@ -83,6 +99,7 @@ signalwire.core.swml_service.SWMLService.define_tools: Public method surfaced by
 signalwire.core.swml_service.SWMLService.document: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.swml_service.SWMLService.get_full_url: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.swml_service.SWMLService.get_proxy_url_base: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.core.swml_service.SWMLService.handle_request: Public dispatch entry point on SWMLService; Python uses Flask/FastAPI request objects directly
 signalwire.core.swml_service.SWMLService.host: Public read-only property surface; Python @property accessor with the same name
 signalwire.core.swml_service.SWMLService.list_tool_names: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.swml_service.SWMLService.name: Public read-only property surface; Python @property accessor with the same name
@@ -123,6 +140,7 @@ signalwire.relay.action.Action.get_node_id: .NET ships each Action subclass in i
 signalwire.relay.action.Action.get_stop_method: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.action.Action.handle_event: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.action.Action.__init__: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
+signalwire.relay.action.Action.is_done: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.action.Action: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.action.Action.on_completed: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.action.Action.payload: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
@@ -177,19 +195,26 @@ signalwire.relay.client.RelayClient.send_ack: Public Client surface ported from 
 signalwire.relay.client.RelayClient.send: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.session_id: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.token: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
+signalwire.relay.collect_action.CollectAction.collect_result: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.collect_action.CollectAction.get_stop_method: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.collect_action.CollectAction.handle_event: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.collect_action.CollectAction.__init__: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.collect_action.CollectAction: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.collect_action.CollectAction.start_input_timers: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
+signalwire.relay.detect_action.DetectAction.detect_result: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.detect_action.DetectAction.get_stop_method: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.detect_action.DetectAction.__init__: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.detect_action.DetectAction: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
+signalwire.relay.event.Event.call_id: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
+signalwire.relay.event.Event.control_id: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
 signalwire.relay.event.Event.event_type: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
 signalwire.relay.event.Event.__init__: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
 signalwire.relay.event.Event: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
+signalwire.relay.event.Event.node_id: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
 signalwire.relay.event.Event.params: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
 signalwire.relay.event.Event.parse: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
+signalwire.relay.event.Event.state: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
+signalwire.relay.event.Event.tag: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
 signalwire.relay.event.Event.timestamp: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
 signalwire.relay.event.Event.to_dict: .NET Event class lives in its own file; Python ships RelayEvent under signalwire.relay.constants
 signalwire.relay.fax_action.FaxAction.fax_type: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
@@ -219,11 +244,14 @@ signalwire.relay.play_action.PlayAction: .NET ships each Action subclass in its 
 signalwire.relay.play_action.PlayAction.pause: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.play_action.PlayAction.resume: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.play_action.PlayAction.volume: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
+signalwire.relay.record_action.RecordAction.duration: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.record_action.RecordAction.get_stop_method: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.record_action.RecordAction.__init__: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.record_action.RecordAction: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.record_action.RecordAction.pause: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.record_action.RecordAction.resume: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
+signalwire.relay.record_action.RecordAction.size: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
+signalwire.relay.record_action.RecordAction.url: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.stream_action.StreamAction.get_stop_method: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.stream_action.StreamAction.__init__: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.stream_action.StreamAction: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
@@ -241,6 +269,8 @@ signalwire.rest.crud_resource.CrudResource.__init__: .NET ships CrudResource und
 signalwire.rest.crud_resource.CrudResource.list: .NET ships CrudResource under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.crud_resource.CrudResource: .NET ships CrudResource under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.crud_resource.CrudResource.update: .NET ships CrudResource under SignalWire.REST; Python's path is signalwire.rest._base
+signalwire.rest.http_client.HttpClient.auth_header: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
+signalwire.rest.http_client.HttpClient.base_url: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.http_client.HttpClient.delete: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.http_client.HttpClient.get: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.http_client.HttpClient.__init__: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
@@ -248,11 +278,14 @@ signalwire.rest.http_client.HttpClient.list_all: .NET ships HttpClient under Sig
 signalwire.rest.http_client.HttpClient: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.http_client.HttpClient.patch: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.http_client.HttpClient.post: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
+signalwire.rest.http_client.HttpClient.project_id: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.http_client.HttpClient.put: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
+signalwire.rest.http_client.HttpClient.token: .NET ships HttpClient under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.namespaces.calling.Calling.ai_hold: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.ai_message: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.ai_stop: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.ai_unhold: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.calling.Calling.client: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.collect: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.collect_start_input_timers: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.collect_stop: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
@@ -273,6 +306,7 @@ signalwire.rest.namespaces.calling.Calling.play_pause: .NET groups REST namespac
 signalwire.rest.namespaces.calling.Calling.play_resume: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.play_stop: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.play_volume: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.calling.Calling.project_id: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.receive_fax_stop: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.record: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.record_pause: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
@@ -289,10 +323,50 @@ signalwire.rest.namespaces.calling.Calling.transcribe_stop: .NET groups REST nam
 signalwire.rest.namespaces.calling.Calling.transfer: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.update_call: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.calling.Calling.user_event: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.addresses: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.ai_agents: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.call_flows: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.call_queues: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.client: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.conference_rooms: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.conversations: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.dial_plans: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.freeclimb_apps: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.fabric.Fabric.__init__: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
 signalwire.rest.namespaces.fabric.Fabric: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.phone_numbers: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.sip_endpoints: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.sip_profiles: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.subscribers: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.namespaces.fabric.Fabric.swml_scripts: .NET groups REST namespaces under SignalWire.REST.Namespaces; Python uses signalwire.rest.<namespace>
+signalwire.rest.rest_client.RestClient.addresses: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.base_url: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.calling: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.chat: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.compat: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.datasphere: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.fabric: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.http: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.imported_numbers: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
 signalwire.rest.rest_client.RestClient.__init__: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.logs: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.lookup: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.mfa: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
 signalwire.rest.rest_client.RestClient: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.number_groups: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.phone_numbers: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.project_id: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.project: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.pubsub: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.queues: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.recordings: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.registry: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.short_codes: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.sip_profile: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.space: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.token: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.verified_callers: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
+signalwire.rest.rest_client.RestClient.video: .NET ships RestClient under SignalWire.REST.RestClient; Python's path is signalwire.rest.client
 signalwire.rest.signal_wire_rest_error.SignalWireRestError.__init__: .NET ships SignalWireRestError under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.signal_wire_rest_error.SignalWireRestError: .NET ships SignalWireRestError under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.signal_wire_rest_error.SignalWireRestError.response_body: .NET ships SignalWireRestError under SignalWire.REST; Python's path is signalwire.rest._base
@@ -302,17 +376,65 @@ signalwire.serverless.adapter.Adapter.handle_azure: .NET ships Adapter class; Py
 signalwire.serverless.adapter.Adapter.handle_lambda: .NET ships Adapter class; Python uses ServerlessMixin on AgentBase + signalwire.utils.is_serverless_mode
 signalwire.serverless.adapter.Adapter: .NET ships Adapter class; Python uses ServerlessMixin on AgentBase + signalwire.utils.is_serverless_mode
 signalwire.serverless.adapter.Adapter.serve: .NET ships Adapter class; Python uses ServerlessMixin on AgentBase + signalwire.utils.is_serverless_mode
+signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.claude_skills.skill.ClaudeSkillsSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.claude_skills.skill.ClaudeSkillsSkill.get_prompt_sections: Skill subclass overrides (Python ships the same overrides; the .NET file path differs from Python's nested module structure)
+signalwire.skills.claude_skills.skill.ClaudeSkillsSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.claude_skills.skill.ClaudeSkillsSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.custom_skills.skill.CustomSkillsSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.custom_skills.skill.CustomSkillsSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.custom_skills.skill.CustomSkillsSkill: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.custom_skills.skill.CustomSkillsSkill.register_tools: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.custom_skills.skill.CustomSkillsSkill.setup: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.custom_skills.skill.CustomSkillsSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.datasphere_serverless.skill.DataSphereServerlessSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.datasphere_serverless.skill.DataSphereServerlessSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.datasphere_serverless.skill.DataSphereServerlessSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.datasphere.skill.DataSphereSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.datasphere.skill.DataSphereSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.datasphere.skill.DataSphereSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.datetime.skill.DatetimeSkill.description: .NET DatetimeSkill class capitalisation differs from Python's DateTimeSkill; both register the same tool name
 signalwire.skills.datetime.skill.DatetimeSkill.get_prompt_sections: .NET DatetimeSkill class capitalisation differs from Python's DateTimeSkill; both register the same tool name
+signalwire.skills.datetime.skill.DatetimeSkill.name: .NET DatetimeSkill class capitalisation differs from Python's DateTimeSkill; both register the same tool name
 signalwire.skills.datetime.skill.DatetimeSkill: .NET DatetimeSkill class capitalisation differs from Python's DateTimeSkill; both register the same tool name
 signalwire.skills.datetime.skill.DatetimeSkill.register_tools: .NET DatetimeSkill class capitalisation differs from Python's DateTimeSkill; both register the same tool name
 signalwire.skills.datetime.skill.DatetimeSkill.setup: .NET DatetimeSkill class capitalisation differs from Python's DateTimeSkill; both register the same tool name
+signalwire.skills.google_maps.skill.GoogleMapsSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.google_maps.skill.GoogleMapsSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.info_gatherer.skill.InfoGathererSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.info_gatherer.skill.InfoGathererSkill.get_prompt_sections: Skill subclass overrides (Python ships the same overrides; the .NET file path differs from Python's nested module structure)
+signalwire.skills.info_gatherer.skill.InfoGathererSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.info_gatherer.skill.InfoGathererSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.joke.skill.JokeSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.joke.skill.JokeSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.math.skill.MathSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.math.skill.MathSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.mcp_gateway.skill.MCPGatewaySkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.mcp_gateway.skill.MCPGatewaySkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.native_vector_search.skill.NativeVectorSearchSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.native_vector_search.skill.NativeVectorSearchSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.native_vector_search.skill.NativeVectorSearchSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.registry.SkillRegistry.get_factory: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.registry.SkillRegistry.reset: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.spider.skill.SpiderSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.spider.skill.SpiderSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.spider.skill.SpiderSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.swml_transfer.skill.SWMLTransferSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.swml_transfer.skill.SWMLTransferSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.swml_transfer.skill.SWMLTransferSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.weather_api.skill.WeatherApiSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.weather_api.skill.WeatherApiSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.web_search.skill.WebSearchSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.web_search.skill.WebSearchSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.web_search.skill.WebSearchSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.web_search.skill.WebSearchSkill.version: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.swml.document.Document.add_raw_verb: .NET ships Document class; Python uses signalwire.core.swml_builder helpers
 signalwire.swml.document.Document.add_section: .NET ships Document class; Python uses signalwire.core.swml_builder helpers
 signalwire.swml.document.Document.add_verb: .NET ships Document class; Python uses signalwire.core.swml_builder helpers
@@ -332,6 +454,7 @@ signalwire.swml.schema.Schema.get_verb: .NET ships Schema as a class; Python use
 signalwire.swml.schema.Schema.is_valid_verb: .NET ships Schema as a class; Python uses signalwire.utils.schema_utils functions
 signalwire.swml.schema.Schema: .NET ships Schema as a class; Python uses signalwire.utils.schema_utils functions
 signalwire.swml.schema.Schema.reset: .NET ships Schema as a class; Python uses signalwire.utils.schema_utils functions
+signalwire.swml.schema.Schema.verb_count: .NET ships Schema as a class; Python uses signalwire.utils.schema_utils functions
 signalwire.swml.service_options.ServiceOptions.basic_auth_password: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
 signalwire.swml.service_options.ServiceOptions.basic_auth_user: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
 signalwire.swml.service_options.ServiceOptions.host: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
