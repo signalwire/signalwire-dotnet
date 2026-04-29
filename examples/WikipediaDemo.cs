@@ -1,8 +1,12 @@
 // Wikipedia Demo
 //
-// An agent that can search Wikipedia for information using a
-// DataMap webhook tool.
+// An agent that can search Wikipedia for information using a real HTTP
+// call to the Wikipedia REST API. Pairs a DataMap webhook (for the
+// platform-side fetch path) with a SDK-side handler that talks to
+// Wikipedia directly when invoked locally.
 
+using System.Net.Http;
+using System.Text.Json;
 using SignalWire.Agent;
 using SignalWire.DataMap;
 using SignalWire.SWAIG;
@@ -51,7 +55,12 @@ var wikiSearch = new DataMap("search_wikipedia")
 
 agent.RegisterSwaigFunction(wikiSearch.ToSwaigFunction());
 
-// Also add a direct lookup tool
+// Also add a direct lookup tool that fetches the article extract from
+// Wikipedia's REST API. Runs in-process when the platform dispatches
+// this SWAIG function back to the agent's /swaig endpoint.
+var wikiHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+wikiHttp.DefaultRequestHeaders.UserAgent.ParseAdd("signalwire-dotnet-wikipedia-demo/1.0");
+
 agent.DefineTool(
     name:        "get_wiki_summary",
     description: "Get a brief summary of a Wikipedia article by title",
@@ -66,9 +75,39 @@ agent.DefineTool(
     handler: (args, raw) =>
     {
         var title = args.GetValueOrDefault("title")?.ToString() ?? "SignalWire";
-        return new FunctionResult(
-            $"Summary for '{title}': This is a demo response. "
-            + "In production, this would fetch the actual Wikipedia summary via API.");
+        var url = "https://en.wikipedia.org/w/api.php"
+            + "?action=query&prop=extracts&exintro=1&explaintext=1&format=json"
+            + "&titles=" + Uri.EscapeDataString(title);
+
+        try
+        {
+            using var resp = wikiHttp.GetAsync(url).GetAwaiter().GetResult();
+            var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("query", out var q)
+                && q.TryGetProperty("pages", out var pages)
+                && pages.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var page in pages.EnumerateObject())
+                {
+                    if (page.Value.ValueKind == JsonValueKind.Object
+                        && page.Value.TryGetProperty("extract", out var ex)
+                        && ex.ValueKind == JsonValueKind.String)
+                    {
+                        var text = (ex.GetString() ?? "").Trim();
+                        if (text.Length > 0)
+                        {
+                            return new FunctionResult($"Summary for '{title}':\n\n{text}");
+                        }
+                    }
+                }
+            }
+            return new FunctionResult($"No Wikipedia summary found for '{title}'.");
+        }
+        catch (Exception ex)
+        {
+            return new FunctionResult($"Error fetching Wikipedia summary for '{title}': {ex.Message}");
+        }
     }
 );
 

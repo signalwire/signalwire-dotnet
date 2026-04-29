@@ -1,9 +1,12 @@
 // AWS Lambda Agent Example
 //
-// Demonstrates deploying a SignalWire AI Agent to AWS Lambda.
-// In a real deployment, this would use Amazon.Lambda.AspNetCoreServer.
-//
-// For local testing, it runs as a normal agent.
+// A SignalWire AI Agent serving real SWML and dispatching real SWAIG
+// tools. The SDK uses the same code path whether the agent runs locally
+// or behind an AWS Lambda HTTP adapter (e.g.
+// Amazon.Lambda.AspNetCoreServer); the Lambda adapter slots in at the
+// top of the request pipeline and forwards the API Gateway event into
+// AgentBase.AsRouter() / Run() unchanged. This file shows the agent
+// configuration; the deployment topology is the user's choice.
 
 using SignalWire.Agent;
 using SignalWire.SWAIG;
@@ -55,8 +58,8 @@ agent.DefineTool(
     }
 );
 
-Console.WriteLine("Starting Lambda Agent (local mode)");
-Console.WriteLine("In production, this would be deployed to AWS Lambda.");
+Console.WriteLine("Starting Lambda Agent");
 Console.WriteLine("Available at: http://localhost:3000/");
+Console.WriteLine("Behind a Lambda HTTP adapter, mount agent.AsRouter() instead of Run().");
 
 agent.Run();
