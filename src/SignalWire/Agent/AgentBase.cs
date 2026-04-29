@@ -53,8 +53,8 @@ public class AgentBase : Service
     private string _postPrompt;
 
     // -- Tools / SWAIG --
-    private Dictionary<string, Dictionary<string, object>> _tools;
-    private List<string> _toolOrder;
+    // _tools and _toolOrder are now declared on Service (lifted so non-agent
+    // SWMLService instances can host SWAIG functions). AgentBase inherits.
 
     // -- Hints --
     private List<string> _hints;
@@ -131,9 +131,7 @@ public class AgentBase : Service
         _promptText = "";
         _postPrompt = "";
 
-        // Tools
-        _tools = [];
-        _toolOrder = [];
+        // Tools — registry now created by Service base default field initialisers
 
         // Hints
         _hints = [];
@@ -289,140 +287,8 @@ public class AgentBase : Service
         return _promptText;
     }
 
-    // ======================================================================
-    //  Tool Methods
-    // ======================================================================
-
-    /// <summary>
-    /// Register a SWAIG tool (function) that the AI can invoke during a
-    /// call.
-    ///
-    /// <para><b>How this becomes a tool the model sees.</b> A SWAIG
-    /// function is <i>exactly the same concept</i> as a "tool" in native
-    /// OpenAI / Anthropic tool calling. On every LLM turn, the SDK
-    /// renders each registered SWAIG function into the OpenAI tool
-    /// schema:</para>
-    ///
-    /// <code>
-    /// {
-    ///   "type": "function",
-    ///   "function": {
-    ///     "name":        "your_name_here",
-    ///     "description": "your description text",
-    ///     "parameters":  { ... your JSON schema ... }
-    ///   }
-    /// }
-    /// </code>
-    ///
-    /// <para>That schema is sent to the model as part of the same API
-    /// call that produces the next assistant message. The model reads:
-    /// <list type="bullet">
-    /// <item>the function <c>description</c> to decide WHEN to call this
-    /// tool</item>
-    /// <item>each parameter <c>description</c> (inside
-    /// <c>parameters</c>) to decide HOW to fill in that argument from
-    /// the user's utterance</item>
-    /// </list>
-    /// </para>
-    ///
-    /// <para>This means <b>descriptions are prompt engineering</b>, not
-    /// developer comments. A vague description is the #1 cause of "the
-    /// model has the right tool but doesn't call it" failures.</para>
-    ///
-    /// <para><b>Bad vs good descriptions:</b></para>
-    /// <code>
-    /// BAD : description: "Lookup function"
-    /// GOOD: description: "Look up a customer's account details by "
-    ///                  + "account number. Use this BEFORE quoting any "
-    ///                  + "account-specific info (balance, plan, status). "
-    ///                  + "Do not use for general product questions."
-    ///
-    /// BAD : parameters: { ["id"] = new { type = "string",
-    ///                                    description = "the id" } }
-    /// GOOD: parameters: { ["account_number"] = new { type = "string",
-    ///         description = "The customer's 8-digit account number, "
-    ///                     + "no dashes or spaces. Ask the user if they "
-    ///                     + "don't provide it." } }
-    /// </code>
-    ///
-    /// <para><b>Tool count matters.</b> LLM tool selection accuracy
-    /// degrades past ~7-8 simultaneously-active tools per call. Use
-    /// <see cref="SignalWire.Contexts.Step.SetFunctions"/> to partition
-    /// tools across steps so only the relevant subset is active at any
-    /// moment.</para>
-    /// </summary>
-    public AgentBase DefineTool(
-        string name,
-        string description,
-        Dictionary<string, object> parameters,
-        Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> handler,
-        bool secure = false)
-    {
-        _tools[name] = new Dictionary<string, object>
-        {
-            ["function"] = name,
-            ["purpose"] = description,
-            ["argument"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["properties"] = parameters,
-            },
-            ["_handler"] = handler,
-            ["_secure"] = secure,
-        };
-        if (!_toolOrder.Contains(name))
-        {
-            _toolOrder.Add(name);
-        }
-        return this;
-    }
-
-    /// <summary>Register a raw SWAIG function definition (e.g. DataMap tools).</summary>
-    public AgentBase RegisterSwaigFunction(Dictionary<string, object> funcDef)
-    {
-        var name = funcDef.TryGetValue("function", out var n) ? n as string ?? "" : "";
-        if (name.Length == 0)
-        {
-            return this;
-        }
-        _tools[name] = funcDef;
-        if (!_toolOrder.Contains(name))
-        {
-            _toolOrder.Add(name);
-        }
-        return this;
-    }
-
-    /// <summary>Register multiple tool definitions at once.</summary>
-    public AgentBase DefineTools(List<Dictionary<string, object>> toolDefs)
-    {
-        foreach (var def in toolDefs)
-        {
-            RegisterSwaigFunction(def);
-        }
-        return this;
-    }
-
-    /// <summary>Dispatch a function call to the registered handler.</summary>
-    public FunctionResult? OnFunctionCall(
-        string name,
-        Dictionary<string, object> args,
-        Dictionary<string, object?> rawData)
-    {
-        if (!_tools.TryGetValue(name, out var tool))
-        {
-            return null;
-        }
-        if (!tool.TryGetValue("_handler", out var handlerObj))
-        {
-            return null;
-        }
-        if (handlerObj is not Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> handler)
-        {
-            return null;
-        }
-        return handler(args, rawData);
-    }
+    // Tool methods (DefineTool, RegisterSwaigFunction, DefineTools,
+    // OnFunctionCall) are now provided by SignalWire.SWML.Service - inherited.
 
     // ======================================================================
     //  AI Config Methods
@@ -749,12 +615,7 @@ public class AgentBase : Service
         return this;
     }
 
-    /// <summary>
-    /// Return the names of every registered SWAIG tool in insertion
-    /// order. Used by <see cref="ContextBuilder.Validate"/> to detect
-    /// collisions with reserved native tool names.
-    /// </summary>
-    public IEnumerable<string> ListToolNames() => _toolOrder.ToList();
+    // ListToolNames is now provided by SignalWire.SWML.Service - inherited.
 
     // ======================================================================
     //  Skill Methods
@@ -1121,68 +982,8 @@ public class AgentBase : Service
         return AgentJsonResponse(200, rendered);
     }
 
-    /// <summary>Handle a SWAIG function dispatch request.</summary>
-    protected override (int, Dictionary<string, string>, string) HandleSwaigRequest(
-        Dictionary<string, object?>? requestData,
-        Dictionary<string, string> headers)
-    {
-        if (requestData is null)
-        {
-            return AgentJsonResponse(400, new { error = "Missing request body" });
-        }
-
-        var functionName = "";
-        if (requestData.TryGetValue("function", out var fnObj))
-        {
-            functionName = fnObj switch
-            {
-                string s => s,
-                JsonElement { ValueKind: JsonValueKind.String } je => je.GetString() ?? "",
-                _ => "",
-            };
-        }
-
-        if (functionName.Length == 0)
-        {
-            return AgentJsonResponse(400, new { error = "Missing function name" });
-        }
-
-        // Extract parsed arguments
-        var args = new Dictionary<string, object>();
-        if (requestData.TryGetValue("argument", out var argObj))
-        {
-            if (argObj is JsonElement argEl && argEl.ValueKind == JsonValueKind.Object
-                && argEl.TryGetProperty("parsed", out var parsed)
-                && parsed.ValueKind == JsonValueKind.Array && parsed.GetArrayLength() > 0)
-            {
-                var first = parsed[0];
-                if (first.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var prop in first.EnumerateObject())
-                    {
-                        args[prop.Name] = prop.Value.ValueKind switch
-                        {
-                            JsonValueKind.String => prop.Value.GetString()!,
-                            JsonValueKind.Number => prop.Value.GetDouble(),
-                            JsonValueKind.True => true,
-                            JsonValueKind.False => false,
-                            _ => prop.Value.ToString(),
-                        };
-                    }
-                }
-            }
-        }
-
-        var rawData = new Dictionary<string, object?>(requestData);
-        var result = OnFunctionCall(functionName, args, rawData);
-
-        if (result is null)
-        {
-            return AgentJsonResponse(404, new { error = $"Unknown function: {functionName}" });
-        }
-
-        return AgentJsonResponse(200, result.ToDict());
-    }
+    // HandleSwaigRequest is now provided by Service (parent). The lifted
+    // version handles GET (renders SWML) and POST (dispatches via OnFunctionCall).
 
     /// <summary>Handle the post-prompt callback.</summary>
     protected override (int, Dictionary<string, string>, string) HandlePostPrompt(

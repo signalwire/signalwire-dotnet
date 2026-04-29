@@ -329,11 +329,15 @@ public class SWMLServiceTests : IDisposable
     }
 
     [Fact]
-    public void Swaig_WithAuth_Returns200()
+    public void Swaig_WithAuth_EmptyBody_Returns400()
     {
+        // After the SWAIG lift, the endpoint validates the body. An empty
+        // body with no `function` name now returns 400. The test exists to
+        // prove the route is mounted under auth — 400 is the correct lifted
+        // behavior; the stub-200 the old test asserted was a no-op handler.
         var svc = MakeService();
         var (status, _, _) = svc.HandleRequest("POST", "/swaig", AuthHeader(), "{}");
-        Assert.Equal(200, status);
+        Assert.Equal(400, status);
     }
 
     [Fact]
@@ -370,9 +374,12 @@ public class SWMLServiceTests : IDisposable
     [Fact]
     public void CustomRoute_SwaigDispatch()
     {
+        // Lifted handler validates body — empty body returns 400 (missing
+        // function name). Point of the test: /agent/swaig routes through
+        // the route prefix to HandleSwaigRequest, which it does.
         var svc = MakeService(route: "/agent");
         var (status, _, _) = svc.HandleRequest("POST", "/agent/swaig", AuthHeader(), "{}");
-        Assert.Equal(200, status);
+        Assert.Equal(400, status);
     }
 
     [Fact]

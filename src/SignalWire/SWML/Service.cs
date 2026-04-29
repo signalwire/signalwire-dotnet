@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using SignalWire.Logging;
+using SignalWire.SWAIG;
 
 namespace SignalWire.SWML;
 
@@ -36,10 +37,19 @@ public class Service
 
     private const int MaxBodySize = 1_048_576; // 1 MB
 
+    private static readonly Regex SwaigFunctionNamePattern = new(
+        @"^[a-zA-Z_][a-zA-Z0-9_]*$",
+        RegexOptions.Compiled);
+
     private readonly Logger _logger;
     private readonly string _basicAuthUser;
     private readonly string _basicAuthPassword;
     private readonly Dictionary<string, Func<Dictionary<string, object?>?, Dictionary<string, string>, object>> _routingCallbacks = new();
+
+    // SWAIG tool registry — lifted from AgentBase so any Service (sidecar,
+    // non-agent verb host) can register and dispatch SWAIG functions.
+    protected Dictionary<string, Dictionary<string, object>> _tools = new();
+    protected List<string> _toolOrder = new();
 
     public string Name { get; }
     public string Route { get; }
@@ -270,7 +280,7 @@ public class Service
         }
         if (subPath == "/swaig")
         {
-            return HandleSwaigRequest(requestData, headers);
+            return HandleSwaigRequest(method, requestData, headers);
         }
         if (subPath == "/post_prompt")
         {
@@ -297,12 +307,208 @@ public class Service
         return JsonResponse(200, swml);
     }
 
-    /// <summary>Handle SWAIG function dispatch. Override in AgentBase.</summary>
+    // ------------------------------------------------------------------
+    // SWAIG tool registry (lifted from AgentBase)
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Define a SWAIG function the AI can call. Tool descriptions and
+    /// parameter descriptions are LLM-facing prompt engineering — see
+    /// PORTING_GUIDE for guidance on writing them.
+    /// </summary>
+    public virtual Service DefineTool(
+        string name,
+        string description,
+        Dictionary<string, object> parameters,
+        Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> handler,
+        bool secure = false)
+    {
+        _tools[name] = new Dictionary<string, object>
+        {
+            ["function"] = name,
+            ["purpose"] = description,
+            ["argument"] = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["properties"] = parameters,
+            },
+            ["_handler"] = handler,
+            ["_secure"] = secure,
+        };
+        if (!_toolOrder.Contains(name))
+        {
+            _toolOrder.Add(name);
+        }
+        return this;
+    }
+
+    /// <summary>Register a raw SWAIG function definition (e.g. DataMap tools).</summary>
+    public virtual Service RegisterSwaigFunction(Dictionary<string, object> funcDef)
+    {
+        var name = funcDef.TryGetValue("function", out var n) ? n as string ?? "" : "";
+        if (name.Length == 0)
+        {
+            return this;
+        }
+        _tools[name] = funcDef;
+        if (!_toolOrder.Contains(name))
+        {
+            _toolOrder.Add(name);
+        }
+        return this;
+    }
+
+    /// <summary>Register multiple tool definitions at once.</summary>
+    public virtual Service DefineTools(List<Dictionary<string, object>> toolDefs)
+    {
+        foreach (var def in toolDefs)
+        {
+            RegisterSwaigFunction(def);
+        }
+        return this;
+    }
+
+    /// <summary>Dispatch a function call to the registered handler.</summary>
+    public virtual FunctionResult? OnFunctionCall(
+        string name,
+        Dictionary<string, object> args,
+        Dictionary<string, object?> rawData)
+    {
+        if (!_tools.TryGetValue(name, out var tool))
+        {
+            return null;
+        }
+        if (!tool.TryGetValue("_handler", out var handlerObj))
+        {
+            return null;
+        }
+        if (handlerObj is not Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> handler)
+        {
+            return null;
+        }
+        return handler(args, rawData);
+    }
+
+    /// <summary>List registered tool names in registration order.</summary>
+    public IEnumerable<string> ListToolNames() => _toolOrder.ToList();
+
+    /// <summary>
+    /// Extension point: invoked between argument parsing and function
+    /// dispatch. Returns (target, shortCircuit). When shortCircuit is
+    /// non-null, it's returned directly without calling OnFunctionCall.
+    /// AgentBase may override to add session-token validation or ephemeral
+    /// dynamic-config copies.
+    /// </summary>
+    protected virtual (Service Target, Dictionary<string, object>? ShortCircuit) SwaigPreDispatch(
+        Dictionary<string, object?> requestData,
+        Dictionary<string, string> headers,
+        string functionName)
+    {
+        return (this, null);
+    }
+
+    /// <summary>
+    /// Handle SWAIG function dispatch.
+    ///
+    /// GET: returns the rendered SWML document (parallel to root /).
+    /// POST: parses {function, argument, call_id}, validates, runs the
+    /// SwaigPreDispatch hook, calls OnFunctionCall on the chosen target.
+    ///
+    /// Lifted from AgentBase so non-agent SWMLServices (e.g. ai_sidecar
+    /// host) can serve /swaig without subclassing AgentBase.
+    /// </summary>
     protected virtual (int, Dictionary<string, string>, string) HandleSwaigRequest(
+        string method,
         Dictionary<string, object?>? requestData,
         Dictionary<string, string> headers)
     {
-        return JsonResponse(200, Array.Empty<object>());
+        if (string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase))
+        {
+            var swml = RenderSwml();
+            return JsonResponse(200, swml);
+        }
+
+        if (requestData is null)
+        {
+            return JsonResponse(400, new { error = "Missing request body" });
+        }
+
+        var functionName = "";
+        if (requestData.TryGetValue("function", out var fnObj))
+        {
+            functionName = fnObj switch
+            {
+                string s => s,
+                JsonElement { ValueKind: JsonValueKind.String } je => je.GetString() ?? "",
+                _ => "",
+            };
+        }
+        if (functionName.Length == 0)
+        {
+            return JsonResponse(400, new { error = "Missing function name" });
+        }
+        if (!SwaigFunctionNamePattern.IsMatch(functionName))
+        {
+            return JsonResponse(400, new { error = $"Invalid function name format: '{functionName}'" });
+        }
+
+        // Argument extraction. Accept the nested
+        // {"argument": {"parsed": [...], "raw": "..."}} shape AND a flat
+        // {"arguments": {...}} shape used by some external integrations.
+        var args = new Dictionary<string, object>();
+        if (requestData.TryGetValue("argument", out var argObj)
+            && argObj is JsonElement argEl
+            && argEl.ValueKind == JsonValueKind.Object
+            && argEl.TryGetProperty("parsed", out var parsed)
+            && parsed.ValueKind == JsonValueKind.Array
+            && parsed.GetArrayLength() > 0)
+        {
+            var first = parsed[0];
+            if (first.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in first.EnumerateObject())
+                {
+                    args[prop.Name] = prop.Value.ValueKind switch
+                    {
+                        JsonValueKind.String => prop.Value.GetString()!,
+                        JsonValueKind.Number => prop.Value.GetDouble(),
+                        JsonValueKind.True => true,
+                        JsonValueKind.False => false,
+                        _ => prop.Value.ToString(),
+                    };
+                }
+            }
+        }
+        else if (requestData.TryGetValue("arguments", out var argsObj)
+            && argsObj is JsonElement argsEl
+            && argsEl.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var prop in argsEl.EnumerateObject())
+            {
+                args[prop.Name] = prop.Value.ValueKind switch
+                {
+                    JsonValueKind.String => prop.Value.GetString()!,
+                    JsonValueKind.Number => prop.Value.GetDouble(),
+                    JsonValueKind.True => true,
+                    JsonValueKind.False => false,
+                    _ => prop.Value.ToString(),
+                };
+            }
+        }
+
+        var (target, shortCircuit) = SwaigPreDispatch(requestData, headers, functionName);
+        if (shortCircuit is not null)
+        {
+            return JsonResponse(200, shortCircuit);
+        }
+
+        var rawData = new Dictionary<string, object?>(requestData);
+        var result = target.OnFunctionCall(functionName, args, rawData);
+        if (result is null)
+        {
+            return JsonResponse(404, new { error = $"Unknown function: {functionName}" });
+        }
+        return JsonResponse(200, result.ToDict());
     }
 
     /// <summary>Handle post-prompt callback. Override in AgentBase.</summary>
