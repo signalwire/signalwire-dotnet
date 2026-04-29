@@ -393,6 +393,42 @@ public class Service
     public IEnumerable<string> ListToolNames() => _toolOrder.ToList();
 
     /// <summary>
+    /// Public read-only view of the SWAIG tool registry — the same data
+    /// served by /swaig get_signature, but reachable in-process for
+    /// introspection (e.g. swaig-test --list-tools against an assembly
+    /// loaded via reflection). The internal "_handler" callable is
+    /// stripped because it isn't meaningful outside this process.
+    ///
+    /// This is an SDK accessor, not a new endpoint. Order matches
+    /// registration order (mirrors ListToolNames).
+    /// </summary>
+    public IReadOnlyList<IReadOnlyDictionary<string, object>> Tools
+    {
+        get
+        {
+            var result = new List<IReadOnlyDictionary<string, object>>(_toolOrder.Count);
+            foreach (var name in _toolOrder)
+            {
+                if (!_tools.TryGetValue(name, out var tool))
+                {
+                    continue;
+                }
+                var copy = new Dictionary<string, object>(tool.Count);
+                foreach (var kv in tool)
+                {
+                    if (kv.Key == "_handler")
+                    {
+                        continue;
+                    }
+                    copy[kv.Key] = kv.Value;
+                }
+                result.Add(copy);
+            }
+            return result;
+        }
+    }
+
+    /// <summary>
     /// Extension point: invoked between argument parsing and function
     /// dispatch. Returns (target, shortCircuit). When shortCircuit is
     /// non-null, it's returned directly without calling OnFunctionCall.

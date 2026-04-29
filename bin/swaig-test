@@ -1,34 +1,84 @@
 #!/usr/bin/env dotnet-script
 // swaig-test -- CLI tool for testing SWAIG endpoints
 //
-// Usage:
-//   dotnet script swaig-test -- --url <url> [options]
+// Two modes:
+//
+//   1. URL mode (HTTP, original): hits a running service over the wire.
+//        swaig-test --url http://user:pass@host:3000/route --list-tools
+//
+//   2. File / assembly mode (in-process reflection): loads a built SDK
+//      assembly, instantiates a SignalWire.SWML.Service subclass, and
+//      reads the runtime tool registry directly. NO HTTP. This works on
+//      a SWMLService-only example that doesn't have an <ai> verb to
+//      walk, where URL-mode --list-tools would return nothing.
+//        swaig-test --assembly path/to/Example.dll --class My.Ns.MyService --list-tools
 //
 // Options:
-//   --url <url>           SWAIG endpoint URL (required for most commands)
-//   --dump-swml           Fetch and display the SWML document
-//   --list-tools          List available SWAIG tools
-//   --exec <tool>         Execute a specific SWAIG tool
-//   --param <key=value>   Pass a parameter (repeatable)
+//   --url <url>           SWAIG endpoint URL (URL mode)
+//   --assembly <path>     Path to a built .dll containing the user's Service subclass
+//   --class <fqtype>      Fully-qualified name of a SignalWire.SWML.Service subclass
+//   --dump-swml           Fetch and display the SWML document (URL mode)
+//   --list-tools          List available SWAIG tools (URL or assembly mode)
+//   --exec <tool>         Execute a specific SWAIG tool (URL mode)
+//   --param <key=value>   Pass a parameter (repeatable, URL mode --exec)
 //   --raw                 Output raw JSON without formatting
 //   --verbose             Enable verbose output
 //   --help                Show this help message
 //
 // URL auth extraction: if the URL contains user:pass@host, the credentials
 // are extracted and used for Basic Auth.
+//
+// In assembly mode the script does NOT need a compile-time #r against
+// SignalWire.dll: when Assembly.LoadFrom() pulls in the user's DLL, the
+// CLR resolves SignalWire.dll from beside it (we hook the load-context
+// resolver below to make sure of that), and we reach the SDK types
+// purely via reflection.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
+using System.Runtime.Loader;
 using System.Text;
 using System.Text.Json;
 
 var options = ParseArgs(Args.ToArray());
 
-if (options.Help || (!options.HasUrl && string.IsNullOrEmpty(options.Exec)))
+if (options.Help)
+{
+    PrintHelp();
+    return;
+}
+
+if (options.HasAssembly)
+{
+    // ----- File / assembly mode (in-process, no HTTP) ------------------
+    if (string.IsNullOrEmpty(options.ClassName))
+    {
+        Console.Error.WriteLine("Error: --assembly requires --class <FQTYPE>");
+        Environment.Exit(1);
+    }
+
+    try
+    {
+        RunAssemblyMode(options);
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        if (options.Verbose)
+            Console.Error.WriteLine(ex.StackTrace);
+        Environment.Exit(1);
+    }
+    return;
+}
+
+if (!options.HasUrl && string.IsNullOrEmpty(options.Exec))
 {
     PrintHelp();
     return;
@@ -36,7 +86,7 @@ if (options.Help || (!options.HasUrl && string.IsNullOrEmpty(options.Exec)))
 
 if (!options.HasUrl)
 {
-    Console.Error.WriteLine("Error: --url is required");
+    Console.Error.WriteLine("Error: --url is required (or use --assembly + --class for in-process mode)");
     Environment.Exit(1);
 }
 
@@ -84,7 +134,198 @@ catch (Exception ex)
 }
 
 // ======================================================================
-// Commands
+// File / assembly mode
+// ======================================================================
+
+static void RunAssemblyMode(CliOptions opts)
+{
+    var asmPath = Path.GetFullPath(opts.AssemblyPath);
+    if (!File.Exists(asmPath))
+    {
+        throw new FileNotFoundException($"Assembly not found: {asmPath}");
+    }
+    if (opts.Verbose) Console.Error.WriteLine($"LoadFrom: {asmPath}");
+
+    // Resolve dependencies relative to the loaded assembly's directory
+    // so the user's example DLL can find SignalWire.dll next to it.
+    var asmDir = Path.GetDirectoryName(asmPath)!;
+    AssemblyLoadContext.Default.Resolving += (ctx, name) =>
+    {
+        var candidate = Path.Combine(asmDir, name.Name + ".dll");
+        return File.Exists(candidate) ? ctx.LoadFromAssemblyPath(candidate) : null;
+    };
+
+    var asm = Assembly.LoadFrom(asmPath);
+
+    var t = asm.GetType(opts.ClassName);
+    if (t is null)
+    {
+        var available = string.Join(", ", asm.GetExportedTypes().Select(x => x.FullName));
+        throw new InvalidOperationException(
+            $"Type '{opts.ClassName}' not found in {Path.GetFileName(asmPath)}. Exported types: {available}");
+    }
+
+    // Resolve SignalWire.SWML.Service from the SDK assembly *as the loaded
+    // example sees it*. We can't just typeof(Service) because the SDK
+    // referenced by this script may differ from the one the example was
+    // compiled against; LoadFrom unifies on the same load context, but
+    // we still want the runtime check to mirror what the user wrote.
+    var serviceType = ResolveServiceType(asm);
+    if (!serviceType.IsAssignableFrom(t))
+    {
+        throw new InvalidOperationException(
+            $"Type '{opts.ClassName}' does not extend SignalWire.SWML.Service");
+    }
+
+    object? instance;
+    try
+    {
+        instance = Activator.CreateInstance(t);
+    }
+    catch (MissingMethodException)
+    {
+        throw new InvalidOperationException(
+            $"Type '{opts.ClassName}' must have a parameterless constructor for --assembly mode");
+    }
+    if (instance is null)
+    {
+        throw new InvalidOperationException($"Activator.CreateInstance returned null for '{opts.ClassName}'");
+    }
+
+    if (opts.ListTools)
+    {
+        ListToolsFromInstance(instance, serviceType, opts.Raw);
+        return;
+    }
+
+    // Default behaviour: print tool list (the only assembly-mode action
+    // implemented today; --exec/--dump-swml stay URL-only).
+    ListToolsFromInstance(instance, serviceType, opts.Raw);
+}
+
+static Type ResolveServiceType(Assembly userAsm)
+{
+    // Find SignalWire.SWML.Service in any assembly currently loaded into
+    // this process. After Assembly.LoadFrom(userDll) the user's assembly
+    // and its dependencies (notably SignalWire.dll, resolved by the load
+    // hook in RunAssemblyMode) are in AppDomain.CurrentDomain.
+    foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+    {
+        var t = asm.GetType("SignalWire.SWML.Service");
+        if (t != null) return t;
+    }
+
+    // Fall back: explicitly load each of the user's referenced
+    // assemblies and check those, in case lazy loading hasn't happened.
+    foreach (var refName in userAsm.GetReferencedAssemblies())
+    {
+        Assembly? loaded;
+        try { loaded = Assembly.Load(refName); }
+        catch { continue; }
+        var t = loaded.GetType("SignalWire.SWML.Service");
+        if (t != null) return t;
+    }
+
+    throw new InvalidOperationException(
+        "Could not resolve SignalWire.SWML.Service from any loaded assembly. " +
+        "Ensure SignalWire.dll is reachable from the example DLL.");
+}
+
+static void ListToolsFromInstance(object instance, Type serviceType, bool raw)
+{
+    var toolsProp = serviceType.GetProperty("Tools",
+        BindingFlags.Public | BindingFlags.Instance);
+    if (toolsProp is null)
+    {
+        throw new InvalidOperationException(
+            "SignalWire.SWML.Service has no public 'Tools' accessor. " +
+            "Update the SDK to expose IReadOnlyList<IReadOnlyDictionary<string,object>> Tools.");
+    }
+
+    var toolsValue = toolsProp.GetValue(instance);
+    if (toolsValue is not IEnumerable enumerable)
+    {
+        Console.WriteLine("(no tools)");
+        return;
+    }
+
+    var rendered = new List<Dictionary<string, object?>>();
+    foreach (var entry in enumerable)
+    {
+        if (entry is not IEnumerable<KeyValuePair<string, object>> kvs)
+        {
+            continue;
+        }
+        var dict = new Dictionary<string, object?>();
+        foreach (var kv in kvs)
+        {
+            dict[kv.Key] = kv.Value;
+        }
+        rendered.Add(dict);
+    }
+
+    if (raw)
+    {
+        var json = JsonSerializer.Serialize(rendered, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        });
+        Console.WriteLine(json);
+        return;
+    }
+
+    if (rendered.Count == 0)
+    {
+        Console.WriteLine("(no tools registered)");
+        return;
+    }
+
+    foreach (var tool in rendered)
+    {
+        var name = tool.TryGetValue("function", out var n) ? n?.ToString() ?? "?" : "?";
+        var purpose = tool.TryGetValue("purpose", out var p) ? p?.ToString() ?? "" : "";
+        Console.WriteLine($"  {name}");
+        if (!string.IsNullOrEmpty(purpose))
+        {
+            Console.WriteLine($"    description: {purpose}");
+        }
+        if (tool.TryGetValue("argument", out var argObj)
+            && argObj is IEnumerable<KeyValuePair<string, object>> argDict)
+        {
+            foreach (var ak in argDict)
+            {
+                if (ak.Key == "properties"
+                    && ak.Value is IEnumerable<KeyValuePair<string, object>> props)
+                {
+                    Console.WriteLine($"    parameters:");
+                    foreach (var prop in props)
+                    {
+                        Console.WriteLine($"      - {prop.Key}: {RenderParam(prop.Value)}");
+                    }
+                }
+            }
+        }
+    }
+}
+
+static string RenderParam(object? value)
+{
+    if (value is null) return "null";
+    if (value is IEnumerable<KeyValuePair<string, object>> dict)
+    {
+        var parts = new List<string>();
+        foreach (var kv in dict)
+        {
+            parts.Add($"{kv.Key}={kv.Value}");
+        }
+        return string.Join(", ", parts);
+    }
+    return value.ToString() ?? "";
+}
+
+// ======================================================================
+// URL-mode commands (unchanged)
 // ======================================================================
 
 static async Task DumpSwml(HttpClient client, CliOptions opts)
@@ -209,6 +450,19 @@ static CliOptions ParseArgs(string[] args)
                     ParseUrl(args[++i], opts);
                 }
                 break;
+            case "--assembly":
+                if (i + 1 < args.Length)
+                {
+                    opts.AssemblyPath = args[++i];
+                    opts.HasAssembly = true;
+                }
+                break;
+            case "--class":
+                if (i + 1 < args.Length)
+                {
+                    opts.ClassName = args[++i];
+                }
+                break;
             case "--dump-swml":
                 opts.DumpSwml = true;
                 break;
@@ -282,13 +536,16 @@ static void PrintHelp()
 
 Usage:
   dotnet script swaig-test -- --url <url> [options]
+  dotnet script swaig-test -- --assembly <dll> --class <fqtype> --list-tools
 
 Options:
-  --url <url>           SWAIG endpoint URL (required)
-  --dump-swml           Fetch and display the SWML document
+  --url <url>           SWAIG endpoint URL (URL mode, HTTP)
+  --assembly <path>     Path to a built .dll (in-process reflection mode)
+  --class <fqtype>      Fully-qualified Service-subclass name to instantiate
+  --dump-swml           Fetch and display the SWML document (URL mode)
   --list-tools          List available SWAIG tools
-  --exec <tool>         Execute a specific SWAIG tool
-  --param <key=value>   Pass a parameter (repeatable)
+  --exec <tool>         Execute a specific SWAIG tool (URL mode)
+  --param <key=value>   Pass a parameter (repeatable, --exec)
   --raw                 Output raw JSON without formatting
   --verbose             Enable verbose output
   --help                Show this help message
@@ -297,10 +554,21 @@ URL Authentication:
   If the URL contains user:pass@host, the credentials are
   extracted and used for Basic Auth automatically.
 
+Modes:
+  URL mode hits a running service over HTTP. It works against any
+  host that serves /swaig (AgentBase or plain SWMLService).
+
+  Assembly mode loads the user's compiled assembly in-process,
+  instantiates a Service subclass, and reads the runtime tool
+  registry directly. This works on a SWMLService-only example
+  that has no <ai> verb to walk; URL-mode --list-tools returns
+  nothing in that case because it asks the LLM endpoint.
+
 Examples:
   swaig-test --url http://user:pass@localhost:3000 --dump-swml
   swaig-test --url http://localhost:3000 --list-tools
-  swaig-test --url http://localhost:3000 --exec lookup --param name=John");
+  swaig-test --url http://localhost:3000 --exec lookup --param name=John
+  swaig-test --assembly bin/Debug/net9.0/MyExample.dll --class My.Ns.MyService --list-tools");
 }
 
 // ======================================================================
@@ -313,6 +581,9 @@ class CliOptions
     public bool HasUrl { get; set; }
     public string? AuthUser { get; set; }
     public string? AuthPassword { get; set; }
+    public string AssemblyPath { get; set; } = "";
+    public bool HasAssembly { get; set; }
+    public string ClassName { get; set; } = "";
     public bool DumpSwml { get; set; }
     public bool ListTools { get; set; }
     public string? Exec { get; set; }
