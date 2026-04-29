@@ -47,10 +47,10 @@ if (skillName.Length == 0)
     return 1;
 }
 
-Dictionary<string, object?> args;
+Dictionary<string, object?> handlerArgs;
 try
 {
-    args = JsonSerializer.Deserialize<Dictionary<string, object?>>(argsRaw) ?? new();
+    handlerArgs = JsonSerializer.Deserialize<Dictionary<string, object?>>(argsRaw) ?? new();
 }
 catch (JsonException)
 {
@@ -117,12 +117,12 @@ skill.RegisterTools(agent);
 
 object? result = skillName switch
 {
-    "web_search"        => DispatchHandler(agent, "web_search", args),
-    "wikipedia_search"  => DispatchHandler(agent, "search_wiki", args),
-    "datasphere"        => DispatchHandler(agent, "search_knowledge", args),
-    "spider"            => DispatchHandler(agent, "scrape_url", args),
-    "api_ninjas_trivia" => await ExecuteDataMap(agent, "get_trivia", EnsureCategory(args)),
-    "weather_api"       => await ExecuteDataMap(agent, "get_weather", args),
+    "web_search"        => DispatchHandler(agent, "web_search", handlerArgs),
+    "wikipedia_search"  => DispatchHandler(agent, "search_wiki", handlerArgs),
+    "datasphere"        => DispatchHandler(agent, "search_knowledge", handlerArgs),
+    "spider"            => DispatchHandler(agent, "scrape_url", handlerArgs),
+    "api_ninjas_trivia" => await ExecuteDataMap(agent, "get_trivia", EnsureCategory(handlerArgs)),
+    "weather_api"       => await ExecuteDataMap(agent, "get_weather", handlerArgs),
     _                   => null,
 };
 
@@ -149,7 +149,11 @@ static object? DispatchHandler(AgentBase agent, string toolName, Dictionary<stri
     var typedArgs = new Dictionary<string, object>();
     foreach (var (k, v) in args)
     {
-        if (v is not null) typedArgs[k] = v;
+        if (v is null) continue;
+        // System.Text.Json deserializes object values as JsonElement; the
+        // skill handlers expect raw string/number/bool. Unwrap them so
+        // `(string)args[k]` and `arg as string` cast successfully.
+        typedArgs[k] = UnwrapJsonElement(v);
     }
     var fr = agent.OnFunctionCall(toolName, typedArgs, rawData);
     if (fr is null)
@@ -157,6 +161,20 @@ static object? DispatchHandler(AgentBase agent, string toolName, Dictionary<stri
         return new Dictionary<string, object> { ["error"] = $"tool '{toolName}' not registered" };
     }
     return fr.ToDict();
+}
+
+static object UnwrapJsonElement(object value)
+{
+    if (value is not JsonElement el) return value;
+    return el.ValueKind switch
+    {
+        JsonValueKind.String => el.GetString() ?? "",
+        JsonValueKind.Number => el.TryGetInt64(out var i) ? i : el.GetDouble(),
+        JsonValueKind.True   => true,
+        JsonValueKind.False  => false,
+        JsonValueKind.Null   => "",
+        _                    => el.GetRawText(),
+    };
 }
 
 static async Task<object?> ExecuteDataMap(AgentBase agent, string toolName, Dictionary<string, object?> args)

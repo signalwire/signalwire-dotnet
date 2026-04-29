@@ -45,10 +45,10 @@ if (projectId.Length == 0 || token.Length == 0)
     return 1;
 }
 
-Dictionary<string, object?> args;
+Dictionary<string, object?> handlerArgs;
 try
 {
-    args = JsonSerializer.Deserialize<Dictionary<string, object?>>(argsRaw) ?? new();
+    handlerArgs = JsonSerializer.Deserialize<Dictionary<string, object?>>(argsRaw) ?? new();
 }
 catch (JsonException)
 {
@@ -76,11 +76,11 @@ try
 {
     result = operation switch
     {
-        "calling.list_calls"        => await CallingListCallsAsync(http, projectId, args),
-        "messaging.send"            => await MessagingSendAsync(http, projectId, args),
-        "phone_numbers.list"        => await new SignalWire.REST.CrudResource(http, "/api/relay/rest/phone_numbers").ListAsync(StringQuery(args)),
-        "fabric.subscribers.list"   => await new SignalWire.REST.CrudResource(http, "/api/fabric/resources/subscribers").ListAsync(StringQuery(args)),
-        "compatibility.calls.list"  => await CallingListCallsAsync(http, projectId, args),
+        "calling.list_calls"        => await CallingListCallsAsync(http, projectId, handlerArgs),
+        "messaging.send"            => await MessagingSendAsync(http, projectId, handlerArgs),
+        "phone_numbers.list"        => await new SignalWire.REST.CrudResource(http, "/api/relay/rest/phone_numbers").ListAsync(StringQuery(handlerArgs)),
+        "fabric.subscribers.list"   => await new SignalWire.REST.CrudResource(http, "/api/fabric/resources/subscribers").ListAsync(StringQuery(handlerArgs)),
+        "compatibility.calls.list"  => await CallingListCallsAsync(http, projectId, handlerArgs),
         _ => null,
     };
 }

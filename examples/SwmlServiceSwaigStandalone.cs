@@ -18,17 +18,33 @@
 //   bin/swaig-test --url http://user:pass@localhost:3000/standalone \
 //                  --exec lookup_competitor --param competitor=ACME
 
+using System;
+using System.Collections.Generic;
 using SignalWire.SWAIG;
 using SignalWire.SWML;
+
+// Port: respect PORT env var (set by the porting-sdk audit harness or by
+// users on a busy box) or first positional CLI arg, falling back to 3000.
+// Service's constructor already does PORT-env fallback when options.Port is
+// null; we just have to NOT hardcode it here.
+int? port = null;
+if (int.TryParse(Environment.GetEnvironmentVariable("PORT"), out var envPort)) port = envPort;
+else if (args.Length > 0 && int.TryParse(args[0], out var argPort)) port = argPort;
+
+// Auth credentials: env vars take precedence (audit harness sets them)
+// — fall through to "user"/"pass" only for the hand-run case where no
+// env is configured.
+var basicUser = Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_USER");
+var basicPass = Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_PASSWORD");
 
 var service = new Service(new ServiceOptions
 {
     Name              = "standalone-swaig",
     Route             = "/standalone",
     Host              = "0.0.0.0",
-    Port              = 3000,
-    BasicAuthUser     = "user",
-    BasicAuthPassword = "pass",
+    Port              = port,
+    BasicAuthUser     = basicUser ?? "user",
+    BasicAuthPassword = basicPass ?? "pass",
 });
 
 // 1. Build a minimal SWML document. Any verbs are fine — the SWAIG HTTP

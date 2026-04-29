@@ -108,6 +108,7 @@ signalwire.core.swml_service.SWMLService.port: Public read-only property surface
 signalwire.core.swml_service.SWMLService.register_swaig_function: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.swml_service.SWMLService.render_swml: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.swml_service.SWMLService.route: Public read-only property surface; Python @property accessor with the same name
+signalwire.core.swml_service.SWMLService.run: .NET HttpListener-based blocking entry point; Python's SWMLService.serve() plays the same role under uvicorn/Flask. Same purpose, different runtime
 signalwire.core.swml_service.SWMLService.sleep: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.swml_service.SWMLService.verb: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.logging.logger.Logger.debug: .NET ships Logger as a class with named factory; Python uses module-level functions

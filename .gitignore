@@ -11,3 +11,5 @@ obj/
 TestResults/
 *.nupkg
 scripts/__pycache__/
+core
+core.*

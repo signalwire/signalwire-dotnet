@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SignalWire.Examples</RootNamespace>
+    <AssemblyName>RelayAuditHarness</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <BaseOutputPath>bin/RelayAuditHarness/</BaseOutputPath>
+    <BaseIntermediateOutputPath>obj/RelayAuditHarness/</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="RelayAuditHarness.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\SignalWire\SignalWire.csproj" />
+  </ItemGroup>
+</Project>

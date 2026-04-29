@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -763,5 +764,98 @@ public class Service
             return port;
         }
         return null;
+    }
+
+    /// <summary>
+    /// Start a blocking HTTP server bound to <see cref="Host"/>:<see cref="Port"/>.
+    /// Each incoming request is dispatched through <see cref="HandleRequest"/>;
+    /// the response status / headers / body are written back to the client.
+    ///
+    /// Mirrors Python's SWMLService.run() — examples and the porting-sdk
+    /// audit harness call this directly.
+    ///
+    /// Uses System.Net.HttpListener (BCL) — no extra deps. Server stops on
+    /// Ctrl-C or when the process is killed.
+    /// </summary>
+    public virtual void Run()
+    {
+        var prefix = $"http://{(Host == "0.0.0.0" ? "+" : Host)}:{Port}/";
+        using var listener = new HttpListener();
+        listener.Prefixes.Add(prefix);
+        try
+        {
+            listener.Start();
+        }
+        catch (HttpListenerException ex)
+        {
+            // On Linux, "+" requires elevated privileges. Fall back to
+            // explicit 0.0.0.0 → localhost so the example still runs in
+            // CI / dev containers.
+            if (Host == "0.0.0.0")
+            {
+                listener.Prefixes.Clear();
+                listener.Prefixes.Add($"http://localhost:{Port}/");
+                listener.Start();
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"failed to bind {prefix}: {ex.Message}. On Linux, binding " +
+                    "0.0.0.0 may require root or `setcap CAP_NET_BIND_SERVICE+ep` " +
+                    "on the dotnet binary; rebind to localhost or use a port >= 1024.",
+                    ex);
+            }
+        }
+
+        while (listener.IsListening)
+        {
+            HttpListenerContext ctx;
+            try { ctx = listener.GetContext(); }
+            catch (HttpListenerException) { break; }
+            catch (ObjectDisposedException) { break; }
+
+            try
+            {
+                var method = ctx.Request.HttpMethod;
+                var path = ctx.Request.Url?.AbsolutePath ?? "/";
+                var headers = new Dictionary<string, string>();
+                foreach (var key in ctx.Request.Headers.AllKeys)
+                {
+                    if (key is null) continue;
+                    headers[key] = ctx.Request.Headers[key] ?? "";
+                }
+                string body;
+                using (var reader = new System.IO.StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
+                {
+                    body = reader.ReadToEnd();
+                }
+
+                var (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
+                ctx.Response.StatusCode = status;
+                foreach (var (k, v) in responseHeaders)
+                {
+                    // HttpListener handles a few headers specially; ignore set-failures.
+                    try { ctx.Response.Headers[k] = v; } catch (ArgumentException) { }
+                }
+                var buf = Encoding.UTF8.GetBytes(responseBody);
+                ctx.Response.ContentLength64 = buf.Length;
+                ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    ctx.Response.StatusCode = 500;
+                    var buf = Encoding.UTF8.GetBytes($"{{\"error\":\"{ex.GetType().Name}\"}}");
+                    ctx.Response.ContentLength64 = buf.Length;
+                    ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+                }
+                catch { /* swallow — already in error path */ }
+            }
+            finally
+            {
+                try { ctx.Response.Close(); } catch { }
+            }
+        }
     }
 }

@@ -82,3 +82,6 @@ RegisterRawSwaigFunction: aspirational; SDK callers use RegisterSwaigFunction
 ResetDocument: aspirational; SDK callers replace the Document on the Service instance
 SetMinimumLevel: aspirational logger helper; SDK callers use SIGNALWIRE_LOG_LEVEL env var
 Conference: doc-only label (e.g. "Conference Bridge"); not a method
+GetDouble: System.Text.Json.JsonElement built-in (.NET stdlib)
+TryGetInt64: System.Text.Json.JsonElement built-in (.NET stdlib)
+TryParse: System primitive .TryParse pattern (int.TryParse etc.) (.NET stdlib)

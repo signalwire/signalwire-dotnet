@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 06bb9151a8714de23fce0639b4193cfc418f4f8b",
+  "generated_from": "signalwire-dotnet @ 452b2bf376d68cdb63e5e6bd5ef88630995f3200",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -392,6 +392,7 @@
           "register_swaig_function",
           "render_swml",
           "route",
+          "run",
           "sleep",
           "verb"
         ]
@@ -919,6 +920,7 @@
         "ClaudeSkillsSkill": [
           "description",
           "get_hints",
+          "get_instance_key",
           "get_prompt_sections",
           "name",
           "register_tools",
