@@ -10,3 +10,4 @@ obj/
 .env
 TestResults/
 *.nupkg
+scripts/__pycache__/
