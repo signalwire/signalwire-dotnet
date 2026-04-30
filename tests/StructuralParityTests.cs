@@ -6,6 +6,10 @@
 // write the same kind of code as Python users — using C#-idiomatic
 // names + types throughout, NOT Python-style naming.
 //
+// Every test here corresponds to existing Python functionality + tests.
+// We are NOT adding new SDK features — we are bringing .NET up to what
+// Python already supports. Python parity references are noted per test.
+//
 // TDD pattern: write the test first (red — calls a method/overload
 // that doesn't exist yet, fails to compile), then add the missing
 // surface in source, watch compile + test go green.
@@ -26,6 +30,9 @@ public class StructuralParityTests
     // AgentBase.AddAnswerVerb / AddPostAnswerVerb — Python takes only
     // (config); the verb name is implicit. Provide a 1-arg overload
     // matching that shape.
+    //
+    // Python parity: tests/unit/core/test_agent_base.py
+    //   test_add_answer_verb_config
     // -------------------------------------------------------------------
 
     [Fact]
@@ -40,6 +47,9 @@ public class StructuralParityTests
 
     // -------------------------------------------------------------------
     // AgentBase.RegisterSipUsername — Python takes only (sip_username).
+    //
+    // Python parity: tests/unit/core/test_agent_server.py
+    //   test_register_sip_username
     // -------------------------------------------------------------------
 
     [Fact]
@@ -52,6 +62,9 @@ public class StructuralParityTests
 
     // -------------------------------------------------------------------
     // AgentBase.EnableSipRouting — Python takes (auto_map, path) optional
+    //
+    // Python parity: tests/unit/core/test_agent_base.py
+    //   test_enable_sip_routing_*
     // -------------------------------------------------------------------
 
     [Fact]
@@ -64,6 +77,11 @@ public class StructuralParityTests
 
     // -------------------------------------------------------------------
     // AgentServer.SetupSipRouting — Python takes (route, auto_map) optional
+    //
+    // Python parity: tests/unit/core/test_agent_server.py
+    //   test_setup_sip_routing_basic
+    //   test_setup_sip_routing_auto_map_existing_agents
+    //   test_setup_sip_routing_no_auto_map
     // -------------------------------------------------------------------
 
     [Fact]
@@ -75,6 +93,9 @@ public class StructuralParityTests
 
     // -------------------------------------------------------------------
     // Call.HangupAsync — Python's hangup(reason="hangup") accepts a reason
+    //
+    // Python parity: tests/unit/relay/test_call.py
+    //   test_hangup
     // -------------------------------------------------------------------
 
     [Fact]
