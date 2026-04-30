@@ -123,6 +123,41 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ("SignalWire.Relay", "Client"): (
         "signalwire.relay.client", "RelayClient",
     ),
+    # SignalWire.REST's ``RestClient`` is Python's
+    # ``signalwire.rest.client.RestClient``. .NET's auto-derived module
+    # ``signalwire.rest.rest_client`` doesn't match Python's canonical
+    # path ``signalwire.rest.client``.
+    ("SignalWire.REST", "RestClient"): (
+        "signalwire.rest.client", "RestClient",
+    ),
+    # .NET's REST namespace classes (in namespace ``SignalWire.REST.Namespaces``)
+    # are named after the namespace (``Calling``, ``Fabric``); Python
+    # places each in its own submodule and suffixes the class with
+    # ``Namespace``.
+    ("SignalWire.REST.Namespaces", "Calling"): (
+        "signalwire.rest.namespaces.calling", "CallingNamespace",
+    ),
+    ("SignalWire.REST.Namespaces", "Fabric"): (
+        "signalwire.rest.namespaces.fabric", "FabricNamespace",
+    ),
+    ("SignalWire.REST.Namespaces", "Compat"): (
+        "signalwire.rest.namespaces.compat", "CompatNamespace",
+    ),
+    ("SignalWire.REST.Namespaces", "Datasphere"): (
+        "signalwire.rest.namespaces.datasphere", "DatasphereNamespace",
+    ),
+    ("SignalWire.REST.Namespaces", "Logs"): (
+        "signalwire.rest.namespaces.logs", "LogsNamespace",
+    ),
+    ("SignalWire.REST.Namespaces", "Project"): (
+        "signalwire.rest.namespaces.project", "ProjectNamespace",
+    ),
+    ("SignalWire.REST.Namespaces", "Registry"): (
+        "signalwire.rest.namespaces.registry", "RegistryNamespace",
+    ),
+    ("SignalWire.REST.Namespaces", "Video"): (
+        "signalwire.rest.namespaces.video", "VideoNamespace",
+    ),
 }
 
 

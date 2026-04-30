@@ -6795,6 +6795,275 @@
         }
       }
     },
+    "signalwire.rest.client": {
+      "classes": {
+        "RestClient": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "project_id",
+                  "type": "string",
+                  "required": false,
+                  "default": ""
+                },
+                {
+                  "name": "token",
+                  "type": "string",
+                  "required": false,
+                  "default": ""
+                },
+                {
+                  "name": "space",
+                  "type": "string",
+                  "required": false,
+                  "default": ""
+                }
+              ],
+              "returns": "void"
+            },
+            "addresses": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "base_url": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "calling": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.namespaces.calling.CallingNamespace"
+            },
+            "chat": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "compat": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "datasphere": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "fabric": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricNamespace"
+            },
+            "http": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.http_client.HttpClient"
+            },
+            "imported_numbers": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "logs": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "lookup": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "mfa": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "number_groups": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "phone_numbers": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "project": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "project_id": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "pubsub": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "queues": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "recordings": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "registry": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "short_codes": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "sip_profile": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "space": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "token": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "verified_callers": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "video": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            }
+          }
+        }
+      }
+    },
     "signalwire.rest.crud_resource": {
       "classes": {
         "CrudResource": {
@@ -7096,7 +7365,7 @@
     },
     "signalwire.rest.namespaces.calling": {
       "classes": {
-        "Calling": {
+        "CallingNamespace": {
           "methods": {
             "__init__": {
               "params": [
@@ -7880,7 +8149,7 @@
     },
     "signalwire.rest.namespaces.fabric": {
       "classes": {
-        "Fabric": {
+        "FabricNamespace": {
           "methods": {
             "__init__": {
               "params": [
@@ -8014,275 +8283,6 @@
               "returns": "class:signalwire.rest.crud_resource.CrudResource"
             },
             "swml_scripts": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            }
-          }
-        }
-      }
-    },
-    "signalwire.rest.rest_client": {
-      "classes": {
-        "RestClient": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "project_id",
-                  "type": "string",
-                  "required": false,
-                  "default": ""
-                },
-                {
-                  "name": "token",
-                  "type": "string",
-                  "required": false,
-                  "default": ""
-                },
-                {
-                  "name": "space",
-                  "type": "string",
-                  "required": false,
-                  "default": ""
-                }
-              ],
-              "returns": "void"
-            },
-            "addresses": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "base_url": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            },
-            "calling": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.namespaces.calling.Calling"
-            },
-            "chat": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "compat": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "datasphere": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "fabric": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.namespaces.fabric.Fabric"
-            },
-            "http": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.http_client.HttpClient"
-            },
-            "imported_numbers": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "logs": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "lookup": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "mfa": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "number_groups": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "phone_numbers": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "project": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "project_id": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            },
-            "pubsub": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "queues": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "recordings": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "registry": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "short_codes": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "sip_profile": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "space": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            },
-            "token": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            },
-            "verified_callers": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "video": {
               "params": [
                 {
                   "name": "self",
