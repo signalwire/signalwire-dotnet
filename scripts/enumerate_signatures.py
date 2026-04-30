@@ -312,6 +312,30 @@ def build_signature(method: dict, aliases: dict, context: str, is_static: bool) 
     return {"params": params_out, "returns": return_canonical}
 
 
+def _load_python_param_counts() -> dict[str, int]:
+    """Load Python reference signatures and index method → param count.
+    Used by collect() to pick the best-matching overload from .NET's
+    multiple definitions of the same method."""
+    py_path = PSDK / "python_signatures.json"
+    if not py_path.is_file():
+        return {}
+    try:
+        d = json.loads(py_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    out: dict[str, int] = {}
+    for mod, mod_entry in d.get("modules", {}).items():
+        for cls, cls_entry in mod_entry.get("classes", {}).items():
+            for m, sig in cls_entry.get("methods", {}).items():
+                out[f"{mod}.{cls}.{m}"] = len(sig.get("params", []))
+        for fn, sig in mod_entry.get("functions", {}).items():
+            out[f"{mod}.{fn}"] = len(sig.get("params", []))
+    return out
+
+
+_PY_PARAM_COUNTS = _load_python_param_counts()
+
+
 def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     out_modules: dict = {}
     failures: list = []
@@ -357,12 +381,22 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             except TypeTranslationError as e:
                 failures.append(str(e))
                 continue
-            # If a method already exists at this name (overload), keep the
-            # one with fewer params — Python convention is single signature.
+            # If a method already exists at this name (overload), prefer
+            # the overload whose parameter count best matches the Python
+            # reference if we know it; otherwise keep the longest. This
+            # avoids picking a 1-arg convenience overload when Python's
+            # canonical signature is multi-param.
             if method_canonical in methods_out:
                 existing = methods_out[method_canonical]
-                if len(sig["params"]) >= len(existing["params"]):
-                    continue
+                py_count = _PY_PARAM_COUNTS.get(f"{target_module}.{target_class}.{method_canonical}")
+                if py_count is not None:
+                    new_diff = abs(len(sig["params"]) - py_count)
+                    old_diff = abs(len(existing["params"]) - py_count)
+                    if new_diff >= old_diff:
+                        continue
+                else:
+                    if len(sig["params"]) <= len(existing["params"]):
+                        continue
             methods_out[method_canonical] = sig
 
         # Properties → emit as zero-arg methods on the same class (matches

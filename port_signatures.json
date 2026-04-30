@@ -1925,9 +1925,9 @@
                 },
                 {
                   "name": "response",
-                  "type": "string",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 },
                 {
                   "name": "post_process",
@@ -1945,8 +1945,13 @@
                   "kind": "self"
                 },
                 {
-                  "name": "action",
-                  "type": "dict<string,any>",
+                  "name": "name",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "any",
                   "required": true
                 }
               ],
@@ -2004,13 +2009,13 @@
                   "name": "final",
                   "type": "bool",
                   "required": false,
-                  "default": false
+                  "default": true
                 },
                 {
-                  "name": "from",
-                  "type": "string",
+                  "name": "from_addr",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -2127,8 +2132,20 @@
                   "required": true
                 },
                 {
-                  "name": "parameters",
+                  "name": "params",
                   "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "call_id",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "node_id",
+                  "type": "optional<string>",
                   "required": false,
                   "default": null
                 }
@@ -2324,7 +2341,7 @@
                 },
                 {
                   "name": "keys",
-                  "type": "list<string>",
+                  "type": "any",
                   "required": true
                 }
               ],
@@ -2338,7 +2355,7 @@
                 },
                 {
                   "name": "keys",
-                  "type": "list<string>",
+                  "type": "any",
                   "required": true
                 }
               ],
@@ -2352,8 +2369,9 @@
                 },
                 {
                   "name": "text",
-                  "type": "string",
-                  "required": true
+                  "type": "optional<any>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -2373,6 +2391,12 @@
                   "name": "message_text",
                   "type": "string",
                   "required": true
+                },
+                {
+                  "name": "role",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -2398,15 +2422,15 @@
                   "kind": "self"
                 },
                 {
-                  "name": "to",
+                  "name": "to_number",
                   "type": "string",
                   "required": true
                 },
                 {
-                  "name": "from",
-                  "type": "string",
+                  "name": "from_number",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 },
                 {
                   "name": "dest_swml",
@@ -2415,16 +2439,10 @@
                   "default": null
                 },
                 {
-                  "name": "call_timeout",
-                  "type": "optional<int>",
+                  "name": "device_type",
+                  "type": "optional<string>",
                   "required": false,
                   "default": null
-                },
-                {
-                  "name": "region",
-                  "type": "string",
-                  "required": false,
-                  "default": ""
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -2450,12 +2468,12 @@
                   "kind": "self"
                 },
                 {
-                  "name": "to",
+                  "name": "to_number",
                   "type": "string",
                   "required": true
                 },
                 {
-                  "name": "from",
+                  "name": "from_number",
                   "type": "string",
                   "required": true
                 },
@@ -2475,6 +2493,12 @@
                   "type": "optional<list<string>>",
                   "required": false,
                   "default": null
+                },
+                {
+                  "name": "region",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -2486,7 +2510,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "ms",
+                  "name": "milliseconds",
                   "type": "int",
                   "required": true
                 }
@@ -2514,7 +2538,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "value",
+                  "name": "post_process",
                   "type": "bool",
                   "required": true
                 }
@@ -2528,7 +2552,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "text",
+                  "name": "response",
                   "type": "string",
                   "required": true
                 }
@@ -2542,7 +2566,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "ms",
+                  "name": "milliseconds",
                   "type": "int",
                   "required": true
                 }
@@ -2603,9 +2627,9 @@
                 },
                 {
                   "name": "control_id",
-                  "type": "string",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -2618,9 +2642,9 @@
                 },
                 {
                   "name": "control_id",
-                  "type": "string",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -2898,8 +2922,18 @@
                   "kind": "self"
                 },
                 {
-                  "name": "filler",
+                  "name": "function_name",
                   "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "language_code",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "fillers",
+                  "type": "list<string>",
                   "required": true
                 }
               ],
@@ -4079,6 +4113,11 @@
                 },
                 {
                   "name": "verb_name",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "section",
                   "type": "string",
                   "required": true
                 },
@@ -6871,6 +6910,11 @@
                   "name": "base_url",
                   "type": "string",
                   "required": true
+                },
+                {
+                  "name": "http_client",
+                  "type": "optional<any>",
+                  "required": true
                 }
               ],
               "returns": "void"
@@ -8253,6 +8297,11 @@
                 {
                   "name": "response_body",
                   "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "inner_exception",
+                  "type": "any",
                   "required": true
                 }
               ],

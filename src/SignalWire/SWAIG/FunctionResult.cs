@@ -12,9 +12,9 @@ public class FunctionResult
     private bool _postProcess;
     private readonly List<Dictionary<string, object>> _actions = [];
 
-    public FunctionResult(string response = "", bool postProcess = false)
+    public FunctionResult(string? response = null, bool postProcess = false)
     {
-        _response = response;
+        _response = response ?? "";
         _postProcess = postProcess;
     }
 
@@ -22,18 +22,28 @@ public class FunctionResult
     // Core
     // ------------------------------------------------------------------
 
-    public FunctionResult SetResponse(string text)
+    public FunctionResult SetResponse(string response)
     {
-        _response = text;
+        _response = response;
         return this;
     }
 
-    public FunctionResult SetPostProcess(bool value)
+    public FunctionResult SetPostProcess(bool postProcess)
     {
-        _postProcess = value;
+        _postProcess = postProcess;
         return this;
     }
 
+    /// <summary>Append an action with the given name and arbitrary data
+    /// payload. Matches Python's ``add_action(name, data)``.</summary>
+    public FunctionResult AddAction(string name, object data)
+    {
+        _actions.Add(new Dictionary<string, object> { [name] = data });
+        return this;
+    }
+
+    /// <summary>Pre-built-dict overload retained for callers that build the
+    /// action dict externally (existing tests + examples).</summary>
     public FunctionResult AddAction(Dictionary<string, object> action)
     {
         _actions.Add(action);
@@ -77,12 +87,12 @@ public class FunctionResult
     // Call Control
     // ------------------------------------------------------------------
 
-    public FunctionResult Connect(string destination, bool final = false, string from = "")
+    public FunctionResult Connect(string destination, bool final = true, string? fromAddr = null)
     {
         var connectObj = new Dictionary<string, object> { ["to"] = destination };
-        if (from.Length > 0)
+        if (!string.IsNullOrEmpty(fromAddr))
         {
-            connectObj["from"] = from;
+            connectObj["from"] = fromAddr;
         }
 
         _actions.Add(new Dictionary<string, object>
@@ -178,7 +188,9 @@ public class FunctionResult
         return this;
     }
 
-    public FunctionResult RemoveGlobalData(List<string> keys)
+    /// <summary>Remove keys from global data. Accepts a single key or list,
+    /// matching Python's ``Union[str, List[str]]``.</summary>
+    public FunctionResult RemoveGlobalData(object keys)
     {
         _actions.Add(new Dictionary<string, object>
         {
@@ -193,7 +205,9 @@ public class FunctionResult
         return this;
     }
 
-    public FunctionResult RemoveMetadata(List<string> keys)
+    /// <summary>Remove keys from metadata. Accepts a single key or list,
+    /// matching Python's ``Union[str, List[str]]``.</summary>
+    public FunctionResult RemoveMetadata(object keys)
     {
         _actions.Add(new Dictionary<string, object>
         {
@@ -257,23 +271,27 @@ public class FunctionResult
     }
 
     /// <summary>
-    /// Replace conversation history. Pass a string for custom text or <c>true</c> for "summary".
+    /// Replace conversation history. Accepts ``true`` (default) for the
+    /// summary form or a string for custom replacement text. Matches
+    /// Python's ``replace_in_history(text: Union[bool, str] = True)``.
     /// </summary>
-    public FunctionResult ReplaceInHistory(string text)
+    public FunctionResult ReplaceInHistory(object? text = null)
     {
-        _actions.Add(new Dictionary<string, object> { ["replace_history"] = text });
-        return this;
-    }
-
-    /// <summary>
-    /// Replace conversation history with a summary when <paramref name="useSummary"/> is true.
-    /// </summary>
-    public FunctionResult ReplaceInHistory(bool useSummary)
-    {
-        _actions.Add(new Dictionary<string, object>
+        var value = text ?? true;
+        if (value is bool b)
         {
-            ["replace_history"] = useSummary ? "summary" : "",
-        });
+            _actions.Add(new Dictionary<string, object>
+            {
+                ["replace_history"] = b ? "summary" : "",
+            });
+        }
+        else
+        {
+            _actions.Add(new Dictionary<string, object>
+            {
+                ["replace_history"] = value.ToString() ?? "",
+            });
+        }
         return this;
     }
 
@@ -323,7 +341,7 @@ public class FunctionResult
         return this;
     }
 
-    public FunctionResult StopRecordCall(string controlId = "")
+    public FunctionResult StopRecordCall(string? controlId = null)
     {
         if (controlId.Length > 0)
         {
@@ -358,15 +376,15 @@ public class FunctionResult
         return this;
     }
 
-    public FunctionResult SetEndOfSpeechTimeout(int ms)
+    public FunctionResult SetEndOfSpeechTimeout(int milliseconds)
     {
-        _actions.Add(new Dictionary<string, object> { ["end_of_speech_timeout"] = ms });
+        _actions.Add(new Dictionary<string, object> { ["end_of_speech_timeout"] = milliseconds });
         return this;
     }
 
-    public FunctionResult SetSpeechEventTimeout(int ms)
+    public FunctionResult SetSpeechEventTimeout(int milliseconds)
     {
-        _actions.Add(new Dictionary<string, object> { ["speech_event_timeout"] = ms });
+        _actions.Add(new Dictionary<string, object> { ["speech_event_timeout"] = milliseconds });
         return this;
     }
 
@@ -488,7 +506,7 @@ public class FunctionResult
         return this;
     }
 
-    public FunctionResult StopTap(string controlId = "")
+    public FunctionResult StopTap(string? controlId = null)
     {
         if (controlId.Length > 0)
         {
@@ -508,16 +526,17 @@ public class FunctionResult
     }
 
     public FunctionResult SendSms(
-        string to,
-        string from,
+        string toNumber,
+        string fromNumber,
         string body,
         List<string>? media = null,
-        List<string>? tags = null)
+        List<string>? tags = null,
+        string? region = null)
     {
         var sms = new Dictionary<string, object>
         {
-            ["to_number"] = to,
-            ["from_number"] = from,
+            ["to_number"] = toNumber,
+            ["from_number"] = fromNumber,
             ["body"] = body,
         };
 
@@ -528,6 +547,10 @@ public class FunctionResult
         if (tags is { Count: > 0 })
         {
             sms["tags"] = tags;
+        }
+        if (!string.IsNullOrEmpty(region))
+        {
+            sms["region"] = region;
         }
 
         _actions.Add(new Dictionary<string, object> { ["send_sms"] = sms });
@@ -562,7 +585,11 @@ public class FunctionResult
     // RPC
     // ------------------------------------------------------------------
 
-    public FunctionResult ExecuteRpc(string method, Dictionary<string, object>? parameters = null)
+    public FunctionResult ExecuteRpc(
+        string method,
+        Dictionary<string, object>? @params = null,
+        string? callId = null,
+        string? nodeId = null)
     {
         var rpc = new Dictionary<string, object>
         {
@@ -570,51 +597,50 @@ public class FunctionResult
             ["jsonrpc"] = "2.0",
         };
 
-        if (parameters is { Count: > 0 })
+        if (@params is { Count: > 0 })
         {
-            rpc["params"] = parameters;
+            rpc["params"] = @params;
         }
+        if (!string.IsNullOrEmpty(callId)) rpc["call_id"] = callId;
+        if (!string.IsNullOrEmpty(nodeId)) rpc["node_id"] = nodeId;
 
         _actions.Add(new Dictionary<string, object> { ["execute_rpc"] = rpc });
         return this;
     }
 
     public FunctionResult RpcDial(
-        string to,
-        string from = "",
+        string toNumber,
+        string? fromNumber = null,
         string? destSwml = null,
-        int? callTimeout = null,
-        string region = "")
+        string? deviceType = null)
     {
-        var parameters = new Dictionary<string, object> { ["to_number"] = to };
+        var rpcParams = new Dictionary<string, object> { ["to_number"] = toNumber };
 
-        if (from.Length > 0)
+        if (!string.IsNullOrEmpty(fromNumber))
         {
-            parameters["from_number"] = from;
+            rpcParams["from_number"] = fromNumber;
         }
         if (destSwml is not null)
         {
-            parameters["dest_swml"] = destSwml;
+            rpcParams["dest_swml"] = destSwml;
         }
-        if (callTimeout is not null)
+        if (!string.IsNullOrEmpty(deviceType))
         {
-            parameters["call_timeout"] = callTimeout.Value;
-        }
-        if (region.Length > 0)
-        {
-            parameters["region"] = region;
+            rpcParams["device_type"] = deviceType;
         }
 
-        return ExecuteRpc("calling.dial", parameters);
+        return ExecuteRpc("calling.dial", rpcParams);
     }
 
-    public FunctionResult RpcAiMessage(string callId, string messageText)
+    public FunctionResult RpcAiMessage(string callId, string messageText, string? role = null)
     {
-        return ExecuteRpc("calling.ai_message", new Dictionary<string, object>
+        var rpcParams = new Dictionary<string, object>
         {
             ["call_id"] = callId,
             ["message_text"] = messageText,
-        });
+        };
+        if (!string.IsNullOrEmpty(role)) rpcParams["role"] = role;
+        return ExecuteRpc("calling.ai_message", rpcParams);
     }
 
     public FunctionResult RpcAiUnhold(string callId)
