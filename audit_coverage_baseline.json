@@ -1,0 +1,11 @@
+{
+  "coverage_pct": 0.678,
+  "covered_methods": 5,
+  "covered_method_list": [
+    "signalwire.core.swml_service.SWMLService.handle_request",
+    "signalwire.core.swml_service.SWMLService.on_function_call",
+    "signalwire.core.swml_service.SWMLService.render_swml",
+    "signalwire.relay.client.RelayClient.connect",
+    "signalwire.relay.client.RelayClient.disconnect"
+  ]
+}
