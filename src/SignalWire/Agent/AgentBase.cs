@@ -199,8 +199,15 @@ public class AgentBase : Service
         return this;
     }
 
-    /// <summary>Add a top-level POM section with an optional body and bullets.</summary>
-    public AgentBase PromptAddSection(string title, string body, List<string>? bullets = null)
+    /// <summary>Add a top-level POM section with an optional body, bullets,
+    /// numbering, and subsections. (Python parity: ``prompt_add_section``.)</summary>
+    public AgentBase PromptAddSection(
+        string title,
+        string body = "",
+        List<string>? bullets = null,
+        bool numbered = false,
+        bool numberedBullets = false,
+        List<Dictionary<string, object>>? subsections = null)
     {
         _usePom = true;
         var section = new Dictionary<string, object>
@@ -212,12 +219,23 @@ public class AgentBase : Service
         {
             section["bullets"] = bullets;
         }
+        if (numbered) section["numbered"] = true;
+        if (numberedBullets) section["numbered_bullets"] = true;
+        if (subsections is not null && subsections.Count > 0)
+        {
+            section["subsections"] = subsections;
+        }
         _pomSections.Add(section);
         return this;
     }
 
-    /// <summary>Add a subsection nested under an existing parent section.</summary>
-    public AgentBase PromptAddSubsection(string parentTitle, string title, string body)
+    /// <summary>Add a subsection nested under an existing parent section.
+    /// (Python parity: ``prompt_add_subsection(parent_title, title, body, bullets)``.)</summary>
+    public AgentBase PromptAddSubsection(
+        string parentTitle,
+        string title,
+        string body = "",
+        List<string>? bullets = null)
     {
         foreach (var section in _pomSections)
         {
@@ -230,11 +248,13 @@ public class AgentBase : Service
                 }
                 if (subsObj is List<Dictionary<string, object>> subs)
                 {
-                    subs.Add(new Dictionary<string, object>
+                    var sub = new Dictionary<string, object>
                     {
                         ["title"] = title,
                         ["body"] = body,
-                    });
+                    };
+                    if (bullets is { Count: > 0 }) sub["bullets"] = bullets;
+                    subs.Add(sub);
                 }
                 break;
             }
@@ -242,8 +262,14 @@ public class AgentBase : Service
         return this;
     }
 
-    /// <summary>Append body text and/or bullets to an existing section.</summary>
-    public AgentBase PromptAddToSection(string title, string? body = null, List<string>? bullets = null)
+    /// <summary>Append body text, a single bullet, and/or bullets list to an
+    /// existing section. (Python parity:
+    /// ``prompt_add_to_section(title, body, bullet, bullets)``.)</summary>
+    public AgentBase PromptAddToSection(
+        string title,
+        string? body = null,
+        string? bullet = null,
+        List<string>? bullets = null)
     {
         foreach (var section in _pomSections)
         {
@@ -254,14 +280,21 @@ public class AgentBase : Service
                     var existing = section.TryGetValue("body", out var b) ? (string)b : "";
                     section["body"] = existing + body;
                 }
+                if (!section.TryGetValue("bullets", out var bObj) || bObj is not List<string> existingBullets)
+                {
+                    existingBullets = [];
+                }
+                if (!string.IsNullOrEmpty(bullet))
+                {
+                    existingBullets.Add(bullet);
+                }
                 if (bullets is { Count: > 0 })
                 {
-                    if (!section.TryGetValue("bullets", out var bObj) || bObj is not List<string> existingBullets)
-                    {
-                        existingBullets = [];
-                        section["bullets"] = existingBullets;
-                    }
                     existingBullets.AddRange(bullets);
+                }
+                if (existingBullets.Count > 0)
+                {
+                    section["bullets"] = existingBullets;
                 }
                 break;
             }

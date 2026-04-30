@@ -179,7 +179,7 @@ public class AgentBaseTests : IDisposable
     {
         var agent = MakeAgent();
         agent.PromptAddSection("Rules", "Base rules.");
-        agent.PromptAddToSection("Rules", " Extra rules.", ["bullet one", "bullet two"]);
+        agent.PromptAddToSection("Rules", " Extra rules.", bullets: ["bullet one", "bullet two"]);
         var sections = (List<Dictionary<string, object>>)agent.GetPrompt();
         Assert.Equal("Base rules. Extra rules.", sections[0]["body"]);
         Assert.Equal(new List<string> { "bullet one", "bullet two" }, sections[0]["bullets"]);

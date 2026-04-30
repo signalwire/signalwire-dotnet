@@ -408,11 +408,30 @@
                 {
                   "name": "body",
                   "type": "string",
-                  "required": true
+                  "required": false,
+                  "default": ""
                 },
                 {
                   "name": "bullets",
                   "type": "optional<list<string>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "numbered",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                },
+                {
+                  "name": "numbered_bullets",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                },
+                {
+                  "name": "subsections",
+                  "type": "optional<list<dict<string,any>>>",
                   "required": false,
                   "default": null
                 }
@@ -438,7 +457,14 @@
                 {
                   "name": "body",
                   "type": "string",
-                  "required": true
+                  "required": false,
+                  "default": ""
+                },
+                {
+                  "name": "bullets",
+                  "type": "optional<list<string>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -456,6 +482,12 @@
                 },
                 {
                   "name": "body",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "bullet",
                   "type": "optional<string>",
                   "required": false,
                   "default": null
@@ -3668,11 +3700,30 @@
                 {
                   "name": "body",
                   "type": "string",
-                  "required": true
+                  "required": false,
+                  "default": ""
                 },
                 {
                   "name": "bullets",
                   "type": "optional<list<string>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "numbered",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                },
+                {
+                  "name": "numbered_bullets",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                },
+                {
+                  "name": "subsections",
+                  "type": "optional<list<dict<string,any>>>",
                   "required": false,
                   "default": null
                 }
@@ -3698,7 +3749,14 @@
                 {
                   "name": "body",
                   "type": "string",
-                  "required": true
+                  "required": false,
+                  "default": ""
+                },
+                {
+                  "name": "bullets",
+                  "type": "optional<list<string>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -3716,6 +3774,12 @@
                 },
                 {
                   "name": "body",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "bullet",
                   "type": "optional<string>",
                   "required": false,
                   "default": null
