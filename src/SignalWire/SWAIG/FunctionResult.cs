@@ -22,15 +22,15 @@ public class FunctionResult
     // Core
     // ------------------------------------------------------------------
 
-    public FunctionResult SetResponse(string response)
+    public FunctionResult SetResponse(string text)
     {
-        _response = response;
+        _response = text;
         return this;
     }
 
-    public FunctionResult SetPostProcess(bool postProcess)
+    public FunctionResult SetPostProcess(bool value)
     {
-        _postProcess = postProcess;
+        _postProcess = value;
         return this;
     }
 
@@ -376,15 +376,15 @@ public class FunctionResult
         return this;
     }
 
-    public FunctionResult SetEndOfSpeechTimeout(int milliseconds)
+    public FunctionResult SetEndOfSpeechTimeout(int ms)
     {
-        _actions.Add(new Dictionary<string, object> { ["end_of_speech_timeout"] = milliseconds });
+        _actions.Add(new Dictionary<string, object> { ["end_of_speech_timeout"] = ms });
         return this;
     }
 
-    public FunctionResult SetSpeechEventTimeout(int milliseconds)
+    public FunctionResult SetSpeechEventTimeout(int ms)
     {
-        _actions.Add(new Dictionary<string, object> { ["speech_event_timeout"] = milliseconds });
+        _actions.Add(new Dictionary<string, object> { ["speech_event_timeout"] = ms });
         return this;
     }
 

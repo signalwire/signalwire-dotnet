@@ -349,7 +349,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "verb_name",
+                  "name": "verb",
                   "type": "string",
                   "required": true
                 },
@@ -368,7 +368,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "verb_name",
+                  "name": "verb",
                   "type": "string",
                   "required": true
                 },
@@ -387,7 +387,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "verb_name",
+                  "name": "verb",
                   "type": "string",
                   "required": true
                 },
@@ -406,7 +406,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "verb_name",
+                  "name": "verb",
                   "type": "string",
                   "required": true
                 },
@@ -425,7 +425,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "params",
+                  "name": "parameters",
                   "type": "dict<string,string>",
                   "required": true
                 }
@@ -671,7 +671,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "language_code",
+                  "name": "lang",
                   "type": "string",
                   "required": true
                 },
@@ -690,7 +690,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "language_code",
+                  "name": "lang",
                   "type": "string",
                   "required": true
                 },
@@ -892,7 +892,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "enter_fillers",
+                  "name": "fillers",
                   "type": "dict<string,list<string>>",
                   "required": true
                 }
@@ -906,7 +906,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "exit_fillers",
+                  "name": "fillers",
                   "type": "dict<string,list<string>>",
                   "required": true
                 }
@@ -2510,7 +2510,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "milliseconds",
+                  "name": "ms",
                   "type": "int",
                   "required": true
                 }
@@ -2538,7 +2538,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "post_process",
+                  "name": "value",
                   "type": "bool",
                   "required": true
                 }
@@ -2552,7 +2552,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "response",
+                  "name": "text",
                   "type": "string",
                   "required": true
                 }
@@ -2566,7 +2566,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "milliseconds",
+                  "name": "ms",
                   "type": "int",
                   "required": true
                 }
@@ -3113,7 +3113,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "params",
+                  "name": "parameters",
                   "type": "dict<string,any>",
                   "required": true
                 }
@@ -3127,7 +3127,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "params",
+                  "name": "parameters",
                   "type": "dict<string,any>",
                   "required": true
                 }
@@ -3141,7 +3141,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "params",
+                  "name": "parameters",
                   "type": "dict<string,any>",
                   "required": true
                 }
@@ -3343,12 +3343,12 @@
                   "kind": "self"
                 },
                 {
-                  "name": "skill_name",
+                  "name": "name",
                   "type": "string",
                   "required": true
                 },
                 {
-                  "name": "params",
+                  "name": "parameters",
                   "type": "optional<dict<string,any>>",
                   "required": false,
                   "default": null
@@ -3363,7 +3363,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "skill_name",
+                  "name": "name",
                   "type": "string",
                   "required": true
                 }
@@ -3386,7 +3386,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "skill_name",
+                  "name": "name",
                   "type": "string",
                   "required": true
                 }
@@ -3734,7 +3734,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "skill_identifier",
+                  "name": "key",
                   "type": "string",
                   "required": true
                 }
@@ -3748,7 +3748,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "skill_identifier",
+                  "name": "key",
                   "type": "string",
                   "required": true
                 }
@@ -3791,7 +3791,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "skill_identifier",
+                  "name": "key",
                   "type": "string",
                   "required": true
                 }

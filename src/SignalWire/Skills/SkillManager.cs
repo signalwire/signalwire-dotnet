@@ -99,16 +99,16 @@ public sealed class SkillManager
         return (true, "");
     }
 
-    public bool UnloadSkill(string skillIdentifier)
+    public bool UnloadSkill(string key)
     {
-        if (!_loadedSkills.TryGetValue(skillIdentifier, out var skill))
+        if (!_loadedSkills.TryGetValue(key, out var skill))
         {
             return false;
         }
 
         skill.Cleanup();
-        _loadedSkills.Remove(skillIdentifier);
-        _logger.Info($"Skill '{skillIdentifier}' unloaded");
+        _loadedSkills.Remove(key);
+        _logger.Info($"Skill '{key}' unloaded");
         return true;
     }
 
@@ -119,8 +119,8 @@ public sealed class SkillManager
         return keys;
     }
 
-    public bool HasSkill(string skillIdentifier) => _loadedSkills.ContainsKey(skillIdentifier);
+    public bool HasSkill(string key) => _loadedSkills.ContainsKey(key);
 
-    public SkillBase? GetSkill(string skillIdentifier) =>
-        _loadedSkills.TryGetValue(skillIdentifier, out var skill) ? skill : null;
+    public SkillBase? GetSkill(string key) =>
+        _loadedSkills.TryGetValue(key, out var skill) ? skill : null;
 }

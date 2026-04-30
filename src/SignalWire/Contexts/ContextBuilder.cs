@@ -490,22 +490,22 @@ public class Context
 
     // -- Fillers --
 
-    public Context SetEnterFillers(Dictionary<string, List<string>> enterFillers) { _enterFillers = enterFillers; return this; }
-    public Context SetExitFillers(Dictionary<string, List<string>> exitFillers) { _exitFillers = exitFillers; return this; }
+    public Context SetEnterFillers(Dictionary<string, List<string>> fillers) { _enterFillers = fillers; return this; }
+    public Context SetExitFillers(Dictionary<string, List<string>> fillers) { _exitFillers = fillers; return this; }
 
-    public Context AddEnterFiller(string languageCode, List<string> fillers)
+    public Context AddEnterFiller(string lang, List<string> fillers)
     {
         _enterFillers ??= [];
-        if (!_enterFillers.ContainsKey(languageCode)) _enterFillers[languageCode] = [];
-        _enterFillers[languageCode].AddRange(fillers);
+        if (!_enterFillers.ContainsKey(lang)) _enterFillers[lang] = [];
+        _enterFillers[lang].AddRange(fillers);
         return this;
     }
 
-    public Context AddExitFiller(string languageCode, List<string> fillers)
+    public Context AddExitFiller(string lang, List<string> fillers)
     {
         _exitFillers ??= [];
-        if (!_exitFillers.ContainsKey(languageCode)) _exitFillers[languageCode] = [];
-        _exitFillers[languageCode].AddRange(fillers);
+        if (!_exitFillers.ContainsKey(lang)) _exitFillers[lang] = [];
+        _exitFillers[lang].AddRange(fillers);
         return this;
     }
 
