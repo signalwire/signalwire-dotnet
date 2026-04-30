@@ -388,17 +388,20 @@ public class FunctionResultTests
     [Fact]
     public void ReplaceInHistory_WithString()
     {
+        // Python parity: emits the string verbatim under key "replace_in_history".
         var fr = new FunctionResult();
         fr.ReplaceInHistory("redacted");
-        Assert.Equal("redacted", GetAction(fr, 0)["replace_history"]);
+        Assert.Equal("redacted", GetAction(fr, 0)["replace_in_history"]);
     }
 
     [Fact]
     public void ReplaceInHistory_WithTrue()
     {
+        // Python parity: bool true is emitted verbatim — the receiving
+        // platform interprets it as the summary placeholder.
         var fr = new FunctionResult();
         fr.ReplaceInHistory(true);
-        Assert.Equal("summary", GetAction(fr, 0)["replace_history"]);
+        Assert.Equal(true, GetAction(fr, 0)["replace_in_history"]);
     }
 
     // =================================================================

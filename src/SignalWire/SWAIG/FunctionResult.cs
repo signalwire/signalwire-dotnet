@@ -268,26 +268,16 @@ public class FunctionResult
 
     /// <summary>
     /// Replace conversation history. Accepts ``true`` (default) for the
-    /// summary form or a string for custom replacement text. Matches
-    /// Python's ``replace_in_history(text: Union[bool, str] = True)``.
+    /// summary placeholder or a string for custom replacement text.
+    /// Matches Python's ``replace_in_history(text: Union[bool, str] = True)``.
     /// </summary>
     public FunctionResult ReplaceInHistory(object? text = null)
     {
         var value = text ?? true;
-        if (value is bool b)
+        _actions.Add(new Dictionary<string, object>
         {
-            _actions.Add(new Dictionary<string, object>
-            {
-                ["replace_history"] = b ? "summary" : "",
-            });
-        }
-        else
-        {
-            _actions.Add(new Dictionary<string, object>
-            {
-                ["replace_history"] = value.ToString() ?? "",
-            });
-        }
+            ["replace_in_history"] = value,
+        });
         return this;
     }
 
@@ -339,20 +329,9 @@ public class FunctionResult
 
     public FunctionResult StopRecordCall(string? controlId = null)
     {
-        if (controlId.Length > 0)
-        {
-            _actions.Add(new Dictionary<string, object>
-            {
-                ["stop_record_call"] = new Dictionary<string, object> { ["control_id"] = controlId },
-            });
-        }
-        else
-        {
-            _actions.Add(new Dictionary<string, object>
-            {
-                ["stop_record_call"] = new Dictionary<string, object>(),
-            });
-        }
+        var stop = new Dictionary<string, object>();
+        if (!string.IsNullOrEmpty(controlId)) stop["control_id"] = controlId;
+        _actions.Add(new Dictionary<string, object> { ["stop_record_call"] = stop });
         return this;
     }
 
@@ -504,20 +483,9 @@ public class FunctionResult
 
     public FunctionResult StopTap(string? controlId = null)
     {
-        if (controlId.Length > 0)
-        {
-            _actions.Add(new Dictionary<string, object>
-            {
-                ["stop_tap"] = new Dictionary<string, object> { ["control_id"] = controlId },
-            });
-        }
-        else
-        {
-            _actions.Add(new Dictionary<string, object>
-            {
-                ["stop_tap"] = new Dictionary<string, object>(),
-            });
-        }
+        var stop = new Dictionary<string, object>();
+        if (!string.IsNullOrEmpty(controlId)) stop["control_id"] = controlId;
+        _actions.Add(new Dictionary<string, object> { ["stop_tap"] = stop });
         return this;
     }
 

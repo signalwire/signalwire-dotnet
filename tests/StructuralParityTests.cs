@@ -107,4 +107,51 @@ public class StructuralParityTests
         var method = typeof(SignalWire.Relay.Call).GetMethod("HangupAsync", new[] { typeof(string) });
         Assert.NotNull(method);
     }
+
+    // -------------------------------------------------------------------
+    // FunctionResult.ReplaceInHistory — Python takes
+    // ``text: Union[bool, str] = True``. Both forms must work.
+    //
+    // Python parity: tests/unit/core/test_function_result.py
+    //   TestFunctionResultReplaceInHistory.* (4 tests)
+    //   ↑ Python-side scaffolding gap closed in this commit; the docs
+    //   and prefabs/info_gatherer.py used the method but no unit test
+    //   exercised it. Adding to Python first per audit discipline.
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void ReplaceInHistory_DefaultTrue()
+    {
+        var fr = new FunctionResult();
+        fr.ReplaceInHistory();
+        var actions = (List<Dictionary<string, object>>)fr.ToDict()["action"];
+        var action = actions[0];
+        Assert.True(action.ContainsKey("replace_in_history"));
+        Assert.Equal(true, action["replace_in_history"]);
+    }
+
+    [Fact]
+    public void ReplaceInHistory_WithString()
+    {
+        var fr = new FunctionResult();
+        fr.ReplaceInHistory("I've saved your data.");
+        var actions = (List<Dictionary<string, object>>)fr.ToDict()["action"];
+        Assert.Equal("I've saved your data.", actions[0]["replace_in_history"]);
+    }
+
+    [Fact]
+    public void ReplaceInHistory_WithFalse()
+    {
+        var fr = new FunctionResult();
+        fr.ReplaceInHistory(false);
+        var actions = (List<Dictionary<string, object>>)fr.ToDict()["action"];
+        Assert.Equal(false, actions[0]["replace_in_history"]);
+    }
+
+    [Fact]
+    public void ReplaceInHistory_Chaining()
+    {
+        var fr = new FunctionResult();
+        Assert.Same(fr, fr.ReplaceInHistory());
+    }
 }
