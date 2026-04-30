@@ -67,8 +67,6 @@ public class ConciergeAgent : AgentBase
 
         if (specialInstructions.Count > 0) PromptAddSection("Special Instructions", "", specialInstructions);
 
-        var capturedVenueName = _venueName;
-
         DefineTool(
             "check_availability",
             "Check availability for a service or amenity",
@@ -77,16 +75,7 @@ public class ConciergeAgent : AgentBase
                 ["service"] = new Dictionary<string, object> { ["type"] = "string", ["description"] = "Service or amenity to check" },
                 ["date"] = new Dictionary<string, object> { ["type"] = "string", ["description"] = "Date to check (optional)" },
             },
-            (args, rawData) =>
-            {
-                var service = args.TryGetValue("service", out var s) ? s as string ?? "" : "";
-                var date = args.TryGetValue("date", out var d) ? d as string ?? "" : "";
-                var response = $"Checking availability for {service} at {capturedVenueName}";
-                if (date.Length > 0) response += $" on {date}";
-                return new FunctionResult(response);
-            });
-
-        var capturedAmenities = _amenities;
+            CheckAvailability);
 
         DefineTool(
             "get_directions",
@@ -95,22 +84,37 @@ public class ConciergeAgent : AgentBase
             {
                 ["destination"] = new Dictionary<string, object> { ["type"] = "string", ["description"] = "The amenity or area to get directions to" },
             },
-            (args, rawData) =>
+            GetDirections);
+    }
+
+    /// <summary>SWAIG tool handler for the ``check_availability`` tool.
+    /// (Python parity: ``ConciergeAgent.check_availability(args, raw_data)``.)</summary>
+    public FunctionResult CheckAvailability(Dictionary<string, object> args, Dictionary<string, object?> rawData)
+    {
+        var service = args.TryGetValue("service", out var s) ? s as string ?? "" : "";
+        var date = args.TryGetValue("date", out var d) ? d as string ?? "" : "";
+        var response = $"Checking availability for {service} at {_venueName}";
+        if (date.Length > 0) response += $" on {date}";
+        return new FunctionResult(response);
+    }
+
+    /// <summary>SWAIG tool handler for the ``get_directions`` tool.
+    /// (Python parity: ``ConciergeAgent.get_directions(args, raw_data)``.)</summary>
+    public FunctionResult GetDirections(Dictionary<string, object> args, Dictionary<string, object?> rawData)
+    {
+        var destination = args.TryGetValue("destination", out var d) ? d as string ?? "" : "";
+        var destinationLower = destination.ToLowerInvariant();
+
+        foreach (var (amenityName, info) in _amenities)
+        {
+            if (amenityName.ToLowerInvariant() == destinationLower)
             {
-                var destination = args.TryGetValue("destination", out var d) ? d as string ?? "" : "";
-                var destinationLower = destination.ToLowerInvariant();
+                var location = info.TryGetValue("location", out var l) ? l as string ?? "location not specified" : "location not specified";
+                return new FunctionResult($"The {amenityName} at {_venueName} is located at: {location}");
+            }
+        }
 
-                foreach (var (amenityName, info) in capturedAmenities)
-                {
-                    if (amenityName.ToLowerInvariant() == destinationLower)
-                    {
-                        var location = info.TryGetValue("location", out var l) ? l as string ?? "location not specified" : "location not specified";
-                        return new FunctionResult($"The {amenityName} at {capturedVenueName} is located at: {location}");
-                    }
-                }
-
-                return new FunctionResult($"Directions to {destination} at {capturedVenueName}: please ask the front desk for assistance.");
-            });
+        return new FunctionResult($"Directions to {destination} at {_venueName}: please ask the front desk for assistance.");
     }
 
     public string GetVenueName() => _venueName;

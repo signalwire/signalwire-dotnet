@@ -51,6 +51,10 @@ public partial class AgentServer
         _logger = Logger.GetLogger("agent_server");
     }
 
+    /// <summary>The agent_server logger. (Python parity:
+    /// ``AgentServer.logger`` instance attribute.)</summary>
+    public Logger Logger => _logger;
+
     // ==================================================================
     //  Agent Registration
     // ==================================================================

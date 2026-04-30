@@ -39,20 +39,11 @@ public class InfoGathererAgent : AgentBase
                 "Use start_questions to begin and submit_answer for each response",
             ]);
 
-        var capturedQuestions = _questions;
-
         DefineTool(
             "start_questions",
             "Start the question-gathering process and return the first question",
             [],
-            (args, rawData) =>
-            {
-                var first = capturedQuestions.Count > 0
-                    && capturedQuestions[0].TryGetValue("question_text", out var qt)
-                    ? qt as string ?? "No questions configured"
-                    : "No questions configured";
-                return new FunctionResult(first);
-            });
+            StartQuestions);
 
         DefineTool(
             "submit_answer",
@@ -62,11 +53,26 @@ public class InfoGathererAgent : AgentBase
                 ["answer"] = new Dictionary<string, object> { ["type"] = "string", ["description"] = "The answer" },
                 ["confirmed_by_user"] = new Dictionary<string, object> { ["type"] = "boolean", ["description"] = "User confirmed this answer" },
             },
-            (args, rawData) =>
-            {
-                var answer = args.TryGetValue("answer", out var a) ? a as string ?? "" : "";
-                return new FunctionResult($"Answer recorded: {answer}");
-            });
+            SubmitAnswer);
+    }
+
+    /// <summary>SWAIG tool handler for the ``start_questions`` tool.
+    /// (Python parity: ``InfoGathererAgent.start_questions``.)</summary>
+    public FunctionResult StartQuestions(Dictionary<string, object> args, Dictionary<string, object?> rawData)
+    {
+        var first = _questions.Count > 0
+            && _questions[0].TryGetValue("question_text", out var qt)
+            ? qt as string ?? "No questions configured"
+            : "No questions configured";
+        return new FunctionResult(first);
+    }
+
+    /// <summary>SWAIG tool handler for the ``submit_answer`` tool.
+    /// (Python parity: ``InfoGathererAgent.submit_answer``.)</summary>
+    public FunctionResult SubmitAnswer(Dictionary<string, object> args, Dictionary<string, object?> rawData)
+    {
+        var answer = args.TryGetValue("answer", out var a) ? a as string ?? "" : "";
+        return new FunctionResult($"Answer recorded: {answer}");
     }
 
     public List<Dictionary<string, object>> GetQuestions() => _questions;

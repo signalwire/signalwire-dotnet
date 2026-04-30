@@ -56,8 +56,6 @@ public class SurveyAgent : AgentBase
         }
         PromptAddSection("Survey Questions", "", qBullets);
 
-        var capturedQuestions = _surveyQuestions;
-
         DefineTool(
             "validate_response",
             "Validate a survey response against the question type constraints",
@@ -66,55 +64,7 @@ public class SurveyAgent : AgentBase
                 ["question_id"] = new Dictionary<string, object> { ["type"] = "string", ["description"] = "ID of the question" },
                 ["answer"] = new Dictionary<string, object> { ["type"] = "string", ["description"] = "The response to validate" },
             },
-            (args, rawData) =>
-            {
-                var questionId = args.TryGetValue("question_id", out var qi) ? qi as string ?? "" : "";
-                var answer = args.TryGetValue("answer", out var a) ? a as string ?? "" : "";
-
-                Dictionary<string, object>? question = null;
-                foreach (var q in capturedQuestions)
-                {
-                    if (q.TryGetValue("id", out var id) && id is string idStr && idStr == questionId)
-                    {
-                        question = q;
-                        break;
-                    }
-                }
-
-                if (question is null) return new FunctionResult($"Unknown question ID: {questionId}");
-
-                var type = question.TryGetValue("type", out var tp) ? tp as string ?? "open_ended" : "open_ended";
-
-                switch (type)
-                {
-                    case "rating":
-                        var scale = question.TryGetValue("scale", out var sc) ? Convert.ToInt32(sc) : 5;
-                        if (int.TryParse(answer, out var val) && val >= 1 && val <= scale)
-                            return new FunctionResult($"Valid rating: {val}/{scale}");
-                        return new FunctionResult($"Invalid rating. Please provide a number between 1 and {scale}.");
-
-                    case "multiple_choice":
-                        var choices = question.TryGetValue("choices", out var ch) && ch is List<string> cl ? cl : [];
-                        var lowerAnswer = answer.Trim().ToLowerInvariant();
-                        foreach (var choice in choices)
-                        {
-                            if (choice.Trim().ToLowerInvariant() == lowerAnswer)
-                                return new FunctionResult($"Valid choice: {choice}");
-                        }
-                        return new FunctionResult($"Invalid choice. Valid options are: {string.Join(", ", choices)}");
-
-                    case "yes_no":
-                        var normalized = answer.Trim().ToLowerInvariant();
-                        if (normalized is "yes" or "no" or "y" or "n")
-                            return new FunctionResult($"Valid response: {normalized}");
-                        return new FunctionResult("Please respond with yes or no.");
-
-                    default:
-                        if (answer.Trim().Length == 0)
-                            return new FunctionResult("Please provide a non-empty response.");
-                        return new FunctionResult($"Response accepted: {answer}");
-                }
-            });
+            ValidateResponse);
 
         DefineTool(
             "log_response",
@@ -124,12 +74,68 @@ public class SurveyAgent : AgentBase
                 ["question_id"] = new Dictionary<string, object> { ["type"] = "string", ["description"] = "ID of the question" },
                 ["answer"] = new Dictionary<string, object> { ["type"] = "string", ["description"] = "The validated answer" },
             },
-            (args, rawData) =>
+            LogResponse);
+    }
+
+    /// <summary>SWAIG tool handler for the ``validate_response`` tool.
+    /// (Python parity: ``SurveyAgent.validate_response``.)</summary>
+    public FunctionResult ValidateResponse(Dictionary<string, object> args, Dictionary<string, object?> rawData)
+    {
+        var questionId = args.TryGetValue("question_id", out var qi) ? qi as string ?? "" : "";
+        var answer = args.TryGetValue("answer", out var a) ? a as string ?? "" : "";
+
+        Dictionary<string, object>? question = null;
+        foreach (var q in _surveyQuestions)
+        {
+            if (q.TryGetValue("id", out var id) && id is string idStr && idStr == questionId)
             {
-                var questionId = args.TryGetValue("question_id", out var qi) ? qi as string ?? "" : "";
-                var answer = args.TryGetValue("answer", out var a) ? a as string ?? "" : "";
-                return new FunctionResult($"Survey answer for {questionId}: {answer}");
-            });
+                question = q;
+                break;
+            }
+        }
+
+        if (question is null) return new FunctionResult($"Unknown question ID: {questionId}");
+
+        var type = question.TryGetValue("type", out var tp) ? tp as string ?? "open_ended" : "open_ended";
+
+        switch (type)
+        {
+            case "rating":
+                var scale = question.TryGetValue("scale", out var sc) ? Convert.ToInt32(sc) : 5;
+                if (int.TryParse(answer, out var val) && val >= 1 && val <= scale)
+                    return new FunctionResult($"Valid rating: {val}/{scale}");
+                return new FunctionResult($"Invalid rating. Please provide a number between 1 and {scale}.");
+
+            case "multiple_choice":
+                var choices = question.TryGetValue("choices", out var ch) && ch is List<string> cl ? cl : [];
+                var lowerAnswer = answer.Trim().ToLowerInvariant();
+                foreach (var choice in choices)
+                {
+                    if (choice.Trim().ToLowerInvariant() == lowerAnswer)
+                        return new FunctionResult($"Valid choice: {choice}");
+                }
+                return new FunctionResult($"Invalid choice. Valid options are: {string.Join(", ", choices)}");
+
+            case "yes_no":
+                var normalized = answer.Trim().ToLowerInvariant();
+                if (normalized is "yes" or "no" or "y" or "n")
+                    return new FunctionResult($"Valid response: {normalized}");
+                return new FunctionResult("Please respond with yes or no.");
+
+            default:
+                if (answer.Trim().Length == 0)
+                    return new FunctionResult("Please provide a non-empty response.");
+                return new FunctionResult($"Response accepted: {answer}");
+        }
+    }
+
+    /// <summary>SWAIG tool handler for the ``log_response`` tool.
+    /// (Python parity: ``SurveyAgent.log_response``.)</summary>
+    public FunctionResult LogResponse(Dictionary<string, object> args, Dictionary<string, object?> rawData)
+    {
+        var questionId = args.TryGetValue("question_id", out var qi) ? qi as string ?? "" : "";
+        var answer = args.TryGetValue("answer", out var a) ? a as string ?? "" : "";
+        return new FunctionResult($"Survey answer for {questionId}: {answer}");
     }
 
     public List<Dictionary<string, object>> GetSurveyQuestions() => _surveyQuestions;

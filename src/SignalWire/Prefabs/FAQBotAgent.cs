@@ -48,9 +48,6 @@ public class FAQBotAgent : AgentBase
             PromptAddSection("Related Questions", "When appropriate, suggest related questions the user might also be interested in.");
         }
 
-        var capturedFaqs = _faqs;
-        var capturedSuggest = _suggestRelated;
-
         DefineTool(
             "search_faqs",
             "Search the FAQ knowledge base by keyword matching and return the best answer",
@@ -58,40 +55,45 @@ public class FAQBotAgent : AgentBase
             {
                 ["query"] = new Dictionary<string, object> { ["type"] = "string", ["description"] = "The question or keywords to search" },
             },
-            (args, rawData) =>
+            SearchFaqs);
+    }
+
+    /// <summary>SWAIG tool handler that searches the configured FAQ
+    /// knowledge base for the best keyword-scored answer.
+    /// (Python parity: ``FAQBotAgent.search_faqs(args, raw_data)``.)</summary>
+    public FunctionResult SearchFaqs(Dictionary<string, object> args, Dictionary<string, object?> rawData)
+    {
+        var query = (args.TryGetValue("query", out var q) ? q as string ?? "" : "").Trim().ToLowerInvariant();
+        if (query.Length == 0) return new FunctionResult("Please provide a search query.");
+
+        var keywords = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        var scored = new List<(int Score, Dictionary<string, object> Faq)>();
+        foreach (var faq in _faqs)
+        {
+            var questionLower = (faq.TryGetValue("question", out var qv) ? qv as string ?? "" : "").ToLowerInvariant();
+            var score = 0;
+            if (questionLower.Contains(query)) score += 10;
+            foreach (var kw in keywords)
             {
-                var query = (args.TryGetValue("query", out var q) ? q as string ?? "" : "").Trim().ToLowerInvariant();
-                if (query.Length == 0) return new FunctionResult("Please provide a search query.");
+                if (kw.Length > 0 && questionLower.Contains(kw)) score++;
+            }
+            if (score > 0) scored.Add((score, faq));
+        }
 
-                var keywords = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (scored.Count == 0) return new FunctionResult($"No FAQ found matching: {query}");
 
-                var scored = new List<(int Score, Dictionary<string, object> Faq)>();
-                foreach (var faq in capturedFaqs)
-                {
-                    var questionLower = (faq.TryGetValue("question", out var qv) ? qv as string ?? "" : "").ToLowerInvariant();
-                    var score = 0;
-                    if (questionLower.Contains(query)) score += 10;
-                    foreach (var kw in keywords)
-                    {
-                        if (kw.Length > 0 && questionLower.Contains(kw)) score++;
-                    }
-                    if (score > 0) scored.Add((score, faq));
-                }
+        scored.Sort((a, b) => b.Score.CompareTo(a.Score));
+        var best = scored[0].Faq;
+        var response = best.TryGetValue("answer", out var ans) ? ans as string ?? "" : "";
 
-                if (scored.Count == 0) return new FunctionResult($"No FAQ found matching: {query}");
+        if (_suggestRelated && scored.Count > 1)
+        {
+            var related = scored.Skip(1).Take(3).Select(s => s.Faq.TryGetValue("question", out var rq) ? rq as string ?? "" : "");
+            response += "\n\nRelated questions: " + string.Join("; ", related);
+        }
 
-                scored.Sort((a, b) => b.Score.CompareTo(a.Score));
-                var best = scored[0].Faq;
-                var response = best.TryGetValue("answer", out var ans) ? ans as string ?? "" : "";
-
-                if (capturedSuggest && scored.Count > 1)
-                {
-                    var related = scored.Skip(1).Take(3).Select(s => s.Faq.TryGetValue("question", out var rq) ? rq as string ?? "" : "");
-                    response += "\n\nRelated questions: " + string.Join("; ", related);
-                }
-
-                return new FunctionResult(response);
-            });
+        return new FunctionResult(response);
     }
 
     public List<Dictionary<string, object>> GetFaqs() => _faqs;
