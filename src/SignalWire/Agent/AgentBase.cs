@@ -356,9 +356,9 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase SetParams(Dictionary<string, object> parameters)
+    public AgentBase SetParams(Dictionary<string, object> @params)
     {
-        _params = parameters;
+        _params = @params;
         return this;
     }
 
@@ -518,15 +518,15 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase SetPromptLlmParams(Dictionary<string, object> parameters)
+    public AgentBase SetPromptLlmParams(Dictionary<string, object> @params)
     {
-        _promptLlmParams = parameters;
+        _promptLlmParams = @params;
         return this;
     }
 
-    public AgentBase SetPostPromptLlmParams(Dictionary<string, object> parameters)
+    public AgentBase SetPostPromptLlmParams(Dictionary<string, object> @params)
     {
-        _postPromptLlmParams = parameters;
+        _postPromptLlmParams = @params;
         return this;
     }
 
@@ -534,27 +534,27 @@ public class AgentBase : Service
     //  Verb Methods
     // ======================================================================
 
-    public AgentBase AddPreAnswerVerb(string verb, object config)
+    public AgentBase AddPreAnswerVerb(string verbName, Dictionary<string, object> config)
     {
-        _preAnswerVerbs.Add((verb, config));
+        _preAnswerVerbs.Add((verbName, config));
         return this;
     }
 
-    public AgentBase AddPostAnswerVerb(string verb, object config)
+    public AgentBase AddPostAnswerVerb(string verbName, Dictionary<string, object> config)
     {
-        _postAnswerVerbs.Add((verb, config));
+        _postAnswerVerbs.Add((verbName, config));
         return this;
     }
 
     /// <summary>Alias for <see cref="AddPostAnswerVerb"/>.</summary>
-    public AgentBase AddAnswerVerb(string verb, object config)
+    public AgentBase AddAnswerVerb(string verbName, Dictionary<string, object> config)
     {
-        return AddPostAnswerVerb(verb, config);
+        return AddPostAnswerVerb(verbName, config);
     }
 
-    public AgentBase AddPostAiVerb(string verb, object config)
+    public AgentBase AddPostAiVerb(string verbName, Dictionary<string, object> config)
     {
-        _postAiVerbs.Add((verb, config));
+        _postAiVerbs.Add((verbName, config));
         return this;
     }
 
@@ -632,34 +632,34 @@ public class AgentBase : Service
     /// Load and activate a skill by name. Resolves through <see cref="SkillRegistry"/>,
     /// validates env vars, calls Setup/RegisterTools, and merges hints/globalData/prompts.
     /// </summary>
-    public AgentBase AddSkill(string name, Dictionary<string, object>? parameters = null)
+    public AgentBase AddSkill(string skillName, Dictionary<string, object>? @params = null)
     {
         var manager = GetSkillManager();
-        var (success, error) = manager.LoadSkill(name, parameters);
+        var (success, error) = manager.LoadSkill(skillName, @params);
 
         if (success)
         {
-            if (!_skillsList.Contains(name))
+            if (!_skillsList.Contains(skillName))
             {
-                _skillsList.Add(name);
+                _skillsList.Add(skillName);
             }
-            _agentLogger.Debug($"Skill '{name}' loaded");
+            _agentLogger.Debug($"Skill '{skillName}' loaded");
         }
         else
         {
-            _agentLogger.Warn($"Skill '{name}' load failed: {error}");
+            _agentLogger.Warn($"Skill '{skillName}' load failed: {error}");
         }
 
         return this;
     }
 
     /// <summary>Remove a loaded skill by its instance key.</summary>
-    public AgentBase RemoveSkill(string name)
+    public AgentBase RemoveSkill(string skillName)
     {
         var manager = GetSkillManager();
-        manager.UnloadSkill(name);
-        _skillsList.Remove(name);
-        _agentLogger.Debug($"Skill '{name}' removed");
+        manager.UnloadSkill(skillName);
+        _skillsList.Remove(skillName);
+        _agentLogger.Debug($"Skill '{skillName}' removed");
         return this;
     }
 
@@ -674,13 +674,13 @@ public class AgentBase : Service
     }
 
     /// <summary>Check if a skill is loaded by instance key.</summary>
-    public bool HasSkill(string name)
+    public bool HasSkill(string skillName)
     {
         if (_skillManager is not null)
         {
-            return _skillManager.HasSkill(name);
+            return _skillManager.HasSkill(skillName);
         }
-        return _skillsList.Contains(name);
+        return _skillsList.Contains(skillName);
     }
 
     // ======================================================================
@@ -713,9 +713,9 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase AddSwaigQueryParams(Dictionary<string, string> parameters)
+    public AgentBase AddSwaigQueryParams(Dictionary<string, string> @params)
     {
-        foreach (var (key, value) in parameters)
+        foreach (var (key, value) in @params)
         {
             _swaigQueryParams[key] = value;
         }

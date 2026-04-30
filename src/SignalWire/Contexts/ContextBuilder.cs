@@ -260,10 +260,10 @@ public class Step
         return this;
     }
 
-    public Step SetResetSystemPrompt(string sp) { _resetSystemPrompt = sp; return this; }
-    public Step SetResetUserPrompt(string up) { _resetUserPrompt = up; return this; }
-    public Step SetResetConsolidate(bool c) { _resetConsolidate = c; return this; }
-    public Step SetResetFullReset(bool f) { _resetFullReset = f; return this; }
+    public Step SetResetSystemPrompt(string systemPrompt) { _resetSystemPrompt = systemPrompt; return this; }
+    public Step SetResetUserPrompt(string userPrompt) { _resetUserPrompt = userPrompt; return this; }
+    public Step SetResetConsolidate(bool consolidate) { _resetConsolidate = consolidate; return this; }
+    public Step SetResetFullReset(bool fullReset) { _resetFullReset = fullReset; return this; }
 
     public List<string>? ValidSteps => _validSteps;
     public List<string>? ValidContexts => _validContexts;
@@ -490,22 +490,22 @@ public class Context
 
     // -- Fillers --
 
-    public Context SetEnterFillers(Dictionary<string, List<string>> fillers) { _enterFillers = fillers; return this; }
-    public Context SetExitFillers(Dictionary<string, List<string>> fillers) { _exitFillers = fillers; return this; }
+    public Context SetEnterFillers(Dictionary<string, List<string>> enterFillers) { _enterFillers = enterFillers; return this; }
+    public Context SetExitFillers(Dictionary<string, List<string>> exitFillers) { _exitFillers = exitFillers; return this; }
 
-    public Context AddEnterFiller(string lang, string text)
+    public Context AddEnterFiller(string languageCode, List<string> fillers)
     {
         _enterFillers ??= [];
-        if (!_enterFillers.ContainsKey(lang)) _enterFillers[lang] = [];
-        _enterFillers[lang].Add(text);
+        if (!_enterFillers.ContainsKey(languageCode)) _enterFillers[languageCode] = [];
+        _enterFillers[languageCode].AddRange(fillers);
         return this;
     }
 
-    public Context AddExitFiller(string lang, string text)
+    public Context AddExitFiller(string languageCode, List<string> fillers)
     {
         _exitFillers ??= [];
-        if (!_exitFillers.ContainsKey(lang)) _exitFillers[lang] = [];
-        _exitFillers[lang].Add(text);
+        if (!_exitFillers.ContainsKey(languageCode)) _exitFillers[languageCode] = [];
+        _exitFillers[languageCode].AddRange(fillers);
         return this;
     }
 
