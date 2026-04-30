@@ -4874,6 +4874,134 @@
         }
       }
     },
+    "signalwire.core.swml_renderer": {
+      "classes": {
+        "SwmlRenderer": {
+          "methods": {
+            "render_function_response_swml": {
+              "params": [
+                {
+                  "name": "response_text",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "service",
+                  "type": "class:signalwire.core.swml_service.SWMLService",
+                  "required": true
+                },
+                {
+                  "name": "actions",
+                  "type": "optional<list<dict<string,any>>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "format",
+                  "type": "string",
+                  "required": false,
+                  "default": "json"
+                }
+              ],
+              "returns": "string"
+            },
+            "render_swml": {
+              "params": [
+                {
+                  "name": "prompt",
+                  "type": "any",
+                  "required": true
+                },
+                {
+                  "name": "service",
+                  "type": "class:signalwire.core.swml_service.SWMLService",
+                  "required": true
+                },
+                {
+                  "name": "post_prompt",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "post_prompt_url",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "swaig_functions",
+                  "type": "optional<list<dict<string,any>>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "startup_hook_url",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "hangup_hook_url",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "prompt_is_pom",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                },
+                {
+                  "name": "params",
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "add_answer",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                },
+                {
+                  "name": "record_call",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                },
+                {
+                  "name": "record_format",
+                  "type": "string",
+                  "required": false,
+                  "default": "mp4"
+                },
+                {
+                  "name": "record_stereo",
+                  "type": "bool",
+                  "required": false,
+                  "default": true
+                },
+                {
+                  "name": "format",
+                  "type": "string",
+                  "required": false,
+                  "default": "json"
+                },
+                {
+                  "name": "default_webhook_url",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
     "signalwire.core.swml_service": {
       "classes": {
         "SWMLService": {

@@ -85,6 +85,7 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "Section": "signalwire.pom.pom",
     "PomBuilder": "signalwire.core.pom_builder",
     "SWMLBuilder": "signalwire.core.swml_builder",
+    "SwmlRenderer": "signalwire.core.swml_renderer",
 
     # -- relay ------------------------------------------------------------
     "Call": "signalwire.relay.call",

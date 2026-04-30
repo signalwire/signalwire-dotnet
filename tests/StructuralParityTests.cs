@@ -14,6 +14,7 @@
 // that doesn't exist yet, fails to compile), then add the missing
 // surface in source, watch compile + test go green.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -467,6 +468,75 @@ public class StructuralParityTests
     //
     // Python parity: tests/unit/core/test_swml_builder.py
     // -------------------------------------------------------------------
+
+    // -------------------------------------------------------------------
+    // SwmlRenderer static helpers — Python's
+    // ``signalwire.core.swml_renderer.SwmlRenderer`` provides
+    // RenderSwml (full AI doc) and RenderFunctionResponseSwml
+    // (function-call follow-up doc).
+    //
+    // Python parity: tests/unit/core/test_swml_renderer.py
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void SwmlRenderer_RenderSwml_BasicAi()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var json = SignalWire.SWML.SwmlRenderer.RenderSwml(
+            prompt: "You are helpful",
+            service: svc);
+        Assert.Contains("ai", json);
+        Assert.Contains("You are helpful", json);
+    }
+
+    [Fact]
+    public void SwmlRenderer_RenderSwml_WithAddAnswer()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var json = SignalWire.SWML.SwmlRenderer.RenderSwml(
+            prompt: "p",
+            service: svc,
+            addAnswer: true);
+        Assert.Contains("answer", json);
+        Assert.Contains("ai", json);
+    }
+
+    [Fact]
+    public void SwmlRenderer_RenderFunctionResponseSwml_Basic()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var json = SignalWire.SWML.SwmlRenderer.RenderFunctionResponseSwml(
+            responseText: "Hello there!",
+            service: svc);
+        Assert.Contains("play", json);
+        Assert.Contains("Hello there!", json);
+    }
+
+    [Fact]
+    public void SwmlRenderer_RenderFunctionResponseSwml_WithActions()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var actions = new List<Dictionary<string, object>>
+        {
+            new() { ["play"] = new Dictionary<string, object> { ["url"] = "test.mp3" } },
+            new() { ["hangup"] = new Dictionary<string, object> { ["reason"] = "completed" } }
+        };
+        var json = SignalWire.SWML.SwmlRenderer.RenderFunctionResponseSwml(
+            responseText: "Response complete",
+            service: svc,
+            actions: actions);
+        Assert.Contains("test.mp3", json);
+        Assert.Contains("hangup", json);
+        Assert.Contains("Response complete", json);
+    }
+
+    [Fact]
+    public void SwmlRenderer_YamlFormat_NotSupported()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        Assert.Throws<NotSupportedException>(() =>
+            SignalWire.SWML.SwmlRenderer.RenderSwml(prompt: "p", service: svc, format: "yaml"));
+    }
 
     [Fact]
     public void SWMLBuilder_AnswerVerb_AppendsAnswer()
