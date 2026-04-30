@@ -459,6 +459,97 @@ public class StructuralParityTests
     // Python parity: tests/unit/core/test_pom_builder.py::TestPomBuilder
     // -------------------------------------------------------------------
 
+    // -------------------------------------------------------------------
+    // SWMLBuilder fluent API — Python's
+    // ``signalwire.core.swml_builder.SWMLBuilder`` chains verb methods
+    // (Answer / Hangup / Ai / Play / Say) onto a Service. Each verb
+    // returns the builder for chaining.
+    //
+    // Python parity: tests/unit/core/test_swml_builder.py
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void SWMLBuilder_AnswerVerb_AppendsAnswer()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var builder = new SignalWire.SWML.SWMLBuilder(svc);
+        var ret = builder.Answer();
+        Assert.Same(builder, ret);  // fluent
+        // Build the doc and confirm the answer verb was added.
+        var doc = builder.Build();
+        var sections = (Dictionary<string, List<Dictionary<string, object?>>>)doc["sections"];
+        var main = sections["main"];
+        Assert.Contains(main, v => v.ContainsKey("answer"));
+    }
+
+    [Fact]
+    public void SWMLBuilder_AnswerVerb_WithParams()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var builder = new SignalWire.SWML.SWMLBuilder(svc);
+        builder.Answer(maxDuration: 30, codecs: "PCMU,PCMA");
+        var doc = builder.Build();
+        var sections = (Dictionary<string, List<Dictionary<string, object?>>>)doc["sections"];
+        var main = sections["main"];
+        var answerVerb = main.First(v => v.ContainsKey("answer"));
+        var config = (Dictionary<string, object>)answerVerb["answer"]!;
+        Assert.Equal(30, config["max_duration"]);
+        Assert.Equal("PCMU,PCMA", config["codecs"]);
+    }
+
+    [Fact]
+    public void SWMLBuilder_HangupVerb_WithReason()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var builder = new SignalWire.SWML.SWMLBuilder(svc);
+        builder.Hangup(reason: "completed");
+        var doc = builder.Build();
+        var sections = (Dictionary<string, List<Dictionary<string, object?>>>)doc["sections"];
+        var main = sections["main"];
+        var hangup = main.First(v => v.ContainsKey("hangup"));
+        var config = (Dictionary<string, object>)hangup["hangup"]!;
+        Assert.Equal("completed", config["reason"]);
+    }
+
+    [Fact]
+    public void SWMLBuilder_AiVerb_PromptText()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var builder = new SignalWire.SWML.SWMLBuilder(svc);
+        builder.Ai(promptText: "You are helpful");
+        var doc = builder.Build();
+        var sections = (Dictionary<string, List<Dictionary<string, object?>>>)doc["sections"];
+        var main = sections["main"];
+        var ai = main.First(v => v.ContainsKey("ai"));
+        var config = (Dictionary<string, object>)ai["ai"]!;
+        Assert.Equal("You are helpful", config["prompt"]);
+    }
+
+    [Fact]
+    public void SWMLBuilder_PlayVerb_WithUrl()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var builder = new SignalWire.SWML.SWMLBuilder(svc);
+        builder.Play(url: "https://example.com/intro.mp3");
+        var doc = builder.Build();
+        var sections = (Dictionary<string, List<Dictionary<string, object?>>>)doc["sections"];
+        var main = sections["main"];
+        var play = main.First(v => v.ContainsKey("play"));
+        var config = (Dictionary<string, object>)play["play"]!;
+        Assert.Equal("https://example.com/intro.mp3", config["url"]);
+    }
+
+    [Fact]
+    public void SWMLBuilder_RenderReturnsJson()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var builder = new SignalWire.SWML.SWMLBuilder(svc);
+        builder.Answer().Hangup();
+        var json = builder.Render();
+        Assert.Contains("answer", json);
+        Assert.Contains("hangup", json);
+    }
+
     [Fact]
     public void PomBuilder_BasicInitialization()
     {

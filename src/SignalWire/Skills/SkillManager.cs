@@ -21,6 +21,10 @@ public sealed class SkillManager
         _logger = Logger.GetLogger("skill_manager");
     }
 
+    /// <summary>The skill_manager logger (Python parity:
+    /// ``SkillManager.logger`` instance attribute).</summary>
+    public Logger Logger => _logger;
+
     /// <summary>
     /// Load a skill by name (resolved via registry) or by explicit type.
     /// Returns (success, errorMessage).

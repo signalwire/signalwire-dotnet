@@ -1,0 +1,129 @@
+// SWMLBuilder.cs
+//
+// Fluent builder for SWML documents — wraps a Service and exposes
+// chainable verb methods (Answer, Hangup, Ai, Play, Say). Mirrors
+// Python's signalwire.core.swml_builder.SWMLBuilder.
+//
+// Each verb method returns this for chaining: build().Answer().Ai(...).Hangup().
+
+using System.Collections.Generic;
+using System.Text.Json;
+
+namespace SignalWire.SWML;
+
+public class SWMLBuilder
+{
+    public Service Service { get; }
+
+    public SWMLBuilder(Service service)
+    {
+        Service = service;
+    }
+
+    /// <summary>Add an ``answer`` verb. (Python parity:
+    /// ``SWMLBuilder.answer(max_duration, codecs)``.)</summary>
+    public SWMLBuilder Answer(int? maxDuration = null, string? codecs = null)
+    {
+        var config = new Dictionary<string, object>();
+        if (maxDuration.HasValue) config["max_duration"] = maxDuration.Value;
+        if (!string.IsNullOrEmpty(codecs)) config["codecs"] = codecs;
+        Service.Document.AddVerb("answer", config);
+        return this;
+    }
+
+    /// <summary>Add a ``hangup`` verb. (Python parity:
+    /// ``SWMLBuilder.hangup(reason)``.)</summary>
+    public SWMLBuilder Hangup(string? reason = null)
+    {
+        var config = new Dictionary<string, object>();
+        if (!string.IsNullOrEmpty(reason)) config["reason"] = reason;
+        Service.Document.AddVerb("hangup", config);
+        return this;
+    }
+
+    /// <summary>Add an ``ai`` verb. (Python parity:
+    /// ``SWMLBuilder.ai(prompt_text, prompt_pom, post_prompt, post_prompt_url, swaig, ...)``.)</summary>
+    public SWMLBuilder Ai(
+        string? promptText = null,
+        List<Dictionary<string, object>>? promptPom = null,
+        string? postPrompt = null,
+        string? postPromptUrl = null,
+        Dictionary<string, object>? swaig = null,
+        Dictionary<string, object>? extraParams = null)
+    {
+        var config = new Dictionary<string, object>();
+        if (!string.IsNullOrEmpty(promptText))
+        {
+            config["prompt"] = promptText;
+        }
+        else if (promptPom is not null)
+        {
+            config["prompt"] = new Dictionary<string, object> { ["pom"] = promptPom };
+        }
+        if (!string.IsNullOrEmpty(postPrompt)) config["post_prompt"] = postPrompt;
+        if (!string.IsNullOrEmpty(postPromptUrl)) config["post_prompt_url"] = postPromptUrl;
+        if (swaig is not null) config["SWAIG"] = swaig;
+        if (extraParams is not null)
+        {
+            foreach (var kv in extraParams) config[kv.Key] = kv.Value;
+        }
+        Service.Document.AddVerb("ai", config);
+        return this;
+    }
+
+    /// <summary>Add a ``play`` verb. (Python parity:
+    /// ``SWMLBuilder.play(url, urls, volume, say_text, say_voice, say_language)``.)</summary>
+    public SWMLBuilder Play(
+        string? url = null,
+        List<string>? urls = null,
+        double? volume = null,
+        string? sayText = null,
+        string? sayVoice = null,
+        string? sayLanguage = null)
+    {
+        var config = new Dictionary<string, object>();
+        if (urls is not null && urls.Count > 0) config["urls"] = urls;
+        else if (!string.IsNullOrEmpty(url)) config["url"] = url;
+        if (volume.HasValue) config["volume"] = volume.Value;
+        if (!string.IsNullOrEmpty(sayText)) config["say_text"] = sayText;
+        if (!string.IsNullOrEmpty(sayVoice)) config["say_voice"] = sayVoice;
+        if (!string.IsNullOrEmpty(sayLanguage)) config["say_language"] = sayLanguage;
+        Service.Document.AddVerb("play", config);
+        return this;
+    }
+
+    /// <summary>Add a ``say`` verb (synthesized speech).
+    /// (Python parity: ``SWMLBuilder.say(text, voice, language)``.)</summary>
+    public SWMLBuilder Say(string text, string? voice = null, string? language = null)
+    {
+        var config = new Dictionary<string, object> { ["text"] = text };
+        if (!string.IsNullOrEmpty(voice)) config["voice"] = voice;
+        if (!string.IsNullOrEmpty(language)) config["language"] = language;
+        Service.Document.AddVerb("say", config);
+        return this;
+    }
+
+    /// <summary>Add a section to the underlying document.
+    /// (Python parity: ``SWMLBuilder.add_section``.)</summary>
+    public SWMLBuilder AddSection(string sectionName)
+    {
+        Service.Document.AddSection(sectionName);
+        return this;
+    }
+
+    /// <summary>Build the SWML document as a dict.
+    /// (Python parity: ``SWMLBuilder.build``.)</summary>
+    public Dictionary<string, object> Build() => Service.Document.ToDict();
+
+    /// <summary>Render the SWML document as a JSON string.
+    /// (Python parity: ``SWMLBuilder.render``.)</summary>
+    public string Render() => JsonSerializer.Serialize(Build());
+
+    /// <summary>Reset the underlying document.
+    /// (Python parity: ``SWMLBuilder.reset``.)</summary>
+    public SWMLBuilder Reset()
+    {
+        Service.Document.Reset();
+        return this;
+    }
+}
