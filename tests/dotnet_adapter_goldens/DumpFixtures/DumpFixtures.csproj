@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>DumpFixtures</AssemblyName>
+    <RootNamespace>SignalWire.Tools.DumpFixtures</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <BaseOutputPath>bin/DumpFixtures/</BaseOutputPath>
+    <BaseIntermediateOutputPath>obj/DumpFixtures/</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+</Project>

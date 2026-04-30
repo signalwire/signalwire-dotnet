@@ -1,0 +1,359 @@
+{
+  "version": "2",
+  "generated_from": "SignalWire.dll via SignatureDump (System.Reflection)",
+  "modules": {
+    "signalwire.tools.goldenfixtures.builder": {
+      "classes": {
+        "Builder": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "parse_version": {
+              "params": [
+                {
+                  "name": "text",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "int"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.tools.goldenfixtures.config": {
+      "classes": {
+        "Config": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "configure": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "host",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "port",
+                  "type": "optional<int>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "log_level",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": "info"
+                }
+              ],
+              "returns": "void"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.tools.goldenfixtures.dispatcher": {
+      "classes": {
+        "Dispatcher": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "register": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "name",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "handler",
+                  "type": "callable<list<string,int>,bool>",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.tools.goldenfixtures.engine": {
+      "classes": {
+        "Engine": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "run": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "target",
+                  "type": "class:signalwire.tools.goldenfixtures.result.Result",
+                  "required": true
+                }
+              ],
+              "returns": "class:signalwire.tools.goldenfixtures.result.Result"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.tools.goldenfixtures.event_bus": {
+      "classes": {
+        "EventBus": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "subscribe": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "topic",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "handler",
+                  "type": "callable<list<string>,void>",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.tools.goldenfixtures.greeter": {
+      "classes": {
+        "Greeter": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "greet": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "name",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "type": "int",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.tools.goldenfixtures.http_fetcher": {
+      "classes": {
+        "HttpFetcher": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "fetch": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "url",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            },
+            "ping": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.tools.goldenfixtures.logger": {
+      "classes": {
+        "Logger": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "log": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "level",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "args",
+                  "kind": "var_positional",
+                  "type": "list<string>",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.tools.goldenfixtures.result": {
+      "classes": {
+        "Result": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.tools.goldenfixtures.store": {
+      "classes": {
+        "Store": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "put": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "key",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "value",
+                  "type": "dict<string,int>",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "query": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "filters",
+                  "type": "dict<string,list<int>>",
+                  "required": true
+                }
+              ],
+              "returns": "list<tuple<string,int>>"
+            }
+          }
+        }
+      }
+    }
+  }
+}
