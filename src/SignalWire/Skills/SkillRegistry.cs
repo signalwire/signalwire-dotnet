@@ -1,3 +1,4 @@
+using SignalWire.Logging;
 using SignalWire.Skills.Builtin;
 
 namespace SignalWire.Skills;
@@ -91,6 +92,18 @@ public sealed class SkillRegistry
             _registeredSkills[name] = factory;
         }
     }
+
+    /// <summary>Deprecated no-op: skills are loaded on-demand.
+    /// (Python parity: ``SkillRegistry.discover_skills`` — kept for
+    /// backwards compatibility; the Python doc says exactly this.)</summary>
+    public void DiscoverSkills()
+    {
+        // No-op. Skills resolve via GetFactory on first request.
+    }
+
+    /// <summary>The skill_registry logger.
+    /// (Python parity: ``SkillRegistry.logger`` instance attribute.)</summary>
+    public Logger Logger { get; } = Logger.GetLogger("skill_registry");
 
     /// <summary>
     /// Get the factory for a skill name. Checks custom registrations first,

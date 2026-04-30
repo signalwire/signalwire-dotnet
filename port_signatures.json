@@ -11401,6 +11401,15 @@
       "classes": {
         "SkillRegistry": {
           "methods": {
+            "discover_skills": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
             "get_factory": {
               "params": [
                 {
@@ -11427,6 +11436,15 @@
                 }
               ],
               "returns": "list<string>"
+            },
+            "logger": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.logging.logger.Logger"
             },
             "register_skill": {
               "params": [
