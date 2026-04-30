@@ -224,11 +224,50 @@ public class PromptObjectModel
     /// <summary>Serialize to JSON string.</summary>
     public string ToJson() => JsonSerializer.Serialize(ToDict());
 
-    /// <summary>Serialize to YAML — not supported in .NET (no built-in
-    /// YAML serializer; users should use a YAML library for this).</summary>
-    public string ToYaml() =>
-        throw new NotSupportedException(
-            "ToYaml is not supported in .NET — use a YAML library against ToDict()");
+    /// <summary>Serialize to YAML string. Uses YamlDotNet under the hood.
+    /// (Python parity: ``PromptObjectModel.to_yaml``.)</summary>
+    public string ToYaml()
+    {
+        var sectionDicts = ToDict();
+        var serializer = new YamlDotNet.Serialization.SerializerBuilder()
+            .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.NullNamingConvention.Instance)
+            .Build();
+        return serializer.Serialize(sectionDicts);
+    }
+
+    /// <summary>Construct a PromptObjectModel from YAML string.
+    /// (Python parity: ``PromptObjectModel.from_yaml``.)</summary>
+    public static PromptObjectModel FromYaml(string yaml)
+    {
+        var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
+            .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.NullNamingConvention.Instance)
+            .Build();
+        // Round-trip via JSON so Section/dict structure aligns with FromJson.
+        var raw = deserializer.Deserialize<object?>(yaml);
+        var json = JsonSerializer.Serialize(NormalizeYamlObject(raw));
+        return FromJson(json);
+    }
+
+    private static object? NormalizeYamlObject(object? obj)
+    {
+        switch (obj)
+        {
+            case Dictionary<object, object?> map:
+                {
+                    var result = new Dictionary<string, object?>();
+                    foreach (var kv in map)
+                    {
+                        var key = kv.Key?.ToString() ?? "";
+                        result[key] = NormalizeYamlObject(kv.Value);
+                    }
+                    return result;
+                }
+            case List<object?> list:
+                return list.ConvertAll(NormalizeYamlObject);
+            default:
+                return obj;
+        }
+    }
 
     /// <summary>Construct a PromptObjectModel from JSON.</summary>
     public static PromptObjectModel FromJson(string json)

@@ -20,4 +20,10 @@
     <EmbeddedResource Include="SWML/schema.json" LogicalName="SignalWire.SWML.schema.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- YamlDotNet is the .NET-idiomatic YAML library; used by POM
+         to mirror Python's ``PromptObjectModel.from_yaml/to_yaml``. -->
+    <PackageReference Include="YamlDotNet" Version="16.2.1" />
+  </ItemGroup>
+
 </Project>

@@ -941,6 +941,28 @@ public class StructuralParityTests
     }
 
     [Fact]
+    public void Pom_ToYamlReturnsStringWithSectionTitle()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        pom.AddSection("Greeting", body: "Hello");
+        var y = pom.ToYaml();
+        Assert.NotNull(y);
+        Assert.Contains("Greeting", y);
+        Assert.Contains("Hello", y);
+    }
+
+    [Fact]
+    public void Pom_FromYamlRoundTrip()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        pom.AddSection("A", body: "body-A", bullets: new List<string> { "x", "y" });
+        var y = pom.ToYaml();
+        var restored = SignalWire.POM.PromptObjectModel.FromYaml(y);
+        Assert.NotNull(restored.FindSection("A"));
+        Assert.Equal(new[] { "x", "y" }, restored.FindSection("A")!.Bullets);
+    }
+
+    [Fact]
     public void Pom_FromJsonRoundTrip()
     {
         var pom = new SignalWire.POM.PromptObjectModel();

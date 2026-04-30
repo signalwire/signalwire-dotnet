@@ -5701,6 +5701,16 @@
               ],
               "returns": "class:signalwire.pom.pom.PromptObjectModel"
             },
+            "from_yaml": {
+              "params": [
+                {
+                  "name": "yaml",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "class:signalwire.pom.pom.PromptObjectModel"
+            },
             "render_markdown": {
               "params": [
                 {
