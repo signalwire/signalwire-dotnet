@@ -582,6 +582,15 @@
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
             },
+            "auto_map_sip_usernames": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.core.agent_base.AgentBase"
+            },
             "build_ai_verb": {
               "params": [
                 {
@@ -663,6 +672,15 @@
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
             },
+            "get_name": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
             "get_skill_manager": {
               "params": [
                 {
@@ -671,6 +689,15 @@
                 }
               ],
               "returns": "class:signalwire.core.skill_manager.SkillManager"
+            },
+            "is_auto_map_sip_usernames": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
             },
             "on_debug_event": {
               "params": [
@@ -769,6 +796,15 @@
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
+            },
+            "skill_manager": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.core.skill_manager.SkillManager"
             }
           }
         }

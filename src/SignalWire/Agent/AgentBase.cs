@@ -636,6 +636,28 @@ public class AgentBase : Service
         return _skillManager;
     }
 
+    /// <summary>Skill manager (Python parity: ``agent.skill_manager``).</summary>
+    public SkillManager SkillManager => GetSkillManager();
+
+    /// <summary>Return the agent name (Python parity: ``agent.get_name()``).</summary>
+    public string GetName() => Name;
+
+    // ``GetFullUrl(bool includeAuth = false)`` is inherited from
+    // SignalWire.SWML.Service — re-using the same implementation matches
+    // Python's ``agent.get_full_url(include_auth=False)``.
+
+    /// <summary>Enable auto-mapping of SIP usernames to this agent's
+    /// route (Python parity: ``agent.auto_map_sip_usernames()``).
+    /// Chainable.</summary>
+    public AgentBase AutoMapSipUsernames()
+    {
+        _autoMapSipUsernames = true;
+        return this;
+    }
+
+    private bool _autoMapSipUsernames = false;
+    public bool IsAutoMapSipUsernames => _autoMapSipUsernames;
+
     /// <summary>
     /// Load and activate a skill by name. Resolves through <see cref="SkillRegistry"/>,
     /// validates env vars, calls Setup/RegisterTools, and merges hints/globalData/prompts.

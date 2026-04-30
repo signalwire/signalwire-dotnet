@@ -199,6 +199,59 @@ public class StructuralParityTests
     //   /home/devuser/src/signalwire-python/signalwire/signalwire/rest/namespaces/fabric.py::FabricNamespace
     // -------------------------------------------------------------------
 
+    // -------------------------------------------------------------------
+    // AgentBase Python-parity accessors —
+    // ``get_name``, ``get_full_url``, ``pom``, ``skill_manager``,
+    // ``auto_map_sip_usernames``. Python users write ``agent.skill_manager``
+    // (not ``agent.get_skill_manager()``); ``agent.get_name()``,
+    // ``agent.pom``. .NET should expose equivalent property/method shapes
+    // so the same code idiom is writeable.
+    //
+    // Python parity: signalwire/core/agent_base.py::AgentBase
+    //   ``get_name`` (line 312), ``get_full_url`` (line 321),
+    //   ``auto_map_sip_usernames`` (line 670), ``self.pom``,
+    //   ``self.skill_manager``.
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void AgentBase_GetName_ReturnsName()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "myagent", Route = "/r" });
+        Assert.Equal("myagent", agent.GetName());
+    }
+
+    [Fact]
+    public void AgentBase_GetFullUrl_BasicHostRoute()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/agent", Host = "example.com", Port = 8080 });
+        // Returns full URL — exact format may vary, but must contain host
+        // and route. (Python's get_full_url ships ``http://host:port/route``
+        // with optional auth prefix.)
+        var url = agent.GetFullUrl();
+        Assert.Contains("example.com", url);
+        Assert.Contains("/agent", url);
+    }
+
+    [Fact]
+    public void AgentBase_SkillManager_Property_Accessible()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r" });
+        // Python: ``agent.skill_manager`` is an instance attribute. .NET
+        // matches via a property of the same name (snake-cases to
+        // ``skill_manager``). Equivalent to GetSkillManager().
+        Assert.NotNull(agent.SkillManager);
+        Assert.Same(agent.SkillManager, agent.SkillManager); // lazy-singleton
+    }
+
+    [Fact]
+    public void AgentBase_AutoMapSipUsernames_Chainable()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r" });
+        // Python: ``agent.auto_map_sip_usernames()`` returns self for
+        // chaining.
+        Assert.Same(agent, agent.AutoMapSipUsernames());
+    }
+
     [Fact]
     public void Fabric_PythonParitySubResources_Exposed()
     {
