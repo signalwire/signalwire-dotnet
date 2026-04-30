@@ -4667,8 +4667,50 @@
         }
       }
     },
-    "signalwire.relay.action": {
+    "signalwire.relay.call": {
       "classes": {
+        "AIAction": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "control_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "node_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "client",
+                  "type": "any",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "get_stop_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        },
         "Action": {
           "methods": {
             "__init__": {
@@ -4805,11 +4847,11 @@
                 },
                 {
                   "name": "callback",
-                  "type": "callable<list<class:signalwire.relay.action.Action>,void>",
+                  "type": "callable<list<class:signalwire.relay.call.Action>,void>",
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.relay.action.Action"
+              "returns": "class:signalwire.relay.call.Action"
             },
             "payload": {
               "params": [
@@ -4878,57 +4920,7 @@
               "returns": "any"
             }
           }
-        }
-      }
-    },
-    "signalwire.relay.ai_action": {
-      "classes": {
-        "AIAction": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "control_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "call_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "node_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "client",
-                  "type": "any",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            },
-            "get_stop_method": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            }
-          }
-        }
-      }
-    },
-    "signalwire.relay.call": {
-      "classes": {
+        },
         "Call": {
           "methods": {
             "__init__": {
@@ -4957,7 +4949,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "dict<string,class:signalwire.relay.action.Action>"
+              "returns": "dict<string,class:signalwire.relay.call.Action>"
             },
             "ai": {
               "params": [
@@ -4972,7 +4964,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.ai_action.AIAction"
+              "returns": "class:signalwire.relay.call.AIAction"
             },
             "ai_hold": {
               "params": [
@@ -5086,7 +5078,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.collect_action.CollectAction"
+              "returns": "class:signalwire.relay.call.CollectAction"
             },
             "connect": {
               "params": [
@@ -5143,7 +5135,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.detect_action.DetectAction"
+              "returns": "class:signalwire.relay.call.DetectAction"
             },
             "device": {
               "params": [
@@ -5360,7 +5352,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.pay_action.PayAction"
+              "returns": "class:signalwire.relay.call.PayAction"
             },
             "peer": {
               "params": [
@@ -5384,7 +5376,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.play_action.PlayAction"
+              "returns": "class:signalwire.relay.call.PlayAction"
             },
             "play_and_collect": {
               "params": [
@@ -5399,7 +5391,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.collect_action.CollectAction"
+              "returns": "class:signalwire.relay.call.CollectAction"
             },
             "queue_enter": {
               "params": [
@@ -5438,7 +5430,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.fax_action.FaxAction"
+              "returns": "class:signalwire.relay.call.FaxAction"
             },
             "record": {
               "params": [
@@ -5453,7 +5445,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.record_action.RecordAction"
+              "returns": "class:signalwire.relay.call.RecordAction"
             },
             "refer": {
               "params": [
@@ -5507,7 +5499,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.fax_action.FaxAction"
+              "returns": "class:signalwire.relay.call.FaxAction"
             },
             "state": {
               "params": [
@@ -5531,7 +5523,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.stream_action.StreamAction"
+              "returns": "class:signalwire.relay.call.StreamAction"
             },
             "tag": {
               "params": [
@@ -5555,7 +5547,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.tap_action.TapAction"
+              "returns": "class:signalwire.relay.call.TapAction"
             },
             "transcribe": {
               "params": [
@@ -5570,7 +5562,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.transcribe_action.TranscribeAction"
+              "returns": "class:signalwire.relay.call.TranscribeAction"
             },
             "transfer": {
               "params": [
@@ -5610,6 +5602,517 @@
                 }
               ],
               "returns": "dict<string,any>"
+            }
+          }
+        },
+        "CollectAction": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "control_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "node_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "client",
+                  "type": "any",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "collect_result": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "get_stop_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "handle_event": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "evt",
+                  "type": "class:signalwire.relay.event.Event",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "start_input_timers": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            }
+          }
+        },
+        "DetectAction": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "control_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "node_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "client",
+                  "type": "any",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "detect_result": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "get_stop_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        },
+        "FaxAction": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "control_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "node_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "client",
+                  "type": "any",
+                  "required": true
+                },
+                {
+                  "name": "fax_type",
+                  "type": "string",
+                  "required": false,
+                  "default": "send"
+                }
+              ],
+              "returns": "void"
+            },
+            "fax_type": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "get_stop_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        },
+        "PayAction": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "control_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "node_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "client",
+                  "type": "any",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "get_stop_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        },
+        "PlayAction": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "control_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "node_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "client",
+                  "type": "any",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "get_stop_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "pause": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "resume": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "volume": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "db",
+                  "type": "float",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            }
+          }
+        },
+        "RecordAction": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "control_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "node_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "client",
+                  "type": "any",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "duration": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "float"
+            },
+            "get_stop_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "pause": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "resume": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "size": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "int"
+            },
+            "url": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        },
+        "StreamAction": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "control_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "node_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "client",
+                  "type": "any",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "get_stop_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        },
+        "TapAction": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "control_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "node_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "client",
+                  "type": "any",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "get_stop_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        },
+        "TranscribeAction": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "control_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "node_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "client",
+                  "type": "any",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "get_stop_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
             }
           }
         }
@@ -6051,139 +6554,6 @@
         }
       }
     },
-    "signalwire.relay.collect_action": {
-      "classes": {
-        "CollectAction": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "control_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "call_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "node_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "client",
-                  "type": "any",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            },
-            "collect_result": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "any"
-            },
-            "get_stop_method": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            },
-            "handle_event": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "evt",
-                  "type": "class:signalwire.relay.event.Event",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            },
-            "start_input_timers": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "void"
-            }
-          }
-        }
-      }
-    },
-    "signalwire.relay.detect_action": {
-      "classes": {
-        "DetectAction": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "control_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "call_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "node_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "client",
-                  "type": "any",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            },
-            "detect_result": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "any"
-            },
-            "get_stop_method": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            }
-          }
-        }
-      }
-    },
     "signalwire.relay.event": {
       "classes": {
         "Event": {
@@ -6308,67 +6678,6 @@
                 }
               ],
               "returns": "dict<string,any>"
-            }
-          }
-        }
-      }
-    },
-    "signalwire.relay.fax_action": {
-      "classes": {
-        "FaxAction": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "control_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "call_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "node_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "client",
-                  "type": "any",
-                  "required": true
-                },
-                {
-                  "name": "fax_type",
-                  "type": "string",
-                  "required": false,
-                  "default": "send"
-                }
-              ],
-              "returns": "void"
-            },
-            "fax_type": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            },
-            "get_stop_method": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
             }
           }
         }
@@ -6578,359 +6887,6 @@
                   "type": "int",
                   "required": false,
                   "default": 30
-                }
-              ],
-              "returns": "string"
-            }
-          }
-        }
-      }
-    },
-    "signalwire.relay.pay_action": {
-      "classes": {
-        "PayAction": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "control_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "call_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "node_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "client",
-                  "type": "any",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            },
-            "get_stop_method": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            }
-          }
-        }
-      }
-    },
-    "signalwire.relay.play_action": {
-      "classes": {
-        "PlayAction": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "control_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "call_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "node_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "client",
-                  "type": "any",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            },
-            "get_stop_method": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            },
-            "pause": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "void"
-            },
-            "resume": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "void"
-            },
-            "volume": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "db",
-                  "type": "float",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            }
-          }
-        }
-      }
-    },
-    "signalwire.relay.record_action": {
-      "classes": {
-        "RecordAction": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "control_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "call_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "node_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "client",
-                  "type": "any",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            },
-            "duration": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "float"
-            },
-            "get_stop_method": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            },
-            "pause": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "void"
-            },
-            "resume": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "void"
-            },
-            "size": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "int"
-            },
-            "url": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            }
-          }
-        }
-      }
-    },
-    "signalwire.relay.stream_action": {
-      "classes": {
-        "StreamAction": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "control_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "call_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "node_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "client",
-                  "type": "any",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            },
-            "get_stop_method": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            }
-          }
-        }
-      }
-    },
-    "signalwire.relay.tap_action": {
-      "classes": {
-        "TapAction": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "control_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "call_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "node_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "client",
-                  "type": "any",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            },
-            "get_stop_method": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            }
-          }
-        }
-      }
-    },
-    "signalwire.relay.transcribe_action": {
-      "classes": {
-        "TranscribeAction": {
-          "methods": {
-            "__init__": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "control_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "call_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "node_id",
-                  "type": "string",
-                  "required": true
-                },
-                {
-                  "name": "client",
-                  "type": "any",
-                  "required": true
-                }
-              ],
-              "returns": "void"
-            },
-            "get_stop_method": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
                 }
               ],
               "returns": "string"

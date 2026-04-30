@@ -83,6 +83,30 @@ CLASS_MODULE_MAP: dict[str, str] = {
     # -- relay ------------------------------------------------------------
     "Call": "signalwire.relay.call",
     "Message": "signalwire.relay.message",
+    # All Relay Action subclasses live under ``signalwire.relay.call`` in
+    # Python (one big module). .NET splits each action into its own
+    # source file / namespace.
+    "Action": "signalwire.relay.call",
+    "AIAction": "signalwire.relay.call",
+    "CollectAction": "signalwire.relay.call",
+    "ConnectAction": "signalwire.relay.call",
+    "DetectAction": "signalwire.relay.call",
+    "FaxAction": "signalwire.relay.call",
+    "PayAction": "signalwire.relay.call",
+    "PlayAction": "signalwire.relay.call",
+    "RecordAction": "signalwire.relay.call",
+    "ReferAction": "signalwire.relay.call",
+    "SendDigitsAction": "signalwire.relay.call",
+    "StandaloneCollectAction": "signalwire.relay.call",
+    "StreamAction": "signalwire.relay.call",
+    "TapAction": "signalwire.relay.call",
+    "TranscribeAction": "signalwire.relay.call",
+    "DialAction": "signalwire.relay.call",
+    "DenoiseAction": "signalwire.relay.call",
+    "EchoAction": "signalwire.relay.call",
+    "QueueAction": "signalwire.relay.call",
+    "PromptAction": "signalwire.relay.call",
+    "Event": "signalwire.relay.event",
 
     # -- prefabs ----------------------------------------------------------
     "ConciergeAgent": "signalwire.prefabs.concierge",
