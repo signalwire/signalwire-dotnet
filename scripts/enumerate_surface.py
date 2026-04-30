@@ -87,6 +87,7 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "SWMLBuilder": "signalwire.core.swml_builder",
     "SwmlRenderer": "signalwire.core.swml_renderer",
     "UrlValidator": "signalwire.utils.url_validator",
+    "ExecutionMode": "signalwire.utils.execution_mode",
     "CrudWithAddresses": "signalwire.rest._base",
 
     # -- relay ------------------------------------------------------------

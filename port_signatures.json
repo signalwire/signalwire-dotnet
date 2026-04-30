@@ -3241,6 +3241,14 @@
         }
       }
     },
+    "signalwire.core.logging_config": {
+      "functions": {
+        "get_execution_mode": {
+          "params": [],
+          "returns": "string"
+        }
+      }
+    },
     "signalwire.core.mixins.ai_config_mixin": {
       "classes": {
         "AIConfigMixin": {
@@ -12344,6 +12352,14 @@
               "returns": "string"
             }
           }
+        }
+      }
+    },
+    "signalwire.utils": {
+      "functions": {
+        "is_serverless_mode": {
+          "params": [],
+          "returns": "bool"
         }
       }
     },

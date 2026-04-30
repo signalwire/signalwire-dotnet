@@ -483,6 +483,104 @@ public class StructuralParityTests
     // Python parity: tests/unit/utils/test_url_validator.py
     // -------------------------------------------------------------------
 
+    // -------------------------------------------------------------------
+    // ExecutionMode — Python's get_execution_mode + is_serverless_mode.
+    // Python parity: tests/unit/utils/test_execution_mode.py
+    // -------------------------------------------------------------------
+
+    private static readonly string[] _execModeEnvKeys = new[]
+    {
+        "GATEWAY_INTERFACE",
+        "AWS_LAMBDA_FUNCTION_NAME", "LAMBDA_TASK_ROOT",
+        "FUNCTION_TARGET", "K_SERVICE", "GOOGLE_CLOUD_PROJECT",
+        "AZURE_FUNCTIONS_ENVIRONMENT", "FUNCTIONS_WORKER_RUNTIME",
+        "AzureWebJobsStorage",
+    };
+
+    private static T WithCleanEnv<T>(Func<T> fn)
+    {
+        var saved = new Dictionary<string, string?>();
+        foreach (var k in _execModeEnvKeys)
+        {
+            saved[k] = Environment.GetEnvironmentVariable(k);
+            Environment.SetEnvironmentVariable(k, null);
+        }
+        try { return fn(); }
+        finally
+        {
+            foreach (var kv in saved) Environment.SetEnvironmentVariable(kv.Key, kv.Value);
+        }
+    }
+
+    [Fact]
+    public void ExecutionMode_DefaultIsServer()
+    {
+        var mode = WithCleanEnv(() => SignalWire.Utils.ExecutionMode.GetExecutionMode());
+        Assert.Equal("server", mode);
+    }
+
+    [Fact]
+    public void ExecutionMode_LambdaDetectedViaFunctionName()
+    {
+        var mode = WithCleanEnv(() =>
+        {
+            Environment.SetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME", "my-fn");
+            return SignalWire.Utils.ExecutionMode.GetExecutionMode();
+        });
+        Assert.Equal("lambda", mode);
+    }
+
+    [Fact]
+    public void ExecutionMode_CgiDetected()
+    {
+        var mode = WithCleanEnv(() =>
+        {
+            Environment.SetEnvironmentVariable("GATEWAY_INTERFACE", "CGI/1.1");
+            return SignalWire.Utils.ExecutionMode.GetExecutionMode();
+        });
+        Assert.Equal("cgi", mode);
+    }
+
+    [Fact]
+    public void ExecutionMode_GoogleCloudFunctionDetected()
+    {
+        var mode = WithCleanEnv(() =>
+        {
+            Environment.SetEnvironmentVariable("FUNCTION_TARGET", "my_handler");
+            return SignalWire.Utils.ExecutionMode.GetExecutionMode();
+        });
+        Assert.Equal("google_cloud_function", mode);
+    }
+
+    [Fact]
+    public void ExecutionMode_AzureFunctionDetected()
+    {
+        var mode = WithCleanEnv(() =>
+        {
+            Environment.SetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT", "Production");
+            return SignalWire.Utils.ExecutionMode.GetExecutionMode();
+        });
+        Assert.Equal("azure_function", mode);
+    }
+
+    [Fact]
+    public void IsServerlessMode_FalseInServer()
+    {
+        var serverless = WithCleanEnv(() => SignalWire.Utils.ExecutionMode.IsServerlessMode());
+        Assert.False(serverless);
+    }
+
+    [Fact]
+    public void IsServerlessMode_TrueInLambda()
+    {
+        var serverless = WithCleanEnv(() =>
+        {
+            Environment.SetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME", "fn");
+            return SignalWire.Utils.ExecutionMode.IsServerlessMode();
+        });
+        Assert.True(serverless);
+    }
+
     [Fact]
     public void UrlValidator_HttpAndHttpsAllowed_PublicIp()
     {

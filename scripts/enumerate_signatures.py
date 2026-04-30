@@ -499,6 +499,44 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         if not out_modules[mod]["classes"]:
             del out_modules[mod]["classes"]
 
+    # Per-method free-function routing for static helpers whose methods
+    # land at DIFFERENT Python modules. .NET groups several helpers on
+    # one static class for ergonomics; Python scatters them.
+    # Map: (source_mod, ClassName, source_method) ->
+    #      (target_mod, target_function_name).
+    STATIC_METHOD_FREE_FN_PROJECTIONS: dict[
+        tuple[str, str, str], tuple[str, str]
+    ] = {
+        ("signalwire.utils.execution_mode", "ExecutionMode", "is_serverless_mode"):
+            ("signalwire.utils", "is_serverless_mode"),
+        ("signalwire.utils.execution_mode", "ExecutionMode", "get_execution_mode"):
+            ("signalwire.core.logging_config", "get_execution_mode"),
+    }
+    cls_to_drop: set[tuple[str, str]] = set()
+    for (src_mod, src_cls, src_method), (tgt_mod, tgt_fn) in STATIC_METHOD_FREE_FN_PROJECTIONS.items():
+        cls_entry = out_modules.get(src_mod, {}).get("classes", {}).get(src_cls)
+        if not cls_entry:
+            continue
+        msig = cls_entry["methods"].get(src_method)
+        if msig is None:
+            continue
+        out_modules.setdefault(tgt_mod, {}).setdefault("functions", {})
+        free_sig = {
+            "params": [p for p in msig["params"] if p.get("kind") not in ("self", "cls")],
+            "returns": msig["returns"],
+        }
+        out_modules[tgt_mod]["functions"].setdefault(tgt_fn, free_sig)
+        cls_to_drop.add((src_mod, src_cls))
+    # Drop source classes once all methods have been projected.
+    for (src_mod, src_cls) in cls_to_drop:
+        if src_mod in out_modules and "classes" in out_modules[src_mod]:
+            out_modules[src_mod]["classes"].pop(src_cls, None)
+            if not out_modules[src_mod]["classes"]:
+                del out_modules[src_mod]["classes"]
+        # If module is now empty, drop it
+        if src_mod in out_modules and not out_modules[src_mod]:
+            del out_modules[src_mod]
+
     # Sort modules + classes deterministically
     sorted_modules = {}
     for mod in sorted(out_modules):
