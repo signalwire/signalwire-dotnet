@@ -449,6 +449,91 @@ public class StructuralParityTests
         Assert.Equal("Greeting", agent.Pom[0]["title"]);
     }
 
+    // -------------------------------------------------------------------
+    // PomBuilder — fluent wrapper around PromptObjectModel for ergonomic
+    // prompt construction. Python's PomBuilder auto-vivifies missing
+    // sections on AddToSection / AddSubsection, exposes HasSection /
+    // GetSection / RenderMarkdown / RenderXml / ToDict / ToJson, and
+    // FromSections classmethod.
+    //
+    // Python parity: tests/unit/core/test_pom_builder.py::TestPomBuilder
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void PomBuilder_BasicInitialization()
+    {
+        var b = new SignalWire.POM.PomBuilder();
+        Assert.NotNull(b.Pom);
+        Assert.Empty(b.Pom.Sections);
+    }
+
+    [Fact]
+    public void PomBuilder_AddSectionChainable()
+    {
+        var b = new SignalWire.POM.PomBuilder();
+        var ret = b.AddSection("Greeting", body: "Hello");
+        Assert.Same(b, ret);  // fluent
+        Assert.True(b.HasSection("Greeting"));
+    }
+
+    [Fact]
+    public void PomBuilder_AddToSectionAutoVivifies()
+    {
+        var b = new SignalWire.POM.PomBuilder();
+        b.AddToSection("NewSection", bullet: "first");
+        Assert.True(b.HasSection("NewSection"));
+        var s = b.GetSection("NewSection");
+        Assert.NotNull(s);
+        Assert.Contains("first", s!.Bullets);
+    }
+
+    [Fact]
+    public void PomBuilder_AddToSectionAppendsBody()
+    {
+        var b = new SignalWire.POM.PomBuilder();
+        b.AddSection("S", body: "first");
+        b.AddToSection("S", body: "second");
+        var md = b.RenderMarkdown();
+        Assert.Contains("first", md);
+        Assert.Contains("second", md);
+    }
+
+    [Fact]
+    public void PomBuilder_AddSubsectionAutoVivifiesParent()
+    {
+        var b = new SignalWire.POM.PomBuilder();
+        b.AddSubsection("Parent", "Child", body: "cb");
+        Assert.True(b.HasSection("Parent"));
+        var parent = b.GetSection("Parent")!;
+        Assert.Single(parent.Subsections);
+        Assert.Equal("Child", parent.Subsections[0].Title);
+    }
+
+    [Fact]
+    public void PomBuilder_GetSectionNullWhenAbsent()
+    {
+        var b = new SignalWire.POM.PomBuilder();
+        Assert.Null(b.GetSection("nope"));
+    }
+
+    [Fact]
+    public void PomBuilder_RenderMarkdownDelegatesToPom()
+    {
+        var b = new SignalWire.POM.PomBuilder();
+        b.AddSection("S", body: "hello");
+        Assert.Equal(b.Pom.RenderMarkdown(), b.RenderMarkdown());
+    }
+
+    [Fact]
+    public void PomBuilder_FromSectionsRoundTrip()
+    {
+        var b = new SignalWire.POM.PomBuilder();
+        b.AddSection("A", body: "body-A");
+        var sections = b.ToDict();
+        var restored = SignalWire.POM.PomBuilder.FromSections(sections);
+        Assert.True(restored.HasSection("A"));
+    }
+
     [Fact]
     public void Pom_EmptyHasNoSections()
     {

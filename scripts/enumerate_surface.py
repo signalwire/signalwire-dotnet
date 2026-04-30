@@ -83,6 +83,7 @@ CLASS_MODULE_MAP: dict[str, str] = {
     # -- pom --------------------------------------------------------------
     "PromptObjectModel": "signalwire.pom.pom",
     "Section": "signalwire.pom.pom",
+    "PomBuilder": "signalwire.core.pom_builder",
 
     # -- relay ------------------------------------------------------------
     "Call": "signalwire.relay.call",
