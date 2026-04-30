@@ -11,6 +11,22 @@ namespace SignalWire.SWML;
 /// <param name="Definition">The full JSON schema definition for this verb.</param>
 public sealed record VerbInfo(string Name, string SchemaName, JsonElement Definition);
 
+/// <summary>Validation error raised by SchemaUtils.ValidateVerb when a
+/// verb config violates its schema. (Python parity:
+/// ``signalwire.utils.schema_utils.SchemaValidationError``.)</summary>
+public class SchemaValidationError : Exception
+{
+    public string VerbName { get; }
+    public List<string> Errors { get; }
+
+    public SchemaValidationError(string verbName, List<string> errors)
+        : base($"Schema validation failed for verb '{verbName}': {string.Join("; ", errors)}")
+    {
+        VerbName = verbName;
+        Errors = errors;
+    }
+}
+
 /// <summary>
 /// Thread-safe singleton that loads the SWML JSON schema from an embedded resource
 /// and exposes verb definitions parsed from $defs.SWMLMethod.anyOf.
@@ -69,6 +85,67 @@ public sealed class Schema
 
     /// <summary>Number of verbs defined in the schema.</summary>
     public int VerbCount => _verbs.Count;
+
+    /// <summary>Alias of <see cref="GetVerbNames"/>. (Python parity:
+    /// ``SchemaUtils.get_all_verb_names``.)</summary>
+    public List<string> GetAllVerbNames() => GetVerbNames();
+
+    /// <summary>Get the parameter (property) definitions for a verb.
+    /// Returns an empty dict when the verb is unknown or has no
+    /// ``properties``. (Python parity:
+    /// ``SchemaUtils.get_verb_parameters(verb_name)``.)</summary>
+    public Dictionary<string, JsonElement> GetVerbParameters(string verbName)
+    {
+        var verb = GetVerb(verbName);
+        if (verb is null) return new Dictionary<string, JsonElement>();
+        if (!verb.Definition.TryGetProperty("properties", out var props)
+            || props.ValueKind != JsonValueKind.Object)
+        {
+            return new Dictionary<string, JsonElement>();
+        }
+        var result = new Dictionary<string, JsonElement>();
+        foreach (var p in props.EnumerateObject())
+        {
+            result[p.Name] = p.Value.Clone();
+        }
+        return result;
+    }
+
+    /// <summary>Validate a SWML document against the loaded schema.
+    /// Returns ``(true, [])`` on success or ``(false, [errors...])`` on
+    /// failure. Lightweight verb-presence check — full JSON-Schema
+    /// validation is out of scope for the bundled SDK.
+    /// (Python parity:
+    /// ``SchemaUtils.validate_document(document) -> (bool, list)``.)</summary>
+    public (bool Valid, List<string> Errors) ValidateDocument(Dictionary<string, object> document)
+    {
+        var errors = new List<string>();
+        if (document is null)
+        {
+            errors.Add("document must not be null");
+            return (false, errors);
+        }
+        if (!document.TryGetValue("sections", out var sectionsObj)
+            || sectionsObj is not Dictionary<string, List<Dictionary<string, object?>>> sections)
+        {
+            errors.Add("document missing 'sections' or wrong shape");
+            return (false, errors);
+        }
+        foreach (var section in sections)
+        {
+            foreach (var verbHash in section.Value)
+            {
+                foreach (var verbKv in verbHash)
+                {
+                    if (!IsValidVerb(verbKv.Key))
+                    {
+                        errors.Add($"unknown verb: {verbKv.Key}");
+                    }
+                }
+            }
+        }
+        return (errors.Count == 0, errors);
+    }
 
     private void LoadSchema()
     {

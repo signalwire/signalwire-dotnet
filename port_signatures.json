@@ -12139,68 +12139,6 @@
         }
       }
     },
-    "signalwire.swml.schema": {
-      "classes": {
-        "Schema": {
-          "methods": {
-            "get_verb": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "name",
-                  "type": "string",
-                  "required": true
-                }
-              ],
-              "returns": "optional<class:signalwire.swml.verb_info.VerbInfo>"
-            },
-            "get_verb_names": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "list<string>"
-            },
-            "instance": {
-              "params": [],
-              "returns": "class:signalwire.swml.schema.Schema"
-            },
-            "is_valid_verb": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "name",
-                  "type": "string",
-                  "required": true
-                }
-              ],
-              "returns": "bool"
-            },
-            "reset": {
-              "params": [],
-              "returns": "void"
-            },
-            "verb_count": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "int"
-            }
-          }
-        }
-      }
-    },
     "signalwire.swml.service_options": {
       "classes": {
         "ServiceOptions": {
@@ -12360,6 +12298,146 @@
         "is_serverless_mode": {
           "params": [],
           "returns": "bool"
+        }
+      }
+    },
+    "signalwire.utils.schema_utils": {
+      "classes": {
+        "SchemaUtils": {
+          "methods": {
+            "get_all_verb_names": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "list<string>"
+            },
+            "get_verb": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "name",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "optional<class:signalwire.swml.verb_info.VerbInfo>"
+            },
+            "get_verb_names": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "list<string>"
+            },
+            "get_verb_parameters": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "verb_name",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
+            "instance": {
+              "params": [],
+              "returns": "class:signalwire.utils.schema_utils.SchemaUtils"
+            },
+            "is_valid_verb": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "name",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "bool"
+            },
+            "reset": {
+              "params": [],
+              "returns": "void"
+            },
+            "validate_document": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "document",
+                  "type": "dict<string,any>",
+                  "required": true
+                }
+              ],
+              "returns": "tuple<bool,list<string>>"
+            },
+            "verb_count": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "int"
+            }
+          }
+        },
+        "SchemaValidationError": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "verb_name",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "errors",
+                  "type": "list<string>",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "errors": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "list<string>"
+            },
+            "verb_name": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            }
+          }
         }
       }
     },

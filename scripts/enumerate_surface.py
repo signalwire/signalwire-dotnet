@@ -164,6 +164,16 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ("SignalWire.REST", "RestClient"): (
         "signalwire.rest.client", "RestClient",
     ),
+    # SignalWire.SWML.Schema is the .NET-idiomatic singleton wrapper
+    # around the SWML JSON schema; Python keeps an instantiable
+    # SchemaUtils helper at signalwire.utils.schema_utils. Rename so
+    # the cross-language audit lines up.
+    ("SignalWire.SWML", "Schema"): (
+        "signalwire.utils.schema_utils", "SchemaUtils",
+    ),
+    ("SignalWire.SWML", "SchemaValidationError"): (
+        "signalwire.utils.schema_utils", "SchemaValidationError",
+    ),
     # .NET's REST namespace classes (in namespace ``SignalWire.REST.Namespaces``)
     # are named after the namespace (``Calling``, ``Fabric``); Python
     # places each in its own submodule and suffixes the class with
