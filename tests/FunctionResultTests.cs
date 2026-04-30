@@ -251,34 +251,47 @@ public class FunctionResultTests
         Assert.Equal(450, hold["timeout"]);
     }
 
+    // Python parity: the action's value is a single primitive
+    // (string/int/bool), priority answerFirst > timeout > enabled > true.
+
     [Fact]
     public void WaitForUser_NoParams()
     {
         var fr = new FunctionResult();
         fr.WaitForUser();
-        Assert.True((bool)GetAction(fr, 0)["wait_for_user"]);
+        Assert.Equal(true, GetAction(fr, 0)["wait_for_user"]);
     }
 
     [Fact]
-    public void WaitForUser_WithParams()
+    public void WaitForUser_TimeoutTakesPriority()
     {
         var fr = new FunctionResult();
-        fr.WaitForUser(true, 30, false);
-        var wfu = (Dictionary<string, object>)GetAction(fr, 0)["wait_for_user"];
-        Assert.True((bool)wfu["enabled"]);
-        Assert.Equal(30, wfu["timeout"]);
-        Assert.False((bool)wfu["answer_first"]);
+        fr.WaitForUser(true, 30);
+        Assert.Equal(30, GetAction(fr, 0)["wait_for_user"]);
     }
 
     [Fact]
-    public void WaitForUser_PartialParams()
+    public void WaitForUser_AnswerFirstTakesPriority()
     {
         var fr = new FunctionResult();
-        fr.WaitForUser(null, 60);
-        var wfu = (Dictionary<string, object>)GetAction(fr, 0)["wait_for_user"];
-        Assert.False(wfu.ContainsKey("enabled"));
-        Assert.Equal(60, wfu["timeout"]);
-        Assert.False(wfu.ContainsKey("answer_first"));
+        fr.WaitForUser(true, 30, true);
+        Assert.Equal("answer_first", GetAction(fr, 0)["wait_for_user"]);
+    }
+
+    [Fact]
+    public void WaitForUser_TimeoutOnly()
+    {
+        var fr = new FunctionResult();
+        fr.WaitForUser(timeout: 60);
+        Assert.Equal(60, GetAction(fr, 0)["wait_for_user"]);
+    }
+
+    [Fact]
+    public void WaitForUser_EnabledFalse()
+    {
+        var fr = new FunctionResult();
+        fr.WaitForUser(false);
+        Assert.Equal(false, GetAction(fr, 0)["wait_for_user"]);
     }
 
     [Fact]

@@ -146,29 +146,29 @@ public class FunctionResult
         return this;
     }
 
-    public FunctionResult WaitForUser(bool? enabled = null, int? timeout = null, bool? answerFirst = null)
+    public FunctionResult WaitForUser(bool? enabled = null, int? timeout = null, bool answerFirst = false)
     {
-        if (enabled is null && timeout is null && answerFirst is null)
+        // Python parity: the action's value is a SINGLE primitive,
+        // chosen by priority answerFirst > timeout > enabled > true.
+        object waitValue;
+        if (answerFirst)
         {
-            _actions.Add(new Dictionary<string, object> { ["wait_for_user"] = true });
-            return this;
+            waitValue = "answer_first";
+        }
+        else if (timeout is not null)
+        {
+            waitValue = timeout.Value;
+        }
+        else if (enabled is not null)
+        {
+            waitValue = enabled.Value;
+        }
+        else
+        {
+            waitValue = true;
         }
 
-        var parameters = new Dictionary<string, object>();
-        if (enabled is not null)
-        {
-            parameters["enabled"] = enabled.Value;
-        }
-        if (timeout is not null)
-        {
-            parameters["timeout"] = timeout.Value;
-        }
-        if (answerFirst is not null)
-        {
-            parameters["answer_first"] = answerFirst.Value;
-        }
-
-        _actions.Add(new Dictionary<string, object> { ["wait_for_user"] = parameters });
+        _actions.Add(new Dictionary<string, object> { ["wait_for_user"] = waitValue });
         return this;
     }
 

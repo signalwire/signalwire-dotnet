@@ -3008,9 +3008,9 @@
                 },
                 {
                   "name": "answer_first",
-                  "type": "optional<bool>",
+                  "type": "bool",
                   "required": false,
-                  "default": null
+                  "default": false
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
