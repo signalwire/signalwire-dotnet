@@ -257,6 +257,15 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     ("signalwire.core.mixins.tool_mixin", "ToolMixin"): [
         "define_tool", "on_function_call", "register_swaig_function",
     ],
+    # Python additionally extracted a ``ToolRegistry`` class that the
+    # ToolMixin delegates to. Project the same set of query methods to
+    # the ToolRegistry path so the cross-language audit treats methods
+    # on .NET's Service (which inherits to AgentBase) as covering both.
+    ("signalwire.core.agent.tools.registry", "ToolRegistry"): [
+        "define_tool", "register_swaig_function",
+        "has_function", "get_function", "get_all_functions",
+        "remove_function",
+    ],
     ("signalwire.core.mixins.web_mixin", "WebMixin"): [
         "enable_debug_routes", "manual_set_proxy_url", "run", "serve",
         "set_dynamic_config_callback",

@@ -252,6 +252,78 @@ public class StructuralParityTests
         Assert.Same(agent, agent.AutoMapSipUsernames());
     }
 
+    // -------------------------------------------------------------------
+    // ToolRegistry-style queries on Service / AgentBase —
+    // Python's ``ToolRegistry.has_function/get_function/get_all_functions/
+    // remove_function`` are part of the cross-language API contract.
+    // .NET stores tools in Service._tools; expose query methods so
+    // ``svc.HasFunction("foo")`` works as ``svc.has_function("foo")`` does
+    // in Python.
+    //
+    // Python parity:
+    //   tests/unit/core/agent/tools/test_tool_registry.py::TestToolRegistryDefineAndQuery
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void HasFunction_FalseWhenUnregistered()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        Assert.False(svc.HasFunction("nope"));
+    }
+
+    [Fact]
+    public void HasFunction_TrueAfterRegister()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        svc.RegisterSwaigFunction(new Dictionary<string, object>
+        {
+            ["function"] = "lookup",
+            ["purpose"] = "lookup something",
+        });
+        Assert.True(svc.HasFunction("lookup"));
+    }
+
+    [Fact]
+    public void GetFunction_ReturnsRegistered()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        svc.RegisterSwaigFunction(new Dictionary<string, object>
+        {
+            ["function"] = "lookup",
+            ["purpose"] = "lookup something",
+        });
+        var fn = svc.GetFunction("lookup");
+        Assert.NotNull(fn);
+        Assert.Equal("lookup", fn!["function"]);
+    }
+
+    [Fact]
+    public void GetFunction_NullWhenAbsent()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        Assert.Null(svc.GetFunction("nope"));
+    }
+
+    [Fact]
+    public void GetAllFunctions_ReturnsCopy()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        svc.RegisterSwaigFunction(new Dictionary<string, object> { ["function"] = "a" });
+        var snapshot = svc.GetAllFunctions();
+        svc.RegisterSwaigFunction(new Dictionary<string, object> { ["function"] = "b" });
+        Assert.False(snapshot.ContainsKey("b"));  // Snapshot must be unaffected
+    }
+
+    [Fact]
+    public void RemoveFunction_TrueWhenPresent_FalseWhenAbsent()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        svc.RegisterSwaigFunction(new Dictionary<string, object> { ["function"] = "doomed" });
+        Assert.True(svc.RemoveFunction("doomed"));
+        Assert.False(svc.HasFunction("doomed"));
+        Assert.False(svc.RemoveFunction("never_existed"));
+    }
+
     [Fact]
     public void Fabric_PythonParitySubResources_Exposed()
     {

@@ -359,6 +359,32 @@ public class Service
         return this;
     }
 
+    /// <summary>Check if a SWAIG function is registered
+    /// (Python parity: ``tool_registry.has_function(name)``).</summary>
+    public virtual bool HasFunction(string name) => _tools.ContainsKey(name);
+
+    /// <summary>Get a registered SWAIG function by name, or null
+    /// (Python parity: ``tool_registry.get_function(name)``).</summary>
+    public virtual Dictionary<string, object>? GetFunction(string name) =>
+        _tools.TryGetValue(name, out var fn) ? fn : null;
+
+    /// <summary>Get a snapshot of all registered SWAIG functions
+    /// (Python parity: ``tool_registry.get_all_functions()`` — returns
+    /// a copy so subsequent registrations don't mutate the snapshot).</summary>
+    public virtual Dictionary<string, Dictionary<string, object>> GetAllFunctions() =>
+        new Dictionary<string, Dictionary<string, object>>(_tools);
+
+    /// <summary>Remove a registered SWAIG function. Returns true if
+    /// removed, false if not found (Python parity:
+    /// ``tool_registry.remove_function(name)``).</summary>
+    public virtual bool RemoveFunction(string name)
+    {
+        if (!_tools.ContainsKey(name)) return false;
+        _tools.Remove(name);
+        _toolOrder.Remove(name);
+        return true;
+    }
+
     /// <summary>Register multiple tool definitions at once.</summary>
     public virtual Service DefineTools(List<Dictionary<string, object>> toolDefs)
     {
