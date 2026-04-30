@@ -154,4 +154,37 @@ public class StructuralParityTests
         var fr = new FunctionResult();
         Assert.Same(fr, fr.ReplaceInHistory());
     }
+
+    // -------------------------------------------------------------------
+    // FunctionResult.SwitchContext — Python's
+    // ``switch_context(system_prompt=None, user_prompt=None, consolidate=False, full_reset=False)``:
+    // when only system_prompt is set the action value is a bare STRING
+    // (simple form); otherwise a dict (advanced form). All four params
+    // default to the falsey value, so calling with no args is legal.
+    //
+    // Python parity: tests/unit/core/test_function_result.py
+    //   TestSwitchContextEdgeCases.test_switch_context_simple_string_only
+    //   TestSwitchContextEdgeCases.test_switch_context_with_full_reset_only
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void SwitchContext_SimpleStringOnly()
+    {
+        var fr = new FunctionResult();
+        fr.SwitchContext(systemPrompt: "You are a helpful bot");
+        var actions = (List<Dictionary<string, object>>)fr.ToDict()["action"];
+        // Python emits a BARE STRING for the simple-form case, not a dict.
+        Assert.Equal("You are a helpful bot", actions[0]["context_switch"]);
+    }
+
+    [Fact]
+    public void SwitchContext_FullResetOnly_NoSystemPrompt()
+    {
+        var fr = new FunctionResult();
+        fr.SwitchContext(fullReset: true);
+        var actions = (List<Dictionary<string, object>>)fr.ToDict()["action"];
+        var ctx = (Dictionary<string, object>)actions[0]["context_switch"];
+        Assert.True((bool)ctx["full_reset"]);
+        Assert.False(ctx.ContainsKey("system_prompt"));
+    }
 }

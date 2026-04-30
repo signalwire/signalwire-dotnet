@@ -237,17 +237,30 @@ public class FunctionResult
     }
 
     public FunctionResult SwitchContext(
-        string systemPrompt,
-        string userPrompt = "",
+        string? systemPrompt = null,
+        string? userPrompt = null,
         bool consolidate = false,
         bool fullReset = false,
         bool isolated = false)
     {
-        var ctx = new Dictionary<string, object> { ["system_prompt"] = systemPrompt };
-
-        if (userPrompt.Length > 0)
+        // Python parity: when only systemPrompt is set, emit a bare
+        // string ("simple form"). Any other combination emits a dict.
+        bool hasUserPrompt = !string.IsNullOrEmpty(userPrompt);
+        bool hasSystem = !string.IsNullOrEmpty(systemPrompt);
+        if (hasSystem && !hasUserPrompt && !consolidate && !fullReset && !isolated)
         {
-            ctx["user_prompt"] = userPrompt;
+            _actions.Add(new Dictionary<string, object> { ["context_switch"] = systemPrompt! });
+            return this;
+        }
+
+        var ctx = new Dictionary<string, object>();
+        if (hasSystem)
+        {
+            ctx["system_prompt"] = systemPrompt!;
+        }
+        if (hasUserPrompt)
+        {
+            ctx["user_prompt"] = userPrompt!;
         }
         if (consolidate)
         {

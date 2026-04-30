@@ -362,14 +362,12 @@ public class FunctionResultTests
     [Fact]
     public void SwitchContext_Simple()
     {
+        // Python parity: when only system_prompt is set, the action's
+        // context_switch value is a bare STRING (simple form), not a
+        // dict. Any other combination of flags triggers the dict form.
         var fr = new FunctionResult();
         fr.SwitchContext("You are a helpful agent.");
-        var cs = (Dictionary<string, object>)GetAction(fr, 0)["context_switch"];
-        Assert.Equal("You are a helpful agent.", cs["system_prompt"]);
-        Assert.False(cs.ContainsKey("user_prompt"));
-        Assert.False(cs.ContainsKey("consolidate"));
-        Assert.False(cs.ContainsKey("full_reset"));
-        Assert.False(cs.ContainsKey("isolated"));
+        Assert.Equal("You are a helpful agent.", GetAction(fr, 0)["context_switch"]);
     }
 
     [Fact]
