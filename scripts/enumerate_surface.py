@@ -208,9 +208,21 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     ("signalwire.core.mixins.auth_mixin", "AuthMixin"): [],
     ("signalwire.core.mixins.mcp_server_mixin", "MCPServerMixin"): [],
     ("signalwire.core.mixins.prompt_mixin", "PromptMixin"): [
-        "define_contexts", "get_prompt",
+        "contexts", "define_contexts", "get_post_prompt", "get_prompt",
         "prompt_add_section", "prompt_add_subsection", "prompt_add_to_section",
         "prompt_has_section", "reset_contexts", "set_post_prompt",
+        "set_prompt_pom", "set_prompt_text",
+    ],
+    # Python additionally extracted a ``PromptManager`` class that
+    # PromptMixin delegates to. Most of the same methods exist there too
+    # (the user-facing surface is identical — `agent.prompt_manager.X`
+    # ≡ `agent.X`). Project the same set so the cross-language audit
+    # treats both paths as covered.
+    ("signalwire.core.agent.prompt.manager", "PromptManager"): [
+        "define_contexts", "get_contexts", "get_post_prompt", "get_prompt",
+        "get_raw_prompt",
+        "prompt_add_section", "prompt_add_subsection", "prompt_add_to_section",
+        "prompt_has_section", "set_post_prompt", "set_prompt_pom",
         "set_prompt_text",
     ],
     ("signalwire.core.mixins.serverless_mixin", "ServerlessMixin"): [],
