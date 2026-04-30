@@ -15,6 +15,7 @@
 // surface in source, watch compile + test go green.
 
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 using SignalWire.Agent;
 using SignalWire.Contexts;
@@ -276,6 +277,132 @@ public class StructuralParityTests
     //   tests/unit/core/mixins/test_auth_mixin.py::
     //     TestValidateBasicAuth, TestGetBasicAuthCredentials
     // -------------------------------------------------------------------
+
+    // -------------------------------------------------------------------
+    // PromptObjectModel + Section parity — Python's
+    // ``signalwire.pom.pom.PromptObjectModel`` exposes a structured
+    // prompt-building API: AddSection, FindSection, RenderMarkdown,
+    // RenderXml, ToDict, ToJson, FromJson, Sections. .NET previously
+    // had no equivalent — POM was stored implicitly as a list of dicts
+    // on AgentBase. Add explicit PromptObjectModel and Section classes.
+    //
+    // Python parity:
+    //   tests/unit/pom/test_pom_object_model.py::
+    //     TestPromptObjectModelBasics, TestSectionBasics
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void Pom_EmptyHasNoSections()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        Assert.Empty(pom.Sections);
+    }
+
+    [Fact]
+    public void Pom_AddSectionReturnsSection()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        var section = pom.AddSection("Greeting");
+        Assert.IsType<SignalWire.POM.Section>(section);
+        Assert.Equal("Greeting", section.Title);
+    }
+
+    [Fact]
+    public void Pom_AddSectionAppearsInSections()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        pom.AddSection("A");
+        pom.AddSection("B");
+        var titles = pom.Sections.Select(s => s.Title).ToList();
+        Assert.Equal(new[] { "A", "B" }, titles);
+    }
+
+    [Fact]
+    public void Pom_FindSectionReturnsMatch()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        pom.AddSection("Greeting", body: "Hello");
+        var s = pom.FindSection("Greeting");
+        Assert.NotNull(s);
+        Assert.Equal("Greeting", s!.Title);
+    }
+
+    [Fact]
+    public void Pom_FindSectionNullWhenAbsent()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        Assert.Null(pom.FindSection("Nope"));
+    }
+
+    [Fact]
+    public void Pom_RenderMarkdownIncludesTitleAndBody()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        pom.AddSection("Greeting", body: "Hello world");
+        var md = pom.RenderMarkdown();
+        Assert.Contains("Greeting", md);
+        Assert.Contains("Hello world", md);
+    }
+
+    [Fact]
+    public void Pom_RenderXmlReturnsXmlString()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        pom.AddSection("Greeting", body: "Hi");
+        var xml = pom.RenderXml();
+        Assert.Contains("<", xml);
+        Assert.Contains(">", xml);
+    }
+
+    [Fact]
+    public void Pom_ToJsonIncludesSectionTitle()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        pom.AddSection("A", body: "body-A");
+        var json = pom.ToJson();
+        Assert.Contains("A", json);
+    }
+
+    [Fact]
+    public void Pom_FromJsonRoundTrip()
+    {
+        var pom = new SignalWire.POM.PromptObjectModel();
+        pom.AddSection("A", body: "body-A");
+        var json = pom.ToJson();
+        var restored = SignalWire.POM.PromptObjectModel.FromJson(json);
+        var titles = restored.Sections.Select(s => s.Title).ToList();
+        Assert.Contains("A", titles);
+    }
+
+    [Fact]
+    public void Section_AddBodyReplaces()
+    {
+        var s = new SignalWire.POM.Section("X", body: "initial");
+        s.AddBody("replacement");
+        var md = s.RenderMarkdown();
+        Assert.Contains("replacement", md);
+        Assert.DoesNotContain("initial", md);
+    }
+
+    [Fact]
+    public void Section_AddBulletsAppends()
+    {
+        var s = new SignalWire.POM.Section("X");
+        s.AddBullets(new List<string> { "one", "two" });
+        var md = s.RenderMarkdown();
+        Assert.Contains("one", md);
+        Assert.Contains("two", md);
+    }
+
+    [Fact]
+    public void Section_AddSubsectionReturnsSection()
+    {
+        var parent = new SignalWire.POM.Section("P");
+        var child = parent.AddSubsection("C", body: "cb");
+        Assert.IsType<SignalWire.POM.Section>(child);
+        Assert.Equal("C", child.Title);
+        Assert.Contains(child, parent.Subsections);
+    }
 
     [Fact]
     public void ValidateBasicAuth_TrueOnMatch_FalseOnMismatch()

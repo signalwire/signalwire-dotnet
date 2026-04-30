@@ -80,6 +80,10 @@ CLASS_MODULE_MAP: dict[str, str] = {
     # ``Service`` in SignalWire.SWML == Python's ``SWMLService``.
     # Renamed via CLASS_RENAME_MAP, mapped here.
 
+    # -- pom --------------------------------------------------------------
+    "PromptObjectModel": "signalwire.pom.pom",
+    "Section": "signalwire.pom.pom",
+
     # -- relay ------------------------------------------------------------
     "Call": "signalwire.relay.call",
     "Message": "signalwire.relay.message",
