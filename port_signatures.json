@@ -8372,6 +8372,33 @@
               ],
               "returns": "class:signalwire.rest.crud_resource.CrudResource"
             },
+            "cxml_applications": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "cxml_scripts": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "cxml_webhooks": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
             "dial_plans": {
               "params": [
                 {
@@ -8390,6 +8417,15 @@
               ],
               "returns": "class:signalwire.rest.crud_resource.CrudResource"
             },
+            "freeswitch_connectors": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
             "phone_numbers": {
               "params": [
                 {
@@ -8399,7 +8435,34 @@
               ],
               "returns": "class:signalwire.rest.crud_resource.CrudResource"
             },
+            "relay_applications": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "resources": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
             "sip_endpoints": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "sip_gateways": {
               "params": [
                 {
                   "name": "self",
@@ -8427,6 +8490,24 @@
               "returns": "class:signalwire.rest.crud_resource.CrudResource"
             },
             "swml_scripts": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "swml_webhooks": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+            },
+            "tokens": {
               "params": [
                 {
                   "name": "self",

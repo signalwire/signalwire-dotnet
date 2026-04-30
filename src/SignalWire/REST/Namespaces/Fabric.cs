@@ -14,7 +14,7 @@ public class Fabric
 
     private const string Base = "/api/fabric/resources";
 
-    // 13 lazily-initialised sub-resources
+    // Lazily-initialised sub-resources
     private CrudResource? _subscribers;
     private CrudResource? _sipEndpoints;
     private CrudResource? _addresses;
@@ -28,6 +28,16 @@ public class Fabric
     private CrudResource? _aiAgents;
     private CrudResource? _sipProfiles;
     private CrudResource? _phoneNumbers;
+    // Python-parity sub-resources (FabricNamespace.cxml_applications, etc.)
+    private CrudResource? _cxmlApplications;
+    private CrudResource? _cxmlScripts;
+    private CrudResource? _cxmlWebhooks;
+    private CrudResource? _freeswitchConnectors;
+    private CrudResource? _relayApplications;
+    private CrudResource? _resources;
+    private CrudResource? _sipGateways;
+    private CrudResource? _swmlWebhooks;
+    private CrudResource? _tokens;
 
     public Fabric(HttpClient client)
     {
@@ -78,4 +88,41 @@ public class Fabric
 
     public CrudResource PhoneNumbers =>
         _phoneNumbers ??= new CrudResource(_client, $"{Base}/phone_numbers");
+
+    // ------------------------------------------------------------------
+    // Python-parity sub-resources (Python's FabricNamespace exposes
+    // these; .NET previously did not). See Python source:
+    //   signalwire/rest/namespaces/fabric.py::FabricNamespace.__init__
+    // ------------------------------------------------------------------
+
+    public CrudResource CxmlApplications =>
+        _cxmlApplications ??= new CrudResource(_client, $"{Base}/cxml_applications");
+
+    public CrudResource CxmlScripts =>
+        _cxmlScripts ??= new CrudResource(_client, $"{Base}/cxml_scripts");
+
+    public CrudResource CxmlWebhooks =>
+        _cxmlWebhooks ??= new CrudResource(_client, $"{Base}/cxml_webhooks");
+
+    public CrudResource FreeswitchConnectors =>
+        _freeswitchConnectors ??= new CrudResource(_client, $"{Base}/freeswitch_connectors");
+
+    public CrudResource RelayApplications =>
+        _relayApplications ??= new CrudResource(_client, $"{Base}/relay_applications");
+
+    public CrudResource Resources =>
+        _resources ??= new CrudResource(_client, Base);
+
+    public CrudResource SipGateways =>
+        _sipGateways ??= new CrudResource(_client, $"{Base}/sip_gateways");
+
+    public CrudResource SwmlWebhooks =>
+        _swmlWebhooks ??= new CrudResource(_client, $"{Base}/swml_webhooks");
+
+    /// <summary>
+    /// Fabric tokens resource — note this lives at the top-level
+    /// ``/api/fabric/tokens`` path, NOT under ``/api/fabric/resources``.
+    /// </summary>
+    public CrudResource Tokens =>
+        _tokens ??= new CrudResource(_client, "/api/fabric/tokens");
 }

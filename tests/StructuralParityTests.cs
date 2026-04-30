@@ -187,4 +187,34 @@ public class StructuralParityTests
         Assert.True((bool)ctx["full_reset"]);
         Assert.False(ctx.ContainsKey("system_prompt"));
     }
+
+    // -------------------------------------------------------------------
+    // Fabric sub-resources — Python's FabricNamespace exposes 16
+    // sub-resource accessors; .NET's Fabric class previously had a
+    // different set (some renamed/deprecated). Add the missing ones so
+    // a Python user's call ``client.fabric.cxml_applications.list(...)``
+    // can be written in .NET as ``client.Fabric.CxmlApplications.List()``.
+    //
+    // Python parity:
+    //   /home/devuser/src/signalwire-python/signalwire/signalwire/rest/namespaces/fabric.py::FabricNamespace
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void Fabric_PythonParitySubResources_Exposed()
+    {
+        var http = new SignalWire.REST.HttpClient("p", "t", "https://test.com");
+        var fabric = new SignalWire.REST.Namespaces.Fabric(http);
+        // 9 sub-resources Python exposes that were missing in .NET.
+        Assert.Equal("/api/fabric/resources/cxml_applications", fabric.CxmlApplications.BasePath);
+        Assert.Equal("/api/fabric/resources/cxml_scripts", fabric.CxmlScripts.BasePath);
+        Assert.Equal("/api/fabric/resources/cxml_webhooks", fabric.CxmlWebhooks.BasePath);
+        Assert.Equal("/api/fabric/resources/freeswitch_connectors", fabric.FreeswitchConnectors.BasePath);
+        Assert.Equal("/api/fabric/resources/relay_applications", fabric.RelayApplications.BasePath);
+        Assert.Equal("/api/fabric/resources/sip_gateways", fabric.SipGateways.BasePath);
+        Assert.Equal("/api/fabric/resources/swml_webhooks", fabric.SwmlWebhooks.BasePath);
+        // ``resources`` is the catch-all under /api/fabric/resources (no
+        // sub-path); ``tokens`` lives at /api/fabric/tokens (different base).
+        Assert.Equal("/api/fabric/resources", fabric.Resources.BasePath);
+        Assert.Equal("/api/fabric/tokens", fabric.Tokens.BasePath);
+    }
 }
