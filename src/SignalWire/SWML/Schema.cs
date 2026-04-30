@@ -90,6 +90,24 @@ public sealed class Schema
     /// ``SchemaUtils.get_all_verb_names``.)</summary>
     public List<string> GetAllVerbNames() => GetVerbNames();
 
+    /// <summary>Public load-schema accessor. Returns the embedded SWML
+    /// schema as a Dictionary&lt;string, JsonElement&gt;. Empty dict
+    /// when the schema can't be loaded. (Python parity:
+    /// ``SchemaUtils.load_schema``.)</summary>
+    public Dictionary<string, JsonElement> LoadSchemaPublic()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        using var stream = assembly.GetManifestResourceStream("SignalWire.SWML.schema.json");
+        if (stream is null) return new Dictionary<string, JsonElement>();
+        using var doc = JsonDocument.Parse(stream);
+        var result = new Dictionary<string, JsonElement>();
+        foreach (var prop in doc.RootElement.EnumerateObject())
+        {
+            result[prop.Name] = prop.Value.Clone();
+        }
+        return result;
+    }
+
     /// <summary>Get the parameter (property) definitions for a verb.
     /// Returns an empty dict when the verb is unknown or has no
     /// ``properties``. (Python parity:

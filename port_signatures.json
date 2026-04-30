@@ -12369,6 +12369,15 @@
               ],
               "returns": "bool"
             },
+            "load_schema": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
             "reset": {
               "params": [],
               "returns": "void"

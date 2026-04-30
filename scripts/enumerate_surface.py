@@ -223,6 +223,10 @@ SKILL_RENAMES: dict[str, str] = {
 # normalises those mismatches.
 METHOD_RENAMES: dict[str, str] = {
     "for_each": "foreach",
+    # .NET can't shadow the private LoadSchema() that runs in the
+    # constructor. The public dict-returning equivalent is named
+    # LoadSchemaPublic in C# but maps to Python's ``load_schema``.
+    "load_schema_public": "load_schema",
 }
 
 # Methods we never emit. .NET's IDisposable/object overrides aren't part of
