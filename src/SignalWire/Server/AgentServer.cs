@@ -39,6 +39,8 @@ public partial class AgentServer
 
     private readonly Dictionary<string, AgentBase> _agents = [];
     private bool _sipRoutingEnabled;
+    private string _sipRoute = "/sip";
+    private bool _sipAutoMap = true;
     private readonly Dictionary<string, string> _sipUsernameMapping = [];
     private readonly Dictionary<string, string> _staticRoutes = [];
 
@@ -90,9 +92,17 @@ public partial class AgentServer
     //  SIP Routing
     // ==================================================================
 
-    public AgentServer SetupSipRouting()
+    /// <summary>
+    /// Enable SIP routing on this server. ``route`` lets the caller pin
+    /// a non-default SIP route prefix; ``autoMap`` opts agents into
+    /// auto-mapped sip_username = agent name. Matches Python's
+    /// ``setup_sip_routing(self, route='/sip', auto_map=True)``.
+    /// </summary>
+    public AgentServer SetupSipRouting(string route = "/sip", bool autoMap = true)
     {
         _sipRoutingEnabled = true;
+        _sipRoute = route;
+        _sipAutoMap = autoMap;
         return this;
     }
 

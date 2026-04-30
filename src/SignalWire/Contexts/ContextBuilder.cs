@@ -493,7 +493,7 @@ public class Context
     public Context SetEnterFillers(Dictionary<string, List<string>> fillers) { _enterFillers = fillers; return this; }
     public Context SetExitFillers(Dictionary<string, List<string>> fillers) { _exitFillers = fillers; return this; }
 
-    public Context AddEnterFiller(string lang, List<string> fillers)
+    public Context AddEnterFiller(string lang, params string[] fillers)
     {
         _enterFillers ??= [];
         if (!_enterFillers.ContainsKey(lang)) _enterFillers[lang] = [];
@@ -501,7 +501,7 @@ public class Context
         return this;
     }
 
-    public Context AddExitFiller(string lang, List<string> fillers)
+    public Context AddExitFiller(string lang, params string[] fillers)
     {
         _exitFillers ??= [];
         if (!_exitFillers.ContainsKey(lang)) _exitFillers[lang] = [];

@@ -552,6 +552,14 @@ public class AgentBase : Service
         return AddPostAnswerVerb(verb, config);
     }
 
+    /// <summary>Append config to the post-answer ``answer`` verb. Matches
+    /// Python's ``add_answer_verb(self, config)`` shape where the verb name
+    /// is implicit.</summary>
+    public AgentBase AddAnswerVerb(Dictionary<string, object> config)
+    {
+        return AddPostAnswerVerb("answer", config);
+    }
+
     public AgentBase AddPostAiVerb(string verb, Dictionary<string, object> config)
     {
         _postAiVerbs.Add((verb, config));
@@ -746,9 +754,16 @@ public class AgentBase : Service
     //  SIP Methods
     // ======================================================================
 
-    public AgentBase EnableSipRouting()
+    /// <summary>
+    /// Enable SIP routing on this agent. ``autoMap`` opts into Python's
+    /// auto-mapping behaviour (sip_username = agent name); ``path`` lets
+    /// the caller pin a specific SIP route prefix.
+    /// </summary>
+    public AgentBase EnableSipRouting(bool autoMap = false, string path = "")
     {
         SetParam("sip_routing", true);
+        if (autoMap) SetParam("sip_routing_auto_map", true);
+        if (!string.IsNullOrEmpty(path)) SetParam("sip_routing_path", path);
         return this;
     }
 
@@ -761,6 +776,11 @@ public class AgentBase : Service
         }
         return this;
     }
+
+    /// <summary>Register a SIP username under this agent's own route — Python
+    /// equivalent of ``register_sip_username(self, sip_username)``.</summary>
+    public AgentBase RegisterSipUsername(string username) =>
+        RegisterSipUsername(username, "");
 
     // ======================================================================
     //  SWML Rendering (5-phase pipeline)

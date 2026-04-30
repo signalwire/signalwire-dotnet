@@ -302,6 +302,18 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "route",
+                  "type": "string",
+                  "required": false,
+                  "default": "/sip"
+                },
+                {
+                  "name": "auto_map",
+                  "type": "bool",
+                  "required": false,
+                  "default": true
                 }
               ],
               "returns": "class:signalwire.agent_server.AgentServer"
@@ -347,11 +359,6 @@
                 {
                   "name": "self",
                   "kind": "self"
-                },
-                {
-                  "name": "verb",
-                  "type": "string",
-                  "required": true
                 },
                 {
                   "name": "config",
@@ -506,6 +513,18 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "auto_map",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                },
+                {
+                  "name": "path",
+                  "type": "string",
+                  "required": false,
+                  "default": ""
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -557,12 +576,6 @@
                   "name": "username",
                   "type": "string",
                   "required": true
-                },
-                {
-                  "name": "route",
-                  "type": "string",
-                  "required": false,
-                  "default": ""
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -677,6 +690,7 @@
                 },
                 {
                   "name": "fillers",
+                  "kind": "var_positional",
                   "type": "list<string>",
                   "required": true
                 }
@@ -696,6 +710,7 @@
                 },
                 {
                   "name": "fillers",
+                  "kind": "var_positional",
                   "type": "list<string>",
                   "required": true
                 }
@@ -2341,7 +2356,7 @@
                 },
                 {
                   "name": "keys",
-                  "type": "any",
+                  "type": "list<string>",
                   "required": true
                 }
               ],
@@ -2355,7 +2370,7 @@
                 },
                 {
                   "name": "keys",
-                  "type": "any",
+                  "type": "list<string>",
                   "required": true
                 }
               ],

@@ -7,6 +7,11 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- Exclude the dotnet_adapter_goldens project (its own .csproj manages
+         its build); without this the default Compile glob picks up the
+         goldens' Program.cs + obj/AssemblyInfo and produces duplicate-attr
+         compile errors. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);dotnet_adapter_goldens/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

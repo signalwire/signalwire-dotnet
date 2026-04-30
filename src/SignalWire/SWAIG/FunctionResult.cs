@@ -188,9 +188,7 @@ public class FunctionResult
         return this;
     }
 
-    /// <summary>Remove keys from global data. Accepts a single key or list,
-    /// matching Python's ``Union[str, List[str]]``.</summary>
-    public FunctionResult RemoveGlobalData(object keys)
+    public FunctionResult RemoveGlobalData(List<string> keys)
     {
         _actions.Add(new Dictionary<string, object>
         {
@@ -205,9 +203,7 @@ public class FunctionResult
         return this;
     }
 
-    /// <summary>Remove keys from metadata. Accepts a single key or list,
-    /// matching Python's ``Union[str, List[str]]``.</summary>
-    public FunctionResult RemoveMetadata(object keys)
+    public FunctionResult RemoveMetadata(List<string> keys)
     {
         _actions.Add(new Dictionary<string, object>
         {

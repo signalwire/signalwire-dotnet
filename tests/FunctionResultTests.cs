@@ -773,29 +773,28 @@ public class FunctionResultTests
     public void RpcDial_Minimal()
     {
         var fr = new FunctionResult();
-        fr.RpcDial("+15551234567");
+        // Python's rpc_dial requires to_number, from_number, dest_swml.
+        // device_type defaults to "phone".
+        fr.RpcDial("+15551234567", "+15559876543", "https://example.com/swml");
         var rpc = (Dictionary<string, object>)GetAction(fr, 0)["execute_rpc"];
         Assert.Equal("calling.dial", rpc["method"]);
         Assert.Equal("2.0", rpc["jsonrpc"]);
         var p = (Dictionary<string, object>)rpc["params"];
         Assert.Equal("+15551234567", p["to_number"]);
-        Assert.False(p.ContainsKey("from_number"));
-        Assert.False(p.ContainsKey("dest_swml"));
-        Assert.False(p.ContainsKey("call_timeout"));
-        Assert.False(p.ContainsKey("region"));
+        Assert.Equal("+15559876543", p["from_number"]);
+        Assert.Equal("https://example.com/swml", p["dest_swml"]);
     }
 
     [Fact]
     public void RpcDial_Full()
     {
         var fr = new FunctionResult();
-        fr.RpcDial("+15551234567", "+15559876543", "https://example.com/swml", 30, "us-east");
+        fr.RpcDial("+15551234567", "+15559876543", "https://example.com/swml", "phone");
         var rpc = (Dictionary<string, object>)GetAction(fr, 0)["execute_rpc"];
         var p = (Dictionary<string, object>)rpc["params"];
         Assert.Equal("+15559876543", p["from_number"]);
         Assert.Equal("https://example.com/swml", p["dest_swml"]);
-        Assert.Equal(30, p["call_timeout"]);
-        Assert.Equal("us-east", p["region"]);
+        Assert.Equal("phone", p["device_type"]);
     }
 
     [Fact]
@@ -981,7 +980,7 @@ public class FunctionResultTests
         Assert.Same(fr, fr.SendSms("a", "b", "c"));
         Assert.Same(fr, fr.Pay("url"));
         Assert.Same(fr, fr.ExecuteRpc("m"));
-        Assert.Same(fr, fr.RpcDial("+1"));
+        Assert.Same(fr, fr.RpcDial("+1", "+2", "swml"));
         Assert.Same(fr, fr.RpcAiMessage("id", "msg"));
         Assert.Same(fr, fr.RpcAiUnhold("id"));
         Assert.Same(fr, fr.SimulateUserInput("txt"));
