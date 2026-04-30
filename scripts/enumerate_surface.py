@@ -238,7 +238,8 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     ],
     ("signalwire.core.mixins.mcp_server_mixin", "MCPServerMixin"): [],
     ("signalwire.core.mixins.prompt_mixin", "PromptMixin"): [
-        "contexts", "define_contexts", "get_post_prompt", "get_prompt",
+        "contexts", "define_contexts", "get_contexts", "get_post_prompt",
+        "get_prompt", "get_raw_prompt",
         "prompt_add_section", "prompt_add_subsection", "prompt_add_to_section",
         "prompt_has_section", "reset_contexts", "set_post_prompt",
         "set_prompt_pom", "set_prompt_text",
@@ -255,6 +256,11 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
         "prompt_has_section", "set_post_prompt", "set_prompt_pom",
         "set_prompt_text",
     ],
+    # Also project to PromptMixin since PromptManager-equivalent
+    # methods live there in older Python (PromptMixin delegates to
+    # PromptManager). When .NET's AgentBase exposes GetRawPrompt /
+    # GetPostPrompt / GetContexts / SetPromptPom, those should also
+    # satisfy PromptMixin parity checks.
     ("signalwire.core.mixins.serverless_mixin", "ServerlessMixin"): [],
     ("signalwire.core.mixins.skill_mixin", "SkillMixin"): [
         "add_skill", "has_skill", "list_skills", "remove_skill",

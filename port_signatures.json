@@ -349,6 +349,24 @@
               ],
               "returns": "class:signalwire.core.contexts.ContextBuilder"
             },
+            "get_contexts": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "optional<dict<string,any>>"
+            },
+            "get_post_prompt": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "optional<string>"
+            },
             "get_prompt": {
               "params": [
                 {
@@ -357,6 +375,15 @@
                 }
               ],
               "returns": "any"
+            },
+            "get_raw_prompt": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "optional<string>"
             },
             "prompt_add_section": {
               "params": [
@@ -456,6 +483,20 @@
                 {
                   "name": "text",
                   "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "class:signalwire.core.agent_base.AgentBase"
+            },
+            "set_prompt_pom": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "pom",
+                  "type": "list<dict<string,any>>",
                   "required": true
                 }
               ],
@@ -834,6 +875,15 @@
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
+            },
+            "pom": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "list<dict<string,any>>"
             },
             "register_sip_username": {
               "params": [
@@ -3532,6 +3582,24 @@
               ],
               "returns": "class:signalwire.core.contexts.ContextBuilder"
             },
+            "get_contexts": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "optional<dict<string,any>>"
+            },
+            "get_post_prompt": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "optional<string>"
+            },
             "get_prompt": {
               "params": [
                 {
@@ -3540,6 +3608,15 @@
                 }
               ],
               "returns": "any"
+            },
+            "get_raw_prompt": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "optional<string>"
             },
             "prompt_add_section": {
               "params": [
@@ -3648,6 +3725,20 @@
                 {
                   "name": "text",
                   "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "class:signalwire.core.agent_base.AgentBase"
+            },
+            "set_prompt_pom": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "pom",
+                  "type": "list<dict<string,any>>",
                   "required": true
                 }
               ],

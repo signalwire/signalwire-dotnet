@@ -287,6 +287,38 @@ public class AgentBase : Service
         return _promptText;
     }
 
+    /// <summary>Return the raw prompt text if set, else null.
+    /// (Python parity: ``PromptManager.get_raw_prompt``.)</summary>
+    public string? GetRawPrompt() => string.IsNullOrEmpty(_promptText) ? null : _promptText;
+
+    /// <summary>Return the post-prompt text if set, else null.
+    /// (Python parity: ``PromptManager.get_post_prompt``.)</summary>
+    public string? GetPostPrompt() => string.IsNullOrEmpty(_postPrompt) ? null : _postPrompt;
+
+    /// <summary>Return the contexts configuration if defined, else null.
+    /// (Python parity: ``PromptManager.get_contexts``.)</summary>
+    public Dictionary<string, object>? GetContexts() =>
+        _contextBuilder is null ? null : _contextBuilder.ToDict();
+
+    /// <summary>Set the prompt as a list-of-section dicts (POM form).
+    /// Throws when ``UsePom`` is false. (Python parity:
+    /// ``PromptManager.set_prompt_pom``.)</summary>
+    public AgentBase SetPromptPom(List<Dictionary<string, object>> pom)
+    {
+        if (!_usePom)
+        {
+            throw new InvalidOperationException("UsePom must be true to use SetPromptPom");
+        }
+        _pomSections.Clear();
+        _pomSections.AddRange(pom);
+        return this;
+    }
+
+    /// <summary>The prompt as POM section list (Python parity:
+    /// ``agent.pom``). Each entry is a section dict
+    /// (title/body/bullets/...). Read-only snapshot.</summary>
+    public IReadOnlyList<Dictionary<string, object>> Pom => _pomSections;
+
     // Tool methods (DefineTool, RegisterSwaigFunction, DefineTools,
     // OnFunctionCall) are now provided by SignalWire.SWML.Service - inherited.
 

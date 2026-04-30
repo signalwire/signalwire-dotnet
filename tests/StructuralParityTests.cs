@@ -291,6 +291,65 @@ public class StructuralParityTests
     //     TestPromptObjectModelBasics, TestSectionBasics
     // -------------------------------------------------------------------
 
+    // -------------------------------------------------------------------
+    // PromptManager-style accessors on AgentBase: GetRawPrompt,
+    // GetPostPrompt, GetContexts, SetPromptPom, Pom property. Python's
+    // ``agent._prompt_manager.X`` is delegated here as ``agent.X``.
+    //
+    // Python parity:
+    //   tests/unit/core/test_agent_base.py::TestAgentBasePromptMethods::
+    //     test_get_raw_prompt_when_set / test_get_raw_prompt_none_when_unset /
+    //     test_get_contexts_none_when_unset /
+    //     test_set_prompt_pom_raises_when_use_pom_false /
+    //     test_set_prompt_pom_succeeds_when_use_pom_true
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void AgentBase_GetRawPrompt_NullWhenUnset()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r" });
+        Assert.Null(agent.GetRawPrompt());
+    }
+
+    [Fact]
+    public void AgentBase_GetRawPrompt_ReturnsSet()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r" });
+        agent.SetPromptText("Raw prompt text");
+        Assert.Equal("Raw prompt text", agent.GetRawPrompt());
+    }
+
+    [Fact]
+    public void AgentBase_GetContexts_NullWhenUnset()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r" });
+        Assert.Null(agent.GetContexts());
+    }
+
+    [Fact]
+    public void AgentBase_SetPromptPom_ThrowsWhenUsePomFalse()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r", UsePom = false });
+        Assert.Throws<System.InvalidOperationException>(() =>
+            agent.SetPromptPom(new List<Dictionary<string, object>>
+            {
+                new() { ["title"] = "X", ["body"] = "y" }
+            }));
+    }
+
+    [Fact]
+    public void AgentBase_SetPromptPom_AssignsWhenUsePomTrue()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r", UsePom = true });
+        var sections = new List<Dictionary<string, object>>
+        {
+            new() { ["title"] = "Greeting", ["body"] = "Hello" }
+        };
+        agent.SetPromptPom(sections);
+        Assert.Single(agent.Pom);
+        Assert.Equal("Greeting", agent.Pom[0]["title"]);
+    }
+
     [Fact]
     public void Pom_EmptyHasNoSections()
     {
