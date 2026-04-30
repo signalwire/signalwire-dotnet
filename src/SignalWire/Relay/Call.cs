@@ -145,8 +145,8 @@ public class Call
     public Task<Dictionary<string, object?>> AnswerAsync()
         => ExecuteAsync("calling.answer");
 
-    public Task<Dictionary<string, object?>> HangupAsync()
-        => ExecuteAsync("calling.hangup");
+    public Task<Dictionary<string, object?>> HangupAsync(string reason = "hangup")
+        => ExecuteAsync("calling.hangup", new Dictionary<string, object?> { ["reason"] = reason });
 
     public Task<Dictionary<string, object?>> PassAsync()
         => ExecuteAsync("calling.pass");

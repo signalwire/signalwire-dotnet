@@ -72,4 +72,18 @@ public class StructuralParityTests
         var server = new AgentServer();
         server.SetupSipRouting(route: "/custom-sip", autoMap: true);
     }
+
+    // -------------------------------------------------------------------
+    // Call.HangupAsync — Python's hangup(reason="hangup") accepts a reason
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void Call_HangupAsync_AcceptsReason()
+    {
+        // We don't actually dispatch a RELAY call here — just verify the
+        // method shape compiles. A real test would require a Call instance
+        // bound to a RelayClient; this exercise is structural.
+        var method = typeof(SignalWire.Relay.Call).GetMethod("HangupAsync", new[] { typeof(string) });
+        Assert.NotNull(method);
+    }
 }
