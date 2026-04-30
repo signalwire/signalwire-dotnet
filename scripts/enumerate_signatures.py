@@ -464,16 +464,53 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             if not out_modules["signalwire.core.agent_base"]["classes"]:
                 out_modules.pop("signalwire.core.agent_base")
 
+    # Static-helper-class -> free-function projection. C# has no free
+    # functions; Python module-level helpers (validate_url,
+    # is_serverless_mode, etc.) live on a static class in C# but the
+    # cross-language audit needs them at the module's free-function path.
+    # When a class in this list lives at ``mod.ClassName``, its public
+    # methods are also emitted as ``mod.method_name`` free functions.
+    # ``mod -> ClassName -> only-these-methods`` projection. None means
+    # all public methods (except __init__).
+    STATIC_TO_FREE_FN: dict[tuple[str, str], list[str] | None] = {
+        # Project only ``validate_url`` — the ``with_resolved_addresses``
+        # overload is .NET-test-only scaffolding.
+        ("signalwire.utils.url_validator", "UrlValidator"): ["validate_url"],
+    }
+    for (mod, cls), allowed in STATIC_TO_FREE_FN.items():
+        cls_entry = out_modules.get(mod, {}).get("classes", {}).get(cls)
+        if not cls_entry:
+            continue
+        out_modules[mod].setdefault("functions", {})
+        for mname, msig in cls_entry["methods"].items():
+            if mname == "__init__":
+                continue
+            if allowed is not None and mname not in allowed:
+                continue
+            free_sig = {
+                "params": [p for p in msig["params"] if p.get("kind") not in ("self", "cls")],
+                "returns": msig["returns"],
+            }
+            out_modules[mod]["functions"].setdefault(mname, free_sig)
+        # Drop the class entry entirely — these helpers are .NET-only
+        # scaffolding (C# has no free functions). Keeping the static class
+        # in the inventory creates phantom missing-reference entries.
+        del out_modules[mod]["classes"][cls]
+        if not out_modules[mod]["classes"]:
+            del out_modules[mod]["classes"]
+
     # Sort modules + classes deterministically
     sorted_modules = {}
     for mod in sorted(out_modules):
         entry = out_modules[mod]
-        sorted_modules[mod] = {
-            "classes": {
+        sorted_modules[mod] = {}
+        if entry.get("classes"):
+            sorted_modules[mod]["classes"] = {
                 cls: {"methods": dict(sorted(entry["classes"][cls]["methods"].items()))}
                 for cls in sorted(entry["classes"])
             }
-        }
+        if entry.get("functions"):
+            sorted_modules[mod]["functions"] = dict(sorted(entry["functions"].items()))
 
     return {
         "version": "2",

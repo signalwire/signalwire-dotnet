@@ -478,6 +478,81 @@ public class StructuralParityTests
     // Python parity: tests/unit/core/test_swml_renderer.py
     // -------------------------------------------------------------------
 
+    // -------------------------------------------------------------------
+    // UrlValidator.ValidateUrl — SSRF prevention.
+    // Python parity: tests/unit/utils/test_url_validator.py
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void UrlValidator_HttpAndHttpsAllowed_PublicIp()
+    {
+        var pub = new[] { System.Net.IPAddress.Parse("8.8.8.8") };
+        Assert.True(SignalWire.Utils.UrlValidator.ValidateUrlWithResolvedAddresses("http://example.com", pub));
+        Assert.True(SignalWire.Utils.UrlValidator.ValidateUrlWithResolvedAddresses("https://example.com", pub));
+    }
+
+    [Fact]
+    public void UrlValidator_NonHttpSchemes_Rejected()
+    {
+        var pub = new[] { System.Net.IPAddress.Parse("8.8.8.8") };
+        Assert.False(SignalWire.Utils.UrlValidator.ValidateUrlWithResolvedAddresses("ftp://example.com", pub));
+        Assert.False(SignalWire.Utils.UrlValidator.ValidateUrlWithResolvedAddresses("file:///etc/passwd", pub));
+    }
+
+    [Fact]
+    public void UrlValidator_LoopbackIpv4_Rejected()
+    {
+        var addrs = new[] { System.Net.IPAddress.Parse("127.0.0.1") };
+        Assert.False(SignalWire.Utils.UrlValidator.ValidateUrlWithResolvedAddresses("http://localhost", addrs));
+    }
+
+    [Fact]
+    public void UrlValidator_Rfc1918_Rejected()
+    {
+        Assert.False(SignalWire.Utils.UrlValidator.ValidateUrlWithResolvedAddresses(
+            "http://internal", new[] { System.Net.IPAddress.Parse("10.0.0.5") }));
+        Assert.False(SignalWire.Utils.UrlValidator.ValidateUrlWithResolvedAddresses(
+            "http://router", new[] { System.Net.IPAddress.Parse("192.168.1.1") }));
+        Assert.False(SignalWire.Utils.UrlValidator.ValidateUrlWithResolvedAddresses(
+            "http://corp", new[] { System.Net.IPAddress.Parse("172.16.0.5") }));
+    }
+
+    [Fact]
+    public void UrlValidator_LinkLocalMetadata_Rejected()
+    {
+        // AWS / GCP metadata endpoint — must always be blocked.
+        var addrs = new[] { System.Net.IPAddress.Parse("169.254.169.254") };
+        Assert.False(SignalWire.Utils.UrlValidator.ValidateUrlWithResolvedAddresses("http://metadata", addrs));
+    }
+
+    [Fact]
+    public void UrlValidator_Ipv6Loopback_Rejected()
+    {
+        var addrs = new[] { System.Net.IPAddress.Parse("::1") };
+        Assert.False(SignalWire.Utils.UrlValidator.ValidateUrlWithResolvedAddresses("http://[::1]", addrs));
+    }
+
+    [Fact]
+    public void UrlValidator_AllowPrivate_Bypasses()
+    {
+        // No DNS lookup needed when allowPrivate is true.
+        Assert.True(SignalWire.Utils.UrlValidator.ValidateUrl("http://10.0.0.5", allowPrivate: true));
+    }
+
+    [Fact]
+    public void UrlValidator_EnvVar_Bypasses()
+    {
+        Environment.SetEnvironmentVariable("SWML_ALLOW_PRIVATE_URLS", "true");
+        try
+        {
+            Assert.True(SignalWire.Utils.UrlValidator.ValidateUrl("http://10.0.0.5"));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SWML_ALLOW_PRIVATE_URLS", null);
+        }
+    }
+
     [Fact]
     public void SwmlRenderer_RenderSwml_BasicAi()
     {
