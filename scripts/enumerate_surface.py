@@ -265,7 +265,9 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     ("signalwire.core.mixins.skill_mixin", "SkillMixin"): [
         "add_skill", "has_skill", "list_skills", "remove_skill",
     ],
-    ("signalwire.core.mixins.state_mixin", "StateMixin"): [],
+    ("signalwire.core.mixins.state_mixin", "StateMixin"): [
+        "validate_tool_token",
+    ],
     ("signalwire.core.mixins.tool_mixin", "ToolMixin"): [
         "define_tool", "on_function_call", "register_swaig_function",
     ],

@@ -362,6 +362,47 @@ public class StructuralParityTests
         Assert.Null(agent.OnRequest(null, null));
     }
 
+    // -------------------------------------------------------------------
+    // ValidateToolToken — Python's StateMixin.validate_tool_token
+    // checks a SWAIG-function call token before executing. The token
+    // is created via SessionManager.create_tool_token(name, call_id)
+    // and validated via SessionManager.validate_tool_token(name, token, call_id).
+    //
+    // Python parity:
+    //   tests/unit/core/test_agent_base.py::test_validate_tool_token
+    //   tests/unit/core/test_agent_base.py::test_create_tool_token
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void ValidateToolToken_FalseForUnknownFunction()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r" });
+        // No tools registered — validation must reject unknown function.
+        Assert.False(agent.ValidateToolToken("nope", "any_token", "call_123"));
+    }
+
+    [Fact]
+    public void ValidateToolToken_RoundTripsCreatedToken()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r" });
+        agent.RegisterSwaigFunction(new Dictionary<string, object>
+        {
+            ["function"] = "lookup",
+            ["purpose"] = "x",
+        });
+        var token = agent.CreateToolToken("lookup", "call_123");
+        Assert.False(string.IsNullOrEmpty(token));
+        Assert.True(agent.ValidateToolToken("lookup", token, "call_123"));
+    }
+
+    [Fact]
+    public void ValidateToolToken_FalseForBadToken()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r" });
+        agent.RegisterSwaigFunction(new Dictionary<string, object> { ["function"] = "lookup" });
+        Assert.False(agent.ValidateToolToken("lookup", "bad_token", "call_123"));
+    }
+
     [Fact]
     public void AgentBase_GetRawPrompt_NullWhenUnset()
     {

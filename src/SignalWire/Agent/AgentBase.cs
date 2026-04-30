@@ -319,6 +319,40 @@ public class AgentBase : Service
     /// (title/body/bullets/...). Read-only snapshot.</summary>
     public IReadOnlyList<Dictionary<string, object>> Pom => _pomSections;
 
+    /// <summary>Create a per-call SWAIG-function token. Returns empty
+    /// string on failure. (Python parity: ``StateMixin._create_tool_token``.)</summary>
+    public string CreateToolToken(string toolName, string callId)
+    {
+        try
+        {
+            return _sessionManager.CreateToken(toolName, callId);
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
+    /// <summary>Validate a per-call SWAIG-function token. Rejects
+    /// when the function is not registered, when the SessionManager
+    /// rejects the token, or on any error. (Python parity:
+    /// ``StateMixin.validate_tool_token``.)</summary>
+    public bool ValidateToolToken(string functionName, string token, string callId)
+    {
+        if (!HasFunction(functionName))
+        {
+            return false;
+        }
+        try
+        {
+            return _sessionManager.ValidateToken(functionName, callId, token);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     // Tool methods (DefineTool, RegisterSwaigFunction, DefineTools,
     // OnFunctionCall) are now provided by SignalWire.SWML.Service - inherited.
 
