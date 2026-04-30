@@ -304,6 +304,64 @@ public class StructuralParityTests
     //     test_set_prompt_pom_succeeds_when_use_pom_true
     // -------------------------------------------------------------------
 
+    // -------------------------------------------------------------------
+    // OnRequest / OnSwmlRequest virtual hooks — Python's WebMixin
+    // exposes these as user-overridable hooks for SWML customization.
+    // OnRequest's default delegates to OnSwmlRequest. Subclasses
+    // override to inject custom SWML modifications.
+    //
+    // Python parity:
+    //   tests/unit/core/mixins/test_web_mixin.py::
+    //     test_on_request_delegates_to_on_swml_request
+    //     test_on_swml_request_called
+    // -------------------------------------------------------------------
+
+    private class CustomSwmlAgent : AgentBase
+    {
+        public CustomSwmlAgent(AgentOptions opts) : base(opts) { }
+        public Dictionary<string, object>? CustomReturn { get; set; }
+        public Dictionary<string, object?>? LastRequestData { get; set; }
+        public string? LastCallbackPath { get; set; }
+        public override Dictionary<string, object>? OnSwmlRequest(
+            Dictionary<string, object?>? requestData, string? callbackPath)
+        {
+            LastRequestData = requestData;
+            LastCallbackPath = callbackPath;
+            return CustomReturn;
+        }
+    }
+
+    [Fact]
+    public void OnRequest_DelegatesToOnSwmlRequest()
+    {
+        var agent = new CustomSwmlAgent(new AgentOptions { Name = "t", Route = "/r" })
+        {
+            CustomReturn = new Dictionary<string, object> { ["custom"] = true }
+        };
+        var rd = new Dictionary<string, object?> { ["data"] = "val" };
+        var result = agent.OnRequest(rd, "/cb");
+        Assert.Equal(rd, agent.LastRequestData);
+        Assert.Equal("/cb", agent.LastCallbackPath);
+        Assert.NotNull(result);
+        Assert.Equal(true, result!["custom"]);
+    }
+
+    [Fact]
+    public void OnSwmlRequest_DefaultReturnsNull()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r" });
+        // Default OnSwmlRequest returns null — caller falls back to
+        // standard SWML rendering.
+        Assert.Null(agent.OnSwmlRequest(null, null));
+    }
+
+    [Fact]
+    public void OnRequest_DefaultReturnsNull()
+    {
+        var agent = new AgentBase(new AgentOptions { Name = "t", Route = "/r" });
+        Assert.Null(agent.OnRequest(null, null));
+    }
+
     [Fact]
     public void AgentBase_GetRawPrompt_NullWhenUnset()
     {

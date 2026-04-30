@@ -242,6 +242,30 @@ public class Service
         return Document.ToDict();
     }
 
+    /// <summary>Customization hook called when SWML is requested.
+    /// Default delegates to <see cref="OnSwmlRequest"/>; subclasses
+    /// typically override <see cref="OnSwmlRequest"/> instead of this
+    /// method. Return null to use the default SWML rendering, or a
+    /// dictionary of modifications to merge in.
+    /// (Python parity: ``WebMixin.on_request``.)</summary>
+    public virtual Dictionary<string, object>? OnRequest(
+        Dictionary<string, object?>? requestData = null,
+        string? callbackPath = null)
+    {
+        return OnSwmlRequest(requestData, callbackPath);
+    }
+
+    /// <summary>Customization hook for subclasses to modify SWML based
+    /// on request data. Return null to use default rendering, or a
+    /// dictionary of modifications. (Python parity:
+    /// ``WebMixin.on_swml_request``.)</summary>
+    public virtual Dictionary<string, object>? OnSwmlRequest(
+        Dictionary<string, object?>? requestData = null,
+        string? callbackPath = null)
+    {
+        return null;
+    }
+
     // ------------------------------------------------------------------
     // HTTP handling
     // ------------------------------------------------------------------

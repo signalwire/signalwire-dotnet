@@ -279,7 +279,8 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
         "remove_function",
     ],
     ("signalwire.core.mixins.web_mixin", "WebMixin"): [
-        "enable_debug_routes", "manual_set_proxy_url", "run", "serve",
+        "enable_debug_routes", "manual_set_proxy_url", "on_request",
+        "on_swml_request", "register_routing_callback", "run", "serve",
         "set_dynamic_config_callback",
     ],
 }
