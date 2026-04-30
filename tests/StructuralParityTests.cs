@@ -264,6 +264,66 @@ public class StructuralParityTests
     //   tests/unit/core/agent/tools/test_tool_registry.py::TestToolRegistryDefineAndQuery
     // -------------------------------------------------------------------
 
+    // -------------------------------------------------------------------
+    // AuthMixin parity — Python's
+    // ``validate_basic_auth(username, password) -> bool`` and
+    // ``get_basic_auth_credentials(include_source=False)``. .NET's
+    // ``GetBasicAuthCredentials`` previously returned only the
+    // (user, password) tuple, with no validate or source-detection
+    // surface. Add both.
+    //
+    // Python parity:
+    //   tests/unit/core/mixins/test_auth_mixin.py::
+    //     TestValidateBasicAuth, TestGetBasicAuthCredentials
+    // -------------------------------------------------------------------
+
+    [Fact]
+    public void ValidateBasicAuth_TrueOnMatch_FalseOnMismatch()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions
+        {
+            Name = "t",
+            Route = "/r",
+            BasicAuthUser = "admin",
+            BasicAuthPassword = "secret",
+        });
+        Assert.True(svc.ValidateBasicAuth("admin", "secret"));
+        Assert.False(svc.ValidateBasicAuth("admin", "wrong"));
+        Assert.False(svc.ValidateBasicAuth("wrong", "secret"));
+    }
+
+    [Fact]
+    public void GetBasicAuthCredentials_WithSourceProvided()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions
+        {
+            Name = "t",
+            Route = "/r",
+            BasicAuthUser = "alice",
+            BasicAuthPassword = "shortpw",
+        });
+        var (user, pass, source) = svc.GetBasicAuthCredentialsWithSource();
+        Assert.Equal("alice", user);
+        Assert.Equal("shortpw", pass);
+        // "provided": user-supplied, doesn't match env or generated heuristic
+        Assert.Equal("provided", source);
+    }
+
+    [Fact]
+    public void GetBasicAuthCredentials_SourceGenerated_WhenLooksGenerated()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions
+        {
+            Name = "t",
+            Route = "/r",
+            BasicAuthUser = "user_abc",
+            BasicAuthPassword = "supersecretlongpassword12345",
+        });
+        var (_, _, source) = svc.GetBasicAuthCredentialsWithSource();
+        // user_ prefix + password > 20 chars => generated
+        Assert.Equal("generated", source);
+    }
+
     [Fact]
     public void HasFunction_FalseWhenUnregistered()
     {

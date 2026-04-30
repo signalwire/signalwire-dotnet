@@ -229,7 +229,9 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
         "set_post_prompt_llm_params", "set_prompt_llm_params",
         "set_pronunciations", "update_global_data",
     ],
-    ("signalwire.core.mixins.auth_mixin", "AuthMixin"): [],
+    ("signalwire.core.mixins.auth_mixin", "AuthMixin"): [
+        "get_basic_auth_credentials", "validate_basic_auth",
+    ],
     ("signalwire.core.mixins.mcp_server_mixin", "MCPServerMixin"): [],
     ("signalwire.core.mixins.prompt_mixin", "PromptMixin"): [
         "contexts", "define_contexts", "get_post_prompt", "get_prompt",

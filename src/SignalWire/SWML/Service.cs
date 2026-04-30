@@ -170,6 +170,45 @@ public class Service
         return (_basicAuthUser, _basicAuthPassword);
     }
 
+    /// <summary>Get the Basic Auth credentials plus the SOURCE of the
+    /// credentials (Python parity:
+    /// ``get_basic_auth_credentials(include_source=True)``).
+    /// Source is one of "provided", "environment", or "generated".</summary>
+    public (string User, string Password, string Source) GetBasicAuthCredentialsWithSource()
+    {
+        var envUser = Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_USER");
+        var envPass = Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_PASSWORD");
+        string source;
+        if (!string.IsNullOrEmpty(envUser) && !string.IsNullOrEmpty(envPass)
+            && _basicAuthUser == envUser && _basicAuthPassword == envPass)
+        {
+            source = "environment";
+        }
+        else if (_basicAuthUser.StartsWith("user_") && _basicAuthPassword.Length > 20)
+        {
+            source = "generated";
+        }
+        else
+        {
+            source = "provided";
+        }
+        return (_basicAuthUser, _basicAuthPassword, source);
+    }
+
+    /// <summary>Validate provided basic-auth credentials against the
+    /// configured ones (constant-time comparison)
+    /// (Python parity: ``validate_basic_auth(username, password)``).</summary>
+    public virtual bool ValidateBasicAuth(string username, string password)
+    {
+        if (_basicAuthUser is null || _basicAuthPassword is null) return false;
+        return CryptographicOperations.FixedTimeEquals(
+                System.Text.Encoding.UTF8.GetBytes(username),
+                System.Text.Encoding.UTF8.GetBytes(_basicAuthUser))
+            && CryptographicOperations.FixedTimeEquals(
+                System.Text.Encoding.UTF8.GetBytes(password),
+                System.Text.Encoding.UTF8.GetBytes(_basicAuthPassword));
+    }
+
     /// <summary>Build the full URL for this service.</summary>
     public string GetFullUrl(bool includeAuth = false)
     {
