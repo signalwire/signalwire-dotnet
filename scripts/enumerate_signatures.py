@@ -355,7 +355,14 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             target_module, target_class = rename
         else:
             canonical_name = SKILL_RENAMES.get(name, name)
-            if canonical_name in CLASS_MODULE_MAP:
+            # CLASS_MODULE_MAP is keyed by the .NET native (pre-rename) name
+            # for skills (DatasphereSkill, McpGatewaySkill, etc.). Try the
+            # native key first, fall back to the canonical key for cases
+            # like AgentBase where the names already match.
+            if name in CLASS_MODULE_MAP:
+                target_module = CLASS_MODULE_MAP[name]
+                target_class = canonical_name
+            elif canonical_name in CLASS_MODULE_MAP:
                 target_module = CLASS_MODULE_MAP[canonical_name]
                 target_class = canonical_name
             else:
