@@ -105,6 +105,31 @@ public sealed class SkillRegistry
     /// (Python parity: ``SkillRegistry.logger`` instance attribute.)</summary>
     public Logger Logger { get; } = Logger.GetLogger("skill_registry");
 
+    private readonly List<string> _externalPaths = new();
+
+    /// <summary>External skill-source paths added via
+    /// <see cref="AddSkillDirectory"/>.</summary>
+    public IReadOnlyList<string> ExternalPaths => _externalPaths;
+
+    /// <summary>Add a directory to the external skill-source path list.
+    /// .NET ports loading skills from disk SHOULD consult this list.
+    /// Throws when the path does not exist or is not a directory.
+    /// (Python parity: ``SkillRegistry.add_skill_directory(path)``.)</summary>
+    public void AddSkillDirectory(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+            throw new ArgumentException("path must not be null or empty", nameof(path));
+        if (!System.IO.Directory.Exists(path))
+            throw new ArgumentException($"Skill directory does not exist: {path}", nameof(path));
+        lock (Lock)
+        {
+            if (!_externalPaths.Contains(path))
+            {
+                _externalPaths.Add(path);
+            }
+        }
+    }
+
     /// <summary>
     /// Get the factory for a skill name. Checks custom registrations first,
     /// then falls back to built-in factories.

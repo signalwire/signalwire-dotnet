@@ -11466,6 +11466,20 @@
       "classes": {
         "SkillRegistry": {
           "methods": {
+            "add_skill_directory": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "path",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
             "discover_skills": {
               "params": [
                 {
@@ -11474,6 +11488,15 @@
                 }
               ],
               "returns": "void"
+            },
+            "external_paths": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "list<string>"
             },
             "get_factory": {
               "params": [
