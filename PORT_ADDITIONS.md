@@ -463,3 +463,46 @@ signalwire.swml.service_options.ServiceOptions.name: .NET options data class wit
 signalwire.swml.service_options.ServiceOptions: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
 signalwire.swml.service_options.ServiceOptions.port: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
 signalwire.swml.service_options.ServiceOptions.route: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
+signalwire.core.agent_base.AgentBase.create_tool_token: Public helper on AgentBase to mint scoped function-call tokens; Python ships equivalent via SessionManager
+signalwire.core.skill_base.SkillBase.agent: Public read-only property surface; Python @property accessor with the same name
+signalwire.core.swml_service.SWMLService.get_basic_auth_credentials_with_source: Public 3-tuple variant of GetBasicAuthCredentials returning (user,password,source); Python folds source into a single method via include_source kwarg
+signalwire.core.swml_service.SWMLService.get_function: Public tool-registry query method on Service (which AgentBase inherits); Python equivalents live on ToolMixin/ToolRegistry - the cross-class duplication is a .NET inheritance artefact
+signalwire.core.swml_service.SWMLService.has_function: Public tool-registry query method on Service (which AgentBase inherits); Python equivalents live on ToolMixin/ToolRegistry - the cross-class duplication is a .NET inheritance artefact
+signalwire.core.swml_service.SWMLService.on_swml_request: Public async hook on Service for in-flight SWML mutation; Python WebMixin.on_swml_request plays the same role on AgentBase
+signalwire.core.swml_service.SWMLService.remove_function: Public tool-registry query method on Service (which AgentBase inherits); Python equivalents live on ToolMixin/ToolRegistry - the cross-class duplication is a .NET inheritance artefact
+signalwire.core.swml_service.SWMLService.validate_basic_auth: Public auth helper inherited from Service via the .NET class hierarchy; Python AuthMixin defines the same name on AgentBase
+signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.claude_skills.skill.ClaudeSkillsSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.claude_skills.skill.ClaudeSkillsSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.datasphere.skill.DataSphereSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.datasphere.skill.DataSphereSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.datasphere_serverless.skill.DataSphereServerlessSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.datasphere_serverless.skill.DataSphereServerlessSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.google_maps.skill.GoogleMapsSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.google_maps.skill.GoogleMapsSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.info_gatherer.skill.InfoGathererSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.info_gatherer.skill.InfoGathererSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.joke.skill.JokeSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.joke.skill.JokeSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.math.skill.MathSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.math.skill.MathSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.mcp_gateway.skill.MCPGatewaySkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.mcp_gateway.skill.MCPGatewaySkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.native_vector_search.skill.NativeVectorSearchSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.native_vector_search.skill.NativeVectorSearchSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.registry.SkillRegistry.instance: Public static SkillRegistry.Instance singleton accessor; Python uses module-level get_skill_registry()
+signalwire.skills.spider.skill.SpiderSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.spider.skill.SpiderSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.swml_transfer.skill.SWMLTransferSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.swml_transfer.skill.SWMLTransferSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.weather_api.skill.WeatherApiSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.weather_api.skill.WeatherApiSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.web_search.skill.WebSearchSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.web_search.skill.WebSearchSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
+signalwire.swml.verb_info.VerbInfo.__init__: .NET-only public type used by the SWML verb registry; Python keeps verb metadata as plain dicts
+signalwire.swml.verb_info.VerbInfo.deconstruct: .NET-only public type used by the SWML verb registry; Python keeps verb metadata as plain dicts

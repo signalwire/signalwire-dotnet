@@ -1127,3 +1127,8 @@ signalwire.web.web_service.WebService: Internal Python WebService class; .NET in
 signalwire.web.web_service.WebService.remove_directory: Internal Python WebService class; .NET integrates HTTP handling on Service directly
 signalwire.web.web_service.WebService.start: Internal Python WebService class; .NET integrates HTTP handling on Service directly
 signalwire.web.web_service.WebService.stop: Internal Python WebService class; .NET integrates HTTP handling on Service directly
+signalwire.agent_server.AgentServer.app: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
+signalwire.core.skill_base.SkillBase.logger: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
+signalwire.core.swml_service.SWMLService.schema_utils: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
+signalwire.core.swml_service.SWMLService.security: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
+signalwire.core.swml_service.SWMLService.verb_registry: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
