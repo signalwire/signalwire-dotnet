@@ -890,6 +890,15 @@
               ],
               "returns": "string"
             },
+            "get_prompt_sections": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "list<dict<string,any>>"
+            },
             "get_skill_manager": {
               "params": [
                 {
@@ -943,7 +952,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "list<dict<string,any>>"
+              "returns": "class:signalwire.pom.pom.PromptObjectModel"
             },
             "register_sip_username": {
               "params": [
@@ -5701,9 +5710,9 @@
                 },
                 {
                   "name": "title",
-                  "type": "string",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 },
                 {
                   "name": "body",
@@ -5719,9 +5728,9 @@
                 },
                 {
                   "name": "numbered",
-                  "type": "bool",
+                  "type": "optional<bool>",
                   "required": false,
-                  "default": false
+                  "default": null
                 },
                 {
                   "name": "numbered_bullets",
@@ -5841,9 +5850,9 @@
                 },
                 {
                   "name": "title",
-                  "type": "string",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 },
                 {
                   "name": "body",
@@ -5859,9 +5868,9 @@
                 },
                 {
                   "name": "numbered",
-                  "type": "bool",
+                  "type": "optional<bool>",
                   "required": false,
-                  "default": false
+                  "default": null
                 },
                 {
                   "name": "numbered_bullets",
@@ -5908,9 +5917,9 @@
                 },
                 {
                   "name": "title",
-                  "type": "string",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 },
                 {
                   "name": "body",
@@ -5926,9 +5935,9 @@
                 },
                 {
                   "name": "numbered",
-                  "type": "bool",
+                  "type": "optional<bool>",
                   "required": false,
-                  "default": false
+                  "default": null
                 },
                 {
                   "name": "numbered_bullets",
@@ -5989,9 +5998,9 @@
                 },
                 {
                   "name": "section_number",
-                  "type": "string",
+                  "type": "optional<list<int>>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 }
               ],
               "returns": "string"
@@ -6010,9 +6019,9 @@
                 },
                 {
                   "name": "section_number",
-                  "type": "string",
+                  "type": "optional<list<int>>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 }
               ],
               "returns": "string"

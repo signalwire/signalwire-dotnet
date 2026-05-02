@@ -562,18 +562,28 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
 # ---------------------------------------------------------------------------
 
 def run_dump() -> dict:
-    """Build + run SignatureDump and parse its stdout."""
+    """Build + run SignatureDump and parse its stdout.
+
+    Notes:
+      * Drop ``--no-restore`` — the SignalWire SDK is multi-target
+        (net8.0/net9.0/net10.0) and the targeting packs for the deps must
+        be present at run time. Forcing ``--no-restore`` causes
+        ``NETSDK1127: targeting pack Microsoft.NETCore.App is not installed``
+        on a fresh checkout (or after a ``dotnet clean``).
+      * stderr is folded into stdout so a build error is visible in the
+        exception message even when the dotnet runner only prints to stderr.
+    """
     cmd = [
         "/home/devuser/.local/bin/dotnet", "run", "--project",
         str(HERE / "SignatureDump" / "SignatureDump.csproj"),
-        "--no-restore",
     ]
     cp = subprocess.run(
         cmd, cwd=PORT_ROOT, capture_output=True, text=True, timeout=600,
     )
     if cp.returncode != 0:
         raise RuntimeError(
-            f"SignatureDump failed (exit {cp.returncode}):\n{cp.stderr}"
+            f"SignatureDump failed (exit {cp.returncode}):\n"
+            f"--- stdout ---\n{cp.stdout}\n--- stderr ---\n{cp.stderr}"
         )
     # SignatureDump prints the JSON document to stdout. dotnet run prepends
     # build messages; the JSON starts at the first ``{`` line.
