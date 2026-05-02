@@ -23,22 +23,22 @@ public class RestClient
     private Fabric? _fabric;
     private Calling? _calling;
     private CrudResource? _phoneNumbers;
-    private CrudResource? _datasphere;
-    private CrudResource? _video;
-    private CrudResource? _compat;
-    private CrudResource? _addresses;
-    private CrudResource? _queues;
-    private CrudResource? _recordings;
-    private CrudResource? _numberGroups;
+    private DatasphereNs? _datasphere;
+    private Video? _video;
+    private Compat? _compat;
+    private Addresses? _addresses;
+    private Queues? _queues;
+    private Recordings? _recordings;
+    private NumberGroups? _numberGroups;
     private CrudResource? _verifiedCallers;
-    private CrudResource? _sipProfile;
+    private SipProfile? _sipProfile;
     private CrudResource? _lookup;
-    private CrudResource? _shortCodes;
-    private CrudResource? _importedNumbers;
-    private CrudResource? _mfa;
-    private CrudResource? _registry;
-    private CrudResource? _logs;
-    private CrudResource? _project;
+    private ShortCodes? _shortCodes;
+    private ImportedNumbers? _importedNumbers;
+    private Mfa? _mfa;
+    private Registry? _registry;
+    private Logs? _logs;
+    private Project? _project;
     private CrudResource? _pubsub;
     private CrudResource? _chat;
 
@@ -90,68 +90,70 @@ public class RestClient
         _phoneNumbers ??= new CrudResource(_http, "/api/relay/rest/phone_numbers");
 
     /// <summary>Datasphere documents.</summary>
-    public CrudResource Datasphere =>
-        _datasphere ??= new CrudResource(_http, "/api/datasphere/documents");
+    public DatasphereNs Datasphere =>
+        _datasphere ??= new DatasphereNs(_http);
 
-    /// <summary>Video rooms.</summary>
-    public CrudResource Video =>
-        _video ??= new CrudResource(_http, "/api/video/rooms");
+    /// <summary>Video rooms (Python-parity entry-point with sub-namespaces).</summary>
+    public Video Video =>
+        _video ??= new Video(_http);
 
     /// <summary>Compatibility (Twilio-compatible LaML) API.</summary>
-    public CrudResource Compat =>
-        _compat ??= new CrudResource(_http, $"/api/laml/2010-04-01/Accounts/{_projectId}");
+    public Compat Compat =>
+        _compat ??= new Compat(_http, _projectId);
 
     /// <summary>Addresses.</summary>
-    public CrudResource Addresses =>
-        _addresses ??= new CrudResource(_http, "/api/relay/rest/addresses");
+    public Addresses Addresses =>
+        _addresses ??= new Addresses(_http);
 
-    /// <summary>Queues.</summary>
-    public CrudResource Queues =>
-        _queues ??= new CrudResource(_http, "/api/fabric/resources/queues");
+    /// <summary>Queues (Relay queues at /api/relay/rest/queues with member ops).</summary>
+    public Queues Queues =>
+        _queues ??= new Queues(_http);
 
-    /// <summary>Recordings.</summary>
-    public CrudResource Recordings =>
-        _recordings ??= new CrudResource(_http, "/api/relay/rest/recordings");
+    /// <summary>Recordings (Relay recordings at /api/relay/rest/recordings).</summary>
+    public Recordings Recordings =>
+        _recordings ??= new Recordings(_http);
 
-    /// <summary>Number groups.</summary>
-    public CrudResource NumberGroups =>
-        _numberGroups ??= new CrudResource(_http, "/api/relay/rest/number_groups");
+    /// <summary>Number groups (with membership operations).</summary>
+    public NumberGroups NumberGroups =>
+        _numberGroups ??= new NumberGroups(_http);
 
     /// <summary>Verified callers.</summary>
     public CrudResource VerifiedCallers =>
         _verifiedCallers ??= new CrudResource(_http, "/api/relay/rest/verified_callers");
 
-    /// <summary>SIP profile.</summary>
-    public CrudResource SipProfile =>
-        _sipProfile ??= new CrudResource(_http, "/api/relay/rest/sip_profiles");
+    /// <summary>SIP profile (singleton at /api/relay/rest/sip_profile;
+    /// legacy plural-path /api/relay/rest/sip_profiles preserved for
+    /// existing tests via BasePath).</summary>
+    public SipProfile SipProfile =>
+        _sipProfile ??= new SipProfile(_http);
 
     /// <summary>Phone number lookup.</summary>
     public CrudResource Lookup =>
         _lookup ??= new CrudResource(_http, "/api/relay/rest/lookup/phone_number");
 
-    /// <summary>Short codes.</summary>
-    public CrudResource ShortCodes =>
-        _shortCodes ??= new CrudResource(_http, "/api/relay/rest/short_codes");
+    /// <summary>Short codes (PUT for update).</summary>
+    public ShortCodes ShortCodes =>
+        _shortCodes ??= new ShortCodes(_http);
 
-    /// <summary>Imported phone numbers.</summary>
-    public CrudResource ImportedNumbers =>
-        _importedNumbers ??= new CrudResource(_http, "/api/relay/rest/imported_phone_numbers");
+    /// <summary>Imported phone numbers (create only).</summary>
+    public ImportedNumbers ImportedNumbers =>
+        _importedNumbers ??= new ImportedNumbers(_http);
 
-    /// <summary>Multi-factor authentication.</summary>
-    public CrudResource Mfa =>
-        _mfa ??= new CrudResource(_http, "/api/relay/rest/mfa");
+    /// <summary>Multi-factor authentication (sms/call/verify dispatch).</summary>
+    public Mfa Mfa =>
+        _mfa ??= new Mfa(_http);
 
-    /// <summary>Registry (10DLC brands, campaigns, orders).</summary>
-    public CrudResource Registry =>
-        _registry ??= new CrudResource(_http, "/api/relay/rest/registry");
+    /// <summary>Registry (10DLC brands, campaigns, orders, numbers).</summary>
+    public Registry Registry =>
+        _registry ??= new Registry(_http);
 
     /// <summary>Logs (messages, voice, fax, conferences).</summary>
-    public CrudResource Logs =>
-        _logs ??= new CrudResource(_http, "/api/relay/rest/logs");
+    public Logs Logs =>
+        _logs ??= new Logs(_http);
 
     /// <summary>Project management.</summary>
-    public CrudResource Project =>
-        _project ??= new CrudResource(_http, "/api/relay/rest/project");
+    public Project Project =>
+        _project ??= new Project(_http);
 
     /// <summary>PubSub tokens.</summary>
     public CrudResource Pubsub =>

@@ -202,6 +202,151 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ("SignalWire.REST.Namespaces", "Video"): (
         "signalwire.rest.namespaces.video", "VideoNamespace",
     ),
+    # ----- Compat sub-resources (Python keeps them all in compat.py) -----
+    ("SignalWire.REST.Namespaces", "CompatAccounts"): (
+        "signalwire.rest.namespaces.compat", "CompatAccounts",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatCalls"): (
+        "signalwire.rest.namespaces.compat", "CompatCalls",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatMessages"): (
+        "signalwire.rest.namespaces.compat", "CompatMessages",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatFaxes"): (
+        "signalwire.rest.namespaces.compat", "CompatFaxes",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatConferences"): (
+        "signalwire.rest.namespaces.compat", "CompatConferences",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatPhoneNumbers"): (
+        "signalwire.rest.namespaces.compat", "CompatPhoneNumbers",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatApplications"): (
+        "signalwire.rest.namespaces.compat", "CompatApplications",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatLamlBins"): (
+        "signalwire.rest.namespaces.compat", "CompatLamlBins",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatQueues"): (
+        "signalwire.rest.namespaces.compat", "CompatQueues",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatRecordings"): (
+        "signalwire.rest.namespaces.compat", "CompatRecordings",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatTranscriptions"): (
+        "signalwire.rest.namespaces.compat", "CompatTranscriptions",
+    ),
+    ("SignalWire.REST.Namespaces", "CompatTokens"): (
+        "signalwire.rest.namespaces.compat", "CompatTokens",
+    ),
+    # ----- Video sub-resources (Python video.py) -----
+    ("SignalWire.REST.Namespaces", "VideoRooms"): (
+        "signalwire.rest.namespaces.video", "VideoRooms",
+    ),
+    ("SignalWire.REST.Namespaces", "VideoRoomTokens"): (
+        "signalwire.rest.namespaces.video", "VideoRoomTokens",
+    ),
+    ("SignalWire.REST.Namespaces", "VideoRoomSessions"): (
+        "signalwire.rest.namespaces.video", "VideoRoomSessions",
+    ),
+    ("SignalWire.REST.Namespaces", "VideoRoomRecordings"): (
+        "signalwire.rest.namespaces.video", "VideoRoomRecordings",
+    ),
+    ("SignalWire.REST.Namespaces", "VideoConferences"): (
+        "signalwire.rest.namespaces.video", "VideoConferences",
+    ),
+    ("SignalWire.REST.Namespaces", "VideoConferenceTokens"): (
+        "signalwire.rest.namespaces.video", "VideoConferenceTokens",
+    ),
+    ("SignalWire.REST.Namespaces", "VideoStreams"): (
+        "signalwire.rest.namespaces.video", "VideoStreams",
+    ),
+    # ----- Logs sub-resources (Python logs.py) -----
+    ("SignalWire.REST.Namespaces", "MessageLogs"): (
+        "signalwire.rest.namespaces.logs", "MessageLogs",
+    ),
+    ("SignalWire.REST.Namespaces", "VoiceLogs"): (
+        "signalwire.rest.namespaces.logs", "VoiceLogs",
+    ),
+    ("SignalWire.REST.Namespaces", "FaxLogs"): (
+        "signalwire.rest.namespaces.logs", "FaxLogs",
+    ),
+    ("SignalWire.REST.Namespaces", "ConferenceLogs"): (
+        "signalwire.rest.namespaces.logs", "ConferenceLogs",
+    ),
+    # ----- Registry sub-resources (Python registry.py) -----
+    ("SignalWire.REST.Namespaces", "RegistryBrands"): (
+        "signalwire.rest.namespaces.registry", "RegistryBrands",
+    ),
+    ("SignalWire.REST.Namespaces", "RegistryCampaigns"): (
+        "signalwire.rest.namespaces.registry", "RegistryCampaigns",
+    ),
+    ("SignalWire.REST.Namespaces", "RegistryOrders"): (
+        "signalwire.rest.namespaces.registry", "RegistryOrders",
+    ),
+    ("SignalWire.REST.Namespaces", "RegistryNumbers"): (
+        "signalwire.rest.namespaces.registry", "RegistryNumbers",
+    ),
+    # ----- Fabric extras (helpers I added in C# for parity) -----
+    ("SignalWire.REST.Namespaces", "FabricAddresses"): (
+        "signalwire.rest.namespaces.fabric", "FabricAddresses",
+    ),
+    ("SignalWire.REST.Namespaces", "FabricResources"): (
+        "signalwire.rest.namespaces.fabric", "GenericResources",
+    ),
+    ("SignalWire.REST.Namespaces", "FabricTokens"): (
+        "signalwire.rest.namespaces.fabric", "FabricTokens",
+    ),
+    ("SignalWire.REST.Namespaces", "SubscribersHelper"): (
+        "signalwire.rest.namespaces.fabric", "SubscribersResource",
+    ),
+    ("SignalWire.REST.Namespaces", "CallFlowsHelper"): (
+        "signalwire.rest.namespaces.fabric", "CallFlowsResource",
+    ),
+    ("SignalWire.REST.Namespaces", "ConferenceRoomsHelper"): (
+        "signalwire.rest.namespaces.fabric", "ConferenceRoomsResource",
+    ),
+    ("SignalWire.REST.Namespaces", "CxmlApplicationsHelper"): (
+        "signalwire.rest.namespaces.fabric", "CxmlApplicationsResource",
+    ),
+    # ----- Small namespaces (Python files name them with "Resource" suffix) -----
+    ("SignalWire.REST.Namespaces", "Mfa"): (
+        "signalwire.rest.namespaces.mfa", "MfaResource",
+    ),
+    ("SignalWire.REST.Namespaces", "SipProfile"): (
+        "signalwire.rest.namespaces.sip_profile", "SipProfileResource",
+    ),
+    ("SignalWire.REST.Namespaces", "ShortCodes"): (
+        "signalwire.rest.namespaces.short_codes", "ShortCodesResource",
+    ),
+    ("SignalWire.REST.Namespaces", "NumberGroups"): (
+        "signalwire.rest.namespaces.number_groups", "NumberGroupsResource",
+    ),
+    ("SignalWire.REST.Namespaces", "ImportedNumbers"): (
+        "signalwire.rest.namespaces.imported_numbers", "ImportedNumbersResource",
+    ),
+    ("SignalWire.REST.Namespaces", "ProjectTokens"): (
+        "signalwire.rest.namespaces.project", "ProjectTokens",
+    ),
+    ("SignalWire.REST.Namespaces", "DatasphereNs"): (
+        "signalwire.rest.namespaces.datasphere", "DatasphereNamespace",
+    ),
+    ("SignalWire.REST.Namespaces", "DatasphereDocuments"): (
+        "signalwire.rest.namespaces.datasphere", "DatasphereDocuments",
+    ),
+    ("SignalWire.REST.Namespaces", "Addresses"): (
+        "signalwire.rest.namespaces.addresses", "AddressesResource",
+    ),
+    ("SignalWire.REST.Namespaces", "Recordings"): (
+        "signalwire.rest.namespaces.recordings", "RecordingsResource",
+    ),
+    ("SignalWire.REST.Namespaces", "Queues"): (
+        "signalwire.rest.namespaces.queues", "QueuesResource",
+    ),
+    # ----- PaginatedIterator (Python lives at _pagination, not paginated_iterator) -----
+    ("SignalWire.REST", "PaginatedIterator"): (
+        "signalwire.rest._pagination", "PaginatedIterator",
+    ),
 }
 
 

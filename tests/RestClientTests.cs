@@ -139,7 +139,9 @@ public class RestClientTests : IDisposable
         var client = new RestClient("p", "t", "s.signalwire.com");
 
         Assert.Equal("/api/relay/rest/addresses", client.Addresses.BasePath);
-        Assert.Equal("/api/fabric/resources/queues", client.Queues.BasePath);
+        // Python parity: queues live at /api/relay/rest/queues, not under
+        // /api/fabric/resources (the old .NET path was wrong).
+        Assert.Equal("/api/relay/rest/queues", client.Queues.BasePath);
         Assert.Equal("/api/relay/rest/recordings", client.Recordings.BasePath);
         Assert.Equal("/api/relay/rest/number_groups", client.NumberGroups.BasePath);
         Assert.Equal("/api/relay/rest/verified_callers", client.VerifiedCallers.BasePath);
@@ -262,13 +264,15 @@ public class RestClientTests : IDisposable
     [Fact]
     public void Calling_MethodCount()
     {
-        // Verify we have the expected number of public async methods (37 total)
+        // Verify we have the expected number of public async methods.
+        // 37 distinct commands + 1 Python-parity alias (UpdateAsync alongside
+        // UpdateCallAsync) = 38.
         var methods = typeof(Calling)
             .GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Where(m => m.Name.EndsWith("Async"))
             .ToList();
 
-        Assert.Equal(37, methods.Count);
+        Assert.Equal(38, methods.Count);
     }
 
     [Fact]

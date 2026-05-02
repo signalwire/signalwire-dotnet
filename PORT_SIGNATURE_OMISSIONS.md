@@ -279,3 +279,47 @@ signalwire.skills.registry.SkillRegistry.logger: .NET .Logger property returns t
 signalwire.skills.registry.SkillRegistry.register_skill: .NET RegisterSkill takes (name, factory) for explicit factory registration; Python takes the skill_class and infers metadata via attributes
 signalwire.skills.spider.skill.SpiderSkill.__init__: .NET skill ctors are parameterless (Wire(agent, params) sets state post-construction); Python skills take agent and params via __init__
 signalwire.skills.weather_api.skill.WeatherApiSkill.__init__: .NET skill ctors are parameterless (Wire(agent, params) sets state post-construction); Python skills take agent and params via __init__
+signalwire.rest.namespaces.calling.CallingNamespace.update: .NET CallingNamespace.UpdateAsync (Python-parity alias for UpdateCallAsync) takes optional Dictionary<string,object> for protocol overflow params; Python uses **kwargs - same shape with optional<> wrapper preventing the diff built-in var_keyword/dict equivalence
+signalwire.rest.namespaces.compat.CompatAccounts.list: .NET CompatAccounts.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params - same shape, var_keyword vs positional dict equivalence not auto-detected
+signalwire.rest.namespaces.compat.CompatConferences.list: .NET CompatConferences.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatConferences.list_participants: .NET CompatConferences.ListParticipantsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatConferences.list_recordings: .NET CompatConferences.ListRecordingsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatFaxes.list_media: .NET CompatFaxes.ListMediaAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatMessages.list_media: .NET CompatMessages.ListMediaAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatPhoneNumbers.list: .NET CompatPhoneNumbers.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatPhoneNumbers.list_available_countries: .NET ListAvailableCountriesAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatPhoneNumbers.search_local: .NET SearchLocalAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatPhoneNumbers.search_toll_free: .NET SearchTollFreeAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatQueues.list_members: .NET CompatQueues.ListMembersAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatRecordings.list: .NET CompatRecordings.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.compat.CompatTranscriptions.list: .NET CompatTranscriptions.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.datasphere.DatasphereDocuments.list_chunks: .NET DatasphereDocuments.ListChunksAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.fabric.CallFlowsResource.list_addresses: .NET CallFlowsHelper.ListAddressesAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.fabric.CallFlowsResource.list_versions: .NET CallFlowsHelper.ListVersionsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.fabric.ConferenceRoomsResource.list_addresses: .NET ConferenceRoomsHelper.ListAddressesAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.fabric.CxmlApplicationsResource.create: .NET CxmlApplicationsHelper.CreateAsync takes optional Dictionary<string,object>; Python uses **kwargs (both raise NotImplementedError; the parameter shape is irrelevant since the call is intercepted before any wire activity)
+signalwire.rest.namespaces.fabric.FabricAddresses.list: .NET FabricAddresses.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.fabric.GenericResources.list: .NET FabricResources.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.fabric.GenericResources.list_addresses: .NET FabricResources.ListAddressesAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.fabric.SubscribersResource.list_sip_endpoints: .NET SubscribersHelper.ListSipEndpointsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.logs.ConferenceLogs.list: .NET ConferenceLogs.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.logs.FaxLogs.list: .NET FaxLogs.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.logs.MessageLogs.list: .NET MessageLogs.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.logs.VoiceLogs.list: .NET VoiceLogs.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.logs.VoiceLogs.list_events: .NET VoiceLogs.ListEventsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.number_groups.NumberGroupsResource.list_memberships: .NET NumberGroups.ListMembershipsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.queues.QueuesResource.list_members: .NET Queues.ListMembersAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.registry.RegistryBrands.list: .NET RegistryBrands.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.registry.RegistryBrands.list_campaigns: .NET RegistryBrands.ListCampaignsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.registry.RegistryCampaigns.list_numbers: .NET RegistryCampaigns.ListNumbersAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.registry.RegistryCampaigns.list_orders: .NET RegistryCampaigns.ListOrdersAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.video.VideoConferences.list_conference_tokens: .NET VideoConferences.ListConferenceTokensAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.video.VideoConferences.list_streams: .NET VideoConferences.ListStreamsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.video.VideoRoomRecordings.list: .NET VideoRoomRecordings.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.video.VideoRoomRecordings.list_events: .NET VideoRoomRecordings.ListEventsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.video.VideoRoomSessions.list: .NET VideoRoomSessions.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.video.VideoRoomSessions.list_events: .NET VideoRoomSessions.ListEventsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.video.VideoRoomSessions.list_members: .NET VideoRoomSessions.ListMembersAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.video.VideoRoomSessions.list_recordings: .NET VideoRoomSessions.ListRecordingsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.video.VideoRooms.list_streams: .NET VideoRooms.ListStreamsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.relay.call.CollectAction.volume: .NET CollectAction.Volume returns void since callers chain via the Action object state; Python returns dict (the protocol response from the volume subcommand)

@@ -38,11 +38,58 @@ public class Fabric
     private CrudResource? _sipGateways;
     private CrudResource? _swmlWebhooks;
     private CrudResource? _tokens;
+    // Python-parity helpers (assignable from tests; not present in the
+    // original .NET Fabric surface).
+    private FabricAddresses? _fabricAddresses;
+    private FabricResources? _fabricResources;
+    private FabricTokens? _fabricTokens;
+    private SubscribersHelper? _subscribersHelper;
+    private CallFlowsHelper? _callFlowsHelper;
+    private ConferenceRoomsHelper? _conferenceRoomsHelper;
+    private CxmlApplicationsHelper? _cxmlApplicationsHelper;
 
     public Fabric(HttpClient client)
     {
         _client = client;
     }
+
+    // Python-parity helper accessors.
+
+    /// <summary>Top-level Fabric addresses (read-only — list/get) that lives
+    /// at /api/fabric/addresses (NOT under /api/fabric/resources).</summary>
+    public FabricAddresses AddressesTopLevel =>
+        _fabricAddresses ??= new FabricAddresses(_client, "/api/fabric/addresses");
+
+    /// <summary>Generic resources operations (list/get/delete/list_addresses/
+    /// assign_domain_application) at /api/fabric/resources.</summary>
+    public FabricResources ResourcesGeneric =>
+        _fabricResources ??= new FabricResources(_client, "/api/fabric/resources");
+
+    /// <summary>Subscriber/guest/invite/embed token endpoints under
+    /// /api/fabric. Distinct from the per-account ``Tokens`` accessor which
+    /// hits /api/fabric/tokens.</summary>
+    public FabricTokens TokensApi =>
+        _fabricTokens ??= new FabricTokens(_client);
+
+    /// <summary>Subscriber-scoped SIP-endpoint operations
+    /// (get/update/delete) under /api/fabric/resources/subscribers.</summary>
+    public SubscribersHelper SubscribersOps =>
+        _subscribersHelper ??= new SubscribersHelper(_client, "/api/fabric/resources/subscribers");
+
+    /// <summary>CallFlows singular-path operations (list_addresses,
+    /// list_versions, deploy_version).</summary>
+    public CallFlowsHelper CallFlowsOps =>
+        _callFlowsHelper ??= new CallFlowsHelper(_client, "/api/fabric/resources/call_flows");
+
+    /// <summary>ConferenceRooms singular-path operations (list_addresses).</summary>
+    public ConferenceRoomsHelper ConferenceRoomsOps =>
+        _conferenceRoomsHelper ??= new ConferenceRoomsHelper(_client, "/api/fabric/resources/conference_rooms");
+
+    /// <summary>cXML applications helper that exposes the deliberate
+    /// NotImplementedException on Create (matching Python's
+    /// ``CxmlApplicationsResource.create``).</summary>
+    public CxmlApplicationsHelper CxmlApplicationsOps =>
+        _cxmlApplicationsHelper ??= new CxmlApplicationsHelper();
 
     public HttpClient Client => _client;
 

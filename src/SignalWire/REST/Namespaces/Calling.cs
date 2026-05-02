@@ -55,6 +55,11 @@ public class Calling
     public Task<Dictionary<string, object?>> UpdateCallAsync(Dictionary<string, object?>? parms = null)
         => ExecuteAsync("update", null, parms);
 
+    /// <summary>Python-parity alias for <see cref="UpdateCallAsync"/>.
+    /// Mirrors ``CallingNamespace.update``.</summary>
+    public Task<Dictionary<string, object?>> UpdateAsync(Dictionary<string, object?>? parms = null)
+        => ExecuteAsync("update", null, parms);
+
     public Task<Dictionary<string, object?>> EndAsync(string callId, Dictionary<string, object?>? parms = null)
         => ExecuteAsync("calling.end", callId, parms);
 
