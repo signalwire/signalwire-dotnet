@@ -5,11 +5,17 @@
 // of sections with title/body/bullets/subsections, then render to
 // markdown, XML, or a serializable dict for transport.
 //
-// Mirrors the Python public surface:
+// Mirrors the Python public surface AND the exact byte-for-byte output
+// of render_markdown / render_xml / to_json / to_yaml. See
+// tests/POM/PromptObjectModelTest.cs and Python's
+// tests/unit/pom/test_pom_render_parity.py for the reference shapes.
+//
 //   - PromptObjectModel: AddSection, FindSection, RenderMarkdown,
-//     RenderXml, ToDict, ToJson, FromJson, Sections (read-only).
-//   - Section: Title, Body, Bullets, Subsections, AddBody, AddBullets,
-//     AddSubsection, RenderMarkdown, RenderXml, ToDict.
+//     RenderXml, ToDict, ToJson, FromJson, ToYaml, FromYaml,
+//     AddPomAsSubsection, Sections, Debug.
+//   - Section: Title, Body, Bullets, Subsections, Numbered,
+//     NumberedBullets, AddBody, AddBullets, AddSubsection,
+//     RenderMarkdown, RenderXml, ToDict.
 
 using System;
 using System.Collections.Generic;
@@ -21,18 +27,31 @@ namespace SignalWire.POM;
 
 public class Section
 {
-    public string Title { get; set; }
+    /// <summary>Section title. Null for the (allowed) first untitled
+    /// top-level section. (Python parity: ``Section.title`` is
+    /// ``Optional[str]``.)</summary>
+    public string? Title { get; set; }
+
     public string Body { get; set; }
+
     public List<string> Bullets { get; }
-    public bool Numbered { get; set; }
+
+    /// <summary>Three-state numbering: null = inherit, true = force on,
+    /// false = force off. (Python parity: ``numbered`` is
+    /// ``Optional[bool]``.) Sibling propagation: if any sibling at the
+    /// same level has Numbered==true, all siblings get numbered unless
+    /// they have Numbered==false.</summary>
+    public bool? Numbered { get; set; }
+
     public bool NumberedBullets { get; set; }
+
     public List<Section> Subsections { get; }
 
     public Section(
-        string title = "",
+        string? title = null,
         string body = "",
         List<string>? bullets = null,
-        bool numbered = false,
+        bool? numbered = null,
         bool numberedBullets = false)
     {
         Title = title;
@@ -62,82 +81,169 @@ public class Section
     /// <summary>Add a subsection under this section, returning the new
     /// Section. (Python parity: ``Section.add_subsection``.)</summary>
     public Section AddSubsection(
-        string title = "",
+        string? title = null,
         string body = "",
         List<string>? bullets = null,
-        bool numbered = false,
+        bool? numbered = null,
         bool numberedBullets = false)
     {
+        if (title is null)
+            throw new ArgumentException("Subsections must have a title");
         var sub = new Section(title, body, bullets, numbered, numberedBullets);
         Subsections.Add(sub);
         return sub;
     }
 
     /// <summary>Render this section as a markdown fragment, indented at
-    /// the given header level (default 2).</summary>
-    public string RenderMarkdown(int level = 2, string sectionNumber = "")
+    /// the given header level (default 2). Mirrors Python's
+    /// ``Section.render_markdown`` exactly.</summary>
+    public string RenderMarkdown(int level = 2, List<int>? sectionNumber = null)
     {
-        var sb = new StringBuilder();
-        if (!string.IsNullOrEmpty(Title))
+        sectionNumber ??= new List<int>();
+        var md = new List<string>();
+
+        // Title with optional numbering
+        if (Title is not null)
         {
-            sb.Append(new string('#', level));
-            sb.Append(' ');
-            if (!string.IsNullOrEmpty(sectionNumber)) sb.Append(sectionNumber).Append(' ');
-            sb.AppendLine(Title);
-            sb.AppendLine();
+            string prefix = "";
+            if (sectionNumber.Count > 0)
+                prefix = string.Join(".", sectionNumber.Select(n => n.ToString())) + ". ";
+            md.Add($"{new string('#', level)} {prefix}{Title}\n");
         }
+
+        // Body
         if (!string.IsNullOrEmpty(Body))
+            md.Add($"{Body}\n");
+
+        // Bullets
+        for (int i = 0; i < Bullets.Count; i++)
         {
-            sb.AppendLine(Body);
-            sb.AppendLine();
+            if (NumberedBullets)
+                md.Add($"{i + 1}. {Bullets[i]}");
+            else
+                md.Add($"- {Bullets[i]}");
         }
         if (Bullets.Count > 0)
-        {
-            for (int i = 0; i < Bullets.Count; i++)
-            {
-                var prefix = NumberedBullets ? $"{i + 1}." : "-";
-                sb.AppendLine($"{prefix} {Bullets[i]}");
-            }
-            sb.AppendLine();
-        }
+            md.Add("");
+
+        // Sibling-numbering propagation: once any subsection in this
+        // group has Numbered==true, all siblings get numbered unless
+        // they explicitly set Numbered==false.
+        bool anySubsectionNumbered = Subsections.Any(s => s.Numbered == true);
+
         for (int i = 0; i < Subsections.Count; i++)
         {
-            var subNum = Numbered ? $"{(string.IsNullOrEmpty(sectionNumber) ? "" : sectionNumber + ".")}{i + 1}" : "";
-            sb.Append(Subsections[i].RenderMarkdown(level + 1, subNum));
+            var subsection = Subsections[i];
+            List<int> newSectionNumber;
+            int nextLevel;
+            if (Title is not null || sectionNumber.Count > 0)
+            {
+                if (anySubsectionNumbered && subsection.Numbered != false)
+                {
+                    newSectionNumber = new List<int>(sectionNumber) { i + 1 };
+                }
+                else
+                {
+                    newSectionNumber = sectionNumber;
+                }
+                nextLevel = level + 1;
+            }
+            else
+            {
+                newSectionNumber = sectionNumber;
+                nextLevel = level;
+            }
+            md.Add(subsection.RenderMarkdown(nextLevel, newSectionNumber));
         }
-        return sb.ToString();
+
+        return string.Join("\n", md);
     }
 
-    /// <summary>Render this section as an XML fragment.</summary>
-    public string RenderXml(int indent = 0, string sectionNumber = "")
+    /// <summary>Render this section as an XML fragment. Mirrors
+    /// Python's ``Section.render_xml`` exactly (no HTML escaping; uses
+    /// `<bullets>` / `<subsections>` wrapping containers).</summary>
+    public string RenderXml(int indent = 0, List<int>? sectionNumber = null)
     {
-        var pad = new string(' ', indent * 2);
-        var sb = new StringBuilder();
-        sb.Append(pad).AppendLine("<section>");
-        if (!string.IsNullOrEmpty(Title))
-            sb.Append(pad).Append("  <title>").Append(System.Net.WebUtility.HtmlEncode(Title)).AppendLine("</title>");
+        sectionNumber ??= new List<int>();
+        string indentStr = new string(' ', indent * 2);
+        var xml = new List<string>();
+
+        xml.Add($"{indentStr}<section>");
+
+        if (Title is not null)
+        {
+            string prefix = "";
+            if (sectionNumber.Count > 0)
+                prefix = string.Join(".", sectionNumber.Select(n => n.ToString())) + ". ";
+            xml.Add($"{indentStr}  <title>{prefix}{Title}</title>");
+        }
+
         if (!string.IsNullOrEmpty(Body))
-            sb.Append(pad).Append("  <body>").Append(System.Net.WebUtility.HtmlEncode(Body)).AppendLine("</body>");
-        foreach (var bullet in Bullets)
-            sb.Append(pad).Append("  <bullet>").Append(System.Net.WebUtility.HtmlEncode(bullet)).AppendLine("</bullet>");
-        foreach (var sub in Subsections)
-            sb.Append(sub.RenderXml(indent + 1));
-        sb.Append(pad).AppendLine("</section>");
-        return sb.ToString();
+            xml.Add($"{indentStr}  <body>{Body}</body>");
+
+        if (Bullets.Count > 0)
+        {
+            xml.Add($"{indentStr}  <bullets>");
+            for (int i = 0; i < Bullets.Count; i++)
+            {
+                if (NumberedBullets)
+                    xml.Add($"{indentStr}    <bullet id=\"{i + 1}\">{Bullets[i]}</bullet>");
+                else
+                    xml.Add($"{indentStr}    <bullet>{Bullets[i]}</bullet>");
+            }
+            xml.Add($"{indentStr}  </bullets>");
+        }
+
+        if (Subsections.Count > 0)
+        {
+            xml.Add($"{indentStr}  <subsections>");
+            bool anySubsectionNumbered = Subsections.Any(s => s.Numbered == true);
+
+            for (int i = 0; i < Subsections.Count; i++)
+            {
+                var subsection = Subsections[i];
+                List<int> newSectionNumber;
+                if (Title is not null || sectionNumber.Count > 0)
+                {
+                    if (anySubsectionNumbered && subsection.Numbered != false)
+                        newSectionNumber = new List<int>(sectionNumber) { i + 1 };
+                    else
+                        newSectionNumber = sectionNumber;
+                }
+                else
+                {
+                    newSectionNumber = sectionNumber;
+                }
+                xml.Add(subsection.RenderXml(indent + 2, newSectionNumber));
+            }
+            xml.Add($"{indentStr}  </subsections>");
+        }
+
+        xml.Add($"{indentStr}</section>");
+        return string.Join("\n", xml);
     }
 
-    /// <summary>Serialize to a Dictionary suitable for JSON.</summary>
+    /// <summary>Serialize to a Dictionary suitable for JSON. Emits
+    /// keys in this exact order: title, body, bullets, subsections,
+    /// numbered, numberedBullets — and only when non-empty / non-null /
+    /// non-default. Mirrors Python's ``Section.to_dict``.</summary>
     public Dictionary<string, object> ToDict()
     {
-        var d = new Dictionary<string, object>
-        {
-            ["title"] = Title,
-            ["body"] = Body,
-            ["bullets"] = new List<string>(Bullets),
-            ["numbered"] = Numbered,
-            ["numberedBullets"] = NumberedBullets,
-            ["subsections"] = Subsections.Select(s => s.ToDict()).ToList(),
-        };
+        var d = new Dictionary<string, object>();
+
+        if (Title is not null)
+            d["title"] = Title;
+        if (!string.IsNullOrEmpty(Body))
+            d["body"] = Body;
+        if (Bullets.Count > 0)
+            d["bullets"] = new List<string>(Bullets);
+        if (Subsections.Count > 0)
+            d["subsections"] = Subsections.Select(s => s.ToDict()).ToList();
+        if (Numbered == true)
+            d["numbered"] = true;
+        if (NumberedBullets)
+            d["numberedBullets"] = true;
+
         return d;
     }
 }
@@ -145,7 +251,7 @@ public class Section
 public class PromptObjectModel
 {
     private readonly List<Section> _sections;
-    public bool Debug { get; }
+    public bool Debug { get; set; }
 
     public IReadOnlyList<Section> Sections => _sections;
 
@@ -156,14 +262,18 @@ public class PromptObjectModel
     }
 
     /// <summary>Add a top-level section to the model, returning the new
-    /// Section. (Python parity: ``PromptObjectModel.add_section``.)</summary>
+    /// Section. Only the first added section may have a null title.
+    /// (Python parity: ``PromptObjectModel.add_section``.)</summary>
     public Section AddSection(
-        string title = "",
+        string? title = null,
         string body = "",
         List<string>? bullets = null,
-        bool numbered = false,
+        bool? numbered = null,
         bool numberedBullets = false)
     {
+        if (title is null && _sections.Count > 0)
+            throw new ArgumentException("Only the first section can have no title");
+
         var s = new Section(title, body, bullets, numbered, numberedBullets);
         _sections.Add(s);
         return s;
@@ -192,28 +302,70 @@ public class PromptObjectModel
         return null;
     }
 
-    /// <summary>Render the model as markdown.</summary>
+    /// <summary>Render the model as markdown. Mirrors Python's
+    /// ``PromptObjectModel.render_markdown`` exactly.</summary>
     public string RenderMarkdown()
     {
-        var sb = new StringBuilder();
-        foreach (var s in _sections)
+        bool anySectionNumbered = _sections.Any(s => s.Numbered == true);
+        var md = new List<string>();
+        int sectionCounter = 0;
+
+        foreach (var section in _sections)
         {
-            sb.Append(s.RenderMarkdown(level: 2));
+            List<int> sectionNumber;
+            if (section.Title is not null)
+            {
+                sectionCounter++;
+                if (anySectionNumbered && section.Numbered != false)
+                    sectionNumber = new List<int> { sectionCounter };
+                else
+                    sectionNumber = new List<int>();
+            }
+            else
+            {
+                sectionNumber = new List<int>();
+            }
+
+            md.Add(section.RenderMarkdown(2, sectionNumber));
         }
-        return sb.ToString();
+
+        return string.Join("\n", md);
     }
 
-    /// <summary>Render the model as XML.</summary>
+    /// <summary>Render the model as XML. Mirrors Python's
+    /// ``PromptObjectModel.render_xml`` exactly (XML preamble +
+    /// ``<prompt>`` wrapper + indent of 2 spaces per level).</summary>
     public string RenderXml()
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("<prompt>");
-        foreach (var s in _sections)
+        var xml = new List<string>
         {
-            sb.Append(s.RenderXml(indent: 1));
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<prompt>",
+        };
+
+        bool anySectionNumbered = _sections.Any(s => s.Numbered == true);
+        int sectionCounter = 0;
+
+        foreach (var section in _sections)
+        {
+            List<int> sectionNumber;
+            if (section.Title is not null)
+            {
+                sectionCounter++;
+                if (anySectionNumbered && section.Numbered != false)
+                    sectionNumber = new List<int> { sectionCounter };
+                else
+                    sectionNumber = new List<int>();
+            }
+            else
+            {
+                sectionNumber = new List<int>();
+            }
+            xml.Add(section.RenderXml(1, sectionNumber));
         }
-        sb.AppendLine("</prompt>");
-        return sb.ToString();
+
+        xml.Add("</prompt>");
+        return string.Join("\n", xml);
     }
 
     /// <summary>Serialize to a list of dicts (matches Python's to_dict
@@ -221,16 +373,31 @@ public class PromptObjectModel
     public List<Dictionary<string, object>> ToDict() =>
         _sections.Select(s => s.ToDict()).ToList();
 
-    /// <summary>Serialize to JSON string.</summary>
-    public string ToJson() => JsonSerializer.Serialize(ToDict());
+    /// <summary>Serialize to JSON string with 2-space indent and Python
+    /// dict-style formatting. Empty model emits ``"[]"``.</summary>
+    public string ToJson()
+    {
+        if (_sections.Count == 0) return "[]";
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        };
+        // System.Text.Json indents with 2 spaces by default in .NET 9+.
+        var dicts = ToDict();
+        return JsonSerializer.Serialize(dicts, options);
+    }
 
-    /// <summary>Serialize to YAML string. Uses YamlDotNet under the hood.
-    /// (Python parity: ``PromptObjectModel.to_yaml``.)</summary>
+    /// <summary>Serialize to YAML string. Matches PyYAML's
+    /// ``yaml.dump(data, default_flow_style=False, sort_keys=False)``
+    /// exactly. Empty model emits ``"[]\n"``.</summary>
     public string ToYaml()
     {
+        if (_sections.Count == 0) return "[]\n";
         var sectionDicts = ToDict();
         var serializer = new YamlDotNet.Serialization.SerializerBuilder()
             .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.NullNamingConvention.Instance)
+            .DisableAliases()
             .Build();
         return serializer.Serialize(sectionDicts);
     }
@@ -242,7 +409,6 @@ public class PromptObjectModel
         var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
             .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.NullNamingConvention.Instance)
             .Build();
-        // Round-trip via JSON so Section/dict structure aligns with FromJson.
         var raw = deserializer.Deserialize<object?>(yaml);
         var json = JsonSerializer.Serialize(NormalizeYamlObject(raw));
         return FromJson(json);
@@ -269,51 +435,97 @@ public class PromptObjectModel
         }
     }
 
-    /// <summary>Construct a PromptObjectModel from JSON.</summary>
+    /// <summary>Construct a PromptObjectModel from JSON.
+    /// (Python parity: ``PromptObjectModel.from_json``.)</summary>
     public static PromptObjectModel FromJson(string json)
     {
         var pom = new PromptObjectModel();
         using var doc = JsonDocument.Parse(json);
         if (doc.RootElement.ValueKind != JsonValueKind.Array) return pom;
+
+        int idx = 0;
         foreach (var el in doc.RootElement.EnumerateArray())
         {
-            pom._sections.Add(SectionFromJson(el));
+            // Python's _from_dict: if i > 0 and 'title' not in sec: sec['title'] = "Untitled Section"
+            bool isFirst = (idx == 0);
+            pom._sections.Add(SectionFromJson(el, isSubsection: false, isFirst: isFirst));
+            idx++;
         }
         return pom;
     }
 
-    private static Section SectionFromJson(JsonElement el)
+    private static Section SectionFromJson(JsonElement el, bool isSubsection, bool isFirst = false)
     {
-        var s = new Section();
+        // Python validation rules from _from_dict.build_section
+        if (isSubsection && (!el.TryGetProperty("title", out _) ||
+                             el.TryGetProperty("title", out var checkT) && checkT.ValueKind == JsonValueKind.Null))
+            throw new ArgumentException("All subsections must have a title");
+
+        bool hasBody = el.TryGetProperty("body", out var bodyEl) &&
+                       bodyEl.ValueKind == JsonValueKind.String &&
+                       !string.IsNullOrEmpty(bodyEl.GetString());
+        bool hasBullets = el.TryGetProperty("bullets", out var bulletsEl) &&
+                          bulletsEl.ValueKind == JsonValueKind.Array &&
+                          bulletsEl.GetArrayLength() > 0;
+        bool hasSubsections = el.TryGetProperty("subsections", out var subsEl) &&
+                              subsEl.ValueKind == JsonValueKind.Array &&
+                              subsEl.GetArrayLength() > 0;
+
+        if (!hasBody && !hasBullets && !hasSubsections)
+            throw new ArgumentException(
+                "All sections must have either a non-empty body, non-empty bullets, or subsections");
+
+        string? title = null;
         if (el.TryGetProperty("title", out var t) && t.ValueKind == JsonValueKind.String)
-            s.Title = t.GetString() ?? "";
-        if (el.TryGetProperty("body", out var b) && b.ValueKind == JsonValueKind.String)
-            s.Body = b.GetString() ?? "";
-        if (el.TryGetProperty("bullets", out var bs) && bs.ValueKind == JsonValueKind.Array)
-            foreach (var item in bs.EnumerateArray())
+            title = t.GetString();
+        else if (!isSubsection && !isFirst)
+            title = "Untitled Section"; // Python applies this fallback at the top level
+
+        var s = new Section(title);
+        if (hasBody)
+            s.Body = bodyEl.GetString() ?? "";
+
+        if (hasBullets)
+        {
+            foreach (var item in bulletsEl.EnumerateArray())
                 if (item.ValueKind == JsonValueKind.String)
                     s.Bullets.Add(item.GetString() ?? "");
-        if (el.TryGetProperty("numbered", out var n) && n.ValueKind == JsonValueKind.True)
-            s.Numbered = true;
+        }
+
+        if (el.TryGetProperty("numbered", out var n))
+        {
+            if (n.ValueKind == JsonValueKind.True) s.Numbered = true;
+            else if (n.ValueKind == JsonValueKind.False) s.Numbered = false;
+        }
         if (el.TryGetProperty("numberedBullets", out var nb) && nb.ValueKind == JsonValueKind.True)
             s.NumberedBullets = true;
-        if (el.TryGetProperty("subsections", out var subs) && subs.ValueKind == JsonValueKind.Array)
-            foreach (var sub in subs.EnumerateArray())
-                s.Subsections.Add(SectionFromJson(sub));
+
+        if (hasSubsections)
+        {
+            foreach (var sub in subsEl.EnumerateArray())
+                s.Subsections.Add(SectionFromJson(sub, isSubsection: true));
+        }
+
         return s;
     }
 
     /// <summary>Add a PromptObjectModel as a subsection of an existing
-    /// section in this model. (Python parity:
-    /// ``PromptObjectModel.add_pom_as_subsection``.)</summary>
+    /// section in this model, identified by title.
+    /// (Python parity: ``PromptObjectModel.add_pom_as_subsection``.)</summary>
     public void AddPomAsSubsection(string targetTitle, PromptObjectModel pomToAdd)
     {
         var target = FindSection(targetTitle);
         if (target is null)
-            throw new ArgumentException($"Target section '{targetTitle}' not found");
+            throw new ArgumentException($"No section with title '{targetTitle}' found.");
+        AddPomAsSubsection(target, pomToAdd);
+    }
+
+    /// <summary>Add a PromptObjectModel as a subsection of an existing
+    /// Section object directly. Overload mirrors Python's polymorphism.
+    /// (Python parity: ``PromptObjectModel.add_pom_as_subsection``.)</summary>
+    public void AddPomAsSubsection(Section target, PromptObjectModel pomToAdd)
+    {
         foreach (var s in pomToAdd.Sections)
-        {
             target.Subsections.Add(s);
-        }
     }
 }

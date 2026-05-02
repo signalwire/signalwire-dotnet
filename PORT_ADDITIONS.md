@@ -506,3 +506,11 @@ signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.register_tools: In
 signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.setup: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill
 signalwire.swml.verb_info.VerbInfo.__init__: .NET-only public type used by the SWML verb registry; Python keeps verb metadata as plain dicts
 signalwire.swml.verb_info.VerbInfo.deconstruct: .NET-only public type used by the SWML verb registry; Python keeps verb metadata as plain dicts
+signalwire.pom.pom.PromptObjectModel.debug: C# auto-property exposing the Python attribute ``debug`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
+signalwire.pom.pom.PromptObjectModel.sections: C# auto-property exposing the Python attribute ``sections`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
+signalwire.pom.pom.Section.body: C# auto-property exposing the Python attribute ``body`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
+signalwire.pom.pom.Section.bullets: C# auto-property exposing the Python attribute ``bullets`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
+signalwire.pom.pom.Section.numbered: C# auto-property exposing the Python attribute ``numbered`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
+signalwire.pom.pom.Section.numbered_bullets: C# auto-property exposing the Python attribute ``numberedBullets`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
+signalwire.pom.pom.Section.subsections: C# auto-property exposing the Python attribute ``subsections`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
+signalwire.pom.pom.Section.title: C# auto-property exposing the Python attribute ``title`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class

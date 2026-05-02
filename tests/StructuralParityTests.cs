@@ -446,8 +446,13 @@ public class StructuralParityTests
             new() { ["title"] = "Greeting", ["body"] = "Hello" }
         };
         agent.SetPromptPom(sections);
-        Assert.Single(agent.Pom);
-        Assert.Equal("Greeting", agent.Pom[0]["title"]);
+        // Pom is now a PromptObjectModel (Python parity: agent.pom).
+        Assert.NotNull(agent.Pom);
+        Assert.Single(agent.Pom!.Sections);
+        Assert.Equal("Greeting", agent.Pom.Sections[0].Title);
+        // Raw dict access still available via GetPromptSections.
+        Assert.Single(agent.GetPromptSections());
+        Assert.Equal("Greeting", agent.GetPromptSections()[0]["title"]);
     }
 
     // -------------------------------------------------------------------

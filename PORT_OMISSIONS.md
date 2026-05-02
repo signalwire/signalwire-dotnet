@@ -42,8 +42,10 @@ rules:
 - **`signalwire.livewire.*`** — LiveWire integration is Python-only.
 - **`signalwire.mcp_gateway.*`** — Standalone MCP gateway server is
   Python-only; .NET ships the `mcp_gateway` skill only.
-- **`signalwire.pom.*`** — Internal POM helper module; .NET emits POM
-  JSON via `prompt_add_section` / `prompt_add_subsection` on AgentBase.
+- **`signalwire.pom.pom_tool.*`** — Python CLI helper for rendering a
+  POM file from disk; .NET ships POM in-process only.
+  (`signalwire.pom.pom` itself IS implemented at
+  `src/SignalWire/POM/PromptObjectModel.cs`.)
 - **`signalwire.web.web_service.*`** — Internal Python WebService class;
   .NET integrates HTTP handling on Service directly.
 - **`signalwire.utils.url_validator.*`** — Internal URL/SSRF validator;
@@ -502,30 +504,10 @@ signalwire.mcp_gateway.session_manager.SessionManager.shutdown: Standalone MCP g
 signalwire.mcp_gateway.session_manager.SessionManager: Standalone MCP gateway server is Python-only; .NET ships the mcp_gateway skill only
 signalwire.mcp_gateway.session_manager.Session: Standalone MCP gateway server is Python-only; .NET ships the mcp_gateway skill only
 signalwire.mcp_gateway.session_manager.Session.touch: Standalone MCP gateway server is Python-only; .NET ships the mcp_gateway skill only
-signalwire.pom.pom.PromptObjectModel.add_pom_as_subsection: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel.add_section: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel.find_section: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel.from_json: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel.from_yaml: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel.__init__: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel.render_markdown: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel.render_xml: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel.to_dict: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel.to_json: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.PromptObjectModel.to_yaml: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.Section.add_body: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.Section.add_bullets: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.Section.add_subsection: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.Section.__init__: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.Section: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.Section.render_markdown: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.Section.render_xml: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom.Section.to_dict: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom_tool.detect_file_format: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom_tool.load_pom: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom_tool.main: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
-signalwire.pom.pom_tool.render_pom: Internal POM helper module; .NET emits POM JSON via prompt_add_section/prompt_add_subsection on AgentBase
+signalwire.pom.pom_tool.detect_file_format: Python CLI helper for rendering a POM file from disk; .NET ships POM in-process only
+signalwire.pom.pom_tool.load_pom: Python CLI helper for rendering a POM file from disk; .NET ships POM in-process only
+signalwire.pom.pom_tool.main: Python CLI helper for rendering a POM file from disk; .NET ships POM in-process only
+signalwire.pom.pom_tool.render_pom: Python CLI helper for rendering a POM file from disk; .NET ships POM in-process only
 signalwire.prefabs.concierge.ConciergeAgent.check_availability: Registered as DefineTool callbacks (not public methods) per .NET idiom; Python registers them via decorators that produce both methods and tools
 signalwire.prefabs.concierge.ConciergeAgent.get_directions: Registered as DefineTool callbacks (not public methods) per .NET idiom; Python registers them via decorators that produce both methods and tools
 signalwire.prefabs.concierge.ConciergeAgent.on_summary: Inherited from AgentBase.OnSummary; .NET enumerator emits methods on the declaring class only

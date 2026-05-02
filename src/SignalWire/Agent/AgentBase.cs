@@ -347,10 +347,35 @@ public class AgentBase : Service
         return this;
     }
 
-    /// <summary>The prompt as POM section list (Python parity:
-    /// ``agent.pom``). Each entry is a section dict
-    /// (title/body/bullets/...). Read-only snapshot.</summary>
-    public IReadOnlyList<Dictionary<string, object>> Pom => _pomSections;
+    /// <summary>The prompt as a <see cref="POM.PromptObjectModel"/>
+    /// instance (Python parity: ``agent.pom``). Returns null when
+    /// <c>UsePom</c> is false. Materialised on each access from the
+    /// internal list-of-dicts so mutations stay round-trip-safe. To
+    /// inspect raw section dicts, use <see cref="GetPromptSections"/>.</summary>
+    public POM.PromptObjectModel? Pom
+    {
+        get
+        {
+            if (!_usePom) return null;
+            var json = JsonSerializer.Serialize(_pomSections);
+            try
+            {
+                return POM.PromptObjectModel.FromJson(json);
+            }
+            catch
+            {
+                // Bad section data (no body/bullets/subsections) means
+                // we can't construct a strict POM; return an empty one
+                // rather than throwing on a property accessor.
+                return new POM.PromptObjectModel();
+            }
+        }
+    }
+
+    /// <summary>The raw POM section dicts. Mirrors how the dotnet
+    /// agent has historically stored its prompt-object data and how
+    /// SWML rendering consumes it. Read-only snapshot.</summary>
+    public IReadOnlyList<Dictionary<string, object>> GetPromptSections() => _pomSections;
 
     /// <summary>Create a per-call SWAIG-function token. Returns empty
     /// string on failure. (Python parity: ``StateMixin._create_tool_token``.)</summary>

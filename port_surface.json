@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 452b2bf376d68cdb63e5e6bd5ef88630995f3200",
+  "generated_from": "signalwire-dotnet @ 42675cb3b96ec640b31c8194bd9db5e794e41686",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -29,6 +29,7 @@
           "handle_request",
           "host",
           "is_sip_routing_enabled",
+          "logger",
           "port",
           "register",
           "register_sip_username",
@@ -36,6 +37,31 @@
           "setup_sip_routing",
           "unregister"
         ]
+      },
+      "functions": []
+    },
+    "signalwire.core.agent.prompt.manager": {
+      "classes": {
+        "PromptManager": [
+          "define_contexts",
+          "get_contexts",
+          "get_post_prompt",
+          "get_prompt",
+          "get_raw_prompt",
+          "prompt_add_section",
+          "prompt_add_subsection",
+          "prompt_add_to_section",
+          "prompt_has_section",
+          "set_post_prompt",
+          "set_prompt_pom",
+          "set_prompt_text"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.core.agent.tools.registry": {
+      "classes": {
+        "ToolRegistry": []
       },
       "functions": []
     },
@@ -48,22 +74,27 @@
           "add_post_answer_verb",
           "add_pre_answer_verb",
           "add_swaig_query_params",
+          "auto_map_sip_usernames",
           "build_ai_verb",
           "clear_post_ai_verbs",
           "clear_post_answer_verbs",
           "clear_pre_answer_verbs",
           "clear_swaig_query_params",
           "clone_for_request",
-          "contexts",
+          "create_tool_token",
           "enable_sip_routing",
+          "get_name",
+          "get_prompt_sections",
           "get_skill_manager",
+          "is_auto_map_sip_usernames",
           "on_debug_event",
           "on_summary",
           "register_sip_username",
           "render_swml",
           "render_swml_with_context",
           "set_post_prompt_url",
-          "set_web_hook_url"
+          "set_web_hook_url",
+          "skill_manager"
         ]
       },
       "functions": []
@@ -273,14 +304,19 @@
     "signalwire.core.mixins.prompt_mixin": {
       "classes": {
         "PromptMixin": [
+          "contexts",
           "define_contexts",
+          "get_contexts",
+          "get_post_prompt",
           "get_prompt",
+          "get_raw_prompt",
           "prompt_add_section",
           "prompt_add_subsection",
           "prompt_add_to_section",
           "prompt_has_section",
           "reset_contexts",
           "set_post_prompt",
+          "set_prompt_pom",
           "set_prompt_text"
         ]
       },
@@ -305,7 +341,9 @@
     },
     "signalwire.core.mixins.state_mixin": {
       "classes": {
-        "StateMixin": []
+        "StateMixin": [
+          "validate_tool_token"
+        ]
       },
       "functions": []
     },
@@ -320,6 +358,25 @@
         "WebMixin": [
           "manual_set_proxy_url",
           "set_dynamic_config_callback"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.core.pom_builder": {
+      "classes": {
+        "PomBuilder": [
+          "__init__",
+          "add_section",
+          "add_subsection",
+          "add_to_section",
+          "from_sections",
+          "get_section",
+          "has_section",
+          "pom",
+          "render_markdown",
+          "render_xml",
+          "to_dict",
+          "to_json"
         ]
       },
       "functions": []
@@ -366,7 +423,35 @@
           "has_skill",
           "list_skills",
           "load_skill",
+          "logger",
           "unload_skill"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.core.swml_builder": {
+      "classes": {
+        "SWMLBuilder": [
+          "__init__",
+          "add_section",
+          "ai",
+          "answer",
+          "build",
+          "hangup",
+          "play",
+          "render",
+          "reset",
+          "say",
+          "service"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.core.swml_renderer": {
+      "classes": {
+        "SwmlRenderer": [
+          "render_function_response_swml",
+          "render_swml"
         ]
       },
       "functions": []
@@ -379,21 +464,29 @@
           "define_tools",
           "document",
           "extract_sip_username",
+          "get_all_functions",
           "get_basic_auth_credentials",
+          "get_basic_auth_credentials_with_source",
           "get_full_url",
+          "get_function",
           "get_proxy_url_base",
           "handle_request",
+          "has_function",
           "host",
           "list_tool_names",
           "name",
           "on_function_call",
+          "on_request",
+          "on_swml_request",
           "port",
           "register_routing_callback",
           "register_swaig_function",
+          "remove_function",
           "render_swml",
           "route",
           "run",
           "sleep",
+          "validate_basic_auth",
           "verb"
         ]
       },
@@ -416,11 +509,48 @@
       },
       "functions": []
     },
+    "signalwire.pom.pom": {
+      "classes": {
+        "PromptObjectModel": [
+          "__init__",
+          "add_pom_as_subsection",
+          "add_section",
+          "debug",
+          "find_section",
+          "from_json",
+          "from_yaml",
+          "render_markdown",
+          "render_xml",
+          "sections",
+          "to_dict",
+          "to_json",
+          "to_yaml"
+        ],
+        "Section": [
+          "__init__",
+          "add_body",
+          "add_bullets",
+          "add_subsection",
+          "body",
+          "bullets",
+          "numbered",
+          "numbered_bullets",
+          "render_markdown",
+          "render_xml",
+          "subsections",
+          "title",
+          "to_dict"
+        ]
+      },
+      "functions": []
+    },
     "signalwire.prefabs.concierge": {
       "classes": {
         "ConciergeAgent": [
           "__init__",
+          "check_availability",
           "get_amenities",
+          "get_directions",
           "get_services",
           "get_venue_name"
         ]
@@ -432,7 +562,8 @@
         "FAQBotAgent": [
           "__init__",
           "get_faqs",
-          "get_suggest_related"
+          "get_suggest_related",
+          "search_faqs"
         ]
       },
       "functions": []
@@ -441,7 +572,9 @@
       "classes": {
         "InfoGathererAgent": [
           "__init__",
-          "get_questions"
+          "get_questions",
+          "start_questions",
+          "submit_answer"
         ]
       },
       "functions": []
@@ -461,16 +594,25 @@
         "SurveyAgent": [
           "__init__",
           "get_survey_name",
-          "get_survey_questions"
+          "get_survey_questions",
+          "log_response",
+          "validate_response"
         ]
       },
       "functions": []
     },
-    "signalwire.relay.action": {
+    "signalwire.relay.call": {
       "classes": {
+        "AIAction": [
+          "__init__",
+          "get_stop_method"
+        ],
         "Action": [
           "__init__",
+          "accepts_terminal_event",
+          "call_id",
           "completed",
+          "control_id",
           "events",
           "execute_subcommand",
           "get_call_id",
@@ -479,6 +621,7 @@
           "get_stop_method",
           "handle_event",
           "is_done",
+          "node_id",
           "on_completed",
           "payload",
           "resolve",
@@ -486,21 +629,7 @@
           "state",
           "stop",
           "wait"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.relay.ai_action": {
-      "classes": {
-        "AIAction": [
-          "__init__",
-          "get_stop_method"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.relay.call": {
-      "classes": {
+        ],
         "Call": [
           "__init__",
           "actions",
@@ -522,6 +651,7 @@
           "detect",
           "device",
           "dial_winner",
+          "direction",
           "disconnect",
           "dispatch_event",
           "echo",
@@ -556,8 +686,61 @@
           "tap",
           "transcribe",
           "transfer",
+          "typed_listeners",
           "unhold",
           "user_event"
+        ],
+        "CollectAction": [
+          "__init__",
+          "accepts_terminal_event",
+          "collect_result",
+          "get_stop_method",
+          "handle_event",
+          "start_input_timers",
+          "volume"
+        ],
+        "DetectAction": [
+          "__init__",
+          "detect_result",
+          "get_stop_method",
+          "handle_event"
+        ],
+        "FaxAction": [
+          "__init__",
+          "fax_type",
+          "get_stop_method"
+        ],
+        "PayAction": [
+          "__init__",
+          "get_stop_method"
+        ],
+        "PlayAction": [
+          "__init__",
+          "get_stop_method",
+          "pause",
+          "resume",
+          "volume"
+        ],
+        "RecordAction": [
+          "__init__",
+          "duration",
+          "get_stop_method",
+          "pause",
+          "resume",
+          "size",
+          "url"
+        ],
+        "StreamAction": [
+          "__init__",
+          "get_stop_method"
+        ],
+        "TapAction": [
+          "__init__",
+          "get_stop_method"
+        ],
+        "TranscribeAction": [
+          "__init__",
+          "get_stop_method"
         ]
       },
       "functions": []
@@ -608,28 +791,6 @@
       },
       "functions": []
     },
-    "signalwire.relay.collect_action": {
-      "classes": {
-        "CollectAction": [
-          "__init__",
-          "collect_result",
-          "get_stop_method",
-          "handle_event",
-          "start_input_timers"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.relay.detect_action": {
-      "classes": {
-        "DetectAction": [
-          "__init__",
-          "detect_result",
-          "get_stop_method"
-        ]
-      },
-      "functions": []
-    },
     "signalwire.relay.event": {
       "classes": {
         "Event": [
@@ -644,16 +805,6 @@
           "tag",
           "timestamp",
           "to_dict"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.relay.fax_action": {
-      "classes": {
-        "FaxAction": [
-          "__init__",
-          "fax_type",
-          "get_stop_method"
         ]
       },
       "functions": []
@@ -684,64 +835,62 @@
       },
       "functions": []
     },
-    "signalwire.relay.pay_action": {
+    "signalwire.rest._base": {
       "classes": {
-        "PayAction": [
+        "CrudWithAddresses": [
           "__init__",
-          "get_stop_method"
+          "list_addresses"
         ]
       },
       "functions": []
     },
-    "signalwire.relay.play_action": {
+    "signalwire.rest._pagination": {
       "classes": {
-        "PlayAction": [
+        "PaginatedIterator": [
           "__init__",
-          "get_stop_method",
-          "pause",
-          "resume",
-          "volume"
+          "data_key",
+          "done",
+          "get_async_enumerator",
+          "http",
+          "index",
+          "items",
+          "next",
+          "params",
+          "path"
         ]
       },
       "functions": []
     },
-    "signalwire.relay.record_action": {
+    "signalwire.rest.client": {
       "classes": {
-        "RecordAction": [
+        "RestClient": [
           "__init__",
-          "duration",
-          "get_stop_method",
-          "pause",
-          "resume",
-          "size",
-          "url"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.relay.stream_action": {
-      "classes": {
-        "StreamAction": [
-          "__init__",
-          "get_stop_method"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.relay.tap_action": {
-      "classes": {
-        "TapAction": [
-          "__init__",
-          "get_stop_method"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.relay.transcribe_action": {
-      "classes": {
-        "TranscribeAction": [
-          "__init__",
-          "get_stop_method"
+          "addresses",
+          "base_url",
+          "calling",
+          "chat",
+          "compat",
+          "datasphere",
+          "fabric",
+          "http",
+          "imported_numbers",
+          "logs",
+          "lookup",
+          "mfa",
+          "number_groups",
+          "phone_numbers",
+          "project",
+          "project_id",
+          "pubsub",
+          "queues",
+          "recordings",
+          "registry",
+          "short_codes",
+          "sip_profile",
+          "space",
+          "token",
+          "verified_callers",
+          "video"
         ]
       },
       "functions": []
@@ -778,9 +927,17 @@
       },
       "functions": []
     },
+    "signalwire.rest.namespaces.addresses": {
+      "classes": {
+        "AddressesResource": [
+          "__init__"
+        ]
+      },
+      "functions": []
+    },
     "signalwire.rest.namespaces.calling": {
       "classes": {
-        "Calling": [
+        "CallingNamespace": [
           "__init__",
           "ai_hold",
           "ai_message",
@@ -820,64 +977,451 @@
           "transcribe",
           "transcribe_stop",
           "transfer",
+          "update",
           "update_call",
           "user_event"
         ]
       },
       "functions": []
     },
-    "signalwire.rest.namespaces.fabric": {
+    "signalwire.rest.namespaces.compat": {
       "classes": {
-        "Fabric": [
+        "CompatAccounts": [
           "__init__",
-          "addresses",
-          "ai_agents",
-          "call_flows",
-          "call_queues",
-          "client",
-          "conference_rooms",
-          "conversations",
-          "dial_plans",
-          "freeclimb_apps",
+          "create",
+          "get",
+          "list",
+          "update"
+        ],
+        "CompatApplications": [
+          "__init__",
+          "update"
+        ],
+        "CompatCalls": [
+          "__init__",
+          "start_recording",
+          "start_stream",
+          "stop_stream",
+          "update",
+          "update_recording"
+        ],
+        "CompatConferences": [
+          "__init__",
+          "base_path",
+          "delete_recording",
+          "get",
+          "get_participant",
+          "get_recording",
+          "list",
+          "list_participants",
+          "list_recordings",
+          "remove_participant",
+          "start_stream",
+          "stop_stream",
+          "update",
+          "update_participant",
+          "update_recording"
+        ],
+        "CompatFaxes": [
+          "__init__",
+          "delete_media",
+          "get_media",
+          "list_media",
+          "update"
+        ],
+        "CompatLamlBins": [
+          "__init__",
+          "update"
+        ],
+        "CompatMessages": [
+          "__init__",
+          "delete_media",
+          "get_media",
+          "list_media",
+          "update"
+        ],
+        "CompatNamespace": [
+          "__init__",
+          "account_sid",
+          "accounts",
+          "applications",
+          "calls",
+          "conferences",
+          "faxes",
+          "laml_bins",
+          "messages",
           "phone_numbers",
-          "sip_endpoints",
-          "sip_profiles",
-          "subscribers",
-          "swml_scripts"
+          "queues",
+          "recordings",
+          "tokens",
+          "transcriptions"
+        ],
+        "CompatPhoneNumbers": [
+          "__init__",
+          "base_path",
+          "delete",
+          "get",
+          "import_number",
+          "list",
+          "list_available_countries",
+          "purchase",
+          "search_local",
+          "search_toll_free",
+          "update"
+        ],
+        "CompatQueues": [
+          "__init__",
+          "dequeue_member",
+          "get_member",
+          "list_members",
+          "update"
+        ],
+        "CompatRecordings": [
+          "__init__",
+          "base_path",
+          "delete",
+          "get",
+          "list"
+        ],
+        "CompatTokens": [
+          "__init__",
+          "base_path",
+          "create",
+          "delete",
+          "update"
+        ],
+        "CompatTranscriptions": [
+          "__init__",
+          "base_path",
+          "delete",
+          "get",
+          "list"
         ]
       },
       "functions": []
     },
-    "signalwire.rest.rest_client": {
+    "signalwire.rest.namespaces.datasphere": {
       "classes": {
-        "RestClient": [
+        "DatasphereDocuments": [
+          "__init__",
+          "delete_chunk",
+          "get_chunk",
+          "list_chunks",
+          "search"
+        ],
+        "DatasphereNamespace": [
+          "__init__",
+          "documents"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.fabric": {
+      "classes": {
+        "CallFlowsResource": [
+          "__init__",
+          "base_path",
+          "deploy_version",
+          "list_addresses",
+          "list_versions"
+        ],
+        "ConferenceRoomsResource": [
+          "__init__",
+          "base_path",
+          "list_addresses"
+        ],
+        "CxmlApplicationsResource": [
+          "create"
+        ],
+        "FabricAddresses": [
+          "__init__",
+          "base_path",
+          "get",
+          "list"
+        ],
+        "FabricNamespace": [
           "__init__",
           "addresses",
-          "base_url",
-          "calling",
-          "chat",
-          "compat",
-          "datasphere",
-          "fabric",
-          "http",
-          "imported_numbers",
-          "logs",
-          "lookup",
-          "mfa",
-          "number_groups",
+          "addresses_top_level",
+          "ai_agents",
+          "call_flows",
+          "call_flows_ops",
+          "call_queues",
+          "client",
+          "conference_rooms",
+          "conference_rooms_ops",
+          "conversations",
+          "cxml_applications",
+          "cxml_applications_ops",
+          "cxml_scripts",
+          "cxml_webhooks",
+          "dial_plans",
+          "freeclimb_apps",
+          "freeswitch_connectors",
           "phone_numbers",
-          "project",
-          "project_id",
-          "pubsub",
-          "queues",
-          "recordings",
-          "registry",
-          "short_codes",
-          "sip_profile",
-          "space",
-          "token",
-          "verified_callers",
-          "video"
+          "relay_applications",
+          "resources",
+          "resources_generic",
+          "sip_endpoints",
+          "sip_gateways",
+          "sip_profiles",
+          "subscribers",
+          "subscribers_ops",
+          "swml_scripts",
+          "swml_webhooks",
+          "tokens",
+          "tokens_api"
+        ],
+        "FabricTokens": [
+          "__init__",
+          "create_embed_token",
+          "create_guest_token",
+          "create_invite_token",
+          "create_subscriber_token",
+          "refresh_subscriber_token"
+        ],
+        "GenericResources": [
+          "__init__",
+          "assign_domain_application",
+          "base_path",
+          "delete",
+          "get",
+          "list",
+          "list_addresses"
+        ],
+        "SubscribersResource": [
+          "__init__",
+          "base_path",
+          "create_sip_endpoint",
+          "delete_sip_endpoint",
+          "get_sip_endpoint",
+          "list_sip_endpoints",
+          "update_sip_endpoint"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.imported_numbers": {
+      "classes": {
+        "ImportedNumbersResource": [
+          "__init__"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.logs": {
+      "classes": {
+        "ConferenceLogs": [
+          "__init__",
+          "base_path",
+          "list"
+        ],
+        "FaxLogs": [
+          "__init__",
+          "base_path",
+          "get",
+          "list"
+        ],
+        "LogsNamespace": [
+          "__init__",
+          "conferences",
+          "fax",
+          "messages",
+          "voice"
+        ],
+        "MessageLogs": [
+          "__init__",
+          "base_path",
+          "get",
+          "list"
+        ],
+        "VoiceLogs": [
+          "__init__",
+          "base_path",
+          "get",
+          "list",
+          "list_events"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.mfa": {
+      "classes": {
+        "MfaResource": [
+          "__init__",
+          "call",
+          "sms",
+          "verify"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.number_groups": {
+      "classes": {
+        "NumberGroupsResource": [
+          "__init__",
+          "add_membership",
+          "delete_membership",
+          "get_membership",
+          "list_memberships",
+          "update"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.project": {
+      "classes": {
+        "ProjectNamespace": [
+          "__init__",
+          "tokens"
+        ],
+        "ProjectTokens": [
+          "__init__",
+          "create",
+          "delete",
+          "update"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.queues": {
+      "classes": {
+        "QueuesResource": [
+          "__init__",
+          "get_member",
+          "get_next_member",
+          "list_members",
+          "update"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.recordings": {
+      "classes": {
+        "RecordingsResource": [
+          "__init__"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.registry": {
+      "classes": {
+        "RegistryBrands": [
+          "__init__",
+          "base_path",
+          "create",
+          "create_campaign",
+          "get",
+          "list",
+          "list_campaigns"
+        ],
+        "RegistryCampaigns": [
+          "__init__",
+          "base_path",
+          "create_order",
+          "get",
+          "list_numbers",
+          "list_orders",
+          "update"
+        ],
+        "RegistryNamespace": [
+          "__init__",
+          "brands",
+          "campaigns",
+          "numbers",
+          "orders"
+        ],
+        "RegistryNumbers": [
+          "__init__",
+          "base_path",
+          "delete"
+        ],
+        "RegistryOrders": [
+          "__init__",
+          "base_path",
+          "get"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.short_codes": {
+      "classes": {
+        "ShortCodesResource": [
+          "__init__",
+          "update"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.sip_profile": {
+      "classes": {
+        "SipProfileResource": [
+          "__init__",
+          "get",
+          "update"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.video": {
+      "classes": {
+        "VideoConferenceTokens": [
+          "__init__",
+          "base_path",
+          "get",
+          "reset"
+        ],
+        "VideoConferences": [
+          "__init__",
+          "create_stream",
+          "list_conference_tokens",
+          "list_streams",
+          "update"
+        ],
+        "VideoNamespace": [
+          "__init__",
+          "conference_tokens",
+          "conferences",
+          "room_recordings",
+          "room_sessions",
+          "room_tokens",
+          "rooms",
+          "streams"
+        ],
+        "VideoRoomRecordings": [
+          "__init__",
+          "base_path",
+          "delete",
+          "get",
+          "list",
+          "list_events"
+        ],
+        "VideoRoomSessions": [
+          "__init__",
+          "base_path",
+          "get",
+          "list",
+          "list_events",
+          "list_members",
+          "list_recordings"
+        ],
+        "VideoRoomTokens": [
+          "__init__",
+          "base_path",
+          "create"
+        ],
+        "VideoRooms": [
+          "__init__",
+          "create_stream",
+          "list_streams",
+          "update"
+        ],
+        "VideoStreams": [
+          "__init__",
+          "base_path",
+          "delete",
+          "get",
+          "update"
         ]
       },
       "functions": []
@@ -1076,8 +1620,12 @@
     "signalwire.skills.registry": {
       "classes": {
         "SkillRegistry": [
+          "add_skill_directory",
+          "discover_skills",
+          "external_paths",
           "get_factory",
           "list_skills",
+          "logger",
           "register_skill",
           "reset"
         ]
@@ -1169,18 +1717,6 @@
       },
       "functions": []
     },
-    "signalwire.swml.schema": {
-      "classes": {
-        "Schema": [
-          "get_verb",
-          "get_verb_names",
-          "is_valid_verb",
-          "reset",
-          "verb_count"
-        ]
-      },
-      "functions": []
-    },
     "signalwire.swml.service_options": {
       "classes": {
         "ServiceOptions": [
@@ -1190,6 +1726,45 @@
           "name",
           "port",
           "route"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.utils.execution_mode": {
+      "classes": {
+        "ExecutionMode": [
+          "get_execution_mode",
+          "is_serverless_mode"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.utils.schema_utils": {
+      "classes": {
+        "SchemaUtils": [
+          "get_all_verb_names",
+          "get_verb",
+          "get_verb_names",
+          "get_verb_parameters",
+          "is_valid_verb",
+          "load_schema",
+          "reset",
+          "validate_document",
+          "verb_count"
+        ],
+        "SchemaValidationError": [
+          "__init__",
+          "errors",
+          "verb_name"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.utils.url_validator": {
+      "classes": {
+        "UrlValidator": [
+          "validate_url",
+          "validate_url_with_resolved_addresses"
         ]
       },
       "functions": []
