@@ -49,7 +49,14 @@ public class Client
 
     // -- event handlers --
     public Func<Call, Event, Task>? OnCallHandler { get; set; }
-    public Func<Event, Dictionary<string, object?>, Task>? OnMessageHandler { get; set; }
+
+    /// <summary>
+    /// Inbound message handler. Mirrors Python's <c>@client.on_message</c>:
+    /// fires with a fully-formed <see cref="Message"/> for every
+    /// <c>messaging.receive</c> event.
+    /// </summary>
+    public Func<Message, Event, Task>? OnMessageHandler { get; set; }
+
     public Func<Event, Dictionary<string, object?>, Task>? OnEventHandler { get; set; }
 
     // -- internals --
@@ -204,6 +211,25 @@ public class Client
         _running = false;
         Connected = false;
 
+        var ws = _ws;
+        if (ws is not null && ws.State == WebSocketState.Open)
+        {
+            try
+            {
+                // Send the close frame and wait briefly so the server
+                // sees the disconnect before our test process moves on.
+                using var closeCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                ws.CloseOutputAsync(
+                    WebSocketCloseStatus.NormalClosure,
+                    "client disconnect",
+                    closeCts.Token).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"Disconnect close error: {ex.Message}");
+            }
+        }
+
         try
         {
             _cts?.Cancel();
@@ -211,22 +237,6 @@ public class Client
         catch (Exception ex)
         {
             _logger.Debug($"Disconnect cts cancel error: {ex.Message}");
-        }
-
-        var ws = _ws;
-        if (ws is not null && ws.State == WebSocketState.Open)
-        {
-            try
-            {
-                _ = ws.CloseOutputAsync(
-                    WebSocketCloseStatus.NormalClosure,
-                    "client disconnect",
-                    CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                _logger.Debug($"Disconnect close error: {ex.Message}");
-            }
         }
     }
 
@@ -551,9 +561,30 @@ public class Client
         // -- inbound message --
         if (eventType == "messaging.receive")
         {
+            // The wire frame uses "message_state"; the Message ctor reads
+            // "state". Synthesize the field so Direction/State surface
+            // consistently to the handler.
+            var msgParams = new Dictionary<string, object?>(parms);
+            if (!msgParams.ContainsKey("state")
+                && msgParams.TryGetValue("message_state", out var ms))
+            {
+                msgParams["state"] = ms;
+            }
+            if (!msgParams.ContainsKey("direction"))
+            {
+                msgParams["direction"] = "inbound";
+            }
+            var inboundMsg = new Message(msgParams);
             if (OnMessageHandler is not null)
             {
-                _ = OnMessageHandler(evt, parms);
+                try
+                {
+                    _ = OnMessageHandler(inboundMsg, evt);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"on_message handler raised: {ex.Message}");
+                }
             }
             return;
         }
@@ -565,7 +596,9 @@ public class Client
             if (msgId is not null && Messages.TryGetValue(msgId, out var msg))
             {
                 msg.DispatchEvent(evt);
-                var msgState = parms.GetValueOrDefault("state")?.ToString();
+                // Production wire uses "message_state"; older paths used "state".
+                var msgState = parms.GetValueOrDefault("message_state")?.ToString()
+                    ?? parms.GetValueOrDefault("state")?.ToString();
                 if (msgState is not null && Constants.MessageTerminalStates.Contains(msgState))
                 {
                     Messages.TryRemove(msgId, out _);
@@ -579,12 +612,13 @@ public class Client
         {
             var tag = parms.GetValueOrDefault("tag")?.ToString();
 
-            if (tag is not null && PendingDials.ContainsKey(tag))
+            if (!string.IsNullOrEmpty(tag) && PendingDials.ContainsKey(tag))
             {
                 var callId = parms.GetValueOrDefault("call_id")?.ToString();
                 if (callId is not null && !Calls.ContainsKey(callId))
                 {
                     var call = new Call(parms, this);
+                    call.Direction ??= "outbound";
                     Calls[callId] = call;
                 }
             }
@@ -623,33 +657,54 @@ public class Client
 
     /// <summary>
     /// Originate an outbound call, awaiting until the dial resolves.
+    /// Honours <c>params_["tag"]</c> when provided; otherwise a UUID is
+    /// generated. Honours <c>params_["dial_timeout"]</c> (seconds) for the
+    /// resolve-or-throw deadline.
     /// </summary>
     public async Task<Call> DialAsync(Dictionary<string, object?> params_)
     {
-        var tag = Guid.NewGuid().ToString();
+        var explicitTag = params_.GetValueOrDefault("tag")?.ToString();
+        var tag = !string.IsNullOrEmpty(explicitTag)
+            ? explicitTag
+            : Guid.NewGuid().ToString();
+
+        var timeoutSeconds = 120.0;
+        if (params_.TryGetValue("dial_timeout", out var dt) && dt is not null)
+        {
+            try
+            {
+                timeoutSeconds = Convert.ToDouble(dt);
+            }
+            catch { /* fall back to default */ }
+        }
 
         var tcs = new TaskCompletionSource<Call>(TaskCreationOptions.RunContinuationsAsynchronously);
         PendingDials[tag] = tcs;
 
-        var rpcParams = new Dictionary<string, object?>(params_) { ["tag"] = tag };
-        await ExecuteAsync("calling.dial", rpcParams).ConfigureAwait(false);
-
-        // Wait for the dial event to resolve with timeout
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        // Build the wire params: drop the SDK-only "dial_timeout" field and
+        // ensure tag is set (won't double-set if caller passed it through).
+        var rpcParams = new Dictionary<string, object?>();
+        foreach (var kvp in params_)
+        {
+            if (kvp.Key == "dial_timeout") continue;
+            rpcParams[kvp.Key] = kvp.Value;
+        }
+        rpcParams["tag"] = tag;
 
         try
         {
-            var call = await tcs.Task.WaitAsync(cts.Token).ConfigureAwait(false);
-            return call;
-        }
-        catch (OperationCanceledException)
-        {
-            // Fallback: look up by tag
-            foreach (var c in Calls.Values)
+            await ExecuteAsync("calling.dial", rpcParams).ConfigureAwait(false);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+            try
             {
-                if (c.Tag == tag) return c;
+                return await tcs.Task.WaitAsync(cts.Token).ConfigureAwait(false);
             }
-            throw new InvalidOperationException("Dial failed: no call object received");
+            catch (OperationCanceledException)
+            {
+                throw new InvalidOperationException(
+                    $"Dial timed out waiting for answer (tag={tag})");
+            }
         }
         finally
         {
@@ -660,13 +715,25 @@ public class Client
     /// <summary>Send an outbound message.</summary>
     public async Task<Message> SendMessageAsync(Dictionary<string, object?> params_)
     {
-        var result = await ExecuteAsync("messaging.send", params_).ConfigureAwait(false);
+        // Default the context like Python does: prefer the assigned protocol
+        // (not the WS-level signalwire protocol; this is the per-connection
+        // routing scope) and fall back to "default".
+        var sendParams = new Dictionary<string, object?>(params_);
+        if (!sendParams.ContainsKey("context"))
+        {
+            sendParams["context"] = !string.IsNullOrEmpty(Protocol) ? Protocol : "default";
+        }
+
+        var result = await ExecuteAsync("messaging.send", sendParams).ConfigureAwait(false);
 
         var messageId = result.GetValueOrDefault("message_id")?.ToString() ?? Guid.NewGuid().ToString();
 
-        var msgParams = new Dictionary<string, object?>(params_)
+        // Seed the Message with the same params we sent + initial state.
+        var msgParams = new Dictionary<string, object?>(sendParams)
         {
             ["message_id"] = messageId,
+            ["direction"] = "outbound",
+            ["state"] = Constants.MessageStateQueued,
         };
         var message = new Message(msgParams);
         Messages[messageId] = message;
@@ -716,7 +783,7 @@ public class Client
     }
 
     /// <summary>Register a handler for inbound messages.</summary>
-    public Client OnMessage(Func<Event, Dictionary<string, object?>, Task> callback)
+    public Client OnMessage(Func<Message, Event, Task> callback)
     {
         OnMessageHandler = callback;
         return this;
@@ -741,39 +808,82 @@ public class Client
         }
 
         var call = new Call(parms, this);
+        // Default direction for calling.call.receive is inbound; honour any
+        // explicit value already in the wire frame.
+        call.Direction ??= "inbound";
         Calls[callId] = call;
 
         _logger.Info($"Inbound call {callId}");
 
         if (OnCallHandler is not null)
         {
-            _ = OnCallHandler(call, evt);
+            try
+            {
+                _ = OnCallHandler(call, evt);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"on_call handler raised: {ex.Message}");
+            }
         }
     }
 
     private void HandleDialEvent(Event evt, Dictionary<string, object?> parms)
     {
         var tag = parms.GetValueOrDefault("tag")?.ToString();
-        var callId = parms.GetValueOrDefault("call_id")?.ToString();
-
         if (tag is null) return;
 
-        // Ensure we have a Call object.
+        // Wire shape: calling.call.dial has NO top-level call_id. The real
+        // identifiers live nested at params.call.{call_id, node_id}. Only
+        // very old / synthetic test paths put call_id at the top level.
+        var topCallId = parms.GetValueOrDefault("call_id")?.ToString();
+        Dictionary<string, object?>? callDict = parms.GetValueOrDefault("call") as Dictionary<string, object?>;
+        var nestedCallId = callDict?.GetValueOrDefault("call_id")?.ToString();
+
+        // dial_state values: dialing|answered|failed
+        var dialState = parms.GetValueOrDefault("dial_state")?.ToString()
+            ?? parms.GetValueOrDefault("state")?.ToString();
+
+        if (!PendingDials.TryGetValue(tag, out var tcs))
+        {
+            return;
+        }
+
+        if (dialState == Constants.DialStateFailed)
+        {
+            tcs.TrySetException(new InvalidOperationException(
+                $"Dial failed (tag={tag})"));
+            return;
+        }
+
+        // Choose the call_id we have: nested takes precedence (production wire).
+        var callId = nestedCallId ?? topCallId;
+
         Call? call = null;
         if (callId is not null && Calls.TryGetValue(callId, out call))
         {
-            // Already tracked
+            // Already tracked from a calling.call.state event.
         }
         else if (callId is not null)
         {
-            call = new Call(parms, this);
+            // Build the Call from the nested call dict (which carries device,
+            // tag, node_id) when present; otherwise fall back to the outer
+            // params.
+            var seed = callDict ?? parms;
+            if (callDict is not null && !seed.ContainsKey("tag"))
+                seed["tag"] = tag;
+            call = new Call(seed, this);
             Calls[callId] = call;
         }
 
-        // Resolve the pending dial TCS.
-        if (call is not null && PendingDials.TryGetValue(tag, out var tcs))
+        if (call is not null)
         {
             call.DialWinner = true;
+            // The dial-winner state on the production wire is "answered".
+            if (dialState == Constants.DialStateAnswered)
+            {
+                call.State = Constants.CallStateAnswered;
+            }
             tcs.TrySetResult(call);
         }
     }

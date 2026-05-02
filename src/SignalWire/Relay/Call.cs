@@ -24,6 +24,7 @@ public class Call
     public Dictionary<string, object?> Peer { get; set; } = new();
     public string? EndReason { get; set; }
     public string? Context { get; set; }
+    public string? Direction { get; set; }
     public bool DialWinner { get; set; }
 
     // -- back-references --
@@ -32,8 +33,11 @@ public class Call
     /// <summary>controlId => Action</summary>
     public Dictionary<string, Action> Actions { get; } = new();
 
-    /// <summary>User-registered event callbacks.</summary>
+    /// <summary>User-registered event callbacks (catch-all).</summary>
     public List<System.Action<Event, Call>> OnEventCallbacks { get; } = [];
+
+    /// <summary>Per-event-type listeners registered via <see cref="On(string, System.Action{Event})"/>.</summary>
+    public Dictionary<string, List<System.Action<Event>>> TypedListeners { get; } = new();
 
     // ------------------------------------------------------------------
     // Construction
@@ -46,7 +50,11 @@ public class Call
         NodeId = GetStr(params_, "node_id");
         Tag = GetStr(params_, "tag");
         Context = GetStr(params_, "context");
-        State = GetStr(params_, "state") ?? Constants.CallStateCreated;
+        Direction = GetStr(params_, "direction");
+        // Production wire uses "call_state"; legacy synthetic frames use "state".
+        State = GetStr(params_, "call_state")
+            ?? GetStr(params_, "state")
+            ?? Constants.CallStateCreated;
 
         if (params_.TryGetValue("device", out var d) && d is Dictionary<string, object?> dev)
             Device = dev;
@@ -72,8 +80,16 @@ public class Call
         // -- call-level state events --
         if (eventType == "calling.call.state")
         {
-            if (evt.State is not null)
-                State = evt.State;
+            // Production wire shape uses "call_state"; legacy unit tests
+            // sometimes send "state". Accept either.
+            string? newState = null;
+            if (parms.TryGetValue("call_state", out var csVal) && csVal is not null)
+                newState = csVal.ToString();
+            else if (evt.State is not null)
+                newState = evt.State;
+
+            if (newState is not null)
+                State = newState;
             if (parms.TryGetValue("end_reason", out var er) && er is not null)
                 EndReason = er.ToString();
             if (parms.TryGetValue("peer", out var p) && p is Dictionary<string, object?> peer)
@@ -99,22 +115,46 @@ public class Call
         {
             action.HandleEvent(evt);
 
-            // Check whether the action has reached a terminal state
-            if (Constants.ActionTerminalStates.TryGetValue(eventType, out var terminalSet))
+            // Check whether the action has reached a terminal state. Subclasses
+            // may opt out of terminal resolution per event_type (e.g.
+            // CollectAction blocks calling.call.play so the play phase of
+            // play_and_collect doesn't resolve the collect action).
+            if (action.AcceptsTerminalEvent(eventType)
+                && Constants.ActionTerminalStates.TryGetValue(eventType, out var terminalSet))
             {
                 var actionState = evt.State;
                 if (actionState is not null && terminalSet.Contains(actionState))
                 {
-                    action.Resolve();
+                    // Pass the terminal event so callers can introspect it.
+                    action.Resolve(evt);
                     Actions.Remove(controlId);
                 }
+            }
+
+            // Some actions resolve on non-terminal-state events (e.g.
+            // DetectAction resolves on the first detect payload). If the
+            // subclass marked itself completed inside HandleEvent, drop it
+            // from the active set so we don't keep routing future events.
+            if (action.Completed && Actions.ContainsKey(controlId))
+            {
+                Actions.Remove(controlId);
             }
         }
 
         // -- fire user-registered callbacks --
         foreach (var cb in OnEventCallbacks)
         {
-            cb(evt, this);
+            try { cb(evt, this); }
+            catch (Exception ex) { _logger.Error($"on-event callback raised: {ex.Message}"); }
+        }
+        // -- fire typed listeners for the matching event_type --
+        if (TypedListeners.TryGetValue(eventType, out var listeners))
+        {
+            foreach (var cb in listeners.ToArray())
+            {
+                try { cb(evt); }
+                catch (Exception ex) { _logger.Error($"on('{eventType}') callback raised: {ex.Message}"); }
+            }
         }
     }
 
@@ -122,6 +162,18 @@ public class Call
     public Call On(System.Action<Event, Call> callback)
     {
         OnEventCallbacks.Add(callback);
+        return this;
+    }
+
+    /// <summary>Register a per-event-type listener (mirrors Python <c>call.on(event_type, handler)</c>).</summary>
+    public Call On(string eventType, System.Action<Event> callback)
+    {
+        if (!TypedListeners.TryGetValue(eventType, out var list))
+        {
+            list = new List<System.Action<Event>>();
+            TypedListeners[eventType] = list;
+        }
+        list.Add(callback);
         return this;
     }
 
@@ -146,7 +198,7 @@ public class Call
         => ExecuteAsync("calling.answer");
 
     public Task<Dictionary<string, object?>> HangupAsync(string reason = "hangup")
-        => ExecuteAsync("calling.hangup", new Dictionary<string, object?> { ["reason"] = reason });
+        => ExecuteAsync("calling.end", new Dictionary<string, object?> { ["reason"] = reason });
 
     public Task<Dictionary<string, object?>> PassAsync()
         => ExecuteAsync("calling.pass");
@@ -173,10 +225,10 @@ public class Call
         => ExecuteAsync("calling.transfer", extra);
 
     public Task<Dictionary<string, object?>> JoinConferenceAsync(Dictionary<string, object?>? extra = null)
-        => ExecuteAsync("calling.conference.join", extra);
+        => ExecuteAsync("calling.join_conference", extra);
 
     public Task<Dictionary<string, object?>> LeaveConferenceAsync()
-        => ExecuteAsync("calling.conference.leave");
+        => ExecuteAsync("calling.leave_conference");
 
     public Task<Dictionary<string, object?>> EchoAsync()
         => ExecuteAsync("calling.echo");
@@ -194,22 +246,22 @@ public class Call
         => ExecuteAsync("calling.live_translate", extra);
 
     public Task<Dictionary<string, object?>> JoinRoomAsync(Dictionary<string, object?>? extra = null)
-        => ExecuteAsync("calling.room.join", extra);
+        => ExecuteAsync("calling.join_room", extra);
 
     public Task<Dictionary<string, object?>> LeaveRoomAsync()
-        => ExecuteAsync("calling.room.leave");
+        => ExecuteAsync("calling.leave_room");
 
     public Task<Dictionary<string, object?>> AmazonBedrockAsync(Dictionary<string, object?>? extra = null)
         => ExecuteAsync("calling.amazon_bedrock", extra);
 
     public Task<Dictionary<string, object?>> AiMessageAsync(Dictionary<string, object?>? extra = null)
-        => ExecuteAsync("calling.ai.message", extra);
+        => ExecuteAsync("calling.ai_message", extra);
 
     public Task<Dictionary<string, object?>> AiHoldAsync()
-        => ExecuteAsync("calling.ai.hold");
+        => ExecuteAsync("calling.ai_hold");
 
     public Task<Dictionary<string, object?>> AiUnholdAsync()
-        => ExecuteAsync("calling.ai.unhold");
+        => ExecuteAsync("calling.ai_unhold");
 
     public Task<Dictionary<string, object?>> UserEventAsync(Dictionary<string, object?>? extra = null)
         => ExecuteAsync("calling.user_event", extra);
@@ -237,10 +289,10 @@ public class Call
         => StartAction<RecordAction>("calling.record", extra);
 
     public CollectAction Collect(Dictionary<string, object?>? extra = null)
-        => StartAction<CollectAction>("calling.collect", extra);
+        => StartAction<CollectAction>("calling.collect", extra, isPlayAndCollect: false);
 
     public CollectAction PlayAndCollect(Dictionary<string, object?>? extra = null)
-        => StartAction<CollectAction>("calling.play_and_collect", extra);
+        => StartAction<CollectAction>("calling.play_and_collect", extra, isPlayAndCollect: true);
 
     public DetectAction Detect(Dictionary<string, object?>? extra = null)
         => StartAction<DetectAction>("calling.detect", extra);
@@ -284,14 +336,24 @@ public class Call
     private T StartAction<T>(
         string method,
         Dictionary<string, object?>? extra = null,
-        string? faxType = null) where T : Action
+        string? faxType = null,
+        bool isPlayAndCollect = false) where T : Action
     {
-        var controlId = Guid.NewGuid().ToString();
+        // Honour caller-provided control_id; else generate.
+        var controlId = (extra is not null
+            && extra.TryGetValue("control_id", out var cidVal)
+            && cidVal?.ToString() is { Length: > 0 } cidStr)
+            ? cidStr
+            : Guid.NewGuid().ToString();
 
         T action;
         if (typeof(T) == typeof(FaxAction))
         {
             action = (T)(Action)new FaxAction(controlId, CallId ?? "", NodeId ?? "", Client, faxType ?? "send");
+        }
+        else if (typeof(T) == typeof(CollectAction))
+        {
+            action = (T)(Action)new CollectAction(controlId, CallId ?? "", NodeId ?? "", Client, isPlayAndCollect);
         }
         else
         {
@@ -304,7 +366,11 @@ public class Call
         parms["control_id"] = controlId;
         if (extra is not null)
         {
-            foreach (var kvp in extra) parms[kvp.Key] = kvp.Value;
+            foreach (var kvp in extra)
+            {
+                if (kvp.Key == "control_id") continue;  // already set
+                parms[kvp.Key] = kvp.Value;
+            }
         }
 
         try

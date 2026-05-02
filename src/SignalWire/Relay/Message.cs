@@ -45,7 +45,8 @@ public sealed class Message
         Body = GetStr(params_, "body");
         Media = GetStringList(params_, "media");
         Tags = GetStringList(params_, "tags");
-        State = GetStr(params_, "state");
+        // Production wire uses "message_state"; legacy paths use "state".
+        State = GetStr(params_, "message_state") ?? GetStr(params_, "state");
         Reason = GetStr(params_, "reason");
     }
 
@@ -62,7 +63,11 @@ public sealed class Message
     {
         var p = evt.Params;
 
-        if (p.TryGetValue("state", out var s) && s is not null)
+        // Production wire shape uses "message_state"; some test helpers send
+        // "state". Either should update the Message.
+        if (p.TryGetValue("message_state", out var msVal) && msVal is not null)
+            State = msVal.ToString();
+        else if (p.TryGetValue("state", out var s) && s is not null)
             State = s.ToString();
         if (p.TryGetValue("reason", out var r) && r is not null)
             Reason = r.ToString();

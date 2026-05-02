@@ -17,9 +17,9 @@ public class Action
     private Func<Action, Task>? _onCompletedCallback;
     private bool _callbackFired;
 
-    protected string ControlId { get; }
-    protected string CallId { get; }
-    protected string NodeId { get; }
+    public string ControlId { get; }
+    public string CallId { get; }
+    public string NodeId { get; }
     protected object Client { get; }
 
     public string? State { get; protected set; }
@@ -114,6 +114,17 @@ public class Action
             State = evt.State;
         }
     }
+
+    /// <summary>
+    /// Subclasses may filter which event types can resolve this action via
+    /// the standard terminal-state path. Default: any event type registered
+    /// in <see cref="Constants.ActionTerminalStates"/> may resolve.
+    ///
+    /// Override returns false to block resolution for a specific event type
+    /// (e.g. CollectAction blocks <c>calling.call.play</c> so the play
+    /// phase of <c>play_and_collect</c> doesn't resolve the collect side).
+    /// </summary>
+    public virtual bool AcceptsTerminalEvent(string eventType) => true;
 
     // ------------------------------------------------------------------
     // Resolution
@@ -227,7 +238,13 @@ public class RecordAction : Action
 
     public override string GetStopMethod() => "calling.record.stop";
 
-    public void Pause() => ExecuteSubcommand("calling.record.pause");
+    public void Pause(string? behavior = null)
+    {
+        var extras = behavior is null
+            ? null
+            : new Dictionary<string, object?> { ["behavior"] = behavior };
+        ExecuteSubcommand("calling.record.pause", extras);
+    }
 
     public void Resume() => ExecuteSubcommand("calling.record.resume");
 
@@ -251,17 +268,31 @@ public class RecordAction : Action
 /// </summary>
 public class CollectAction : Action
 {
-    public CollectAction(string controlId, string callId, string nodeId, object client)
-        : base(controlId, callId, nodeId, client) { }
+    private readonly bool _isPlayAndCollect;
 
-    public override string GetStopMethod() => "calling.collect.stop";
+    public CollectAction(string controlId, string callId, string nodeId, object client,
+        bool isPlayAndCollect = false)
+        : base(controlId, callId, nodeId, client)
+    {
+        _isPlayAndCollect = isPlayAndCollect;
+    }
+
+    public override string GetStopMethod() =>
+        _isPlayAndCollect ? "calling.play_and_collect.stop" : "calling.collect.stop";
 
     /// <summary>
     /// Notify the server to start input timers now rather than waiting
     /// for the initial-timeout to expire naturally.
     /// </summary>
     public void StartInputTimers() =>
-        ExecuteSubcommand("calling.collect.start_input_timers");
+        ExecuteSubcommand(_isPlayAndCollect
+            ? "calling.collect.start_input_timers"
+            : "calling.collect.start_input_timers");
+
+    /// <summary>play_and_collect-only: change playback volume mid-prompt.</summary>
+    public void Volume(double db) =>
+        ExecuteSubcommand("calling.play_and_collect.volume",
+            new() { ["volume"] = db });
 
     /// <summary>Return the structured collect result from the payload.</summary>
     public object? CollectResult =>
@@ -276,6 +307,14 @@ public class CollectAction : Action
         if (evt.EventType == "calling.call.play") return;
         base.HandleEvent(evt);
     }
+
+    /// <summary>
+    /// Block <c>calling.call.play</c> events from triggering the standard
+    /// terminal-state resolution path: only <c>calling.call.collect</c>
+    /// may resolve a CollectAction.
+    /// </summary>
+    public override bool AcceptsTerminalEvent(string eventType) =>
+        eventType != "calling.call.play";
 }
 
 /// <summary>Handle for calling.detect operations.</summary>
@@ -289,6 +328,22 @@ public class DetectAction : Action
     public object? DetectResult =>
         Payload.TryGetValue("detect", out var d) ? d
         : Payload.TryGetValue("result", out var r) ? r : null;
+
+    /// <summary>
+    /// Per RELAY_IMPLEMENTATION_GUIDE.md "detect gotcha": detect events
+    /// continuously stream a <c>detect</c> object — resolve on the FIRST
+    /// meaningful detect payload (or on terminal state if it arrives first
+    /// with no detect data).
+    /// </summary>
+    public override void HandleEvent(Event evt)
+    {
+        base.HandleEvent(evt);
+        if (Completed) return;
+        if (evt.Params.TryGetValue("detect", out var d) && d is not null)
+        {
+            Resolve(evt);
+        }
+    }
 }
 
 /// <summary>Handle for calling.fax operations (send or receive).</summary>
