@@ -85,6 +85,46 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     // ---- Lifecycle ---------------------------------------------------
 
     [Fact]
+    public async Task DialForwardsCodecsArray()
+    {
+        if (!_fixture.Available) return;
+        var calling = NewCalling();
+        var body = await calling.DialAsync(new Dictionary<string, object?>
+        {
+            ["url"] = "https://example.com/swml",
+            ["to"] = "+15551234567",
+            ["codecs"] = new[] { "OPUS", "G729", "VP8", "PCMA" },
+        });
+        Assert.NotNull(body);
+        Assert.True(body.ContainsKey("id"));
+        var p = CommandAssert(_fixture.Harness.Journal.Last(), "dial", null);
+        Assert.Equal("+15551234567", StringParam(p, "to"));
+        Assert.True(p.TryGetProperty("codecs", out var codecs));
+        Assert.Equal(JsonValueKind.Array, codecs.ValueKind);
+        var arr = codecs.EnumerateArray()
+            .Where(e => e.ValueKind == JsonValueKind.String)
+            .Select(e => e.GetString())
+            .ToArray();
+        Assert.Equal(new[] { "OPUS", "G729", "VP8", "PCMA" }, arr);
+    }
+
+    [Fact]
+    public async Task DialForwardsCodecsString()
+    {
+        if (!_fixture.Available) return;
+        var calling = NewCalling();
+        var body = await calling.DialAsync(new Dictionary<string, object?>
+        {
+            ["url"] = "https://example.com/swml",
+            ["to"] = "+15551234567",
+            ["codecs"] = "OPUS,G729,VP8,PCMA",
+        });
+        Assert.NotNull(body);
+        var p = CommandAssert(_fixture.Harness.Journal.Last(), "dial", null);
+        Assert.Equal("OPUS,G729,VP8,PCMA", StringParam(p, "codecs"));
+    }
+
+    [Fact]
     public async Task Update_LifecycleCommand()
     {
         if (!_fixture.Available) return;
