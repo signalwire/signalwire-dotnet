@@ -1,0 +1,56 @@
+name: Doc audit
+
+# Layer C doc<->code alignment audit. Regenerates port_surface.json from
+# C# source, then walks docs/, examples/, rest/docs/, relay/docs/ etc. and
+# verifies that every method/class reference in markdown or example code
+# resolves to a real symbol — or is excused in DOC_AUDIT_IGNORE.md with a
+# one-line rationale. Catches the "phantom API" bug class: a doc promising
+# a method that was never implemented.
+#
+# The audit is JSON-driven (audit_docs.py reads port_surface.json) and
+# language-agnostic, so we only need Python here, not a .NET toolchain.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Nightly at 06:30 UTC — runs right after the Layer B surface audit so
+    # doc drift surfaces alongside surface drift.
+    - cron: '30 6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  doc-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout signalwire-dotnet
+        uses: actions/checkout@v5
+        with:
+          path: signalwire-dotnet
+
+      - name: Checkout porting-sdk (contains audit_docs.py)
+        uses: actions/checkout@v5
+        with:
+          repository: signalwire/porting-sdk
+          path: porting-sdk
+          token: ${{ secrets.PORTING_SDK_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Enumerate .NET surface (input for audit_docs)
+        working-directory: signalwire-dotnet
+        run: python3 scripts/enumerate_surface.py
+
+      - name: Audit doc / example references
+        working-directory: signalwire-dotnet
+        run: |
+          python3 ${{ github.workspace }}/porting-sdk/scripts/audit_docs.py \
+              --root . \
+              --surface port_surface.json \
+              --ignore DOC_AUDIT_IGNORE.md

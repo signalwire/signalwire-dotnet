@@ -1,0 +1,55 @@
+name: Surface audit
+
+# Layer B symbol-level surface parity. Regenerates port_surface.json from
+# C# source via the regex-based scripts/enumerate_surface.py, then diffs
+# it against porting-sdk/python_surface.json. Any drift not excused by
+# PORT_OMISSIONS.md or PORT_ADDITIONS.md fails the job.
+#
+# The enumerator is pure Python (regex over src/SignalWire/**/*.cs) so
+# we don't need a .NET toolchain for this workflow.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Nightly at 06:00 UTC — keeps us in sync with porting-sdk updates that
+    # follow upstream signalwire-python additions.
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  surface-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout signalwire-dotnet
+        uses: actions/checkout@v5
+        with:
+          path: signalwire-dotnet
+
+      - name: Checkout porting-sdk (contains python_surface.json)
+        uses: actions/checkout@v5
+        with:
+          repository: signalwire/porting-sdk
+          path: porting-sdk
+          token: ${{ secrets.PORTING_SDK_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Enumerate .NET public API surface
+        working-directory: signalwire-dotnet
+        run: python3 scripts/enumerate_surface.py
+
+      - name: Diff against Python reference
+        working-directory: signalwire-dotnet
+        run: |
+          python3 ${{ github.workspace }}/porting-sdk/scripts/diff_port_surface.py \
+              --reference ${{ github.workspace }}/porting-sdk/python_surface.json \
+              --port-surface port_surface.json \
+              --omissions PORT_OMISSIONS.md \
+              --additions PORT_ADDITIONS.md

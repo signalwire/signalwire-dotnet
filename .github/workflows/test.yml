@@ -1,0 +1,63 @@
+name: Test
+
+# Runs the full per-port CI gate set: dotnet test (per-framework, serial),
+# signature regen, drift against the Python reference, and the no-cheat
+# audit. Mirrors `bash scripts/run-ci.sh` so there's no drift between local
+# and CI.
+#
+# Concurrency note: the SignalWire.Tests assembly multi-targets net8.0 +
+# net9.0 + net10.0 and the shared mock_signalwire / mock_relay servers are
+# single-tenant. run-ci.sh runs `dotnet test --framework <fw>` SERIALLY,
+# one framework at a time, to keep the mock journal deterministic.
+#
+# Test runner uses the same docker SDK image as locally
+# (mcr.microsoft.com/dotnet/sdk:10.0) so the two paths produce identical
+# build/test output. setup-dotnet provides the host-side dotnet that
+# enumerate_signatures.py shells out to for the SIGNATURES gate.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout signalwire-dotnet
+        uses: actions/checkout@v5
+        with:
+          path: signalwire-dotnet
+
+      - name: Checkout porting-sdk (mock_relay + mock_signalwire test harnesses)
+        uses: actions/checkout@v5
+        with:
+          repository: signalwire/porting-sdk
+          path: porting-sdk
+          token: ${{ secrets.PORTING_SDK_TOKEN }}
+
+      - name: Set up .NET SDKs (net8.0 / net9.0 / net10.0)
+        # Host-side dotnet is consumed by scripts/enumerate_signatures.py
+        # for the SIGNATURES gate. The TEST gate uses docker (see run-ci.sh).
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Set up Python (porting-sdk audit scripts)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python test harnesses (mock_relay + mock_signalwire)
+        run: |
+          pip install -e porting-sdk/test_harness/mock_relay
+          pip install -e porting-sdk/test_harness/mock_signalwire
+
+      - name: Run CI gate script (TEST -> SIGNATURES -> DRIFT -> NO-CHEAT)
+        working-directory: signalwire-dotnet
+        env:
+          PORTING_SDK: ${{ github.workspace }}/porting-sdk
+        run: bash scripts/run-ci.sh

@@ -573,8 +573,12 @@ def run_dump() -> dict:
       * stderr is folded into stdout so a build error is visible in the
         exception message even when the dotnet runner only prints to stderr.
     """
+    # Resolve `dotnet` from $PATH (CI / fresh checkouts), with a fallback
+    # to the developer-machine path that pre-dates the PATH-aware variant.
+    import shutil
+    dotnet = shutil.which("dotnet") or "/home/devuser/.local/bin/dotnet"
     cmd = [
-        "/home/devuser/.local/bin/dotnet", "run", "--project",
+        dotnet, "run", "--project",
         str(HERE / "SignatureDump" / "SignatureDump.csproj"),
     ]
     cp = subprocess.run(
