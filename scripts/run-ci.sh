@@ -161,12 +161,26 @@ run_gate() {
 
 # Per-framework runner that returns 0 only when ALL frameworks passed.
 # Sequential to avoid the multi-target race against the shared mock.
+#
+# `--user $(id -u):$(id -g)` makes the container write build artifacts
+# (obj/, bin/) as the host user instead of root. Without this, the
+# subsequent SIGNATURES gate (which runs the host-side `dotnet` outside
+# docker) hits "Access to the path .../obj/<guid>.tmp is denied" because
+# it inherits root-owned obj/ files from the TEST gate.
+#
+# `-e HOME=/tmp` is required because UID-only `--user` has no entry in
+# the image's /etc/passwd, so HOME defaults to `/` which is not writable.
+# dotnet's NuGet/MSBuild needs a writable HOME for ~/.nuget/packages and
+# ~/.dotnet caches.
 dotnet_test_per_framework() {
     local rc=0
     local fw
     for fw in net8.0 net9.0 net10.0; do
         echo "    --- dotnet test --framework $fw ---"
-        if ! docker run --rm --network host -v "$PWD:/src" -w /src \
+        if ! docker run --rm --network host \
+                --user "$(id -u):$(id -g)" \
+                -e HOME=/tmp \
+                -v "$PWD:/src" -w /src \
                 mcr.microsoft.com/dotnet/sdk:10.0 \
                 dotnet test --framework "$fw"; then
             rc=1
