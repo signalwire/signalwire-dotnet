@@ -514,3 +514,311 @@ signalwire.pom.pom.Section.numbered: C# auto-property exposing the Python attrib
 signalwire.pom.pom.Section.numbered_bullets: C# auto-property exposing the Python attribute ``numberedBullets`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
 signalwire.pom.pom.Section.subsections: C# auto-property exposing the Python attribute ``subsections`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
 signalwire.pom.pom.Section.title: C# auto-property exposing the Python attribute ``title`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
+
+## Surface-audit additions (dotnet projection)
+
+The .NET enumerator projects symbols under canonical Python paths
+(`signalwire.relay.call.*`, `signalwire.rest.client.RestClient`, etc.).
+This section documents port-only entries surfaced by the Layer B audit
+under those canonical paths, mirroring the bucket terminology used by
+other ports' PORT_ADDITIONS files (mixin-lifted, namespace_field_accessor,
+action_protocol_method, idiomatic_getter, ...).
+
+### Logger getters (idiomatic_getter)
+
+dotnet exposes `Logger` instances on AgentServer / SkillManager / SkillRegistry as readonly properties. Python keeps the equivalent as `self.logger` instance attributes that the Python enumerator excludes as state.
+
+signalwire.agent_server.AgentServer.logger: idiomatic_getter: .NET public Logger property; Python keeps `self.logger` as an instance attribute that the Python adapter excludes as state.
+signalwire.core.skill_manager.SkillManager.logger: idiomatic_getter: .NET public Logger property; Python keeps `self.logger` as an instance attribute that the Python adapter excludes as state.
+signalwire.skills.registry.SkillRegistry.logger: idiomatic_getter: .NET public Logger property; Python keeps `self.logger` as an instance attribute that the Python adapter excludes as state.
+
+### AgentBase mixin-lifted accessors
+
+mixin_lifted: .NET folds Python's PromptMixin / SkillManagerMixin / SipMixin onto AgentBase as readonly properties so callers don't reach into a sub-object — same pattern as the documented mixin-lifted bucket in other ports.
+
+signalwire.core.agent_base.AgentBase.get_prompt_sections: prompt_mixin_lifted: .NET AgentBase exposes a get_prompt_sections() accessor; Python's equivalent lives on PromptMixin (mirrors mixin-lifted pattern).
+signalwire.core.agent_base.AgentBase.is_auto_map_sip_usernames: mixin_lifted: .NET AgentBase exposes a typed `is_auto_map_sip_usernames` predicate getter for the SIP-routing config; Python keeps the equivalent as an attribute-style boolean flag.
+signalwire.core.agent_base.AgentBase.skill_manager: mixin_lifted: .NET AgentBase exposes a `skill_manager` getter for the underlying SkillManager; Python keeps the equivalent as a private attribute accessed via `self._skill_manager`.
+
+### PromptMixin port-emitted methods on the actual mixin path
+
+The .NET enumerator emits `get_contexts` / `get_raw_prompt` on `PromptMixin` directly (the mixin Python defines them on too). Python's signature inventory excludes these because the Python adapter only emits methods on the consuming class via the mixin-roll-up rule; .NET emits them on the declaring mixin.
+
+signalwire.core.mixins.prompt_mixin.PromptMixin.get_contexts: prompt_mixin_lifted: .NET emits this method on the declaring mixin path; Python's adapter excludes mixin declarations and only emits via the consuming class. Functional parity preserved.
+signalwire.core.mixins.prompt_mixin.PromptMixin.get_raw_prompt: prompt_mixin_lifted: .NET emits this method on the declaring mixin path; Python's adapter excludes mixin declarations and only emits via the consuming class. Functional parity preserved.
+
+### POM / SWMLBuilder back-reference accessors (idiomatic_getter)
+
+signalwire.core.pom_builder.PomBuilder.pom: idiomatic_getter: .NET public PomBuilder.pom getter returning the wrapped PromptObjectModel; Python's `pom` is an instance attribute that the surface enumerator excludes (Python only includes methods, not instance-level attribute names).
+signalwire.core.swml_builder.SWMLBuilder.service: idiomatic_getter: .NET readonly accessor exposing the parent SWMLService back-reference; Python keeps the equivalent as a private attribute.
+
+### SWMLService tool_mixin_lifted method
+
+signalwire.core.swml_service.SWMLService.get_all_functions: tool_mixin_lifted: .NET exposes the tool registry's accessor directly on SWMLService; Python keeps this on `ToolRegistry` and accesses via `agent.tool_registry.get_all_functions()`.
+
+### Action common methods (action_protocol_method)
+
+action_protocol_method: .NET models all Action variants (PlayAction, RecordAction, ...) on top of a single Action base class that exposes the shared protocol (call_id, control_id, state, handle_event, resolve, stop, ...). Python uses an action-class-per-type hierarchy; the same data is exposed via attribute access on each action and the protocol implementations live on shared internals.
+
+signalwire.relay.call.Action.accepts_terminal_event: action_protocol_method: .NET shared Action protocol; Python folds this into wait()/dispatch paths.
+signalwire.relay.call.Action.call_id: action_protocol_method: .NET Action accessor for the parent call_id; Python uses attribute access.
+signalwire.relay.call.Action.completed: action_protocol_method: .NET Action accessor for the completed-state predicate; Python uses attribute access.
+signalwire.relay.call.Action.control_id: action_protocol_method: .NET Action accessor for the per-action control_id; Python uses attribute access.
+signalwire.relay.call.Action.events: action_protocol_method: .NET Action accessor for the underlying event stream; Python uses attribute access.
+signalwire.relay.call.Action.execute_subcommand: action_protocol_method: .NET shared Action protocol method for sub-command dispatch; Python uses internal helpers.
+signalwire.relay.call.Action.get_call_id: action_protocol_method: .NET getter sibling of `call_id`; Python uses attribute access only.
+signalwire.relay.call.Action.get_control_id: action_protocol_method: .NET getter sibling of `control_id`; Python uses attribute access only.
+signalwire.relay.call.Action.get_node_id: action_protocol_method: .NET getter sibling of `node_id`; Python uses attribute access only.
+signalwire.relay.call.Action.get_stop_method: action_protocol_method: .NET shared protocol used to dispatch the per-action `stop` RPC name; Python keeps this in a per-action `_stop_method` attribute.
+signalwire.relay.call.Action.handle_event: action_protocol_method: .NET shared Action event-handling protocol; Python keeps the equivalent in private dispatch helpers.
+signalwire.relay.call.Action.node_id: action_protocol_method: .NET Action accessor for the node_id; Python uses attribute access.
+signalwire.relay.call.Action.on_completed: action_protocol_method: .NET callback registration helper; Python keeps the equivalent on Call/Action via async iterators.
+signalwire.relay.call.Action.payload: action_protocol_method: .NET Action accessor for the originating-event payload; Python uses attribute access.
+signalwire.relay.call.Action.resolve: action_protocol_method: .NET shared Action protocol for promise/task resolution; Python uses async/await and asyncio.Future internally.
+signalwire.relay.call.Action.result: action_protocol_method: .NET Action accessor for the typed result struct; Python uses attribute access (`action.result`).
+signalwire.relay.call.Action.state: action_protocol_method: .NET Action accessor for the state enum; Python uses attribute access.
+signalwire.relay.call.Action.stop: action_protocol_method: .NET shared Action stop helper; Python uses per-action stop methods.
+
+### Per-action `get_stop_method` overrides (action_protocol_method)
+
+signalwire.relay.call.AIAction.get_stop_method: action_protocol_method: .NET per-action override returning the `stop` RPC name; Python uses a `_stop_method` attribute.
+signalwire.relay.call.CollectAction.get_stop_method: action_protocol_method: .NET per-action override returning the `stop` RPC name; Python uses a `_stop_method` attribute.
+signalwire.relay.call.DetectAction.get_stop_method: action_protocol_method: .NET per-action override returning the `stop` RPC name; Python uses a `_stop_method` attribute.
+signalwire.relay.call.FaxAction.get_stop_method: action_protocol_method: .NET per-action override returning the `stop` RPC name; Python uses a `_stop_method` attribute.
+signalwire.relay.call.PayAction.get_stop_method: action_protocol_method: .NET per-action override returning the `stop` RPC name; Python uses a `_stop_method` attribute.
+signalwire.relay.call.PlayAction.get_stop_method: action_protocol_method: .NET per-action override returning the `stop` RPC name; Python uses a `_stop_method` attribute.
+signalwire.relay.call.RecordAction.get_stop_method: action_protocol_method: .NET per-action override returning the `stop` RPC name; Python uses a `_stop_method` attribute.
+signalwire.relay.call.StreamAction.get_stop_method: action_protocol_method: .NET per-action override returning the `stop` RPC name; Python uses a `_stop_method` attribute.
+signalwire.relay.call.TapAction.get_stop_method: action_protocol_method: .NET per-action override returning the `stop` RPC name; Python uses a `_stop_method` attribute.
+signalwire.relay.call.TranscribeAction.get_stop_method: action_protocol_method: .NET per-action override returning the `stop` RPC name; Python uses a `_stop_method` attribute.
+
+### Per-action subclass overrides (action_protocol_method)
+
+signalwire.relay.call.CollectAction.accepts_terminal_event: action_protocol_method: .NET CollectAction override of the shared terminal-event predicate; Python uses inline branching.
+signalwire.relay.call.CollectAction.collect_result: idiomatic_getter: .NET strongly-typed accessor for the CollectAction result payload; Python uses attribute access on the action.
+signalwire.relay.call.CollectAction.handle_event: action_protocol_method: .NET CollectAction event-handling override; Python folds into the dispatch helpers.
+signalwire.relay.call.DetectAction.detect_result: idiomatic_getter: .NET strongly-typed accessor for the DetectAction result payload; Python uses attribute access on the action.
+signalwire.relay.call.DetectAction.handle_event: action_protocol_method: .NET DetectAction event-handling override; Python folds into the dispatch helpers.
+signalwire.relay.call.FaxAction.fax_type: idiomatic_getter: .NET FaxAction accessor for the fax_type enum; Python uses attribute access.
+signalwire.relay.call.RecordAction.duration: idiomatic_getter: .NET RecordAction explicit accessor for `duration`; Python uses attribute-style access.
+signalwire.relay.call.RecordAction.size: idiomatic_getter: .NET RecordAction explicit accessor for `size`; Python uses attribute-style access.
+signalwire.relay.call.RecordAction.url: idiomatic_getter: .NET RecordAction explicit accessor for `url`; Python uses attribute-style access.
+
+### Call accessors (idiomatic_getter)
+
+signalwire.relay.call.Call.direction: idiomatic_getter: .NET Call accessor for the call direction enum; Python uses attribute access.
+signalwire.relay.call.Call.typed_listeners: idiomatic_getter: .NET Call accessor for the typed-event listener registry; Python uses dict attribute access.
+
+### CrudWithAddresses explicit constructor
+
+signalwire.rest._base.CrudWithAddresses.__init__: .NET-port explicit constructor for the abstract CrudWithAddresses; Python inherits BaseResource's `__init__` implicitly so the enumerator only emits it on the base.
+
+### PaginatedIterator .NET-idiom accessors
+
+idiomatic_getter / dotnet_async_enumerator: .NET PaginatedIterator exposes property-style accessors on its fields (`http`, `path`, `params`, `data_key`, `index`, `items`) and ships an `IAsyncEnumerable`-flavored `get_async_enumerator` / `next` / `done` API. Python uses `__iter__` / `__next__` and attribute access.
+
+signalwire.rest._pagination.PaginatedIterator.data_key: idiomatic_getter: .NET property accessor for the underlying field; Python uses attribute access.
+signalwire.rest._pagination.PaginatedIterator.done: idiomatic_getter: .NET predicate accessor (true once the iterator is exhausted); Python uses `StopIteration` / `not has_more`.
+signalwire.rest._pagination.PaginatedIterator.get_async_enumerator: dotnet_async_enumerator: .NET ships an `IAsyncEnumerable`-flavored helper; Python uses `__aiter__`.
+signalwire.rest._pagination.PaginatedIterator.http: idiomatic_getter: .NET property accessor for the underlying field; Python uses attribute access.
+signalwire.rest._pagination.PaginatedIterator.index: idiomatic_getter: .NET property accessor for the underlying field; Python uses attribute access.
+signalwire.rest._pagination.PaginatedIterator.items: idiomatic_getter: .NET property accessor for the underlying field; Python uses attribute access.
+signalwire.rest._pagination.PaginatedIterator.next: dotnet_async_enumerator: .NET advances the iterator one item at a time; Python uses `__next__`.
+signalwire.rest._pagination.PaginatedIterator.params: idiomatic_getter: .NET property accessor for the underlying field; Python uses attribute access.
+signalwire.rest._pagination.PaginatedIterator.path: idiomatic_getter: .NET property accessor for the underlying field; Python uses attribute access.
+
+### RestClient namespace getters (namespace_field_accessor)
+
+namespace_field_accessor: .NET RestClient exposes each namespace as a readonly property; Python uses attribute access on the client instance. The path `signalwire.rest.client.RestClient` is the canonical Python-projection path the .NET enumerator now emits (older entries used `signalwire.rest.rest_client.RestClient`).
+
+signalwire.rest.client.RestClient.addresses: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.base_url: namespace_field_accessor: .NET RestClient field accessor for the base URL; Python uses attribute access.
+signalwire.rest.client.RestClient.calling: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.chat: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.compat: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.datasphere: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.fabric: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.http: namespace_field_accessor: .NET RestClient field accessor for the HTTP transport; Python uses attribute access.
+signalwire.rest.client.RestClient.imported_numbers: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.logs: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.lookup: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.mfa: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.number_groups: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.phone_numbers: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.project: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.project_id: namespace_field_accessor: .NET RestClient field accessor for the project_id; Python uses attribute access.
+signalwire.rest.client.RestClient.pubsub: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.queues: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.recordings: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.registry: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.short_codes: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.sip_profile: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.space: namespace_field_accessor: .NET RestClient field accessor for the space domain; Python uses attribute access.
+signalwire.rest.client.RestClient.token: namespace_field_accessor: .NET RestClient field accessor for the API token; Python uses attribute access.
+signalwire.rest.client.RestClient.verified_callers: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.video: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+
+### Per-namespace field accessors (namespace_field_accessor)
+
+namespace_field_accessor: .NET REST namespaces expose each field/sub-resource as a readonly property; Python uses attribute access on the namespace instance. The same flatten-the-MRO pattern documented elsewhere also produces explicit `__init__` constructors and per-resource `base_path` getters since C# requires explicit constructors and doesn't carry class-level base_path attributes through inheritance.
+
+signalwire.rest.namespaces.calling.CallingNamespace.client: namespace_field_accessor: .NET accessor for the parent client reference; Python uses a private attribute.
+signalwire.rest.namespaces.calling.CallingNamespace.get_base_path: namespace_field_accessor: .NET method-style getter for the namespace base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.calling.CallingNamespace.project_id: namespace_field_accessor: .NET accessor for the project_id field; Python uses an instance attribute.
+signalwire.rest.namespaces.calling.CallingNamespace.update_call: .NET helper for updating an in-flight call; Python clients use client.calls(sid).update().
+
+signalwire.rest.namespaces.compat.CompatApplications.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.compat.CompatCalls.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.compat.CompatConferences.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.compat.CompatConferences.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.compat.CompatFaxes.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.compat.CompatLamlBins.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.compat.CompatMessages.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.compat.CompatNamespace.account_sid: namespace_field_accessor: .NET accessor for the account_sid field; Python uses an instance attribute.
+signalwire.rest.namespaces.compat.CompatNamespace.accounts: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.applications: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.calls: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.conferences: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.faxes: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.laml_bins: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.messages: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.phone_numbers: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.queues: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.recordings: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.tokens: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatNamespace.transcriptions: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.compat.CompatPhoneNumbers.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.compat.CompatQueues.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.compat.CompatRecordings.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.compat.CompatRecordings.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.compat.CompatTokens.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.compat.CompatTokens.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.compat.CompatTranscriptions.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.compat.CompatTranscriptions.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+
+signalwire.rest.namespaces.datasphere.DatasphereNamespace.documents: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+
+signalwire.rest.namespaces.fabric.CallFlowsResource.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.fabric.CallFlowsResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.fabric.ConferenceRoomsResource.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.fabric.ConferenceRoomsResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.fabric.FabricAddresses.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.fabric.FabricAddresses.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.fabric.FabricNamespace.addresses: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.addresses_top_level: dotnet_typed_namespace_alias: .NET ships a typed alias for the top-level Addresses sub-resource (covers the cross-fabric `/addresses` endpoint); Python keeps a single `addresses` attribute and lets callers branch by argument.
+signalwire.rest.namespaces.fabric.FabricNamespace.ai_agents: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.call_flows: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.call_flows_ops: dotnet_typed_namespace_alias: .NET ships a typed-ops alias for the CallFlows sub-resource; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.call_queues: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.client: namespace_field_accessor: .NET accessor for the parent client reference; Python uses a private attribute.
+signalwire.rest.namespaces.fabric.FabricNamespace.conference_rooms: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.conference_rooms_ops: dotnet_typed_namespace_alias: .NET ships a typed-ops alias for the ConferenceRooms sub-resource; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.conversations: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.cxml_applications: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.cxml_applications_ops: dotnet_typed_namespace_alias: .NET ships a typed-ops alias for the CxmlApplications sub-resource; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.cxml_scripts: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.cxml_webhooks: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.dial_plans: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.freeclimb_apps: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.freeswitch_connectors: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.phone_numbers: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.relay_applications: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.resources: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.resources_generic: dotnet_typed_namespace_alias: .NET ships a typed alias for the GenericResources sub-resource; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.sip_endpoints: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.sip_gateways: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.sip_profiles: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.subscribers: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.subscribers_ops: dotnet_typed_namespace_alias: .NET ships a typed-ops alias for the Subscribers sub-resource; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.swml_scripts: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.swml_webhooks: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.tokens: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.FabricNamespace.tokens_api: dotnet_typed_namespace_alias: .NET ships a typed-api alias for the Tokens sub-resource; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.fabric.GenericResources.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.fabric.GenericResources.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.fabric.SubscribersResource.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.fabric.SubscribersResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+
+signalwire.rest.namespaces.logs.ConferenceLogs.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.logs.ConferenceLogs.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.logs.FaxLogs.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.logs.FaxLogs.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.logs.LogsNamespace.conferences: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.logs.LogsNamespace.fax: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.logs.LogsNamespace.messages: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.logs.LogsNamespace.voice: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.logs.MessageLogs.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.logs.MessageLogs.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.logs.VoiceLogs.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.logs.VoiceLogs.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+
+signalwire.rest.namespaces.number_groups.NumberGroupsResource.update: .NET port emits explicit CRUD where Python inherits via CrudResource.
+
+signalwire.rest.namespaces.project.ProjectNamespace.tokens: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+
+signalwire.rest.namespaces.queues.QueuesResource.update: .NET port emits explicit CRUD where Python inherits via CrudResource.
+
+signalwire.rest.namespaces.registry.RegistryBrands.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.registry.RegistryBrands.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.registry.RegistryCampaigns.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.registry.RegistryCampaigns.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.registry.RegistryNamespace.brands: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.registry.RegistryNamespace.campaigns: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.registry.RegistryNamespace.numbers: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.registry.RegistryNamespace.orders: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.registry.RegistryNumbers.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.registry.RegistryNumbers.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.registry.RegistryOrders.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.registry.RegistryOrders.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+
+signalwire.rest.namespaces.video.VideoConferenceTokens.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.video.VideoConferenceTokens.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.video.VideoConferences.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.video.VideoConferences.update: .NET port emits explicit CRUD where Python inherits via CrudResource.
+signalwire.rest.namespaces.video.VideoNamespace.conference_tokens: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.video.VideoNamespace.conferences: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.video.VideoNamespace.room_recordings: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.video.VideoNamespace.room_sessions: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.video.VideoNamespace.room_tokens: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.video.VideoNamespace.rooms: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.video.VideoNamespace.streams: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
+signalwire.rest.namespaces.video.VideoRoomRecordings.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.video.VideoRoomRecordings.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.video.VideoRoomSessions.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.video.VideoRoomSessions.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.video.VideoRoomTokens.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.video.VideoRoomTokens.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.video.VideoRooms.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.video.VideoRooms.update: .NET port emits explicit CRUD where Python inherits via CrudResource.
+signalwire.rest.namespaces.video.VideoStreams.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
+signalwire.rest.namespaces.video.VideoStreams.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+
+### SkillRegistry .NET-specific accessors
+
+signalwire.skills.registry.SkillRegistry.external_paths: idiomatic_getter: .NET SkillRegistry accessor for paths added via AddSearchPath; Python's equivalent state is private and accessed via the registry's internal list.
+
+### ExecutionMode (dotnet helper class)
+
+dotnet_helper_class: .NET ships ExecutionMode as a dedicated class with classmethod-style helpers (`get_execution_mode`, `is_serverless_mode`); Python ships these as module-level functions under `signalwire.utils`.
+
+signalwire.utils.execution_mode.ExecutionMode: dotnet_helper_class: .NET wraps execution-mode helpers in a class; Python uses module-level functions in signalwire.utils.
+signalwire.utils.execution_mode.ExecutionMode.get_execution_mode: dotnet_helper_class: .NET classmethod-style accessor; Python uses a module-level function `signalwire.utils.get_execution_mode()`.
+signalwire.utils.execution_mode.ExecutionMode.is_serverless_mode: dotnet_helper_class: .NET classmethod-style accessor; Python uses a module-level function `signalwire.utils.is_serverless_mode()`.
+
+### SchemaUtils / SchemaValidationError extra accessors
+
+signalwire.utils.schema_utils.SchemaUtils.get_verb: idiomatic_getter: .NET SchemaUtils helper exposing per-verb metadata; Python keeps verb metadata internal and reaches in via the JSON schema only.
+signalwire.utils.schema_utils.SchemaUtils.get_verb_names: idiomatic_getter: .NET SchemaUtils helper enumerating known verb names; Python keeps the equivalent internal.
+signalwire.utils.schema_utils.SchemaUtils.is_valid_verb: idiomatic_getter: .NET SchemaUtils predicate for verb-name validation; Python infers from the schema lookup directly.
+signalwire.utils.schema_utils.SchemaUtils.reset: dotnet_helper_class: .NET test-side helper to reset the cached schema state between tests; Python uses module reload.
+signalwire.utils.schema_utils.SchemaUtils.verb_count: idiomatic_getter: .NET SchemaUtils helper exposing the number of registered verbs; Python keeps the equivalent internal.
+signalwire.utils.schema_utils.SchemaValidationError.errors: idiomatic_getter: .NET typed accessor for the validation error list; Python keeps the equivalent on the exception's `args` tuple.
+signalwire.utils.schema_utils.SchemaValidationError.verb_name: idiomatic_getter: .NET typed accessor for the verb name that failed validation; Python uses message-string parsing.
+
+### UrlValidator (dotnet wrapper class)
+
+dotnet_helper_class: .NET ships UrlValidator as a class with static-method-style helpers; Python uses module-level `validate_url(...)` and a private resolver hook in `signalwire.utils.url_validator`.
+
+signalwire.utils.url_validator.UrlValidator: dotnet_helper_class: .NET wrapper class for URL-validation helpers; Python uses module-level functions.
+signalwire.utils.url_validator.UrlValidator.validate_url: dotnet_helper_class: .NET method-style API for the same `validate_url` function Python ships at module level (`signalwire.utils.url_validator.validate_url`).
+signalwire.utils.url_validator.UrlValidator.validate_url_with_resolved_addresses: dotnet_helper_class: .NET helper that exposes a 2-tuple (validated url, resolved addresses) for callers that need to log or audit DNS resolution; Python keeps the resolver hook private and tests patch it via `unittest.mock.patch`.
