@@ -65,6 +65,11 @@ signalwire.agent_server.AgentServer.serve_static: Public helper added in .NET; P
 signalwire.core.agent_base.AgentBase.build_ai_verb: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
 signalwire.core.agent_base.AgentBase.clone_for_request: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
 signalwire.core.agent_base.AgentBase.contexts: Public read-only property surface; Python @property accessor with the same name
+signalwire.core.agent_base.AgentBase.handle_request: .NET overrides Service.handle_request on AgentBase to gate POST routes through the webhook signature validator when signing_key is set; Python wires the equivalent via FastAPI Depends() in web_mixin._register_routes
+signalwire.core.agent_base.AgentBase.is_webhook_signature_validation_enabled: .NET surfaces a public read-only flag for whether SigningKey is configured; Python users check `bool(agent.signing_key)` directly
+signalwire.core.agent_base.AgentBase.signing_key: Public read-only property exposing the configured Signing Key; Python sets it as an attribute (porting-sdk/webhooks.md AgentBase integration)
+signalwire.agent.agent_options.AgentOptions.signing_key: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
+signalwire.agent.agent_options.AgentOptions.trust_proxy_for_signature: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
 signalwire.core.agent_base.AgentBase.get_skill_manager: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
 signalwire.core.agent_base.AgentBase.render_swml: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
 signalwire.core.agent_base.AgentBase.render_swml_with_context: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
@@ -87,6 +92,10 @@ signalwire.core.data_map.DataMap.create_expression_tool: Public method surfaced 
 signalwire.core.data_map.DataMap.create_simple_api_tool: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.security.session_manager.SessionManager.create_token: Public method on SessionManager ported from Python; .NET groups them with simpler signatures
 signalwire.core.security.session_manager.SessionManager.token_expiry_secs: Public property exposing the token expiry; Python uses a class constant
+signalwire.core.security.webhook_middleware.WebhookValidationMiddleware.__init__: .NET ships the webhook signature validation as a constructable middleware class wrapping (signing_key, trust_proxy); Python uses a make_webhook_validation_dependency factory function that returns a FastAPI dependency callable
+signalwire.core.security.webhook_middleware.WebhookValidationMiddleware.validate: .NET middleware exposes Validate(method, path, headers, body) returning a (status, headers, body) tuple to short-circuit HttpListener dispatch; Python's FastAPI dependency raises HTTPException(403) instead
+signalwire.core.security.webhook_middleware.WebhookValidationMiddleware.extract_signature_header: Public static helper for pulling X-SignalWire-Signature / X-Twilio-Signature alias from a header dict; Python inlines this in webhook_middleware._extract_signature_header (private helper)
+signalwire.core.security.webhook_middleware.WebhookValidationMiddleware.reconstruct_url: Public method exposing the URL-reconstruction logic (SWML_PROXY_URL_BASE / X-Forwarded-* / Host fallback); Python keeps this as a private _reconstruct_url helper
 signalwire.core.skill_base.SkillBase.description: Public abstract/virtual properties on SkillBase; Python uses class-level constants instead
 signalwire.core.skill_base.SkillBase.name: Public read-only property surface; Python @property accessor with the same name
 signalwire.core.skill_base.SkillBase.required_env_vars: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path

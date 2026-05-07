@@ -105,6 +105,24 @@
               ],
               "returns": "string"
             },
+            "signing_key": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "trust_proxy_for_signature": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
+            },
             "use_pom": {
               "params": [
                 {
@@ -908,7 +926,45 @@
               ],
               "returns": "class:signalwire.core.skill_manager.SkillManager"
             },
+            "handle_request": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "method",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "path",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "headers",
+                  "type": "dict<string,string>",
+                  "required": true
+                },
+                {
+                  "name": "body",
+                  "type": "optional<string>",
+                  "required": true
+                }
+              ],
+              "returns": "tuple<int,dict<string,string>,string>"
+            },
             "is_auto_map_sip_usernames": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
+            },
+            "is_webhook_signature_validation_enabled": {
               "params": [
                 {
                   "name": "self",
@@ -1023,6 +1079,15 @@
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
+            },
+            "signing_key": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
             },
             "skill_manager": {
               "params": [
@@ -4449,6 +4514,170 @@
               "returns": "bool"
             }
           }
+        }
+      }
+    },
+    "signalwire.core.security.webhook_middleware": {
+      "classes": {
+        "WebhookValidationMiddleware": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "signing_key",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "trust_proxy",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                }
+              ],
+              "returns": "void"
+            },
+            "extract_signature_header": {
+              "params": [
+                {
+                  "name": "headers",
+                  "type": "dict<string,string>",
+                  "required": true
+                }
+              ],
+              "returns": "optional<string>"
+            },
+            "reconstruct_url": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "headers",
+                  "type": "dict<string,string>",
+                  "required": true
+                },
+                {
+                  "name": "path",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "host_fallback",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "port_fallback",
+                  "type": "int",
+                  "required": false,
+                  "default": 0
+                }
+              ],
+              "returns": "string"
+            },
+            "validate": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "method",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "path",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "headers",
+                  "type": "dict<string,string>",
+                  "required": true
+                },
+                {
+                  "name": "body",
+                  "type": "optional<string>",
+                  "required": true
+                },
+                {
+                  "name": "host_fallback",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "port_fallback",
+                  "type": "int",
+                  "required": false,
+                  "default": 0
+                }
+              ],
+              "returns": "optional<tuple<int,dict<string,string>,string>>"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.core.security.webhook_validator": {
+      "functions": {
+        "validate_request": {
+          "params": [
+            {
+              "name": "signing_key",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "signature",
+              "type": "optional<string>",
+              "required": true
+            },
+            {
+              "name": "url",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "params_or_raw_body",
+              "type": "optional<any>",
+              "required": true
+            }
+          ],
+          "returns": "bool"
+        },
+        "validate_webhook_signature": {
+          "params": [
+            {
+              "name": "signing_key",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "signature",
+              "type": "optional<string>",
+              "required": true
+            },
+            {
+              "name": "url",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "raw_body",
+              "type": "optional<string>",
+              "required": true
+            }
+          ],
+          "returns": "bool"
         }
       }
     },

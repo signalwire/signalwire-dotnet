@@ -75,6 +75,16 @@ CLASS_MODULE_MAP: dict[str, str] = {
 
     # -- security ---------------------------------------------------------
     "SessionManager": "signalwire.core.security.session_manager",
+    # WebhookValidator is a static helper class in C# whose methods are
+    # projected to free functions in
+    # ``signalwire.core.security.webhook_validator`` to mirror Python's
+    # module-level ``validate_webhook_signature`` / ``validate_request``.
+    "WebhookValidator": "signalwire.core.security.webhook_validator",
+    # WebhookValidationMiddleware is a port-only adapter (Python ships a
+    # FastAPI dependency-factory function instead). Document the addition
+    # in PORT_ADDITIONS.md and place the .NET class under the parallel
+    # ``signalwire.core.security.webhook_middleware`` path.
+    "WebhookValidationMiddleware": "signalwire.core.security.webhook_middleware",
 
     # -- swml -------------------------------------------------------------
     # ``Service`` in SignalWire.SWML == Python's ``SWMLService``.

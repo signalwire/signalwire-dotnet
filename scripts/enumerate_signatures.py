@@ -476,6 +476,10 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         # Project only ``validate_url`` — the ``with_resolved_addresses``
         # overload is .NET-test-only scaffolding.
         ("signalwire.utils.url_validator", "UrlValidator"): ["validate_url"],
+        # WebhookValidator's static methods mirror Python's module-level
+        # ``signalwire.core.security.webhook_validator`` functions
+        # (``validate_webhook_signature`` and ``validate_request``).
+        ("signalwire.core.security.webhook_validator", "WebhookValidator"): None,
     }
     for (mod, cls), allowed in STATIC_TO_FREE_FN.items():
         cls_entry = out_modules.get(mod, {}).get("classes", {}).get(cls)

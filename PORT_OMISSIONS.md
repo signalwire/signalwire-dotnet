@@ -352,6 +352,7 @@ signalwire.core.security.session_manager.SessionManager.generate_token: Python s
 signalwire.core.security.session_manager.SessionManager.get_session_metadata: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
 signalwire.core.security.session_manager.SessionManager.set_session_metadata: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
 signalwire.core.security.session_manager.SessionManager.validate_tool_token: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
+signalwire.core.security.webhook_middleware.make_webhook_validation_dependency: Python ships a FastAPI dependency-factory function; .NET ships an equivalent constructable WebhookValidationMiddleware class (recorded in PORT_ADDITIONS.md) since the .NET HTTP integration is HttpListener-based, not async-FastAPI-based
 signalwire.core.skill_base.SkillBase.define_tool: Python convenience method that delegates to AgentBase; .NET ships protected DefineTool() helper inside SkillBase that does the same thing (visible to subclasses, not external callers)
 signalwire.core.skill_base.SkillBase.get_skill_data: Python convenience helpers; .NET inlines equivalent logic on individual skills
 signalwire.core.skill_base.SkillBase.__init__: Python uses an explicit __init__; .NET SkillBase uses the protected Wire(agent, params) flow set up by SkillManager

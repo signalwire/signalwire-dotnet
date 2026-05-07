@@ -23,6 +23,25 @@ public sealed class AgentOptions
     public string RecordFormat { get; init; } = "wav";
     public bool RecordStereo { get; init; }
     public bool UsePom { get; init; } = true;
+
+    /// <summary>
+    /// Optional SignalWire Signing Key (from Dashboard → API Credentials).
+    /// When set, webhook signature validation is enforced on POST /, /swaig,
+    /// /post_prompt — unsigned or invalidly-signed requests get a 403. Falls
+    /// back to the <c>SIGNALWIRE_SIGNING_KEY</c> env var if not passed. See
+    /// <c>porting-sdk/webhooks.md</c> for the contract. (Python parity:
+    /// <c>AgentBase.__init__(signing_key=...)</c>.)
+    /// </summary>
+    public string? SigningKey { get; init; }
+
+    /// <summary>
+    /// If true, honor <c>X-Forwarded-Proto</c> / <c>X-Forwarded-Host</c>
+    /// headers when reconstructing the URL for signature validation. Default
+    /// false because proxy headers are spoofable; opt in only when you
+    /// control the proxy chain. (Python parity:
+    /// <c>AgentBase.__init__(trust_proxy_for_signature=...)</c>.)
+    /// </summary>
+    public bool TrustProxyForSignature { get; init; }
 }
 
 /// <summary>
@@ -103,6 +122,23 @@ public class AgentBase : Service
     private List<string> _skillsList;
     private SkillManager? _skillManager;
 
+    // -- Webhook signature validation (porting-sdk/webhooks.md) --
+    private readonly string? _signingKey;
+    private readonly bool _trustProxyForSignature;
+    private readonly WebhookValidationMiddleware? _webhookValidationMiddleware;
+
+    /// <summary>The configured Signing Key, or null when validation is
+    /// disabled. Read-only — the resolution order
+    /// (constructor arg → <c>SIGNALWIRE_SIGNING_KEY</c> env) is fixed at
+    /// construction time. (Python parity: <c>agent.signing_key</c>.)</summary>
+    public string? SigningKey => _signingKey;
+
+    /// <summary>True iff signature validation is enabled — i.e. either the
+    /// <c>SigningKey</c> option or <c>SIGNALWIRE_SIGNING_KEY</c> env var
+    /// was set at construction time. (Python parity:
+    /// <c>bool(agent.signing_key)</c>.)</summary>
+    public bool IsWebhookSignatureValidationEnabled => _signingKey is not null;
+
     // ======================================================================
     //  Constructor
     // ======================================================================
@@ -179,6 +215,30 @@ public class AgentBase : Service
         _contextBuilder = null;
         _skillsList = [];
         _skillManager = null;
+
+        // Webhook signature validation (porting-sdk/webhooks.md). Resolution
+        // order: explicit constructor arg → SIGNALWIRE_SIGNING_KEY env var.
+        // When unset we DO NOT mount the validator and log a one-time WARN
+        // matching the Python message text exactly so cross-port log greps
+        // catch both ports identically.
+        var resolvedSigningKey = options.SigningKey
+            ?? Environment.GetEnvironmentVariable("SIGNALWIRE_SIGNING_KEY");
+        _signingKey = string.IsNullOrEmpty(resolvedSigningKey) ? null : resolvedSigningKey;
+        _trustProxyForSignature = options.TrustProxyForSignature;
+
+        if (_signingKey is not null)
+        {
+            _webhookValidationMiddleware = new WebhookValidationMiddleware(
+                _signingKey, trustProxy: _trustProxyForSignature);
+            _agentLogger.Info("webhook_signature_validation_enabled");
+        }
+        else
+        {
+            _webhookValidationMiddleware = null;
+            _agentLogger.Warn(
+                "[signalwire] webhook signature validation is disabled — "
+                + "set signing_key or SIGNALWIRE_SIGNING_KEY to enable");
+        }
 
         _agentLogger.Info($"Agent '{Name}' initialised");
     }
@@ -1113,6 +1173,97 @@ public class AgentBase : Service
     // ======================================================================
     //  HTTP Overrides
     // ======================================================================
+
+    /// <summary>
+    /// Override the base dispatch to enforce webhook signature validation on
+    /// POST requests targeting the signed routes (<c>/</c>, <c>/swaig</c>,
+    /// <c>/post_prompt</c>) when <see cref="SigningKey"/> is configured.
+    ///
+    /// <para>Validation is gated behind Basic Auth: callers must already
+    /// satisfy the SWMLService basic-auth check (it always runs first in
+    /// <see cref="Service.HandleRequest"/>) before we even look at
+    /// signatures, matching Python where <c>signing_key</c> is layered on
+    /// top of <c>basic_auth</c>.</para>
+    ///
+    /// <para>On invalid signature: returns 403 directly without dispatching
+    /// to the agent's POST handler. On valid signature (or non-POST, or
+    /// non-signed route): delegates to <see cref="Service.HandleRequest"/>.
+    /// </para>
+    ///
+    /// <para>(Python parity: <c>web_mixin._register_routes</c> wraps the
+    /// signed POST routes in a FastAPI <c>Depends(sig_dep)</c> dependency
+    /// when <c>signing_key</c> is set; this is the .NET equivalent.)</para>
+    /// </summary>
+    public override (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
+        string method,
+        string path,
+        Dictionary<string, string> headers,
+        string? body)
+    {
+        // Validation is opt-in: when no signing key is configured, the
+        // base dispatch handles the request as before.
+        if (_webhookValidationMiddleware is null)
+        {
+            return base.HandleRequest(method, path, headers, body);
+        }
+
+        // We only gate POST requests to the signed routes. GET requests
+        // (e.g. /swaig, /post_prompt) are unsigned in the Python reference
+        // — the platform never POSTs to them with a signature, and the
+        // SDK's GET handler returns SWML / health JSON.
+        if (!IsSignedPostRoute(method, path))
+        {
+            return base.HandleRequest(method, path, headers, body);
+        }
+
+        var rejected = _webhookValidationMiddleware.Validate(
+            method, path, headers, body,
+            hostFallback: Host, portFallback: Port);
+        if (rejected is { } r)
+        {
+            return r;
+        }
+
+        // Valid — dispatch as normal. The base does its own body-parse,
+        // and `body` is the raw bytes the validator already verified.
+        return base.HandleRequest(method, path, headers, body);
+    }
+
+    /// <summary>
+    /// True iff the request targets a SignalWire-signed POST route under
+    /// this agent's <see cref="Service.Route"/>. Signed routes are root
+    /// (SWML), <c>/swaig</c>, and <c>/post_prompt</c> — see
+    /// <c>porting-sdk/webhooks.md</c>.
+    /// </summary>
+    private bool IsSignedPostRoute(string method, string path)
+    {
+        if (!string.Equals(method, "POST", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // Strip the agent's route prefix to identify the sub-path, mirroring
+        // the logic in Service.HandleRequest.
+        string? subPath;
+        if (Route == "/")
+        {
+            subPath = path;
+        }
+        else if (path == Route || path.StartsWith(Route + "/", StringComparison.Ordinal))
+        {
+            subPath = path[Route.Length..];
+            if (string.IsNullOrEmpty(subPath))
+            {
+                subPath = "/";
+            }
+        }
+        else
+        {
+            return false;
+        }
+
+        return subPath is "/" or "" or "/swaig" or "/post_prompt";
+    }
 
     /// <summary>
     /// Handle the SWML document request. If a dynamic-config callback is registered,
