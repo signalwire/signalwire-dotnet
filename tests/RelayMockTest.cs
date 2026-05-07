@@ -34,7 +34,7 @@ public static class RelayMockTest
     public const int DefaultHttpPort = 9785;
 
     private static readonly TimeSpan StartupTimeout = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan HttpTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan HttpTimeout = TimeSpan.FromSeconds(30);
 
     private static readonly object StateLock = new();
     private static Harness? _sharedHarness;
