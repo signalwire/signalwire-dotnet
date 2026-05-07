@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 42675cb3b96ec640b31c8194bd9db5e794e41686",
+  "generated_from": "signalwire-dotnet @ 2b39aa4f57609b0097f0bdfd2416332432c4dadf",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -14,6 +14,8 @@
           "record_format",
           "record_stereo",
           "route",
+          "signing_key",
+          "trust_proxy_for_signature",
           "use_pom"
         ]
       },
@@ -86,7 +88,9 @@
           "get_name",
           "get_prompt_sections",
           "get_skill_manager",
+          "handle_request",
           "is_auto_map_sip_usernames",
+          "is_webhook_signature_validation_enabled",
           "on_debug_event",
           "on_summary",
           "register_sip_username",
@@ -94,6 +98,7 @@
           "render_swml_with_context",
           "set_post_prompt_url",
           "set_web_hook_url",
+          "signing_key",
           "skill_manager"
         ]
       },
@@ -389,6 +394,25 @@
           "create_token",
           "token_expiry_secs",
           "validate_token"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.core.security.webhook_middleware": {
+      "classes": {
+        "WebhookValidationMiddleware": [
+          "__init__",
+          "extract_signature_header",
+          "reconstruct_url"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.core.security.webhook_validator": {
+      "classes": {
+        "WebhookValidator": [
+          "validate_request",
+          "validate_webhook_signature"
         ]
       },
       "functions": []

@@ -831,3 +831,7 @@ dotnet_helper_class: .NET ships UrlValidator as a class with static-method-style
 signalwire.utils.url_validator.UrlValidator: dotnet_helper_class: .NET wrapper class for URL-validation helpers; Python uses module-level functions.
 signalwire.utils.url_validator.UrlValidator.validate_url: dotnet_helper_class: .NET method-style API for the same `validate_url` function Python ships at module level (`signalwire.utils.url_validator.validate_url`).
 signalwire.utils.url_validator.UrlValidator.validate_url_with_resolved_addresses: dotnet_helper_class: .NET helper that exposes a 2-tuple (validated url, resolved addresses) for callers that need to log or audit DNS resolution; Python keeps the resolver hook private and tests patch it via `unittest.mock.patch`.
+signalwire.core.security.webhook_middleware.WebhookValidationMiddleware: dotnet_idiom: middleware as a class (Python uses FastAPI dependency factory function)
+signalwire.core.security.webhook_validator.WebhookValidator: dotnet_idiom_class_wrapper: static class containing validator functions (Python keeps them at module level)
+signalwire.core.security.webhook_validator.WebhookValidator.validate_request: dotnet_idiom_class_wrapper: see WebhookValidator class entry
+signalwire.core.security.webhook_validator.WebhookValidator.validate_webhook_signature: dotnet_idiom_class_wrapper: see WebhookValidator class entry
