@@ -8,6 +8,10 @@ name: Surface audit
 # The enumerator is pure Python (regex over src/SignalWire/**/*.cs) so
 # we don't need a .NET toolchain for this workflow.
 
+env:
+  # Opt into Node.js 24 ahead of GitHub's 2026-06-02 default switch.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 on:
   pull_request:
   push:

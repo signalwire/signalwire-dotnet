@@ -15,6 +15,10 @@ name: Test
 # build/test output. setup-dotnet provides the host-side dotnet that
 # enumerate_signatures.py shells out to for the SIGNATURES gate.
 
+env:
+  # Opt into Node.js 24 ahead of GitHub's 2026-06-02 default switch.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 on:
   pull_request:
   push:
