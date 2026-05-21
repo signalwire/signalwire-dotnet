@@ -53,6 +53,16 @@ public sealed class WebSearchSkill : SkillBase
             ? nm as string ?? "No results found for the given query."
             : "No results found for the given query.";
 
+        // Optional prefix/postfix wrapped around every non-empty search
+        // result. Use these to give the calling agent a mechanical cue
+        // (e.g. "tell the user this came from a public web search")
+        // without needing prompt-side rules. Mirrors the
+        // response_format_callback pattern used by NativeVectorSearchSkill.
+        var responsePrefix = Params.TryGetValue("response_prefix", out var rp)
+            ? rp as string ?? "" : "";
+        var responsePostfix = Params.TryGetValue("response_postfix", out var rpf)
+            ? rpf as string ?? "" : "";
+
         DefineTool(
             toolName,
             "Search the web for high-quality information, automatically filtering low-quality results",
@@ -132,7 +142,21 @@ public sealed class WebSearchSkill : SkillBase
                     sb.Append("URL: ").Append(link).Append('\n');
                     sb.Append("Snippet: ").Append(sn).Append("\n\n");
                 }
-                return new FunctionResult(sb.ToString().TrimEnd());
+                var response = sb.ToString().TrimEnd();
+                // Wrap the successful response with the optional prefix/
+                // postfix. Mirrors Python's "<prefix>\n\n<body>\n\n<postfix>"
+                // shape from signalwire/skills/web_search/skill.py (only
+                // applied to the success path; error / no-results responses
+                // are left untouched, matching the Python reference).
+                if (responsePrefix.Length > 0)
+                {
+                    response = $"{responsePrefix}\n\n{response}";
+                }
+                if (responsePostfix.Length > 0)
+                {
+                    response = $"{response}\n\n{responsePostfix}";
+                }
+                return new FunctionResult(response);
             });
     }
 

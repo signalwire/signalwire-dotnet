@@ -95,7 +95,7 @@ signalwire.core.function_result.FunctionResult.remove_metadata: .NET helpers tak
 signalwire.core.function_result.FunctionResult.tap: .NET FunctionResult fluent helpers expose the most-used parameters explicitly; full Python parity is captured via .GlobalData/.Metadata extension dictionaries
 signalwire.core.function_result.FunctionResult.toggle_functions: .NET ToggleFunctions takes Dictionary<string,bool>; Python takes List[Dict] of toggle records - different data shape for the same protocol payload
 signalwire.core.mixins.ai_config_mixin.AIConfigMixin.add_function_include: .NET AddFunctionInclude takes a single FunctionInclude object aggregating url/functions/meta_data; Python takes them individually
-signalwire.core.mixins.ai_config_mixin.AIConfigMixin.add_language: .NET AddLanguage exposes the 4 most-used parameters; engine/model/fillers go via SetParam - full parity captured at Service.SetParam
+signalwire.core.mixins.ai_config_mixin.AIConfigMixin.add_language: .NET AddLanguage exposes name/code/voice/params (4 most-used parameters); engine/model/fillers go via SetParam - full parity captured at Service.SetParam
 signalwire.core.mixins.ai_config_mixin.AIConfigMixin.add_pattern_hint: .NET AddPatternHint exposes pattern/hint via positional args; replace/ignore_case go via SetParam variants
 signalwire.core.mixins.ai_config_mixin.AIConfigMixin.add_pronunciation: .NET ignore_case takes string ("yes"/"no"); Python uses bool - semantic divergence from older protocol versions
 signalwire.core.mixins.ai_config_mixin.AIConfigMixin.enable_debug_events: .NET EnableDebugEvents level takes string severity ("info","debug","trace"); Python uses int level for log-level integration

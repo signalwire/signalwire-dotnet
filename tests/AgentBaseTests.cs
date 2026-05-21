@@ -331,6 +331,137 @@ public class AgentBaseTests : IDisposable
         Assert.Equal("rachel", languages[0]["voice"]);
     }
 
+    // =================================================================
+    //  Per-language params (porting-sdk: signalwire-python 029ca6f)
+    // =================================================================
+
+    [Fact]
+    public void AddLanguage_WithParams_AttachesParams()
+    {
+        var agent = MakeAgent();
+        var p = new Dictionary<string, object?>
+        {
+            ["stability"] = 0.5,
+            ["similarity_boost"] = 0.75,
+        };
+        agent.AddLanguage("English", "en-US", "josh", p);
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var languages = (List<Dictionary<string, object>>)ai["languages"];
+        Assert.Single(languages);
+        var emitted = (Dictionary<string, object?>)languages[0]["params"];
+        Assert.Equal(0.5, emitted["stability"]);
+        Assert.Equal(0.75, emitted["similarity_boost"]);
+    }
+
+    [Fact]
+    public void AddLanguage_WithoutParams_OmitsKey()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage("French", "fr-FR", "fr-FR-Neural2-A");
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var languages = (List<Dictionary<string, object>>)ai["languages"];
+        Assert.False(languages[0].ContainsKey("params"));
+    }
+
+    [Fact]
+    public void AddLanguage_WithEmptyParams_OmitsKey()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage("French", "fr-FR", "v", new Dictionary<string, object?>());
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var languages = (List<Dictionary<string, object>>)ai["languages"];
+        Assert.False(languages[0].ContainsKey("params"));
+    }
+
+    [Fact]
+    public void GetLanguageParams_ReturnsSetDict()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage("English", "en-US", "v",
+            new Dictionary<string, object?> { ["a"] = 1 });
+        var got = agent.GetLanguageParams("en-US");
+        Assert.NotNull(got);
+        Assert.Equal(1, got!["a"]);
+    }
+
+    [Fact]
+    public void GetLanguageParams_ReturnsNullWhenUnset()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage("English", "en-US", "v");
+        Assert.Null(agent.GetLanguageParams("en-US"));
+    }
+
+    [Fact]
+    public void GetLanguageParams_ReturnsNullForUnknownCode()
+    {
+        var agent = MakeAgent();
+        Assert.Null(agent.GetLanguageParams("zh-CN"));
+    }
+
+    [Fact]
+    public void SetLanguageParams_ReplacesExisting()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage("English", "en-US", "v",
+            new Dictionary<string, object?> { ["a"] = 1 });
+        agent.SetLanguageParams("en-US",
+            new Dictionary<string, object?> { ["b"] = 2 });
+        var got = agent.GetLanguageParams("en-US");
+        Assert.NotNull(got);
+        Assert.False(got!.ContainsKey("a"));
+        Assert.Equal(2, got["b"]);
+    }
+
+    [Fact]
+    public void SetLanguageParams_AddsWhenUnset()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage("English", "en-US", "v");
+        agent.SetLanguageParams("en-US",
+            new Dictionary<string, object?> { ["c"] = 3 });
+        var got = agent.GetLanguageParams("en-US");
+        Assert.NotNull(got);
+        Assert.Equal(3, got!["c"]);
+    }
+
+    [Fact]
+    public void SetLanguageParams_EmptyDictRemovesKey()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage("English", "en-US", "v",
+            new Dictionary<string, object?> { ["a"] = 1 });
+        agent.SetLanguageParams("en-US", new Dictionary<string, object?>());
+
+        Assert.Null(agent.GetLanguageParams("en-US"));
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var languages = (List<Dictionary<string, object>>)ai["languages"];
+        Assert.False(languages[0].ContainsKey("params"));
+    }
+
+    [Fact]
+    public void SetLanguageParams_UnknownCodeIsNoop()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage("English", "en-US", "v");
+        agent.SetLanguageParams("zh-CN",
+            new Dictionary<string, object?> { ["a"] = 1 });
+        // The known language remains untouched.
+        Assert.Null(agent.GetLanguageParams("en-US"));
+    }
+
+    [Fact]
+    public void SetLanguageParams_ReturnsAgentForChaining()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage("English", "en-US", "v");
+        Assert.Same(agent, agent.SetLanguageParams("en-US",
+            new Dictionary<string, object?> { ["a"] = 1 }));
+    }
+
     [Fact]
     public void AddPronunciation()
     {

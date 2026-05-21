@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text;
 using Xunit;
 using SignalWire.Agent;
 using SignalWire.Logging;
@@ -456,6 +458,202 @@ public class SkillsTests : IDisposable
         skill.Wire(agent, new Dictionary<string, object> { ["api_key"] = "k", ["search_engine_id"] = "s" });
         var globalData = skill.GetGlobalData();
         Assert.True((bool)globalData["web_search_enabled"]);
+    }
+
+    // ==================================================================
+    //  WebSearch response_prefix / response_postfix
+    //  (porting-sdk: signalwire-python 8aad242)
+    // ==================================================================
+
+    /// <summary>Spin up a one-shot HTTP fixture that returns the given JSON
+    /// body for the next /customsearch/v1 request. Returns (baseUrl, dispose
+    /// action). The fixture binds to an ephemeral loopback port so multiple
+    /// xUnit tests can run in parallel without colliding.</summary>
+    private static (string baseUrl, IDisposable disposable) StartCseFixture(string body)
+    {
+        var listener = new HttpListener();
+        // 0 → kernel picks an unused port; bind to loopback IPv4.
+        var port = GetFreePort();
+        var prefix = $"http://127.0.0.1:{port}/";
+        listener.Prefixes.Add(prefix);
+        listener.Start();
+        var cts = new System.Threading.CancellationTokenSource();
+        Task.Run(async () =>
+        {
+            while (!cts.IsCancellationRequested)
+            {
+                try
+                {
+                    var ctx = await listener.GetContextAsync().ConfigureAwait(false);
+                    var bytes = Encoding.UTF8.GetBytes(body);
+                    ctx.Response.StatusCode = 200;
+                    ctx.Response.ContentType = "application/json";
+                    ctx.Response.ContentLength64 = bytes.Length;
+                    await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                    ctx.Response.Close();
+                }
+                catch (HttpListenerException) { break; }
+                catch (ObjectDisposedException) { break; }
+            }
+        });
+        var disposable = new FixtureHandle(() =>
+        {
+            cts.Cancel();
+            try { listener.Stop(); } catch { }
+            try { listener.Close(); } catch { }
+        });
+        return (prefix.TrimEnd('/'), disposable);
+    }
+
+    private static int GetFreePort()
+    {
+        // Bind to port 0 to let the OS pick; then read the assigned port.
+        var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        l.Start();
+        var port = ((System.Net.IPEndPoint)l.LocalEndpoint).Port;
+        l.Stop();
+        return port;
+    }
+
+    private sealed class FixtureHandle : IDisposable
+    {
+        private readonly Action _dispose;
+        public FixtureHandle(Action dispose) { _dispose = dispose; }
+        public void Dispose() => _dispose();
+    }
+
+    private const string CseFixtureJson =
+        "{\"items\":[{\"title\":\"Result A\",\"link\":\"https://example.com/a\",\"snippet\":\"Snippet A\"}]}";
+
+    private static FunctionResult InvokeWebSearch(AgentBase agent)
+    {
+        var result = agent.OnFunctionCall(
+            "web_search",
+            new Dictionary<string, object> { ["query"] = "anything" },
+            new Dictionary<string, object?>());
+        Assert.NotNull(result);
+        return result!;
+    }
+
+    [Fact]
+    public void WebSearchSkill_ResponsePrefixWrapsSuccess()
+    {
+        var (baseUrl, fixture) = StartCseFixture(CseFixtureJson);
+        try
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            var skill = new WebSearchSkill();
+            var parameters = new Dictionary<string, object>
+            {
+                ["api_key"] = "k",
+                ["search_engine_id"] = "s",
+                ["response_prefix"] = "[INTRO]",
+            };
+            skill.Wire(agent, parameters);
+            skill.RegisterTools(agent);
+
+            var result = InvokeWebSearch(agent);
+            var response = (string)result.ToDict()["response"];
+            Assert.StartsWith("[INTRO]\n\n", response);
+            Assert.Contains("Result A", response);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
+
+    [Fact]
+    public void WebSearchSkill_ResponsePostfixWrapsSuccess()
+    {
+        var (baseUrl, fixture) = StartCseFixture(CseFixtureJson);
+        try
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            var skill = new WebSearchSkill();
+            var parameters = new Dictionary<string, object>
+            {
+                ["api_key"] = "k",
+                ["search_engine_id"] = "s",
+                ["response_postfix"] = "[OUTRO]",
+            };
+            skill.Wire(agent, parameters);
+            skill.RegisterTools(agent);
+
+            var result = InvokeWebSearch(agent);
+            var response = (string)result.ToDict()["response"];
+            Assert.EndsWith("\n\n[OUTRO]", response);
+            Assert.Contains("Result A", response);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
+
+    [Fact]
+    public void WebSearchSkill_ResponsePrefixAndPostfixBothApplied()
+    {
+        var (baseUrl, fixture) = StartCseFixture(CseFixtureJson);
+        try
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            var skill = new WebSearchSkill();
+            var parameters = new Dictionary<string, object>
+            {
+                ["api_key"] = "k",
+                ["search_engine_id"] = "s",
+                ["response_prefix"] = "[INTRO]",
+                ["response_postfix"] = "[OUTRO]",
+            };
+            skill.Wire(agent, parameters);
+            skill.RegisterTools(agent);
+
+            var result = InvokeWebSearch(agent);
+            var response = (string)result.ToDict()["response"];
+            Assert.StartsWith("[INTRO]\n\n", response);
+            Assert.EndsWith("\n\n[OUTRO]", response);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
+
+    [Fact]
+    public void WebSearchSkill_NoPrefixOrPostfixByDefault()
+    {
+        var (baseUrl, fixture) = StartCseFixture(CseFixtureJson);
+        try
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            var skill = new WebSearchSkill();
+            var parameters = new Dictionary<string, object>
+            {
+                ["api_key"] = "k",
+                ["search_engine_id"] = "s",
+            };
+            skill.Wire(agent, parameters);
+            skill.RegisterTools(agent);
+
+            var result = InvokeWebSearch(agent);
+            var response = (string)result.ToDict()["response"];
+            Assert.StartsWith("Web search results for", response);
+            Assert.DoesNotContain("[INTRO]", response);
+            Assert.DoesNotContain("[OUTRO]", response);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", null);
+            fixture.Dispose();
+        }
     }
 
     [Fact]

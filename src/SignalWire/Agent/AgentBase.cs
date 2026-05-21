@@ -498,13 +498,92 @@ public class AgentBase : Service
 
     public AgentBase AddLanguage(string name, string code, string voice)
     {
-        _languages.Add(new Dictionary<string, object>
+        return AddLanguage(name, code, voice, null);
+    }
+
+    /// <summary>
+    /// Add a language configuration with optional per-language engine-specific
+    /// params (e.g. voice stability/similarity for ElevenLabs, model knobs).
+    /// The <c>params</c> key is only emitted into SWML when non-empty, so
+    /// existing language entries stay byte-identical when no params are passed.
+    /// Mirrors signalwire-python's <c>AIConfigMixin.add_language(params=...)</c>.
+    /// </summary>
+    /// <param name="name">Language name (e.g. "English").</param>
+    /// <param name="code">Language code (e.g. "en-US").</param>
+    /// <param name="voice">TTS voice name or combined "engine.voice:model".</param>
+    /// <param name="languageParams">Optional engine-specific params dict.
+    /// <c>null</c> or empty omits the SWML <c>params</c> key.</param>
+    public AgentBase AddLanguage(
+        string name,
+        string code,
+        string voice,
+        Dictionary<string, object?>? languageParams)
+    {
+        var language = new Dictionary<string, object>
         {
             ["name"] = name,
             ["code"] = code,
             ["voice"] = voice,
-        });
+        };
+        // Per-language params (engine-specific tuning, voice settings, etc.).
+        // Only emit the key when non-empty so we don't pollute SWML with
+        // empty objects.
+        if (languageParams is { Count: > 0 })
+        {
+            language["params"] = languageParams;
+        }
+        _languages.Add(language);
         return this;
+    }
+
+    /// <summary>
+    /// Set (or replace) the per-language <c>params</c> dict on an
+    /// already-added language. Useful when language entries are built
+    /// up via <see cref="AddLanguage(string, string, string)"/> first and
+    /// engine-specific tuning is added later (e.g., from a config loader).
+    /// Empty dict removes the key. No-op if <paramref name="code"/> isn't
+    /// found — matches Python's silent-skip behavior.
+    /// </summary>
+    public AgentBase SetLanguageParams(string code, Dictionary<string, object?> languageParams)
+    {
+        foreach (var language in _languages)
+        {
+            if (language.TryGetValue("code", out var c) && c is string codeValue && codeValue == code)
+            {
+                if (languageParams is { Count: > 0 })
+                {
+                    language["params"] = languageParams;
+                }
+                else
+                {
+                    language.Remove("params");
+                }
+                break;
+            }
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Read the per-language <c>params</c> dict for a previously-added
+    /// language. Returns <c>null</c> when the params were never set or
+    /// when the code is unknown — no exception path, matching Python.
+    /// </summary>
+    public Dictionary<string, object?>? GetLanguageParams(string code)
+    {
+        foreach (var language in _languages)
+        {
+            if (language.TryGetValue("code", out var c) && c is string codeValue && codeValue == code)
+            {
+                if (language.TryGetValue("params", out var p)
+                    && p is Dictionary<string, object?> typed)
+                {
+                    return typed;
+                }
+                return null;
+            }
+        }
+        return null;
     }
 
     public AgentBase SetLanguages(List<Dictionary<string, object>> languages)
