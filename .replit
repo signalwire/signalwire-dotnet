@@ -1,0 +1,5 @@
+run = "dotnet build src/SignalWire/SignalWire.csproj"
+entrypoint = "README.md"
+
+[nix]
+channel = "stable-24_05"

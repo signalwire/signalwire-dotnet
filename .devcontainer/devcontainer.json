@@ -1,0 +1,9 @@
+{
+  "name": "signalwire-dotnet",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:8.0",
+  "postCreateCommand": "dotnet restore",
+  "forwardPorts": [3000, 8000],
+  "customizations": {
+    "vscode": { "extensions": ["ms-dotnettools.csharp"] }
+  }
+}
