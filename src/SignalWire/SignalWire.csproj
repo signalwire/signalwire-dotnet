@@ -5,9 +5,9 @@
     <RootNamespace>SignalWire</RootNamespace>
     <AssemblyName>SignalWire</AssemblyName>
     <PackageId>SignalWire.Sdk</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Authors>SignalWire</Authors>
-    <Description>SignalWire AI Agents SDK for .NET — build AI voice agents, control live calls over WebSocket, and manage resources over REST.</Description>
+    <Description>SignalWire SDK for .NET — build AI voice agents, control live calls over WebSocket, and manage resources over REST.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/signalwire/signalwire-dotnet</PackageProjectUrl>
     <RepositoryUrl>https://github.com/signalwire/signalwire-dotnet</RepositoryUrl>

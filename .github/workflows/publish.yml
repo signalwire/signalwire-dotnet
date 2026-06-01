@@ -1,0 +1,83 @@
+name: Publish Release
+
+# Triggered by pushing a `v*` tag (or manually via workflow_dispatch).
+# Runs the full per-port CI gate (TEST -> SIGNATURES -> DRIFT -> NO-CHEAT)
+# before packing and pushing SignalWire.Sdk to NuGet, then creates a
+# GitHub release with auto-generated notes.
+
+env:
+  # Opt into Node.js 24 ahead of GitHub's 2026-06-02 default switch.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (e.g. v1.1.1)'
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout signalwire-dotnet
+        uses: actions/checkout@v5
+        with:
+          path: signalwire-dotnet
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Checkout porting-sdk (mock_relay + mock_signalwire test harnesses)
+        uses: actions/checkout@v5
+        with:
+          repository: signalwire/porting-sdk
+          path: porting-sdk
+          fetch-depth: 1
+          token: ${{ secrets.PORTING_SDK_TOKEN }}
+
+      - name: Set up .NET SDKs (net8.0 / net9.0 / net10.0)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Set up Python (porting-sdk mock servers + audit scripts)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python test harnesses (mock_relay + mock_signalwire)
+        run: |
+          pip install -e porting-sdk/test_harness/mock_relay
+          pip install -e porting-sdk/test_harness/mock_signalwire
+
+      - name: Run CI gate script (TEST -> SIGNATURES -> DRIFT -> NO-CHEAT)
+        working-directory: signalwire-dotnet
+        env:
+          PORTING_SDK: ${{ github.workspace }}/porting-sdk
+        run: bash scripts/run-ci.sh
+
+      - name: Pack NuGet package
+        working-directory: signalwire-dotnet
+        run: dotnet pack src/SignalWire/SignalWire.csproj -c Release -o nupkgs
+
+      - name: Push to NuGet.org
+        working-directory: signalwire-dotnet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push "nupkgs/*.nupkg" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          generate_release_notes: true
