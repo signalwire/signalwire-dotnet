@@ -124,9 +124,15 @@ public class PomBuilder
         var json = JsonSerializer.Serialize(sections);
         builder.Pom = PromptObjectModel.FromJson(json);
         // Rebuild the sections lookup so HasSection / GetSection work.
+        // Only titled sections are indexable (Python parity:
+        // pom_builder.from_sections guards with ``if section.title``).
+        // Section.Title is nullable and Dictionary rejects null keys.
         foreach (var s in builder.Pom.Sections)
         {
-            builder._sections[s.Title] = s;
+            if (!string.IsNullOrEmpty(s.Title))
+            {
+                builder._sections[s.Title] = s;
+            }
         }
         return builder;
     }
