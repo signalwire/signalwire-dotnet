@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using Xunit;
 using SignalWire.Agent;
@@ -549,6 +551,9 @@ public class SkillsTests : IDisposable
                 ["api_key"] = "k",
                 ["search_engine_id"] = "s",
                 ["response_prefix"] = "[INTRO]",
+                // snippets_only keeps this deterministic + offline: the wrapper
+                // is applied to the snippet result without any page scrape.
+                ["snippets_only"] = true,
             };
             skill.Wire(agent, parameters);
             skill.RegisterTools(agent);
@@ -579,6 +584,7 @@ public class SkillsTests : IDisposable
                 ["api_key"] = "k",
                 ["search_engine_id"] = "s",
                 ["response_postfix"] = "[OUTRO]",
+                ["snippets_only"] = true,
             };
             skill.Wire(agent, parameters);
             skill.RegisterTools(agent);
@@ -610,6 +616,7 @@ public class SkillsTests : IDisposable
                 ["search_engine_id"] = "s",
                 ["response_prefix"] = "[INTRO]",
                 ["response_postfix"] = "[OUTRO]",
+                ["snippets_only"] = true,
             };
             skill.Wire(agent, parameters);
             skill.RegisterTools(agent);
@@ -639,13 +646,14 @@ public class SkillsTests : IDisposable
             {
                 ["api_key"] = "k",
                 ["search_engine_id"] = "s",
+                ["snippets_only"] = true,
             };
             skill.Wire(agent, parameters);
             skill.RegisterTools(agent);
 
             var result = InvokeWebSearch(agent);
             var response = (string)result.ToDict()["response"];
-            Assert.StartsWith("Web search results for", response);
+            Assert.StartsWith("Snippet-only results", response);
             Assert.DoesNotContain("[INTRO]", response);
             Assert.DoesNotContain("[OUTRO]", response);
         }
@@ -654,6 +662,287 @@ public class SkillsTests : IDisposable
             Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", null);
             fixture.Dispose();
         }
+    }
+
+    // ==================================================================
+    //  WebSearch latency control: per_page_timeout / overall_deadline /
+    //  parallel_scrape / snippets_only + snippet fallback.
+    //  (porting-sdk: signalwire-python 51101da + 295745b)
+    //
+    //  Scrape latency is simulated with an injected HttpMessageHandler so the
+    //  deadline / per_page_timeout paths are exercised deterministically,
+    //  offline, and fast. The CSE fetch itself uses HttpHelper's own client
+    //  (the loopback fixture); only the per-page scrape uses the injected
+    //  handler — so the two never cross.
+    // ==================================================================
+
+    /// <summary>A scrape HttpMessageHandler that optionally delays each
+    /// response by <c>delay</c> (honoring cancellation so per_page_timeout /
+    /// overall_deadline can abort it) and counts how many scrape requests it
+    /// saw. With a multi-second delay it stands in for a hung site.</summary>
+    private sealed class DelayingScrapeHandler : HttpMessageHandler
+    {
+        private readonly TimeSpan _delay;
+        private int _calls;
+        public DelayingScrapeHandler(TimeSpan delay) { _delay = delay; }
+        public int Calls => System.Threading.Volatile.Read(ref _calls);
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
+        {
+            System.Threading.Interlocked.Increment(ref _calls);
+            if (_delay > TimeSpan.Zero)
+            {
+                // Task.Delay observes the token: a per_page_timeout / deadline
+                // cancellation throws TaskCanceledException here, mirroring a
+                // real fetch that is aborted mid-flight.
+                await Task.Delay(_delay, cancellationToken).ConfigureAwait(false);
+            }
+            // A real, substantial page so the quality floor is cleared on the
+            // happy path. Mentions the query words used by the tests.
+            var html = "<html><body><h1>Widgets and Gizmos</h1><p>" +
+                string.Concat(System.Linq.Enumerable.Repeat(
+                    "Detailed information about widgets and gizmos for sale. ", 40)) +
+                "</p></body></html>";
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(html, Encoding.UTF8, "text/html"),
+            };
+        }
+    }
+
+    // CSE fixture with two real-looking result URLs for the scrape path.
+    private const string CseTwoResultsJson =
+        "{\"items\":[" +
+        "{\"title\":\"Widgets Guide\",\"link\":\"http://site-one.invalid/a\",\"snippet\":\"First CSE snippet about widgets.\"}," +
+        "{\"title\":\"Gizmos Guide\",\"link\":\"http://site-two.invalid/b\",\"snippet\":\"Second CSE snippet about gizmos.\"}" +
+        "]}";
+
+    private static WebSearchSkill WireWebSearch(AgentBase agent, Dictionary<string, object> extra)
+    {
+        var skill = new WebSearchSkill();
+        var parameters = new Dictionary<string, object>
+        {
+            ["api_key"] = "k",
+            ["search_engine_id"] = "s",
+        };
+        foreach (var (kk, vv) in extra) parameters[kk] = vv;
+        skill.Wire(agent, parameters);
+        skill.RegisterTools(agent);
+        return skill;
+    }
+
+    [Fact]
+    public void WebSearchSkill_SnippetsOnlySkipsScraping()
+    {
+        var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
+        // A handler that would hang forever if touched — proving the fast path
+        // never scrapes.
+        var handler = new DelayingScrapeHandler(TimeSpan.FromMinutes(5));
+        WebSearchSkill.ScrapeHandlerFactory = () => handler;
+        try
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            WireWebSearch(agent, new Dictionary<string, object> { ["snippets_only"] = true });
+
+            var sw = Stopwatch.StartNew();
+            var result = InvokeWebSearch(agent);
+            sw.Stop();
+            var response = (string)result.ToDict()["response"];
+
+            Assert.Equal(0, handler.Calls);               // no page fetch at all
+            Assert.StartsWith("Snippet-only results", response);
+            Assert.Contains("First CSE snippet about widgets.", response);
+            Assert.NotEmpty(response);
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(2),
+                $"snippets_only should be sub-second, took {sw.Elapsed}");
+        }
+        finally
+        {
+            WebSearchSkill.ScrapeHandlerFactory = null;
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
+
+    [Fact]
+    public void WebSearchSkill_OverallDeadlineTruncatesAndFallsBackToSnippets()
+    {
+        var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
+        // Each scrape would take 30s; the 1.0s deadline must abort them and we
+        // fall back to the (non-empty) snippet response.
+        var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(30));
+        WebSearchSkill.ScrapeHandlerFactory = () => handler;
+        try
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            WireWebSearch(agent, new Dictionary<string, object>
+            {
+                ["overall_deadline"] = 1.0,   // schema floor; small so the test is fast
+                ["per_page_timeout"] = 20.0,  // larger than the deadline → deadline wins
+                ["parallel_scrape"] = true,
+            });
+
+            var sw = Stopwatch.StartNew();
+            var result = InvokeWebSearch(agent);
+            sw.Stop();
+            var response = (string)result.ToDict()["response"];
+
+            // CONTRACT: returns within ~deadline + slack despite the 30s hang.
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5),
+                $"overall_deadline must bound the call; took {sw.Elapsed}");
+            Assert.True(sw.Elapsed >= TimeSpan.FromMilliseconds(800),
+                $"should actually wait out the ~1s deadline; took {sw.Elapsed}");
+            // CONTRACT: non-empty snippet fallback, NOT the empty no-results msg.
+            Assert.StartsWith("Snippet-only results", response);
+            Assert.Contains("First CSE snippet about widgets.", response);
+            Assert.DoesNotContain("No results found", response);
+            Assert.DoesNotContain("couldn't find quality results", response);
+            Assert.NotEmpty(response);
+        }
+        finally
+        {
+            WebSearchSkill.ScrapeHandlerFactory = null;
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
+
+    [Fact]
+    public void WebSearchSkill_OverallDeadlineEnforcedInSequentialMode()
+    {
+        var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
+        var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(30));
+        WebSearchSkill.ScrapeHandlerFactory = () => handler;
+        try
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            WireWebSearch(agent, new Dictionary<string, object>
+            {
+                ["overall_deadline"] = 1.0,
+                ["per_page_timeout"] = 20.0,
+                ["parallel_scrape"] = false,  // sequential path must honor the deadline too
+            });
+
+            var sw = Stopwatch.StartNew();
+            var result = InvokeWebSearch(agent);
+            sw.Stop();
+            var response = (string)result.ToDict()["response"];
+
+            // Sequential: the first page hangs; the 1.0s deadline (not the 20s
+            // per-page timeout) must cancel it and stop the loop.
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5),
+                $"sequential mode must honor overall_deadline; took {sw.Elapsed}");
+            Assert.StartsWith("Snippet-only results", response);
+            Assert.Contains("First CSE snippet about widgets.", response);
+        }
+        finally
+        {
+            WebSearchSkill.ScrapeHandlerFactory = null;
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
+
+    [Fact]
+    public void WebSearchSkill_PerPageTimeoutAbortsSlowFetchThenFallsBack()
+    {
+        var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
+        // Each scrape takes 10s but per_page_timeout is 0.3s, so every page is
+        // abandoned well before its body arrives. overall_deadline is generous
+        // (10s default) — this isolates the per-page timeout.
+        var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(10));
+        WebSearchSkill.ScrapeHandlerFactory = () => handler;
+        try
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            WireWebSearch(agent, new Dictionary<string, object>
+            {
+                ["per_page_timeout"] = 0.3,
+                ["parallel_scrape"] = true,
+            });
+
+            var sw = Stopwatch.StartNew();
+            var result = InvokeWebSearch(agent);
+            sw.Stop();
+            var response = (string)result.ToDict()["response"];
+
+            // All page fetches aborted at ~0.3s; we never wait the 10s body.
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(4),
+                $"per_page_timeout must abort the slow fetch; took {sw.Elapsed}");
+            Assert.StartsWith("Snippet-only results", response);
+            Assert.Contains("First CSE snippet about widgets.", response);
+        }
+        finally
+        {
+            WebSearchSkill.ScrapeHandlerFactory = null;
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
+
+    [Fact]
+    public void WebSearchSkill_FastScrapeProducesFullContent()
+    {
+        var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
+        // Fast scrapes under a generous deadline must yield the normal
+        // fully-scraped response (proving the deadline machinery doesn't
+        // truncate healthy runs).
+        var handler = new DelayingScrapeHandler(TimeSpan.FromMilliseconds(20));
+        WebSearchSkill.ScrapeHandlerFactory = () => handler;
+        try
+        {
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            WireWebSearch(agent, new Dictionary<string, object>
+            {
+                ["overall_deadline"] = 10.0,
+                ["parallel_scrape"] = true,
+            });
+
+            var result = InvokeWebSearch(agent);
+            var response = (string)result.ToDict()["response"];
+
+            Assert.True(handler.Calls >= 1, "the happy path must actually scrape");
+            Assert.StartsWith("Quality web search results for", response);
+            Assert.Contains("Content:", response);
+            Assert.DoesNotContain("Snippet-only results", response);
+        }
+        finally
+        {
+            WebSearchSkill.ScrapeHandlerFactory = null;
+            Environment.SetEnvironmentVariable("WEB_SEARCH_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
+
+    [Fact]
+    public void WebSearchSkill_SchemaAdvertisesLatencyParamsWithDefaults()
+    {
+        var skill = new WebSearchSkill();
+        var schema = skill.GetParameterSchema();
+        Assert.True(schema.TryGetValue("properties", out var pObj));
+        var props = Assert.IsType<Dictionary<string, object>>(pObj);
+
+        void AssertParam(string name, string type, object def)
+        {
+            Assert.True(props.TryGetValue(name, out var raw), $"{name} missing from schema");
+            var p = Assert.IsType<Dictionary<string, object>>(raw);
+            Assert.Equal(type, p["type"]);
+            Assert.Equal(def, p["default"]);
+            Assert.Equal(false, p["required"]);
+        }
+
+        AssertParam("per_page_timeout", "number", 2.0);
+        AssertParam("overall_deadline", "number", 10.0);
+        AssertParam("parallel_scrape", "boolean", true);
+        AssertParam("snippets_only", "boolean", false);
+        AssertParam("response_prefix", "string", "");
+        AssertParam("response_postfix", "string", "");
     }
 
     [Fact]

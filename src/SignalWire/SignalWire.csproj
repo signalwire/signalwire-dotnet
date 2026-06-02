@@ -18,6 +18,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Expose internal test seams (e.g. WebSearchSkill.ScrapeHandlerFactory,
+         which lets the web_search latency-control tests inject a delaying
+         HttpMessageHandler) to the test assembly only. Internal members are
+         invisible to the public-surface audit, so this adds no drift. -->
+    <InternalsVisibleTo Include="SignalWire.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="SWML/schema.json" LogicalName="SignalWire.SWML.schema.json" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
