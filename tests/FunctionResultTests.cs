@@ -481,6 +481,57 @@ public class FunctionResultTests
     }
 
     [Fact]
+    public void RecordCall_RecordFormatEnum_MatchesStringFormat()
+    {
+        // The enum member maps to the canonical wire value.
+        Assert.Equal("wav", RecordFormat.Wav.ToWireName());
+        Assert.Equal("mp3", RecordFormat.Mp3.ToWireName());
+
+        // RecordCall(RecordFormat, ...) emits the IDENTICAL record_call action
+        // as passing the bare string format — same format key, same values.
+        var enumFr = new FunctionResult();
+        enumFr.RecordCall(RecordFormat.Mp3, RecordDirection.Both, "rec-1");
+        var enumRec = (Dictionary<string, object>)GetAction(enumFr, 0)["record_call"];
+
+        var stringFr = new FunctionResult();
+        stringFr.RecordCall("rec-1", false, "mp3", "both");
+        var stringRec = (Dictionary<string, object>)GetAction(stringFr, 0)["record_call"];
+
+        Assert.Equal("mp3", enumRec["format"]);
+        Assert.Equal(stringRec["format"], enumRec["format"]);
+        Assert.Equal(stringRec["direction"], enumRec["direction"]);
+        Assert.Equal(stringRec["control_id"], enumRec["control_id"]);
+        Assert.Equal(stringRec["stereo"], enumRec["stereo"]);
+        Assert.Equal(stringRec["initiator"], enumRec["initiator"]);
+    }
+
+    [Fact]
+    public void RecordCall_RecordDirectionEnum_MatchesStringDirection()
+    {
+        // Each enum member maps to the canonical wire value.
+        Assert.Equal("speak", RecordDirection.Speak.ToWireName());
+        Assert.Equal("listen", RecordDirection.Listen.ToWireName());
+        Assert.Equal("both", RecordDirection.Both.ToWireName());
+
+        // RecordCall(.., RecordDirection, ..) emits the IDENTICAL record_call
+        // action as passing the bare string direction.
+        var enumFr = new FunctionResult();
+        enumFr.RecordCall(RecordFormat.Wav, RecordDirection.Listen);
+        var enumRec = (Dictionary<string, object>)GetAction(enumFr, 0)["record_call"];
+
+        var stringFr = new FunctionResult();
+        stringFr.RecordCall("", false, "wav", "listen");
+        var stringRec = (Dictionary<string, object>)GetAction(stringFr, 0)["record_call"];
+
+        Assert.Equal("listen", enumRec["direction"]);
+        Assert.Equal(stringRec["direction"], enumRec["direction"]);
+        Assert.Equal(stringRec["format"], enumRec["format"]);
+        // Empty controlId is omitted by both paths (no control_id key).
+        Assert.False(enumRec.ContainsKey("control_id"));
+        Assert.Equal(stringRec.ContainsKey("control_id"), enumRec.ContainsKey("control_id"));
+    }
+
+    [Fact]
     public void StopRecordCall_WithoutControlId()
     {
         var fr = new FunctionResult();

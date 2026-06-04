@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 2b39aa4f57609b0097f0bdfd2416332432c4dadf",
+  "generated_from": "signalwire-dotnet @ aa9d3e1e2ef1e62d5e63e700e2581e0a795cbaf1",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -279,9 +279,11 @@
           "add_pattern_hint",
           "add_pronunciation",
           "enable_debug_events",
+          "get_language_params",
           "set_function_includes",
           "set_global_data",
           "set_internal_fillers",
+          "set_language_params",
           "set_languages",
           "set_native_functions",
           "set_param",
@@ -673,6 +675,9 @@
           "denoise",
           "denoise_stop",
           "detect",
+          "detect_answering_machine",
+          "detect_digit",
+          "detect_fax",
           "device",
           "dial_winner",
           "direction",
@@ -696,6 +701,12 @@
           "peer",
           "play",
           "play_and_collect",
+          "play_audio",
+          "play_ringtone",
+          "play_silence",
+          "play_tts",
+          "prompt_audio",
+          "prompt_tts",
           "queue_enter",
           "queue_leave",
           "receive_fax",
@@ -712,7 +723,10 @@
           "transfer",
           "typed_listeners",
           "unhold",
-          "user_event"
+          "user_event",
+          "wait_for_answered",
+          "wait_for_ending",
+          "wait_for_ringing"
         ],
         "CollectAction": [
           "__init__",
@@ -1656,6 +1670,14 @@
       },
       "functions": []
     },
+    "signalwire.skills.skill_name_extensions": {
+      "classes": {
+        "SkillNameExtensions": [
+          "to_wire_name"
+        ]
+      },
+      "functions": []
+    },
     "signalwire.skills.spider.skill": {
       "classes": {
         "SpiderSkill": [
@@ -1699,6 +1721,7 @@
         "WebSearchSkill": [
           "description",
           "get_global_data",
+          "get_parameter_schema",
           "get_prompt_sections",
           "name",
           "register_tools",
@@ -1717,6 +1740,22 @@
           "name",
           "register_tools",
           "setup"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.swaig.record_direction_extensions": {
+      "classes": {
+        "RecordDirectionExtensions": [
+          "to_wire_name"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.swaig.record_format_extensions": {
+      "classes": {
+        "RecordFormatExtensions": [
+          "to_wire_name"
         ]
       },
       "functions": []

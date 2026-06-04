@@ -17043,6 +17043,42 @@
         }
       }
     },
+    "signalwire.swaig.record_direction_extensions": {
+      "classes": {
+        "RecordDirectionExtensions": {
+          "methods": {
+            "to_wire_name": {
+              "params": [
+                {
+                  "name": "direction",
+                  "type": "class:signalwire.swaig.record_direction.RecordDirection",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.swaig.record_format_extensions": {
+      "classes": {
+        "RecordFormatExtensions": {
+          "methods": {
+            "to_wire_name": {
+              "params": [
+                {
+                  "name": "format",
+                  "type": "class:signalwire.swaig.record_format.RecordFormat",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
     "signalwire.swml.document": {
       "classes": {
         "Document": {

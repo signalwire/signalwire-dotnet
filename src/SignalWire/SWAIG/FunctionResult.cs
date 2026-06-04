@@ -340,6 +340,23 @@ public class FunctionResult
         return this;
     }
 
+    /// <summary>
+    /// Typed overload of <see cref="RecordCall(string, bool, string, string)"/>:
+    /// start background call recording using the <see cref="RecordFormat"/> and
+    /// <see cref="RecordDirection"/> closed-set enums instead of bare strings.
+    /// Delegates to the string overload via each enum's canonical wire name, so
+    /// the emitted SWML is identical. Strings remain supported for parity with
+    /// the Python reference (which takes bare <c>str</c> arguments validated to
+    /// the same closed sets). The <c>stereo</c> flag (a plain bool, not a
+    /// closed set) stays on the string overload; pass
+    /// <c>RecordFormat.X.ToWireName()</c> there if you need it with typed values.
+    /// </summary>
+    public FunctionResult RecordCall(
+        RecordFormat format,
+        RecordDirection direction,
+        string controlId = "") =>
+        RecordCall(controlId, false, format.ToWireName(), direction.ToWireName());
+
     public FunctionResult StopRecordCall(string? controlId = null)
     {
         var stop = new Dictionary<string, object>();
