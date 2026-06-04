@@ -319,8 +319,340 @@ public class Call
         => StartAction<AIAction>("calling.ai", extra);
 
     // ------------------------------------------------------------------
+    // Typed play convenience (thin wrappers over Play)
+    //
+    // These restore the legacy ``call.play_tts(...)`` ergonomics so callers
+    // don't hand-build the ``{type, params}`` media shape. Each builds the
+    // exact RELAY media object and delegates to the generic Play, then wires
+    // the optional onCompleted callback onto the returned PlayAction.
+    // ------------------------------------------------------------------
+
+    /// <summary>Play text-to-speech. Typed convenience over <see cref="Play"/>.</summary>
+    public PlayAction PlayTts(
+        string text,
+        string? language = null,
+        string? gender = null,
+        string? voice = null,
+        double? volume = null,
+        System.Action<Action>? onCompleted = null)
+    {
+        var ttsParams = new Dictionary<string, object?> { ["text"] = text };
+        if (language is not null) ttsParams["language"] = language;
+        if (gender is not null) ttsParams["gender"] = gender;
+        if (voice is not null) ttsParams["voice"] = voice;
+        var extra = new Dictionary<string, object?>
+        {
+            ["play"] = new List<Dictionary<string, object?>>
+            {
+                new() { ["type"] = "tts", ["params"] = ttsParams },
+            },
+        };
+        if (volume is not null) extra["volume"] = volume;
+        return WithOnCompleted(Play(extra), onCompleted);
+    }
+
+    /// <summary>Play an audio file from a URL. Typed convenience over <see cref="Play"/>.</summary>
+    public PlayAction PlayAudio(
+        string url,
+        double? volume = null,
+        System.Action<Action>? onCompleted = null)
+    {
+        var extra = new Dictionary<string, object?>
+        {
+            ["play"] = new List<Dictionary<string, object?>>
+            {
+                new()
+                {
+                    ["type"] = "audio",
+                    ["params"] = new Dictionary<string, object?> { ["url"] = url },
+                },
+            },
+        };
+        if (volume is not null) extra["volume"] = volume;
+        return WithOnCompleted(Play(extra), onCompleted);
+    }
+
+    /// <summary>Play silence for <paramref name="duration"/> seconds. Typed convenience over <see cref="Play"/>.</summary>
+    public PlayAction PlaySilence(
+        double duration,
+        System.Action<Action>? onCompleted = null)
+    {
+        var extra = new Dictionary<string, object?>
+        {
+            ["play"] = new List<Dictionary<string, object?>>
+            {
+                new()
+                {
+                    ["type"] = "silence",
+                    ["params"] = new Dictionary<string, object?> { ["duration"] = duration },
+                },
+            },
+        };
+        return WithOnCompleted(Play(extra), onCompleted);
+    }
+
+    /// <summary>Play a named ringtone by country code. Typed convenience over <see cref="Play"/>.</summary>
+    public PlayAction PlayRingtone(
+        string name,
+        double? duration = null,
+        double? volume = null,
+        System.Action<Action>? onCompleted = null)
+    {
+        var rtParams = new Dictionary<string, object?> { ["name"] = name };
+        if (duration is not null) rtParams["duration"] = duration;
+        var extra = new Dictionary<string, object?>
+        {
+            ["play"] = new List<Dictionary<string, object?>>
+            {
+                new() { ["type"] = "ringtone", ["params"] = rtParams },
+            },
+        };
+        if (volume is not null) extra["volume"] = volume;
+        return WithOnCompleted(Play(extra), onCompleted);
+    }
+
+    // ------------------------------------------------------------------
+    // Typed detect convenience (thin wrappers over Detect)
+    //
+    // Each builds the ``{type, params}`` detect object — including only the
+    // params the caller supplied so the server applies its own defaults —
+    // and delegates to the generic Detect.
+    // ------------------------------------------------------------------
+
+    /// <summary>Detect DTMF digits. Typed convenience over <see cref="Detect"/>.</summary>
+    public DetectAction DetectDigit(
+        string? digits = null,
+        double? timeout = null,
+        System.Action<Action>? onCompleted = null)
+    {
+        var detectParams = new Dictionary<string, object?>();
+        if (digits is not null) detectParams["digits"] = digits;
+        var extra = new Dictionary<string, object?>
+        {
+            ["detect"] = new Dictionary<string, object?>
+            {
+                ["type"] = "digit",
+                ["params"] = detectParams,
+            },
+        };
+        if (timeout is not null) extra["timeout"] = timeout;
+        return WithOnCompleted(Detect(extra), onCompleted);
+    }
+
+    /// <summary>Detect human vs answering machine (AMD). Typed convenience over <see cref="Detect"/>.</summary>
+    public DetectAction DetectAnsweringMachine(
+        double? initialTimeout = null,
+        double? endSilenceTimeout = null,
+        double? machineVoiceThreshold = null,
+        int? machineWordsThreshold = null,
+        bool? detectInterruptions = null,
+        bool? detectMessageEnd = null,
+        double? timeout = null,
+        System.Action<Action>? onCompleted = null)
+    {
+        var detectParams = new Dictionary<string, object?>();
+        if (initialTimeout is not null) detectParams["initial_timeout"] = initialTimeout;
+        if (endSilenceTimeout is not null) detectParams["end_silence_timeout"] = endSilenceTimeout;
+        if (machineVoiceThreshold is not null) detectParams["machine_voice_threshold"] = machineVoiceThreshold;
+        if (machineWordsThreshold is not null) detectParams["machine_words_threshold"] = machineWordsThreshold;
+        if (detectInterruptions is not null) detectParams["detect_interruptions"] = detectInterruptions;
+        if (detectMessageEnd is not null) detectParams["detect_message_end"] = detectMessageEnd;
+        var extra = new Dictionary<string, object?>
+        {
+            ["detect"] = new Dictionary<string, object?>
+            {
+                ["type"] = "machine",
+                ["params"] = detectParams,
+            },
+        };
+        if (timeout is not null) extra["timeout"] = timeout;
+        return WithOnCompleted(Detect(extra), onCompleted);
+    }
+
+    /// <summary>Detect a fax tone (CED/CNG). Typed convenience over <see cref="Detect"/>.</summary>
+    public DetectAction DetectFax(
+        string? tone = null,
+        double? timeout = null,
+        System.Action<Action>? onCompleted = null)
+    {
+        var detectParams = new Dictionary<string, object?>();
+        if (tone is not null) detectParams["tone"] = tone;
+        var extra = new Dictionary<string, object?>
+        {
+            ["detect"] = new Dictionary<string, object?>
+            {
+                ["type"] = "fax",
+                ["params"] = detectParams,
+            },
+        };
+        if (timeout is not null) extra["timeout"] = timeout;
+        return WithOnCompleted(Detect(extra), onCompleted);
+    }
+
+    // ------------------------------------------------------------------
+    // Typed prompt convenience (thin wrappers over PlayAndCollect)
+    //
+    // Build the play media, pass the caller's collect object straight
+    // through, and delegate to the generic PlayAndCollect.
+    // ------------------------------------------------------------------
+
+    /// <summary>Play TTS then collect input. Typed media over <see cref="PlayAndCollect"/>.</summary>
+    public CollectAction PromptTts(
+        string text,
+        Dictionary<string, object?> collect,
+        string? language = null,
+        string? gender = null,
+        string? voice = null,
+        double? volume = null,
+        System.Action<Action>? onCompleted = null)
+    {
+        var ttsParams = new Dictionary<string, object?> { ["text"] = text };
+        if (language is not null) ttsParams["language"] = language;
+        if (gender is not null) ttsParams["gender"] = gender;
+        if (voice is not null) ttsParams["voice"] = voice;
+        var extra = new Dictionary<string, object?>
+        {
+            ["play"] = new List<Dictionary<string, object?>>
+            {
+                new() { ["type"] = "tts", ["params"] = ttsParams },
+            },
+            ["collect"] = collect,
+        };
+        if (volume is not null) extra["volume"] = volume;
+        return WithOnCompleted(PlayAndCollect(extra), onCompleted);
+    }
+
+    /// <summary>Play an audio file then collect input. Typed media over <see cref="PlayAndCollect"/>.</summary>
+    public CollectAction PromptAudio(
+        string url,
+        Dictionary<string, object?> collect,
+        double? volume = null,
+        System.Action<Action>? onCompleted = null)
+    {
+        var extra = new Dictionary<string, object?>
+        {
+            ["play"] = new List<Dictionary<string, object?>>
+            {
+                new()
+                {
+                    ["type"] = "audio",
+                    ["params"] = new Dictionary<string, object?> { ["url"] = url },
+                },
+            },
+            ["collect"] = collect,
+        };
+        if (volume is not null) extra["volume"] = volume;
+        return WithOnCompleted(PlayAndCollect(extra), onCompleted);
+    }
+
+    // ------------------------------------------------------------------
+    // State-wait convenience
+    //
+    // Mirrors Python's wait_for_answered/ringing/ending. State ordering is
+    // created < ringing < answered < ending < ended. If the call is already
+    // at or past the target state we return immediately (matches the legacy
+    // SDK); otherwise we await the next calling.call.state event that lands
+    // on the target. There is no generic wait_for primitive on the .NET Call
+    // — these are built directly on the typed-listener + State machinery.
+    // ------------------------------------------------------------------
+
+    private static readonly string[] _stateOrder =
+    {
+        Constants.CallStateCreated,
+        Constants.CallStateRinging,
+        Constants.CallStateAnswered,
+        Constants.CallStateEnding,
+        Constants.CallStateEnded,
+    };
+
+    private static int StateRank(string? s)
+    {
+        if (s is null) return -1;
+        var idx = System.Array.IndexOf(_stateOrder, s);
+        return idx;
+    }
+
+    private async Task<Event> WaitForStateAsync(string target, double? timeoutSeconds)
+    {
+        // Already at or past the target -> resolve immediately.
+        if (StateRank(State) >= StateRank(target))
+        {
+            return new Event("calling.call.state", new Dictionary<string, object?>
+            {
+                ["call_state"] = State,
+            });
+        }
+
+        var tcs = new TaskCompletionSource<Event>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        // The dispatcher reads "call_state" off the params for state events;
+        // match on that (Event.State reads "state", which the state frame
+        // does not carry).
+        void Listener(Event evt)
+        {
+            if (tcs.Task.IsCompleted) return;
+            var cs = evt.Params.TryGetValue("call_state", out var v) ? v?.ToString() : null;
+            if (cs == target)
+            {
+                tcs.TrySetResult(evt);
+            }
+        }
+
+        On("calling.call.state", Listener);
+        try
+        {
+            if (timeoutSeconds is not null)
+            {
+                using var cts = new CancellationTokenSource(
+                    TimeSpan.FromSeconds(timeoutSeconds.Value));
+                try
+                {
+                    return await tcs.Task.WaitAsync(cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Timed out: surface the current state so callers can
+                    // introspect rather than throw out of an SDK call.
+                    return new Event("calling.call.state", new Dictionary<string, object?>
+                    {
+                        ["call_state"] = State,
+                    });
+                }
+            }
+            return await tcs.Task.ConfigureAwait(false);
+        }
+        finally
+        {
+            if (TypedListeners.TryGetValue("calling.call.state", out var list))
+            {
+                list.Remove(Listener);
+            }
+        }
+    }
+
+    /// <summary>Wait until the call is answered (immediate if already answered or past it).</summary>
+    public Task<Event> WaitForAnsweredAsync(double? timeout = null)
+        => WaitForStateAsync(Constants.CallStateAnswered, timeout);
+
+    /// <summary>Wait until the call is ringing (immediate if already ringing or past it).</summary>
+    public Task<Event> WaitForRingingAsync(double? timeout = null)
+        => WaitForStateAsync(Constants.CallStateRinging, timeout);
+
+    /// <summary>Wait until the call is ending (immediate if already ending or past it).</summary>
+    public Task<Event> WaitForEndingAsync(double? timeout = null)
+        => WaitForStateAsync(Constants.CallStateEnding, timeout);
+
+    // ------------------------------------------------------------------
     // Private helpers
     // ------------------------------------------------------------------
+
+    /// <summary>Attach an optional onCompleted callback to a started action.</summary>
+    private static T WithOnCompleted<T>(T action, System.Action<Action>? onCompleted)
+        where T : Action
+    {
+        if (onCompleted is not null) action.OnCompleted(onCompleted);
+        return action;
+    }
 
     private Task<Dictionary<string, object?>> ExecuteAsync(
         string method, Dictionary<string, object?>? extra = null)
