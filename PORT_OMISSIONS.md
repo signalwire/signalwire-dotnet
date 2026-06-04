@@ -942,7 +942,6 @@ signalwire.rest._pagination.PaginatedIterator.__init__: Python pagination iterat
 signalwire.rest._pagination.PaginatedIterator.__iter__: Python pagination iterator class; .NET callers paginate by repeated CrudResource.List(page=...) calls
 signalwire.rest._pagination.PaginatedIterator.__next__: Python pagination iterator class; .NET callers paginate by repeated CrudResource.List(page=...) calls
 signalwire.rest._pagination.PaginatedIterator: Python pagination iterator class; .NET callers paginate by repeated CrudResource.List(page=...) calls
-signalwire.run_agent: Module-level entry point in Python; .NET starts agents via AgentBase.Run() / AgentServer.Run()
 signalwire.search.document_processor.DocumentProcessor.create_chunks: search subsystem; not ported per skip list
 signalwire.search.document_processor.DocumentProcessor.__init__: search subsystem; not ported per skip list
 signalwire.search.document_processor.DocumentProcessor: search subsystem; not ported per skip list
@@ -1087,7 +1086,6 @@ signalwire.skills.web_search.skill.WebSearchSkill.get_parameter_schema: Inherite
 signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.get_hints: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
 signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
 signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.search_wiki: Python module-level convenience; .NET defines search_wiki as the registered tool name (not a class method)
-signalwire.start_agent: Module-level entry point in Python; .NET starts agents via AgentBase.Run()
 signalwire.utils.is_serverless_mode: Detection helper; .NET ships SignalWire.Serverless.Adapter.Detect under a different module path
 signalwire.utils.schema_utils.SchemaUtils.full_validation_available: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
 signalwire.utils.schema_utils.SchemaUtils.generate_method_body: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
