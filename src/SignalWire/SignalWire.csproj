@@ -36,4 +36,15 @@
     <PackageReference Include="YamlDotNet" Version="16.2.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Kestrel (the .NET-idiomatic cross-platform HTTPS server) backs the
+         server-TLS path in SWML.Service.Run(). The BCL HttpListener can serve
+         plain HTTP everywhere but CANNOT terminate TLS on Linux (cert binding
+         needs http.sys / netsh, Windows-only) — so HTTPS goes through Kestrel,
+         mirroring Python's uvicorn ssl_certfile/ssl_keyfile path. The shared
+         ASP.NET Core framework is referenced (not a NuGet download); it adds
+         no SignalWire.* public surface, so the signature audit is unaffected. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
 </Project>

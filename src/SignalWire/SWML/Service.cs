@@ -4,6 +4,12 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using SignalWire.Logging;
 using SignalWire.SWAIG;
 
@@ -856,17 +862,47 @@ public class Service
     }
 
     /// <summary>
-    /// Start a blocking HTTP server bound to <see cref="Host"/>:<see cref="Port"/>.
+    /// Start a blocking HTTP(S) server bound to <see cref="Host"/>:<see cref="Port"/>.
     /// Each incoming request is dispatched through <see cref="HandleRequest"/>;
     /// the response status / headers / body are written back to the client.
     ///
     /// Mirrors Python's SWMLService.run() — examples and the porting-sdk
     /// audit harness call this directly.
     ///
-    /// Uses System.Net.HttpListener (BCL) — no extra deps. Server stops on
-    /// Ctrl-C or when the process is killed.
+    /// Transport selection mirrors Python's <c>SecurityConfig</c> /
+    /// uvicorn <c>ssl_certfile</c>/<c>ssl_keyfile</c> path:
+    /// <list type="bullet">
+    ///   <item>Plain HTTP uses System.Net.HttpListener (BCL, no extra deps).</item>
+    ///   <item>HTTPS (when <c>SWML_SSL_ENABLED</c> is truthy and
+    ///   <c>SWML_SSL_CERT_PATH</c>/<c>SWML_SSL_KEY_PATH</c> point at a valid
+    ///   PEM cert+key) uses Kestrel, because HttpListener cannot terminate TLS
+    ///   on Linux (cert binding requires http.sys / netsh, Windows-only).</item>
+    /// </list>
+    /// Server stops on Ctrl-C or when the process is killed.
     /// </summary>
-    public virtual void Run()
+    public virtual void Run() => RunForTest(CancellationToken.None);
+
+    /// <summary>
+    /// Cancellation-aware entry point used by the TLS capability test so it can
+    /// start the server on a background thread and stop it deterministically.
+    /// Internal (not part of the public surface) — the public blocking
+    /// <see cref="Run()"/> delegates here with <see cref="CancellationToken.None"/>.
+    /// </summary>
+    internal void RunForTest(CancellationToken cancellationToken)
+    {
+        var ssl = SslSettings.FromEnvironment();
+        if (ssl.Enabled)
+        {
+            RunHttps(ssl, cancellationToken);
+        }
+        else
+        {
+            RunHttp(cancellationToken);
+        }
+    }
+
+    /// <summary>Plain-HTTP server backed by the BCL HttpListener.</summary>
+    private void RunHttp(CancellationToken cancellationToken)
     {
         var prefix = $"http://{(Host == "0.0.0.0" ? "+" : Host)}:{Port}/";
         using var listener = new HttpListener();
@@ -895,6 +931,12 @@ public class Service
                     ex);
             }
         }
+
+        // Stop the blocking GetContext() loop when the caller cancels.
+        using var stopReg = cancellationToken.Register(() =>
+        {
+            try { listener.Stop(); } catch { /* best effort */ }
+        });
 
         while (listener.IsListening)
         {
@@ -945,6 +987,133 @@ public class Service
             {
                 try { ctx.Response.Close(); } catch { }
             }
+        }
+    }
+
+    /// <summary>
+    /// HTTPS server backed by Kestrel, terminating TLS with the configured PEM
+    /// cert+key. This is the cross-platform equivalent of Python's
+    /// <c>uvicorn.run(..., ssl_certfile=..., ssl_keyfile=...)</c>. Requests are
+    /// adapted to the same <see cref="HandleRequest"/> contract used by the
+    /// HTTP path, so SWML/SWAIG behavior is identical over either transport.
+    /// </summary>
+    private void RunHttps(SslSettings ssl, CancellationToken cancellationToken)
+    {
+        var serverCert = LoadServerCertificate(ssl);
+
+        var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateSlimBuilder();
+        builder.Logging.ClearProviders();
+        var bindHost = Host == "0.0.0.0" ? System.Net.IPAddress.Any : System.Net.IPAddress.Parse(Host);
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Limits.MaxRequestBodySize = MaxBodySize;
+            options.Listen(bindHost, Port, listenOptions =>
+            {
+                listenOptions.UseHttps(serverCert);
+            });
+        });
+
+        var app = builder.Build();
+        app.Run(async http =>
+        {
+            var method = http.Request.Method;
+            var path = http.Request.Path.HasValue ? http.Request.Path.Value! : "/";
+            var headers = new Dictionary<string, string>();
+            foreach (var h in http.Request.Headers)
+            {
+                headers[h.Key] = h.Value.ToString();
+            }
+            string body;
+            using (var reader = new System.IO.StreamReader(http.Request.Body, Encoding.UTF8))
+            {
+                body = await reader.ReadToEndAsync().ConfigureAwait(false);
+            }
+
+            int status;
+            Dictionary<string, string> responseHeaders;
+            string responseBody;
+            try
+            {
+                (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
+            }
+            catch (Exception ex)
+            {
+                status = 500;
+                responseHeaders = new Dictionary<string, string>();
+                responseBody = $"{{\"error\":\"{ex.GetType().Name}\"}}";
+            }
+
+            http.Response.StatusCode = status;
+            foreach (var (k, v) in responseHeaders)
+            {
+                // Content-Length is managed by Kestrel from the body we write.
+                if (string.Equals(k, "Content-Length", StringComparison.OrdinalIgnoreCase)) continue;
+                try { http.Response.Headers[k] = v; } catch { /* reserved header */ }
+            }
+            await http.Response.WriteAsync(responseBody, Encoding.UTF8).ConfigureAwait(false);
+        });
+
+        _logger.Info($"Service '{Name}' starting with TLS on https://{Host}:{Port}{Route}");
+        // Block until cancelled (parity with the HttpListener path's blocking loop).
+        app.RunAsync(WaitHandleToken(cancellationToken)).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Kestrel's <c>RunAsync</c> wants a token that, when cancelled, triggers a
+    /// graceful shutdown. When the caller passes <see cref="CancellationToken.None"/>
+    /// (the public blocking <see cref="Run()"/>) we substitute a never-cancelled
+    /// token so the server runs until the process exits.
+    /// </summary>
+    private static CancellationToken WaitHandleToken(CancellationToken ct)
+        => ct == CancellationToken.None ? new CancellationToken(false) : ct;
+
+    /// <summary>
+    /// Load the PEM cert+key into an X509Certificate2 suitable for Kestrel.
+    /// On some platforms Kestrel rejects an ephemeral-keyed cert, so we round-
+    /// trip through a PFX export/import to materialize a persisted key handle.
+    /// </summary>
+    private static System.Security.Cryptography.X509Certificates.X509Certificate2 LoadServerCertificate(SslSettings ssl)
+    {
+        using var pem = System.Security.Cryptography.X509Certificates.X509Certificate2.CreateFromPemFile(
+            ssl.CertPath!, ssl.KeyPath!);
+        // Re-import via PFX bytes so the private key is in a form Kestrel accepts
+        // across Linux/macOS/Windows (CreateFromPemFile yields an ephemeral key).
+        // The byte[] PFX constructor is available on net8/9/10 alike.
+        var pfx = pem.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pkcs12);
+#if NET9_0_OR_GREATER
+        return System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadPkcs12(pfx, null);
+#else
+        return new System.Security.Cryptography.X509Certificates.X509Certificate2(pfx);
+#endif
+    }
+
+    /// <summary>
+    /// Server-TLS settings, mirroring Python's <c>SecurityConfig</c> SSL fields:
+    /// <c>SWML_SSL_ENABLED</c> / <c>SWML_SSL_CERT_PATH</c> / <c>SWML_SSL_KEY_PATH</c>.
+    /// SSL is treated as enabled only when the flag is truthy AND both files
+    /// exist, matching <c>SecurityConfig.validate_ssl_config()</c> (which
+    /// disables SSL and logs when the config is incomplete).
+    /// </summary>
+    private readonly struct SslSettings
+    {
+        public bool Enabled { get; init; }
+        public string? CertPath { get; init; }
+        public string? KeyPath { get; init; }
+
+        public static SslSettings FromEnvironment()
+        {
+            var flag = (Environment.GetEnvironmentVariable("SWML_SSL_ENABLED") ?? "").Trim().ToLowerInvariant();
+            var enabled = flag is "true" or "1" or "yes";
+            var cert = Environment.GetEnvironmentVariable("SWML_SSL_CERT_PATH");
+            var key = Environment.GetEnvironmentVariable("SWML_SSL_KEY_PATH");
+
+            // Match SecurityConfig.validate_ssl_config(): enabled-but-incomplete
+            // degrades to HTTP rather than crashing.
+            var valid = enabled
+                && !string.IsNullOrWhiteSpace(cert) && File.Exists(cert)
+                && !string.IsNullOrWhiteSpace(key) && File.Exists(key);
+
+            return new SslSettings { Enabled = valid, CertPath = cert, KeyPath = key };
         }
     }
 }

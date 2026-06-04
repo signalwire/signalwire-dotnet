@@ -69,6 +69,17 @@ public class Client
     private Task? _readerTask;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
 
+    /// <summary>
+    /// Test-only seam to configure the underlying <see cref="ClientWebSocket"/>
+    /// before it connects — used by the TLS capability test to trust the
+    /// porting-sdk throwaway CA via a custom
+    /// <c>RemoteCertificateValidationCallback</c> for the WSS handshake.
+    /// Internal (invisible to the public-surface audit), mirroring the
+    /// existing internal test seams in the SDK; production code leaves it null
+    /// so the default OS/OpenSSL trust store applies.
+    /// </summary>
+    internal Action<ClientWebSocketOptions>? ConfigureWebSocketOptions { get; set; }
+
     /// <summary>Messages received from the transport layer. Test code can enqueue here.</summary>
     public ConcurrentQueue<string> InboundQueue { get; } = new();
 
@@ -136,6 +147,10 @@ public class Client
 
         _ws = new ClientWebSocket();
         _cts = new CancellationTokenSource();
+
+        // Apply any test-only transport configuration (e.g. trusting the
+        // porting-sdk test CA for a WSS handshake) before connecting.
+        ConfigureWebSocketOptions?.Invoke(_ws.Options);
 
         await _ws.ConnectAsync(uri, _cts.Token).ConfigureAwait(false);
 
