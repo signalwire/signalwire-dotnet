@@ -273,6 +273,31 @@ public class SkillsTests : IDisposable
         Assert.False(agent.HasSkill("datetime"));
     }
 
+    [Fact]
+    public void AgentAddSkill_AcceptsSkillNameEnumOrString()
+    {
+        // The enum member maps to the canonical snake_case wire string.
+        Assert.Equal("datetime", SkillName.Datetime.ToWireName());
+
+        // AddSkill(SkillName) loads the IDENTICAL skill as the bare string:
+        // it is keyed under the same wire name, so the string-based
+        // HasSkill/ListSkills see it, and the enum-based HasSkill does too.
+        var enumAgent = MakeAgent();
+        enumAgent.AddSkill(SkillName.Datetime);
+        Assert.True(enumAgent.HasSkill("datetime"));          // string lookup
+        Assert.True(enumAgent.HasSkill(SkillName.Datetime));  // enum lookup — same skill
+        Assert.Contains("datetime", enumAgent.ListSkills());
+
+        // RemoveSkill(SkillName) unloads it via the same wire name.
+        enumAgent.RemoveSkill(SkillName.Datetime);
+        Assert.False(enumAgent.HasSkill("datetime"));
+
+        // Parity: the bare string still works identically (Python uses str).
+        var stringAgent = MakeAgent();
+        stringAgent.AddSkill("datetime");
+        Assert.True(stringAgent.HasSkill(SkillName.Datetime));
+    }
+
     // ==================================================================
     //  Datetime handler execution
     // ==================================================================

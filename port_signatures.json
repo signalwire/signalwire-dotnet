@@ -16586,6 +16586,24 @@
         }
       }
     },
+    "signalwire.skills.skill_name_extensions": {
+      "classes": {
+        "SkillNameExtensions": {
+          "methods": {
+            "to_wire_name": {
+              "params": [
+                {
+                  "name": "name",
+                  "type": "class:signalwire.skills.skill_name.SkillName",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
     "signalwire.skills.spider.skill": {
       "classes": {
         "SpiderSkill": {

@@ -946,6 +946,16 @@ public class AgentBase : Service
         return this;
     }
 
+    /// <summary>
+    /// Typed overload of <see cref="AddSkill(string, Dictionary{string, object})"/>:
+    /// load a built-in skill by its <see cref="SkillName"/> enum member.
+    /// Delegates to the string overload via the canonical wire name, so the
+    /// loaded skill is identical to passing the bare string. Strings remain
+    /// supported for parity with the Python reference and for custom skills.
+    /// </summary>
+    public AgentBase AddSkill(SkillName name, Dictionary<string, object>? parameters = null) =>
+        AddSkill(name.ToWireName(), parameters);
+
     /// <summary>Remove a loaded skill by its instance key.</summary>
     public AgentBase RemoveSkill(string name)
     {
@@ -955,6 +965,10 @@ public class AgentBase : Service
         _agentLogger.Debug($"Skill '{name}' removed");
         return this;
     }
+
+    /// <summary>Typed overload of <see cref="RemoveSkill(string)"/>:
+    /// remove a built-in skill by its <see cref="SkillName"/> enum member.</summary>
+    public AgentBase RemoveSkill(SkillName name) => RemoveSkill(name.ToWireName());
 
     /// <summary>List all loaded skill instance keys.</summary>
     public List<string> ListSkills()
@@ -975,6 +989,11 @@ public class AgentBase : Service
         }
         return _skillsList.Contains(name);
     }
+
+    /// <summary>Typed overload of <see cref="HasSkill(string)"/>:
+    /// check whether a built-in skill is loaded by its <see cref="SkillName"/>
+    /// enum member.</summary>
+    public bool HasSkill(SkillName name) => HasSkill(name.ToWireName());
 
     // ======================================================================
     //  Web / Callback Methods

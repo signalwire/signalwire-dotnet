@@ -431,7 +431,7 @@ signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.name: Publi
 signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.registry.SkillRegistry.get_factory: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.registry.SkillRegistry.reset: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
-signalwire.skills.spider.skill.SpiderSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
+signalwire.skills.skill_name_extensions.SkillNameExtensions.to_wire_name: dotnet_enum_idiom: maps the typed SkillName closed-set enum member to its canonical snake_case wire name; AddSkill/RemoveSkill/HasSkill expose a SkillName overload next to the string overload so built-in skill names are typo-checked at compile time, with the string path preserved for parity (Python uses bare str) and custom skills.
 signalwire.skills.spider.skill.SpiderSkill.name: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.spider.skill.SpiderSkill.supports_multiple_instances: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.swml_transfer.skill.SWMLTransferSkill.description: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
