@@ -81,6 +81,19 @@ public class SkillsTests : IDisposable
     }
 
     [Fact]
+    public void Registry_DiscoverSkills_ReturnsInventoryNotNoop()
+    {
+        // Regression: DiscoverSkills() was a void no-op (it mirrored Python's
+        // old broken discover_skills). It must now return the discoverable
+        // inventory -- the same data as ListSkills().
+        var registry = SkillRegistry.Instance;
+        var discovered = registry.DiscoverSkills();
+        Assert.NotNull(discovered);
+        Assert.NotEmpty(discovered);
+        Assert.Equal(registry.ListSkills(), discovered);
+    }
+
+    [Fact]
     public void Registry_EachBuiltinInstantiable()
     {
         var registry = SkillRegistry.Instance;

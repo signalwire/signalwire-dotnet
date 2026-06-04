@@ -93,12 +93,14 @@ public sealed class SkillRegistry
         }
     }
 
-    /// <summary>Deprecated no-op: skills are loaded on-demand.
-    /// (Python parity: ``SkillRegistry.discover_skills`` — kept for
-    /// backwards compatibility; the Python doc says exactly this.)</summary>
-    public void DiscoverSkills()
+    /// <summary>Discover and return all available skills.
+    /// Skills resolve on-demand, so there is nothing to eagerly register;
+    /// this returns the discoverable inventory (mirrors <see cref="ListSkills"/>).
+    /// (Python parity: ``SkillRegistry.discover_skills`` now returns
+    /// ``list_skills()`` — it was a no-op until the reference stub was fixed.)</summary>
+    public List<string> DiscoverSkills()
     {
-        // No-op. Skills resolve via GetFactory on first request.
+        return ListSkills();
     }
 
     /// <summary>The skill_registry logger.

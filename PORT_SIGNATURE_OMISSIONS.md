@@ -274,7 +274,8 @@ signalwire.rest.namespaces.fabric.FabricNamespace.swml_webhooks: .NET REST names
 signalwire.rest.namespaces.fabric.FabricNamespace.tokens: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
 signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.__init__: .NET skill ctors are parameterless (Wire(agent, params) sets state post-construction); Python skills take agent and params via __init__
 signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.__init__: .NET skill ctors are parameterless (Wire(agent, params) sets state post-construction); Python skills take agent and params via __init__
-signalwire.skills.registry.SkillRegistry.list_skills: .NET SkillRegistry.ListSkills returns list of richer skill-info dicts; Python returns plain list of skill names
+signalwire.skills.registry.SkillRegistry.list_skills: .NET SkillRegistry.ListSkills returns a plain list of skill names (List<string>); Python's list_skills returns the richer list<dict<string,string>> skill-info inventory
+signalwire.skills.registry.SkillRegistry.discover_skills: .NET SkillRegistry.DiscoverSkills returns List<string> of skill names (mirrors ListSkills); Python's discover_skills returns the same list<dict<string,string>> inventory as list_skills
 signalwire.skills.registry.SkillRegistry.logger: .NET .Logger property returns the SignalWire.Logging.Logger class instance; Python reference adapter resolves logger to get_logger() which has a different class:path
 signalwire.skills.registry.SkillRegistry.register_skill: .NET RegisterSkill takes (name, factory) for explicit factory registration; Python takes the skill_class and infers metadata via attributes
 signalwire.skills.spider.skill.SpiderSkill.__init__: .NET skill ctors are parameterless (Wire(agent, params) sets state post-construction); Python skills take agent and params via __init__

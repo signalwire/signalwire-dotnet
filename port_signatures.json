@@ -16154,7 +16154,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "void"
+              "returns": "list<string>"
             },
             "external_paths": {
               "params": [
