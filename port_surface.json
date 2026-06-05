@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ aa9d3e1e2ef1e62d5e63e700e2581e0a795cbaf1",
+  "generated_from": "signalwire-dotnet @ 76a8c505a16eba55cbeca19c122f52c2ac9d1da1",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -1740,6 +1740,62 @@
           "name",
           "register_tools",
           "setup"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.swaig.callback_method_extensions": {
+      "classes": {
+        "CallbackMethodExtensions": [
+          "to_wire_name"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.swaig.conference_beep_extensions": {
+      "classes": {
+        "ConferenceBeepExtensions": [
+          "to_wire_name"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.swaig.conference_record_extensions": {
+      "classes": {
+        "ConferenceRecordExtensions": [
+          "to_wire_name"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.swaig.conference_trim_extensions": {
+      "classes": {
+        "ConferenceTrimExtensions": [
+          "to_wire_name"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.swaig.join_conference_options": {
+      "classes": {
+        "JoinConferenceOptions": [
+          "beep",
+          "coach",
+          "end_on_exit",
+          "max_participants",
+          "muted",
+          "record",
+          "recording_status_callback",
+          "recording_status_callback_event",
+          "recording_status_callback_method",
+          "region",
+          "result",
+          "start_on_enter",
+          "status_callback",
+          "status_callback_event",
+          "status_callback_method",
+          "trim",
+          "wait_url"
         ]
       },
       "functions": []

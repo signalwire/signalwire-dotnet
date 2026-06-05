@@ -452,24 +452,166 @@ public class FunctionResult
         return this;
     }
 
+    /// <summary>
+    /// Join an ad-hoc audio conference (RELAY + CXML calls) using SWML.
+    /// Full parity with the Python reference
+    /// <c>signalwire/core/function_result.py::join_conference</c>: the conference
+    /// <paramref name="name"/> plus 18 optional parameters, each validated to the
+    /// same closed sets / bounds as Python, and emitted under its snake_case wire
+    /// key only when it differs from its default. When every parameter is at its
+    /// default the action value is the bare conference-name string (simple form);
+    /// otherwise it is a <c>{ "name": ..., ... }</c> object (full form).
+    /// </summary>
+    /// <remarks>
+    /// This flat, all-string overload is the parity-bearing signature against the
+    /// Python reference (which takes bare <c>str</c> arguments for the closed sets).
+    /// For an idiomatic, compile-time-checked alternative see
+    /// <see cref="JoinConference(string, JoinConferenceOptions?)"/>, which accepts
+    /// the typed <see cref="ConferenceBeep"/> / <see cref="ConferenceRecord"/> /
+    /// <see cref="ConferenceTrim"/> / <see cref="CallbackMethod"/> enums and
+    /// delegates straight here so the emitted SWML is identical.
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// If <paramref name="beep"/>, <paramref name="record"/>, <paramref name="trim"/>,
+    /// <paramref name="statusCallbackMethod"/>, or
+    /// <paramref name="recordingStatusCallbackMethod"/> is outside its closed set,
+    /// if <paramref name="maxParticipants"/> is not in 1..=250, or if
+    /// <paramref name="name"/> is empty/whitespace.
+    /// </exception>
     public FunctionResult JoinConference(
         string name,
         bool muted = false,
         string beep = "true",
-        string holdAudio = "ring")
+        bool startOnEnter = true,
+        bool endOnExit = false,
+        string? waitUrl = null,
+        int maxParticipants = 250,
+        string record = "do-not-record",
+        string? region = null,
+        string trim = "trim-silence",
+        string? coach = null,
+        string? statusCallbackEvent = null,
+        string? statusCallback = null,
+        string statusCallbackMethod = "POST",
+        string? recordingStatusCallback = null,
+        string recordingStatusCallbackMethod = "POST",
+        string recordingStatusCallbackEvent = "completed",
+        object? result = null)
     {
-        _actions.Add(new Dictionary<string, object>
+        // ---- Validation (mirrors Python ValueError messages exactly,
+        //      including its repr-rendered "one of [...]" list) ----
+        string[] validBeep = ["true", "false", "onEnter", "onExit"];
+        if (Array.IndexOf(validBeep, beep) < 0)
+            throw new ArgumentException($"beep must be one of {PyList(validBeep)}");
+
+        if (maxParticipants <= 0 || maxParticipants > 250)
+            throw new ArgumentException("max_participants must be a positive integer <= 250");
+
+        string[] validRecord = ["do-not-record", "record-from-start"];
+        if (Array.IndexOf(validRecord, record) < 0)
+            throw new ArgumentException($"record must be one of {PyList(validRecord)}");
+
+        string[] validTrim = ["trim-silence", "do-not-trim"];
+        if (Array.IndexOf(validTrim, trim) < 0)
+            throw new ArgumentException($"trim must be one of {PyList(validTrim)}");
+
+        string[] validMethods = ["GET", "POST"];
+        if (Array.IndexOf(validMethods, statusCallbackMethod) < 0)
+            throw new ArgumentException($"status_callback_method must be one of {PyList(validMethods)}");
+        if (Array.IndexOf(validMethods, recordingStatusCallbackMethod) < 0)
+            throw new ArgumentException($"recording_status_callback_method must be one of {PyList(validMethods)}");
+
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("name cannot be empty");
+
+        // ---- Emission ----
+        // Simple form when every parameter is at its default: the action value
+        // is just the conference-name string.
+        bool allDefaults =
+            !muted && beep == "true" && startOnEnter && !endOnExit &&
+            waitUrl is null && maxParticipants == 250 && record == "do-not-record" &&
+            region is null && trim == "trim-silence" && coach is null &&
+            statusCallbackEvent is null && statusCallback is null &&
+            statusCallbackMethod == "POST" && recordingStatusCallback is null &&
+            recordingStatusCallbackMethod == "POST" && recordingStatusCallbackEvent == "completed" &&
+            result is null;
+
+        object joinParams;
+        if (allDefaults)
         {
-            ["join_conference"] = new Dictionary<string, object>
-            {
-                ["name"] = name,
-                ["muted"] = muted,
-                ["beep"] = beep,
-                ["hold_audio"] = holdAudio,
-            },
-        });
+            joinParams = name;
+        }
+        else
+        {
+            // Full object form: required name + every non-default parameter under
+            // its snake_case wire key (each only when it differs from its default).
+            var p = new Dictionary<string, object> { ["name"] = name };
+            if (muted) p["muted"] = muted;
+            if (beep != "true") p["beep"] = beep;
+            if (!startOnEnter) p["start_on_enter"] = startOnEnter;
+            if (endOnExit) p["end_on_exit"] = endOnExit;
+            if (!string.IsNullOrEmpty(waitUrl)) p["wait_url"] = waitUrl;
+            if (maxParticipants != 250) p["max_participants"] = maxParticipants;
+            if (record != "do-not-record") p["record"] = record;
+            if (!string.IsNullOrEmpty(region)) p["region"] = region;
+            if (trim != "trim-silence") p["trim"] = trim;
+            if (!string.IsNullOrEmpty(coach)) p["coach"] = coach;
+            if (!string.IsNullOrEmpty(statusCallbackEvent)) p["status_callback_event"] = statusCallbackEvent;
+            if (!string.IsNullOrEmpty(statusCallback)) p["status_callback"] = statusCallback;
+            if (statusCallbackMethod != "POST") p["status_callback_method"] = statusCallbackMethod;
+            if (!string.IsNullOrEmpty(recordingStatusCallback)) p["recording_status_callback"] = recordingStatusCallback;
+            if (recordingStatusCallbackMethod != "POST") p["recording_status_callback_method"] = recordingStatusCallbackMethod;
+            if (recordingStatusCallbackEvent != "completed") p["recording_status_callback_event"] = recordingStatusCallbackEvent;
+            if (result is not null) p["result"] = result;
+            joinParams = p;
+        }
+
+        _actions.Add(new Dictionary<string, object> { ["join_conference"] = joinParams });
         return this;
     }
+
+    /// <summary>
+    /// Typed-options overload of
+    /// <see cref="JoinConference(string, bool, string, bool, bool, string?, int, string, string?, string, string?, string?, string?, string, string?, string, string, object?)"/>.
+    /// Accepts the conference <paramref name="name"/> plus a single
+    /// <see cref="JoinConferenceOptions"/> bag whose four closed-set fields are the
+    /// typed <see cref="ConferenceBeep"/> / <see cref="ConferenceRecord"/> /
+    /// <see cref="ConferenceTrim"/> / <see cref="CallbackMethod"/> enums. Delegates
+    /// to the flat overload via each enum's <c>ToWireName()</c>, so the emitted
+    /// <c>join_conference</c> action is identical to the string form. A defaults-only
+    /// options object collapses to the simple bare-name form.
+    /// </summary>
+    public FunctionResult JoinConference(string name, JoinConferenceOptions? options)
+    {
+        options ??= new JoinConferenceOptions();
+        return JoinConference(
+            name,
+            muted: options.Muted,
+            beep: options.Beep.ToWireName(),
+            startOnEnter: options.StartOnEnter,
+            endOnExit: options.EndOnExit,
+            waitUrl: options.WaitUrl,
+            maxParticipants: options.MaxParticipants,
+            record: options.Record.ToWireName(),
+            region: options.Region,
+            trim: options.Trim.ToWireName(),
+            coach: options.Coach,
+            statusCallbackEvent: options.StatusCallbackEvent,
+            statusCallback: options.StatusCallback,
+            statusCallbackMethod: options.StatusCallbackMethod.ToWireName(),
+            recordingStatusCallback: options.RecordingStatusCallback,
+            recordingStatusCallbackMethod: options.RecordingStatusCallbackMethod.ToWireName(),
+            recordingStatusCallbackEvent: options.RecordingStatusCallbackEvent,
+            result: options.Result);
+    }
+
+    /// <summary>
+    /// Render a string array as Python's list repr (single-quoted, comma-space
+    /// separated, square-bracketed) so the validation messages match the Python
+    /// reference's f-string-rendered <c>ValueError</c> text byte-for-byte.
+    /// </summary>
+    private static string PyList(IEnumerable<string> values) =>
+        "[" + string.Join(", ", values.Select(v => $"'{v}'")) + "]";
 
     public FunctionResult JoinRoom(string name)
     {

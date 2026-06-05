@@ -87,7 +87,6 @@ signalwire.core.contexts.Step.add_gather_question: .NET options-object pattern: 
 signalwire.core.contexts.Step.set_gather_info: .NET options-object pattern: a typed Options/Params data class collects what Python takes as named keyword arguments - same captured fields, different parameter binding
 signalwire.core.data_map.DataMap.expression: .NET DataMap.Expression takes a string pattern; Python accepts re.Pattern or string interchangeably for compiled-regex reuse
 signalwire.core.function_result.FunctionResult.create_payment_prompt: .NET FunctionResult fluent helpers expose the most-used parameters explicitly; full Python parity is captured via .GlobalData/.Metadata extension dictionaries
-signalwire.core.function_result.FunctionResult.join_conference: .NET FunctionResult fluent helpers expose the most-used parameters explicitly; full Python parity is captured via .GlobalData/.Metadata extension dictionaries
 signalwire.core.function_result.FunctionResult.pay: .NET FunctionResult fluent helpers expose the most-used parameters explicitly; full Python parity is captured via .GlobalData/.Metadata extension dictionaries
 signalwire.core.function_result.FunctionResult.record_call: .NET FunctionResult fluent helpers expose the most-used parameters explicitly; full Python parity is captured via .GlobalData/.Metadata extension dictionaries
 signalwire.core.function_result.FunctionResult.remove_global_data: .NET helpers take List<string> for keys; Python accepts either str or List[str] - both shapes are convenience overloads

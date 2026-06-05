@@ -679,27 +679,266 @@ public class FunctionResultTests
         Assert.False(action.ContainsKey("SWML"));
     }
 
+    // -----------------------------------------------------------------
+    //  JoinConference — full parity with Python reference
+    //  signalwire/core/function_result.py::join_conference
+    //  (19 params: name + 18 optional; 7 validations; simple/full emission).
+    //  Ported from tests/unit/core/test_function_result.py
+    //  TestJoinConference (test_join_conference_*).
+    // -----------------------------------------------------------------
+
     [Fact]
-    public void JoinConference_Defaults()
+    public void JoinConference_SimpleNameAllDefaults_UsesBareNameString()
     {
+        // Parity: test_join_conference_simple_name_all_defaults — with all
+        // defaults, the join_conference value is just the conference name
+        // string, not an object.
         var fr = new FunctionResult();
-        fr.JoinConference("myconf");
-        var jc = (Dictionary<string, object>)GetAction(fr, 0)["join_conference"];
-        Assert.Equal("myconf", jc["name"]);
-        Assert.False((bool)jc["muted"]);
-        Assert.Equal("true", jc["beep"]);
-        Assert.Equal("ring", jc["hold_audio"]);
+        fr.JoinConference("my-conference");
+        var joinParams = GetAction(fr, 0)["join_conference"];
+        Assert.Equal("my-conference", joinParams);
     }
 
     [Fact]
-    public void JoinConference_Custom()
+    public void JoinConference_ComplexParams_UsesObjectForm()
     {
+        // Parity: test_join_conference_complex_params — every non-default
+        // parameter is emitted under its snake_case wire key.
         var fr = new FunctionResult();
-        fr.JoinConference("room1", true, "false", "music");
+        fr.JoinConference(
+            name: "team-meeting",
+            muted: true,
+            beep: "onEnter",
+            startOnEnter: false,
+            endOnExit: true,
+            waitUrl: "https://example.com/hold-music",
+            maxParticipants: 50,
+            record: "record-from-start",
+            region: "us-east",
+            trim: "do-not-trim",
+            coach: "call-id-123",
+            statusCallbackEvent: "start end",
+            statusCallback: "https://example.com/callback",
+            statusCallbackMethod: "GET",
+            recordingStatusCallback: "https://example.com/rec-callback",
+            recordingStatusCallbackMethod: "GET",
+            recordingStatusCallbackEvent: "in-progress",
+            result: new Dictionary<string, object> { ["key"] = "value" });
+
         var jc = (Dictionary<string, object>)GetAction(fr, 0)["join_conference"];
+        Assert.Equal("team-meeting", jc["name"]);
         Assert.True((bool)jc["muted"]);
-        Assert.Equal("false", jc["beep"]);
-        Assert.Equal("music", jc["hold_audio"]);
+        Assert.Equal("onEnter", jc["beep"]);
+        Assert.False((bool)jc["start_on_enter"]);
+        Assert.True((bool)jc["end_on_exit"]);
+        Assert.Equal("https://example.com/hold-music", jc["wait_url"]);
+        Assert.Equal(50, jc["max_participants"]);
+        Assert.Equal("record-from-start", jc["record"]);
+        Assert.Equal("us-east", jc["region"]);
+        Assert.Equal("do-not-trim", jc["trim"]);
+        Assert.Equal("call-id-123", jc["coach"]);
+        Assert.Equal("start end", jc["status_callback_event"]);
+        Assert.Equal("https://example.com/callback", jc["status_callback"]);
+        Assert.Equal("GET", jc["status_callback_method"]);
+        Assert.Equal("https://example.com/rec-callback", jc["recording_status_callback"]);
+        Assert.Equal("GET", jc["recording_status_callback_method"]);
+        Assert.Equal("in-progress", jc["recording_status_callback_event"]);
+        Assert.Equal(new Dictionary<string, object> { ["key"] = "value" }, jc["result"]);
+    }
+
+    [Fact]
+    public void JoinConference_DefaultValuedParams_OmittedFromObjectForm()
+    {
+        // When one non-default param forces object form, params still at
+        // their default must NOT appear (mirrors Python's per-key guards).
+        var fr = new FunctionResult();
+        fr.JoinConference("conf", muted: true);
+        var jc = (Dictionary<string, object>)GetAction(fr, 0)["join_conference"];
+        Assert.Equal("conf", jc["name"]);
+        Assert.True((bool)jc["muted"]);
+        // All still-default params are omitted.
+        Assert.False(jc.ContainsKey("beep"));
+        Assert.False(jc.ContainsKey("start_on_enter"));
+        Assert.False(jc.ContainsKey("end_on_exit"));
+        Assert.False(jc.ContainsKey("wait_url"));
+        Assert.False(jc.ContainsKey("max_participants"));
+        Assert.False(jc.ContainsKey("record"));
+        Assert.False(jc.ContainsKey("region"));
+        Assert.False(jc.ContainsKey("trim"));
+        Assert.False(jc.ContainsKey("coach"));
+        Assert.False(jc.ContainsKey("status_callback_event"));
+        Assert.False(jc.ContainsKey("status_callback"));
+        Assert.False(jc.ContainsKey("status_callback_method"));
+        Assert.False(jc.ContainsKey("recording_status_callback"));
+        Assert.False(jc.ContainsKey("recording_status_callback_method"));
+        Assert.False(jc.ContainsKey("recording_status_callback_event"));
+        Assert.False(jc.ContainsKey("result"));
+    }
+
+    [Fact]
+    public void JoinConference_InvalidBeep_Throws()
+    {
+        // Parity: test_join_conference_invalid_beep.
+        var fr = new FunctionResult();
+        var ex = Assert.Throws<ArgumentException>(() => fr.JoinConference("conf", beep: "invalid"));
+        Assert.Contains("beep must be one of", ex.Message);
+        Assert.Contains("['true', 'false', 'onEnter', 'onExit']", ex.Message);
+    }
+
+    [Fact]
+    public void JoinConference_MaxParticipantsTooHigh_Throws()
+    {
+        // Parity: test_join_conference_max_participants_too_high.
+        var fr = new FunctionResult();
+        var ex = Assert.Throws<ArgumentException>(() => fr.JoinConference("conf", maxParticipants: 300));
+        Assert.Contains("max_participants must be a positive integer <= 250", ex.Message);
+    }
+
+    [Fact]
+    public void JoinConference_MaxParticipantsZero_Throws()
+    {
+        // Parity: test_join_conference_max_participants_zero.
+        var fr = new FunctionResult();
+        var ex = Assert.Throws<ArgumentException>(() => fr.JoinConference("conf", maxParticipants: 0));
+        Assert.Contains("max_participants must be a positive integer <= 250", ex.Message);
+    }
+
+    [Fact]
+    public void JoinConference_MaxParticipantsNegative_Throws()
+    {
+        // Parity: test_join_conference_max_participants_negative.
+        var fr = new FunctionResult();
+        var ex = Assert.Throws<ArgumentException>(() => fr.JoinConference("conf", maxParticipants: -5));
+        Assert.Contains("max_participants must be a positive integer <= 250", ex.Message);
+    }
+
+    [Fact]
+    public void JoinConference_InvalidRecord_Throws()
+    {
+        // Parity: test_join_conference_invalid_record.
+        var fr = new FunctionResult();
+        var ex = Assert.Throws<ArgumentException>(() => fr.JoinConference("conf", record: "always"));
+        Assert.Contains("record must be one of", ex.Message);
+        Assert.Contains("['do-not-record', 'record-from-start']", ex.Message);
+    }
+
+    [Fact]
+    public void JoinConference_InvalidTrim_Throws()
+    {
+        // Parity: test_join_conference_invalid_trim.
+        var fr = new FunctionResult();
+        var ex = Assert.Throws<ArgumentException>(() => fr.JoinConference("conf", trim: "bad-value"));
+        Assert.Contains("trim must be one of", ex.Message);
+        Assert.Contains("['trim-silence', 'do-not-trim']", ex.Message);
+    }
+
+    [Fact]
+    public void JoinConference_EmptyName_Throws()
+    {
+        // Parity: test_join_conference_empty_name.
+        var fr = new FunctionResult();
+        var ex = Assert.Throws<ArgumentException>(() => fr.JoinConference("", muted: true));
+        Assert.Contains("name cannot be empty", ex.Message);
+    }
+
+    [Fact]
+    public void JoinConference_WhitespaceName_Throws()
+    {
+        // Parity: test_join_conference_whitespace_name.
+        var fr = new FunctionResult();
+        var ex = Assert.Throws<ArgumentException>(() => fr.JoinConference("   ", muted: true));
+        Assert.Contains("name cannot be empty", ex.Message);
+    }
+
+    [Fact]
+    public void JoinConference_InvalidStatusCallbackMethod_Throws()
+    {
+        // Parity: test_join_conference_invalid_status_callback_method.
+        var fr = new FunctionResult();
+        var ex = Assert.Throws<ArgumentException>(() => fr.JoinConference("conf", statusCallbackMethod: "PUT"));
+        Assert.Contains("status_callback_method must be one of", ex.Message);
+        Assert.Contains("['GET', 'POST']", ex.Message);
+    }
+
+    [Fact]
+    public void JoinConference_InvalidRecordingStatusCallbackMethod_Throws()
+    {
+        // Parity: test_join_conference_invalid_recording_status_callback_method.
+        var fr = new FunctionResult();
+        var ex = Assert.Throws<ArgumentException>(
+            () => fr.JoinConference("conf", recordingStatusCallbackMethod: "DELETE"));
+        Assert.Contains("recording_status_callback_method must be one of", ex.Message);
+        Assert.Contains("['GET', 'POST']", ex.Message);
+    }
+
+    [Fact]
+    public void JoinConference_Chaining_ReturnsSelf()
+    {
+        // Parity: test_join_conference_chaining.
+        var fr = new FunctionResult();
+        var ret = fr.JoinConference("conf");
+        Assert.Same(fr, ret);
+    }
+
+    [Fact]
+    public void JoinConference_TypedEnumOptions_MatchStringForm()
+    {
+        // The typed-enum closed sets map to the canonical wire values.
+        Assert.Equal("true", ConferenceBeep.True.ToWireName());
+        Assert.Equal("false", ConferenceBeep.False.ToWireName());
+        Assert.Equal("onEnter", ConferenceBeep.OnEnter.ToWireName());
+        Assert.Equal("onExit", ConferenceBeep.OnExit.ToWireName());
+        Assert.Equal("do-not-record", ConferenceRecord.DoNotRecord.ToWireName());
+        Assert.Equal("record-from-start", ConferenceRecord.RecordFromStart.ToWireName());
+        Assert.Equal("trim-silence", ConferenceTrim.TrimSilence.ToWireName());
+        Assert.Equal("do-not-trim", ConferenceTrim.DoNotTrim.ToWireName());
+        Assert.Equal("GET", CallbackMethod.Get.ToWireName());
+        Assert.Equal("POST", CallbackMethod.Post.ToWireName());
+
+        // The typed options overload emits the IDENTICAL join_conference
+        // action as passing the equivalent bare strings.
+        var enumFr = new FunctionResult();
+        enumFr.JoinConference("team-meeting", new JoinConferenceOptions
+        {
+            Muted = true,
+            Beep = ConferenceBeep.OnEnter,
+            MaxParticipants = 50,
+            Record = ConferenceRecord.RecordFromStart,
+            Trim = ConferenceTrim.DoNotTrim,
+            StatusCallbackMethod = CallbackMethod.Get,
+            WaitUrl = "https://example.com/hold-music",
+        });
+        var enumJc = (Dictionary<string, object>)GetAction(enumFr, 0)["join_conference"];
+
+        var stringFr = new FunctionResult();
+        stringFr.JoinConference(
+            name: "team-meeting",
+            muted: true,
+            beep: "onEnter",
+            maxParticipants: 50,
+            record: "record-from-start",
+            trim: "do-not-trim",
+            statusCallbackMethod: "GET",
+            waitUrl: "https://example.com/hold-music");
+        var stringJc = (Dictionary<string, object>)GetAction(stringFr, 0)["join_conference"];
+
+        Assert.Equal(stringJc["name"], enumJc["name"]);
+        Assert.Equal(stringJc["muted"], enumJc["muted"]);
+        Assert.Equal(stringJc["beep"], enumJc["beep"]);
+        Assert.Equal(stringJc["max_participants"], enumJc["max_participants"]);
+        Assert.Equal(stringJc["record"], enumJc["record"]);
+        Assert.Equal(stringJc["trim"], enumJc["trim"]);
+        Assert.Equal(stringJc["status_callback_method"], enumJc["status_callback_method"]);
+        Assert.Equal(stringJc["wait_url"], enumJc["wait_url"]);
+    }
+
+    [Fact]
+    public void JoinConference_TypedOptionsAllDefaults_UsesBareNameString()
+    {
+        // A defaults-only options object behaves like the simple form.
+        var fr = new FunctionResult();
+        fr.JoinConference("solo", new JoinConferenceOptions());
+        Assert.Equal("solo", GetAction(fr, 0)["join_conference"]);
     }
 
     [Fact]

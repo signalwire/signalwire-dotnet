@@ -2697,10 +2697,94 @@
                   "default": "true"
                 },
                 {
-                  "name": "hold_audio",
+                  "name": "start_on_enter",
+                  "type": "bool",
+                  "required": false,
+                  "default": true
+                },
+                {
+                  "name": "end_on_exit",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                },
+                {
+                  "name": "wait_url",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "max_participants",
+                  "type": "int",
+                  "required": false,
+                  "default": 250
+                },
+                {
+                  "name": "record",
                   "type": "string",
                   "required": false,
-                  "default": "ring"
+                  "default": "do-not-record"
+                },
+                {
+                  "name": "region",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "trim",
+                  "type": "string",
+                  "required": false,
+                  "default": "trim-silence"
+                },
+                {
+                  "name": "coach",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "status_callback_event",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "status_callback",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "status_callback_method",
+                  "type": "string",
+                  "required": false,
+                  "default": "POST"
+                },
+                {
+                  "name": "recording_status_callback",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "recording_status_callback_method",
+                  "type": "string",
+                  "required": false,
+                  "default": "POST"
+                },
+                {
+                  "name": "recording_status_callback_event",
+                  "type": "string",
+                  "required": false,
+                  "default": "completed"
+                },
+                {
+                  "name": "result",
+                  "type": "optional<any>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -17038,6 +17122,248 @@
                 }
               ],
               "returns": "bool"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.swaig.callback_method_extensions": {
+      "classes": {
+        "CallbackMethodExtensions": {
+          "methods": {
+            "to_wire_name": {
+              "params": [
+                {
+                  "name": "method",
+                  "type": "class:signalwire.swaig.callback_method.CallbackMethod",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.swaig.conference_beep_extensions": {
+      "classes": {
+        "ConferenceBeepExtensions": {
+          "methods": {
+            "to_wire_name": {
+              "params": [
+                {
+                  "name": "beep",
+                  "type": "class:signalwire.swaig.conference_beep.ConferenceBeep",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.swaig.conference_record_extensions": {
+      "classes": {
+        "ConferenceRecordExtensions": {
+          "methods": {
+            "to_wire_name": {
+              "params": [
+                {
+                  "name": "record",
+                  "type": "class:signalwire.swaig.conference_record.ConferenceRecord",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.swaig.conference_trim_extensions": {
+      "classes": {
+        "ConferenceTrimExtensions": {
+          "methods": {
+            "to_wire_name": {
+              "params": [
+                {
+                  "name": "trim",
+                  "type": "class:signalwire.swaig.conference_trim.ConferenceTrim",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.swaig.join_conference_options": {
+      "classes": {
+        "JoinConferenceOptions": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "beep": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.swaig.conference_beep.ConferenceBeep"
+            },
+            "coach": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "end_on_exit": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
+            },
+            "max_participants": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "int"
+            },
+            "muted": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
+            },
+            "record": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.swaig.conference_record.ConferenceRecord"
+            },
+            "recording_status_callback": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "recording_status_callback_event": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "recording_status_callback_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.swaig.callback_method.CallbackMethod"
+            },
+            "region": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "result": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "start_on_enter": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
+            },
+            "status_callback": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "status_callback_event": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "status_callback_method": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.swaig.callback_method.CallbackMethod"
+            },
+            "trim": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.swaig.conference_trim.ConferenceTrim"
+            },
+            "wait_url": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
             }
           }
         }
