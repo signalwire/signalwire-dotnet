@@ -26,6 +26,18 @@ public sealed class Message
     public List<string> Media { get; private set; }
     public List<string> Tags { get; private set; }
     public string? State { get; private set; }
+
+    /// <summary>
+    /// The current delivery state as the typed <see cref="Relay.MessageState"/>
+    /// enum, parsed from <see cref="State"/>. Returns <c>null</c> when
+    /// <see cref="State"/> is unset or an unrecognised (e.g. newly-introduced
+    /// server) value — read <see cref="State"/> for the raw string in that
+    /// case. Typed convenience alongside the parity-bearing string
+    /// <see cref="State"/>; agrees with it for known states.
+    /// </summary>
+    public MessageState? MessageState =>
+        MessageStateExtensions.TryParse(State, out var s) ? s : null;
+
     public string? Reason { get; private set; }
     public bool Completed { get; private set; }
     public string? Result { get; private set; }

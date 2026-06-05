@@ -131,6 +131,80 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
     }
 
     [Fact]
+    public async Task Dial_TypedCallStateAccessor_AgreesWithStringOnRealEvents()
+    {
+        // Tier-3: the typed Call.CallState accessor must return the right enum
+        // for a call whose State was driven by REAL calling.call.state events
+        // dispatched through mock_relay (no mocks of the Call/Client), and must
+        // agree with the parity-bearing string State.
+        if (Skipped()) return;
+        using var bound = await ConnectedClient();
+        try
+        {
+            ArmDial(tag: "t-typed-state", winnerCallId: "typed-winner",
+                states: new[] { "created", "ringing", "answered" });
+
+            var call = await bound.Client.DialAsync(new()
+            {
+                ["devices"] = new List<List<Dictionary<string, object?>>>
+                {
+                    new() { PhoneDevice() },
+                },
+                ["tag"] = "t-typed-state",
+                ["dial_timeout"] = 5.0,
+            });
+
+            Assert.NotNull(call);
+            // String state arrived via real dispatched events.
+            Assert.Equal("answered", call.State);
+            // Typed accessor agrees and is the right enum member.
+            Assert.Equal(CallState.Answered, call.CallState);
+            Assert.Equal(call.State, call.CallState!.Value.ToWireName());
+            Assert.False(call.CallState!.Value.IsTerminal());  // answered is not terminal
+        }
+        finally { bound.Client.Disconnect(); }
+    }
+
+    [Fact]
+    public async Task Dial_WithTypedDevice_EmitsByteIdenticalWireShape()
+    {
+        // Tier-3: a dial built from the typed Device.ToDict() must reach the
+        // REAL mock journal with the identical {type, params} wire shape the
+        // hand-written device dict produces (PhoneDevice()). No mocks.
+        if (Skipped()) return;
+        using var bound = await ConnectedClient();
+        try
+        {
+            ArmDial("t-typed-dev", "typed-dev-winner", new[] { "created", "answered" });
+
+            var device = new Device("phone", new Dictionary<string, object?>
+            {
+                ["to_number"] = "+15551112222",
+                ["from_number"] = "+15553334444",
+            });
+
+            await bound.Client.DialAsync(new()
+            {
+                ["devices"] = new List<List<Dictionary<string, object?>>>
+                {
+                    new() { device.ToDict() },   // typed object, projected to wire dict
+                },
+                ["tag"] = "t-typed-dev",
+                ["dial_timeout"] = 5.0,
+            });
+
+            var entries = bound.Harness.Journal.Recv("calling.dial");
+            Assert.NotEmpty(entries);
+            var dev0 = entries[^1].Params()!.Value.GetProperty("devices")[0][0];
+            Assert.Equal("phone", dev0.GetProperty("type").GetString());
+            var p = dev0.GetProperty("params");
+            Assert.Equal("+15551112222", p.GetProperty("to_number").GetString());
+            Assert.Equal("+15553334444", p.GetProperty("from_number").GetString());
+        }
+        finally { bound.Client.Disconnect(); }
+    }
+
+    [Fact]
     public async Task Dial_Journal_RecordsCallingDialFrame()
     {
         if (Skipped()) return;

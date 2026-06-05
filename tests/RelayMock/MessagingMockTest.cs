@@ -194,6 +194,44 @@ public class MessagingMockTest : IClassFixture<RelayMockServerFixture>
     }
 
     [Fact]
+    public async Task SendMessage_TypedMessageStateAccessor_AgreesWithStringOnRealEvents()
+    {
+        // Tier-3: Message.MessageState must return the right enum for a message
+        // whose State was driven by a REAL messaging.state event through
+        // mock_relay (no mocks of the Message), and agree with the string.
+        if (Skipped()) return;
+        using var bound = await ConnectedClient();
+        try
+        {
+            var msg = await bound.Client.SendMessageAsync(new()
+            {
+                ["to_number"] = "+15551112222",
+                ["from_number"] = "+15553334444",
+                ["body"] = "hi",
+            });
+            // Initial queued state, typed + string.
+            Assert.Equal("queued", msg.State);
+            Assert.Equal(MessageState.Queued, msg.MessageState);
+
+            bound.Harness.Push(EventFrame("messaging.state", new()
+            {
+                ["message_id"] = msg.MessageId,
+                ["message_state"] = "delivered",
+                ["from_number"] = "+15553334444",
+                ["to_number"] = "+15551112222",
+                ["body"] = "hi",
+            }));
+            await msg.WaitAsync(5);
+
+            Assert.Equal("delivered", msg.State);
+            Assert.Equal(MessageState.Delivered, msg.MessageState);
+            Assert.Equal(msg.State, msg.MessageState!.Value.ToWireName());
+            Assert.True(msg.MessageState!.Value.IsTerminal());
+        }
+        finally { bound.Client.Disconnect(); }
+    }
+
+    [Fact]
     public async Task SendMessage_ResolvesOnUndelivered()
     {
         if (Skipped()) return;

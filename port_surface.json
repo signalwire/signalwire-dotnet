@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ b1153651670022900c4161c3d8e81d028734563d",
+  "generated_from": "signalwire-dotnet @ 02f34a5470c4a1253b51a8f6a1c50922280edb6f",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -667,6 +667,7 @@
           "answer",
           "bind_digit",
           "call_id",
+          "call_state",
           "clear_digit_bindings",
           "client",
           "collect",
@@ -783,6 +784,16 @@
       },
       "functions": []
     },
+    "signalwire.relay.call_state_extensions": {
+      "classes": {
+        "CallStateExtensions": [
+          "is_terminal",
+          "to_wire_name",
+          "try_parse"
+        ]
+      },
+      "functions": []
+    },
     "signalwire.relay.client": {
       "classes": {
         "RelayClient": [
@@ -829,6 +840,28 @@
       },
       "functions": []
     },
+    "signalwire.relay.device": {
+      "classes": {
+        "Device": [
+          "__init__",
+          "from_dict",
+          "params",
+          "to_dict",
+          "type"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.relay.dial_state_extensions": {
+      "classes": {
+        "DialStateExtensions": [
+          "is_terminal",
+          "to_wire_name",
+          "try_parse"
+        ]
+      },
+      "functions": []
+    },
     "signalwire.relay.event": {
       "classes": {
         "Event": [
@@ -860,6 +893,7 @@
           "is_done",
           "media",
           "message_id",
+          "message_state",
           "on",
           "on_completed",
           "reason",
@@ -869,6 +903,16 @@
           "tags",
           "to_number",
           "wait"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.relay.message_state_extensions": {
+      "classes": {
+        "MessageStateExtensions": [
+          "is_terminal",
+          "to_wire_name",
+          "try_parse"
         ]
       },
       "functions": []

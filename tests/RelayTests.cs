@@ -799,6 +799,256 @@ public class RelayTests : IDisposable
         Assert.False(client.Connected);
     }
 
+    // ==================================================================
+    //  Tier-3 typed RELAY state enums (CallState / DialState / MessageState)
+    //
+    //  Each enum is a typed alias ALONGSIDE the existing bare-string state
+    //  (Constants.* / Call.State / Message.State). These tests pin: the
+    //  wire-string round-trip, TryParse on a known value AND graceful
+    //  failure on an unknown (server-growable) value, and IsTerminal()
+    //  agreeing with the Constants terminal sets. The three vocabularies are
+    //  deliberately distinct and never conflated.
+    // ==================================================================
+
+    [Fact]
+    public void CallState_ToWireName_RoundTrips()
+    {
+        // Enum -> wire matches the canonical Constants string for every member.
+        Assert.Equal(Constants.CallStateCreated, CallState.Created.ToWireName());
+        Assert.Equal(Constants.CallStateRinging, CallState.Ringing.ToWireName());
+        Assert.Equal(Constants.CallStateAnswered, CallState.Answered.ToWireName());
+        Assert.Equal(Constants.CallStateEnding, CallState.Ending.ToWireName());
+        Assert.Equal(Constants.CallStateEnded, CallState.Ended.ToWireName());
+
+        // wire -> enum round-trips for every member.
+        foreach (CallState s in Enum.GetValues(typeof(CallState)))
+        {
+            Assert.True(CallStateExtensions.TryParse(s.ToWireName(), out var parsed));
+            Assert.Equal(s, parsed);
+        }
+    }
+
+    [Fact]
+    public void CallState_TryParse_UnknownReturnsFalse()
+    {
+        Assert.False(CallStateExtensions.TryParse("transferring", out _));
+        Assert.False(CallStateExtensions.TryParse("", out _));
+        Assert.False(CallStateExtensions.TryParse(null, out _));
+        // A known value still parses.
+        Assert.True(CallStateExtensions.TryParse("answered", out var ok));
+        Assert.Equal(CallState.Answered, ok);
+    }
+
+    [Fact]
+    public void CallState_IsTerminal_AgreesWithConstants()
+    {
+        // Only "ended" is terminal — matches Constants.CallTerminalStates.
+        Assert.True(CallState.Ended.IsTerminal());
+        Assert.False(CallState.Created.IsTerminal());
+        Assert.False(CallState.Ringing.IsTerminal());
+        Assert.False(CallState.Answered.IsTerminal());
+        Assert.False(CallState.Ending.IsTerminal());
+
+        foreach (CallState s in Enum.GetValues(typeof(CallState)))
+        {
+            Assert.Equal(Constants.CallTerminalStates.Contains(s.ToWireName()), s.IsTerminal());
+        }
+    }
+
+    [Fact]
+    public void DialState_ToWireName_RoundTrips()
+    {
+        Assert.Equal(Constants.DialStateDialing, DialState.Dialing.ToWireName());
+        Assert.Equal(Constants.DialStateAnswered, DialState.Answered.ToWireName());
+        Assert.Equal(Constants.DialStateFailed, DialState.Failed.ToWireName());
+
+        foreach (DialState s in Enum.GetValues(typeof(DialState)))
+        {
+            Assert.True(DialStateExtensions.TryParse(s.ToWireName(), out var parsed));
+            Assert.Equal(s, parsed);
+        }
+    }
+
+    [Fact]
+    public void DialState_TryParse_UnknownReturnsFalse()
+    {
+        Assert.False(DialStateExtensions.TryParse("busy", out _));
+        Assert.False(DialStateExtensions.TryParse(null, out _));
+        Assert.True(DialStateExtensions.TryParse("failed", out var ok));
+        Assert.Equal(DialState.Failed, ok);
+    }
+
+    [Fact]
+    public void DialState_IsTerminal_AnsweredAndFailed()
+    {
+        // answered + failed resolve the dial; dialing is in-progress.
+        Assert.True(DialState.Answered.IsTerminal());
+        Assert.True(DialState.Failed.IsTerminal());
+        Assert.False(DialState.Dialing.IsTerminal());
+    }
+
+    [Fact]
+    public void MessageState_ToWireName_RoundTrips()
+    {
+        Assert.Equal(Constants.MessageStateQueued, MessageState.Queued.ToWireName());
+        Assert.Equal(Constants.MessageStateInitiated, MessageState.Initiated.ToWireName());
+        Assert.Equal(Constants.MessageStateSent, MessageState.Sent.ToWireName());
+        Assert.Equal(Constants.MessageStateDelivered, MessageState.Delivered.ToWireName());
+        Assert.Equal(Constants.MessageStateUndelivered, MessageState.Undelivered.ToWireName());
+        Assert.Equal(Constants.MessageStateFailed, MessageState.Failed.ToWireName());
+        Assert.Equal(Constants.MessageStateReceived, MessageState.Received.ToWireName());
+
+        foreach (MessageState s in Enum.GetValues(typeof(MessageState)))
+        {
+            Assert.True(MessageStateExtensions.TryParse(s.ToWireName(), out var parsed));
+            Assert.Equal(s, parsed);
+        }
+    }
+
+    [Fact]
+    public void MessageState_TryParse_UnknownReturnsFalse()
+    {
+        Assert.False(MessageStateExtensions.TryParse("read", out _));
+        Assert.False(MessageStateExtensions.TryParse(null, out _));
+        Assert.True(MessageStateExtensions.TryParse("delivered", out var ok));
+        Assert.Equal(MessageState.Delivered, ok);
+    }
+
+    [Fact]
+    public void MessageState_IsTerminal_AgreesWithConstants()
+    {
+        Assert.True(MessageState.Delivered.IsTerminal());
+        Assert.True(MessageState.Undelivered.IsTerminal());
+        Assert.True(MessageState.Failed.IsTerminal());
+        Assert.False(MessageState.Queued.IsTerminal());
+        Assert.False(MessageState.Initiated.IsTerminal());
+        Assert.False(MessageState.Sent.IsTerminal());
+        Assert.False(MessageState.Received.IsTerminal());
+
+        foreach (MessageState s in Enum.GetValues(typeof(MessageState)))
+        {
+            Assert.Equal(Constants.MessageTerminalStates.Contains(s.ToWireName()), s.IsTerminal());
+        }
+    }
+
+    [Fact]
+    public void StateVocabularies_AreDistinct_NeverConflated()
+    {
+        // A call vocabulary value is NOT a message/dial value, and vice versa.
+        // "ended" is a call-terminal but not a message-terminal token.
+        Assert.False(MessageStateExtensions.TryParse("ended", out _));
+        // "delivered" is a message state, not a call state.
+        Assert.False(CallStateExtensions.TryParse("delivered", out _));
+        // "dialing" is a dial state, not a call state.
+        Assert.False(CallStateExtensions.TryParse("dialing", out _));
+        // "ringing" is a call state, not a dial state.
+        Assert.False(DialStateExtensions.TryParse("ringing", out _));
+    }
+
+    [Fact]
+    public void Call_CallStateAccessor_AgreesWithString()
+    {
+        // Drive Call.State through its real DispatchEvent path (no mocks of the
+        // Call itself), then assert the typed accessor agrees with the string.
+        var client = new TestableClient();
+        var call = new Call(new Dictionary<string, object?> { ["call_id"] = "c-typed" }, client);
+
+        Assert.Equal("created", call.State);
+        Assert.Equal(CallState.Created, call.CallState);
+
+        call.DispatchEvent(new Event("calling.call.state",
+            new Dictionary<string, object?> { ["call_state"] = "answered" }));
+        Assert.Equal("answered", call.State);
+        Assert.Equal(CallState.Answered, call.CallState);
+
+        call.DispatchEvent(new Event("calling.call.state",
+            new Dictionary<string, object?> { ["call_state"] = "ended" }));
+        Assert.Equal("ended", call.State);
+        Assert.Equal(CallState.Ended, call.CallState);
+        Assert.True(call.CallState!.Value.IsTerminal());
+    }
+
+    [Fact]
+    public void Call_CallStateAccessor_NullForUnknownState()
+    {
+        var client = new TestableClient();
+        var call = new Call(new Dictionary<string, object?> { ["call_id"] = "c-unknown" }, client);
+        // Force an out-of-set value the way a future server might.
+        call.State = "transferring";
+        Assert.Null(call.CallState);   // typed accessor degrades gracefully
+        Assert.Equal("transferring", call.State);  // raw string preserved (parity)
+    }
+
+    [Fact]
+    public void Message_MessageStateAccessor_AgreesWithString()
+    {
+        var msg = new Message(new Dictionary<string, object?>
+        {
+            ["message_id"] = "m-typed",
+            ["message_state"] = "queued",
+        });
+        Assert.Equal("queued", msg.State);
+        Assert.Equal(MessageState.Queued, msg.MessageState);
+
+        // Real DispatchEvent path drives the state to a terminal value.
+        msg.DispatchEvent(new Event("messaging.state",
+            new Dictionary<string, object?> { ["message_state"] = "delivered" }));
+        Assert.Equal("delivered", msg.State);
+        Assert.Equal(MessageState.Delivered, msg.MessageState);
+        Assert.True(msg.MessageState!.Value.IsTerminal());
+    }
+
+    // ==================================================================
+    //  Tier-3 typed Device ({type, params}) — wire-shape parity
+    // ==================================================================
+
+    [Fact]
+    public void Device_ToDict_ByteIdenticalToHandWrittenDict()
+    {
+        var p = new Dictionary<string, object?>
+        {
+            ["to_number"] = "+15551112222",
+            ["from_number"] = "+15553334444",
+        };
+        var typed = new Device("phone", p).ToDict();
+
+        // The exact hand-written shape the RELAY methods already accept.
+        var handWritten = new Dictionary<string, object?>
+        {
+            ["type"] = "phone",
+            ["params"] = new Dictionary<string, object?>
+            {
+                ["to_number"] = "+15551112222",
+                ["from_number"] = "+15553334444",
+            },
+        };
+
+        // Whole nested dict byte-identical (key set, values, nested params).
+        Assert.Equal(handWritten["type"], typed["type"]);
+        Assert.Equal(
+            (Dictionary<string, object?>)handWritten["params"]!,
+            (Dictionary<string, object?>)typed["params"]!);
+        Assert.Equal(new[] { "type", "params" }, typed.Keys.ToArray());
+    }
+
+    [Fact]
+    public void Device_DefaultsEmptyParams_AndRoundTripsFromDict()
+    {
+        var d = new Device("sip");
+        var dict = d.ToDict();
+        Assert.Equal("sip", dict["type"]);
+        Assert.Empty((Dictionary<string, object?>)dict["params"]!);
+
+        // FromDict reconstructs an equivalent device; ToDict is stable.
+        var back = Device.FromDict(dict);
+        Assert.NotNull(back);
+        Assert.Equal("sip", back!.Type);
+        Assert.Equal(dict["type"], back.ToDict()["type"]);
+
+        // No type -> null (the discriminant is required).
+        Assert.Null(Device.FromDict(new Dictionary<string, object?> { ["params"] = new Dictionary<string, object?>() }));
+    }
+
     /// <summary>Test helper that captures sent messages instead of writing to a socket.</summary>
     private class TestableClient : Client
     {

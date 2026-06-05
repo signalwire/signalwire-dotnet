@@ -20,6 +20,18 @@ public class Call
 
     // -- state --
     public string State { get; set; } = Constants.CallStateCreated;
+
+    /// <summary>
+    /// The current call lifecycle state as the typed <see cref="Relay.CallState"/>
+    /// enum, parsed from <see cref="State"/>. Returns <c>null</c> when
+    /// <see cref="State"/> is an unrecognised (e.g. newly-introduced server)
+    /// value — read <see cref="State"/> for the raw string in that case. This
+    /// is a typed convenience alongside the parity-bearing string
+    /// <see cref="State"/>; it always agrees with it for known states.
+    /// </summary>
+    public CallState? CallState =>
+        CallStateExtensions.TryParse(State, out var s) ? s : null;
+
     public Dictionary<string, object?> Device { get; set; } = new();
     public Dictionary<string, object?> Peer { get; set; } = new();
     public string? EndReason { get; set; }
