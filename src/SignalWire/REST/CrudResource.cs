@@ -26,34 +26,39 @@ public class CrudResource
 
     /// <summary>List resources (GET basePath).</summary>
     public virtual Task<Dictionary<string, object?>> ListAsync(
-        Dictionary<string, string>? queryParams = null)
+        Dictionary<string, string>? queryParams = null,
+        CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams);
+        return Client.GetAsync(BasePath, queryParams, cancellationToken);
     }
 
     /// <summary>Create a new resource (POST basePath).</summary>
     public virtual Task<Dictionary<string, object?>> CreateAsync(
-        Dictionary<string, object?> data)
+        Dictionary<string, object?> data,
+        CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync(BasePath, data);
+        return Client.PostAsync(BasePath, data, cancellationToken);
     }
 
     /// <summary>Retrieve a single resource by ID (GET basePath/{id}).</summary>
-    public virtual Task<Dictionary<string, object?>> GetAsync(string id)
+    public virtual Task<Dictionary<string, object?>> GetAsync(
+        string id, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id));
+        return Client.GetAsync(Path(id), cancellationToken: cancellationToken);
     }
 
     /// <summary>Update a resource by ID (PUT basePath/{id}).</summary>
     public virtual Task<Dictionary<string, object?>> UpdateAsync(
-        string id, Dictionary<string, object?> data)
+        string id, Dictionary<string, object?> data,
+        CancellationToken cancellationToken = default)
     {
-        return Client.PutAsync(Path(id), data);
+        return Client.PutAsync(Path(id), data, cancellationToken);
     }
 
     /// <summary>Delete a resource by ID (DELETE basePath/{id}).</summary>
-    public virtual Task<Dictionary<string, object?>> DeleteAsync(string id)
+    public virtual Task<Dictionary<string, object?>> DeleteAsync(
+        string id, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(id));
+        return Client.DeleteAsync(Path(id), cancellationToken);
     }
 }

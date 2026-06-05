@@ -14,7 +14,7 @@ namespace SignalWire.Relay;
 /// Uses async/await with <see cref="TaskCompletionSource"/> for the
 /// native C# async pattern instead of polling loops.
 /// </summary>
-public class Client
+public class Client : IAsyncDisposable
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -68,6 +68,7 @@ public class Client
     private CancellationTokenSource? _cts;
     private Task? _readerTask;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
+    private bool _disposed;
 
     /// <summary>
     /// Test-only seam to configure the underlying <see cref="ClientWebSocket"/>
@@ -134,7 +135,7 @@ public class Client
     /// <c>signalwire.connect</c> handshake, and starts the reader loop
     /// that pumps inbound frames into <see cref="HandleMessage"/>.
     /// </summary>
-    public virtual async Task ConnectAsync()
+    public virtual async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(Host))
         {
@@ -152,7 +153,12 @@ public class Client
         // porting-sdk test CA for a WSS handshake) before connecting.
         ConfigureWebSocketOptions?.Invoke(_ws.Options);
 
-        await _ws.ConnectAsync(uri, _cts.Token).ConfigureAwait(false);
+        // Honour caller cancellation for the connect handshake while keeping
+        // the internal _cts as the lifetime token for the reader loop. Link
+        // them so either source can abort the in-flight ConnectAsync.
+        using var connectCts = CancellationTokenSource.CreateLinkedTokenSource(
+            _cts.Token, cancellationToken);
+        await _ws.ConnectAsync(uri, connectCts.Token).ConfigureAwait(false);
 
         Connected = true;
         _running = true;
@@ -161,11 +167,11 @@ public class Client
         // Start the reader loop so authentication responses and events route correctly.
         _readerTask = Task.Run(() => ReadLoopAsync(_cts.Token));
 
-        await AuthenticateAsync().ConfigureAwait(false);
+        await AuthenticateAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Send the signalwire.connect RPC to authenticate.</summary>
-    public async Task AuthenticateAsync()
+    public async Task AuthenticateAsync(CancellationToken cancellationToken = default)
     {
         _logger.Info("Authenticating");
 
@@ -197,7 +203,8 @@ public class Client
             connectParams["authorization_state"] = AuthorizationState;
         }
 
-        var result = await ExecuteAsync("signalwire.connect", connectParams).ConfigureAwait(false);
+        var result = await ExecuteAsync("signalwire.connect", connectParams, cancellationToken)
+            .ConfigureAwait(false);
 
         SessionId = result.GetValueOrDefault("session_id")?.ToString();
         Protocol = result.GetValueOrDefault("protocol")?.ToString();
@@ -255,23 +262,91 @@ public class Client
         }
     }
 
+    /// <summary>
+    /// Asynchronously release the connection and all owned IDisposables —
+    /// the WebSocket (<c>_ws</c>), the lifetime token source (<c>_cts</c>),
+    /// and the send lock (<c>_sendLock</c>). This is the .NET analogue of
+    /// Python's <c>__aexit__</c>: <c>await using var client = ...;</c> closes
+    /// the socket and frees the handles deterministically instead of leaking
+    /// them until finalization. Idempotent.
+    ///
+    /// <para>Closes gracefully when the socket is still open (best-effort
+    /// close handshake), cancels the reader loop, waits briefly for it to
+    /// unwind, then disposes every owned resource.</para>
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _running = false;
+        Connected = false;
+
+        var ws = _ws;
+        if (ws is not null)
+        {
+            if (ws.State == WebSocketState.Open)
+            {
+                try
+                {
+                    using var closeCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                    await ws.CloseOutputAsync(
+                        WebSocketCloseStatus.NormalClosure,
+                        "client dispose",
+                        closeCts.Token).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Debug($"DisposeAsync close error: {ex.Message}");
+                }
+            }
+        }
+
+        // Cancel the reader loop and let it unwind before we dispose the socket
+        // out from under it.
+        try { _cts?.Cancel(); }
+        catch (Exception ex) { _logger.Debug($"DisposeAsync cts cancel error: {ex.Message}"); }
+
+        var reader = _readerTask;
+        if (reader is not null)
+        {
+            try
+            {
+                await reader.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"DisposeAsync reader drain: {ex.Message}");
+            }
+        }
+
+        ws?.Dispose();
+        _cts?.Dispose();
+        _sendLock.Dispose();
+
+        _ws = null;
+        _cts = null;
+
+        GC.SuppressFinalize(this);
+    }
+
     /// <summary>Reconnect with exponential back-off (1s to 30s cap).</summary>
-    public async Task ReconnectAsync()
+    public async Task ReconnectAsync(CancellationToken cancellationToken = default)
     {
         Connected = false;
 
         var delay = _reconnectDelay;
         _logger.Warn($"Reconnecting in {delay}s");
 
-        await Task.Delay(TimeSpan.FromSeconds(delay)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken).ConfigureAwait(false);
 
         _reconnectDelay = Math.Min(_reconnectDelay * 2, MaxReconnectDelay);
 
-        await ConnectAsync().ConfigureAwait(false);
+        await ConnectAsync(cancellationToken).ConfigureAwait(false);
 
         if (Contexts.Count > 0)
         {
-            await ReceiveAsync(Contexts).ConfigureAwait(false);
+            await ReceiveAsync(Contexts, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -281,16 +356,16 @@ public class Client
     /// into <see cref="InboundQueue"/>; production reads come from the
     /// WebSocket reader started in <see cref="ConnectAsync"/>.
     /// </summary>
-    public async Task RunAsync()
+    public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         if (!Connected)
         {
-            await ConnectAsync().ConfigureAwait(false);
+            await ConnectAsync(cancellationToken).ConfigureAwait(false);
         }
 
         _running = true;
 
-        while (_running && Connected)
+        while (_running && Connected && !cancellationToken.IsCancellationRequested)
         {
             try
             {
@@ -300,15 +375,20 @@ public class Client
                 }
                 else
                 {
-                    await Task.Delay(10).ConfigureAwait(false);
+                    await Task.Delay(10, cancellationToken).ConfigureAwait(false);
                 }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Caller asked the run loop to stop.
+                break;
             }
             catch (Exception ex)
             {
                 _logger.Error($"Read error: {ex.Message}");
                 if (_running)
                 {
-                    await ReconnectAsync().ConfigureAwait(false);
+                    await ReconnectAsync(cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -394,7 +474,8 @@ public class Client
     /// Returns the "result" portion of the response.
     /// </summary>
     public async Task<Dictionary<string, object?>> ExecuteAsync(
-        string method, Dictionary<string, object?>? params_ = null)
+        string method, Dictionary<string, object?>? params_ = null,
+        CancellationToken cancellationToken = default)
     {
         var id = Guid.NewGuid().ToString();
 
@@ -413,13 +494,23 @@ public class Client
 
         Send(msg);
 
-        // Await the response with a timeout
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        // Await the response with a 30s timeout, also honouring caller
+        // cancellation. A caller-cancelled request propagates
+        // OperationCanceledException; the internal timeout still degrades to an
+        // empty result (the historical behaviour the rest of the client relies
+        // on for resilience).
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            timeoutCts.Token, cancellationToken);
 
         try
         {
-            var result = await tcs.Task.WaitAsync(cts.Token).ConfigureAwait(false);
+            var result = await tcs.Task.WaitAsync(linkedCts.Token).ConfigureAwait(false);
             return result;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (OperationCanceledException)
         {
@@ -676,7 +767,8 @@ public class Client
     /// generated. Honours <c>params_["dial_timeout"]</c> (seconds) for the
     /// resolve-or-throw deadline.
     /// </summary>
-    public async Task<Call> DialAsync(Dictionary<string, object?> params_)
+    public async Task<Call> DialAsync(
+        Dictionary<string, object?> params_, CancellationToken cancellationToken = default)
     {
         var explicitTag = params_.GetValueOrDefault("tag")?.ToString();
         var tag = !string.IsNullOrEmpty(explicitTag)
@@ -708,12 +800,18 @@ public class Client
 
         try
         {
-            await ExecuteAsync("calling.dial", rpcParams).ConfigureAwait(false);
+            await ExecuteAsync("calling.dial", rpcParams, cancellationToken).ConfigureAwait(false);
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                timeoutCts.Token, cancellationToken);
             try
             {
-                return await tcs.Task.WaitAsync(cts.Token).ConfigureAwait(false);
+                return await tcs.Task.WaitAsync(linkedCts.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (OperationCanceledException)
             {
@@ -728,7 +826,8 @@ public class Client
     }
 
     /// <summary>Send an outbound message.</summary>
-    public async Task<Message> SendMessageAsync(Dictionary<string, object?> params_)
+    public async Task<Message> SendMessageAsync(
+        Dictionary<string, object?> params_, CancellationToken cancellationToken = default)
     {
         // Default the context like Python does: prefer the assigned protocol
         // (not the WS-level signalwire protocol; this is the per-connection
@@ -739,7 +838,8 @@ public class Client
             sendParams["context"] = !string.IsNullOrEmpty(Protocol) ? Protocol : "default";
         }
 
-        var result = await ExecuteAsync("messaging.send", sendParams).ConfigureAwait(false);
+        var result = await ExecuteAsync("messaging.send", sendParams, cancellationToken)
+            .ConfigureAwait(false);
 
         var messageId = result.GetValueOrDefault("message_id")?.ToString() ?? Guid.NewGuid().ToString();
 
@@ -757,7 +857,8 @@ public class Client
     }
 
     /// <summary>Subscribe to one or more inbound contexts.</summary>
-    public async Task ReceiveAsync(IEnumerable<string> contexts)
+    public async Task ReceiveAsync(
+        IEnumerable<string> contexts, CancellationToken cancellationToken = default)
     {
         var ctxList = contexts.ToList();
         foreach (var ctx in ctxList)
@@ -771,13 +872,14 @@ public class Client
         await ExecuteAsync("signalwire.receive", new()
         {
             ["contexts"] = ctxList,
-        }).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
 
         _logger.Info($"Subscribed to contexts: {string.Join(", ", ctxList)}");
     }
 
     /// <summary>Unsubscribe from one or more contexts.</summary>
-    public async Task UnreceiveAsync(IEnumerable<string> contexts)
+    public async Task UnreceiveAsync(
+        IEnumerable<string> contexts, CancellationToken cancellationToken = default)
     {
         var ctxList = contexts.ToList();
         Contexts.RemoveAll(c => ctxList.Contains(c));
@@ -785,7 +887,7 @@ public class Client
         await ExecuteAsync("signalwire.unreceive", new()
         {
             ["contexts"] = ctxList,
-        }).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
 
         _logger.Info($"Unsubscribed from contexts: {string.Join(", ", ctxList)}");
     }

@@ -63,8 +63,9 @@ public class ShortCodes : CrudResource
 {
     public ShortCodes(HttpClient client) : base(client, "/api/relay/rest/short_codes") { }
 
-    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> kwargs)
-        => Client.PutAsync(Path(id), kwargs);
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> kwargs,
+        CancellationToken cancellationToken = default)
+        => Client.PutAsync(Path(id), kwargs, cancellationToken);
 }
 
 /// <summary>
@@ -80,8 +81,9 @@ public class NumberGroups : CrudResource
     public NumberGroups(HttpClient client)
         : base(client, "/api/relay/rest/number_groups") { }
 
-    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> kwargs)
-        => Client.PutAsync(Path(id), kwargs);
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> kwargs,
+        CancellationToken cancellationToken = default)
+        => Client.PutAsync(Path(id), kwargs, cancellationToken);
 
     public Task<Dictionary<string, object?>> ListMembershipsAsync(string groupId, Dictionary<string, string>? queryParams = null)
         => Client.GetAsync(Path(groupId, "number_group_memberships"), queryParams);
@@ -214,8 +216,9 @@ public class Queues : CrudResource
     public Queues(HttpClient client)
         : base(client, "/api/relay/rest/queues") { }
 
-    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> kwargs)
-        => Client.PutAsync(Path(id), kwargs);
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> kwargs,
+        CancellationToken cancellationToken = default)
+        => Client.PutAsync(Path(id), kwargs, cancellationToken);
 
     public Task<Dictionary<string, object?>> ListMembersAsync(string queueId, Dictionary<string, string>? queryParams = null)
         => Client.GetAsync(Path(queueId, "members"), queryParams);

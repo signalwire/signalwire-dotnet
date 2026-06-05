@@ -9,13 +9,14 @@ namespace SignalWire.REST;
 /// phone_numbers, datasphere, video, compat, etc.). Credentials can be
 /// supplied explicitly or pulled from environment variables.
 /// </summary>
-public class RestClient
+public class RestClient : IDisposable
 {
     private readonly string _projectId;
     private readonly string _token;
     private readonly string _space;
     private readonly string _baseUrl;
     private readonly HttpClient _http;
+    private bool _disposed;
 
     // ------------------------------------------------------------------
     // 21 lazily-initialised namespace instances
@@ -162,4 +163,30 @@ public class RestClient
     /// <summary>Chat tokens.</summary>
     public CrudResource Chat =>
         _chat ??= new CrudResource(_http, "/api/relay/rest/chat");
+
+    // ------------------------------------------------------------------
+    // IDisposable
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Dispose the owned REST <see cref="HttpClient"/> (which, in turn, only
+    /// disposes its inner <see cref="System.Net.Http.HttpClient"/> because it
+    /// created it). <c>RestClient</c> always constructs its own transport, so
+    /// it always owns it. Idempotent.
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
+        {
+            _http.Dispose();
+        }
+        _disposed = true;
+    }
 }

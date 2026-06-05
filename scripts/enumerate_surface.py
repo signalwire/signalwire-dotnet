@@ -387,7 +387,7 @@ METHOD_RENAMES: dict[str, str] = {
 # Methods we never emit. .NET's IDisposable/object overrides aren't part of
 # the SDK contract.
 SKIP_METHOD_NAMES: set[str] = {
-    "Dispose", "ToString", "GetHashCode", "Equals", "Finalize",
+    "Dispose", "DisposeAsync", "ToString", "GetHashCode", "Equals", "Finalize",
     "MemberwiseClone",
     # C# constructs that can superficially look like methods
     "operator", "using", "typedef", "friend", "template", "return",

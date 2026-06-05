@@ -811,7 +811,7 @@ public class RelayTests : IDisposable
             SentMessages.Add(msg);
         }
 
-        public override Task ConnectAsync()
+        public override Task ConnectAsync(CancellationToken cancellationToken = default)
         {
             Connected = true;
             return Task.CompletedTask;

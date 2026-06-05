@@ -10,9 +10,11 @@ namespace SignalWire.REST;
 /// Uses <see cref="System.Net.Http.HttpClient"/> with Basic Auth,
 /// and returns parsed JSON responses as dictionaries.
 /// </summary>
-public class HttpClient
+public class HttpClient : IDisposable
 {
     private readonly System.Net.Http.HttpClient _http;
+    private readonly bool _ownsHttp;
+    private bool _disposed;
     private readonly string _projectId;
     private readonly string _token;
     private readonly string _baseUrl;
@@ -29,6 +31,11 @@ public class HttpClient
         _baseUrl = baseUrl.TrimEnd('/');
         _authHeader = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{projectId}:{token}"));
 
+        // Only the inner HttpClient WE create is ours to dispose. A
+        // caller-injected instance may be shared (e.g. an IHttpClientFactory
+        // client) and disposing it here would yank it out from under the
+        // caller. This is the standard ".NET owns-what-it-creates" guard.
+        _ownsHttp = httpClient is null;
         _http = httpClient ?? new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
     }
 
@@ -47,36 +54,46 @@ public class HttpClient
 
     /// <summary>GET with optional query-string parameters.</summary>
     public virtual async Task<Dictionary<string, object?>> GetAsync(
-        string path, Dictionary<string, string>? queryParams = null)
+        string path, Dictionary<string, string>? queryParams = null,
+        CancellationToken cancellationToken = default)
     {
-        return await RequestAsync("GET", path, queryParams).ConfigureAwait(false);
+        return await RequestAsync("GET", path, queryParams, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>POST with JSON body.</summary>
     public virtual async Task<Dictionary<string, object?>> PostAsync(
-        string path, Dictionary<string, object?>? data = null)
+        string path, Dictionary<string, object?>? data = null,
+        CancellationToken cancellationToken = default)
     {
-        return await RequestAsync("POST", path, body: data).ConfigureAwait(false);
+        return await RequestAsync("POST", path, body: data, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>PUT with JSON body.</summary>
     public virtual async Task<Dictionary<string, object?>> PutAsync(
-        string path, Dictionary<string, object?>? data = null)
+        string path, Dictionary<string, object?>? data = null,
+        CancellationToken cancellationToken = default)
     {
-        return await RequestAsync("PUT", path, body: data).ConfigureAwait(false);
+        return await RequestAsync("PUT", path, body: data, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>PATCH with JSON body.</summary>
     public virtual async Task<Dictionary<string, object?>> PatchAsync(
-        string path, Dictionary<string, object?>? data = null)
+        string path, Dictionary<string, object?>? data = null,
+        CancellationToken cancellationToken = default)
     {
-        return await RequestAsync("PATCH", path, body: data).ConfigureAwait(false);
+        return await RequestAsync("PATCH", path, body: data, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>DELETE.</summary>
-    public virtual async Task<Dictionary<string, object?>> DeleteAsync(string path)
+    public virtual async Task<Dictionary<string, object?>> DeleteAsync(
+        string path, CancellationToken cancellationToken = default)
     {
-        return await RequestAsync("DELETE", path).ConfigureAwait(false);
+        return await RequestAsync("DELETE", path, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
     // ------------------------------------------------------------------
@@ -88,14 +105,15 @@ public class HttpClient
     /// Expects { "data": [...], "links": { "next": "..." } }.
     /// </summary>
     public async IAsyncEnumerable<List<Dictionary<string, object?>>> ListAllAsync(
-        string path, Dictionary<string, string>? queryParams = null)
+        string path, Dictionary<string, string>? queryParams = null,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var currentPath = path;
         var currentParams = queryParams;
 
         while (currentPath is not null)
         {
-            var response = await GetAsync(currentPath, currentParams).ConfigureAwait(false);
+            var response = await GetAsync(currentPath, currentParams, cancellationToken).ConfigureAwait(false);
 
             if (response.TryGetValue("data", out var dataObj) && dataObj is List<object?> dataList)
             {
@@ -139,7 +157,8 @@ public class HttpClient
         string method,
         string path,
         Dictionary<string, string>? queryParams = null,
-        Dictionary<string, object?>? body = null)
+        Dictionary<string, object?>? body = null,
+        CancellationToken cancellationToken = default)
     {
         var url = _baseUrl + path;
 
@@ -164,7 +183,14 @@ public class HttpClient
         HttpResponseMessage response;
         try
         {
-            response = await _http.SendAsync(request).ConfigureAwait(false);
+            response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Caller-requested cancellation is NOT a transport failure — let it
+            // propagate as OperationCanceledException so `await`-ers can observe
+            // the cancellation rather than catching a wrapped REST error.
+            throw;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
@@ -173,7 +199,7 @@ public class HttpClient
         }
 
         var statusCode = (int)response.StatusCode;
-        var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
         if (statusCode < 200 || statusCode >= 300)
         {
@@ -240,5 +266,31 @@ public class HttpClient
             JsonValueKind.False => false,
             _ => null,
         };
+    }
+
+    // ------------------------------------------------------------------
+    // IDisposable
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Release the underlying <see cref="System.Net.Http.HttpClient"/> — but
+    /// ONLY when this object created it (<c>_ownsHttp</c>). A caller-injected
+    /// HttpClient is left untouched: its lifetime belongs to whoever passed it
+    /// in. Idempotent.
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing && _ownsHttp)
+        {
+            _http.Dispose();
+        }
+        _disposed = true;
     }
 }

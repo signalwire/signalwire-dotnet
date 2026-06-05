@@ -47,8 +47,9 @@ public class VideoRooms : CrudResource
     public VideoRooms(HttpClient client, string basePath) : base(client, basePath) { }
 
     /// <summary>Update via PUT (matching Python's _update_method = "PUT").</summary>
-    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> kwargs)
-        => Client.PutAsync(Path(id), kwargs);
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> kwargs,
+        CancellationToken cancellationToken = default)
+        => Client.PutAsync(Path(id), kwargs, cancellationToken);
 
     public Task<Dictionary<string, object?>> ListStreamsAsync(string roomId, Dictionary<string, string>? queryParams = null)
         => Client.GetAsync(Path(roomId, "streams"), queryParams);
@@ -143,8 +144,9 @@ public class VideoConferences : CrudResource
 {
     public VideoConferences(HttpClient client, string basePath) : base(client, basePath) { }
 
-    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> kwargs)
-        => Client.PutAsync(Path(id), kwargs);
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> kwargs,
+        CancellationToken cancellationToken = default)
+        => Client.PutAsync(Path(id), kwargs, cancellationToken);
 
     public Task<Dictionary<string, object?>> ListConferenceTokensAsync(string conferenceId, Dictionary<string, string>? queryParams = null)
         => Client.GetAsync(Path(conferenceId, "conference_tokens"), queryParams);

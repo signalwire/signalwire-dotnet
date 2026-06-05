@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 76a8c505a16eba55cbeca19c122f52c2ac9d1da1",
+  "generated_from": "signalwire-dotnet @ 52ce452520c03481d2e84e6850cb508c7d587c44",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -1752,6 +1752,14 @@
       },
       "functions": []
     },
+    "signalwire.swaig.codec_extensions": {
+      "classes": {
+        "CodecExtensions": [
+          "to_wire_name"
+        ]
+      },
+      "functions": []
+    },
     "signalwire.swaig.conference_beep_extensions": {
       "classes": {
         "ConferenceBeepExtensions": [
@@ -1811,6 +1819,14 @@
     "signalwire.swaig.record_format_extensions": {
       "classes": {
         "RecordFormatExtensions": [
+          "to_wire_name"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.swaig.tap_direction_extensions": {
+      "classes": {
+        "TapDirectionExtensions": [
           "to_wire_name"
         ]
       },
