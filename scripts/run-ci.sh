@@ -8,8 +8,17 @@
 #   1. dotnet test (via docker SDK image)  — language test runner
 #   2. signature regen                     — python adapter + dotnet build
 #   3. drift gate                          — porting-sdk diff_port_signatures.py
-#   4. no-cheat gate                       — porting-sdk audit_no_cheat_tests.py
-#   5. emission gate                       — porting-sdk diff_port_emission.py
+#   4. surface-fresh gate                  — porting-sdk check_surface_freshness.py
+#                                            (regenerates port_surface.json in
+#                                            place via enumerate_surface.py and
+#                                            fails if the committed copy is stale
+#                                            modulo the generated_from git-sha;
+#                                            closes the Layer-B-not-gated hole —
+#                                            DRIFT gates Layer A signatures only,
+#                                            so port_surface.json could silently
+#                                            rot)
+#   5. no-cheat gate                       — porting-sdk audit_no_cheat_tests.py
+#   6. emission gate                       — porting-sdk diff_port_emission.py
 #                                            (byte-compares tools/EmitCorpus's
 #                                            FunctionResult.ToDict() output vs
 #                                            Python's to_dict() over the shared
@@ -204,6 +213,32 @@ dotnet_test_per_framework() {
     return $rc
 }
 
+# SURFACE-FRESH gate: prove the committed port_surface.json (Layer B) still
+# matches a fresh regeneration. The DRIFT gate only polices Layer A
+# (port_signatures.json), so without this a Layer-B symbol/shape change could
+# land in source without the committed surface being regenerated — it silently
+# rots. We:
+#   1. snapshot the committed copy (HEAD, with a working-tree fallback),
+#   2. regenerate port_surface.json IN PLACE via the surface enumerator
+#      (pure-regex parse of src/SignalWire/**/*.cs — no docker / build needed,
+#      unlike the SIGNATURES gate's SignatureDump path),
+#   3. compare the two modulo the volatile generated_from git-sha,
+#   4. restore the committed copy unconditionally so the tree is left clean.
+surface_fresh_gate() {
+    local committed="/tmp/committed_surface.json"
+    git show HEAD:port_surface.json > "$committed" 2>/dev/null \
+        || cp port_surface.json "$committed"
+    python3 scripts/enumerate_surface.py
+    local rc=$?
+    if [ "$rc" -eq 0 ]; then
+        python3 "$PORTING_SDK_DIR/scripts/check_surface_freshness.py" \
+            --committed "$committed" --fresh port_surface.json
+        rc=$?
+    fi
+    git checkout -- port_surface.json
+    return $rc
+}
+
 cd "$PORT_ROOT"
 
 echo "==> running CI gates for $PORT_NAME (porting-sdk at $PORTING_SDK_DIR)"
@@ -229,11 +264,16 @@ run_gate "DRIFT" "diff_port_signatures vs python reference" \
         --surface-additions "$PORT_ROOT/PORT_ADDITIONS.md" \
         --omissions "$PORT_ROOT/PORT_SIGNATURE_OMISSIONS.md"
 
-# Gate 4: no-cheat
+# Gate 4: surface-fresh — regenerate port_surface.json (Layer B) in place and
+# fail if the committed copy is stale modulo the generated_from git-sha.
+run_gate "SURFACE-FRESH" "check_surface_freshness vs regenerated port_surface.json" \
+    surface_fresh_gate
+
+# Gate 5: no-cheat
 run_gate "NO-CHEAT" "audit_no_cheat_tests" \
     python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"
 
-# Gate 5: emission — byte-compare FunctionResult.ToDict() vs Python to_dict()
+# Gate 6: emission — byte-compare FunctionResult.ToDict() vs Python to_dict()
 # across the shared 81-entry corpus. scripts/emit-corpus.sh wraps
 # tools/EmitCorpus so only clean JSON reaches stdout (it builds with MSBuild
 # output on stderr, then runs the compiled binary). No mocks / no network —
