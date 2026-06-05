@@ -316,8 +316,11 @@ public class DataMapTests
     [Fact]
     public void Output_OnWebhookWithFunctionResult()
     {
+        // post_process is only carried in to_dict() when there is at least one
+        // action (Python parity: post_process is meaningless without actions),
+        // so give the result an action for it to surface on output.
         var fr = new FunctionResult("OK");
-        fr.SetPostProcess(true);
+        fr.SetPostProcess(true).Stop();
 
         var dm = new DM("fn");
         dm.Webhook("GET", "https://a.com");
