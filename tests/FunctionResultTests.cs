@@ -488,7 +488,11 @@ public class FunctionResultTests
         // SWML; stereo/format/direction/beep/input_sensitivity always emitted; no
         // "initiator" key, no control_id.
         var fr = new FunctionResult();
-        fr.RecordCall();
+        // Defaults via the typed canonical overload (RecordCall() with no
+        // recording-format arg is ambiguous between the enum and string overloads
+        // — both default everything — so pin the typed defaults explicitly; the
+        // emitted SWML is byte-identical to record_call() in Python).
+        fr.RecordCall(format: RecordFormat.Wav, direction: RecordDirection.Both);
         var rec = MainVerb(GetAction(fr, 0), "record_call");
         Assert.False((bool)rec["stereo"]);
         Assert.Equal("wav", rec["format"]);
@@ -550,7 +554,7 @@ public class FunctionResultTests
         Assert.Equal("mp3", RecordFormat.Mp3.ToWireName());
         Assert.Equal("mp4", RecordFormat.Mp4.ToWireName());
 
-        var enumRec = MainVerb(GetAction(new FunctionResult().RecordCall(RecordFormat.Mp3, RecordDirection.Both, "rec-1"), 0), "record_call");
+        var enumRec = MainVerb(GetAction(new FunctionResult().RecordCall(controlId: "rec-1", format: RecordFormat.Mp3, direction: RecordDirection.Both), 0), "record_call");
         var stringRec = MainVerb(GetAction(new FunctionResult().RecordCall("rec-1", false, "mp3", "both"), 0), "record_call");
         Assert.Equal("mp3", enumRec["format"]);
         Assert.Equal(stringRec["format"], enumRec["format"]);
@@ -565,7 +569,7 @@ public class FunctionResultTests
         Assert.Equal("listen", RecordDirection.Listen.ToWireName());
         Assert.Equal("both", RecordDirection.Both.ToWireName());
 
-        var enumRec = MainVerb(GetAction(new FunctionResult().RecordCall(RecordFormat.Wav, RecordDirection.Listen), 0), "record_call");
+        var enumRec = MainVerb(GetAction(new FunctionResult().RecordCall(format: RecordFormat.Wav, direction: RecordDirection.Listen), 0), "record_call");
         var stringRec = MainVerb(GetAction(new FunctionResult().RecordCall("", false, "wav", "listen"), 0), "record_call");
         Assert.Equal("listen", enumRec["direction"]);
         Assert.Equal(stringRec["direction"], enumRec["direction"]);
@@ -930,7 +934,10 @@ public class FunctionResultTests
     {
         // Python parity (test_tap_default_params): only uri present; default
         // direction/codec/rtp_ptime omitted.
-        var t = MainVerb(GetAction(new FunctionResult().Tap("rtp://192.168.1.1:5000"), 0), "tap");
+        // Tap(uri) alone is ambiguous between the enum and string overloads (both
+        // default direction/codec); pin the typed default to select the canonical
+        // overload — the emitted SWML is byte-identical to tap(uri) in Python.
+        var t = MainVerb(GetAction(new FunctionResult().Tap("rtp://192.168.1.1:5000", direction: TapDirection.Both), 0), "tap");
         Assert.Equal("rtp://192.168.1.1:5000", t["uri"]);
         Assert.False(t.ContainsKey("direction"));
         Assert.False(t.ContainsKey("codec"));
@@ -976,7 +983,9 @@ public class FunctionResultTests
     [Fact]
     public void Tap_InvalidRtpPtime_Throws()
     {
-        var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("rtp://1.2.3.4:5000", rtpPtime: 0));
+        // Pin the typed direction so the call is unambiguous; the typed overload
+        // performs the same rtp_ptime > 0 validation as the string overload.
+        var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("rtp://1.2.3.4:5000", direction: TapDirection.Both, rtpPtime: 0));
         Assert.Contains("rtp_ptime must be a positive integer", ex.Message);
     }
 
@@ -991,7 +1000,7 @@ public class FunctionResultTests
         // (b) the enum overload and the equivalent string produce the
         // BYTE-IDENTICAL tap verb. Use a non-default direction (hear) so the
         // key is actually emitted and assertable.
-        var enumTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", TapDirection.Hear, Codec.Pcmu, "t1", 20, null), 0), "tap");
+        var enumTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", controlId: "t1", direction: TapDirection.Hear, codec: Codec.Pcmu, rtpPtime: 20, statusUrl: null), 0), "tap");
         var stringTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", "t1", "hear", "PCMU", 20, null), 0), "tap");
         Assert.Equal("hear", enumTap["direction"]);
         Assert.Equal(stringTap, enumTap);  // whole verb dict byte-identical
@@ -1000,7 +1009,7 @@ public class FunctionResultTests
         // the per-key guard omits (both -> direction key absent on both paths).
         foreach (var d in (TapDirection[])Enum.GetValues(typeof(TapDirection)))
         {
-            var e = MainVerb(GetAction(new FunctionResult().Tap("u", d, Codec.Pcmu), 0), "tap");
+            var e = MainVerb(GetAction(new FunctionResult().Tap("u", direction: d, codec: Codec.Pcmu), 0), "tap");
             var s = MainVerb(GetAction(new FunctionResult().Tap("u", "", d.ToWireName(), "PCMU", 20, null), 0), "tap");
             Assert.Equal(s, e);
             if (d == TapDirection.Both)
@@ -1020,7 +1029,7 @@ public class FunctionResultTests
         // (b) the enum overload and the equivalent string produce the
         // BYTE-IDENTICAL tap verb. Use a non-default codec (PCMA) so the key is
         // actually emitted and assertable.
-        var enumTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", TapDirection.Both, Codec.Pcma, "t1", 20, null), 0), "tap");
+        var enumTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", controlId: "t1", direction: TapDirection.Both, codec: Codec.Pcma, rtpPtime: 20, statusUrl: null), 0), "tap");
         var stringTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", "t1", "both", "PCMA", 20, null), 0), "tap");
         Assert.Equal("PCMA", enumTap["codec"]);
         Assert.Equal(stringTap, enumTap);  // whole verb dict byte-identical
@@ -1029,7 +1038,7 @@ public class FunctionResultTests
         // the per-key guard omits (PCMU -> codec key absent on both paths).
         foreach (var c in (Codec[])Enum.GetValues(typeof(Codec)))
         {
-            var e = MainVerb(GetAction(new FunctionResult().Tap("u", TapDirection.Both, c), 0), "tap");
+            var e = MainVerb(GetAction(new FunctionResult().Tap("u", direction: TapDirection.Both, codec: c), 0), "tap");
             var s = MainVerb(GetAction(new FunctionResult().Tap("u", "", "both", c.ToWireName(), 20, null), 0), "tap");
             Assert.Equal(s, e);
             if (c == Codec.Pcmu)
@@ -1422,7 +1431,7 @@ public class FunctionResultTests
         Assert.Same(fr, fr.Say("s"));
         Assert.Same(fr, fr.PlayBackgroundFile("f"));
         Assert.Same(fr, fr.StopBackgroundFile());
-        Assert.Same(fr, fr.RecordCall());
+        Assert.Same(fr, fr.RecordCall(format: RecordFormat.Wav));
         Assert.Same(fr, fr.StopRecordCall());
         Assert.Same(fr, fr.AddDynamicHints(new List<object>()));
         Assert.Same(fr, fr.ClearDynamicHints());
@@ -1436,7 +1445,7 @@ public class FunctionResultTests
         Assert.Same(fr, fr.JoinConference("c"));
         Assert.Same(fr, fr.JoinRoom("r"));
         Assert.Same(fr, fr.SipRefer("sip:x"));
-        Assert.Same(fr, fr.Tap("uri"));
+        Assert.Same(fr, fr.Tap("uri", direction: TapDirection.Both));
         Assert.Same(fr, fr.StopTap());
         Assert.Same(fr, fr.SendSms("a", "b", "c"));
         Assert.Same(fr, fr.Pay("url"));

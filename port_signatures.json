@@ -2952,15 +2952,15 @@
                 },
                 {
                   "name": "format",
-                  "type": "string",
+                  "type": "class:signalwire.swaig.record_format.RecordFormat",
                   "required": false,
-                  "default": "wav"
+                  "default": "Wav"
                 },
                 {
                   "name": "direction",
-                  "type": "string",
+                  "type": "class:signalwire.swaig.record_direction.RecordDirection",
                   "required": false,
-                  "default": "both"
+                  "default": "Both"
                 },
                 {
                   "name": "terminators",
@@ -3441,15 +3441,15 @@
                 },
                 {
                   "name": "direction",
-                  "type": "string",
+                  "type": "class:signalwire.swaig.tap_direction.TapDirection",
                   "required": false,
-                  "default": "both"
+                  "default": "Both"
                 },
                 {
                   "name": "codec",
-                  "type": "string",
+                  "type": "class:signalwire.swaig.codec.Codec",
                   "required": false,
-                  "default": "PCMU"
+                  "default": "Pcmu"
                 },
                 {
                   "name": "rtp_ptime",

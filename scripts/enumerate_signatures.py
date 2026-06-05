@@ -312,28 +312,88 @@ def build_signature(method: dict, aliases: dict, context: str, is_static: bool) 
     return {"params": params_out, "returns": return_canonical}
 
 
-def _load_python_param_counts() -> dict[str, int]:
-    """Load Python reference signatures and index method → param count.
-    Used by collect() to pick the best-matching overload from .NET's
-    multiple definitions of the same method."""
+def _load_python_param_meta() -> tuple[dict[str, int], dict[str, list]]:
+    """Load Python reference signatures and index method → (param count,
+    ordered list of param canonical types). Used by collect() to pick the
+    best-matching overload from .NET's multiple definitions of the same
+    method: the count picks the right arity, the per-param types break ties by
+    preferring the overload that aligns with the reference's typing (typed
+    where the reference is a closed set / class, string where it is a bare
+    string)."""
     py_path = PSDK / "python_signatures.json"
     if not py_path.is_file():
-        return {}
+        return {}, {}
     try:
         d = json.loads(py_path.read_text(encoding="utf-8"))
     except Exception:
-        return {}
-    out: dict[str, int] = {}
+        return {}, {}
+    counts: dict[str, int] = {}
+    types: dict[str, list] = {}
+
+    def record(key: str, sig: dict) -> None:
+        params = sig.get("params", [])
+        counts[key] = len(params)
+        types[key] = [p.get("type") for p in params]
+
     for mod, mod_entry in d.get("modules", {}).items():
         for cls, cls_entry in mod_entry.get("classes", {}).items():
             for m, sig in cls_entry.get("methods", {}).items():
-                out[f"{mod}.{cls}.{m}"] = len(sig.get("params", []))
+                record(f"{mod}.{cls}.{m}", sig)
         for fn, sig in mod_entry.get("functions", {}).items():
-            out[f"{mod}.{fn}"] = len(sig.get("params", []))
-    return out
+            record(f"{mod}.{fn}", sig)
+    return counts, types
 
 
-_PY_PARAM_COUNTS = _load_python_param_counts()
+_PY_PARAM_COUNTS, _PY_PARAM_TYPES = _load_python_param_meta()
+
+
+def _is_typed_ref(t) -> bool:
+    """A canonical type that carries a named/closed-set shape (vs a bare
+    scalar): a ``class:`` ref, an ``enum<…>``, or a ``union<…>`` containing
+    either."""
+    if not isinstance(t, str):
+        return False
+    if t.startswith("class:") or t.startswith("enum<"):
+        return True
+    return t.startswith("union<") and ("class:" in t or "enum<" in t)
+
+
+def _oracle_alignment_score(sig: dict, ref_types: list | None) -> int:
+    """Score how well an overload's per-param typing aligns with the Python
+    reference, for breaking same-arity overload-selection ties — scoped tightly
+    to the wave-1 closed-set contract so it only disambiguates the case it is
+    meant to.
+
+    For each positional param: where the reference is a closed-set ``enum<…>``
+    (the only form the diff *requires* a typed port shape for) award +1 when the
+    port param is typed (``class:`` / ``enum<…>`` / ``union<…class…>``); where
+    the reference is a bare ``string`` award +1 when the port param is also a
+    bare ``string``. Reference ``union``/``class:``/scalar params are neutral
+    (no preference), so this never reshuffles an overload selection that the
+    reference does not pin to a closed set — it selects the enum overload for
+    FunctionResult.RecordCall/Tap (reference ``enum<…>``) and keeps the string
+    overload where the reference is a bare ``string`` (e.g. SkillMixin.add_skill,
+    whose typed SkillName overload stays a documented .NET addition), while
+    leaving e.g. add_pom_as_subsection (reference ``union<string,Section>``)
+    untouched. With no reference types the score is 0 for every candidate, so
+    selection falls back to declaration order."""
+    if not ref_types:
+        return 0
+    score = 0
+    params = sig.get("params", [])
+    for i, p in enumerate(params):
+        if i >= len(ref_types):
+            break
+        ref_t = ref_types[i]
+        port_t = p.get("type")
+        if not isinstance(ref_t, str):
+            continue
+        if ref_t.startswith("enum<"):
+            if _is_typed_ref(port_t):
+                score += 1
+        elif ref_t == "string" and port_t == "string":
+            score += 1
+    return score
 
 
 def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
@@ -392,17 +452,39 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             # the overload whose parameter count best matches the Python
             # reference if we know it; otherwise keep the longest. This
             # avoids picking a 1-arg convenience overload when Python's
-            # canonical signature is multi-param.
+            # canonical signature is multi-param. On a *tie* in that distance
+            # (e.g. a typed-enum overload and a bare-string overload that share
+            # Python's full arity, like FunctionResult.RecordCall/Tap), prefer
+            # the overload whose per-param typing best aligns with the reference
+            # (typed where the reference is a closed set / class, bare string
+            # where the reference is a bare string). This deterministically
+            # selects the enum overload as canonical for RecordCall/Tap —
+            # regardless of source-declaration order — while leaving the bare
+            # ``string`` overload canonical where the reference itself is a bare
+            # ``string`` (e.g. SkillMixin.add_skill). The non-selected overload
+            # is a .NET-only addition (documented in PORT_ADDITIONS.md).
             if method_canonical in methods_out:
                 existing = methods_out[method_canonical]
-                py_count = _PY_PARAM_COUNTS.get(f"{target_module}.{target_class}.{method_canonical}")
+                ref_key = f"{target_module}.{target_class}.{method_canonical}"
+                py_count = _PY_PARAM_COUNTS.get(ref_key)
+                ref_types = _PY_PARAM_TYPES.get(ref_key)
                 if py_count is not None:
                     new_diff = abs(len(sig["params"]) - py_count)
                     old_diff = abs(len(existing["params"]) - py_count)
-                    if new_diff >= old_diff:
+                    if new_diff > old_diff:
+                        continue
+                    if new_diff == old_diff and (
+                        _oracle_alignment_score(sig, ref_types)
+                        <= _oracle_alignment_score(existing, ref_types)
+                    ):
                         continue
                 else:
-                    if len(sig["params"]) <= len(existing["params"]):
+                    if len(sig["params"]) < len(existing["params"]):
+                        continue
+                    if len(sig["params"]) == len(existing["params"]) and (
+                        _oracle_alignment_score(sig, ref_types)
+                        <= _oracle_alignment_score(existing, ref_types)
+                    ):
                         continue
             methods_out[method_canonical] = sig
 

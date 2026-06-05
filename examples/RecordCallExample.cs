@@ -14,17 +14,20 @@ void PrintResult(string label, FunctionResult result)
     Console.WriteLine();
 }
 
-// 1. Basic recording
+// 1. Basic recording (typed canonical overload; pass the RecordFormat /
+//    RecordDirection enums — RecordCall() with no recording-format argument is
+//    ambiguous between the typed and string overloads).
 var basic = new FunctionResult("Starting basic call recording");
-basic.RecordCall();
+basic.RecordCall(format: RecordFormat.Wav, direction: RecordDirection.Both);
 PrintResult("Basic Recording", basic);
 
-// 2. Advanced recording with custom settings
+// 2. Advanced recording with custom settings (typed enums; the bare-string
+//    overload remains available for parity, e.g. format: "mp3").
 var advanced = new FunctionResult("Starting advanced call recording");
 advanced.RecordCall(
     controlId: "support_call_001",
     stereo:    true,
-    format:    "mp3"
+    format:    RecordFormat.Mp3
 );
 PrintResult("Advanced Recording", advanced);
 

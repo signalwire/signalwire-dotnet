@@ -422,19 +422,73 @@ public class FunctionResult
     }
 
     /// <summary>
-    /// Start background call recording using SWML.
+    /// Start background call recording using SWML — canonical, full-arity
+    /// overload with the two closed-set arguments (<paramref name="format"/> /
+    /// <paramref name="direction"/>) as the typed <see cref="RecordFormat"/> /
+    /// <see cref="RecordDirection"/> enums.
     /// </summary>
     /// <remarks>
     /// Full parity with the Python reference
     /// <c>record_call(control_id, stereo, format, direction, terminators, beep,
     /// input_sensitivity, initial_timeout, end_silence_timeout, max_length,
-    /// status_url)</c>. The <c>record_call</c> verb is wrapped in a SWML document
+    /// status_url)</c>, in the same parameter order. The Python reference
+    /// validates the bare-string <c>format</c>/<c>direction</c> against the closed
+    /// sets {wav,mp3,mp4} / {speak,listen,both}; this overload surfaces those
+    /// knowable sets as enums so a bad value is a compile error rather than a
+    /// runtime <c>ValueError</c> (a same-arity bare-string overload preserves the
+    /// Python <c>str</c> path — see <see cref="RecordCall(string, bool, string, string, string?, bool, double, double?, double?, double?, string?)"/>).
+    /// The <c>record_call</c> verb is wrapped in a SWML document
     /// (<c>{version, sections: {main: [{record_call: ...}]}}</c>) and emitted under
     /// the <c>SWML</c> action key — there is no bare top-level <c>record_call</c>
     /// action and no invented <c>initiator</c> key. <c>stereo</c>, <c>format</c>,
     /// <c>direction</c>, <c>beep</c>, and <c>input_sensitivity</c> are ALWAYS
     /// emitted (Python emits them unconditionally); the remaining parameters are
     /// emitted only when set.
+    /// </remarks>
+    public FunctionResult RecordCall(
+        string controlId = "",
+        bool stereo = false,
+        RecordFormat format = RecordFormat.Wav,
+        RecordDirection direction = RecordDirection.Both,
+        string? terminators = null,
+        bool beep = false,
+        double inputSensitivity = 44.0,
+        double? initialTimeout = null,
+        double? endSilenceTimeout = null,
+        double? maxLength = null,
+        string? statusUrl = null) =>
+        // The typed closed-set enums (RecordFormat {wav,mp3,mp4} /
+        // RecordDirection {speak,listen,both}) are the canonical, full-arity
+        // signature — the Python reference validates the bare-str args against
+        // exactly these sets, so this surfaces the knowable set as a type. An
+        // enum member is always valid, so the per-value validation done by the
+        // string parity overload is unnecessary here; both paths funnel through
+        // RecordCallCore and emit byte-identical SWML.
+        RecordCallCore(
+            controlId, stereo, format.ToWireName(), direction.ToWireName(),
+            terminators, beep, inputSensitivity, initialTimeout,
+            endSilenceTimeout, maxLength, statusUrl);
+
+    /// <summary>
+    /// String-typed parity overload of
+    /// <see cref="RecordCall(string, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>:
+    /// start background call recording with <paramref name="format"/> and
+    /// <paramref name="direction"/> as bare strings, validated at runtime against
+    /// the same closed sets ({wav,mp3,mp4} / {speak,listen,both}). This preserves
+    /// parity with the Python reference (which takes bare <c>str</c> arguments and
+    /// raises <c>ValueError</c> on a bad value) and keeps a forward-compatible
+    /// escape hatch for a wire value the enum does not yet model. The emitted SWML
+    /// is identical to the typed overload — both delegate to the same core. The
+    /// canonical, audited signature is the typed overload above; this .NET-only
+    /// string overload is documented in PORT_ADDITIONS.md.
+    /// </summary>
+    /// <remarks>
+    /// This overload is selected only when <paramref name="format"/> (and/or
+    /// <paramref name="direction"/>) is passed as a <c>string</c>; passing the
+    /// <see cref="RecordFormat"/>/<see cref="RecordDirection"/> enums (or no
+    /// recording-format argument at all) binds the typed canonical overload.
+    /// Both share Python's parameter order and defaults; the only difference is
+    /// the static type of the two closed-set arguments.
     /// </remarks>
     /// <exception cref="ArgumentException">
     /// If <paramref name="format"/> is not one of <c>wav</c>/<c>mp3</c>/<c>mp4</c>
@@ -463,6 +517,30 @@ public class FunctionResult
         if (Array.IndexOf(validDirections, direction) < 0)
             throw new ArgumentException("direction must be 'speak', 'listen', or 'both'", nameof(direction));
 
+        return RecordCallCore(
+            controlId, stereo, format, direction, terminators, beep,
+            inputSensitivity, initialTimeout, endSilenceTimeout, maxLength, statusUrl);
+    }
+
+    /// <summary>
+    /// Shared emit core for both <c>RecordCall</c> overloads. Takes the already
+    /// resolved wire strings (<paramref name="format"/>/<paramref name="direction"/>)
+    /// and builds the <c>record_call</c> verb exactly as the Python reference does,
+    /// so the typed and string paths are byte-for-byte identical.
+    /// </summary>
+    private FunctionResult RecordCallCore(
+        string controlId,
+        bool stereo,
+        string format,
+        string direction,
+        string? terminators,
+        bool beep,
+        double inputSensitivity,
+        double? initialTimeout,
+        double? endSilenceTimeout,
+        double? maxLength,
+        string? statusUrl)
+    {
         // Always-emitted parameters (Python emits these unconditionally).
         var record = new Dictionary<string, object>
         {
@@ -483,25 +561,6 @@ public class FunctionResult
 
         return EmitSwmlVerb("record_call", record);
     }
-
-    /// <summary>
-    /// Typed overload of
-    /// <see cref="RecordCall(string, bool, string, string, string?, bool, double, double?, double?, double?, string?)"/>:
-    /// start background call recording using the <see cref="RecordFormat"/> and
-    /// <see cref="RecordDirection"/> closed-set enums instead of bare strings.
-    /// Delegates to the string overload via each enum's canonical wire name, so
-    /// the emitted SWML is identical. Strings remain supported for parity with
-    /// the Python reference (which takes bare <c>str</c> arguments validated to
-    /// the same closed sets). The <c>stereo</c> flag and the remaining recording
-    /// parameters (a plain bool / numbers, not closed sets) stay on the string
-    /// overload; call it with <c>RecordFormat.X.ToWireName()</c> if you need them
-    /// alongside typed values.
-    /// </summary>
-    public FunctionResult RecordCall(
-        RecordFormat format,
-        RecordDirection direction,
-        string controlId = "") =>
-        RecordCall(controlId, false, format.ToWireName(), direction.ToWireName());
 
     /// <summary>
     /// Stop an active background call recording using SWML.
@@ -854,16 +913,71 @@ public class FunctionResult
         EmitSwmlVerb("sip_refer", new Dictionary<string, object> { ["to_uri"] = toUri });
 
     /// <summary>
-    /// Start a background call tap using SWML.
+    /// Start a background call tap using SWML — canonical, full-arity overload
+    /// with the two closed-set arguments (<paramref name="direction"/> /
+    /// <paramref name="codec"/>) as the typed <see cref="TapDirection"/> /
+    /// <see cref="Codec"/> enums.
     /// </summary>
     /// <remarks>
     /// Full parity with the Python reference
-    /// <c>tap(uri, control_id, direction, codec, rtp_ptime, status_url)</c>. The
+    /// <c>tap(uri, control_id, direction, codec, rtp_ptime, status_url)</c>, in the
+    /// same parameter order. The Python reference validates the bare-string
+    /// <c>direction</c>/<c>codec</c> against the closed sets {speak,hear,both} /
+    /// {PCMU,PCMA}; this overload surfaces those knowable sets as enums so a bad
+    /// value is a compile error rather than a runtime <c>ValueError</c> (a
+    /// same-arity bare-string overload preserves the Python <c>str</c> path — see
+    /// <see cref="Tap(string, string, string, string, int, string?)"/>). The
     /// <c>tap</c> verb is wrapped in a SWML document and emitted under the
     /// <c>SWML</c> action key. Only <c>uri</c> is always present; <c>control_id</c>,
     /// <c>direction</c>, <c>codec</c>, <c>rtp_ptime</c>, and <c>status_url</c> are
     /// emitted only when they differ from their defaults (mirrors Python's per-key
     /// guards).
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// If <paramref name="rtpPtime"/> is not a positive integer (parity with
+    /// Python's <c>ValueError</c>); <paramref name="direction"/>/<paramref name="codec"/>
+    /// are closed-set enums and so cannot be invalid.
+    /// </exception>
+    public FunctionResult Tap(
+        string uri,
+        string controlId = "",
+        TapDirection direction = TapDirection.Both,
+        Codec codec = Codec.Pcmu,
+        int rtpPtime = 20,
+        string? statusUrl = null)
+    {
+        // rtp_ptime is the only runtime-validatable arg here; direction/codec are
+        // closed-set enums and therefore always valid. Funnel through TapCore so
+        // the typed and string paths emit byte-identical SWML.
+        if (rtpPtime <= 0)
+            throw new ArgumentException("rtp_ptime must be a positive integer", nameof(rtpPtime));
+
+        return TapCore(uri, controlId, direction.ToWireName(), codec.ToWireName(), rtpPtime, statusUrl);
+    }
+
+    /// <summary>
+    /// String-typed parity overload of
+    /// <see cref="Tap(string, string, TapDirection, Codec, int, string?)"/>: start
+    /// a background call tap with <paramref name="direction"/> and
+    /// <paramref name="codec"/> as bare strings, validated at runtime against the
+    /// same closed sets ({speak,hear,both} / {PCMU,PCMA}). This preserves parity
+    /// with the Python reference (which takes bare <c>str</c> arguments and raises
+    /// <c>ValueError</c> on a bad value) and keeps a forward-compatible escape
+    /// hatch. The emitted SWML is identical to the typed overload — both delegate
+    /// to the same core. The canonical, audited signature is the typed overload
+    /// above; this .NET-only string overload is documented in PORT_ADDITIONS.md.
+    /// </summary>
+    /// <remarks>
+    /// This overload is selected only when <paramref name="direction"/> (and/or
+    /// <paramref name="codec"/>) is passed as a <c>string</c>; passing the
+    /// <see cref="TapDirection"/>/<see cref="Codec"/> enums (or neither) binds the
+    /// typed canonical overload. Both share Python's parameter order and defaults;
+    /// the only difference is the static type of the two closed-set arguments.
+    /// The tap direction set (<c>speak</c>/<c>hear</c>/<c>both</c>) differs from
+    /// <c>record_call</c>'s (<c>speak</c>/<c>listen</c>/<c>both</c>), and the tap
+    /// codec set (<c>PCMU</c>/<c>PCMA</c>) is narrower than the RELAY connect/stream
+    /// codec superset — hence the dedicated <see cref="TapDirection"/> and
+    /// <see cref="Codec"/> enums rather than shared ones.
     /// </remarks>
     /// <exception cref="ArgumentException">
     /// If <paramref name="direction"/> is not one of <c>speak</c>/<c>hear</c>/<c>both</c>,
@@ -893,6 +1007,23 @@ public class FunctionResult
         if (rtpPtime <= 0)
             throw new ArgumentException("rtp_ptime must be a positive integer", nameof(rtpPtime));
 
+        return TapCore(uri, controlId, direction, codec, rtpPtime, statusUrl);
+    }
+
+    /// <summary>
+    /// Shared emit core for both <c>Tap</c> overloads. Takes the already resolved
+    /// wire strings (<paramref name="direction"/>/<paramref name="codec"/>) and
+    /// builds the <c>tap</c> verb exactly as the Python reference does, so the
+    /// typed and string paths are byte-for-byte identical.
+    /// </summary>
+    private FunctionResult TapCore(
+        string uri,
+        string controlId,
+        string direction,
+        string codec,
+        int rtpPtime,
+        string? statusUrl)
+    {
         // uri is always present; the rest only when non-default.
         var tapObj = new Dictionary<string, object> { ["uri"] = uri };
         if (!string.IsNullOrEmpty(controlId)) tapObj["control_id"] = controlId;
@@ -903,33 +1034,6 @@ public class FunctionResult
 
         return EmitSwmlVerb("tap", tapObj);
     }
-
-    /// <summary>
-    /// Typed overload of
-    /// <see cref="Tap(string, string, string, string, int, string?)"/>: start a
-    /// background call tap using the <see cref="TapDirection"/> and
-    /// <see cref="Codec"/> closed-set enums instead of bare strings. Delegates to
-    /// the string overload via each enum's canonical wire name, so the emitted
-    /// SWML is identical. Strings remain supported for parity with the Python
-    /// reference (which takes bare <c>str</c> arguments validated to the same
-    /// closed sets). <c>rtpPtime</c> (a plain int, not a closed set) and the
-    /// optional <c>controlId</c>/<c>statusUrl</c> stay as ordinary parameters.
-    /// </summary>
-    /// <remarks>
-    /// The tap direction set (<c>speak</c>/<c>hear</c>/<c>both</c>) differs from
-    /// <c>record_call</c>'s (<c>speak</c>/<c>listen</c>/<c>both</c>), and the tap
-    /// codec set (<c>PCMU</c>/<c>PCMA</c>) is narrower than the RELAY connect/stream
-    /// codec superset — hence the dedicated <see cref="TapDirection"/> and
-    /// <see cref="Codec"/> enums rather than shared ones.
-    /// </remarks>
-    public FunctionResult Tap(
-        string uri,
-        TapDirection direction,
-        Codec codec,
-        string controlId = "",
-        int rtpPtime = 20,
-        string? statusUrl = null) =>
-        Tap(uri, controlId, direction.ToWireName(), codec.ToWireName(), rtpPtime, statusUrl);
 
     /// <summary>
     /// Stop an active tap stream using SWML.
