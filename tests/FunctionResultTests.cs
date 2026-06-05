@@ -486,6 +486,7 @@ public class FunctionResultTests
         // The enum member maps to the canonical wire value.
         Assert.Equal("wav", RecordFormat.Wav.ToWireName());
         Assert.Equal("mp3", RecordFormat.Mp3.ToWireName());
+        Assert.Equal("mp4", RecordFormat.Mp4.ToWireName());
 
         // RecordCall(RecordFormat, ...) emits the IDENTICAL record_call action
         // as passing the bare string format — same format key, same values.

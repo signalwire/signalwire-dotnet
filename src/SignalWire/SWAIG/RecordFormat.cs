@@ -8,7 +8,7 @@ namespace SignalWire.SWAIG;
 /// <para>
 /// The Python reference validates this argument explicitly
 /// (<c>record_call(... format ...)</c> raises <c>ValueError</c> unless the value
-/// is <c>"wav"</c> or <c>"mp3"</c>), so it is a genuine closed set rather than a
+/// is <c>"wav"</c>, <c>"mp3"</c>, or <c>"mp4"</c>), so it is a genuine closed set rather than a
 /// free-form string. <see cref="FunctionResult.RecordCall(RecordFormat, RecordDirection, string, bool)"/>
 /// accepts this enum OR a string: the enum gives editor autocompletion and turns
 /// a typo into a compile error, while the string overload preserves parity with
@@ -34,6 +34,9 @@ public enum RecordFormat
 
     /// <summary>mp3</summary>
     Mp3,
+
+    /// <summary>mp4</summary>
+    Mp4,
 }
 
 /// <summary>
@@ -46,6 +49,7 @@ public static class RecordFormatExtensions
     {
         [RecordFormat.Wav] = "wav",
         [RecordFormat.Mp3] = "mp3",
+        [RecordFormat.Mp4] = "mp4",
     };
 
     /// <summary>
