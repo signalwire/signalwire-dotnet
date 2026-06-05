@@ -981,6 +981,80 @@ public class FunctionResultTests
     }
 
     [Fact]
+    public void Tap_TapDirectionEnum_MatchesString()
+    {
+        // (a) each member maps to its exact wire value.
+        Assert.Equal("speak", TapDirection.Speak.ToWireName());
+        Assert.Equal("hear", TapDirection.Hear.ToWireName());
+        Assert.Equal("both", TapDirection.Both.ToWireName());
+
+        // (b) the enum overload and the equivalent string produce the
+        // BYTE-IDENTICAL tap verb. Use a non-default direction (hear) so the
+        // key is actually emitted and assertable.
+        var enumTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", TapDirection.Hear, Codec.Pcmu, "t1", 20, null), 0), "tap");
+        var stringTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", "t1", "hear", "PCMU", 20, null), 0), "tap");
+        Assert.Equal("hear", enumTap["direction"]);
+        Assert.Equal(stringTap, enumTap);  // whole verb dict byte-identical
+
+        // (c) every value round-trips to the wire, including the default which
+        // the per-key guard omits (both -> direction key absent on both paths).
+        foreach (var d in (TapDirection[])Enum.GetValues(typeof(TapDirection)))
+        {
+            var e = MainVerb(GetAction(new FunctionResult().Tap("u", d, Codec.Pcmu), 0), "tap");
+            var s = MainVerb(GetAction(new FunctionResult().Tap("u", "", d.ToWireName(), "PCMU", 20, null), 0), "tap");
+            Assert.Equal(s, e);
+            if (d == TapDirection.Both)
+                Assert.False(e.ContainsKey("direction"));  // default omitted
+            else
+                Assert.Equal(d.ToWireName(), e["direction"]);
+        }
+    }
+
+    [Fact]
+    public void Tap_CodecEnum_MatchesString()
+    {
+        // (a) each member maps to its exact (upper-case) wire value.
+        Assert.Equal("PCMU", Codec.Pcmu.ToWireName());
+        Assert.Equal("PCMA", Codec.Pcma.ToWireName());
+
+        // (b) the enum overload and the equivalent string produce the
+        // BYTE-IDENTICAL tap verb. Use a non-default codec (PCMA) so the key is
+        // actually emitted and assertable.
+        var enumTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", TapDirection.Both, Codec.Pcma, "t1", 20, null), 0), "tap");
+        var stringTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", "t1", "both", "PCMA", 20, null), 0), "tap");
+        Assert.Equal("PCMA", enumTap["codec"]);
+        Assert.Equal(stringTap, enumTap);  // whole verb dict byte-identical
+
+        // (c) every value round-trips to the wire, including the default which
+        // the per-key guard omits (PCMU -> codec key absent on both paths).
+        foreach (var c in (Codec[])Enum.GetValues(typeof(Codec)))
+        {
+            var e = MainVerb(GetAction(new FunctionResult().Tap("u", TapDirection.Both, c), 0), "tap");
+            var s = MainVerb(GetAction(new FunctionResult().Tap("u", "", "both", c.ToWireName(), 20, null), 0), "tap");
+            Assert.Equal(s, e);
+            if (c == Codec.Pcmu)
+                Assert.False(e.ContainsKey("codec"));  // default omitted
+            else
+                Assert.Equal(c.ToWireName(), e["codec"]);
+        }
+    }
+
+    [Fact]
+    public void Tap_OutOfSetString_StillRejected()
+    {
+        // (d) the string overload's validation still rejects out-of-set values
+        // (the enum overload only constrains compile-time call sites; the string
+        // path remains the runtime guard — parity with Python's ValueError).
+        var dirEx = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("u", controlId: "", direction: "listen"));
+        Assert.Contains("direction must be one of", dirEx.Message);
+        Assert.Contains("['speak', 'hear', 'both']", dirEx.Message);  // 'listen' is record_call's, NOT tap's
+
+        var codecEx = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("u", controlId: "", codec: "OPUS"));
+        Assert.Contains("codec must be one of", codecEx.Message);
+        Assert.Contains("['PCMU', 'PCMA']", codecEx.Message);  // OPUS is a RELAY codec, NOT a SWAIG tap codec
+    }
+
+    [Fact]
     public void StopTap_WithoutControlId_EmptyParams()
     {
         var stop = MainVerb(GetAction(new FunctionResult().StopTap(), 0), "stop_tap");

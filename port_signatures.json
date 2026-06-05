@@ -17262,6 +17262,24 @@
         }
       }
     },
+    "signalwire.swaig.codec_extensions": {
+      "classes": {
+        "CodecExtensions": {
+          "methods": {
+            "to_wire_name": {
+              "params": [
+                {
+                  "name": "codec",
+                  "type": "class:signalwire.swaig.codec.Codec",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
     "signalwire.swaig.conference_beep_extensions": {
       "classes": {
         "ConferenceBeepExtensions": {
@@ -17513,6 +17531,24 @@
                 {
                   "name": "format",
                   "type": "class:signalwire.swaig.record_format.RecordFormat",
+                  "required": true
+                }
+              ],
+              "returns": "string"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.swaig.tap_direction_extensions": {
+      "classes": {
+        "TapDirectionExtensions": {
+          "methods": {
+            "to_wire_name": {
+              "params": [
+                {
+                  "name": "direction",
+                  "type": "class:signalwire.swaig.tap_direction.TapDirection",
                   "required": true
                 }
               ],

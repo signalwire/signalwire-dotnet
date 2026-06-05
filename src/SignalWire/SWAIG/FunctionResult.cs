@@ -905,6 +905,33 @@ public class FunctionResult
     }
 
     /// <summary>
+    /// Typed overload of
+    /// <see cref="Tap(string, string, string, string, int, string?)"/>: start a
+    /// background call tap using the <see cref="TapDirection"/> and
+    /// <see cref="Codec"/> closed-set enums instead of bare strings. Delegates to
+    /// the string overload via each enum's canonical wire name, so the emitted
+    /// SWML is identical. Strings remain supported for parity with the Python
+    /// reference (which takes bare <c>str</c> arguments validated to the same
+    /// closed sets). <c>rtpPtime</c> (a plain int, not a closed set) and the
+    /// optional <c>controlId</c>/<c>statusUrl</c> stay as ordinary parameters.
+    /// </summary>
+    /// <remarks>
+    /// The tap direction set (<c>speak</c>/<c>hear</c>/<c>both</c>) differs from
+    /// <c>record_call</c>'s (<c>speak</c>/<c>listen</c>/<c>both</c>), and the tap
+    /// codec set (<c>PCMU</c>/<c>PCMA</c>) is narrower than the RELAY connect/stream
+    /// codec superset — hence the dedicated <see cref="TapDirection"/> and
+    /// <see cref="Codec"/> enums rather than shared ones.
+    /// </remarks>
+    public FunctionResult Tap(
+        string uri,
+        TapDirection direction,
+        Codec codec,
+        string controlId = "",
+        int rtpPtime = 20,
+        string? statusUrl = null) =>
+        Tap(uri, controlId, direction.ToWireName(), codec.ToWireName(), rtpPtime, statusUrl);
+
+    /// <summary>
     /// Stop an active tap stream using SWML.
     /// </summary>
     /// <remarks>
