@@ -9,6 +9,12 @@
 #   2. signature regen                     — python adapter + dotnet build
 #   3. drift gate                          — porting-sdk diff_port_signatures.py
 #   4. no-cheat gate                       — porting-sdk audit_no_cheat_tests.py
+#   5. emission gate                       — porting-sdk diff_port_emission.py
+#                                            (byte-compares tools/EmitCorpus's
+#                                            FunctionResult.ToDict() output vs
+#                                            Python's to_dict() over the shared
+#                                            81-entry corpus; no mocks / network,
+#                                            pure serialisation)
 #
 # `dotnet` is not on host PATH. We use `docker run` with the official SDK
 # image (mcr.microsoft.com/dotnet/sdk:10.0). The same pattern is used in
@@ -226,6 +232,15 @@ run_gate "DRIFT" "diff_port_signatures vs python reference" \
 # Gate 4: no-cheat
 run_gate "NO-CHEAT" "audit_no_cheat_tests" \
     python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"
+
+# Gate 5: emission — byte-compare FunctionResult.ToDict() vs Python to_dict()
+# across the shared 81-entry corpus. scripts/emit-corpus.sh wraps
+# tools/EmitCorpus so only clean JSON reaches stdout (it builds with MSBuild
+# output on stderr, then runs the compiled binary). No mocks / no network —
+# pure serialisation; needs only signalwire-python adjacent (already required).
+run_gate "EMISSION" "diff_port_emission vs python to_dict()" \
+    python3 "$PORTING_SDK_DIR/scripts/diff_port_emission.py" \
+        --dump-cmd "bash $PORT_ROOT/scripts/emit-corpus.sh"
 
 if [ -z "$FAILED_GATES" ]; then
     echo "==> CI PASS"

@@ -232,10 +232,25 @@ public class FunctionResult
     public FunctionResult RemoveGlobalData(List<string> keys)
     {
         // Python parity: add_action("unset_global_data", keys) — the action key
-        // is "unset_global_data" and its value is the bare key list (Python also
-        // accepts a single string; .NET takes List<string>, a documented
-        // convenience-shape divergence). No {keys: ...} wrapper.
+        // is "unset_global_data" and its value is the bare key list. No
+        // {keys: ...} wrapper.
         _actions.Add(new Dictionary<string, object> { ["unset_global_data"] = keys });
+        return this;
+    }
+
+    /// <summary>
+    /// Single-key overload of <see cref="RemoveGlobalData(List{string})"/>.
+    /// </summary>
+    /// <remarks>
+    /// Python's <c>remove_global_data(keys: Union[str, List[str]])</c> accepts a
+    /// bare string AND a list; the bare-string call emits the action value as the
+    /// bare string (<c>{"unset_global_data": "plan"}</c>), NOT a one-element list.
+    /// This overload surfaces that arm so the emission is byte-identical to the
+    /// reference for a single key.
+    /// </remarks>
+    public FunctionResult RemoveGlobalData(string key)
+    {
+        _actions.Add(new Dictionary<string, object> { ["unset_global_data"] = key });
         return this;
     }
 
@@ -250,6 +265,22 @@ public class FunctionResult
         // Python parity: add_action("unset_meta_data", keys) — bare key list under
         // the "unset_meta_data" action key (no {keys: ...} wrapper).
         _actions.Add(new Dictionary<string, object> { ["unset_meta_data"] = keys });
+        return this;
+    }
+
+    /// <summary>
+    /// Single-key overload of <see cref="RemoveMetadata(List{string})"/>.
+    /// </summary>
+    /// <remarks>
+    /// Python's <c>remove_metadata(keys: Union[str, List[str]])</c> accepts a bare
+    /// string AND a list; the bare-string call emits the action value as the bare
+    /// string (<c>{"unset_meta_data": "token"}</c>), NOT a one-element list. This
+    /// overload surfaces that arm so the emission is byte-identical to the
+    /// reference for a single key.
+    /// </remarks>
+    public FunctionResult RemoveMetadata(string key)
+    {
+        _actions.Add(new Dictionary<string, object> { ["unset_meta_data"] = key });
         return this;
     }
 

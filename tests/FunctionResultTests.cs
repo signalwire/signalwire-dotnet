@@ -317,6 +317,19 @@ public class FunctionResultTests
     }
 
     [Fact]
+    public void RemoveGlobalData_SingleString()
+    {
+        // Python parity (test_remove_global_data_single_string):
+        // FunctionResult().remove_global_data("user_id")
+        //   -> action[0] == {"unset_global_data": "user_id"}
+        // The single-key string overload emits the action value as the BARE
+        // string, NOT a one-element list (which would be ["user_id"]).
+        var fr = new FunctionResult();
+        fr.RemoveGlobalData("user_id");
+        Assert.Equal("user_id", GetAction(fr, 0)["unset_global_data"]);
+    }
+
+    [Fact]
     public void SetMetadata()
     {
         var fr = new FunctionResult();
@@ -334,6 +347,19 @@ public class FunctionResultTests
         fr.RemoveMetadata(["key1", "key2"]);
         var keys = (List<string>)GetAction(fr, 0)["unset_meta_data"];
         Assert.Equal(new List<string> { "key1", "key2" }, keys);
+    }
+
+    [Fact]
+    public void RemoveMetadata_SingleString()
+    {
+        // Python parity (test_remove_metadata_single_string):
+        // FunctionResult().remove_metadata("key1")
+        //   -> action[0] == {"unset_meta_data": "key1"}
+        // The single-key string overload emits the action value as the BARE
+        // string, NOT a one-element list.
+        var fr = new FunctionResult();
+        fr.RemoveMetadata("key1");
+        Assert.Equal("key1", GetAction(fr, 0)["unset_meta_data"]);
     }
 
     [Fact]
