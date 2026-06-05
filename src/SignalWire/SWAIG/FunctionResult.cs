@@ -95,6 +95,8 @@ public class FunctionResult
             connectObj["from"] = fromAddr;
         }
 
+        // final=true -> permanent transfer; matches the Python reference
+        // (function_result.py connect: "transfer": str(final).lower()).
         _actions.Add(new Dictionary<string, object>
         {
             ["SWML"] = new Dictionary<string, object>
@@ -106,7 +108,9 @@ public class FunctionResult
                         new() { ["connect"] = connectObj },
                     },
                 },
+                ["version"] = "1.0.0",
             },
+            ["transfer"] = final ? "true" : "false",
         });
 
         return this;

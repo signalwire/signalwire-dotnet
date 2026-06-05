@@ -177,6 +177,19 @@ public class FunctionResultTests
     }
 
     [Fact]
+    public void Connect_EmitsTransferAndVersion()
+    {
+        // final -> top-level "transfer" + SWML "version" (parity with Python connect).
+        var actionTrue = GetAction(new FunctionResult().Connect("+15551234567", true), 0);
+        Assert.Equal("true", actionTrue["transfer"]);
+        var swml = (Dictionary<string, object>)actionTrue["SWML"];
+        Assert.Equal("1.0.0", swml["version"]);
+
+        var actionFalse = GetAction(new FunctionResult().Connect("+15551234567", false), 0);
+        Assert.Equal("false", actionFalse["transfer"]);
+    }
+
+    [Fact]
     public void SwmlTransfer_Basic()
     {
         var fr = new FunctionResult();
