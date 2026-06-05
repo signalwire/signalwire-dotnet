@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 52ce452520c03481d2e84e6850cb508c7d587c44",
+  "generated_from": "signalwire-dotnet @ b1153651670022900c4161c3d8e81d028734563d",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -1804,6 +1804,24 @@
           "status_callback_method",
           "trim",
           "wait_url"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.swaig.parameter_schema": {
+      "classes": {
+        "ParameterSchema": [
+          "array",
+          "boolean",
+          "build",
+          "create",
+          "enum",
+          "integer",
+          "number",
+          "object",
+          "required",
+          "required_names",
+          "string"
         ]
       },
       "functions": []
