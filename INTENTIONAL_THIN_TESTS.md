@@ -1,28 +1,24 @@
 # INTENTIONAL_THIN_TESTS — methods exempt from the no-cheat-tests audit
 
-The `audit_no_cheat_tests.py` script flags methods in test files whose bodies
-have no assertion call. This is generally a code smell — but for harness
-infrastructure (helper classes that wrap the mock server's HTTP control plane
-or `IDisposable` cleanup hooks for shared fixtures), the methods are by
-design pass-through wrappers without assertions. They are exercised
-indirectly by the actual `[Fact]` methods that use them.
+**Currently empty** — there are no justified thin tests in this port.
 
-## Format
+The previous 2 entries were both `IDisposable.Dispose()` cleanup hooks on
+shared xUnit fixtures (`MockServerFixture` / `RelayMockServerFixture`) — not
+`[Fact]` tests. The auditor mis-flagged them because its `public void Name(...)`
+shape pattern didn't require a test attribute. That detector bug is fixed
+upstream — the auditor now only treats such a method as a test when a
+`[Fact]`/`[Theory]`/`[TestMethod]`/etc. attribute precedes it, so `Dispose`
+hooks and fixture constructors are never flagged and need no entry here.
 
-Each entry: `- <file:line> — <one-sentence justification>` — one line per
-intentional thin helper. The audit script consumes this list as an
-allowlist.
+For a genuine thin `[Fact]` that must stay, prefer the in-code marker over a
+`file:line` entry (markers ride with the code through reflow; line numbers
+drift):
 
-## Entries
+```csharp
+[Fact]
+public void SmokeConstructor() {  // no-cheat: smoke test — exercises the build path only
+    _ = new Thing();
+}
+```
 
-- tests/MockTest.cs:546 — `MockServerFixture.Dispose()` is the xUnit
-  `IClassFixture` cleanup hook for the shared mock_signalwire harness;
-  the harness lives for the whole test run (per-process singleton owned
-  by the `MockTest` static, with its own `AppDomain.ProcessExit` shutdown
-  trap), so the fixture deliberately leaves it alone — disposing it here
-  would tear down the server underneath sibling test classes that share
-  the same `IClassFixture<MockServerFixture>`.
-- tests/RelayMockTest.cs:592 — `RelayMockServerFixture.Dispose()` is the
-  same pattern for the mock_relay harness; shutdown is owned by
-  `RelayMockTest`'s static `AppDomain.ProcessExit` handler, not by
-  per-fixture disposal.
+Format if a `file:line` entry is ever needed: `- <file:line> — <justification>`.
