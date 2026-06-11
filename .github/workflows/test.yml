@@ -53,7 +53,7 @@ jobs:
       - name: Set up .NET SDKs (net8.0 / net9.0 / net10.0)
         # Host-side dotnet is consumed by scripts/enumerate_signatures.py
         # for the SIGNATURES gate. The TEST gate uses docker (see run-ci.sh).
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
             8.0.x
