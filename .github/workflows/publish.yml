@@ -39,7 +39,7 @@ jobs:
           token: ${{ secrets.PORTING_SDK_TOKEN }}
 
       - name: Set up .NET SDKs (net8.0 / net9.0 / net10.0)
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
             8.0.x
