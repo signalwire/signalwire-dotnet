@@ -49,7 +49,7 @@ jobs:
       - name: Set up Python (porting-sdk mock servers + audit scripts)
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.14'
 
       - name: Install Python test harnesses (mock_relay + mock_signalwire)
         run: |
