@@ -25,13 +25,13 @@ jobs:
       contents: write
     steps:
       - name: Checkout signalwire-dotnet
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: signalwire-dotnet
           ref: ${{ inputs.tag || github.ref }}
 
       - name: Checkout porting-sdk (mock_relay + mock_signalwire test harnesses)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: signalwire/porting-sdk
           path: porting-sdk
