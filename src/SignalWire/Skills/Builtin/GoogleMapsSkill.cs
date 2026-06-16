@@ -35,8 +35,18 @@ public sealed class GoogleMapsSkill : SkillBase
                         ["type"] = "string",
                         ["description"] = "The address to look up",
                     },
+                    ["bias_lat"] = new Dictionary<string, object>
+                    {
+                        ["type"] = "number",
+                        ["description"] = "Latitude to bias results toward (optional)",
+                    },
+                    ["bias_lng"] = new Dictionary<string, object>
+                    {
+                        ["type"] = "number",
+                        ["description"] = "Longitude to bias results toward (optional)",
+                    },
                 },
-                ["required"] = new List<string> { "address" },
+                // No `required` — Python passes none (google_maps/skill.py:433).
             },
             ["data_map"] = new Dictionary<string, object>
             {
@@ -78,7 +88,7 @@ public sealed class GoogleMapsSkill : SkillBase
                     ["dest_lat"] = new Dictionary<string, object> { ["type"] = "number", ["description"] = "Latitude of the destination" },
                     ["dest_lng"] = new Dictionary<string, object> { ["type"] = "number", ["description"] = "Longitude of the destination" },
                 },
-                ["required"] = new List<string> { "origin_lat", "origin_lng", "dest_lat", "dest_lng" },
+                // No `required` — Python passes none (google_maps/skill.py:457).
             },
             ["data_map"] = new Dictionary<string, object>
             {

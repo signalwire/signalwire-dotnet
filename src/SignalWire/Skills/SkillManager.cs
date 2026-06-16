@@ -116,10 +116,10 @@ public sealed class SkillManager
         return true;
     }
 
-    public List<string> ListSkills()
+    public IReadOnlyList<string> ListSkills()
     {
         var keys = _loadedSkills.Keys.ToList();
-        keys.Sort();
+        keys.Sort(StringComparer.Ordinal);
         return keys;
     }
 

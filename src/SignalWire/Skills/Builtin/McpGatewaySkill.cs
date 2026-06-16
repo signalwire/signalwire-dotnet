@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.Json;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
@@ -40,9 +42,9 @@ public sealed class McpGatewaySkill : SkillBase
         var authUser = Params.TryGetValue("auth_user", out var au) ? au as string ?? "" : "";
         var authPassword = Params.TryGetValue("auth_password", out var ap) ? ap as string ?? "" : "";
         var toolPrefix = Params.TryGetValue("tool_prefix", out var tp) ? tp as string ?? "mcp_" : "mcp_";
-        var sessionTimeout = Params.TryGetValue("session_timeout", out var st) ? Convert.ToInt32(st) : 300;
-        var requestTimeout = Params.TryGetValue("request_timeout", out var rt) ? Convert.ToInt32(rt) : 30;
-        var retryAttempts = Params.TryGetValue("retry_attempts", out var ra) ? Math.Max(1, Convert.ToInt32(ra)) : 3;
+        var sessionTimeout = Params.TryGetValue("session_timeout", out var st) ? Convert.ToInt32(st, CultureInfo.InvariantCulture) : 300;
+        var requestTimeout = Params.TryGetValue("request_timeout", out var rt) ? Convert.ToInt32(rt, CultureInfo.InvariantCulture) : 30;
+        var retryAttempts = Params.TryGetValue("retry_attempts", out var ra) ? Math.Max(1, Convert.ToInt32(ra, CultureInfo.InvariantCulture)) : 3;
 
         if (services.Count == 0)
         {
@@ -131,6 +133,7 @@ public sealed class McpGatewaySkill : SkillBase
                          sessionTimeout, requestTimeout, retryAttempts, "", ""));
     }
 
+    [SuppressMessage("Design", "CA1031", Justification = "Per-attempt failures are caught to drive retry/fallback; the last error is surfaced to the caller as an in-band string.")]
     private static Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> BuildHandler(
         string gatewayUrl, string authToken, string authUser, string authPassword,
         int sessionTimeout, int requestTimeout, int retryAttempts,

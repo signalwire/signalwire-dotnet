@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using SignalWire.Agent;
@@ -39,6 +41,7 @@ public sealed class DatasphereSkill : SkillBase
         return true;
     }
 
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort upstream search call; any failure is surfaced to the caller as an in-band error string.")]
     public override void RegisterTools(AgentBase agent)
     {
         var toolName = GetToolName("search_knowledge");
@@ -47,9 +50,9 @@ public sealed class DatasphereSkill : SkillBase
         var token = Params.TryGetValue("token", out var tk) ? tk as string ?? "" : "";
         var documentId = Params.TryGetValue("document_id", out var di) ? di as string ?? "" : "";
         var count = Params.TryGetValue("count", out var c)
-            ? Math.Max(1, Math.Min(10, Convert.ToInt32(c))) : 1;
+            ? Math.Max(1, Math.Min(10, Convert.ToInt32(c, CultureInfo.InvariantCulture))) : 1;
         var distance = Params.TryGetValue("distance", out var d)
-            ? Convert.ToDouble(d) : 3.0;
+            ? Convert.ToDouble(d, CultureInfo.InvariantCulture) : 3.0;
         var noResultsMessage = Params.TryGetValue("no_results_message", out var nm)
             ? nm as string ?? "I couldn't find any relevant information for '{query}' in the knowledge base."
             : "I couldn't find any relevant information for '{query}' in the knowledge base.";
@@ -63,7 +66,7 @@ public sealed class DatasphereSkill : SkillBase
                 {
                     ["type"] = "string",
                     ["description"] = "The search query to find relevant knowledge",
-                    ["required"] = true,
+                    // Not required — Python passes none (datasphere/skill.py:171).
                 },
             },
             (args, rawData) =>
@@ -98,7 +101,7 @@ public sealed class DatasphereSkill : SkillBase
                 }
                 if (Params.TryGetValue("max_synonyms", out var ms))
                 {
-                    body["max_synonyms"] = Convert.ToInt32(ms);
+                    body["max_synonyms"] = Convert.ToInt32(ms, CultureInfo.InvariantCulture);
                 }
 
                 int status;
@@ -169,7 +172,8 @@ public sealed class DatasphereSkill : SkillBase
 
     private static string FormatNoResults(string template, string query)
     {
-        return template.Contains("{query}") ? template.Replace("{query}", query) : template;
+        return template.Contains("{query}", StringComparison.Ordinal)
+            ? template.Replace("{query}", query, StringComparison.Ordinal) : template;
     }
 
     public override Dictionary<string, object> GetGlobalData() => new()

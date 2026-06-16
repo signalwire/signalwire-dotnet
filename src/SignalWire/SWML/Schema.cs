@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
 
@@ -14,16 +15,31 @@ public sealed record VerbInfo(string Name, string SchemaName, JsonElement Defini
 /// <summary>Validation error raised by SchemaUtils.ValidateVerb when a
 /// verb config violates its schema. (Python parity:
 /// ``signalwire.utils.schema_utils.SchemaValidationError``.)</summary>
+[SuppressMessage("Naming", "CA1710", Justification = "Type name matches the cross-port surface (Python SchemaValidationError); renaming to *Exception would break parity.")]
 public class SchemaValidationError : Exception
 {
-    public string VerbName { get; }
-    public List<string> Errors { get; }
+    public string VerbName { get; } = "";
+    public IReadOnlyList<string> Errors { get; } = Array.Empty<string>();
 
-    public SchemaValidationError(string verbName, List<string> errors)
-        : base($"Schema validation failed for verb '{verbName}': {string.Join("; ", errors)}")
+    public SchemaValidationError(string verbName, IReadOnlyList<string> errors)
+        : base($"Schema validation failed for verb '{verbName}': {string.Join("; ", errors ?? Array.Empty<string>())}")
     {
         VerbName = verbName;
-        Errors = errors;
+        Errors = errors ?? Array.Empty<string>();
+    }
+
+    public SchemaValidationError()
+    {
+    }
+
+    public SchemaValidationError(string message)
+        : base(message)
+    {
+    }
+
+    public SchemaValidationError(string message, Exception innerException)
+        : base(message, innerException)
+    {
     }
 }
 
@@ -44,6 +60,7 @@ public sealed class Schema
     }
 
     /// <summary>Thread-safe singleton accessor.</summary>
+    [SuppressMessage("Maintainability", "CA1508", Justification = "Double-checked locking; the analyzer cannot model that Reset() (used by tests) nulls _instance from another method, so its always-null claim is a false positive.")]
     public static Schema Instance
     {
         get
@@ -70,7 +87,7 @@ public sealed class Schema
     public bool IsValidVerb(string name) => _verbs.ContainsKey(name);
 
     /// <summary>Get a sorted list of all verb names.</summary>
-    public List<string> GetVerbNames()
+    public IReadOnlyList<string> GetVerbNames()
     {
         var names = _verbs.Keys.ToList();
         names.Sort(StringComparer.Ordinal);
@@ -88,12 +105,13 @@ public sealed class Schema
 
     /// <summary>Alias of <see cref="GetVerbNames"/>. (Python parity:
     /// ``SchemaUtils.get_all_verb_names``.)</summary>
-    public List<string> GetAllVerbNames() => GetVerbNames();
+    public IReadOnlyList<string> GetAllVerbNames() => GetVerbNames();
 
     /// <summary>Public load-schema accessor. Returns the embedded SWML
     /// schema as a Dictionary&lt;string, JsonElement&gt;. Empty dict
     /// when the schema can't be loaded. (Python parity:
     /// ``SchemaUtils.load_schema``.)</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance accessor matching the cross-port surface (Python SchemaUtils.load_schema); kept non-static so callers reach it via Schema.Instance.")]
     public Dictionary<string, JsonElement> LoadSchemaPublic()
     {
         var assembly = Assembly.GetExecutingAssembly();

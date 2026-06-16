@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.REST.Namespaces;
 
 namespace SignalWire.REST;
@@ -73,6 +74,7 @@ public class RestClient : IDisposable
     public string ProjectId => _projectId;
     public string Token => _token;
     public string Space => _space;
+    [SuppressMessage("Usage", "CA1056", Justification = "BaseUrl is a wire string sent verbatim to the SignalWire API.")]
     public string BaseUrl => _baseUrl;
     public HttpClient Http => _http;
 

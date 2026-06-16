@@ -18,6 +18,7 @@
 // logged, never echoed in error messages, and never included in the response.
 
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -34,6 +35,8 @@ namespace SignalWire.Security;
 /// </summary>
 public static class WebhookValidator
 {
+    private static readonly char[] AuthorityTerminators = { '/', '?', '#' };
+
     // ----------------------------------------------------------------------
     // Public API
     // ----------------------------------------------------------------------
@@ -67,6 +70,7 @@ public static class WebhookValidator
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="signingKey"/> is null or empty.
     /// </exception>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is the wire string the platform signed verbatim; it is concatenated byte-for-byte into the HMAC message, so a Uri round-trip could alter the signed bytes.")]
     public static bool ValidateWebhookSignature(
         string signingKey,
         string? signature,
@@ -145,6 +149,7 @@ public static class WebhookValidator
     /// <paramref name="paramsOrRawBody"/> is neither a string nor a
     /// dictionary/list of params.
     /// </exception>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is the wire string the platform signed verbatim; it is concatenated byte-for-byte into the HMAC message, so a Uri round-trip could alter the signed bytes.")]
     public static bool ValidateRequest(
         string signingKey,
         string? signature,
@@ -294,6 +299,8 @@ public static class WebhookValidator
     // ----------------------------------------------------------------------
 
     /// <summary>Scheme-A digest: lowercase hex of HMAC-SHA1.</summary>
+    [SuppressMessage("Security", "CA5350", Justification = "HMAC-SHA1 is mandated by the SignalWire webhook signature contract (porting-sdk/webhooks.md); the algorithm is fixed by the wire protocol and cross-port test vectors, not a free choice.")]
+    [SuppressMessage("Globalization", "CA1308", Justification = "Lowercase hex is the Scheme-A digest form sent on the wire and compared verbatim against the X-SignalWire-Signature header.")]
     private static string HexHmacSha1(string key, string message)
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
@@ -303,6 +310,7 @@ public static class WebhookValidator
     }
 
     /// <summary>Scheme-B digest: standard base64 of HMAC-SHA1.</summary>
+    [SuppressMessage("Security", "CA5350", Justification = "HMAC-SHA1 is mandated by the SignalWire/cXML webhook signature contract (porting-sdk/webhooks.md); the algorithm is fixed by the wire protocol and cross-port test vectors, not a free choice.")]
     private static string Base64HmacSha1(string key, string message)
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
@@ -315,6 +323,7 @@ public static class WebhookValidator
     /// Constant-time string compare. Returns false on any unexpected error so
     /// malformed inputs never throw.
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Constant-time compare must never throw on malformed input; any failure is treated as a non-match (returns false) to avoid leaking branch information.")]
     private static bool SafeEquals(string a, string b)
     {
         try
@@ -367,6 +376,7 @@ public static class WebhookValidator
     /// Best-effort parse of an <c>application/x-www-form-urlencoded</c> body.
     /// Returns an empty list if the body doesn't decode as form data.
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort form parse: any decode failure yields an empty param list so a malformed body never throws into the validator.")]
     private static List<KeyValuePair<string, string>> ParseFormBody(string rawBody)
     {
         var result = new List<KeyValuePair<string, string>>();
@@ -375,7 +385,7 @@ public static class WebhookValidator
             return result;
         }
         // Bail out early if there's no '=' anywhere — definitely not form data.
-        if (!rawBody.Contains('='))
+        if (!rawBody.Contains('=', StringComparison.Ordinal))
         {
             return result;
         }
@@ -385,7 +395,7 @@ public static class WebhookValidator
             foreach (var pair in rawBody.Split('&'))
             {
                 if (pair.Length == 0) continue;
-                var eq = pair.IndexOf('=');
+                var eq = pair.IndexOf('=', StringComparison.Ordinal);
                 string key, value;
                 if (eq < 0)
                 {
@@ -418,6 +428,7 @@ public static class WebhookValidator
     ///   <item>If https + <c>:443</c> / http + <c>:80</c>: input URL AND url with port stripped.</item>
     /// </list>
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort URL parse: an unparseable URL falls back to using the input string as the sole candidate rather than throwing.")]
     private static List<string> CandidateUrls(string url)
     {
         var result = new List<string>();
@@ -442,11 +453,11 @@ public static class WebhookValidator
             return result;
         }
 
-        var scheme = (parsed.Scheme ?? "").ToLowerInvariant();
+        var scheme = (parsed.Scheme ?? "").ToUpperInvariant();
         int? standardPort = scheme switch
         {
-            "http" => 80,
-            "https" => 443,
+            "HTTP" => 80,
+            "HTTPS" => 443,
             _ => null,
         };
 
@@ -494,22 +505,22 @@ public static class WebhookValidator
         var schemeEnd = url.IndexOf("://", StringComparison.Ordinal);
         if (schemeEnd < 0) return false;
         var afterScheme = schemeEnd + 3;
-        var pathStart = url.IndexOfAny(new[] { '/', '?', '#' }, afterScheme);
+        var pathStart = url.IndexOfAny(AuthorityTerminators, afterScheme);
         var authorityEnd = pathStart < 0 ? url.Length : pathStart;
         var authority = url[afterScheme..authorityEnd];
         // IPv6 host: skip the "[...]" segment before looking for ':'.
-        var bracketEnd = authority.IndexOf(']');
+        var bracketEnd = authority.IndexOf(']', StringComparison.Ordinal);
         var searchFrom = bracketEnd >= 0 ? bracketEnd + 1 : 0;
         // Strip userinfo "user:pass@" — port lookup is on the host part only.
         var atSign = authority.IndexOf('@', searchFrom);
         var hostPart = atSign >= 0 ? authority[(atSign + 1)..] : authority[searchFrom..];
-        return hostPart.Contains(':');
+        return hostPart.Contains(':', StringComparison.Ordinal);
     }
 
     private static string BuildUrlWithPort(Uri uri, int port)
     {
         var host = uri.Host;
-        if (host.Contains(':') && !host.StartsWith('['))
+        if (host.Contains(':', StringComparison.Ordinal) && !host.StartsWith('['))
         {
             host = $"[{host}]";
         }
@@ -521,7 +532,7 @@ public static class WebhookValidator
     private static string BuildUrlWithoutPort(Uri uri)
     {
         var host = uri.Host;
-        if (host.Contains(':') && !host.StartsWith('['))
+        if (host.Contains(':', StringComparison.Ordinal) && !host.StartsWith('['))
         {
             host = $"[{host}]";
         }
@@ -536,6 +547,8 @@ public static class WebhookValidator
     /// present and matches. Returns false only when the param is present and
     /// mismatches.
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort URL parse: an unparseable URL means there is no bodySHA256 constraint to enforce, so the check passes rather than throwing.")]
+    [SuppressMessage("Globalization", "CA1308", Justification = "Lowercase hex is the bodySHA256 wire form compared verbatim against the query-param digest.")]
     private static bool CheckBodySha256(string url, string rawBody)
     {
         Uri? parsed;
@@ -562,7 +575,7 @@ public static class WebhookValidator
         foreach (var pair in qstr.Split('&'))
         {
             if (pair.Length == 0) continue;
-            var eq = pair.IndexOf('=');
+            var eq = pair.IndexOf('=', StringComparison.Ordinal);
             string k, v;
             if (eq < 0) { k = pair; v = ""; }
             else { k = pair[..eq]; v = pair[(eq + 1)..]; }

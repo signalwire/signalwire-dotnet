@@ -52,11 +52,11 @@ public sealed class Device
     /// Build a device from its discriminant and (optional) params payload.
     /// </summary>
     /// <param name="type">The device type discriminant (required).</param>
-    /// <param name="params_">The device params; an empty map when omitted.</param>
-    public Device(string type, Dictionary<string, object?>? params_ = null)
+    /// <param name="parameters">The device params; an empty map when omitted.</param>
+    public Device(string type, Dictionary<string, object?>? parameters = null)
     {
         Type = type ?? throw new ArgumentNullException(nameof(type));
-        Params = params_ ?? new Dictionary<string, object?>();
+        Params = parameters ?? new Dictionary<string, object?>();
     }
 
     /// <summary>

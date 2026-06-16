@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -63,15 +65,16 @@ public sealed class WebSearchSkill : SkillBase
             && parameters.TryGetValue("search_engine_id", out var se) && se is string sid && sid.Length > 0;
     }
 
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort CSE search call; any failure is surfaced to the caller as an in-band error string.")]
     public override void RegisterTools(AgentBase agent)
     {
         var toolName = GetToolName("web_search");
         var apiKey = Params.TryGetValue("api_key", out var k) ? k as string ?? "" : "";
         var searchEngineId = Params.TryGetValue("search_engine_id", out var se) ? se as string ?? "" : "";
         var numResults = Params.TryGetValue("num_results", out var nr)
-            ? Math.Max(1, Math.Min(10, Convert.ToInt32(nr)))
+            ? Math.Max(1, Math.Min(10, Convert.ToInt32(nr, CultureInfo.InvariantCulture)))
             : 3;
-        var timeout = Params.TryGetValue("timeout", out var to) ? Math.Max(2, Convert.ToInt32(to)) : 15;
+        var timeout = Params.TryGetValue("timeout", out var to) ? Math.Max(2, Convert.ToInt32(to, CultureInfo.InvariantCulture)) : 15;
         var noResultsMessage = Params.TryGetValue("no_results_message", out var nm)
             ? nm as string ?? "No results found for the given query."
             : "No results found for the given query.";
@@ -105,7 +108,7 @@ public sealed class WebSearchSkill : SkillBase
                 {
                     ["type"] = "string",
                     ["description"] = "The search query",
-                    ["required"] = true,
+                    // Not required — Python passes none (web_search/skill.py:707).
                 },
             },
             (args, rawData) =>
@@ -122,7 +125,7 @@ public sealed class WebSearchSkill : SkillBase
                     ["key"] = apiKey,
                     ["cx"] = searchEngineId,
                     ["q"] = query,
-                    ["num"] = numResults.ToString(),
+                    ["num"] = numResults.ToString(CultureInfo.InvariantCulture),
                 };
 
                 int status;
@@ -229,6 +232,7 @@ public sealed class WebSearchSkill : SkillBase
     /// breaking once the deadline fires. The overall_deadline is enforced in
     /// BOTH modes. Mirrors Python's parallel/sequential scrape loop.
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Deadline-bounded best-effort scrape batch; any per-batch failure is swallowed so completed work can still be harvested.")]
     private static List<ScrapedResult> ScrapeCandidates(
         string query,
         List<SearchResult> candidates,
@@ -292,6 +296,7 @@ public sealed class WebSearchSkill : SkillBase
     /// cancelled/failed, or the content is below the quality threshold. Mirrors
     /// Python's <c>_scrape_one</c> closure.
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Per-page scrape is best-effort and bounded by per_page_timeout/overall_deadline; any failure abandons just that page (returns null).")]
     private static async Task<ScrapedResult?> ScrapeOneAsync(
         string query,
         SearchResult candidate,
@@ -344,6 +349,7 @@ public sealed class WebSearchSkill : SkillBase
     }
 
     /// <summary>Default scrape handler: a plain <see cref="SocketsHttpHandler"/>.</summary>
+    [SuppressMessage("Performance", "CA1859", Justification = "Return type must stay HttpMessageHandler to match the Func<HttpMessageHandler> ScrapeHandlerFactory delegate used via the ?? fallback.")]
     private static HttpMessageHandler DefaultScrapeHandler() => new SocketsHttpHandler();
 
     // A scraped page must clear this minimal quality bar to be kept. Python's
@@ -378,12 +384,12 @@ public sealed class WebSearchSkill : SkillBase
         if (text.Length < 50) return 0.0;
         var lengthScore = Math.Min(1.0, text.Length / 1000.0);
         var relevance = 0.0;
-        var lowered = text.ToLowerInvariant();
-        var words = query.ToLowerInvariant().Split(
+        var uppered = text.ToUpperInvariant();
+        var words = query.ToUpperInvariant().Split(
             (char[]?)null, StringSplitOptions.RemoveEmptyEntries);
         if (words.Length > 0)
         {
-            var found = words.Count(w => lowered.Contains(w));
+            var found = words.Count(w => uppered.Contains(w, StringComparison.Ordinal));
             relevance = (double)found / words.Length;
         }
         return (lengthScore * 0.5) + (relevance * 0.5);
@@ -460,29 +466,32 @@ public sealed class WebSearchSkill : SkillBase
 
     private static string FormatNoResults(string template, string query)
     {
-        return template.Contains("{query}") ? template.Replace("{query}", query) : template;
+        return template.Contains("{query}", StringComparison.Ordinal)
+            ? template.Replace("{query}", query, StringComparison.Ordinal) : template;
     }
 
     // ------------------------------------------------------------------
     //  Param helpers
     // ------------------------------------------------------------------
 
+    [SuppressMessage("Design", "CA1031", Justification = "Lenient param coercion; any conversion failure falls back to the supplied default.")]
     private double GetParamDouble(string name, double fallback)
     {
         if (Params.TryGetValue(name, out var v) && v is not null)
         {
-            try { return Convert.ToDouble(v); }
-            catch { return fallback; }
+            try { return Convert.ToDouble(v, CultureInfo.InvariantCulture); }
+            catch (Exception) { return fallback; }
         }
         return fallback;
     }
 
+    [SuppressMessage("Design", "CA1031", Justification = "Lenient param coercion; any conversion failure falls back to the supplied default.")]
     private bool GetParamBool(string name, bool fallback)
     {
         if (Params.TryGetValue(name, out var v) && v is not null)
         {
-            try { return Convert.ToBoolean(v); }
-            catch { return fallback; }
+            try { return Convert.ToBoolean(v, CultureInfo.InvariantCulture); }
+            catch (Exception) { return fallback; }
         }
         return fallback;
     }

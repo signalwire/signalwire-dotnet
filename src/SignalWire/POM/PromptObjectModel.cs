@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -34,7 +35,13 @@ public class Section
 
     public string Body { get; set; }
 
-    public List<string> Bullets { get; }
+    private readonly List<string> _bullets;
+
+    public IReadOnlyList<string> Bullets => _bullets;
+
+    /// <summary>Mutable backing store for <see cref="Bullets"/>, used by
+    /// builders within the assembly to append bullets in place.</summary>
+    internal List<string> BulletsMutable => _bullets;
 
     /// <summary>Three-state numbering: null = inherit, true = force on,
     /// false = force off. (Python parity: ``numbered`` is
@@ -45,21 +52,27 @@ public class Section
 
     public bool NumberedBullets { get; set; }
 
-    public List<Section> Subsections { get; }
+    private readonly List<Section> _subsections;
+
+    public IReadOnlyList<Section> Subsections => _subsections;
+
+    /// <summary>Mutable backing store for <see cref="Subsections"/>, used by
+    /// builders within the assembly to append subsections in place.</summary>
+    internal List<Section> SubsectionsMutable => _subsections;
 
     public Section(
         string? title = null,
         string body = "",
-        List<string>? bullets = null,
+        IReadOnlyList<string>? bullets = null,
         bool? numbered = null,
         bool numberedBullets = false)
     {
         Title = title;
         Body = body;
-        Bullets = bullets is null ? new List<string>() : new List<string>(bullets);
+        _bullets = bullets is null ? new List<string>() : new List<string>(bullets);
         Numbered = numbered;
         NumberedBullets = numberedBullets;
-        Subsections = new List<Section>();
+        _subsections = new List<Section>();
     }
 
     /// <summary>Set or replace this section's body text.
@@ -72,9 +85,10 @@ public class Section
 
     /// <summary>Append bullets to this section.
     /// (Python parity: ``Section.add_bullets``.)</summary>
-    public Section AddBullets(List<string> bullets)
+    public Section AddBullets(IReadOnlyList<string> bullets)
     {
-        Bullets.AddRange(bullets);
+        ArgumentNullException.ThrowIfNull(bullets);
+        _bullets.AddRange(bullets);
         return this;
     }
 
@@ -83,21 +97,21 @@ public class Section
     public Section AddSubsection(
         string? title = null,
         string body = "",
-        List<string>? bullets = null,
+        IReadOnlyList<string>? bullets = null,
         bool? numbered = null,
         bool numberedBullets = false)
     {
         if (title is null)
             throw new ArgumentException("Subsections must have a title");
         var sub = new Section(title, body, bullets, numbered, numberedBullets);
-        Subsections.Add(sub);
+        _subsections.Add(sub);
         return sub;
     }
 
     /// <summary>Render this section as a markdown fragment, indented at
     /// the given header level (default 2). Mirrors Python's
     /// ``Section.render_markdown`` exactly.</summary>
-    public string RenderMarkdown(int level = 2, List<int>? sectionNumber = null)
+    public string RenderMarkdown(int level = 2, IReadOnlyList<int>? sectionNumber = null)
     {
         sectionNumber ??= new List<int>();
         var md = new List<string>();
@@ -107,7 +121,7 @@ public class Section
         {
             string prefix = "";
             if (sectionNumber.Count > 0)
-                prefix = string.Join(".", sectionNumber.Select(n => n.ToString())) + ". ";
+                prefix = string.Join(".", sectionNumber.Select(n => n.ToString(CultureInfo.InvariantCulture))) + ". ";
             md.Add($"{new string('#', level)} {prefix}{Title}\n");
         }
 
@@ -134,7 +148,7 @@ public class Section
         for (int i = 0; i < Subsections.Count; i++)
         {
             var subsection = Subsections[i];
-            List<int> newSectionNumber;
+            IReadOnlyList<int> newSectionNumber;
             int nextLevel;
             if (Title is not null || sectionNumber.Count > 0)
             {
@@ -162,7 +176,7 @@ public class Section
     /// <summary>Render this section as an XML fragment. Mirrors
     /// Python's ``Section.render_xml`` exactly (no HTML escaping; uses
     /// `<bullets>` / `<subsections>` wrapping containers).</summary>
-    public string RenderXml(int indent = 0, List<int>? sectionNumber = null)
+    public string RenderXml(int indent = 0, IReadOnlyList<int>? sectionNumber = null)
     {
         sectionNumber ??= new List<int>();
         string indentStr = new string(' ', indent * 2);
@@ -174,7 +188,7 @@ public class Section
         {
             string prefix = "";
             if (sectionNumber.Count > 0)
-                prefix = string.Join(".", sectionNumber.Select(n => n.ToString())) + ". ";
+                prefix = string.Join(".", sectionNumber.Select(n => n.ToString(CultureInfo.InvariantCulture))) + ". ";
             xml.Add($"{indentStr}  <title>{prefix}{Title}</title>");
         }
 
@@ -202,7 +216,7 @@ public class Section
             for (int i = 0; i < Subsections.Count; i++)
             {
                 var subsection = Subsections[i];
-                List<int> newSectionNumber;
+                IReadOnlyList<int> newSectionNumber;
                 if (Title is not null || sectionNumber.Count > 0)
                 {
                     if (anySubsectionNumbered && subsection.Numbered != false)
@@ -250,6 +264,12 @@ public class Section
 
 public class PromptObjectModel
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
     private readonly List<Section> _sections;
     public bool Debug { get; set; }
 
@@ -267,7 +287,7 @@ public class PromptObjectModel
     public Section AddSection(
         string? title = null,
         string body = "",
-        List<string>? bullets = null,
+        IReadOnlyList<string>? bullets = null,
         bool? numbered = null,
         bool numberedBullets = false)
     {
@@ -370,7 +390,7 @@ public class PromptObjectModel
 
     /// <summary>Serialize to a list of dicts (matches Python's to_dict
     /// which returns a List rather than a Dict).</summary>
-    public List<Dictionary<string, object>> ToDict() =>
+    public IReadOnlyList<Dictionary<string, object>> ToDict() =>
         _sections.Select(s => s.ToDict()).ToList();
 
     /// <summary>Serialize to JSON string with 2-space indent and Python
@@ -378,14 +398,9 @@ public class PromptObjectModel
     public string ToJson()
     {
         if (_sections.Count == 0) return "[]";
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        };
         // System.Text.Json indents with 2 spaces by default in .NET 9+.
         var dicts = ToDict();
-        return JsonSerializer.Serialize(dicts, options);
+        return JsonSerializer.Serialize(dicts, JsonOptions);
     }
 
     /// <summary>Serialize to YAML string. Matches PyYAML's
@@ -489,7 +504,7 @@ public class PromptObjectModel
         {
             foreach (var item in bulletsEl.EnumerateArray())
                 if (item.ValueKind == JsonValueKind.String)
-                    s.Bullets.Add(item.GetString() ?? "");
+                    s.BulletsMutable.Add(item.GetString() ?? "");
         }
 
         if (el.TryGetProperty("numbered", out var n))
@@ -503,7 +518,7 @@ public class PromptObjectModel
         if (hasSubsections)
         {
             foreach (var sub in subsEl.EnumerateArray())
-                s.Subsections.Add(SectionFromJson(sub, isSubsection: true));
+                s.SubsectionsMutable.Add(SectionFromJson(sub, isSubsection: true));
         }
 
         return s;
@@ -514,6 +529,7 @@ public class PromptObjectModel
     /// (Python parity: ``PromptObjectModel.add_pom_as_subsection``.)</summary>
     public void AddPomAsSubsection(string targetTitle, PromptObjectModel pomToAdd)
     {
+        ArgumentNullException.ThrowIfNull(pomToAdd);
         var target = FindSection(targetTitle);
         if (target is null)
             throw new ArgumentException($"No section with title '{targetTitle}' found.");
@@ -523,9 +539,14 @@ public class PromptObjectModel
     /// <summary>Add a PromptObjectModel as a subsection of an existing
     /// Section object directly. Overload mirrors Python's polymorphism.
     /// (Python parity: ``PromptObjectModel.add_pom_as_subsection``.)</summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Performance", "CA1822:Mark members as static",
+        Justification = "Instance overload mirrors the AddPomAsSubsection(string, ...) sibling and the cross-port instance surface.")]
     public void AddPomAsSubsection(Section target, PromptObjectModel pomToAdd)
     {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(pomToAdd);
         foreach (var s in pomToAdd.Sections)
-            target.Subsections.Add(s);
+            target.SubsectionsMutable.Add(s);
     }
 }

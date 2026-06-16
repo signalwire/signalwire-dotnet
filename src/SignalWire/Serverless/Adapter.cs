@@ -55,6 +55,8 @@ public static class Adapter
         SWML.Service agent,
         Dictionary<string, object?> lambdaEvent)
     {
+        ArgumentNullException.ThrowIfNull(agent);
+        ArgumentNullException.ThrowIfNull(lambdaEvent);
         var method = GetStr(lambdaEvent, "httpMethod")?.ToUpperInvariant()
             ?? GetNestedStr(lambdaEvent, "requestContext", "http", "method")?.ToUpperInvariant()
             ?? "GET";
@@ -106,6 +108,8 @@ public static class Adapter
         SWML.Service agent,
         Dictionary<string, object?> request)
     {
+        ArgumentNullException.ThrowIfNull(agent);
+        ArgumentNullException.ThrowIfNull(request);
         var method = (GetStr(request, "method") ?? GetStr(request, "Method") ?? "GET").ToUpperInvariant();
         var url = GetStr(request, "url") ?? GetStr(request, "Url") ?? "/";
 
@@ -166,24 +170,24 @@ public static class Adapter
         switch (env)
         {
             case "lambda":
-            {
-                var input = Console.In.ReadToEnd();
-                var evt = string.IsNullOrEmpty(input) ? new Dictionary<string, object?>()
-                    : JsonSerializer.Deserialize<Dictionary<string, object?>>(input) ?? new();
-                var response = HandleLambda(agent, evt);
-                Console.Write(JsonSerializer.Serialize(response));
-                break;
-            }
+                {
+                    var input = Console.In.ReadToEnd();
+                    var evt = string.IsNullOrEmpty(input) ? new Dictionary<string, object?>()
+                        : JsonSerializer.Deserialize<Dictionary<string, object?>>(input) ?? new();
+                    var response = HandleLambda(agent, evt);
+                    Console.Write(JsonSerializer.Serialize(response));
+                    break;
+                }
 
             case "azure":
-            {
-                var input = Console.In.ReadToEnd();
-                var request = string.IsNullOrEmpty(input) ? new Dictionary<string, object?>()
-                    : JsonSerializer.Deserialize<Dictionary<string, object?>>(input) ?? new();
-                var response = HandleAzure(agent, request);
-                Console.Write(JsonSerializer.Serialize(response));
-                break;
-            }
+                {
+                    var input = Console.In.ReadToEnd();
+                    var request = string.IsNullOrEmpty(input) ? new Dictionary<string, object?>()
+                        : JsonSerializer.Deserialize<Dictionary<string, object?>>(input) ?? new();
+                    var response = HandleAzure(agent, request);
+                    Console.Write(JsonSerializer.Serialize(response));
+                    break;
+                }
 
             default:
                 agent.Run();

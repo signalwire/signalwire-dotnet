@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.Logging;
 
 namespace SignalWire.Relay;
@@ -32,8 +33,8 @@ public class Call
     public CallState? CallState =>
         CallStateExtensions.TryParse(State, out var s) ? s : null;
 
-    public Dictionary<string, object?> Device { get; set; } = new();
-    public Dictionary<string, object?> Peer { get; set; } = new();
+    public Dictionary<string, object?> Device { get; private set; } = new();
+    public Dictionary<string, object?> Peer { get; private set; } = new();
     public string? EndReason { get; set; }
     public string? Context { get; set; }
     public string? Direction { get; set; }
@@ -45,8 +46,10 @@ public class Call
     /// <summary>controlId => Action</summary>
     public Dictionary<string, Action> Actions { get; } = new();
 
+    private readonly List<System.Action<Event, Call>> _onEventCallbacks = [];
+
     /// <summary>User-registered event callbacks (catch-all).</summary>
-    public List<System.Action<Event, Call>> OnEventCallbacks { get; } = [];
+    public IReadOnlyList<System.Action<Event, Call>> OnEventCallbacks => _onEventCallbacks;
 
     /// <summary>Per-event-type listeners registered via <see cref="On(string, System.Action{Event})"/>.</summary>
     public Dictionary<string, List<System.Action<Event>>> TypedListeners { get; } = new();
@@ -55,22 +58,23 @@ public class Call
     // Construction
     // ------------------------------------------------------------------
 
-    public Call(Dictionary<string, object?> params_, Client client)
+    public Call(Dictionary<string, object?> parameters, Client client)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
         Client = client;
-        CallId = GetStr(params_, "call_id");
-        NodeId = GetStr(params_, "node_id");
-        Tag = GetStr(params_, "tag");
-        Context = GetStr(params_, "context");
-        Direction = GetStr(params_, "direction");
+        CallId = GetStr(parameters, "call_id");
+        NodeId = GetStr(parameters, "node_id");
+        Tag = GetStr(parameters, "tag");
+        Context = GetStr(parameters, "context");
+        Direction = GetStr(parameters, "direction");
         // Production wire uses "call_state"; legacy synthetic frames use "state".
-        State = GetStr(params_, "call_state")
-            ?? GetStr(params_, "state")
+        State = GetStr(parameters, "call_state")
+            ?? GetStr(parameters, "state")
             ?? Constants.CallStateCreated;
 
-        if (params_.TryGetValue("device", out var d) && d is Dictionary<string, object?> dev)
+        if (parameters.TryGetValue("device", out var d) && d is Dictionary<string, object?> dev)
             Device = dev;
-        if (params_.TryGetValue("peer", out var p) && p is Dictionary<string, object?> peer)
+        if (parameters.TryGetValue("peer", out var p) && p is Dictionary<string, object?> peer)
             Peer = peer;
     }
 
@@ -82,8 +86,10 @@ public class Call
     /// Central event router invoked by the Client whenever a server event
     /// targets this call.
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "User-registered event callbacks run at a handler boundary; a faulty callback is logged and must not abort event dispatch to other listeners.")]
     public void DispatchEvent(Event evt)
     {
+        ArgumentNullException.ThrowIfNull(evt);
         var eventType = evt.EventType;
         var parms = evt.Params;
 
@@ -173,7 +179,7 @@ public class Call
     /// <summary>Register a generic event listener on this call.</summary>
     public Call On(System.Action<Event, Call> callback)
     {
-        OnEventCallbacks.Add(callback);
+        _onEventCallbacks.Add(callback);
         return this;
     }
 
@@ -364,6 +370,7 @@ public class Call
     }
 
     /// <summary>Play an audio file from a URL. Typed convenience over <see cref="Play"/>.</summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public PlayAction PlayAudio(
         string url,
         double? volume = null,
@@ -535,6 +542,7 @@ public class Call
     }
 
     /// <summary>Play an audio file then collect input. Typed media over <see cref="PlayAndCollect"/>.</summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public CollectAction PromptAudio(
         string url,
         Dictionary<string, object?> collect,

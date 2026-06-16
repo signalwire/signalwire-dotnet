@@ -25,15 +25,16 @@ public sealed class SwmlTransferSkill : SkillBase
         var paramDescription = Params.TryGetValue("parameter_description", out var pd) ? pd as string ?? "The type of transfer to perform" : "The type of transfer to perform";
         var defaultMessage = Params.TryGetValue("default_message", out var dm) ? dm as string ?? "Transferring your call, please hold." : "Transferring your call, please hold.";
 
-        var transferKeys = transfers.Keys.ToList();
-
+        // The transfer key is a plain required string with NO enum — Python's
+        // swml_transfer does not put the transfer keys in the param schema
+        // (swml_transfer/skill.py:186); the keys drive DataMap pattern-matching
+        // expressions, not the param's enum.
         var properties = new Dictionary<string, object>
         {
             [paramName] = new Dictionary<string, object>
             {
                 ["type"] = "string",
                 ["description"] = paramDescription,
-                ["enum"] = transferKeys,
             },
         };
         var required = new List<string> { paramName };
@@ -62,7 +63,7 @@ public sealed class SwmlTransferSkill : SkillBase
             if (url.Length > 0)
             {
                 var actionList = (List<Dictionary<string, object>>)((Dictionary<string, object>)expression["output"])["action"];
-                if (url.StartsWith("http://") || url.StartsWith("https://"))
+                if (url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal))
                 {
                     actionList.Add(new Dictionary<string, object> { ["transfer_uri"] = url });
                 }

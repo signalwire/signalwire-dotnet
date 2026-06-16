@@ -7,6 +7,7 @@
 // passed true or ``SWML_ALLOW_PRIVATE_URLS`` is set.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 
@@ -14,10 +15,18 @@ namespace SignalWire.Utils;
 
 public static class UrlValidator
 {
+    private static readonly string[] TruthyEnvValues = { "1", "true", "yes" };
+
+    private static bool IsTruthyEnv(string? value) =>
+        value is not null && Array.Exists(
+            TruthyEnvValues,
+            v => string.Equals(v, value, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Validate that a URL is safe to fetch (not pointing to
     /// private/internal resources). Returns true when safe, false when
     /// rejected. (Python parity:
     /// ``signalwire.utils.url_validator.validate_url(url, allow_private)``.)</summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API and validated as text; converting churns call sites.")]
     public static bool ValidateUrl(string url, bool allowPrivate = false)
     {
         if (string.IsNullOrEmpty(url)) return false;
@@ -41,8 +50,7 @@ public static class UrlValidator
         }
 
         var envBypass = Environment.GetEnvironmentVariable("SWML_ALLOW_PRIVATE_URLS");
-        if (allowPrivate
-            || (envBypass is not null && envBypass.ToLowerInvariant() is "1" or "true" or "yes"))
+        if (allowPrivate || IsTruthyEnv(envBypass))
         {
             return true;
         }
@@ -77,6 +85,7 @@ public static class UrlValidator
     /// <summary>Test-friendly overload that accepts already-resolved IPs
     /// instead of doing a live DNS lookup. Cross-language audit / unit
     /// tests use this to exercise the blocked-range logic deterministically.</summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API and validated as text; converting churns call sites.")]
     public static bool ValidateUrlWithResolvedAddresses(
         string url,
         IPAddress[] resolvedAddresses,
@@ -88,8 +97,7 @@ public static class UrlValidator
         if (string.IsNullOrEmpty(uri.Host)) return false;
 
         var envBypass = Environment.GetEnvironmentVariable("SWML_ALLOW_PRIVATE_URLS");
-        if (allowPrivate
-            || (envBypass is not null && envBypass.ToLowerInvariant() is "1" or "true" or "yes"))
+        if (allowPrivate || IsTruthyEnv(envBypass))
         {
             return true;
         }

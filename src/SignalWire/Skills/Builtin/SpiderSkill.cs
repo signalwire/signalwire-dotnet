@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using SignalWire.Agent;
@@ -36,14 +38,15 @@ public sealed class SpiderSkill : SkillBase
 
     public override bool Setup(AgentBase agent, Dictionary<string, object> parameters) => true;
 
+    [SuppressMessage("Design", "CA1031", Justification = "Per-page fetch/scrape failures are best-effort; each is surfaced in-band or skipped so the crawl can continue.")]
     public override void RegisterTools(AgentBase agent)
     {
         var prefix = Params.TryGetValue("tool_name", out var p) && p is string ps && ps.Length > 0 ? ps + "_" : "";
-        var maxLength = Params.TryGetValue("max_text_length", out var ml) ? Convert.ToInt32(ml) : 5000;
-        var timeout = Params.TryGetValue("timeout", out var to) ? Math.Max(2, Convert.ToInt32(to)) : 15;
+        var maxLength = Params.TryGetValue("max_text_length", out var ml) ? Convert.ToInt32(ml, CultureInfo.InvariantCulture) : 5000;
+        var timeout = Params.TryGetValue("timeout", out var to) ? Math.Max(2, Convert.ToInt32(to, CultureInfo.InvariantCulture)) : 15;
         var userAgent = Params.TryGetValue("user_agent", out var ua) ? ua as string ?? "SignalWire-Spider/1.0" : "SignalWire-Spider/1.0";
-        var maxPages = Params.TryGetValue("max_pages", out var mp) ? Math.Max(1, Convert.ToInt32(mp)) : 1;
-        var maxDepth = Params.TryGetValue("max_depth", out var md) ? Math.Max(0, Convert.ToInt32(md)) : 0;
+        var maxPages = Params.TryGetValue("max_pages", out var mp) ? Math.Max(1, Convert.ToInt32(mp, CultureInfo.InvariantCulture)) : 1;
+        var maxDepth = Params.TryGetValue("max_depth", out var md) ? Math.Max(0, Convert.ToInt32(md, CultureInfo.InvariantCulture)) : 0;
 
         DefineTool(
             prefix + "scrape_url",
@@ -142,7 +145,7 @@ public sealed class SpiderSkill : SkillBase
                             }
                         }
                     }
-                    catch
+                    catch (Exception)
                     {
                         // ignore individual page failures and continue
                     }
@@ -278,7 +281,7 @@ public sealed class SpiderSkill : SkillBase
             if (m.Success) result.Add(StripHtml(m.Groups[1].Value));
             return result;
         }
-        var dot = selector.IndexOf('.');
+        var dot = selector.IndexOf('.', StringComparison.Ordinal);
         var tag = dot < 0 ? selector : selector[..dot];
         var matches = Regex.Matches(html, $@"<{Regex.Escape(tag)}\b[^>]*>([\s\S]*?)</{Regex.Escape(tag)}>",
             RegexOptions.IgnoreCase);

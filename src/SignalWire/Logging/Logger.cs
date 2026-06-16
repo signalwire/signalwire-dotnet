@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace SignalWire.Logging;
 
 public enum LogLevel
@@ -58,7 +60,7 @@ public sealed class Logger
     {
         if (!ShouldLog(level)) return;
 
-        var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
         var upper = level.ToString().ToUpperInvariant();
         Console.Error.WriteLine($"[{timestamp}] [{upper}] [{Name}] {message}");
     }
@@ -66,12 +68,12 @@ public sealed class Logger
     private static LogLevel? ParseLevel(string? value)
     {
         if (string.IsNullOrEmpty(value)) return null;
-        return value.ToLowerInvariant() switch
+        return value.ToUpperInvariant() switch
         {
-            "debug" => LogLevel.Debug,
-            "info" => LogLevel.Info,
-            "warn" => LogLevel.Warn,
-            "error" => LogLevel.Error,
+            "DEBUG" => LogLevel.Debug,
+            "INFO" => LogLevel.Info,
+            "WARN" => LogLevel.Warn,
+            "ERROR" => LogLevel.Error,
             _ => null,
         };
     }

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using SignalWire.Agent;
@@ -111,6 +113,7 @@ public sealed class ClaudeSkillsSkill : SkillBase
         }
     }
 
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort section file read; any failure surfaces as an in-band error string to the caller.")]
     private Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> MakeHandler(ParsedSkill skill)
     {
         return (args, rawData) =>
@@ -144,18 +147,20 @@ public sealed class ClaudeSkillsSkill : SkillBase
         };
     }
 
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort SKILL.md read; an unreadable file is simply skipped (returns null).")]
+    [SuppressMessage("Globalization", "CA1308", Justification = "Frontmatter key normalization matched against lowercase literals; not a wire value.")]
     private static ParsedSkill? Parse(string skillFile, string fallbackName, bool ignoreInvocationControl)
     {
         string raw;
         try { raw = File.ReadAllText(skillFile, Encoding.UTF8); }
-        catch { return null; }
+        catch (Exception) { return null; }
 
         string? name = null, description = null, argumentHint = null;
         var disableModel = false;
         var userInvocable = true;
         string body;
 
-        if (raw.StartsWith("---"))
+        if (raw.StartsWith("---", StringComparison.Ordinal))
         {
             var rest = raw[3..];
             var endIdx = rest.IndexOf("\n---", StringComparison.Ordinal);
@@ -169,7 +174,7 @@ public sealed class ClaudeSkillsSkill : SkillBase
                 foreach (var line in fm.Split('\n'))
                 {
                     var trimmed = line.TrimEnd('\r');
-                    var colonIdx = trimmed.IndexOf(':');
+                    var colonIdx = trimmed.IndexOf(':', StringComparison.Ordinal);
                     if (colonIdx <= 0) continue;
                     var key = trimmed[..colonIdx].Trim();
                     var value = trimmed[(colonIdx + 1)..].Trim();
@@ -273,6 +278,7 @@ public sealed class ClaudeSkillsSkill : SkillBase
         return Regex.IsMatch(name, sb.ToString(), RegexOptions.IgnoreCase);
     }
 
+    [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the SWAIG tool-name wire convention.")]
     private static string Sanitize(string raw)
     {
         var lower = raw.ToLowerInvariant();
@@ -284,9 +290,9 @@ public sealed class ClaudeSkillsSkill : SkillBase
 
     private static string SubstituteVariables(string content, string skillDir, Dictionary<string, object?> rawData)
     {
-        content = content.Replace("${CLAUDE_SKILL_DIR}", skillDir);
+        content = content.Replace("${CLAUDE_SKILL_DIR}", skillDir, StringComparison.Ordinal);
         var sessionId = rawData.TryGetValue("call_id", out var cid) && cid is string cidStr ? cidStr : "";
-        content = content.Replace("${CLAUDE_SESSION_ID}", sessionId);
+        content = content.Replace("${CLAUDE_SESSION_ID}", sessionId, StringComparison.Ordinal);
         return content;
     }
 
@@ -300,15 +306,15 @@ public sealed class ClaudeSkillsSkill : SkillBase
 
         var result = IndexedArgRegex.Replace(body, m =>
         {
-            var idx = int.Parse(m.Groups[1].Value);
+            var idx = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
             return idx < positional.Length ? positional[idx] : "";
         });
         result = ShorthandArgRegex.Replace(result, m =>
         {
-            var idx = int.Parse(m.Groups[1].Value);
+            var idx = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
             return idx < positional.Length ? positional[idx] : "";
         });
-        result = result.Replace("$ARGUMENTS", arguments);
+        result = result.Replace("$ARGUMENTS", arguments, StringComparison.Ordinal);
         if (!hasBareArguments && arguments.Length > 0)
         {
             result += $"\n\nARGUMENTS: {arguments}";
@@ -356,6 +362,6 @@ public sealed class ClaudeSkillsSkill : SkillBase
     public override string GetInstanceKey()
     {
         var skillsPath = Params.TryGetValue("skills_path", out var sp) ? sp as string ?? "default" : "default";
-        return $"claude_skills_{skillsPath.GetHashCode():x}";
+        return $"claude_skills_{skillsPath.GetHashCode(StringComparison.Ordinal):x}";
     }
 }

@@ -918,9 +918,13 @@ public class FunctionResultTests
         var enumFr = new FunctionResult();
         enumFr.JoinConference("team-meeting", new JoinConferenceOptions
         {
-            Muted = true, Beep = ConferenceBeep.OnEnter, MaxParticipants = 50,
-            Record = ConferenceRecord.RecordFromStart, Trim = ConferenceTrim.DoNotTrim,
-            StatusCallbackMethod = CallbackMethod.Get, WaitUrl = "https://example.com/hold-music",
+            Muted = true,
+            Beep = ConferenceBeep.OnEnter,
+            MaxParticipants = 50,
+            Record = ConferenceRecord.RecordFromStart,
+            Trim = ConferenceTrim.DoNotTrim,
+            StatusCallbackMethod = CallbackMethod.Get,
+            WaitUrl = "https://example.com/hold-music",
         });
         var enumJc = MainVerb(GetAction(enumFr, 0), "join_conference");
 

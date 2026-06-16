@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
@@ -15,6 +17,7 @@ public sealed partial class MathSkill : SkillBase
 
     public override bool Setup(AgentBase agent, Dictionary<string, object> parameters) => true;
 
+    [SuppressMessage("Design", "CA1031", Justification = "Expression evaluation is best-effort; any failure is returned to the caller as an in-band error string.")]
     public override void RegisterTools(AgentBase agent)
     {
         DefineTool(
@@ -26,7 +29,7 @@ public sealed partial class MathSkill : SkillBase
                 {
                     ["type"] = "string",
                     ["description"] = "The mathematical expression to evaluate (e.g., \"2 + 3 * 4\")",
-                    ["required"] = true,
+                    // Not required — Python's math skill passes none (math/skill.py:33).
                 },
             },
             (args, rawData) =>
@@ -48,10 +51,10 @@ public sealed partial class MathSkill : SkillBase
 
                 try
                 {
-                    var sanitized = expression.Replace("^", "**");
+                    var sanitized = expression.Replace("^", "**", StringComparison.Ordinal);
                     var table = new System.Data.DataTable();
                     // DataTable.Compute supports basic arithmetic
-                    var simpleExpr = sanitized.Replace("**", "^");
+                    var simpleExpr = sanitized.Replace("**", "^", StringComparison.Ordinal);
                     var value = table.Compute(simpleExpr, "");
 
                     if (value is null || value == DBNull.Value)
@@ -60,7 +63,7 @@ public sealed partial class MathSkill : SkillBase
                     }
                     else
                     {
-                        var numValue = Convert.ToDouble(value);
+                        var numValue = Convert.ToDouble(value, CultureInfo.InvariantCulture);
                         if (double.IsInfinity(numValue))
                         {
                             result.SetResponse("Error: Division by zero or overflow in expression.");

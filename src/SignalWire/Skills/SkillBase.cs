@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
@@ -28,6 +29,8 @@ public abstract class SkillBase
     // ------------------------------------------------------------------
 
     public virtual string Version => "1.0.0";
+
+    [SuppressMessage("Design", "CA1002", Justification = "Virtual member overridden by built-in skill subclasses; changing the type would break the override surface across un-owned files.")]
     public virtual List<string> RequiredEnvVars => [];
     public virtual bool SupportsMultipleInstances => false;
 
@@ -41,10 +44,12 @@ public abstract class SkillBase
         return key;
     }
 
+    [SuppressMessage("Design", "CA1002", Justification = "Virtual member overridden by built-in skill subclasses; changing the type would break the override surface across un-owned files.")]
     public virtual List<string> GetHints() => [];
 
     public virtual Dictionary<string, object> GetGlobalData() => [];
 
+    [SuppressMessage("Design", "CA1002", Justification = "Virtual member overridden by built-in skill subclasses; changing the type would break the override surface across un-owned files.")]
     public virtual List<Dictionary<string, object>> GetPromptSections()
     {
         if (_params.TryGetValue("skip_prompt", out var sp) && sp is true)
@@ -104,7 +109,7 @@ public abstract class SkillBase
     //  Env var validation
     // ------------------------------------------------------------------
 
-    public List<string> ValidateEnvVars()
+    public IReadOnlyList<string> ValidateEnvVars()
     {
         var missing = new List<string>();
         foreach (var varName in RequiredEnvVars)
@@ -131,6 +136,7 @@ public abstract class SkillBase
         Dictionary<string, object> parameters,
         Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> handler)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
         if (_swaigFields.Count > 0)
         {
             foreach (var field in _swaigFields)
@@ -164,6 +170,7 @@ public abstract class SkillBase
 
     public void Wire(AgentBase agent, Dictionary<string, object> parameters)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
         _agent = agent;
         _params = parameters;
 

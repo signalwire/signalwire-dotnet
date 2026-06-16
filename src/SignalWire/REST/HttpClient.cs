@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -21,11 +22,14 @@ public class HttpClient : IDisposable
     private readonly string _authHeader;
     private readonly string _userAgent = "signalwire-agents-dotnet-rest/1.0";
 
+    [SuppressMessage("Usage", "CA1054", Justification = "baseUrl is a wire string sent verbatim to the SignalWire API.")]
     public HttpClient(string projectId, string token, string baseUrl)
         : this(projectId, token, baseUrl, null) { }
 
+    [SuppressMessage("Usage", "CA1054", Justification = "baseUrl is a wire string sent verbatim to the SignalWire API.")]
     public HttpClient(string projectId, string token, string baseUrl, System.Net.Http.HttpClient? httpClient)
     {
+        ArgumentNullException.ThrowIfNull(baseUrl);
         _projectId = projectId;
         _token = token;
         _baseUrl = baseUrl.TrimEnd('/');
@@ -45,6 +49,7 @@ public class HttpClient : IDisposable
 
     public string ProjectId => _projectId;
     public string Token => _token;
+    [SuppressMessage("Usage", "CA1056", Justification = "BaseUrl is a wire string sent verbatim to the SignalWire API.")]
     public string BaseUrl => _baseUrl;
     public string AuthHeader => _authHeader;
 

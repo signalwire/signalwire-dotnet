@@ -153,10 +153,11 @@ public class CallFlowsHelper
 
     public CallFlowsHelper(HttpClient client, string basePath)
     {
+        ArgumentNullException.ThrowIfNull(basePath);
         _client = client;
         _basePath = basePath;
         // Sub-resource paths use singular 'call_flow' per the API spec.
-        _singularBase = basePath.Replace("/call_flows", "/call_flow");
+        _singularBase = basePath.Replace("/call_flows", "/call_flow", StringComparison.Ordinal);
     }
 
     public string BasePath => _basePath;
@@ -183,9 +184,10 @@ public class ConferenceRoomsHelper
 
     public ConferenceRoomsHelper(HttpClient client, string basePath)
     {
+        ArgumentNullException.ThrowIfNull(basePath);
         _client = client;
         _basePath = basePath;
-        _singularBase = basePath.Replace("/conference_rooms", "/conference_room");
+        _singularBase = basePath.Replace("/conference_rooms", "/conference_room", StringComparison.Ordinal);
     }
 
     public string BasePath => _basePath;

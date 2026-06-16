@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.SWAIG;
 
 namespace SignalWire.DataMap;
@@ -84,7 +85,7 @@ public class DataMap
         string type,
         string description,
         bool required = false,
-        List<string>? enumValues = null)
+        IReadOnlyList<string>? enumValues = null)
     {
         var prop = new Dictionary<string, object>
         {
@@ -94,7 +95,7 @@ public class DataMap
 
         if (enumValues is { Count: > 0 })
         {
-            prop["enum"] = enumValues;
+            prop["enum"] = new List<string>(enumValues);
         }
 
         _properties[name] = prop;
@@ -129,14 +130,17 @@ public class DataMap
         return this;
     }
 
+    [SuppressMessage("Usage", "CA1054:URI-like parameters should not be strings",
+        Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public DataMap Webhook(
         string method,
         string url,
         Dictionary<string, string>? headers = null,
         string formParam = "",
         bool inputArgsAsParams = false,
-        List<string>? requireArgs = null)
+        IReadOnlyList<string>? requireArgs = null)
     {
+        ArgumentNullException.ThrowIfNull(formParam);
         var wh = new Dictionary<string, object>
         {
             ["method"] = method,
@@ -157,16 +161,17 @@ public class DataMap
         }
         if (requireArgs is { Count: > 0 })
         {
-            wh["require_args"] = requireArgs;
+            wh["require_args"] = new List<string>(requireArgs);
         }
 
         _webhooks.Add(wh);
         return this;
     }
 
-    public DataMap WebhookExpressions(List<Dictionary<string, object>> expressions)
+    public DataMap WebhookExpressions(IReadOnlyList<Dictionary<string, object>> expressions)
     {
-        if (_webhooks.Count > 0) _webhooks[^1]["expressions"] = expressions;
+        ArgumentNullException.ThrowIfNull(expressions);
+        if (_webhooks.Count > 0) _webhooks[^1]["expressions"] = new List<Dictionary<string, object>>(expressions);
         return this;
     }
 
@@ -201,15 +206,17 @@ public class DataMap
         return this;
     }
 
-    public DataMap ErrorKeys(List<string> keys)
+    public DataMap ErrorKeys(IReadOnlyList<string> keys)
     {
-        if (_webhooks.Count > 0) _webhooks[^1]["error_keys"] = keys;
+        ArgumentNullException.ThrowIfNull(keys);
+        if (_webhooks.Count > 0) _webhooks[^1]["error_keys"] = new List<string>(keys);
         return this;
     }
 
-    public DataMap GlobalErrorKeys(List<string> keys)
+    public DataMap GlobalErrorKeys(IReadOnlyList<string> keys)
     {
-        _globalErrorKeys = keys;
+        ArgumentNullException.ThrowIfNull(keys);
+        _globalErrorKeys = new List<string>(keys);
         return this;
     }
 
@@ -242,11 +249,14 @@ public class DataMap
 
     // -- Static Helpers --
 
+    [SuppressMessage("Usage", "CA1054:URI-like parameters should not be strings",
+        Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public static Dictionary<string, object> CreateSimpleApiTool(
-        string name, string purpose, List<Dictionary<string, object>> parameters,
+        string name, string purpose, IReadOnlyList<Dictionary<string, object>> parameters,
         string method, string url, object output,
         Dictionary<string, string>? headers = null)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
         var builder = new DataMap(name);
         builder.Purpose(purpose);
         foreach (var p in parameters)
@@ -262,9 +272,11 @@ public class DataMap
     }
 
     public static Dictionary<string, object> CreateExpressionTool(
-        string name, string purpose, List<Dictionary<string, object>> parameters,
-        List<Dictionary<string, object>> expressions)
+        string name, string purpose, IReadOnlyList<Dictionary<string, object>> parameters,
+        IReadOnlyList<Dictionary<string, object>> expressions)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(expressions);
         var builder = new DataMap(name);
         builder.Purpose(purpose);
         foreach (var p in parameters)

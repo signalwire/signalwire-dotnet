@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -55,7 +57,11 @@ public class Service
 
     // SWAIG tool registry — lifted from AgentBase so any Service (sidecar,
     // non-agent verb host) can register and dispatch SWAIG functions.
+    [SuppressMessage("Design", "CA1051", Justification = "Mutable SWAIG registry shared with the AgentBase subclass (reassigned during clone); intentional protected field.")]
     protected Dictionary<string, Dictionary<string, object>> _tools = new();
+
+    [SuppressMessage("Design", "CA1051", Justification = "Mutable SWAIG registration-order list shared with the AgentBase subclass (reassigned during clone); intentional protected field.")]
+    [SuppressMessage("Design", "CA1002", Justification = "Internal mutable backing list shared with the AgentBase subclass; not a public surface return type.")]
     protected List<string> _toolOrder = new();
 
     public string Name { get; }
@@ -66,6 +72,7 @@ public class Service
 
     public Service(ServiceOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         Name = options.Name;
 
         var route = options.Route.TrimEnd('/');
@@ -171,6 +178,7 @@ public class Service
     // ------------------------------------------------------------------
 
     /// <summary>Get the Basic Auth credentials as a tuple.</summary>
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface (Python get_basic_auth_credentials).")]
     public (string User, string Password) GetBasicAuthCredentials()
     {
         return (_basicAuthUser, _basicAuthPassword);
@@ -190,7 +198,7 @@ public class Service
         {
             source = "environment";
         }
-        else if (_basicAuthUser.StartsWith("user_") && _basicAuthPassword.Length > 20)
+        else if (_basicAuthUser.StartsWith("user_", StringComparison.Ordinal) && _basicAuthPassword.Length > 20)
         {
             source = "generated";
         }
@@ -216,6 +224,7 @@ public class Service
     }
 
     /// <summary>Build the full URL for this service.</summary>
+    [SuppressMessage("Usage", "CA1055", Justification = "URL is a wire string sent verbatim to the SignalWire API / used as a config value.")]
     public string GetFullUrl(bool includeAuth = false)
     {
         var auth = includeAuth
@@ -285,6 +294,9 @@ public class Service
         Dictionary<string, string> headers,
         string? body)
     {
+        ArgumentNullException.ThrowIfNull(path);
+        ArgumentNullException.ThrowIfNull(headers);
+
         // Health/ready: no auth required
         if (path == "/health")
         {
@@ -393,15 +405,26 @@ public class Service
         Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> handler,
         bool secure = false)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
+        var (properties, required) = NormalizeParameters(parameters);
+        var argument = new Dictionary<string, object>
+        {
+            ["type"] = "object",
+            ["properties"] = properties,
+        };
+        // Emit the top-level JSON-Schema `required` array (the form the model +
+        // validator expect) only when non-empty — matching the Python reference,
+        // which omits the key for an empty required list (swaig_function.py:128).
+        if (required.Count > 0)
+        {
+            argument["required"] = required;
+        }
+
         _tools[name] = new Dictionary<string, object>
         {
             ["function"] = name,
             ["purpose"] = description,
-            ["argument"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["properties"] = parameters,
-            },
+            ["argument"] = argument,
             ["_handler"] = handler,
             ["_secure"] = secure,
         };
@@ -412,9 +435,46 @@ public class Service
         return this;
     }
 
+    /// <summary>
+    /// Normalize a tool's flat property map into (properties, required).
+    /// Skills mark a parameter required by setting <c>["required"] = true</c>
+    /// inside the property object (the ergonomic per-property idiom). JSON
+    /// Schema — and the Python reference — express requiredness as a top-level
+    /// <c>required: [...]</c> array on the parameters object, not a per-property
+    /// flag. This lifts each property's <c>"required": true</c> into that array
+    /// (in declared order) and strips the flag from the property, so the emitted
+    /// <c>argument</c> is standard JSON Schema and byte-matches the reference.
+    /// A property without the flag (or <c>"required": false</c>) is optional.
+    /// </summary>
+    private static (Dictionary<string, object> Properties, List<string> Required) NormalizeParameters(
+        Dictionary<string, object> parameters)
+    {
+        var properties = new Dictionary<string, object>(parameters.Count);
+        var required = new List<string>();
+        foreach (var (key, value) in parameters)
+        {
+            if (value is Dictionary<string, object> prop)
+            {
+                var copy = new Dictionary<string, object>(prop);
+                if (copy.TryGetValue("required", out var req) && req is true)
+                {
+                    required.Add(key);
+                }
+                copy.Remove("required");
+                properties[key] = copy;
+            }
+            else
+            {
+                properties[key] = value;
+            }
+        }
+        return (properties, required);
+    }
+
     /// <summary>Register a raw SWAIG function definition (e.g. DataMap tools).</summary>
     public virtual Service RegisterSwaigFunction(Dictionary<string, object> funcDef)
     {
+        ArgumentNullException.ThrowIfNull(funcDef);
         var name = funcDef.TryGetValue("function", out var n) ? n as string ?? "" : "";
         if (name.Length == 0)
         {
@@ -455,8 +515,9 @@ public class Service
     }
 
     /// <summary>Register multiple tool definitions at once.</summary>
-    public virtual Service DefineTools(List<Dictionary<string, object>> toolDefs)
+    public virtual Service DefineTools(IReadOnlyList<Dictionary<string, object>> toolDefs)
     {
+        ArgumentNullException.ThrowIfNull(toolDefs);
         foreach (var def in toolDefs)
         {
             RegisterSwaigFunction(def);
@@ -702,7 +763,7 @@ public class Service
         if (sipUri.StartsWith("sip:", StringComparison.OrdinalIgnoreCase))
         {
             var afterPrefix = sipUri[4..];
-            var atIdx = afterPrefix.IndexOf('@');
+            var atIdx = afterPrefix.IndexOf('@', StringComparison.Ordinal);
             username = atIdx >= 0 ? afterPrefix[..atIdx] : afterPrefix;
         }
         else
@@ -727,6 +788,7 @@ public class Service
     /// Detect or construct the proxy URL base from request headers.
     /// Priority: SWML_PROXY_URL_BASE env > X-Forwarded-Proto+Host > X-Original-URL > fallback.
     /// </summary>
+    [SuppressMessage("Usage", "CA1055", Justification = "URL is a wire string sent verbatim to the SignalWire API / used as a config value.")]
     public string GetProxyUrlBase(Dictionary<string, string>? headers = null)
     {
         // 1. Explicit env var
@@ -786,7 +848,7 @@ public class Service
         }
 
         var decodedStr = Encoding.UTF8.GetString(decoded);
-        var colonIdx = decodedStr.IndexOf(':');
+        var colonIdx = decodedStr.IndexOf(':', StringComparison.Ordinal);
         if (colonIdx < 0)
         {
             return false;
@@ -828,6 +890,7 @@ public class Service
     }
 
     /// <summary>Generate cryptographically secure random hex string.</summary>
+    [SuppressMessage("Globalization", "CA1308", Justification = "lowercase hex is the convention/wire form for credential tokens")]
     private static string RandomHex(int bytes)
     {
         var buffer = new byte[bytes];
@@ -836,6 +899,7 @@ public class Service
     }
 
     /// <summary>Case-insensitive header lookup.</summary>
+    [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the conventional wire form for HTTP header names")]
     private static string? GetHeaderCaseInsensitive(Dictionary<string, string> headers, string name)
     {
         if (headers.TryGetValue(name, out var value))
@@ -902,6 +966,7 @@ public class Service
     }
 
     /// <summary>Plain-HTTP server backed by the BCL HttpListener.</summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Per-request handler boundary and best-effort cleanup: a single failed request (or its error/close path) must not crash the blocking server loop.")]
     private void RunHttp(CancellationToken cancellationToken)
     {
         var prefix = $"http://{(Host == "0.0.0.0" ? "+" : Host)}:{Port}/";
@@ -997,9 +1062,11 @@ public class Service
     /// adapted to the same <see cref="HandleRequest"/> contract used by the
     /// HTTP path, so SWML/SWAIG behavior is identical over either transport.
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Per-request handler boundary and best-effort header writes: a single failed request must not crash the Kestrel pipeline; the failure is surfaced as a 500.")]
+    [SuppressMessage("Reliability", "CA2025", Justification = "app.RunAsync(...).GetResult() blocks until the server stops, so serverCert is alive for the entire Kestrel lifetime and the 'using' disposes it only after the task has completed.")]
     private void RunHttps(SslSettings ssl, CancellationToken cancellationToken)
     {
-        var serverCert = LoadServerCertificate(ssl);
+        using var serverCert = LoadServerCertificate(ssl);
 
         var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateSlimBuilder();
         builder.Logging.ClearProviders();
@@ -1102,8 +1169,10 @@ public class Service
 
         public static SslSettings FromEnvironment()
         {
-            var flag = (Environment.GetEnvironmentVariable("SWML_SSL_ENABLED") ?? "").Trim().ToLowerInvariant();
-            var enabled = flag is "true" or "1" or "yes";
+            var flag = (Environment.GetEnvironmentVariable("SWML_SSL_ENABLED") ?? "").Trim();
+            var enabled = flag.Equals("true", StringComparison.OrdinalIgnoreCase)
+                || flag.Equals("1", StringComparison.Ordinal)
+                || flag.Equals("yes", StringComparison.OrdinalIgnoreCase);
             var cert = Environment.GetEnvironmentVariable("SWML_SSL_CERT_PATH");
             var key = Environment.GetEnvironmentVariable("SWML_SSL_KEY_PATH");
 

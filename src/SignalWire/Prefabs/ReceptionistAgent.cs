@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
@@ -9,12 +10,12 @@ namespace SignalWire.Prefabs;
 /// </summary>
 public class ReceptionistAgent : AgentBase
 {
-    private readonly List<Dictionary<string, object>> _departments;
+    private readonly IReadOnlyList<Dictionary<string, object>> _departments;
     private readonly string _greeting;
 
     public ReceptionistAgent(
         string name,
-        List<Dictionary<string, object>> departments,
+        IReadOnlyList<Dictionary<string, object>> departments,
         Dictionary<string, object>? options = null)
         : base(CreateOptions(name, options))
     {
@@ -92,11 +93,15 @@ public class ReceptionistAgent : AgentBase
             });
     }
 
-    public List<Dictionary<string, object>> GetDepartments() => _departments;
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
+    public IReadOnlyList<Dictionary<string, object>> GetDepartments() => _departments;
+
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
     public string GetGreeting() => _greeting;
 
     private static AgentOptions CreateOptions(string name, Dictionary<string, object>? options)
     {
+        ArgumentNullException.ThrowIfNull(name);
         return new AgentOptions
         {
             Name = name.Length > 0 ? name : "receptionist",

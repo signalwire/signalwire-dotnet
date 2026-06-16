@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace SignalWire.Contexts;
 
 /// <summary>
@@ -38,6 +40,7 @@ public class GatherQuestion
 
     public GatherQuestion(Dictionary<string, object> opts)
     {
+        ArgumentNullException.ThrowIfNull(opts);
         _key = (string)opts["key"];
         _question = (string)opts["question"];
         _type = opts.TryGetValue("type", out var t) ? (string)t : "string";
@@ -85,7 +88,7 @@ public class GatherInfo
         return this;
     }
 
-    public List<GatherQuestion> Questions => _questions;
+    public IReadOnlyList<GatherQuestion> Questions => _questions;
     public string? CompletionAction => _completionAction;
 
     public Dictionary<string, object> ToDict()
@@ -109,8 +112,8 @@ public class Step
     private string? _text;
     private string? _stepCriteria;
     private object? _functions;
-    private List<string>? _validSteps;
-    private List<string>? _validContexts;
+    private IReadOnlyList<string>? _validSteps;
+    private IReadOnlyList<string>? _validContexts;
     private List<Dictionary<string, object>> _sections = [];
     private GatherInfo? _gatherInfo;
     private bool _end;
@@ -141,11 +144,12 @@ public class Step
         return this;
     }
 
-    public Step AddBullets(string title, List<string> bullets)
+    public Step AddBullets(string title, IReadOnlyList<string> bullets)
     {
+        ArgumentNullException.ThrowIfNull(bullets);
         if (_text is not null)
             throw new InvalidOperationException("Cannot add POM sections when SetText() has been used.");
-        _sections.Add(new Dictionary<string, object> { ["title"] = title, ["bullets"] = bullets });
+        _sections.Add(new Dictionary<string, object> { ["title"] = title, ["bullets"] = new List<string>(bullets) });
         return this;
     }
 
@@ -197,8 +201,8 @@ public class Step
     /// </param>
     public Step SetFunctions(object functions) { _functions = functions; return this; }
 
-    public Step SetValidSteps(List<string> steps) { _validSteps = steps; return this; }
-    public Step SetValidContexts(List<string> contexts) { _validContexts = contexts; return this; }
+    public Step SetValidSteps(IReadOnlyList<string> steps) { _validSteps = steps; return this; }
+    public Step SetValidContexts(IReadOnlyList<string> contexts) { _validContexts = contexts; return this; }
 
     /// <summary>
     /// Mark this step as terminal for the step flow.
@@ -221,6 +225,7 @@ public class Step
 
     public Step SetGatherInfo(Dictionary<string, object> opts)
     {
+        ArgumentNullException.ThrowIfNull(opts);
         _gatherInfo = new GatherInfo(
             opts.TryGetValue("output_key", out var ok) ? (string)ok : null,
             opts.TryGetValue("completion_action", out var ca) ? (string)ca : null,
@@ -265,8 +270,8 @@ public class Step
     public Step SetResetConsolidate(bool consolidate) { _resetConsolidate = consolidate; return this; }
     public Step SetResetFullReset(bool fullReset) { _resetFullReset = fullReset; return this; }
 
-    public List<string>? ValidSteps => _validSteps;
-    public List<string>? ValidContexts => _validContexts;
+    public IReadOnlyList<string>? ValidSteps => _validSteps;
+    public IReadOnlyList<string>? ValidContexts => _validContexts;
     public GatherInfo? GatherInfoData => _gatherInfo;
 
     private string RenderText()
@@ -328,8 +333,8 @@ public class Context
     private readonly string _name;
     private readonly Dictionary<string, Step> _steps = [];
     private readonly List<string> _stepOrder = [];
-    private List<string>? _validContexts;
-    private List<string>? _validSteps;
+    private IReadOnlyList<string>? _validContexts;
+    private IReadOnlyList<string>? _validSteps;
     private string? _initialStep;
     private string? _postPrompt;
     private string? _systemPrompt;
@@ -390,8 +395,13 @@ public class Context
         return this;
     }
 
-    public Dictionary<string, Step> GetSteps() => _steps;
-    public List<string> GetStepOrder() => [.. _stepOrder];
+    [SuppressMessage("Design", "CA1024:Use properties where appropriate",
+        Justification = "get_* accessor matches the cross-port surface")]
+    public IReadOnlyDictionary<string, Step> GetSteps() => _steps;
+
+    [SuppressMessage("Design", "CA1024:Use properties where appropriate",
+        Justification = "get_* accessor matches the cross-port surface")]
+    public IReadOnlyList<string> GetStepOrder() => [.. _stepOrder];
 
     // -- Prompt (plain text vs POM) --
 
@@ -411,11 +421,12 @@ public class Context
         return this;
     }
 
-    public Context AddBullets(string title, List<string> bullets)
+    public Context AddBullets(string title, IReadOnlyList<string> bullets)
     {
+        ArgumentNullException.ThrowIfNull(bullets);
         if (_promptText is not null)
             throw new InvalidOperationException("Cannot add POM sections when SetPrompt() has been used.");
-        _promptSections.Add(new Dictionary<string, object> { ["title"] = title, ["bullets"] = bullets });
+        _promptSections.Add(new Dictionary<string, object> { ["title"] = title, ["bullets"] = new List<string>(bullets) });
         return this;
     }
 
@@ -437,11 +448,12 @@ public class Context
         return this;
     }
 
-    public Context AddSystemBullets(string title, List<string> bullets)
+    public Context AddSystemBullets(string title, IReadOnlyList<string> bullets)
     {
+        ArgumentNullException.ThrowIfNull(bullets);
         if (_systemPrompt is not null)
             throw new InvalidOperationException("Cannot add POM sections when SetSystemPrompt() has been used.");
-        _systemPromptSections.Add(new Dictionary<string, object> { ["title"] = title, ["bullets"] = bullets });
+        _systemPromptSections.Add(new Dictionary<string, object> { ["title"] = title, ["bullets"] = new List<string>(bullets) });
         return this;
     }
 
@@ -457,10 +469,12 @@ public class Context
     /// <param name="stepName">Name of the step to start on (must exist in this context).</param>
     public Context SetInitialStep(string stepName) { _initialStep = stepName; return this; }
 
+    [SuppressMessage("Design", "CA1024:Use properties where appropriate",
+        Justification = "get_* accessor matches the cross-port surface")]
     public string? GetInitialStep() => _initialStep;
 
-    public Context SetValidContexts(List<string> contexts) { _validContexts = contexts; return this; }
-    public Context SetValidSteps(List<string> steps) { _validSteps = steps; return this; }
+    public Context SetValidContexts(IReadOnlyList<string> contexts) { _validContexts = contexts; return this; }
+    public Context SetValidSteps(IReadOnlyList<string> steps) { _validSteps = steps; return this; }
     public Context SetPostPrompt(string postPrompt) { _postPrompt = postPrompt; return this; }
     public Context SetConsolidate(bool consolidate) { _consolidate = consolidate; return this; }
     public Context SetFullReset(bool fullReset) { _fullReset = fullReset; return this; }
@@ -509,7 +523,9 @@ public class Context
         return this;
     }
 
-    public List<string>? GetValidContexts() => _validContexts;
+    [SuppressMessage("Design", "CA1024:Use properties where appropriate",
+        Justification = "get_* accessor matches the cross-port surface")]
+    public IReadOnlyList<string>? GetValidContexts() => _validContexts;
 
     // -- Rendering helpers --
 
@@ -636,7 +652,7 @@ public class ContextBuilder
     public Context? GetContext(string name) => _contexts.TryGetValue(name, out var c) ? c : null;
     public bool HasContexts() => _contexts.Count > 0;
 
-    public List<string> Validate()
+    public IReadOnlyList<string> Validate()
     {
         var errors = new List<string>();
         if (_contexts.Count == 0) { errors.Add("At least one context must be defined"); return errors; }
@@ -712,7 +728,7 @@ public class ContextBuilder
 
         foreach (var (contextName, context) in _contexts)
         {
-            var stepOrder = context.GetStepOrder();
+            var stepOrder = context.GetStepOrder().ToList();
             foreach (var (stepName, step) in context.GetSteps())
             {
                 var gi = step.GatherInfoData;

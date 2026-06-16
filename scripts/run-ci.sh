@@ -239,6 +239,47 @@ surface_fresh_gate() {
     return $rc
 }
 
+# Resolve a dotnet invocation: host dotnet if present, else the SDK docker image
+# (same host-or-docker shape as dotnet_test_per_framework). Echoes a command
+# prefix the caller runs as `$(dotnet_cmd) <args>`. Docker maps the repo at /src
+# as the host user with a writable HOME so MSBuild/NuGet caches work.
+dotnet_cmd() {
+    local bin
+    bin="$(command -v dotnet || true)"
+    if [ -n "$bin" ]; then
+        echo "$bin"
+    else
+        echo "docker run --rm --user $(id -u):$(id -g) -e HOME=/tmp -v $PWD:/src -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet"
+    fi
+}
+
+# FMT gate: dotnet format whitespace (the house style — whitespace/newlines).
+# LOCAL ($CI unset) auto-fixes the tree; CI ($CI=true) verifies read-only and
+# FAILS on any unformatted file. Whitespace-scoped so it stays orthogonal to the
+# LINT gate (analyzers); a reformat is surface/emission-neutral.
+fmt_gate() {
+    local dn
+    dn="$(dotnet_cmd)"
+    if [ -n "${CI:-}" ]; then
+        $dn format whitespace SignalWire.sln --verify-no-changes
+    else
+        $dn format whitespace SignalWire.sln
+        if ! git diff --quiet 2>/dev/null; then
+            echo "    (FMT auto-applied whitespace formatting — review & stage)"
+        fi
+    fi
+}
+
+# LINT gate: a clean analyzer build. Directory.Build.props turns the curated
+# analyzer set on with TreatWarningsAsErrors across net8/9/10, so `dotnet build`
+# failing == a lint violation. Builds the src library only (analyzers run there;
+# tests/examples/tools are not the shipped surface).
+lint_gate() {
+    local dn
+    dn="$(dotnet_cmd)"
+    $dn build src/SignalWire/SignalWire.csproj -c Release --no-incremental
+}
+
 cd "$PORT_ROOT"
 
 echo "==> running CI gates for $PORT_NAME (porting-sdk at $PORTING_SDK_DIR)"
@@ -281,6 +322,41 @@ run_gate "NO-CHEAT" "audit_no_cheat_tests" \
 run_gate "EMISSION" "diff_port_emission vs python to_dict()" \
     python3 "$PORTING_SDK_DIR/scripts/diff_port_emission.py" \
         --dump-cmd "bash $PORT_ROOT/scripts/emit-corpus.sh"
+
+# Gate 7: FMT — dotnet format whitespace (local: auto-fix; CI: --verify).
+run_gate "FMT" "dotnet format whitespace (local: auto-fix; CI: --verify)" \
+    fmt_gate
+
+# Gate 8: LINT — clean analyzer build (Directory.Build.props: curated CA set,
+# TreatWarningsAsErrors). A build warning == a lint violation.
+run_gate "LINT" "dotnet build (analyzers, warnings-as-errors)" \
+    lint_gate
+
+# Gate 9: DOC-AUDIT — every symbol referenced in docs/examples resolves to a
+# real entry in port_surface.json (or is excused in DOC_AUDIT_IGNORE.md).
+run_gate "DOC-AUDIT" "audit_docs vs port_surface.json" \
+    python3 "$PORTING_SDK_DIR/scripts/audit_docs.py" \
+        --root "$PORT_ROOT" \
+        --surface "$PORT_ROOT/port_surface.json" \
+        --ignore "$PORT_ROOT/DOC_AUDIT_IGNORE.md"
+
+# Gate 10: SURFACE-DIFF — the public symbol set matches the Python reference
+# surface (modulo documented omissions/additions). DRIFT polices signatures;
+# this polices the symbol set.
+run_gate "SURFACE-DIFF" "diff_port_surface vs python_surface.json" \
+    python3 "$PORTING_SDK_DIR/scripts/diff_port_surface.py" \
+        --reference "$PORTING_SDK_DIR/python_surface.json" \
+        --port-surface "$PORT_ROOT/port_surface.json" \
+        --omissions "$PORT_ROOT/PORT_OMISSIONS.md" \
+        --additions "$PORT_ROOT/PORT_ADDITIONS.md"
+
+# Gate 11: SKILL-CONTRACT — each built-in skill's SWAIG tool contract
+# (name/parameters/required/enum) matches the Python reference. Sibling of
+# EMISSION for skills; scripts/emit-skills.sh wraps tools/EmitSkills.
+run_gate "SKILL-CONTRACT" "diff_skill_contracts vs python reference" \
+    python3 "$PORTING_SDK_DIR/scripts/diff_skill_contracts.py" \
+        --dump-cmd "bash $PORT_ROOT/scripts/emit-skills.sh" \
+        --port-repo "$PORT_ROOT"
 
 if [ -z "$FAILED_GATES" ]; then
     echo "==> CI PASS"

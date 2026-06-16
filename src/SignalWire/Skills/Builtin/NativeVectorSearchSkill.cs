@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using SignalWire.Agent;
@@ -28,16 +30,17 @@ public sealed class NativeVectorSearchSkill : SkillBase
 
     public override bool Setup(AgentBase agent, Dictionary<string, object> parameters) => true;
 
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort remote search call; any failure is surfaced to the caller as an in-band error string.")]
     public override void RegisterTools(AgentBase agent)
     {
         var toolName = GetToolName("search_knowledge");
         var description = Params.TryGetValue("description", out var d)
             ? d as string ?? "Search the local knowledge base for information"
             : "Search the local knowledge base for information";
-        var defaultCount = Params.TryGetValue("count", out var c) ? Math.Max(1, Convert.ToInt32(c)) : 5;
+        var defaultCount = Params.TryGetValue("count", out var c) ? Math.Max(1, Convert.ToInt32(c, CultureInfo.InvariantCulture)) : 5;
         var indexName = Params.TryGetValue("index_name", out var idx) ? idx as string ?? "default" : "default";
         var similarityThreshold = Params.TryGetValue("similarity_threshold", out var st)
-            ? Convert.ToDouble(st) : 0.0;
+            ? Convert.ToDouble(st, CultureInfo.InvariantCulture) : 0.0;
         var tags = Params.TryGetValue("tags", out var tg) && tg is List<string> tagList ? tagList : [];
         var noResultsMessage = Params.TryGetValue("no_results_message", out var nm)
             ? nm as string ?? "No information found for '{query}'" : "No information found for '{query}'";
@@ -70,7 +73,7 @@ public sealed class NativeVectorSearchSkill : SkillBase
                 {
                     return new FunctionResult("Please provide a search query.");
                 }
-                var count = args.TryGetValue("count", out var cn) ? Convert.ToInt32(cn) : defaultCount;
+                var count = args.TryGetValue("count", out var cn) ? Convert.ToInt32(cn, CultureInfo.InvariantCulture) : defaultCount;
                 if (remoteUrl.Length == 0)
                 {
                     // Local mode requires sentence-transformers / FAISS; not
@@ -93,7 +96,7 @@ public sealed class NativeVectorSearchSkill : SkillBase
                     {
                         basicAuth = (Uri.UnescapeDataString(parts[0]), Uri.UnescapeDataString(parts[1]));
                     }
-                    requestUrl = u.GetLeftPart(UriPartial.Authority).Replace(u.UserInfo + "@", "") + u.PathAndQuery;
+                    requestUrl = u.GetLeftPart(UriPartial.Authority).Replace(u.UserInfo + "@", "", StringComparison.Ordinal) + u.PathAndQuery;
                 }
 
                 // The Python skill POSTs to the search server's `/search`
@@ -138,8 +141,8 @@ public sealed class NativeVectorSearchSkill : SkillBase
                     || results.ValueKind != JsonValueKind.Array
                     || results.GetArrayLength() == 0)
                 {
-                    var msg = noResultsMessage.Contains("{query}")
-                        ? noResultsMessage.Replace("{query}", query) : noResultsMessage;
+                    var msg = noResultsMessage.Contains("{query}", StringComparison.Ordinal)
+                        ? noResultsMessage.Replace("{query}", query, StringComparison.Ordinal) : noResultsMessage;
                     if (responsePrefix.Length > 0) msg = responsePrefix + " " + msg;
                     if (responsePostfix.Length > 0) msg = msg + " " + responsePostfix;
                     return new FunctionResult(msg);
