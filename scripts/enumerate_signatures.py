@@ -160,9 +160,11 @@ def translate_dotnet_type(t: str, aliases: dict[str, str], context: str) -> str:
         "System.Collections.Generic.List",
         "System.Collections.Generic.IList",
         "System.Collections.Generic.IReadOnlyList",
+        "System.Collections.Generic.IReadOnlyCollection",
         "System.Collections.Generic.IEnumerable",
         "System.Collections.Generic.ICollection",
         "System.Collections.Generic.IAsyncEnumerable",
+        "System.Collections.ObjectModel.ReadOnlyCollection",
         "System.Collections.Concurrent.ConcurrentQueue",
         "System.Collections.Concurrent.ConcurrentBag",
     ):

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
@@ -10,13 +12,11 @@ namespace SignalWire.Prefabs;
 public class SurveyAgent : AgentBase
 {
     private readonly string _surveyName;
-    private readonly List<Dictionary<string, object>> _surveyQuestions;
-
-    private static readonly string[] ValidTypes = ["rating", "multiple_choice", "yes_no", "open_ended"];
+    private readonly IReadOnlyList<Dictionary<string, object>> _surveyQuestions;
 
     public SurveyAgent(
         string name,
-        List<Dictionary<string, object>> questions,
+        IReadOnlyList<Dictionary<string, object>> questions,
         Dictionary<string, object>? options = null)
         : base(CreateOptions(name, options))
     {
@@ -79,8 +79,10 @@ public class SurveyAgent : AgentBase
 
     /// <summary>SWAIG tool handler for the ``validate_response`` tool.
     /// (Python parity: ``SurveyAgent.validate_response``.)</summary>
+    [SuppressMessage("Globalization", "CA1308", Justification = "normalized lowercase preserves the existing yes/no response value verbatim")]
     public FunctionResult ValidateResponse(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
+        ArgumentNullException.ThrowIfNull(args);
         var questionId = args.TryGetValue("question_id", out var qi) ? qi as string ?? "" : "";
         var answer = args.TryGetValue("answer", out var a) ? a as string ?? "" : "";
 
@@ -101,17 +103,17 @@ public class SurveyAgent : AgentBase
         switch (type)
         {
             case "rating":
-                var scale = question.TryGetValue("scale", out var sc) ? Convert.ToInt32(sc) : 5;
+                var scale = question.TryGetValue("scale", out var sc) ? Convert.ToInt32(sc, CultureInfo.InvariantCulture) : 5;
                 if (int.TryParse(answer, out var val) && val >= 1 && val <= scale)
                     return new FunctionResult($"Valid rating: {val}/{scale}");
                 return new FunctionResult($"Invalid rating. Please provide a number between 1 and {scale}.");
 
             case "multiple_choice":
                 var choices = question.TryGetValue("choices", out var ch) && ch is List<string> cl ? cl : [];
-                var lowerAnswer = answer.Trim().ToLowerInvariant();
+                var trimmedAnswer = answer.Trim();
                 foreach (var choice in choices)
                 {
-                    if (choice.Trim().ToLowerInvariant() == lowerAnswer)
+                    if (choice.Trim().Equals(trimmedAnswer, StringComparison.OrdinalIgnoreCase))
                         return new FunctionResult($"Valid choice: {choice}");
                 }
                 return new FunctionResult($"Invalid choice. Valid options are: {string.Join(", ", choices)}");
@@ -131,18 +133,24 @@ public class SurveyAgent : AgentBase
 
     /// <summary>SWAIG tool handler for the ``log_response`` tool.
     /// (Python parity: ``SurveyAgent.log_response``.)</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "instance method matches the cross-port SWAIG tool-handler surface")]
     public FunctionResult LogResponse(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
+        ArgumentNullException.ThrowIfNull(args);
         var questionId = args.TryGetValue("question_id", out var qi) ? qi as string ?? "" : "";
         var answer = args.TryGetValue("answer", out var a) ? a as string ?? "" : "";
         return new FunctionResult($"Survey answer for {questionId}: {answer}");
     }
 
-    public List<Dictionary<string, object>> GetSurveyQuestions() => _surveyQuestions;
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
+    public IReadOnlyList<Dictionary<string, object>> GetSurveyQuestions() => _surveyQuestions;
+
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
     public string GetSurveyName() => _surveyName;
 
     private static AgentOptions CreateOptions(string name, Dictionary<string, object>? options)
     {
+        ArgumentNullException.ThrowIfNull(name);
         return new AgentOptions
         {
             Name = name.Length > 0 ? name : "survey",

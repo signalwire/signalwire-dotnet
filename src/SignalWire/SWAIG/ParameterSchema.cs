@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace SignalWire.SWAIG;
@@ -87,6 +88,7 @@ public sealed class ParameterSchema
     /// <param name="defaultValue">Optional JSON-Schema <c>default</c>.</param>
     /// <param name="format">Optional JSON-Schema <c>format</c> hint (e.g. <c>"date"</c>).</param>
     /// <param name="enumValues">Optional closed set of allowed string values.</param>
+    [SuppressMessage("Naming", "CA1720", Justification = "Fluent builder verb names the JSON-Schema type it emits (\"string\"); part of the typed convenience DSL surface")]
     public ParameterSchema String(
         string name,
         string? description = null,
@@ -106,6 +108,7 @@ public sealed class ParameterSchema
         AddScalar(name, "number", description, required, defaultValue, format, null);
 
     /// <summary>Add an <c>integer</c> property.</summary>
+    [SuppressMessage("Naming", "CA1720", Justification = "Fluent builder verb names the JSON-Schema type it emits (\"integer\"); part of the typed convenience DSL surface")]
     public ParameterSchema Integer(
         string name,
         string? description = null,
@@ -189,6 +192,7 @@ public sealed class ParameterSchema
         string? description = null,
         bool required = false)
     {
+        ArgumentNullException.ThrowIfNull(itemSchema);
         var items = new Dictionary<string, object>
         {
             ["type"] = "object",
@@ -202,13 +206,17 @@ public sealed class ParameterSchema
     /// <see cref="ParameterSchema"/>. Emits
     /// <c>{"type":"object","properties":{…}}</c>.
     /// </summary>
+    [SuppressMessage("Naming", "CA1720", Justification = "Fluent builder verb names the JSON-Schema type it emits (\"object\"); part of the typed convenience DSL surface")]
     public ParameterSchema Object(
         string name,
         ParameterSchema schema,
         string? description = null,
-        bool required = false) =>
-        AddProperty(name, "object", description, required,
+        bool required = false)
+    {
+        ArgumentNullException.ThrowIfNull(schema);
+        return AddProperty(name, "object", description, required,
             prop => prop["properties"] = schema.Build());
+    }
 
     /// <summary>
     /// Mark one or more already-declared properties required by setting the
@@ -218,6 +226,7 @@ public sealed class ParameterSchema
     /// <exception cref="ArgumentException">If a named property was not declared.</exception>
     public ParameterSchema Required(params string[] names)
     {
+        ArgumentNullException.ThrowIfNull(names);
         foreach (var name in names)
         {
             if (!_properties.TryGetValue(name, out var prop))
@@ -325,7 +334,7 @@ public sealed class ParameterSchema
     /// </summary>
     private static List<string> WireNamesOf(Type enumType)
     {
-        if (enumType is null) throw new ArgumentNullException(nameof(enumType));
+        ArgumentNullException.ThrowIfNull(enumType);
         if (!enumType.IsEnum)
         {
             throw new ArgumentException(

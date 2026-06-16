@@ -20,6 +20,7 @@ public class CrudResource
     /// <summary>Build a full path by appending segments to the base path.</summary>
     protected string Path(params string[] parts)
     {
+        ArgumentNullException.ThrowIfNull(parts);
         if (parts.Length == 0) return BasePath;
         return BasePath + "/" + string.Join("/", parts);
     }

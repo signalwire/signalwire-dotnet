@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using SignalWire.Logging;
 
 namespace SignalWire.Relay;
@@ -17,15 +19,19 @@ public class Action
     private Func<Action, Task>? _onCompletedCallback;
     private bool _callbackFired;
 
+    [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface; the GetControlId() accessor matches the cross-port-named accessor.")]
     public string ControlId { get; }
+    [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface; the GetCallId() accessor matches the cross-port-named accessor.")]
     public string CallId { get; }
+    [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface; the GetNodeId() accessor matches the cross-port-named accessor.")]
     public string NodeId { get; }
     protected object Client { get; }
 
     public string? State { get; protected set; }
     public bool Completed { get; private set; }
     public object? Result { get; private set; }
-    public List<Event> Events { get; } = [];
+    private readonly List<Event> _events = [];
+    public IReadOnlyList<Event> Events => _events;
     public Dictionary<string, object?> Payload { get; private set; } = new();
 
     public Action(string controlId, string callId, string nodeId, object client)
@@ -63,8 +69,14 @@ public class Action
     // ------------------------------------------------------------------
 
     public bool IsDone => Completed;
+
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
     public string GetControlId() => ControlId;
+
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
     public string GetCallId() => CallId;
+
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
     public string GetNodeId() => NodeId;
 
     // ------------------------------------------------------------------
@@ -102,7 +114,8 @@ public class Action
     /// </summary>
     public virtual void HandleEvent(Event evt)
     {
-        Events.Add(evt);
+        ArgumentNullException.ThrowIfNull(evt);
+        _events.Add(evt);
 
         foreach (var kvp in evt.Params)
         {
@@ -248,15 +261,16 @@ public class RecordAction : Action
 
     public void Resume() => ExecuteSubcommand("calling.record.resume");
 
+    [SuppressMessage("Usage", "CA1056", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public string? Url => Payload.TryGetValue("url", out var v) ? v?.ToString() : null;
 
     public double? Duration =>
         Payload.TryGetValue("duration", out var v) && v is not null
-            ? Convert.ToDouble(v) : null;
+            ? Convert.ToDouble(v, CultureInfo.InvariantCulture) : null;
 
     public int? Size =>
         Payload.TryGetValue("size", out var v) && v is not null
-            ? Convert.ToInt32(v) : null;
+            ? Convert.ToInt32(v, CultureInfo.InvariantCulture) : null;
 }
 
 /// <summary>
@@ -304,6 +318,7 @@ public class CollectAction : Action
     /// </summary>
     public override void HandleEvent(Event evt)
     {
+        ArgumentNullException.ThrowIfNull(evt);
         if (evt.EventType == "calling.call.play") return;
         base.HandleEvent(evt);
     }
@@ -337,6 +352,7 @@ public class DetectAction : Action
     /// </summary>
     public override void HandleEvent(Event evt)
     {
+        ArgumentNullException.ThrowIfNull(evt);
         base.HandleEvent(evt);
         if (Completed) return;
         if (evt.Params.TryGetValue("detect", out var d) && d is not null)

@@ -30,6 +30,8 @@
 // The class is small by design — see WebhookValidator for the actual
 // crypto. This is just the wire-shape glue.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace SignalWire.Security;
 
 /// <summary>
@@ -152,6 +154,7 @@ public sealed class WebhookValidationMiddleware
     ///     local construction.</item>
     /// </list>
     /// </summary>
+    [SuppressMessage("Usage", "CA1055", Justification = "Returns a URL wire string that is fed verbatim to WebhookValidator and compared against the platform's signed string; a Uri round-trip could normalize away the exact bytes the signature covers.")]
     public string ReconstructUrl(
         Dictionary<string, string> headers,
         string path,
@@ -209,6 +212,7 @@ public sealed class WebhookValidationMiddleware
         return (403, headers, "");
     }
 
+    [SuppressMessage("Globalization", "CA1308", Justification = "HTTP header names are matched in their conventional lowercase wire form; the value is used only as a dictionary key, never sent.")]
     private static string? GetHeaderCaseInsensitive(
         Dictionary<string, string>? headers, string name)
     {

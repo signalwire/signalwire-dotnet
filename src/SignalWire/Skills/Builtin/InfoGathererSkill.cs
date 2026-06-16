@@ -67,7 +67,7 @@ public sealed class InfoGathererSkill : SkillBase
                 {
                     ["type"] = "string",
                     ["description"] = "The answer to the current question",
-                    ["required"] = true,
+                    // Not required — Python's submit_answer passes none (info_gatherer/skill.py:170).
                 },
                 ["confirmed_by_user"] = new Dictionary<string, object>
                 {

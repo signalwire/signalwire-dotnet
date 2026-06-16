@@ -218,15 +218,20 @@ public class SWMLDocumentTests : IDisposable
     }
 
     [Fact]
-    public void GetVerbs_ReturnsCopy_MutationDoesNotAffectOriginal()
+    public void GetVerbs_ReturnsSnapshot_NotAffectedByLaterAdds()
     {
         var doc = new Document();
         doc.AddVerb("answer", new Dictionary<string, object>());
 
+        // GetVerbs returns an IReadOnlyList snapshot — callers cannot mutate it
+        // (the type enforces what the old test asserted by trying to .Add), and
+        // it does not observe verbs added to the document afterward.
         var verbs = doc.GetVerbs("main");
-        verbs.Add(new Dictionary<string, object> { ["extra"] = "should not affect original" });
+        Assert.Single(verbs);
 
-        Assert.Single(doc.GetVerbs("main"));
+        doc.AddVerb("hangup", new Dictionary<string, object>());
+        Assert.Single(verbs); // the earlier snapshot is unchanged
+        Assert.Equal(2, doc.GetVerbs("main").Count); // a fresh call sees both
     }
 
     [Fact]

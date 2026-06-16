@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace SignalWire.SWAIG;
@@ -52,6 +53,7 @@ public class FunctionResult
 
     public FunctionResult AddActions(IEnumerable<Dictionary<string, object>> actions)
     {
+        ArgumentNullException.ThrowIfNull(actions);
         foreach (var action in actions)
         {
             _actions.Add(action);
@@ -229,7 +231,7 @@ public class FunctionResult
         return this;
     }
 
-    public FunctionResult RemoveGlobalData(List<string> keys)
+    public FunctionResult RemoveGlobalData(IReadOnlyList<string> keys)
     {
         // Python parity: add_action("unset_global_data", keys) — the action key
         // is "unset_global_data" and its value is the bare key list. No
@@ -239,7 +241,7 @@ public class FunctionResult
     }
 
     /// <summary>
-    /// Single-key overload of <see cref="RemoveGlobalData(List{string})"/>.
+    /// Single-key overload of <see cref="RemoveGlobalData(IReadOnlyList{string})"/>.
     /// </summary>
     /// <remarks>
     /// Python's <c>remove_global_data(keys: Union[str, List[str]])</c> accepts a
@@ -260,7 +262,7 @@ public class FunctionResult
         return this;
     }
 
-    public FunctionResult RemoveMetadata(List<string> keys)
+    public FunctionResult RemoveMetadata(IReadOnlyList<string> keys)
     {
         // Python parity: add_action("unset_meta_data", keys) — bare key list under
         // the "unset_meta_data" action key (no {keys: ...} wrapper).
@@ -269,7 +271,7 @@ public class FunctionResult
     }
 
     /// <summary>
-    /// Single-key overload of <see cref="RemoveMetadata(List{string})"/>.
+    /// Single-key overload of <see cref="RemoveMetadata(IReadOnlyList{string})"/>.
     /// </summary>
     /// <remarks>
     /// Python's <c>remove_metadata(keys: Union[str, List[str]])</c> accepts a bare
@@ -476,6 +478,7 @@ public class FunctionResult
     /// emitted (Python emits them unconditionally); the remaining parameters are
     /// emitted only when set.
     /// </remarks>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult RecordCall(
         string controlId = "",
         bool stereo = false,
@@ -526,6 +529,7 @@ public class FunctionResult
     /// or <paramref name="direction"/> is not one of <c>speak</c>/<c>listen</c>/<c>both</c>
     /// (parity with Python's <c>ValueError</c>).
     /// </exception>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult RecordCall(
         string controlId = "",
         bool stereo = false,
@@ -613,7 +617,7 @@ public class FunctionResult
     // Speech & AI
     // ------------------------------------------------------------------
 
-    public FunctionResult AddDynamicHints(List<object> hints)
+    public FunctionResult AddDynamicHints(IReadOnlyList<object> hints)
     {
         _actions.Add(new Dictionary<string, object> { ["add_dynamic_hints"] = hints });
         return this;
@@ -652,7 +656,7 @@ public class FunctionResult
     /// reshaping. (The previous <c>Dictionary&lt;string,bool&gt;</c> shape both
     /// changed the signature AND lost caller-controlled key ordering / extra keys.)
     /// </remarks>
-    public FunctionResult ToggleFunctions(List<Dictionary<string, object>> functionToggles)
+    public FunctionResult ToggleFunctions(IReadOnlyList<Dictionary<string, object>> functionToggles)
     {
         _actions.Add(new Dictionary<string, object> { ["toggle_functions"] = functionToggles });
         return this;
@@ -784,6 +788,7 @@ public class FunctionResult
     /// if <paramref name="maxParticipants"/> is not in 1..=250, or if
     /// <paramref name="name"/> is empty/whitespace.
     /// </exception>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult JoinConference(
         string name,
         bool muted = false,
@@ -940,6 +945,7 @@ public class FunctionResult
     /// <c>sip_refer</c> verb (params <c>{to_uri}</c>) is wrapped in a SWML document
     /// and emitted under the <c>SWML</c> action key.
     /// </remarks>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult SipRefer(string toUri) =>
         EmitSwmlVerb("sip_refer", new Dictionary<string, object> { ["to_uri"] = toUri });
 
@@ -969,6 +975,7 @@ public class FunctionResult
     /// Python's <c>ValueError</c>); <paramref name="direction"/>/<paramref name="codec"/>
     /// are closed-set enums and so cannot be invalid.
     /// </exception>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult Tap(
         string uri,
         string controlId = "",
@@ -1016,6 +1023,7 @@ public class FunctionResult
     /// <paramref name="rtpPtime"/> is not a positive integer (parity with Python's
     /// <c>ValueError</c>).
     /// </exception>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult Tap(
         string uri,
         string controlId = "",
@@ -1101,8 +1109,8 @@ public class FunctionResult
         string toNumber,
         string fromNumber,
         string? body = null,
-        List<string>? media = null,
-        List<string>? tags = null,
+        IReadOnlyList<string>? media = null,
+        IReadOnlyList<string>? tags = null,
         string? region = null)
     {
         // At least body or media must be provided.
@@ -1152,6 +1160,7 @@ public class FunctionResult
     /// </param>
     /// <param name="parameters">Name/value pairs forwarded to the payment connector.</param>
     /// <param name="prompts">Custom prompt configurations (see <see cref="CreatePaymentPrompt"/>).</param>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult Pay(
         string paymentConnectorUrl,
         string inputMethod = "dtmf",
@@ -1169,8 +1178,8 @@ public class FunctionResult
         string voice = "woman",
         string? description = null,
         string validCardTypes = "visa mastercard amex",
-        List<Dictionary<string, string>>? parameters = null,
-        List<Dictionary<string, object>>? prompts = null,
+        IReadOnlyList<Dictionary<string, string>>? parameters = null,
+        IReadOnlyList<Dictionary<string, object>>? prompts = null,
         string? aiResponse = "The payment status is ${pay_result}, do not mention anything else about collecting payment if successful.")
     {
         // postal_code defaults to bool true (Python: postal_code=True).
@@ -1350,7 +1359,7 @@ public class FunctionResult
     /// <param name="actions">Actions with <c>type</c>/<c>phrase</c> keys (see <see cref="CreatePaymentAction"/>).</param>
     public static Dictionary<string, object> CreatePaymentPrompt(
         string forSituation,
-        List<Dictionary<string, string>> actions,
+        IReadOnlyList<Dictionary<string, string>> actions,
         string? cardType = null,
         string? errorType = null)
     {

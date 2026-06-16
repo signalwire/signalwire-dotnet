@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
@@ -29,8 +30,8 @@ public sealed class DatasphereServerlessSkill : SkillBase
         var projectId = Params.TryGetValue("project_id", out var pi) ? pi as string ?? "" : "";
         var token = Params.TryGetValue("token", out var tk) ? tk as string ?? "" : "";
         var documentId = Params.TryGetValue("document_id", out var di) ? di as string ?? "" : "";
-        var count = Params.TryGetValue("count", out var c) ? Math.Max(1, Math.Min(10, Convert.ToInt32(c))) : 1;
-        var distance = Params.TryGetValue("distance", out var d) ? Convert.ToDouble(d) : 3.0;
+        var count = Params.TryGetValue("count", out var c) ? Math.Max(1, Math.Min(10, Convert.ToInt32(c, CultureInfo.InvariantCulture))) : 1;
+        var distance = Params.TryGetValue("distance", out var d) ? Convert.ToDouble(d, CultureInfo.InvariantCulture) : 3.0;
 
         var authString = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{projectId}:{token}"));
         var noResultsMessage = Params.TryGetValue("no_results_message", out var nr)

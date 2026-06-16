@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SignalWire.Contexts;
@@ -143,6 +144,7 @@ public class AgentBase : Service
     //  Constructor
     // ======================================================================
 
+    [SuppressMessage("Design", "CA1062", Justification = "options is consumed by the base initializer, which runs before any constructor-body guard could; a null argument fails fast there. Guarding earlier is not possible without a non-idiomatic static throw-helper around the base call.")]
     public AgentBase(AgentOptions options) : base(new ServiceOptions
     {
         Name = options.Name,
@@ -264,10 +266,10 @@ public class AgentBase : Service
     public AgentBase PromptAddSection(
         string title,
         string body = "",
-        List<string>? bullets = null,
+        IReadOnlyList<string>? bullets = null,
         bool numbered = false,
         bool numberedBullets = false,
-        List<Dictionary<string, object>>? subsections = null)
+        IReadOnlyList<Dictionary<string, object>>? subsections = null)
     {
         _usePom = true;
         var section = new Dictionary<string, object>
@@ -277,13 +279,13 @@ public class AgentBase : Service
         };
         if (bullets is { Count: > 0 })
         {
-            section["bullets"] = bullets;
+            section["bullets"] = bullets.ToList();
         }
         if (numbered) section["numbered"] = true;
         if (numberedBullets) section["numbered_bullets"] = true;
         if (subsections is not null && subsections.Count > 0)
         {
-            section["subsections"] = subsections;
+            section["subsections"] = subsections.ToList();
         }
         _pomSections.Add(section);
         return this;
@@ -295,7 +297,7 @@ public class AgentBase : Service
         string parentTitle,
         string title,
         string body = "",
-        List<string>? bullets = null)
+        IReadOnlyList<string>? bullets = null)
     {
         foreach (var section in _pomSections)
         {
@@ -313,7 +315,7 @@ public class AgentBase : Service
                         ["title"] = title,
                         ["body"] = body,
                     };
-                    if (bullets is { Count: > 0 }) sub["bullets"] = bullets;
+                    if (bullets is { Count: > 0 }) sub["bullets"] = bullets.ToList();
                     subs.Add(sub);
                 }
                 break;
@@ -329,7 +331,7 @@ public class AgentBase : Service
         string title,
         string? body = null,
         string? bullet = null,
-        List<string>? bullets = null)
+        IReadOnlyList<string>? bullets = null)
     {
         foreach (var section in _pomSections)
         {
@@ -371,6 +373,7 @@ public class AgentBase : Service
     /// <summary>
     /// Return the prompt payload: POM array if enabled and populated, otherwise raw text.
     /// </summary>
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface (Python agent.get_prompt()).")]
     public object GetPrompt()
     {
         if (_usePom && _pomSections.Count > 0)
@@ -396,7 +399,7 @@ public class AgentBase : Service
     /// <summary>Set the prompt as a list-of-section dicts (POM form).
     /// Throws when ``UsePom`` is false. (Python parity:
     /// ``PromptManager.set_prompt_pom``.)</summary>
-    public AgentBase SetPromptPom(List<Dictionary<string, object>> pom)
+    public AgentBase SetPromptPom(IReadOnlyList<Dictionary<string, object>> pom)
     {
         if (!_usePom)
         {
@@ -412,6 +415,7 @@ public class AgentBase : Service
     /// <c>UsePom</c> is false. Materialised on each access from the
     /// internal list-of-dicts so mutations stay round-trip-safe. To
     /// inspect raw section dicts, use <see cref="GetPromptSections"/>.</summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Property accessor must not throw on malformed section data; on any parse failure it falls back to an empty POM instead of propagating the exception.")]
     public POM.PromptObjectModel? Pom
     {
         get
@@ -435,10 +439,12 @@ public class AgentBase : Service
     /// <summary>The raw POM section dicts. Mirrors how the dotnet
     /// agent has historically stored its prompt-object data and how
     /// SWML rendering consumes it. Read-only snapshot.</summary>
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface (Python agent.get_prompt_sections()).")]
     public IReadOnlyList<Dictionary<string, object>> GetPromptSections() => _pomSections;
 
     /// <summary>Create a per-call SWAIG-function token. Returns empty
     /// string on failure. (Python parity: ``StateMixin._create_tool_token``.)</summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort token creation; any failure returns an empty string to match the Python reference's swallow-and-fallback behavior.")]
     public string CreateToolToken(string toolName, string callId)
     {
         try
@@ -455,6 +461,7 @@ public class AgentBase : Service
     /// when the function is not registered, when the SessionManager
     /// rejects the token, or on any error. (Python parity:
     /// ``StateMixin.validate_tool_token``.)</summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort token validation; any failure is treated as an invalid token (returns false) to match the Python reference's swallow-and-reject behavior.")]
     public bool ValidateToolToken(string functionName, string token, string callId)
     {
         if (!HasFunction(functionName))
@@ -484,8 +491,9 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase AddHints(List<string> hints)
+    public AgentBase AddHints(IReadOnlyList<string> hints)
     {
+        ArgumentNullException.ThrowIfNull(hints);
         _hints.AddRange(hints);
         return this;
     }
@@ -586,14 +594,16 @@ public class AgentBase : Service
         return null;
     }
 
-    public AgentBase SetLanguages(List<Dictionary<string, object>> languages)
+    public AgentBase SetLanguages(IReadOnlyList<Dictionary<string, object>> languages)
     {
-        _languages = languages;
+        ArgumentNullException.ThrowIfNull(languages);
+        _languages = [.. languages];
         return this;
     }
 
     public AgentBase AddPronunciation(string replace, string with, string ignore = "")
     {
+        ArgumentNullException.ThrowIfNull(ignore);
         var entry = new Dictionary<string, object>
         {
             ["replace"] = replace,
@@ -607,9 +617,10 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase SetPronunciations(List<Dictionary<string, object>> pronunciations)
+    public AgentBase SetPronunciations(IReadOnlyList<Dictionary<string, object>> pronunciations)
     {
-        _pronunciations = pronunciations;
+        ArgumentNullException.ThrowIfNull(pronunciations);
+        _pronunciations = [.. pronunciations];
         return this;
     }
 
@@ -633,6 +644,7 @@ public class AgentBase : Service
 
     public AgentBase UpdateGlobalData(Dictionary<string, object> data)
     {
+        ArgumentNullException.ThrowIfNull(data);
         foreach (var (key, value) in data)
         {
             _globalData[key] = value;
@@ -640,9 +652,10 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase SetNativeFunctions(List<string> functions)
+    public AgentBase SetNativeFunctions(IReadOnlyList<string> functions)
     {
-        _nativeFunctions = functions;
+        ArgumentNullException.ThrowIfNull(functions);
+        _nativeFunctions = [.. functions];
         return this;
     }
 
@@ -670,9 +683,10 @@ public class AgentBase : Service
         "get_ideal_strategy",       // thinking (enable_thinking)
     };
 
-    public AgentBase SetInternalFillers(List<string> fillers)
+    public AgentBase SetInternalFillers(IReadOnlyList<string> fillers)
     {
-        _internalFillers = fillers;
+        ArgumentNullException.ThrowIfNull(fillers);
+        _internalFillers = [.. fillers];
         return this;
     }
 
@@ -742,8 +756,9 @@ public class AgentBase : Service
     /// for the complete list of supported function names and what fillers
     /// do. Names outside the supported set log a warning.</para>
     /// </summary>
-    public AgentBase AddInternalFiller(string functionName, string languageCode, List<string> fillers)
+    public AgentBase AddInternalFiller(string functionName, string languageCode, IReadOnlyList<string> fillers)
     {
+        ArgumentNullException.ThrowIfNull(fillers);
         if (!SupportedInternalFillerNames.Contains(functionName))
         {
             var supportedStr = "[" + string.Join(", ",
@@ -759,7 +774,7 @@ public class AgentBase : Service
             langMap = [];
             _internalFillersMap[functionName] = langMap;
         }
-        langMap[languageCode] = fillers;
+        langMap[languageCode] = [.. fillers];
         return this;
     }
 
@@ -775,9 +790,10 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase SetFunctionIncludes(List<Dictionary<string, object>> includes)
+    public AgentBase SetFunctionIncludes(IReadOnlyList<Dictionary<string, object>> includes)
     {
-        _functionIncludes = includes;
+        ArgumentNullException.ThrowIfNull(includes);
+        _functionIncludes = [.. includes];
         return this;
     }
 
@@ -893,6 +909,8 @@ public class AgentBase : Service
     // ======================================================================
 
     /// <summary>Return the skill manager, creating it lazily on first access.</summary>
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface (Python agent.get_skill_manager()); also has the lazy-init side effect of creating the manager.")]
+    [SuppressMessage("Naming", "CA1721", Justification = "GetSkillManager() and the SkillManager property both intentionally exist to mirror the Python reference surface (get_skill_manager() + skill_manager).")]
     public SkillManager GetSkillManager()
     {
         _skillManager ??= new SkillManager(this);
@@ -900,9 +918,12 @@ public class AgentBase : Service
     }
 
     /// <summary>Skill manager (Python parity: ``agent.skill_manager``).</summary>
+    [SuppressMessage("Naming", "CA1721", Justification = "The SkillManager property and GetSkillManager() both intentionally exist to mirror the Python reference surface (skill_manager + get_skill_manager()).")]
     public SkillManager SkillManager => GetSkillManager();
 
     /// <summary>Return the agent name (Python parity: ``agent.get_name()``).</summary>
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface (Python agent.get_name()).")]
+    [SuppressMessage("Naming", "CA1721", Justification = "GetName() and the inherited Name property both intentionally exist to mirror the Python reference surface (get_name() + name).")]
     public string GetName() => Name;
 
     // ``GetFullUrl(bool includeAuth = false)`` is inherited from
@@ -918,7 +939,7 @@ public class AgentBase : Service
         return this;
     }
 
-    private bool _autoMapSipUsernames = false;
+    private bool _autoMapSipUsernames;
     public bool IsAutoMapSipUsernames => _autoMapSipUsernames;
 
     /// <summary>
@@ -971,7 +992,7 @@ public class AgentBase : Service
     public AgentBase RemoveSkill(SkillName name) => RemoveSkill(name.ToWireName());
 
     /// <summary>List all loaded skill instance keys.</summary>
-    public List<string> ListSkills()
+    public IReadOnlyList<string> ListSkills()
     {
         if (_skillManager is not null)
         {
@@ -1006,12 +1027,14 @@ public class AgentBase : Service
         return this;
     }
 
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public AgentBase SetWebHookUrl(string url)
     {
         _webhookUrl = url;
         return this;
     }
 
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public AgentBase SetPostPromptUrl(string url)
     {
         _postPromptUrl = url;
@@ -1019,14 +1042,17 @@ public class AgentBase : Service
     }
 
     /// <summary>Manually override the proxy URL used for SWAIG webhook construction.</summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public AgentBase ManualSetProxyUrl(string url)
     {
+        ArgumentNullException.ThrowIfNull(url);
         _manualProxyUrl = url.TrimEnd('/');
         return this;
     }
 
     public AgentBase AddSwaigQueryParams(Dictionary<string, string> parameters)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
         foreach (var (key, value) in parameters)
         {
             _swaigQueryParams[key] = value;
@@ -1073,6 +1099,7 @@ public class AgentBase : Service
 
     public AgentBase RegisterSipUsername(string username, string route = "")
     {
+        ArgumentNullException.ThrowIfNull(route);
         SetParam("sip_username", username);
         if (route.Length > 0)
         {
@@ -1298,6 +1325,8 @@ public class AgentBase : Service
         Dictionary<string, string> headers,
         string? body)
     {
+        ArgumentNullException.ThrowIfNull(path);
+
         // Validation is opt-in: when no signing key is configured, the
         // base dispatch handles the request as before.
         if (_webhookValidationMiddleware is null)

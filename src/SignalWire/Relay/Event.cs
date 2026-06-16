@@ -11,10 +11,10 @@ public sealed class Event
     public double Timestamp { get; }
     public Dictionary<string, object?> Params { get; }
 
-    public Event(string eventType, Dictionary<string, object?> params_, double timestamp = 0)
+    public Event(string eventType, Dictionary<string, object?> parameters, double timestamp = 0)
     {
         EventType = eventType;
-        Params = params_;
+        Params = parameters;
         Timestamp = timestamp > 0 ? timestamp : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
     }
 
@@ -40,8 +40,8 @@ public sealed class Event
     };
 
     /// <summary>Factory: parse an event from its type and params.</summary>
-    public static Event Parse(string eventType, Dictionary<string, object?> params_)
-        => new(eventType, params_);
+    public static Event Parse(string eventType, Dictionary<string, object?> parameters)
+        => new(eventType, parameters);
 
     // ------------------------------------------------------------------
     // Internal

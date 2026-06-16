@@ -1,0 +1,46 @@
+root = true
+
+# ---------------------------------------------------------------------------
+# signalwire-dotnet — formatting + analyzer policy.
+#
+# FMT gate: `dotnet format whitespace` (the whitespace/newline rules below).
+# LINT gate: a clean analyzer build (Directory.Build.props turns analyzers on
+# with TreatWarningsAsErrors). Per-rule severities below encode the cross-port
+# principle (locked 2026-06-16): every rule that is a genuinely useful standing
+# signal stays ON (error) and is burned to zero; a rule is set to `none` ONLY
+# when obeying it would change the SWAIG wire bytes / rename a wire token, or
+# when it is genuinely low-value here. Each `none` carries its rationale.
+# Type/shape idiom (Uri, IReadOnlyList, properties, naming) is NEVER a reason to
+# suppress — where it diverges from Python, the parity checker is taught the
+# equivalence (porting-sdk/type_aliases.yaml), not the code de-idiomatized.
+# ---------------------------------------------------------------------------
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+[*.cs]
+indent_size = 4
+
+# ── Analyzer rules turned OFF (with rationale) ─────────────────────────────
+# These are the ONLY suppressed rules. Everything else stays at its default
+# (error, via TreatWarningsAsErrors) and is burned to zero.
+
+# CA1308 "prefer ToUpperInvariant": KEPT ON globally (real locale signal); the
+# few wire-semantic lowercasing sites (lowercase hex token generation) are
+# suppressed INLINE at the site with rationale, not here.
+
+# CA1716 — identifiers should not match reserved language keywords (VB
+# `Event`/`Call`/etc.). `Event`, `Call`, `Action` are the idiomatic .NET type
+# names AND the cross-port concept names; VB-keyword interop is not a concern
+# for this SDK. Low-value here; renaming would churn the public surface for no
+# real benefit.
+dotnet_diagnostic.CA1716.severity = none
+
+# CA1724 — type name conflicts with a namespace. The few collisions are
+# intentional concept names shared across the cross-port surface; renaming
+# would diverge from the other ports' type names for no functional gain.
+dotnet_diagnostic.CA1724.severity = none

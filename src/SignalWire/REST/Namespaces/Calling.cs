@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace SignalWire.REST.Namespaces;
 
 /// <summary>
@@ -22,6 +24,8 @@ public class Calling
 
     public HttpClient Client => _client;
     public string ProjectId => _projectId;
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface.")]
+    [SuppressMessage("Performance", "CA1822", Justification = "get_* accessor matches the cross-port surface; kept as an instance member for parity.")]
     public string GetBasePath() => BasePath;
 
     // ------------------------------------------------------------------

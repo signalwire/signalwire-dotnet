@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.Logging;
 using SignalWire.Skills.Builtin;
 
@@ -60,6 +61,7 @@ public sealed class SkillRegistry
 
     private SkillRegistry() { }
 
+    [SuppressMessage("Reliability", "CA1508", Justification = "Double-checked locking: the analyzer cannot model the concurrent re-assignment of _instance inside the lock, so it wrongly reports the inner null-check as dead.")]
     public static SkillRegistry Instance
     {
         get
@@ -98,7 +100,7 @@ public sealed class SkillRegistry
     /// this returns the discoverable inventory (mirrors <see cref="ListSkills"/>).
     /// (Python parity: ``SkillRegistry.discover_skills`` now returns
     /// ``list_skills()`` — it was a no-op until the reference stub was fixed.)</summary>
-    public List<string> DiscoverSkills()
+    public IReadOnlyList<string> DiscoverSkills()
     {
         return ListSkills();
     }
@@ -159,16 +161,16 @@ public sealed class SkillRegistry
     }
 
     /// <summary>Return all known skill names (builtins + custom), sorted.</summary>
-    public List<string> ListSkills()
+    public IReadOnlyList<string> ListSkills()
     {
         lock (Lock)
         {
             // Ensure all builtins are registered
             foreach (var name in BuiltinSkillNames)
             {
-                if (!_registeredSkills.ContainsKey(name) && BuiltinFactories.ContainsKey(name))
+                if (!_registeredSkills.ContainsKey(name) && BuiltinFactories.TryGetValue(name, out var factory))
                 {
-                    _registeredSkills[name] = BuiltinFactories[name];
+                    _registeredSkills[name] = factory;
                 }
             }
 

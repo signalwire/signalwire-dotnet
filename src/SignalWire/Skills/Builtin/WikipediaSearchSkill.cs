@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using SignalWire.Agent;
@@ -29,10 +31,11 @@ public sealed class WikipediaSearchSkill : SkillBase
 
     public override bool Setup(AgentBase agent, Dictionary<string, object> parameters) => true;
 
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort Wikipedia API call; any failure is surfaced to the caller as an in-band error string.")]
     public override void RegisterTools(AgentBase agent)
     {
         var numResults = Params.TryGetValue("num_results", out var nr)
-            ? Math.Max(1, Math.Min(5, Convert.ToInt32(nr)))
+            ? Math.Max(1, Math.Min(5, Convert.ToInt32(nr, CultureInfo.InvariantCulture)))
             : 1;
         var noResultsMessage = Params.TryGetValue("no_results_message", out var nm)
             ? nm as string ?? "I couldn't find any Wikipedia articles for '{query}'."
@@ -47,7 +50,7 @@ public sealed class WikipediaSearchSkill : SkillBase
                 {
                     ["type"] = "string",
                     ["description"] = "The topic to search for on Wikipedia",
-                    ["required"] = true,
+                    // Not required — Python passes none (wikipedia_search/skill.py:87).
                 },
             },
             (args, rawData) =>
@@ -69,7 +72,7 @@ public sealed class WikipediaSearchSkill : SkillBase
                         ["list"] = "search",
                         ["format"] = "json",
                         ["srsearch"] = query,
-                        ["srlimit"] = numResults.ToString(),
+                        ["srlimit"] = numResults.ToString(CultureInfo.InvariantCulture),
                     };
                     var (sStatus, _, sParsed) = HttpHelper.GetAsync(baseUrl, searchParams)
                         .ConfigureAwait(false).GetAwaiter().GetResult();
@@ -156,7 +159,8 @@ public sealed class WikipediaSearchSkill : SkillBase
 
     private static string FormatNoResults(string template, string query)
     {
-        return template.Contains("{query}") ? template.Replace("{query}", query) : template;
+        return template.Contains("{query}", StringComparison.Ordinal)
+            ? template.Replace("{query}", query, StringComparison.Ordinal) : template;
     }
 
     public override List<Dictionary<string, object>> GetPromptSections()

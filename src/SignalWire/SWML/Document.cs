@@ -52,7 +52,7 @@ public class Document
     /// Get a copy of the verbs for a section.
     /// Returns an empty list if the section does not exist.
     /// </summary>
-    public List<Dictionary<string, object?>> GetVerbs(string section = "main")
+    public IReadOnlyList<Dictionary<string, object?>> GetVerbs(string section = "main")
     {
         if (_sections.TryGetValue(section, out var verbs))
         {
@@ -70,21 +70,21 @@ public class Document
     /// <summary>Append a verb to a named section.</summary>
     public void AddVerbToSection(string section, string verbName, object? config)
     {
-        if (!_sections.ContainsKey(section))
+        if (!_sections.TryGetValue(section, out var verbs))
         {
             throw new InvalidOperationException($"Section '{section}' does not exist");
         }
-        _sections[section].Add(new Dictionary<string, object?> { [verbName] = config });
+        verbs.Add(new Dictionary<string, object?> { [verbName] = config });
     }
 
     /// <summary>Append a pre-formatted verb hash to a section.</summary>
     public void AddRawVerb(string section, Dictionary<string, object?> verbHash)
     {
-        if (!_sections.ContainsKey(section))
+        if (!_sections.TryGetValue(section, out var verbs))
         {
             throw new InvalidOperationException($"Section '{section}' does not exist");
         }
-        _sections[section].Add(verbHash);
+        verbs.Add(verbHash);
     }
 
     /// <summary>Clear all verbs in a section (keeps the section itself).</summary>

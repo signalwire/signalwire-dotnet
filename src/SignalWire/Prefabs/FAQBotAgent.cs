@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
@@ -9,12 +10,12 @@ namespace SignalWire.Prefabs;
 /// </summary>
 public class FAQBotAgent : AgentBase
 {
-    private readonly List<Dictionary<string, object>> _faqs;
+    private readonly IReadOnlyList<Dictionary<string, object>> _faqs;
     private readonly bool _suggestRelated;
 
     public FAQBotAgent(
         string name,
-        List<Dictionary<string, object>> faqs,
+        IReadOnlyList<Dictionary<string, object>> faqs,
         Dictionary<string, object>? options = null)
         : base(CreateOptions(name, options))
     {
@@ -61,8 +62,10 @@ public class FAQBotAgent : AgentBase
     /// <summary>SWAIG tool handler that searches the configured FAQ
     /// knowledge base for the best keyword-scored answer.
     /// (Python parity: ``FAQBotAgent.search_faqs(args, raw_data)``.)</summary>
+    [SuppressMessage("Globalization", "CA1308", Justification = "lowercased query is the normalized value echoed back in the response text verbatim")]
     public FunctionResult SearchFaqs(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
+        ArgumentNullException.ThrowIfNull(args);
         var query = (args.TryGetValue("query", out var q) ? q as string ?? "" : "").Trim().ToLowerInvariant();
         if (query.Length == 0) return new FunctionResult("Please provide a search query.");
 
@@ -71,12 +74,12 @@ public class FAQBotAgent : AgentBase
         var scored = new List<(int Score, Dictionary<string, object> Faq)>();
         foreach (var faq in _faqs)
         {
-            var questionLower = (faq.TryGetValue("question", out var qv) ? qv as string ?? "" : "").ToLowerInvariant();
+            var question = faq.TryGetValue("question", out var qv) ? qv as string ?? "" : "";
             var score = 0;
-            if (questionLower.Contains(query)) score += 10;
+            if (question.Contains(query, StringComparison.OrdinalIgnoreCase)) score += 10;
             foreach (var kw in keywords)
             {
-                if (kw.Length > 0 && questionLower.Contains(kw)) score++;
+                if (kw.Length > 0 && question.Contains(kw, StringComparison.OrdinalIgnoreCase)) score++;
             }
             if (score > 0) scored.Add((score, faq));
         }
@@ -96,11 +99,15 @@ public class FAQBotAgent : AgentBase
         return new FunctionResult(response);
     }
 
-    public List<Dictionary<string, object>> GetFaqs() => _faqs;
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
+    public IReadOnlyList<Dictionary<string, object>> GetFaqs() => _faqs;
+
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
     public bool GetSuggestRelated() => _suggestRelated;
 
     private static AgentOptions CreateOptions(string name, Dictionary<string, object>? options)
     {
+        ArgumentNullException.ThrowIfNull(name);
         return new AgentOptions
         {
             Name = name.Length > 0 ? name : "faq_bot",

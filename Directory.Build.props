@@ -1,0 +1,32 @@
+<Project>
+
+  <!--
+    Repo-wide build defaults. The LINT gate (scripts/run-ci.sh) builds
+    src/SignalWire with these on, so a warning is a build failure.
+
+    Governing principle (cross-port, locked 2026-06-16): language idiom drives
+    type/shape; every analyzer rule that is a genuinely useful standing signal
+    is ON and burned to zero (burndown cost is not a disqualifier). A rule is
+    turned OFF only when obeying it would change the SWAIG wire bytes or rename
+    a wire token, or when it is genuinely low-value for this codebase. Per-rule
+    severities + rationale live in .editorconfig.
+  -->
+
+  <!--
+    The analyzer bar applies ONLY to the shipped library (SignalWire.csproj) —
+    that is the public surface the LINT gate polices. Test/example/tool projects
+    (tests/, examples/, tools/, scripts/) carry intentionally loose code (audit
+    harnesses, corpus dumps) and would only fight the gate, so they are left at
+    the SDK defaults. Keyed off the project file name so the scoping is robust
+    regardless of path-separator quirks.
+  -->
+  <PropertyGroup Condition="'$(MSBuildProjectFile)' == 'SignalWire.csproj'">
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>All</AnalysisMode>
+    <!-- A lint violation fails the build → the LINT gate. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+</Project>

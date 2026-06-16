@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace SignalWire.SWAIG;
 
 /// <summary>
@@ -31,7 +33,7 @@ namespace SignalWire.SWAIG;
 public sealed record JoinConferenceOptions
 {
     /// <summary>Whether to join muted. Python default: <c>False</c>.</summary>
-    public bool Muted { get; init; } = false;
+    public bool Muted { get; init; }
 
     /// <summary>Beep behaviour. Python default: <c>"true"</c>.</summary>
     public ConferenceBeep Beep { get; init; } = ConferenceBeep.True;
@@ -40,10 +42,11 @@ public sealed record JoinConferenceOptions
     public bool StartOnEnter { get; init; } = true;
 
     /// <summary>Whether the conference ends when this participant exits. Python default: <c>False</c>.</summary>
-    public bool EndOnExit { get; init; } = false;
+    public bool EndOnExit { get; init; }
 
     /// <summary>SWML URL for hold music. Python default: <c>None</c>.</summary>
-    public string? WaitUrl { get; init; } = null;
+    [SuppressMessage("Usage", "CA1056", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
+    public string? WaitUrl { get; init; }
 
     /// <summary>Maximum participants (1..=250). Python default: <c>250</c>.</summary>
     public int MaxParticipants { get; init; } = 250;
@@ -52,25 +55,27 @@ public sealed record JoinConferenceOptions
     public ConferenceRecord Record { get; init; } = ConferenceRecord.DoNotRecord;
 
     /// <summary>Conference region. Python default: <c>None</c>.</summary>
-    public string? Region { get; init; } = null;
+    public string? Region { get; init; }
 
     /// <summary>Silence-trim mode. Python default: <c>"trim-silence"</c>.</summary>
     public ConferenceTrim Trim { get; init; } = ConferenceTrim.TrimSilence;
 
     /// <summary>SWML Call ID / CXML CallSid for coaching. Python default: <c>None</c>.</summary>
-    public string? Coach { get; init; } = null;
+    public string? Coach { get; init; }
 
     /// <summary>Events to report. Python default: <c>None</c>.</summary>
-    public string? StatusCallbackEvent { get; init; } = null;
+    public string? StatusCallbackEvent { get; init; }
 
     /// <summary>URL for status callbacks. Python default: <c>None</c>.</summary>
-    public string? StatusCallback { get; init; } = null;
+    [SuppressMessage("Usage", "CA1056", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
+    public string? StatusCallback { get; init; }
 
     /// <summary>HTTP method for status callbacks. Python default: <c>"POST"</c>.</summary>
     public CallbackMethod StatusCallbackMethod { get; init; } = CallbackMethod.Post;
 
     /// <summary>URL for recording status callbacks. Python default: <c>None</c>.</summary>
-    public string? RecordingStatusCallback { get; init; } = null;
+    [SuppressMessage("Usage", "CA1056", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
+    public string? RecordingStatusCallback { get; init; }
 
     /// <summary>HTTP method for recording status callbacks. Python default: <c>"POST"</c>.</summary>
     public CallbackMethod RecordingStatusCallbackMethod { get; init; } = CallbackMethod.Post;
@@ -79,5 +84,5 @@ public sealed record JoinConferenceOptions
     public string RecordingStatusCallbackEvent { get; init; } = "completed";
 
     /// <summary>Switch payload (object {} or array []). Python default: <c>None</c>.</summary>
-    public object? Result { get; init; } = null;
+    public object? Result { get; init; }
 }

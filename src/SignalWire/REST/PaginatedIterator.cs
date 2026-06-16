@@ -48,7 +48,7 @@ public class PaginatedIterator : IAsyncEnumerable<Dictionary<string, object?>>
     public Dictionary<string, string>? Params => _params;
     public string DataKey => _dataKey;
     public int Index => _index;
-    public List<Dictionary<string, object?>> Items => _items;
+    public IReadOnlyList<Dictionary<string, object?>> Items => _items;
     public bool Done => _done;
 
     /// <summary>Returns the next item, or throws InvalidOperationException

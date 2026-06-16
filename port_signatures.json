@@ -2952,15 +2952,15 @@
                 },
                 {
                   "name": "format",
-                  "type": "class:signalwire.swaig.record_format.RecordFormat",
+                  "type": "string",
                   "required": false,
-                  "default": "Wav"
+                  "default": "wav"
                 },
                 {
                   "name": "direction",
-                  "type": "class:signalwire.swaig.record_direction.RecordDirection",
+                  "type": "string",
                   "required": false,
-                  "default": "Both"
+                  "default": "both"
                 },
                 {
                   "name": "terminators",
@@ -3441,15 +3441,15 @@
                 },
                 {
                   "name": "direction",
-                  "type": "class:signalwire.swaig.tap_direction.TapDirection",
+                  "type": "string",
                   "required": false,
-                  "default": "Both"
+                  "default": "both"
                 },
                 {
                   "name": "codec",
-                  "type": "class:signalwire.swaig.codec.Codec",
+                  "type": "string",
                   "required": false,
-                  "default": "Pcmu"
+                  "default": "PCMU"
                 },
                 {
                   "name": "rtp_ptime",
@@ -7217,7 +7217,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "params_",
+                  "name": "parameters",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -9002,7 +9002,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "params_",
+                  "name": "parameters",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -9036,7 +9036,7 @@
                   "required": true
                 },
                 {
-                  "name": "params_",
+                  "name": "parameters",
                   "type": "optional<dict<string,any>>",
                   "required": false,
                   "default": null
@@ -9327,7 +9327,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "params_",
+                  "name": "parameters",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -9398,7 +9398,7 @@
                   "required": true
                 },
                 {
-                  "name": "params_",
+                  "name": "parameters",
                   "type": "optional<dict<string,any>>",
                   "required": false,
                   "default": null
@@ -9506,7 +9506,7 @@
                   "required": true
                 },
                 {
-                  "name": "params_",
+                  "name": "parameters",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -9572,7 +9572,7 @@
                   "required": true
                 },
                 {
-                  "name": "params_",
+                  "name": "parameters",
                   "type": "dict<string,any>",
                   "required": true
                 }
@@ -9630,7 +9630,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "params_",
+                  "name": "parameters",
                   "type": "optional<dict<string,any>>",
                   "required": false,
                   "default": null
@@ -11621,12 +11621,12 @@
                   "kind": "self"
                 },
                 {
-                  "name": "sid",
+                  "name": "id",
                   "type": "string",
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -11731,12 +11731,12 @@
                   "kind": "self"
                 },
                 {
-                  "name": "sid",
+                  "name": "id",
                   "type": "string",
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -12148,12 +12148,12 @@
                   "kind": "self"
                 },
                 {
-                  "name": "sid",
+                  "name": "id",
                   "type": "string",
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -12196,12 +12196,12 @@
                   "kind": "self"
                 },
                 {
-                  "name": "sid",
+                  "name": "id",
                   "type": "string",
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -12302,12 +12302,12 @@
                   "kind": "self"
                 },
                 {
-                  "name": "sid",
+                  "name": "id",
                   "type": "string",
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -12730,12 +12730,12 @@
                   "kind": "self"
                 },
                 {
-                  "name": "sid",
+                  "name": "id",
                   "type": "string",
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -14457,7 +14457,7 @@
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -14653,7 +14653,7 @@
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -15110,7 +15110,7 @@
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -15326,7 +15326,7 @@
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },
@@ -15756,7 +15756,7 @@
                   "required": true
                 },
                 {
-                  "name": "kwargs",
+                  "name": "data",
                   "type": "dict<string,any>",
                   "required": true
                 },

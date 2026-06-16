@@ -312,7 +312,7 @@ public class FunctionResultTests
         // {"unset_global_data": ["user_id", "session", "token"]} — bare list, no {keys} wrapper.
         var fr = new FunctionResult();
         fr.RemoveGlobalData(["user_id", "session", "token"]);
-        var keys = (List<string>)GetAction(fr, 0)["unset_global_data"];
+        var keys = (IReadOnlyList<string>)GetAction(fr, 0)["unset_global_data"];
         Assert.Equal(new List<string> { "user_id", "session", "token" }, keys);
     }
 
@@ -345,7 +345,7 @@ public class FunctionResultTests
         // {"unset_meta_data": ["key1", "key2"]} — bare list.
         var fr = new FunctionResult();
         fr.RemoveMetadata(["key1", "key2"]);
-        var keys = (List<string>)GetAction(fr, 0)["unset_meta_data"];
+        var keys = (IReadOnlyList<string>)GetAction(fr, 0)["unset_meta_data"];
         Assert.Equal(new List<string> { "key1", "key2" }, keys);
     }
 
@@ -918,9 +918,13 @@ public class FunctionResultTests
         var enumFr = new FunctionResult();
         enumFr.JoinConference("team-meeting", new JoinConferenceOptions
         {
-            Muted = true, Beep = ConferenceBeep.OnEnter, MaxParticipants = 50,
-            Record = ConferenceRecord.RecordFromStart, Trim = ConferenceTrim.DoNotTrim,
-            StatusCallbackMethod = CallbackMethod.Get, WaitUrl = "https://example.com/hold-music",
+            Muted = true,
+            Beep = ConferenceBeep.OnEnter,
+            MaxParticipants = 50,
+            Record = ConferenceRecord.RecordFromStart,
+            Trim = ConferenceTrim.DoNotTrim,
+            StatusCallbackMethod = CallbackMethod.Get,
+            WaitUrl = "https://example.com/hold-music",
         });
         var enumJc = MainVerb(GetAction(enumFr, 0), "join_conference");
 

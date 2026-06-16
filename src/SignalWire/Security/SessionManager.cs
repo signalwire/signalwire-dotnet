@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -28,6 +29,7 @@ public sealed class SessionManager
     /// <summary>
     /// Create or confirm a session, returning the call ID.
     /// </summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface; binding it to the instance is intentional.")]
     public string CreateSession(string? callId = null)
     {
         return callId ?? Guid.NewGuid().ToString();
@@ -61,12 +63,18 @@ public sealed class SessionManager
     /// <returns><c>true</c> if the token is valid and not expired.</returns>
     public bool ValidateToken(string functionName, string callId, string token)
     {
+        ArgumentNullException.ThrowIfNull(token);
+
         string decoded;
         try
         {
             decoded = Base64UrlDecode(token);
         }
-        catch
+        catch (FormatException)
+        {
+            return false;
+        }
+        catch (DecoderFallbackException)
         {
             return false;
         }
@@ -121,6 +129,7 @@ public sealed class SessionManager
     // Private helpers
     // ------------------------------------------------------------------
 
+    [SuppressMessage("Globalization", "CA1308", Justification = "Lowercase hex is the on-the-wire token signature form; the digest is sent and compared verbatim.")]
     private string ComputeHmac(string message)
     {
         var messageBytes = Encoding.UTF8.GetBytes(message);
@@ -135,6 +144,7 @@ public sealed class SessionManager
         return CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
     }
 
+    [SuppressMessage("Globalization", "CA1308", Justification = "Lowercase hex is the on-the-wire nonce form embedded in the token; produced and compared verbatim.")]
     private static string RandomHex(int bytes)
     {
         var buffer = new byte[bytes];

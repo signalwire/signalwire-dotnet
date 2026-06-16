@@ -56,7 +56,9 @@ public class ContextsTests
     {
         var q = new GatherQuestion(new Dictionary<string, object>
         {
-            ["key"] = "x", ["question"] = "Q?", ["type"] = "string",
+            ["key"] = "x",
+            ["question"] = "Q?",
+            ["type"] = "string",
         });
         Assert.False(q.ToDict().ContainsKey("type"));
     }
@@ -66,7 +68,9 @@ public class ContextsTests
     {
         var q = new GatherQuestion(new Dictionary<string, object>
         {
-            ["key"] = "x", ["question"] = "Q?", ["type"] = "boolean",
+            ["key"] = "x",
+            ["question"] = "Q?",
+            ["type"] = "boolean",
         });
         Assert.Equal("boolean", q.ToDict()["type"]);
     }
@@ -308,7 +312,9 @@ public class ContextsTests
         step.SetText("text");
         step.SetGatherInfo(new Dictionary<string, object>
         {
-            ["output_key"] = "info", ["completion_action"] = "next_step", ["prompt"] = "Answer these questions",
+            ["output_key"] = "info",
+            ["completion_action"] = "next_step",
+            ["prompt"] = "Answer these questions",
         });
         step.AddGatherQuestion(new Dictionary<string, object> { ["key"] = "name", ["question"] = "Your name?" });
 

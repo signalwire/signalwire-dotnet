@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -24,12 +26,23 @@ public partial class AgentServer
 
     private static readonly Dictionary<string, string> MimeTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["html"] = "text/html", ["htm"] = "text/html", ["css"] = "text/css",
-        ["js"] = "application/javascript", ["json"] = "application/json",
-        ["png"] = "image/png", ["jpg"] = "image/jpeg", ["jpeg"] = "image/jpeg",
-        ["gif"] = "image/gif", ["svg"] = "image/svg+xml", ["ico"] = "image/x-icon",
-        ["txt"] = "text/plain", ["pdf"] = "application/pdf", ["xml"] = "application/xml",
-        ["woff"] = "font/woff", ["woff2"] = "font/woff2", ["ttf"] = "font/ttf",
+        ["html"] = "text/html",
+        ["htm"] = "text/html",
+        ["css"] = "text/css",
+        ["js"] = "application/javascript",
+        ["json"] = "application/json",
+        ["png"] = "image/png",
+        ["jpg"] = "image/jpeg",
+        ["jpeg"] = "image/jpeg",
+        ["gif"] = "image/gif",
+        ["svg"] = "image/svg+xml",
+        ["ico"] = "image/x-icon",
+        ["txt"] = "text/plain",
+        ["pdf"] = "application/pdf",
+        ["xml"] = "application/xml",
+        ["woff"] = "font/woff",
+        ["woff2"] = "font/woff2",
+        ["ttf"] = "font/ttf",
         ["eot"] = "application/vnd.ms-fontobject",
     };
 
@@ -62,6 +75,7 @@ public partial class AgentServer
     /// <summary>Register an agent at a route. Throws if the route is already taken.</summary>
     public AgentServer Register(AgentBase agent, string? route = null)
     {
+        ArgumentNullException.ThrowIfNull(agent);
         route = NormalizeRoute(route ?? agent.Route);
 
         if (_agents.ContainsKey(route))
@@ -73,13 +87,14 @@ public partial class AgentServer
 
     public AgentServer Unregister(string route)
     {
+        ArgumentNullException.ThrowIfNull(route);
         route = NormalizeRoute(route);
         _agents.Remove(route);
         return this;
     }
 
     /// <summary>Return all registered routes (sorted).</summary>
-    public List<string> GetAgents()
+    public IReadOnlyList<string> GetAgents()
     {
         var routes = _agents.Keys.ToList();
         routes.Sort(StringComparer.Ordinal);
@@ -88,6 +103,7 @@ public partial class AgentServer
 
     public AgentBase? GetAgent(string route)
     {
+        ArgumentNullException.ThrowIfNull(route);
         route = NormalizeRoute(route);
         return _agents.TryGetValue(route, out var agent) ? agent : null;
     }
@@ -112,12 +128,16 @@ public partial class AgentServer
 
     public AgentServer RegisterSipUsername(string username, string route)
     {
+        ArgumentNullException.ThrowIfNull(route);
         route = NormalizeRoute(route);
         _sipUsernameMapping[username] = route;
         return this;
     }
 
     public bool IsSipRoutingEnabled => _sipRoutingEnabled;
+
+    [SuppressMessage("Design", "CA1024:Use properties where appropriate",
+        Justification = "get_* accessor matches the cross-port surface; returns a defensive copy")]
     public Dictionary<string, string> GetSipUsernameMapping() => new(_sipUsernameMapping);
 
     // ==================================================================
@@ -128,8 +148,11 @@ public partial class AgentServer
     /// Serve static files from <paramref name="directory"/> under <paramref name="urlPrefix"/>.
     /// Throws if the directory does not exist.
     /// </summary>
+    [SuppressMessage("Usage", "CA1054:URI-like parameters should not be strings",
+        Justification = "urlPrefix is a wire route prefix string, not a navigable URI")]
     public AgentServer ServeStatic(string directory, string urlPrefix)
     {
+        ArgumentNullException.ThrowIfNull(urlPrefix);
         var realDir = Path.GetFullPath(directory);
         if (!Directory.Exists(realDir))
             throw new InvalidOperationException($"Static directory '{directory}' does not exist");
@@ -147,6 +170,7 @@ public partial class AgentServer
     public (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
         string method, string path, Dictionary<string, string>? headers = null, string? body = null)
     {
+        ArgumentNullException.ThrowIfNull(path);
         headers ??= [];
         path = NormalizePath(path);
 
@@ -214,6 +238,8 @@ public partial class AgentServer
         return JsonResponse(200, new Dictionary<string, object> { ["agents"] = agentList });
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Best-effort static-file path resolution and read; any failure falls through to skip the route or return 500.")]
     private (int, Dictionary<string, string>, string)? HandleStaticFile(string path)
     {
         // Sort by longest prefix first
@@ -255,7 +281,10 @@ public partial class AgentServer
 
             if (File.Exists(absPath))
             {
-                var ext = Path.GetExtension(absPath).TrimStart('.').ToLowerInvariant();
+                // MimeTypes uses OrdinalIgnoreCase, so the upper-cased
+                // extension still matches the lowercase keys; ToUpperInvariant
+                // is the analyzer-preferred normalization form.
+                var ext = Path.GetExtension(absPath).TrimStart('.').ToUpperInvariant();
                 var contentType = MimeTypes.TryGetValue(ext, out var mime) ? mime : "application/octet-stream";
 
                 try
@@ -263,7 +292,7 @@ public partial class AgentServer
                     var content = File.ReadAllText(absPath);
                     var responseHeaders = SecurityHeaders();
                     responseHeaders["Content-Type"] = contentType;
-                    responseHeaders["Content-Length"] = content.Length.ToString();
+                    responseHeaders["Content-Length"] = content.Length.ToString(CultureInfo.InvariantCulture);
                     return (200, responseHeaders, content);
                 }
                 catch

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
@@ -19,6 +20,7 @@ public class ConciergeAgent : AgentBase
         Dictionary<string, object>? options = null)
         : base(CreateOptions(name, options))
     {
+        ArgumentNullException.ThrowIfNull(venueInfo);
         _venueName = venueInfo.TryGetValue("venue_name", out var vn) ? vn as string ?? "Venue" : "Venue";
         _services = venueInfo.TryGetValue("services", out var sv) && sv is List<string> sl ? sl : [];
         _amenities = venueInfo.TryGetValue("amenities", out var am) && am is Dictionary<string, Dictionary<string, object>> ad ? ad : [];
@@ -91,6 +93,7 @@ public class ConciergeAgent : AgentBase
     /// (Python parity: ``ConciergeAgent.check_availability(args, raw_data)``.)</summary>
     public FunctionResult CheckAvailability(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
+        ArgumentNullException.ThrowIfNull(args);
         var service = args.TryGetValue("service", out var s) ? s as string ?? "" : "";
         var date = args.TryGetValue("date", out var d) ? d as string ?? "" : "";
         var response = $"Checking availability for {service} at {_venueName}";
@@ -102,12 +105,12 @@ public class ConciergeAgent : AgentBase
     /// (Python parity: ``ConciergeAgent.get_directions(args, raw_data)``.)</summary>
     public FunctionResult GetDirections(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
+        ArgumentNullException.ThrowIfNull(args);
         var destination = args.TryGetValue("destination", out var d) ? d as string ?? "" : "";
-        var destinationLower = destination.ToLowerInvariant();
 
         foreach (var (amenityName, info) in _amenities)
         {
-            if (amenityName.ToLowerInvariant() == destinationLower)
+            if (amenityName.Equals(destination, StringComparison.OrdinalIgnoreCase))
             {
                 var location = info.TryGetValue("location", out var l) ? l as string ?? "location not specified" : "location not specified";
                 return new FunctionResult($"The {amenityName} at {_venueName} is located at: {location}");
@@ -117,12 +120,18 @@ public class ConciergeAgent : AgentBase
         return new FunctionResult($"Directions to {destination} at {_venueName}: please ask the front desk for assistance.");
     }
 
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
     public string GetVenueName() => _venueName;
-    public List<string> GetServices() => _services;
+
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
+    public IReadOnlyList<string> GetServices() => _services;
+
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
     public Dictionary<string, Dictionary<string, object>> GetAmenities() => _amenities;
 
     private static AgentOptions CreateOptions(string name, Dictionary<string, object>? options)
     {
+        ArgumentNullException.ThrowIfNull(name);
         return new AgentOptions
         {
             Name = name.Length > 0 ? name : "concierge",

@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -26,7 +28,8 @@ public class Client : IAsyncDisposable
     public string Token { get; }
     public string Host { get; set; }
     public string Scheme { get; set; }
-    public List<string> Contexts { get; } = [];
+    private readonly List<string> _contexts = [];
+    public IReadOnlyList<string> Contexts => _contexts;
     public bool Connected { get; set; }
     public string? SessionId { get; set; }
     public string? Protocol { get; set; }
@@ -98,7 +101,7 @@ public class Client : IAsyncDisposable
         var ctxs = options.GetValueOrDefault("contexts", "");
         if (!string.IsNullOrEmpty(ctxs))
         {
-            Contexts.AddRange(ctxs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+            _contexts.AddRange(ctxs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
         }
 
         Host = options.GetValueOrDefault("host", "")
@@ -165,7 +168,9 @@ public class Client : IAsyncDisposable
         _reconnectDelay = 1;
 
         // Start the reader loop so authentication responses and events route correctly.
-        _readerTask = Task.Run(() => ReadLoopAsync(_cts.Token));
+        // The reader loop's lifetime is governed by the internal _cts, not the
+        // caller's connect token; pass None to Task.Run to mark this intentional.
+        _readerTask = Task.Run(() => ReadLoopAsync(_cts.Token), CancellationToken.None);
 
         await AuthenticateAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -227,6 +232,7 @@ public class Client : IAsyncDisposable
     }
 
     /// <summary>Gracefully close the connection.</summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort teardown: the close handshake and token cancellation must not throw out of Disconnect; any transport error is logged and swallowed.")]
     public void Disconnect()
     {
         _logger.Info("Disconnecting");
@@ -274,6 +280,7 @@ public class Client : IAsyncDisposable
     /// close handshake), cancels the reader loop, waits briefly for it to
     /// unwind, then disposes every owned resource.</para>
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort disposal: the close handshake, token cancellation, and reader drain must each not throw out of DisposeAsync; any error is logged and swallowed so cleanup continues.")]
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
@@ -304,7 +311,13 @@ public class Client : IAsyncDisposable
 
         // Cancel the reader loop and let it unwind before we dispose the socket
         // out from under it.
-        try { _cts?.Cancel(); }
+        try
+        {
+            if (_cts is not null)
+            {
+                await _cts.CancelAsync().ConfigureAwait(false);
+            }
+        }
         catch (Exception ex) { _logger.Debug($"DisposeAsync cts cancel error: {ex.Message}"); }
 
         var reader = _readerTask;
@@ -356,6 +369,7 @@ public class Client : IAsyncDisposable
     /// into <see cref="InboundQueue"/>; production reads come from the
     /// WebSocket reader started in <see cref="ConnectAsync"/>.
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Resilience boundary: a read/processing error in the event loop is logged and triggers reconnect rather than tearing down the loop; mirrors the reference SDK's run-loop recovery.")]
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         if (!Connected)
@@ -399,6 +413,7 @@ public class Client : IAsyncDisposable
     /// each completed message into <see cref="HandleMessage"/>. Handles
     /// fragmented frames by accumulating them until <see cref="ValueWebSocketReceiveResult.EndOfMessage"/>.
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Transport boundary: a malformed frame or unexpected processing error is logged; HandleMessage failures must not kill the socket reader. Specific transport exceptions (OperationCanceled, WebSocketException) are already handled distinctly.")]
     public async Task ReadLoopAsync(CancellationToken cancellation)
     {
         if (_ws is null) return;
@@ -432,7 +447,7 @@ public class Client : IAsyncDisposable
                     break;
                 }
 
-                assembled.Write(buffer, 0, result.Count);
+                await assembled.WriteAsync(buffer.AsMemory(0, result.Count), cancellation).ConfigureAwait(false);
 
                 if (!result.EndOfMessage) continue;
 
@@ -474,7 +489,7 @@ public class Client : IAsyncDisposable
     /// Returns the "result" portion of the response.
     /// </summary>
     public async Task<Dictionary<string, object?>> ExecuteAsync(
-        string method, Dictionary<string, object?>? params_ = null,
+        string method, Dictionary<string, object?>? parameters = null,
         CancellationToken cancellationToken = default)
     {
         var id = Guid.NewGuid().ToString();
@@ -484,7 +499,7 @@ public class Client : IAsyncDisposable
             ["jsonrpc"] = "2.0",
             ["id"] = id,
             ["method"] = method,
-            ["params"] = params_ ?? new Dictionary<string, object?>(),
+            ["params"] = parameters ?? new Dictionary<string, object?>(),
         };
 
         var tcs = new TaskCompletionSource<Dictionary<string, object?>>(
@@ -526,6 +541,7 @@ public class Client : IAsyncDisposable
     /// Encode and send a JSON message. Real production path writes to the
     /// WebSocket; tests override this to capture payloads in memory.
     /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort send: a transport-level send error is logged; it must not propagate out of the fire-and-forget Send path and crash the caller.")]
     public virtual void Send(Dictionary<string, object?> msg)
     {
         var json = JsonSerializer.Serialize(msg, JsonOptions);
@@ -580,6 +596,7 @@ public class Client : IAsyncDisposable
     // ==================================================================
 
     /// <summary>Parse a raw JSON string from the server and route it.</summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Tolerant parse boundary: an unparseable inbound frame is logged and dropped rather than crashing the dispatcher.")]
     public void HandleMessage(string raw)
     {
         _logger.Debug($"<< {raw}");
@@ -601,7 +618,7 @@ public class Client : IAsyncDisposable
         var id = data.GetValueOrDefault("id")?.ToString();
         if (id is not null && Pending.TryGetValue(id, out var tcs))
         {
-            if (data.ContainsKey("error") && data["error"] is Dictionary<string, object?> err)
+            if (data.TryGetValue("error", out var errVal) && errVal is Dictionary<string, object?> err)
             {
                 var code = err.GetValueOrDefault("code")?.ToString() ?? "0";
                 var message = err.GetValueOrDefault("message")?.ToString() ?? "Unknown RPC error";
@@ -642,6 +659,7 @@ public class Client : IAsyncDisposable
     }
 
     /// <summary>Route a signalwire.event payload to the appropriate handler.</summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Handler boundary: a faulty user-supplied on_message handler is logged and must not abort event routing for other events.")]
     public void HandleEvent(Dictionary<string, object?> outerParams)
     {
         var eventType = outerParams.GetValueOrDefault("event_type")?.ToString() ?? "";
@@ -768,21 +786,25 @@ public class Client : IAsyncDisposable
     /// resolve-or-throw deadline.
     /// </summary>
     public async Task<Call> DialAsync(
-        Dictionary<string, object?> params_, CancellationToken cancellationToken = default)
+        Dictionary<string, object?> parameters, CancellationToken cancellationToken = default)
     {
-        var explicitTag = params_.GetValueOrDefault("tag")?.ToString();
+        ArgumentNullException.ThrowIfNull(parameters);
+        var explicitTag = parameters.GetValueOrDefault("tag")?.ToString();
         var tag = !string.IsNullOrEmpty(explicitTag)
             ? explicitTag
             : Guid.NewGuid().ToString();
 
         var timeoutSeconds = 120.0;
-        if (params_.TryGetValue("dial_timeout", out var dt) && dt is not null)
+        if (parameters.TryGetValue("dial_timeout", out var dt) && dt is not null)
         {
             try
             {
-                timeoutSeconds = Convert.ToDouble(dt);
+                timeoutSeconds = Convert.ToDouble(dt, CultureInfo.InvariantCulture);
             }
-            catch { /* fall back to default */ }
+            catch (Exception ex) when (ex is FormatException or InvalidCastException or OverflowException)
+            {
+                // fall back to default
+            }
         }
 
         var tcs = new TaskCompletionSource<Call>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -791,7 +813,7 @@ public class Client : IAsyncDisposable
         // Build the wire params: drop the SDK-only "dial_timeout" field and
         // ensure tag is set (won't double-set if caller passed it through).
         var rpcParams = new Dictionary<string, object?>();
-        foreach (var kvp in params_)
+        foreach (var kvp in parameters)
         {
             if (kvp.Key == "dial_timeout") continue;
             rpcParams[kvp.Key] = kvp.Value;
@@ -827,12 +849,13 @@ public class Client : IAsyncDisposable
 
     /// <summary>Send an outbound message.</summary>
     public async Task<Message> SendMessageAsync(
-        Dictionary<string, object?> params_, CancellationToken cancellationToken = default)
+        Dictionary<string, object?> parameters, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
         // Default the context like Python does: prefer the assigned protocol
         // (not the WS-level signalwire protocol; this is the per-connection
         // routing scope) and fall back to "default".
-        var sendParams = new Dictionary<string, object?>(params_);
+        var sendParams = new Dictionary<string, object?>(parameters);
         if (!sendParams.ContainsKey("context"))
         {
             sendParams["context"] = !string.IsNullOrEmpty(Protocol) ? Protocol : "default";
@@ -863,9 +886,9 @@ public class Client : IAsyncDisposable
         var ctxList = contexts.ToList();
         foreach (var ctx in ctxList)
         {
-            if (!Contexts.Contains(ctx))
+            if (!_contexts.Contains(ctx))
             {
-                Contexts.Add(ctx);
+                _contexts.Add(ctx);
             }
         }
 
@@ -882,7 +905,7 @@ public class Client : IAsyncDisposable
         IEnumerable<string> contexts, CancellationToken cancellationToken = default)
     {
         var ctxList = contexts.ToList();
-        Contexts.RemoveAll(c => ctxList.Contains(c));
+        _contexts.RemoveAll(c => ctxList.Contains(c));
 
         await ExecuteAsync("signalwire.unreceive", new()
         {
@@ -915,6 +938,7 @@ public class Client : IAsyncDisposable
     //  Private helpers
     // ==================================================================
 
+    [SuppressMessage("Design", "CA1031", Justification = "Handler boundary: a faulty user-supplied on_call handler is logged and must not abort inbound-call routing.")]
     private void HandleInboundCall(Event evt, Dictionary<string, object?> parms)
     {
         var callId = parms.GetValueOrDefault("call_id")?.ToString();

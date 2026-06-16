@@ -26,10 +26,10 @@ public class PomBuilder
     public PomBuilder AddSection(
         string title,
         string body = "",
-        List<string>? bullets = null,
+        IReadOnlyList<string>? bullets = null,
         bool numbered = false,
         bool numberedBullets = false,
-        List<Dictionary<string, object>>? subsections = null)
+        IReadOnlyList<Dictionary<string, object>>? subsections = null)
     {
         var section = Pom.AddSection(title, body, bullets, numbered, numberedBullets);
         _sections[title] = section;
@@ -54,7 +54,7 @@ public class PomBuilder
         string title,
         string? body = null,
         string? bullet = null,
-        List<string>? bullets = null)
+        IReadOnlyList<string>? bullets = null)
     {
         if (!_sections.ContainsKey(title))
         {
@@ -69,11 +69,11 @@ public class PomBuilder
         }
         if (!string.IsNullOrEmpty(bullet))
         {
-            section.Bullets.Add(bullet);
+            section.BulletsMutable.Add(bullet);
         }
         if (bullets is not null)
         {
-            section.Bullets.AddRange(bullets);
+            section.BulletsMutable.AddRange(bullets);
         }
         return this;
     }
@@ -85,7 +85,7 @@ public class PomBuilder
         string parentTitle,
         string title,
         string body = "",
-        List<string>? bullets = null)
+        IReadOnlyList<string>? bullets = null)
     {
         if (!_sections.ContainsKey(parentTitle))
         {
@@ -111,14 +111,14 @@ public class PomBuilder
     public string RenderXml() => Pom.RenderXml();
 
     /// <summary>Serialize the POM to a list of section dicts.</summary>
-    public List<Dictionary<string, object>> ToDict() => Pom.ToDict();
+    public IReadOnlyList<Dictionary<string, object>> ToDict() => Pom.ToDict();
 
     /// <summary>Serialize the POM to a JSON string.</summary>
     public string ToJson() => Pom.ToJson();
 
     /// <summary>Build a PomBuilder from a list of section dicts.
     /// (Python parity: ``PomBuilder.from_sections`` classmethod.)</summary>
-    public static PomBuilder FromSections(List<Dictionary<string, object>> sections)
+    public static PomBuilder FromSections(IReadOnlyList<Dictionary<string, object>> sections)
     {
         var builder = new PomBuilder();
         var json = JsonSerializer.Serialize(sections);

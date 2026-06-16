@@ -89,9 +89,9 @@ public class CompatCalls : CrudResource
     public CompatCalls(HttpClient client, string basePath) : base(client, basePath) { }
 
     /// <summary>UPDATE uses POST (Twilio compat) — overrides the generic CrudResource PUT.</summary>
-    public override Task<Dictionary<string, object?>> UpdateAsync(string sid, Dictionary<string, object?> kwargs,
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
-        => Client.PostAsync(Path(sid), kwargs, cancellationToken);
+        => Client.PostAsync(Path(id), data, cancellationToken);
 
     public Task<Dictionary<string, object?>> StartRecordingAsync(string callSid, Dictionary<string, object?> kwargs)
         => Client.PostAsync(Path(callSid, "Recordings"), kwargs);
@@ -111,9 +111,9 @@ public class CompatMessages : CrudResource
 {
     public CompatMessages(HttpClient client, string basePath) : base(client, basePath) { }
 
-    public override Task<Dictionary<string, object?>> UpdateAsync(string sid, Dictionary<string, object?> kwargs,
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
-        => Client.PostAsync(Path(sid), kwargs, cancellationToken);
+        => Client.PostAsync(Path(id), data, cancellationToken);
 
     public Task<Dictionary<string, object?>> ListMediaAsync(string messageSid, Dictionary<string, string>? queryParams = null)
         => Client.GetAsync(Path(messageSid, "Media"), queryParams);
@@ -130,9 +130,9 @@ public class CompatFaxes : CrudResource
 {
     public CompatFaxes(HttpClient client, string basePath) : base(client, basePath) { }
 
-    public override Task<Dictionary<string, object?>> UpdateAsync(string sid, Dictionary<string, object?> kwargs,
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
-        => Client.PostAsync(Path(sid), kwargs, cancellationToken);
+        => Client.PostAsync(Path(id), data, cancellationToken);
 
     public Task<Dictionary<string, object?>> ListMediaAsync(string faxSid, Dictionary<string, string>? queryParams = null)
         => Client.GetAsync(Path(faxSid, "Media"), queryParams);
@@ -211,10 +211,11 @@ public class CompatPhoneNumbers
 
     public CompatPhoneNumbers(HttpClient client, string basePath)
     {
+        ArgumentNullException.ThrowIfNull(basePath);
         _client = client;
         _basePath = basePath;
-        _availableBase = basePath.Replace("/IncomingPhoneNumbers", "/AvailablePhoneNumbers");
-        _importedBase = basePath.Replace("/IncomingPhoneNumbers", "/ImportedPhoneNumbers");
+        _availableBase = basePath.Replace("/IncomingPhoneNumbers", "/AvailablePhoneNumbers", StringComparison.Ordinal);
+        _importedBase = basePath.Replace("/IncomingPhoneNumbers", "/ImportedPhoneNumbers", StringComparison.Ordinal);
     }
 
     public string BasePath => _basePath;
@@ -255,9 +256,9 @@ public class CompatApplications : CrudResource
 {
     public CompatApplications(HttpClient client, string basePath) : base(client, basePath) { }
 
-    public override Task<Dictionary<string, object?>> UpdateAsync(string sid, Dictionary<string, object?> kwargs,
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
-        => Client.PostAsync(Path(sid), kwargs, cancellationToken);
+        => Client.PostAsync(Path(id), data, cancellationToken);
 }
 
 /// <summary>Compat cXML / LaML script bins.</summary>
@@ -265,9 +266,9 @@ public class CompatLamlBins : CrudResource
 {
     public CompatLamlBins(HttpClient client, string basePath) : base(client, basePath) { }
 
-    public override Task<Dictionary<string, object?>> UpdateAsync(string sid, Dictionary<string, object?> kwargs,
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
-        => Client.PostAsync(Path(sid), kwargs, cancellationToken);
+        => Client.PostAsync(Path(id), data, cancellationToken);
 }
 
 /// <summary>Compat queues with member management.</summary>
@@ -275,9 +276,9 @@ public class CompatQueues : CrudResource
 {
     public CompatQueues(HttpClient client, string basePath) : base(client, basePath) { }
 
-    public override Task<Dictionary<string, object?>> UpdateAsync(string sid, Dictionary<string, object?> kwargs,
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
-        => Client.PostAsync(Path(sid), kwargs, cancellationToken);
+        => Client.PostAsync(Path(id), data, cancellationToken);
 
     public Task<Dictionary<string, object?>> ListMembersAsync(string queueSid, Dictionary<string, string>? queryParams = null)
         => Client.GetAsync(Path(queueSid, "Members"), queryParams);

@@ -7,6 +7,7 @@
 // Each verb method returns this for chaining: build().Answer().Ai(...).Hangup().
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace SignalWire.SWML;
@@ -43,9 +44,10 @@ public class SWMLBuilder
 
     /// <summary>Add an ``ai`` verb. (Python parity:
     /// ``SWMLBuilder.ai(prompt_text, prompt_pom, post_prompt, post_prompt_url, swaig, ...)``.)</summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API as a SWML field value.")]
     public SWMLBuilder Ai(
         string? promptText = null,
-        List<Dictionary<string, object>>? promptPom = null,
+        IReadOnlyList<Dictionary<string, object>>? promptPom = null,
         string? postPrompt = null,
         string? postPromptUrl = null,
         Dictionary<string, object>? swaig = null,
@@ -73,9 +75,10 @@ public class SWMLBuilder
 
     /// <summary>Add a ``play`` verb. (Python parity:
     /// ``SWMLBuilder.play(url, urls, volume, say_text, say_voice, say_language)``.)</summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API as a SWML field value.")]
     public SWMLBuilder Play(
         string? url = null,
-        List<string>? urls = null,
+        IReadOnlyList<string>? urls = null,
         double? volume = null,
         string? sayText = null,
         string? sayVoice = null,

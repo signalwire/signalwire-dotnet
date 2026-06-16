@@ -273,7 +273,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
             ["params"] = new Dictionary<string, object?>
             {
                 ["version"] = new Dictionary<string, int>
-                    { ["major"] = 2, ["minor"] = 0, ["revision"] = 0 },
+                { ["major"] = 2, ["minor"] = 0, ["revision"] = 0 },
                 ["agent"] = "signalwire-dotnet-mock-tests/1.0",
                 ["authentication"] = new Dictionary<string, object?>
                 {
@@ -331,7 +331,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
             ["params"] = new Dictionary<string, object?>
             {
                 ["version"] = new Dictionary<string, int>
-                    { ["major"] = 2, ["minor"] = 0, ["revision"] = 0 },
+                { ["major"] = 2, ["minor"] = 0, ["revision"] = 0 },
                 ["agent"] = "signalwire-dotnet-mock-tests/1.0",
                 ["authentication"] = new Dictionary<string, object?>
                 {

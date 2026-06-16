@@ -11,6 +11,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace SignalWire.SWML;
@@ -19,12 +20,13 @@ public static class SwmlRenderer
 {
     /// <summary>Generate a complete SWML document with AI configuration.
     /// (Python parity: ``SwmlRenderer.render_swml``.)</summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API as a SWML/SWAIG field value.")]
     public static string RenderSwml(
         object prompt,
         Service service,
         string? postPrompt = null,
         string? postPromptUrl = null,
-        List<Dictionary<string, object>>? swaigFunctions = null,
+        IReadOnlyList<Dictionary<string, object>>? swaigFunctions = null,
         string? startupHookUrl = null,
         string? hangupHookUrl = null,
         bool promptIsPom = false,
@@ -36,6 +38,8 @@ public static class SwmlRenderer
         string format = "json",
         string? defaultWebhookUrl = null)
     {
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(format);
         var builder = new SWMLBuilder(service);
         builder.Reset();
 
@@ -101,9 +105,11 @@ public static class SwmlRenderer
     public static string RenderFunctionResponseSwml(
         string responseText,
         Service service,
-        List<Dictionary<string, object>>? actions = null,
+        IReadOnlyList<Dictionary<string, object>>? actions = null,
         string format = "json")
     {
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(format);
         service.Document.Reset();
 
         if (!string.IsNullOrEmpty(responseText))

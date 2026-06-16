@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
@@ -9,14 +10,14 @@ namespace SignalWire.Prefabs;
 /// </summary>
 public class InfoGathererAgent : AgentBase
 {
-    private readonly List<Dictionary<string, object>> _questions;
+    private readonly IReadOnlyList<Dictionary<string, object>> _questions;
 
     /// <param name="name">Agent name (defaults to "info_gatherer").</param>
     /// <param name="questions">List of question dicts with key_name, question_text, and optional confirm.</param>
     /// <param name="options">Additional <see cref="AgentOptions"/> overrides.</param>
     public InfoGathererAgent(
         string name,
-        List<Dictionary<string, object>> questions,
+        IReadOnlyList<Dictionary<string, object>> questions,
         AgentOptions? options = null)
         : base(CreateOptions(name, options))
     {
@@ -69,16 +70,20 @@ public class InfoGathererAgent : AgentBase
 
     /// <summary>SWAIG tool handler for the ``submit_answer`` tool.
     /// (Python parity: ``InfoGathererAgent.submit_answer``.)</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "instance method matches the cross-port SWAIG tool-handler surface")]
     public FunctionResult SubmitAnswer(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
+        ArgumentNullException.ThrowIfNull(args);
         var answer = args.TryGetValue("answer", out var a) ? a as string ?? "" : "";
         return new FunctionResult($"Answer recorded: {answer}");
     }
 
-    public List<Dictionary<string, object>> GetQuestions() => _questions;
+    [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface")]
+    public IReadOnlyList<Dictionary<string, object>> GetQuestions() => _questions;
 
     private static AgentOptions CreateOptions(string name, AgentOptions? baseOpts)
     {
+        ArgumentNullException.ThrowIfNull(name);
         return new AgentOptions
         {
             Name = name.Length > 0 ? name : "info_gatherer",

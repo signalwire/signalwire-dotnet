@@ -56,7 +56,7 @@ internal static class HttpHelper
     {
         if (query is { Count: > 0 })
         {
-            var sep = url.Contains('?') ? "&" : "?";
+            var sep = url.Contains('?', StringComparison.Ordinal) ? "&" : "?";
             var sb = new StringBuilder(url);
             sb.Append(sep);
             var first = true;

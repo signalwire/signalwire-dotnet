@@ -23,8 +23,8 @@ public sealed class Message
     public string? FromNumber { get; }
     public string? ToNumber { get; }
     public string? Body { get; private set; }
-    public List<string> Media { get; private set; }
-    public List<string> Tags { get; private set; }
+    public IReadOnlyList<string> Media { get; private set; }
+    public IReadOnlyList<string> Tags { get; private set; }
     public string? State { get; private set; }
 
     /// <summary>
@@ -45,21 +45,21 @@ public sealed class Message
     /// <summary>
     /// Build a Message from a params dictionary (as returned by the server).
     /// </summary>
-    public Message(Dictionary<string, object?>? params_ = null)
+    public Message(Dictionary<string, object?>? parameters = null)
     {
-        params_ ??= new();
+        parameters ??= new();
 
-        MessageId = GetStr(params_, "message_id") ?? GetStr(params_, "id");
-        Context = GetStr(params_, "context");
-        Direction = GetStr(params_, "direction");
-        FromNumber = GetStr(params_, "from_number") ?? GetStr(params_, "from");
-        ToNumber = GetStr(params_, "to_number") ?? GetStr(params_, "to");
-        Body = GetStr(params_, "body");
-        Media = GetStringList(params_, "media");
-        Tags = GetStringList(params_, "tags");
+        MessageId = GetStr(parameters, "message_id") ?? GetStr(parameters, "id");
+        Context = GetStr(parameters, "context");
+        Direction = GetStr(parameters, "direction");
+        FromNumber = GetStr(parameters, "from_number") ?? GetStr(parameters, "from");
+        ToNumber = GetStr(parameters, "to_number") ?? GetStr(parameters, "to");
+        Body = GetStr(parameters, "body");
+        Media = GetStringList(parameters, "media");
+        Tags = GetStringList(parameters, "tags");
         // Production wire uses "message_state"; legacy paths use "state".
-        State = GetStr(params_, "message_state") ?? GetStr(params_, "state");
-        Reason = GetStr(params_, "reason");
+        State = GetStr(parameters, "message_state") ?? GetStr(parameters, "state");
+        Reason = GetStr(parameters, "reason");
     }
 
     // ------------------------------------------------------------------
@@ -73,6 +73,7 @@ public sealed class Message
     /// </summary>
     public void DispatchEvent(Event evt)
     {
+        ArgumentNullException.ThrowIfNull(evt);
         var p = evt.Params;
 
         // Production wire shape uses "message_state"; some test helpers send
