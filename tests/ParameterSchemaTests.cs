@@ -335,13 +335,16 @@ public class ParameterSchemaTests : IDisposable
         Assert.Equal("object", argument["type"]);
         var properties = (Dictionary<string, object>)argument["properties"];
 
-        // Builder-produced parameters are present, byte-identical to what we built.
-        Assert.Equal(parameters, properties);
-
+        // DefineTool lifts per-property `required: true` into the top-level
+        // JSON-Schema `required` array (standard form), so the rendered
+        // properties no longer carry the per-property flag.
         var serviceProp = (Dictionary<string, object>)properties["service"];
         Assert.Equal("string", serviceProp["type"]);
         Assert.Equal("The service to book", serviceProp["description"]);
-        Assert.True((bool)serviceProp["required"]);
+        Assert.False(serviceProp.ContainsKey("required"));
+
+        // The required names are lifted to argument.required (in declared order).
+        Assert.Equal(new List<string> { "service", "date" }, (List<string>)argument["required"]);
 
         var formatProp = (Dictionary<string, object>)properties["format"];
         Assert.Equal(new List<string> { "wav", "mp3", "mp4" }, (List<string>)formatProp["enum"]);

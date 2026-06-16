@@ -145,6 +145,9 @@ ensure_mock_relay() {
 
 cleanup_spawned() {
     local pid
+    # `${arr[@]}` on an empty array trips `set -u` on bash < 5.2; guard it so a
+    # clean exit (mocks already running → nothing spawned) doesn't error out.
+    [ ${#SPAWNED_PIDS[@]} -eq 0 ] && return 0
     for pid in "${SPAWNED_PIDS[@]}"; do
         if kill -0 "$pid" 2>/dev/null; then
             kill "$pid" 2>/dev/null || true

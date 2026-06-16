@@ -312,7 +312,7 @@ public class FunctionResultTests
         // {"unset_global_data": ["user_id", "session", "token"]} — bare list, no {keys} wrapper.
         var fr = new FunctionResult();
         fr.RemoveGlobalData(["user_id", "session", "token"]);
-        var keys = (List<string>)GetAction(fr, 0)["unset_global_data"];
+        var keys = (IReadOnlyList<string>)GetAction(fr, 0)["unset_global_data"];
         Assert.Equal(new List<string> { "user_id", "session", "token" }, keys);
     }
 
@@ -345,7 +345,7 @@ public class FunctionResultTests
         // {"unset_meta_data": ["key1", "key2"]} — bare list.
         var fr = new FunctionResult();
         fr.RemoveMetadata(["key1", "key2"]);
-        var keys = (List<string>)GetAction(fr, 0)["unset_meta_data"];
+        var keys = (IReadOnlyList<string>)GetAction(fr, 0)["unset_meta_data"];
         Assert.Equal(new List<string> { "key1", "key2" }, keys);
     }
 
