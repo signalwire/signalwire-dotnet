@@ -31,8 +31,8 @@ public class CompatMessagesFaxesMockTest : IClassFixture<MockServerFixture>
 
     private Compat NewCompat()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        return new Compat(http, "test_proj");
+        var http = _fixture.NewHttp();
+        return new Compat(http, _fixture.Project);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -69,7 +69,7 @@ public class CompatMessagesFaxesMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Messages/MM_U1", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Messages/MM_U1", j.Path);
         Assert.Equal("x", StringField(j, "Body"));
         Assert.Equal("canceled", StringField(j, "Status"));
     }
@@ -94,7 +94,7 @@ public class CompatMessagesFaxesMockTest : IClassFixture<MockServerFixture>
         await compat.Messages.GetMediaAsync("MM_X", "ME_X");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Messages/MM_X/Media/ME_X", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Messages/MM_X/Media/ME_X", j.Path);
     }
 
     // ---- Messages: DeleteMedia ---------------------------------------
@@ -116,7 +116,7 @@ public class CompatMessagesFaxesMockTest : IClassFixture<MockServerFixture>
         await compat.Messages.DeleteMediaAsync("MM_D", "ME_D");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Messages/MM_D/Media/ME_D", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Messages/MM_D/Media/ME_D", j.Path);
     }
 
     // ---- Faxes: Update -----------------------------------------------
@@ -145,7 +145,7 @@ public class CompatMessagesFaxesMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Faxes/FX_U2", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Faxes/FX_U2", j.Path);
         Assert.Equal("canceled", StringField(j, "Status"));
     }
 
@@ -170,7 +170,7 @@ public class CompatMessagesFaxesMockTest : IClassFixture<MockServerFixture>
         await compat.Faxes.ListMediaAsync("FX_LM_X");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Faxes/FX_LM_X/Media", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Faxes/FX_LM_X/Media", j.Path);
     }
 
     // ---- Faxes: GetMedia ---------------------------------------------
@@ -193,7 +193,7 @@ public class CompatMessagesFaxesMockTest : IClassFixture<MockServerFixture>
         await compat.Faxes.GetMediaAsync("FX_G", "ME_G");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Faxes/FX_G/Media/ME_G", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Faxes/FX_G/Media/ME_G", j.Path);
     }
 
     // ---- Faxes: DeleteMedia ------------------------------------------
@@ -215,6 +215,6 @@ public class CompatMessagesFaxesMockTest : IClassFixture<MockServerFixture>
         await compat.Faxes.DeleteMediaAsync("FX_D", "ME_D");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Faxes/FX_D/Media/ME_D", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Faxes/FX_D/Media/ME_D", j.Path);
     }
 }

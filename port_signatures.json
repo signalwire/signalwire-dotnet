@@ -9340,15 +9340,6 @@
               ],
               "returns": "class:signalwire.relay.message.Message"
             },
-            "session_id": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "string"
-            },
             "token": {
               "params": [
                 {

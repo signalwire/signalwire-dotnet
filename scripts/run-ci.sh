@@ -40,11 +40,14 @@
 #
 # Multi-target serialization: SignalWire.Tests targets net8.0+net9.0+net10.0.
 # By default `dotnet test` runs all three target frameworks in PARALLEL,
-# and they all hit the SAME shared mock server (port 8784/8785). The
-# server's journal is a single ring buffer with no per-client scoping, so
-# concurrent test runs trip over each other (Journal.Last() returns the
-# wrong test's request, scenarios get reset mid-test, etc.). We work
-# around this by running each target framework SEQUENTIALLY.
+# and they all hit the SAME shared mock server (port 8784/8785). Tests are
+# now session-isolated WITHIN a framework run (RELAY scopes the journal +
+# scenarios by the handshake `sessionid`; REST scopes by a per-test random
+# project's Authorization header), so in-framework parallelism is enabled
+# (see tests/AssemblyInfo.cs + tests/xunit.runner.json). ACROSS frameworks
+# we still run SEQUENTIALLY: that isolation key is per-client, not
+# per-framework, so two framework runs would still share the one mock's
+# scenario buckets and connection set — a separate mock-lifecycle concern.
 
 set -u
 set -o pipefail

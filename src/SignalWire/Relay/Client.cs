@@ -31,7 +31,19 @@ public class Client : IAsyncDisposable
     private readonly List<string> _contexts = [];
     public IReadOnlyList<string> Contexts => _contexts;
     public bool Connected { get; set; }
-    public string? SessionId { get; set; }
+
+    /// <summary>
+    /// Server-assigned session id captured from the <c>signalwire.connect</c>
+    /// handshake (the RELAY <c>ConnectResult.sessionid</c> field). Kept
+    /// <c>internal</c> — not part of the developer-facing call-control surface:
+    /// the Python reference keeps it off <c>RelayClient</c>'s public API and the
+    /// TypeScript port keeps it in a private <c>_sessionId</c> field, so this
+    /// port matches that surface (see <c>PORT_PHILOSOPHY_DOTNET.md</c>). It is
+    /// connection bookkeeping the test harness reads (via
+    /// <c>[InternalsVisibleTo("SignalWire.Tests")]</c>) to scope a session's
+    /// journal under concurrent mock-backed tests.
+    /// </summary>
+    internal string? SessionId { get; set; }
     public string? Protocol { get; set; }
     public string? AuthorizationState { get; set; }
     public string Agent { get; set; } = "signalwire-agents-dotnet/1.0";
@@ -211,7 +223,13 @@ public class Client : IAsyncDisposable
         var result = await ExecuteAsync("signalwire.connect", connectParams, cancellationToken)
             .ConfigureAwait(false);
 
-        SessionId = result.GetValueOrDefault("session_id")?.ToString();
+        // The RELAY wire key is `sessionid` (no underscore) — see switchblade's
+        // ConnectResult and relay-protocol/signalwire.connect.result.json
+        // (`required: [... "sessionid"]`). The TypeScript port reads
+        // `result.sessionid` for the same reason. Accept the legacy `session_id`
+        // spelling as a fallback so a server that emits either is handled.
+        SessionId = result.GetValueOrDefault("sessionid")?.ToString()
+            ?? result.GetValueOrDefault("session_id")?.ToString();
         Protocol = result.GetValueOrDefault("protocol")?.ToString();
 
         // Some servers nest the credentials inside `authorization`.
@@ -221,10 +239,16 @@ public class Client : IAsyncDisposable
             {
                 AuthorizationState = aStateStr;
             }
-            if (string.IsNullOrEmpty(SessionId)
-                && auth.TryGetValue("session_id", out var sid) && sid is string sidStr)
+            if (string.IsNullOrEmpty(SessionId))
             {
-                SessionId = sidStr;
+                if (auth.TryGetValue("sessionid", out var sid0) && sid0 is string sidStr0)
+                {
+                    SessionId = sidStr0;
+                }
+                else if (auth.TryGetValue("session_id", out var sid) && sid is string sidStr)
+                {
+                    SessionId = sidStr;
+                }
             }
         }
 

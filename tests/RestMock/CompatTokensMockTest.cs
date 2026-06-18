@@ -32,8 +32,8 @@ public class CompatTokensMockTest : IClassFixture<MockServerFixture>
 
     private Compat NewCompat()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        return new Compat(http, "test_proj");
+        var http = _fixture.NewHttp();
+        return new Compat(http, _fixture.Project);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -77,7 +77,7 @@ public class CompatTokensMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/tokens", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/tokens", j.Path);
         Assert.Equal(3600L, IntField(j, "Ttl"));
         Assert.Equal("api-key", StringField(j, "Name"));
     }
@@ -109,7 +109,7 @@ public class CompatTokensMockTest : IClassFixture<MockServerFixture>
         var j = _fixture.Harness.Journal.Last();
         // CompatTokens.update uses PATCH (BaseResource.update -> http.patch).
         Assert.Equal("PATCH", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/tokens/TK_UU", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/tokens/TK_UU", j.Path);
         Assert.Equal(7200L, IntField(j, "Ttl"));
     }
 
@@ -132,6 +132,6 @@ public class CompatTokensMockTest : IClassFixture<MockServerFixture>
         await compat.Tokens.DeleteAsync("TK_DEL");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/tokens/TK_DEL", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/tokens/TK_DEL", j.Path);
     }
 }

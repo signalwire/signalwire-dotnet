@@ -31,8 +31,8 @@ public class CompatMiscMockTest : IClassFixture<MockServerFixture>
 
     private Compat NewCompat()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        return new Compat(http, "test_proj");
+        var http = _fixture.NewHttp();
+        return new Compat(http, _fixture.Project);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -69,7 +69,7 @@ public class CompatMiscMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Applications/AP_UU", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Applications/AP_UU", j.Path);
         Assert.Equal("renamed", StringField(j, "FriendlyName"));
         Assert.Equal("https://a.b/v", StringField(j, "VoiceUrl"));
     }
@@ -101,7 +101,7 @@ public class CompatMiscMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/LamlBins/LB_UU", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/LamlBins/LB_UU", j.Path);
         Assert.Equal("renamed", StringField(j, "FriendlyName"));
         Assert.Equal("<Response/>", StringField(j, "Contents"));
     }

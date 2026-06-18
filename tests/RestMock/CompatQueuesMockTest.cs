@@ -31,8 +31,8 @@ public class CompatQueuesMockTest : IClassFixture<MockServerFixture>
 
     private Compat NewCompat()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        return new Compat(http, "test_proj");
+        var http = _fixture.NewHttp();
+        return new Compat(http, _fixture.Project);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -76,7 +76,7 @@ public class CompatQueuesMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Queues/QU_UU", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Queues/QU_UU", j.Path);
         Assert.Equal("renamed", StringField(j, "FriendlyName"));
         Assert.Equal(200L, IntField(j, "MaxSize"));
     }
@@ -102,7 +102,7 @@ public class CompatQueuesMockTest : IClassFixture<MockServerFixture>
         await compat.Queues.ListMembersAsync("QU_LMX");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Queues/QU_LMX/Members", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Queues/QU_LMX/Members", j.Path);
     }
 
     // ---- GetMember ---------------------------------------------------
@@ -125,7 +125,7 @@ public class CompatQueuesMockTest : IClassFixture<MockServerFixture>
         await compat.Queues.GetMemberAsync("QU_GMX", "CA_GMX");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Queues/QU_GMX/Members/CA_GMX", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Queues/QU_GMX/Members/CA_GMX", j.Path);
     }
 
     // ---- DequeueMember ----------------------------------------------
@@ -155,7 +155,7 @@ public class CompatQueuesMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Queues/QU_DMX/Members/CA_DMX", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Queues/QU_DMX/Members/CA_DMX", j.Path);
         Assert.Equal("https://a.b/url", StringField(j, "Url"));
         Assert.Equal("POST", StringField(j, "Method"));
     }

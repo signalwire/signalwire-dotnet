@@ -31,8 +31,8 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
 
     private Compat NewCompat()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        return new Compat(http, "test_proj");
+        var http = _fixture.NewHttp();
+        return new Compat(http, _fixture.Project);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -80,7 +80,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         await compat.Conferences.ListAsync();
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences", j.Path);
         Assert.NotNull(j.MatchedRoute);
     }
 
@@ -104,7 +104,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         await compat.Conferences.GetAsync("CF_GETSID");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_GETSID", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_GETSID", j.Path);
     }
 
     // ---- Update ------------------------------------------------------
@@ -134,7 +134,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_UPD", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_UPD", j.Path);
         Assert.Equal("completed", StringField(j, "Status"));
         Assert.Equal("https://a.b", StringField(j, "AnnounceUrl"));
     }
@@ -159,7 +159,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         await compat.Conferences.GetParticipantAsync("CF_GP", "CA_GP");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_GP/Participants/CA_GP", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_GP/Participants/CA_GP", j.Path);
     }
 
     // ---- UpdateParticipant -------------------------------------------
@@ -189,7 +189,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_M/Participants/CA_M", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_M/Participants/CA_M", j.Path);
         Assert.Equal(true, BoolField(j, "Muted"));
         Assert.Equal(false, BoolField(j, "Hold"));
     }
@@ -213,7 +213,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         await compat.Conferences.RemoveParticipantAsync("CF_RM", "CA_RM");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_RM/Participants/CA_RM", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_RM/Participants/CA_RM", j.Path);
     }
 
     // ---- ListRecordings ---------------------------------------------
@@ -237,7 +237,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         await compat.Conferences.ListRecordingsAsync("CF_LRX");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_LRX/Recordings", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_LRX/Recordings", j.Path);
     }
 
     // ---- GetRecording -----------------------------------------------
@@ -260,7 +260,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         await compat.Conferences.GetRecordingAsync("CF_GRX", "RE_GRX");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_GRX/Recordings/RE_GRX", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_GRX/Recordings/RE_GRX", j.Path);
     }
 
     // ---- UpdateRecording --------------------------------------------
@@ -289,7 +289,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_UR/Recordings/RE_UR", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_UR/Recordings/RE_UR", j.Path);
         Assert.Equal("paused", StringField(j, "Status"));
     }
 
@@ -312,7 +312,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         await compat.Conferences.DeleteRecordingAsync("CF_DRX", "RE_DRX");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_DRX/Recordings/RE_DRX", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_DRX/Recordings/RE_DRX", j.Path);
     }
 
     // ---- StartStream ------------------------------------------------
@@ -342,7 +342,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_SSX/Streams", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_SSX/Streams", j.Path);
         Assert.Equal("wss://a.b/s", StringField(j, "Url"));
     }
 
@@ -372,7 +372,7 @@ public class CompatConferencesMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Conferences/CF_TSX/Streams/ST_TSX", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Conferences/CF_TSX/Streams/ST_TSX", j.Path);
         Assert.Equal("stopped", StringField(j, "Status"));
     }
 }

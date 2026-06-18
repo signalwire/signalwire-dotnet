@@ -170,6 +170,27 @@ public static class MockTest
         public int Port { get; }
         private readonly System.Net.Http.HttpClient _http;
 
+        /// <summary>
+        /// The unique random project this harness's client authenticates with
+        /// (<c>test_proj_&lt;hex&gt;</c>). Tests that assert on the AccountSid
+        /// embedded in a LAML path read it from here instead of hard-coding
+        /// <c>test_proj</c>. Empty on an unscoped/raw harness.
+        /// </summary>
+        public string Project { get; set; } = "";
+
+        /// <summary>
+        /// When set, <see cref="JournalApi.All"/>/<see cref="JournalApi.Last"/>
+        /// return only the requests THIS test's client made — identified by its
+        /// <c>Authorization</c> header (Basic <c>project:token</c>, with a
+        /// per-test random project). REST is pure request/response, so the mock
+        /// needs no session handshake: each request is self-identifying via its
+        /// auth header, and filtering the shared global journal by that header
+        /// makes the suite safe under parallelism with no SDK / mock change.
+        /// Empty =&gt; unscoped (legacy view; correct only under serial runs).
+        /// Mirrors the TypeScript port's <c>MockHarness.authHeader</c>.
+        /// </summary>
+        public string AuthHeader { get; set; } = "";
+
         internal Harness(string url, string host, int port)
         {
             Url = url;
@@ -178,13 +199,19 @@ public static class MockTest
             _http = new System.Net.Http.HttpClient { Timeout = HttpTimeout };
         }
 
-        public JournalApi Journal => new(_http, Url);
+        public JournalApi Journal => new(_http, Url, AuthHeader);
 
-        public ScenariosApi Scenarios => new(_http, Url);
+        public ScenariosApi Scenarios => new(_http, Url, AuthHeader);
 
-        /// <summary>Resets journal + scenarios in one round-trip pair.</summary>
+        /// <summary>
+        /// Reset journal + scenarios. A scoped harness leaves the shared journal
+        /// alone (it only ever reads its own entries, identified by auth header,
+        /// so there is nothing to clear and a global wipe would race a concurrent
+        /// test). Unscoped harnesses do the legacy global reset.
+        /// </summary>
         public void Reset()
         {
+            if (!string.IsNullOrEmpty(AuthHeader)) return;
             Journal.Reset();
             Scenarios.Reset();
         }
@@ -197,10 +224,12 @@ public static class MockTest
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
-        internal JournalApi(System.Net.Http.HttpClient http, string baseUrl)
+        private readonly string _authHeader;
+        internal JournalApi(System.Net.Http.HttpClient http, string baseUrl, string authHeader = "")
         {
             _http = http;
             _baseUrl = baseUrl;
+            _authHeader = authHeader;
         }
 
         private static readonly JsonSerializerOptions JsonOpts = new()
@@ -208,7 +237,9 @@ public static class MockTest
             PropertyNameCaseInsensitive = true,
         };
 
-        /// <summary>Every entry recorded since the last reset, in arrival order.</summary>
+        /// <summary>This client's requests in arrival order. Scoped to this
+        /// harness's <c>AuthHeader</c> when set (so a parallel test never sees
+        /// another test's requests); unscoped harnesses see the whole journal.</summary>
         public List<JournalEntry> All()
         {
             var resp = _http.GetAsync(_baseUrl + "/__mock__/journal")
@@ -219,8 +250,13 @@ public static class MockTest
                     $"MockTest: GET /__mock__/journal returned {(int)resp.StatusCode}");
             }
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            return JsonSerializer.Deserialize<List<JournalEntry>>(body, JsonOpts)
+            var entries = JsonSerializer.Deserialize<List<JournalEntry>>(body, JsonOpts)
                 ?? new List<JournalEntry>();
+            if (string.IsNullOrEmpty(_authHeader)) return entries;
+            return entries.Where(e =>
+                e.Headers is not null
+                && e.Headers.TryGetValue("authorization", out var a)
+                && a == _authHeader).ToList();
         }
 
         /// <summary>Most-recent journal entry (throws if empty).</summary>
@@ -255,17 +291,29 @@ public static class MockTest
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
-        internal ScenariosApi(System.Net.Http.HttpClient http, string baseUrl)
+        private readonly string _authHeader;
+        internal ScenariosApi(System.Net.Http.HttpClient http, string baseUrl, string authHeader = "")
         {
             _http = http;
             _baseUrl = baseUrl;
+            _authHeader = authHeader;
         }
+
+        // REST's session key is the Authorization header: a scoped override is
+        // consumed only by a request bearing the same auth, so a concurrent test
+        // can't drain it (and a stale one can't bleed across tests). Unscoped
+        // harness => shared bucket. Mirrors the TypeScript port.
+        private string Q()
+            => string.IsNullOrEmpty(_authHeader)
+                ? ""
+                : "?session_id=" + Uri.EscapeDataString(_authHeader);
 
         /// <summary>
         /// Stage a one-shot response override for the named operation. The
-        /// next request matching <paramref name="endpointId"/> will return
-        /// the supplied <paramref name="status"/> + <paramref name="body"/>;
-        /// later requests fall back to spec synthesis.
+        /// next request matching <paramref name="endpointId"/> (and this
+        /// harness's auth header, when scoped) returns the supplied
+        /// <paramref name="status"/> + <paramref name="body"/>; later requests
+        /// fall back to spec synthesis.
         /// </summary>
         public void Set(string endpointId, int status, Dictionary<string, object?> body)
         {
@@ -276,7 +324,7 @@ public static class MockTest
             };
             var json = JsonSerializer.Serialize(payload);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + endpointId, content)
+            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + endpointId + Q(), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -285,10 +333,12 @@ public static class MockTest
             }
         }
 
+        /// <summary>Reset this client's armed scenarios (scoped by auth header)
+        /// or all of them when unscoped.</summary>
         public void Reset()
         {
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/reset", content)
+            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/reset" + Q(), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -519,28 +569,97 @@ public static class MockTest
 /// </summary>
 public sealed class MockServerFixture : IDisposable
 {
-    public MockTest.Harness Harness { get; }
+    /// <summary>
+    /// A Harness view scoped to the CURRENT test's unique random project
+    /// (<c>test_proj_&lt;hex&gt;</c>) via its <c>Authorization</c> header, so
+    /// journal reads return only this test's requests and scenario overrides are
+    /// consumed only by it — making the shared mock safe under test parallelism.
+    /// <para>Isolation key is PER-TEST: a fresh project is minted on every
+    /// <see cref="Reset"/> call, which every test class invokes from its
+    /// constructor (xUnit constructs the test class once per test method). A
+    /// unique project per test is what makes negative "the journal is empty"
+    /// assertions hold even though the shared journal is never wiped — a sibling
+    /// test in the same class authenticates under a DIFFERENT project, so its
+    /// requests fall outside this test's auth-filtered view. Mirrors the
+    /// TypeScript port's per-test <c>newMockClient()</c>.</para>
+    /// Falls back to an unscoped harness when the mock is unavailable.
+    /// </summary>
+    public MockTest.Harness Harness { get; private set; }
     public bool Available { get; }
+
+    /// <summary>The unique random project the CURRENT test's clients
+    /// authenticate with (rotated on each <see cref="Reset"/>). Tests that
+    /// assert on the AccountSid in a LAML path interpolate this instead of
+    /// hard-coding <c>test_proj</c>.</summary>
+    public string Project { get; private set; }
+
+    /// <summary>The <c>Authorization: Basic base64(project:token)</c> header
+    /// the scoped journal/scenarios filter on (rotated with the project).</summary>
+    public string AuthHeader { get; private set; }
+
+    public const string Token = "test_tok";
+
+    private readonly MockTest.Harness? _shared;
 
     public MockServerFixture()
     {
         Available = false;
         try
         {
-            Harness = MockTest.GetHarnessNoReset();
+            _shared = MockTest.GetHarnessNoReset();
             Available = true;
         }
         catch (Exception)
         {
             // Defer the failure: tests check Available and skip cleanly when
             // adjacency walk + spawn both failed.
-            Harness = null!;
+            _shared = null;
         }
+        // Mint the first per-test scope. Reset() re-mints before each test.
+        Project = NewProject();
+        AuthHeader = BasicAuth(Project);
+        Harness = BuildScopedHarness(Project, AuthHeader);
     }
 
+    private static string NewProject()
+        => "test_proj_" + Guid.NewGuid().ToString("N").Substring(0, 12);
+
+    private static string BasicAuth(string project)
+        => "Basic " + Convert.ToBase64String(
+            System.Text.Encoding.UTF8.GetBytes($"{project}:{Token}"));
+
+    private MockTest.Harness BuildScopedHarness(string project, string authHeader)
+    {
+        if (_shared is null) return null!;
+        // A per-test scoped view onto the same server. No reset needed: this
+        // project starts with zero entries in the auth-filtered view.
+        return new MockTest.Harness(_shared.Url, _shared.Host, _shared.Port)
+        {
+            Project = project,
+            AuthHeader = authHeader,
+        };
+    }
+
+    /// <summary>Build an SDK <see cref="SignalWire.REST.HttpClient"/> bound to
+    /// the mock and authenticating with this fixture's scoped project, so its
+    /// requests are filterable in <see cref="Harness"/>'s journal.</summary>
+    public SignalWire.REST.HttpClient NewHttp()
+        => new(Project, Token, Harness.Url);
+
+    /// <summary>
+    /// Re-mint this fixture's per-test scope: a brand-new random project =&gt;
+    /// new auth header =&gt; new auth-filtered Harness view that starts empty.
+    /// Every test class calls this from its constructor, which xUnit runs once
+    /// per test method, so each test gets its own isolation key. The shared
+    /// server journal is intentionally NOT wiped (a global wipe would race a
+    /// concurrent test); the new scope simply doesn't see any prior request.
+    /// </summary>
     public void Reset()
     {
-        if (Available) Harness.Reset();
+        if (!Available) return;
+        Project = NewProject();
+        AuthHeader = BasicAuth(Project);
+        Harness = BuildScopedHarness(Project, AuthHeader);
     }
 
     public void Dispose() { /* shared mock lives for whole test run */ }

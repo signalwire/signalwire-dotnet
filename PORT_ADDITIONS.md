@@ -203,7 +203,6 @@ signalwire.relay.client.RelayClient.reconnect: Public Client surface ported from
 signalwire.relay.client.RelayClient.scheme: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.send_ack: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.send: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
-signalwire.relay.client.RelayClient.session_id: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.token: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.collect_action.CollectAction.collect_result: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call
 signalwire.relay.collect_action.CollectAction.get_stop_method: .NET ships each Action subclass in its own file under SignalWire.Relay; Python groups them in signalwire.relay.call

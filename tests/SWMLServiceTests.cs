@@ -5,6 +5,7 @@ using SignalWire.Logging;
 
 namespace SignalWire.Tests;
 
+[Collection(GlobalStateCollection.Name)]
 public class SWMLServiceTests : IDisposable
 {
     public SWMLServiceTests()

@@ -31,8 +31,8 @@ public class CompatPhoneNumbersMockTest : IClassFixture<MockServerFixture>
 
     private Compat NewCompat()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        return new Compat(http, "test_proj");
+        var http = _fixture.NewHttp();
+        return new Compat(http, _fixture.Project);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -64,7 +64,7 @@ public class CompatPhoneNumbersMockTest : IClassFixture<MockServerFixture>
         await compat.PhoneNumbers.ListAsync();
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/IncomingPhoneNumbers", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/IncomingPhoneNumbers", j.Path);
     }
 
     // ---- Get ---------------------------------------------------------
@@ -87,7 +87,7 @@ public class CompatPhoneNumbersMockTest : IClassFixture<MockServerFixture>
         await compat.PhoneNumbers.GetAsync("PN_GET");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/IncomingPhoneNumbers/PN_GET", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/IncomingPhoneNumbers/PN_GET", j.Path);
     }
 
     // ---- Update ------------------------------------------------------
@@ -117,7 +117,7 @@ public class CompatPhoneNumbersMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/IncomingPhoneNumbers/PN_UU", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/IncomingPhoneNumbers/PN_UU", j.Path);
         Assert.Equal("updated", StringField(j, "FriendlyName"));
         Assert.Equal("https://a.b/v", StringField(j, "VoiceUrl"));
     }
@@ -141,7 +141,7 @@ public class CompatPhoneNumbersMockTest : IClassFixture<MockServerFixture>
         await compat.PhoneNumbers.DeleteAsync("PN_DEL");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/IncomingPhoneNumbers/PN_DEL", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/IncomingPhoneNumbers/PN_DEL", j.Path);
     }
 
     // ---- Purchase ----------------------------------------------------
@@ -171,7 +171,7 @@ public class CompatPhoneNumbersMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/IncomingPhoneNumbers", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/IncomingPhoneNumbers", j.Path);
         Assert.Equal("+15555550100", StringField(j, "PhoneNumber"));
         Assert.Equal("Main", StringField(j, "FriendlyName"));
     }
@@ -203,7 +203,7 @@ public class CompatPhoneNumbersMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/ImportedPhoneNumbers", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/ImportedPhoneNumbers", j.Path);
         Assert.Equal("+15555550111", StringField(j, "PhoneNumber"));
     }
 
@@ -229,7 +229,7 @@ public class CompatPhoneNumbersMockTest : IClassFixture<MockServerFixture>
         await compat.PhoneNumbers.ListAvailableCountriesAsync();
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/AvailablePhoneNumbers", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/AvailablePhoneNumbers", j.Path);
     }
 
     // ---- SearchTollFree ----------------------------------------------
@@ -260,7 +260,7 @@ public class CompatPhoneNumbersMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/AvailablePhoneNumbers/US/TollFree", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/AvailablePhoneNumbers/US/TollFree", j.Path);
         // The AreaCode should be on the query string, not body.
         Assert.NotNull(j.QueryParams);
         Assert.True(j.QueryParams!.ContainsKey("AreaCode"));

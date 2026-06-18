@@ -31,8 +31,8 @@ public class CompatRecordingsTranscriptionsMockTest : IClassFixture<MockServerFi
 
     private Compat NewCompat()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        return new Compat(http, "test_proj");
+        var http = _fixture.NewHttp();
+        return new Compat(http, _fixture.Project);
     }
 
     // ---- Recordings.List --------------------------------------------
@@ -56,7 +56,7 @@ public class CompatRecordingsTranscriptionsMockTest : IClassFixture<MockServerFi
         await compat.Recordings.ListAsync();
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Recordings", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Recordings", j.Path);
     }
 
     // ---- Recordings.Get ----------------------------------------------
@@ -79,7 +79,7 @@ public class CompatRecordingsTranscriptionsMockTest : IClassFixture<MockServerFi
         await compat.Recordings.GetAsync("RE_GET");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Recordings/RE_GET", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Recordings/RE_GET", j.Path);
     }
 
     // ---- Recordings.Delete -------------------------------------------
@@ -101,7 +101,7 @@ public class CompatRecordingsTranscriptionsMockTest : IClassFixture<MockServerFi
         await compat.Recordings.DeleteAsync("RE_DEL");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Recordings/RE_DEL", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Recordings/RE_DEL", j.Path);
     }
 
     // ---- Transcriptions.List -----------------------------------------
@@ -125,7 +125,7 @@ public class CompatRecordingsTranscriptionsMockTest : IClassFixture<MockServerFi
         await compat.Transcriptions.ListAsync();
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Transcriptions", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Transcriptions", j.Path);
     }
 
     // ---- Transcriptions.Get ------------------------------------------
@@ -148,7 +148,7 @@ public class CompatRecordingsTranscriptionsMockTest : IClassFixture<MockServerFi
         await compat.Transcriptions.GetAsync("TR_GET");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Transcriptions/TR_GET", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Transcriptions/TR_GET", j.Path);
     }
 
     // ---- Transcriptions.Delete ---------------------------------------
@@ -170,6 +170,6 @@ public class CompatRecordingsTranscriptionsMockTest : IClassFixture<MockServerFi
         await compat.Transcriptions.DeleteAsync("TR_DEL");
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Transcriptions/TR_DEL", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Transcriptions/TR_DEL", j.Path);
     }
 }

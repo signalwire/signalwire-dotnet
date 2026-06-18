@@ -33,7 +33,7 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
 
     private RestClientLike NewClient()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
+        var http = _fixture.NewHttp();
         return new RestClientLike(http);
     }
 

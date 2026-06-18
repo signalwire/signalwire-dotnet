@@ -198,10 +198,8 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
         }
         Assert.False(string.IsNullOrEmpty(issued), "first connect did not set protocol");
 
-        // Reset journal so we only see the second connect.
-        _fixture.Harness.Journal.Reset();
-
-        // Second connection sends the saved protocol back.
+        // Second connection sends the saved protocol back. bound2.Harness is
+        // scoped to bound2's fresh session, so it only sees the second connect.
         using (var bound2 = RelayMockTest.NewClient(contexts: new[] { "c1" }))
         {
             bound2.Client.Protocol = issued;

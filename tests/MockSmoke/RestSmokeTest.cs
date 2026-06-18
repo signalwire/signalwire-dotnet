@@ -66,8 +66,8 @@ public class RestSmokeTest : IClassFixture<MockServerFixture>
         }
 
         // Build a real HttpClient + Calling namespace pointed at the mock.
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        var compatBasePath = "/api/laml/2010-04-01/Accounts/test_proj";
+        var http = _fixture.NewHttp();
+        var compatBasePath = $"/api/laml/2010-04-01/Accounts/{_fixture.Project}";
         var compat = new CrudResource(http, compatBasePath);
 
         // Drive the SDK through a real socket. The mock will synthesize a JSON
@@ -112,8 +112,8 @@ public class RestSmokeTest : IClassFixture<MockServerFixture>
 
         // Issue a request — the journal should still record it (regardless of
         // whether the override matched a registered route).
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        var compat = new CrudResource(http, "/api/laml/2010-04-01/Accounts/test_proj");
+        var http = _fixture.NewHttp();
+        var compat = new CrudResource(http, $"/api/laml/2010-04-01/Accounts/{_fixture.Project}");
 
         try
         {
