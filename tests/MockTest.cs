@@ -41,7 +41,15 @@ public static class MockTest
     public const int ReservedControlPlanePort = 9784;
 
     private static readonly TimeSpan StartupTimeout = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan HttpTimeout = TimeSpan.FromSeconds(5);
+    // Control-plane calls (journal/scenario) hit the shared mock over HTTP. A
+    // healthy mock answers in milliseconds, but under heavy concurrent load —
+    // e.g. the porting-sdk cross-port matrix running every port's suite plus
+    // this assembly's now-parallel tests on one runner — a single GET can stall
+    // past a tight budget and surface as a TaskCanceledException / disposed
+    // NetworkStream (seen on UpdateRecording_JournalRecordsPostWithStatus). 5s
+    // was too tight; match the relay harness's 30s (RelayMockTest.cs). The
+    // timeout only bites pathological load, so a generous value is correct.
+    private static readonly TimeSpan HttpTimeout = TimeSpan.FromSeconds(30);
 
     private static readonly object StateLock = new();
     private static Harness? _sharedHarness;
