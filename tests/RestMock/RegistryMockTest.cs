@@ -35,7 +35,7 @@ public class RegistryMockTest : IClassFixture<MockServerFixture>
 
     private Registry NewRegistry()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
+        var http = _fixture.NewHttp();
         return new Registry(http);
     }
 

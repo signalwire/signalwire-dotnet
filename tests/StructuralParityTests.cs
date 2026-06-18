@@ -26,6 +26,7 @@ using SignalWire.SWML;
 
 namespace SignalWire.Tests;
 
+[Collection(GlobalStateCollection.Name)]
 public class StructuralParityTests
 {
     // -------------------------------------------------------------------

@@ -64,13 +64,12 @@ public static class RelayMockTest
     public static Bound NewClient(string project = "test_proj", string token = "test_tok",
         IEnumerable<string>? contexts = null)
     {
-        var h = EnsureServer();
-        h.Reset();
+        var shared = EnsureServer();
         var opts = new Dictionary<string, string>
         {
             ["project"] = project,
             ["token"] = token,
-            ["host"] = h.RelayHost,
+            ["host"] = shared.RelayHost,
             ["scheme"] = "ws",
         };
         if (contexts is not null)
@@ -78,19 +77,57 @@ public static class RelayMockTest
             opts["contexts"] = string.Join(",", contexts);
         }
         var client = new SignalWire.Relay.Client(opts);
-        return new Bound(client, h);
+        // The caller connects the client (some tests cover the connect path
+        // itself). The returned Bound exposes a per-client Harness view that
+        // scopes journal reads/resets + pushes to THIS client's session id —
+        // the value is read lazily on first Harness access (after ConnectAsync
+        // has populated client.SessionId), so the shared mock is safe under
+        // parallel test execution. No global reset is needed: a brand-new
+        // session starts with an empty (scoped) journal.
+        return new Bound(client, shared);
     }
 
-    /// <summary>Tuple of Relay client + Harness bound to the same mock.</summary>
+    /// <summary>Tuple of Relay client + Harness bound to the same mock. The
+    /// <see cref="Harness"/> view is session-scoped to <see cref="Client"/>
+    /// (lazily, once the connect handshake assigns a session id).</summary>
     public sealed class Bound : IDisposable
     {
         public SignalWire.Relay.Client Client { get; }
-        public Harness Harness { get; }
-        internal Bound(SignalWire.Relay.Client client, Harness harness)
+        private readonly Harness _shared;
+        private Harness? _scoped;
+
+        internal Bound(SignalWire.Relay.Client client, Harness shared)
         {
             Client = client;
-            Harness = harness;
+            _shared = shared;
         }
+
+        /// <summary>A Harness scoped to <see cref="Client"/>'s session id. Built
+        /// on first access and re-scoped if the session id appears later (i.e.
+        /// after <c>ConnectAsync()</c>). Falls back to an unscoped view until the
+        /// client has a session id.</summary>
+        public Harness Harness
+        {
+            get
+            {
+                var sid = Client.SessionId ?? "";
+                if (_scoped is null)
+                {
+                    _scoped = new Harness(
+                        _shared.HttpUrl, _shared.WsUrl, _shared.Host,
+                        _shared.WsPort, _shared.HttpPort)
+                    {
+                        SessionId = sid,
+                    };
+                }
+                else if (_scoped.SessionId != sid && !string.IsNullOrEmpty(sid))
+                {
+                    _scoped.SessionId = sid;
+                }
+                return _scoped;
+            }
+        }
+
         public void Dispose()
         {
             try { Client.Disconnect(); } catch { /* best effort */ }
@@ -114,6 +151,17 @@ public static class RelayMockTest
         public int WsPort { get; }
         public int HttpPort { get; }
 
+        /// <summary>
+        /// When set, journal reads + <see cref="Reset"/> and scenario arming /
+        /// reset are scoped to this session id (the server-assigned
+        /// <c>sessionid</c> from the connect handshake), so a test only ever
+        /// sees its own frames and never disturbs another test's.
+        /// <see cref="RelayMockTest.NewClient"/> sets this automatically. Empty
+        /// =&gt; global (legacy, single-threaded). Mirrors the TypeScript port's
+        /// <c>MockRelayHarness.sessionId</c>.
+        /// </summary>
+        public string SessionId { get; set; } = "";
+
         private readonly System.Net.Http.HttpClient _http;
 
         internal Harness(string httpUrl, string wsUrl, string host, int wsPort, int httpPort)
@@ -127,9 +175,18 @@ public static class RelayMockTest
             _http = new System.Net.Http.HttpClient { Timeout = HttpTimeout };
         }
 
-        public JournalApi Journal => new(_http, HttpUrl);
-        public ScenariosApi Scenarios => new(_http, HttpUrl);
+        /// <summary><c>?session_id=&lt;id&gt;</c> suffix for control-plane calls
+        /// when scoped, else empty.</summary>
+        internal string SessionQuery()
+            => string.IsNullOrEmpty(SessionId)
+                ? ""
+                : "?session_id=" + Uri.EscapeDataString(SessionId);
 
+        public JournalApi Journal => new(_http, HttpUrl, SessionQuery());
+        public ScenariosApi Scenarios => new(_http, HttpUrl, SessionId);
+
+        /// <summary>Clear journal + scenarios for this session (both scoped when
+        /// <see cref="SessionId"/> is set, global otherwise).</summary>
         public void Reset()
         {
             Journal.Reset();
@@ -138,13 +195,17 @@ public static class RelayMockTest
 
         // ── Server-initiated push helpers ─────────────────────────────
 
-        /// <summary>Push a single JSON-RPC frame to one or all sessions.</summary>
+        /// <summary>Push a single JSON-RPC frame to one or all sessions. Targets
+        /// this harness's session when scoped (so a parallel test's client never
+        /// receives it); an explicit <paramref name="sessionId"/> overrides, and
+        /// an unscoped harness with no arg broadcasts (legacy behavior).</summary>
         public Dictionary<string, JsonElement> Push(Dictionary<string, object?> frame, string? sessionId = null)
         {
+            var target = !string.IsNullOrEmpty(sessionId) ? sessionId : SessionId;
             var path = "/__mock__/push";
-            if (!string.IsNullOrEmpty(sessionId))
+            if (!string.IsNullOrEmpty(target))
             {
-                path += "?session_id=" + Uri.EscapeDataString(sessionId);
+                path += "?session_id=" + Uri.EscapeDataString(target);
             }
             var body = new Dictionary<string, object?> { ["frame"] = frame };
             return PostJson(path, body);
@@ -162,15 +223,49 @@ public static class RelayMockTest
                 ["delay_ms"] = spec.DelayMs,
             };
             if (spec.CallId is not null) body["call_id"] = spec.CallId;
-            if (spec.SessionId is not null) body["session_id"] = spec.SessionId;
+            // Target this harness's session by default so the inbound-call
+            // sequence reaches only this test's client (an unscoped harness
+            // broadcasts, as before). An explicit spec.SessionId overrides.
+            var sid = spec.SessionId ?? (string.IsNullOrEmpty(SessionId) ? null : SessionId);
+            if (sid is not null) body["session_id"] = sid;
             return PostJson("/__mock__/inbound_call", body);
         }
 
         /// <summary>Run a scripted timeline mixing <c>sleep_ms</c>, <c>push</c>, and
-        /// <c>expect_recv</c> checkpoints.</summary>
+        /// <c>expect_recv</c> checkpoints. When this harness is session-scoped,
+        /// each <c>push</c>/<c>expect_recv</c> op is stamped with this session id
+        /// (unless it already carries one), so the timeline targets only this
+        /// test's client and <c>expect_recv</c> matches only this session's
+        /// frames — making it parallel-safe. Mirrors the TypeScript port.</summary>
         public Dictionary<string, JsonElement> ScenarioPlay(IEnumerable<Dictionary<string, object?>> steps)
         {
-            return PostJson("/__mock__/scenario_play", steps.ToList());
+            var list = steps.ToList();
+            var scoped = string.IsNullOrEmpty(SessionId)
+                ? list
+                : list.Select(ScopeOp).ToList();
+            return PostJson("/__mock__/scenario_play", scoped);
+        }
+
+        /// <summary>Inject <see cref="SessionId"/> into a timeline op's
+        /// <c>push</c>/<c>expect_recv</c> spec when the op doesn't already
+        /// specify a <c>session_id</c>. Leaves <c>sleep_ms</c> ops untouched.</summary>
+        private Dictionary<string, object?> ScopeOp(Dictionary<string, object?> op)
+        {
+            var outOp = new Dictionary<string, object?>(op);
+            foreach (var key in new[] { "push", "expect_recv" })
+            {
+                if (outOp.TryGetValue(key, out var spec)
+                    && spec is Dictionary<string, object?> specDict
+                    && !specDict.ContainsKey("session_id"))
+                {
+                    var newSpec = new Dictionary<string, object?>(specDict)
+                    {
+                        ["session_id"] = SessionId,
+                    };
+                    outOp[key] = newSpec;
+                }
+            }
+            return outOp;
         }
 
         /// <summary>List active WebSocket session metadata.</summary>
@@ -230,10 +325,12 @@ public static class RelayMockTest
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
-        internal JournalApi(System.Net.Http.HttpClient http, string baseUrl)
+        private readonly string _sessionQuery;
+        internal JournalApi(System.Net.Http.HttpClient http, string baseUrl, string sessionQuery = "")
         {
             _http = http;
             _baseUrl = baseUrl;
+            _sessionQuery = sessionQuery;
         }
 
         private static readonly JsonSerializerOptions JsonOpts = new()
@@ -243,7 +340,7 @@ public static class RelayMockTest
 
         public List<JournalEntry> All()
         {
-            var resp = _http.GetAsync(_baseUrl + "/__mock__/journal")
+            var resp = _http.GetAsync(_baseUrl + "/__mock__/journal" + _sessionQuery)
                 .GetAwaiter().GetResult();
             if (resp.StatusCode != HttpStatusCode.OK)
             {
@@ -283,7 +380,7 @@ public static class RelayMockTest
         public void Reset()
         {
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/journal/reset", content)
+            var resp = _http.PostAsync(_baseUrl + "/__mock__/journal/reset" + _sessionQuery, content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -298,18 +395,27 @@ public static class RelayMockTest
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
-        internal ScenariosApi(System.Net.Http.HttpClient http, string baseUrl)
+        private readonly string _sessionId;
+        internal ScenariosApi(System.Net.Http.HttpClient http, string baseUrl, string sessionId = "")
         {
             _http = http;
             _baseUrl = baseUrl;
+            _sessionId = sessionId;
         }
 
-        /// <summary>Queue scripted post-RPC events for <paramref name="method"/> (FIFO).</summary>
+        private string Q()
+            => string.IsNullOrEmpty(_sessionId)
+                ? ""
+                : "?session_id=" + Uri.EscapeDataString(_sessionId);
+
+        /// <summary>Queue scripted post-RPC events for <paramref name="method"/>
+        /// (FIFO consume-once). Scoped to this harness's session when set, so a
+        /// concurrent test can't consume another's armed scenario.</summary>
         public void ArmMethod(string method, IEnumerable<Dictionary<string, object?>> events)
         {
             var json = JsonSerializer.Serialize(events.ToList());
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + method, content)
+            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + method + Q(), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -318,10 +424,28 @@ public static class RelayMockTest
             }
         }
 
+        /// <summary>Queue a dial-dance scenario (winner state events + final dial
+        /// event) for the <c>dial</c> pseudo-method. Scoped to this harness's
+        /// session when set.</summary>
+        public void ArmDial(Dictionary<string, object?> opts)
+        {
+            var json = JsonSerializer.Serialize(opts);
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/dial" + Q(), content)
+                .GetAwaiter().GetResult();
+            if (!resp.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException(
+                    $"RelayMockTest: POST /__mock__/scenarios/dial returned {(int)resp.StatusCode}");
+            }
+        }
+
+        /// <summary>Reset this session's armed scenario queues (or all of them
+        /// when unscoped).</summary>
         public void Reset()
         {
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/reset", content)
+            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/reset" + Q(), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -584,9 +708,20 @@ public sealed class RelayMockServerFixture : IDisposable
         }
     }
 
+    /// <summary>
+    /// No-op under the session-isolated model. Each test drives its own client
+    /// via <see cref="RelayMockTest.NewClient"/>, whose <c>Bound.Harness</c> view
+    /// is scoped to that client's handshake session id and therefore starts with
+    /// an empty (scoped) journal — there is nothing to clear. A global
+    /// journal/scenario wipe here would race a concurrent test's in-flight state
+    /// (and, even serially, drop another session's armed scenarios), so we
+    /// deliberately do nothing. Kept for source-compatibility with the many test
+    /// constructors that call it. Mirrors the REST <c>MockServerFixture.Reset</c>
+    /// no-op for scoped harnesses.
+    /// </summary>
     public void Reset()
     {
-        if (Available) Harness.Reset();
+        // intentionally empty — see remarks above.
     }
 
     public void Dispose() { /* shared mock lives for whole test run */ }

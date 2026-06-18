@@ -198,7 +198,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var call = bound.Client.GetCall("conv-play-tts-cb")!;
-            _fixture.Harness.Scenarios.ArmMethod("calling.play", new[]
+            bound.Harness.Scenarios.ArmMethod("calling.play", new[]
             {
                 new Dictionary<string, object?>
                 {

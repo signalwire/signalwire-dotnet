@@ -32,7 +32,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
 
     private Video NewVideo()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
+        var http = _fixture.NewHttp();
         return new Video(http);
     }
 

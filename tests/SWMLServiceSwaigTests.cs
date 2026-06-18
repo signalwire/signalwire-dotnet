@@ -13,6 +13,7 @@ namespace SignalWire.Tests;
 /// contract that lets sidecar / non-agent verbs reuse the SWAIG dispatch
 /// surface that previously lived only on AgentBase.
 /// </summary>
+[Collection(GlobalStateCollection.Name)]
 public class SWMLServiceSwaigTests : IDisposable
 {
     public SWMLServiceSwaigTests()

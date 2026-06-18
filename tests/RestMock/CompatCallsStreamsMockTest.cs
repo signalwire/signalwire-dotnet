@@ -31,8 +31,8 @@ public class CompatCallsStreamsMockTest : IClassFixture<MockServerFixture>
 
     private Compat NewCompat()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        return new Compat(http, "test_proj");
+        var http = _fixture.NewHttp();
+        return new Compat(http, _fixture.Project);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -73,7 +73,7 @@ public class CompatCallsStreamsMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Calls/CA_JX1/Streams", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Calls/CA_JX1/Streams", j.Path);
         Assert.Equal("wss://a.b/s", StringField(j, "Url"));
         Assert.Equal("strm-x", StringField(j, "Name"));
     }
@@ -106,7 +106,7 @@ public class CompatCallsStreamsMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Calls/CA_S1/Streams/ST_S1", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Calls/CA_S1/Streams/ST_S1", j.Path);
         Assert.Equal("stopped", StringField(j, "Status"));
     }
 
@@ -138,7 +138,7 @@ public class CompatCallsStreamsMockTest : IClassFixture<MockServerFixture>
         });
         var j = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
-        Assert.Equal("/api/laml/2010-04-01/Accounts/test_proj/Calls/CA_R1/Recordings/RE_R1", j.Path);
+        Assert.Equal($"/api/laml/2010-04-01/Accounts/{_fixture.Project}/Calls/CA_R1/Recordings/RE_R1", j.Path);
         Assert.Equal("paused", StringField(j, "Status"));
     }
 }

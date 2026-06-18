@@ -8,6 +8,7 @@ using SignalWire.SWML;
 
 namespace SignalWire.Tests;
 
+[Collection(GlobalStateCollection.Name)]
 public class AgentServerTests : IDisposable
 {
     private readonly string _tempDir;

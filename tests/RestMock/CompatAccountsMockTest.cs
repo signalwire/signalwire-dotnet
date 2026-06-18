@@ -34,8 +34,8 @@ public class CompatAccountsMockTest : IClassFixture<MockServerFixture>
 
     private Compat NewCompat()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        return new Compat(http, "test_proj");
+        var http = _fixture.NewHttp();
+        return new Compat(http, _fixture.Project);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)

@@ -4,6 +4,7 @@ using SignalWire.Relay;
 
 namespace SignalWire.Tests;
 
+[Collection(GlobalStateCollection.Name)]
 public class RelayTests : IDisposable
 {
     public RelayTests()

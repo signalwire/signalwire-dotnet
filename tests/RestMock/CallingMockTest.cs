@@ -39,8 +39,8 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
 
     private Calling NewCalling()
     {
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        return new Calling(http, "test_proj");
+        var http = _fixture.NewHttp();
+        return new Calling(http, _fixture.Project);
     }
 
     /// <summary>Asserts journal entry shape — method/path/command — and

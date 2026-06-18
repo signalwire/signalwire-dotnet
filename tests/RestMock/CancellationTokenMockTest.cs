@@ -51,8 +51,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
     public async Task GetAsync_PreCancelledToken_ThrowsAndDoesNotReachWire()
     {
         if (Skipped()) return;
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        _fixture.Harness.Journal.Reset();
+        var http = _fixture.NewHttp();
 
         using var cts = new CancellationTokenSource();
         cts.Cancel(); // cancel BEFORE issuing the call
@@ -72,8 +71,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
     public async Task PostAsync_PreCancelledToken_ThrowsOperationCanceled()
     {
         if (Skipped()) return;
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        _fixture.Harness.Journal.Reset();
+        var http = _fixture.NewHttp();
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -90,9 +88,8 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
     public async Task CrudResource_CreateAsync_PreCancelledToken_PropagatesCancellation()
     {
         if (Skipped()) return;
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
+        var http = _fixture.NewHttp();
         var crud = new CrudResource(http, "/api/relay/rest/phone_numbers");
-        _fixture.Harness.Journal.Reset();
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -173,8 +170,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
     public async Task GetAsync_DefaultToken_StillReachesWire()
     {
         if (Skipped()) return;
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", _fixture.Harness.Url);
-        _fixture.Harness.Journal.Reset();
+        var http = _fixture.NewHttp();
 
         // No token argument: the new optional param defaults to
         // CancellationToken.None and the request completes normally.

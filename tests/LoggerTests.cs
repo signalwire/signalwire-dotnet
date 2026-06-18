@@ -3,6 +3,7 @@ using SignalWire.Logging;
 
 namespace SignalWire.Tests;
 
+[Collection(GlobalStateCollection.Name)]
 public class LoggerTests : IDisposable
 {
     public LoggerTests()

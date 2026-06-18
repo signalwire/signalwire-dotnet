@@ -4,8 +4,6 @@
  * Licensed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
-using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using SignalWire.Relay;
 using SignalWire.Tests.Mock;
@@ -21,7 +19,6 @@ namespace SignalWire.Tests.RelayMock;
 public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
 {
     private readonly RelayMockServerFixture _fixture;
-    private static readonly System.Net.Http.HttpClient HttpClient = new();
 
     public EventDispatchMockTest(RelayMockServerFixture fixture)
     {
@@ -79,7 +76,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
             },
         };
 
-    private void ArmDial(string tag, string winnerCallId, IEnumerable<string> states)
+    private void ArmDial(RelayMockTest.Bound bound, string tag, string winnerCallId, IEnumerable<string> states)
     {
         var body = new Dictionary<string, object?>
         {
@@ -94,16 +91,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
             },
             ["delay_ms"] = 1,
         };
-        var json = JsonSerializer.Serialize(body);
-        using var content = new StringContent(json, Encoding.UTF8, "application/json");
-        var resp = HttpClient.PostAsync(
-            _fixture.Harness.HttpUrl + "/__mock__/scenarios/dial", content)
-            .GetAwaiter().GetResult();
-        if (!resp.IsSuccessStatusCode)
-        {
-            var b = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            throw new InvalidOperationException($"arm_dial failed: {(int)resp.StatusCode} {b}");
-        }
+        bound.Harness.Scenarios.ArmDial(body);
     }
 
     // ------------------------------------------------------------------
@@ -410,7 +398,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
         await bound.Client.ConnectAsync();
         try
         {
-            ArmDial("ec-tag-route", "WINTAG", new[] { "created", "answered" });
+            ArmDial(bound, "ec-tag-route", "WINTAG", new[] { "created", "answered" });
 
             var call = await bound.Client.DialAsync(new()
             {

@@ -123,7 +123,22 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
             $"expected protocol in result; got: {resultEl}");
 
         // Journal assertion: the mock recorded the inbound signalwire.connect.
-        var recvEntries = _fixture.Harness.Journal.Recv("signalwire.connect");
+        // Scope the read to THIS connection's session id (the `sessionid` the
+        // mock just returned) so the assertion is deterministic under parallel
+        // execution — other tests' connect frames live in the same global
+        // journal otherwise.
+        var sessionScoped = _fixture.Harness;
+        if (resultEl.TryGetProperty("sessionid", out var sidEl)
+            && sidEl.GetString() is { Length: > 0 } sid)
+        {
+            sessionScoped = new RelayMockTest.Harness(
+                _fixture.Harness.HttpUrl, _fixture.Harness.WsUrl, _fixture.Harness.Host,
+                _fixture.Harness.WsPort, _fixture.Harness.HttpPort)
+            {
+                SessionId = sid,
+            };
+        }
+        var recvEntries = sessionScoped.Journal.Recv("signalwire.connect");
         Assert.NotEmpty(recvEntries);
         var lastConnect = recvEntries[^1];
         Assert.Equal("recv", lastConnect.Direction);

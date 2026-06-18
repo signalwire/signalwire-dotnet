@@ -21,6 +21,7 @@ namespace SignalWire.Tests;
 ///       rendered into SWML, and the parameters appear under the SWAIG
 ///       function's <c>argument.properties</c>; the function also dispatches.
 /// </summary>
+[Collection(GlobalStateCollection.Name)]
 public class ParameterSchemaTests : IDisposable
 {
     public ParameterSchemaTests()

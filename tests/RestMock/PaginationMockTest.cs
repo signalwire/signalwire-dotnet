@@ -33,8 +33,7 @@ public class PaginationMockTest : IClassFixture<MockServerFixture>
         _fixture.Reset();
     }
 
-    private SignalWire.REST.HttpClient NewHttp() =>
-        new("test_proj", "test_tok", _fixture.Harness.Url);
+    private SignalWire.REST.HttpClient NewHttp() => _fixture.NewHttp();
 
     [Fact]
     public void Init_RecordsStateWithoutFetching()

@@ -70,9 +70,9 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
         return bound;
     }
 
-    private void ArmMethod(string method, IEnumerable<Dictionary<string, object?>> events)
+    private void ArmMethod(RelayMockTest.Bound bound, string method, IEnumerable<Dictionary<string, object?>> events)
     {
-        _fixture.Harness.Scenarios.ArmMethod(method, events);
+        bound.Harness.Scenarios.ArmMethod(method, events);
     }
 
     private static Dictionary<string, object?> EventFrame(
@@ -133,7 +133,7 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var call = bound.Client.GetCall("call-play-fin")!;
-            ArmMethod("calling.play", new[]
+            ArmMethod(bound, "calling.play", new[]
             {
                 new Dictionary<string, object?>
                 {
@@ -246,7 +246,7 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var call = bound.Client.GetCall("call-play-cb")!;
-            ArmMethod("calling.play", new[]
+            ArmMethod(bound, "calling.play", new[]
             {
                 new Dictionary<string, object?>
                 {
@@ -324,7 +324,7 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var call = bound.Client.GetCall("call-rec-fin")!;
-            ArmMethod("calling.record", new[]
+            ArmMethod(bound, "calling.record", new[]
             {
                 new Dictionary<string, object?>
                 {
@@ -399,7 +399,7 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var call = bound.Client.GetCall("call-det")!;
-            ArmMethod("calling.detect", new[]
+            ArmMethod(bound, "calling.detect", new[]
             {
                 new Dictionary<string, object?>
                 {
