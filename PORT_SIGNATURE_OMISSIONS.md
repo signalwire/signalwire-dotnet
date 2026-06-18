@@ -63,19 +63,11 @@ signalwire.agent_server.AgentServer.get_agents: .NET GetAgents returns list of (
 signalwire.agent_server.AgentServer.logger: .NET .Logger property returns the SignalWire.Logging.Logger class instance; Python reference adapter resolves logger to get_logger() which has a different class:path
 signalwire.agent_server.AgentServer.unregister: .NET Unregister returns AgentServer for fluent chaining; Python returns bool indicating whether the route was actually registered
 signalwire.core.agent.prompt.manager.PromptManager.define_contexts: .NET DefineContexts returns ContextBuilder for fluent context construction; Python returns void and takes a contexts dict argument
-signalwire.core.agent.prompt.manager.PromptManager.prompt_add_section: .NET fluent-builder pattern: returns AgentBase for chaining (agent.SetPromptText("..").SetPostPrompt("..")); Python returns void per imperative idiom
-signalwire.core.agent.prompt.manager.PromptManager.prompt_add_subsection: .NET fluent-builder pattern: returns AgentBase for chaining (agent.SetPromptText("..").SetPostPrompt("..")); Python returns void per imperative idiom
-signalwire.core.agent.prompt.manager.PromptManager.prompt_add_to_section: .NET fluent-builder pattern: returns AgentBase for chaining (agent.SetPromptText("..").SetPostPrompt("..")); Python returns void per imperative idiom
-signalwire.core.agent.prompt.manager.PromptManager.set_post_prompt: .NET fluent-builder pattern: returns AgentBase for chaining (agent.SetPromptText("..").SetPostPrompt("..")); Python returns void per imperative idiom
-signalwire.core.agent.prompt.manager.PromptManager.set_prompt_pom: .NET fluent-builder pattern: returns AgentBase for chaining (agent.SetPromptText("..").SetPostPrompt("..")); Python returns void per imperative idiom
-signalwire.core.agent.prompt.manager.PromptManager.set_prompt_text: .NET fluent-builder pattern: returns AgentBase for chaining (agent.SetPromptText("..").SetPostPrompt("..")); Python returns void per imperative idiom
 signalwire.core.agent.tools.registry.ToolRegistry.define_tool: .NET fluent-builder pattern: returns Service (SWMLService) for chaining (service.DefineTool(...).RegisterSwaigFunction(...)); Python returns void
 signalwire.core.agent.tools.registry.ToolRegistry.get_function: .NET ToolRegistry.GetFunction returns SWAIGFunction|Dict union (richer typed model); Python returns the bare dict
-signalwire.core.agent.tools.registry.ToolRegistry.register_swaig_function: .NET fluent-builder pattern: returns Service (SWMLService) for chaining (service.DefineTool(...).RegisterSwaigFunction(...)); Python returns void
 signalwire.core.agent_base.AgentBase.__init__: .NET options-object pattern: a typed Options/Params data class collects what Python takes as named keyword arguments - same captured fields, different parameter binding
 signalwire.core.agent_base.AgentBase.on_debug_event: .NET OnDebugEvent returns AgentBase for fluent chaining; Python returns the Callable (decorator pattern)
 signalwire.core.agent_base.AgentBase.on_summary: .NET OnSummary registers a callback for the summary lifecycle; Python takes summary + raw_data as direct override-point parameters
-signalwire.core.agent_base.AgentBase.pom: .NET .Pom property returns the typed PromptObjectModel; Python .pom returns the raw list-of-dicts representation
 signalwire.core.contexts.Context.add_enter_filler: .NET filler-list methods take a List<string>; Python uses *args (var_positional) for the same payload
 signalwire.core.contexts.Context.add_exit_filler: .NET filler-list methods take a List<string>; Python uses *args (var_positional) for the same payload
 signalwire.core.contexts.Context.add_step: .NET options-object pattern: a typed Options/Params data class collects what Python takes as named keyword arguments - same captured fields, different parameter binding
@@ -124,8 +116,6 @@ signalwire.pom.pom.PromptObjectModel.from_json: .NET FromJson/FromYaml accepts o
 signalwire.pom.pom.PromptObjectModel.from_yaml: .NET FromJson/FromYaml accepts only string source; Python additionally accepts a pre-parsed dict for in-memory construction
 signalwire.pom.pom.Section.__init__: .NET POM section methods take all named arguments positionally; Python keeps body/bullets/numbered/numberedBullets keyword-only
 signalwire.pom.pom.Section.add_subsection: .NET POM section methods take all named arguments positionally; Python keeps body/bullets/numbered/numberedBullets keyword-only
-signalwire.pom.pom.Section.render_markdown: .NET render methods take section_number as a delimiter string; Python takes a list of integers for nested numbering
-signalwire.pom.pom.Section.render_xml: .NET render methods take section_number as a delimiter string; Python takes a list of integers for nested numbering
 signalwire.prefabs.concierge.ConciergeAgent.__init__: .NET options-object pattern: a typed Options/Params data class collects what Python takes as named keyword arguments - same captured fields, different parameter binding
 signalwire.prefabs.faq_bot.FAQBotAgent.__init__: .NET options-object pattern: a typed Options/Params data class collects what Python takes as named keyword arguments - same captured fields, different parameter binding
 signalwire.prefabs.info_gatherer.InfoGathererAgent.__init__: .NET options-object pattern: a typed Options/Params data class collects what Python takes as named keyword arguments - same captured fields, different parameter binding
@@ -206,25 +196,11 @@ signalwire.relay.message.Message.on: .NET Message.On takes a typed Action<Messag
 signalwire.relay.message.Message.result: .NET Message.Wait/Result returns RelayEvent for typed access to the resolution; Python returns the bare string outcome
 signalwire.relay.message.Message.wait: .NET Message.Wait/Result returns RelayEvent for typed access to the resolution; Python returns the bare string outcome
 signalwire.rest._base.CrudWithAddresses.list_addresses: .NET ListAddresses takes optional Dictionary<string,object> for query params; Python uses **kwargs
-signalwire.rest.client.RestClient.addresses: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
 signalwire.rest.client.RestClient.chat: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.compat: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.datasphere: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.imported_numbers: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.logs: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
 signalwire.rest.client.RestClient.lookup: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.mfa: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.number_groups: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
 signalwire.rest.client.RestClient.phone_numbers: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.project: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
 signalwire.rest.client.RestClient.pubsub: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.queues: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.recordings: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.registry: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.short_codes: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.sip_profile: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
 signalwire.rest.client.RestClient.verified_callers: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.client.RestClient.video: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
 signalwire.rest.namespaces.calling.CallingNamespace.__init__: .NET CallingNamespace ctor takes (client, project_id) for explicit dependency injection; Python takes a pre-bound http_client
 signalwire.rest.namespaces.calling.CallingNamespace.ai_hold: .NET CallingNamespace methods take an optional Dictionary<string,object> for protocol overflow params; Python uses **kwargs - same shape with optional<> wrapper preventing the diff built-in var_keyword/dict equivalence
 signalwire.rest.namespaces.calling.CallingNamespace.ai_message: .NET CallingNamespace methods take an optional Dictionary<string,object> for protocol overflow params; Python uses **kwargs - same shape with optional<> wrapper preventing the diff built-in var_keyword/dict equivalence
