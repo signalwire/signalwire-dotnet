@@ -564,6 +564,10 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         # ``signalwire.core.security.webhook_validator`` functions
         # (``validate_webhook_signature`` and ``validate_request``).
         ("signalwire.core.security.webhook_validator", "WebhookValidator"): None,
+        # SecurityUtils's static methods mirror Python's module-level
+        # ``signalwire.core.security.security_utils`` free functions
+        # (``filter_sensitive_headers`` / ``redact_url`` / ``is_valid_hostname``).
+        ("signalwire.core.security.security_utils", "SecurityUtils"): None,
     }
     for (mod, cls), allowed in STATIC_TO_FREE_FN.items():
         cls_entry = out_modules.get(mod, {}).get("classes", {}).get(cls)

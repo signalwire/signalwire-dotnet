@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 43ed87087d784d9521619c5f59af5febfcc6580e",
+  "generated_from": "signalwire-dotnet @ 1cedd1f0b640ab7b23b26beeebb6f3986af08e65",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -384,6 +384,16 @@
           "render_xml",
           "to_dict",
           "to_json"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.core.security.security_utils": {
+      "classes": {
+        "SecurityUtils": [
+          "filter_sensitive_headers",
+          "is_valid_hostname",
+          "redact_url"
         ]
       },
       "functions": []
