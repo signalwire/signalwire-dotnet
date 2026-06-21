@@ -199,23 +199,48 @@ dotnet_test_per_framework() {
     local fw
     local dotnet_bin
     dotnet_bin="$(command -v dotnet || true)"
+    local failed_fws=""
+    # Per-framework logs kept until the end. The outer run_gate echoes only the
+    # LAST ~400 lines of the whole gate on failure, so a FIRST-framework failure
+    # (net8.0) gets buried under later frameworks' warning spew and becomes
+    # undiagnosable in CI. We capture each framework to its own file and, after
+    # all frameworks run, RE-PRINT every failing framework's output LAST — so the
+    # real error lands inside run_gate's final-400-line window.
+    local -a fwlogs=()
     for fw in net8.0 net9.0 net10.0; do
         echo "    --- dotnet test --framework $fw ---"
+        local fwlog
+        fwlog="$(mktemp)"
+        fwlogs+=("$fw:$fwlog")
         if [ -n "$dotnet_bin" ]; then
-            if ! "$dotnet_bin" test --framework "$fw"; then
-                rc=1
-            fi
+            "$dotnet_bin" test --framework "$fw" 2>&1 | tee "$fwlog"
+            [ "${PIPESTATUS[0]}" -eq 0 ] || { rc=1; failed_fws="$failed_fws $fw"; }
         else
-            if ! docker run --rm --network host \
+            docker run --rm --network host \
                     --user "$(id -u):$(id -g)" \
                     -e HOME=/tmp \
                     -v "$PWD:/src" -w /src \
                     mcr.microsoft.com/dotnet/sdk:10.0 \
-                    dotnet test --framework "$fw"; then
-                rc=1
-            fi
+                    dotnet test --framework "$fw" 2>&1 | tee "$fwlog"
+            [ "${PIPESTATUS[0]}" -eq 0 ] || { rc=1; failed_fws="$failed_fws $fw"; }
         fi
     done
+    if [ "$rc" -ne 0 ]; then
+        echo "    dotnet TEST gate: failing framework(s):$failed_fws"
+        local entry f log
+        for entry in "${fwlogs[@]}"; do
+            f="${entry%%:*}"; log="${entry#*:}"
+            case " $failed_fws " in
+                *" $f "*)
+                    echo "    ===== $f FAILED — full output (re-printed last so it survives log truncation) ====="
+                    sed 's/^/    [FAIL '"$f"'] /' "$log"
+                    echo "    ===== end $f output ====="
+                    ;;
+            esac
+        done
+    fi
+    local entry log
+    for entry in "${fwlogs[@]}"; do log="${entry#*:}"; rm -f "$log"; done
     return $rc
 }
 
