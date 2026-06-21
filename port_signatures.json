@@ -10146,7 +10146,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.chat.ChatResource"
             },
             "compat": {
               "params": [
@@ -10263,7 +10263,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.pubsub.PubSubResource"
             },
             "queues": {
               "params": [
@@ -10335,7 +10335,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.verified_callers.VerifiedCallersResource"
             },
             "video": {
               "params": [
@@ -11528,6 +11528,42 @@
                   "type": "optional<dict<string,any>>",
                   "required": false,
                   "default": null
+                }
+              ],
+              "returns": "dict<string,any>"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.rest.namespaces.chat": {
+      "classes": {
+        "ChatResource": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "client",
+                  "type": "class:signalwire.rest.http_client.HttpClient",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "create_token": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "kwargs",
+                  "type": "dict<string,any>",
+                  "required": true
                 }
               ],
               "returns": "dict<string,any>"
@@ -13095,6 +13131,31 @@
                 }
               ],
               "returns": "dict<string,any>"
+            },
+            "update": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "cancellation_token",
+                  "type": "any",
+                  "required": false,
+                  "default": null
+                }
+              ],
+              "returns": "dict<string,any>"
             }
           }
         },
@@ -13129,6 +13190,29 @@
     },
     "signalwire.rest.namespaces.fabric": {
       "classes": {
+        "AutoMaterializedWebhook": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "client",
+                  "type": "class:signalwire.rest.http_client.HttpClient",
+                  "required": true
+                },
+                {
+                  "name": "base_path",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            }
+          }
+        },
         "CallFlowsResource": {
           "methods": {
             "__init__": {
@@ -13402,7 +13486,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResource"
             },
             "call_flows": {
               "params": [
@@ -13411,7 +13495,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResourcePUT"
             },
             "call_flows_ops": {
               "params": [
@@ -13447,7 +13531,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResourcePUT"
             },
             "conference_rooms_ops": {
               "params": [
@@ -13474,7 +13558,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResourcePUT"
             },
             "cxml_applications_ops": {
               "params": [
@@ -13492,7 +13576,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResourcePUT"
             },
             "cxml_webhooks": {
               "params": [
@@ -13501,7 +13585,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.AutoMaterializedWebhook"
             },
             "dial_plans": {
               "params": [
@@ -13528,7 +13612,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResourcePUT"
             },
             "phone_numbers": {
               "params": [
@@ -13546,7 +13630,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResourcePUT"
             },
             "resources": {
               "params": [
@@ -13573,7 +13657,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResourcePUT"
             },
             "sip_gateways": {
               "params": [
@@ -13582,7 +13666,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResource"
             },
             "sip_profiles": {
               "params": [
@@ -13600,7 +13684,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResourcePUT"
             },
             "subscribers_ops": {
               "params": [
@@ -13618,7 +13702,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.FabricResourcePUT"
             },
             "swml_webhooks": {
               "params": [
@@ -13627,7 +13711,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.fabric.AutoMaterializedWebhook"
             },
             "tokens": {
               "params": [
@@ -13646,6 +13730,77 @@
                 }
               ],
               "returns": "class:signalwire.rest.namespaces.fabric.FabricTokens"
+            }
+          }
+        },
+        "FabricResource": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "client",
+                  "type": "class:signalwire.rest.http_client.HttpClient",
+                  "required": true
+                },
+                {
+                  "name": "base_path",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "update": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "cancellation_token",
+                  "type": "any",
+                  "required": false,
+                  "default": null
+                }
+              ],
+              "returns": "dict<string,any>"
+            }
+          }
+        },
+        "FabricResourcePUT": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "client",
+                  "type": "class:signalwire.rest.http_client.HttpClient",
+                  "required": true
+                },
+                {
+                  "name": "base_path",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "void"
             }
           }
         },
@@ -13759,6 +13914,25 @@
               "returns": "void"
             },
             "assign_domain_application": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "resource_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "kwargs",
+                  "type": "dict<string,any>",
+                  "required": true
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
+            "assign_phone_route": {
               "params": [
                 {
                   "name": "self",
@@ -13934,6 +14108,26 @@
                   "name": "endpoint_id",
                   "type": "string",
                   "required": true
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
+            "list_addresses": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "subscriber_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "query_params",
+                  "type": "optional<dict<string,string>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "dict<string,any>"
@@ -14595,6 +14789,42 @@
         }
       }
     },
+    "signalwire.rest.namespaces.pubsub": {
+      "classes": {
+        "PubSubResource": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "client",
+                  "type": "class:signalwire.rest.http_client.HttpClient",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "create_token": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "kwargs",
+                  "type": "dict<string,any>",
+                  "required": true
+                }
+              ],
+              "returns": "dict<string,any>"
+            }
+          }
+        }
+      }
+    },
     "signalwire.rest.namespaces.queues": {
       "classes": {
         "QueuesResource": {
@@ -15189,6 +15419,86 @@
                   "name": "kwargs",
                   "type": "dict<string,any>",
                   "required": true
+                }
+              ],
+              "returns": "dict<string,any>"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.rest.namespaces.verified_callers": {
+      "classes": {
+        "VerifiedCallersResource": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "client",
+                  "type": "class:signalwire.rest.http_client.HttpClient",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "redial_verification": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "caller_id",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
+            "submit_verification": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "caller_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "kwargs",
+                  "type": "dict<string,any>",
+                  "required": true
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
+            "update": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "cancellation_token",
+                  "type": "any",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "dict<string,any>"

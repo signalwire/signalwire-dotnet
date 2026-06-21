@@ -145,7 +145,9 @@ public class RestClientTests : IDisposable
         Assert.Equal("/api/relay/rest/queues", client.Queues.BasePath);
         Assert.Equal("/api/relay/rest/recordings", client.Recordings.BasePath);
         Assert.Equal("/api/relay/rest/number_groups", client.NumberGroups.BasePath);
-        Assert.Equal("/api/relay/rest/verified_callers", client.VerifiedCallers.BasePath);
+        // Python parity: verified caller IDs live at
+        // /api/relay/rest/verified_caller_ids (the old .NET path lacked _ids).
+        Assert.Equal("/api/relay/rest/verified_caller_ids", client.VerifiedCallers.BasePath);
         Assert.Equal("/api/relay/rest/sip_profiles", client.SipProfile.BasePath);
         Assert.Equal("/api/relay/rest/lookup/phone_number", client.Lookup.BasePath);
         Assert.Equal("/api/relay/rest/short_codes", client.ShortCodes.BasePath);
@@ -154,8 +156,10 @@ public class RestClientTests : IDisposable
         Assert.Equal("/api/relay/rest/registry", client.Registry.BasePath);
         Assert.Equal("/api/relay/rest/logs", client.Logs.BasePath);
         Assert.Equal("/api/relay/rest/project", client.Project.BasePath);
-        Assert.Equal("/api/relay/rest/pubsub", client.Pubsub.BasePath);
-        Assert.Equal("/api/relay/rest/chat", client.Chat.BasePath);
+        // Python parity: chat/pubsub are token-only resources at
+        // /api/{chat,pubsub}/tokens (the old .NET /api/relay/rest paths were wrong).
+        Assert.Equal("/api/pubsub/tokens", client.Pubsub.BasePath);
+        Assert.Equal("/api/chat/tokens", client.Chat.BasePath);
     }
 
     // ==================================================================

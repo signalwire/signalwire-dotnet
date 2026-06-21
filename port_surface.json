@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 1cedd1f0b640ab7b23b26beeebb6f3986af08e65",
+  "generated_from": "signalwire-dotnet @ 897cd2c29bea47386f4fe3a6c2d674e97ce62d93",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -1075,6 +1075,15 @@
       },
       "functions": []
     },
+    "signalwire.rest.namespaces.chat": {
+      "classes": {
+        "ChatResource": [
+          "__init__",
+          "create_token"
+        ]
+      },
+      "functions": []
+    },
     "signalwire.rest.namespaces.compat": {
       "classes": {
         "CompatAccounts": [
@@ -1198,7 +1207,8 @@
           "delete_chunk",
           "get_chunk",
           "list_chunks",
-          "search"
+          "search",
+          "update"
         ],
         "DatasphereNamespace": [
           "__init__",
@@ -1209,6 +1219,9 @@
     },
     "signalwire.rest.namespaces.fabric": {
       "classes": {
+        "AutoMaterializedWebhook": [
+          "__init__"
+        ],
         "CallFlowsResource": [
           "__init__",
           "base_path",
@@ -1263,6 +1276,13 @@
           "tokens",
           "tokens_api"
         ],
+        "FabricResource": [
+          "__init__",
+          "update"
+        ],
+        "FabricResourcePUT": [
+          "__init__"
+        ],
         "FabricTokens": [
           "__init__",
           "create_embed_token",
@@ -1274,6 +1294,7 @@
         "GenericResources": [
           "__init__",
           "assign_domain_application",
+          "assign_phone_route",
           "base_path",
           "delete",
           "get",
@@ -1286,6 +1307,7 @@
           "create_sip_endpoint",
           "delete_sip_endpoint",
           "get_sip_endpoint",
+          "list_addresses",
           "list_sip_endpoints",
           "update_sip_endpoint"
         ]
@@ -1375,6 +1397,15 @@
       },
       "functions": []
     },
+    "signalwire.rest.namespaces.pubsub": {
+      "classes": {
+        "PubSubResource": [
+          "__init__",
+          "create_token"
+        ]
+      },
+      "functions": []
+    },
     "signalwire.rest.namespaces.queues": {
       "classes": {
         "QueuesResource": [
@@ -1449,6 +1480,17 @@
         "SipProfileResource": [
           "__init__",
           "get",
+          "update"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.verified_callers": {
+      "classes": {
+        "VerifiedCallersResource": [
+          "__init__",
+          "redial_verification",
+          "submit_verification",
           "update"
         ]
       },

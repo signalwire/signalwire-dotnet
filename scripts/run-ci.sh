@@ -345,6 +345,64 @@ run_gate "SURFACE-FRESH" "check_surface_freshness vs regenerated port_surface.js
 run_gate "NO-CHEAT" "audit_no_cheat_tests" \
     python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"
 
+# Gate 5b: REST-COVERAGE — every canonical REST route the SDK implements must be
+# exercised with BOTH a success (2xx) AND an error (4xx/5xx) response on the
+# correct on-the-wire path (parity). Measured by replaying the mock journal of a
+# REST-coverage suite run through porting-sdk's rest_coverage checker. Accepted
+# gaps — routes with no SDK method, malformed canonical routes, mock-router
+# collisions — are allowlisted: the shared baseline
+# (porting-sdk/REST_COVERAGE_BASELINE.md) + this port's REST_COVERAGE_GAPS.md. A
+# stale entry (route now covered) fails the gate. Self-contained: spins its own
+# mock on a dedicated port, runs ONLY the RestCoverage-trait tests on a SINGLE
+# target framework into ONE journal, then checks that journal. Same shape as
+# go's/python's/java's gate.
+rest_coverage_gate() {
+    local port="${REST_COVERAGE_PORT:-8779}"
+    local url="http://127.0.0.1:${port}"
+    local mock_pkg_parent="$PORTING_SDK_DIR/test_harness/mock_signalwire"
+    (
+        cd "$mock_pkg_parent"
+        PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" \
+            python3 -m mock_signalwire --host 127.0.0.1 --port "$port" --log-level error
+    ) >/tmp/rest_cov_mock_dotnet.$$.log 2>&1 &
+    local mock_pid=$!
+    # shellcheck disable=SC2064
+    trap "kill $mock_pid 2>/dev/null" RETURN
+    local i
+    for i in $(seq 1 60); do
+        if curl -fsS --max-time 1 "$url/__mock__/health" >/dev/null 2>&1; then break; fi
+        sleep 0.5
+    done
+    curl -fsS --max-time 5 -X POST "$url/__mock__/journal/reset" >/dev/null 2>&1
+
+    # Run ONLY the coverage-trait tests, on ONE framework (net8.0), so all
+    # traffic lands in this one mock's single journal. The coverage tests are
+    # journal-scoped per-test (per-test random project) but the checker reads
+    # the GLOBAL journal, so a single-framework serial run is the clean way to
+    # get one journal with every route's success+error pair.
+    local dn rc
+    dn="$(command -v dotnet || true)"
+    if [ -n "$dn" ]; then
+        MOCK_SIGNALWIRE_PORT="$port" "$dn" test --framework net8.0 \
+            --filter "Category=RestCoverage" || return 1
+    else
+        MOCK_SIGNALWIRE_PORT="$port" docker run --rm --network host \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -e MOCK_SIGNALWIRE_PORT="$port" \
+            -v "$PWD:/src" -w /src \
+            mcr.microsoft.com/dotnet/sdk:10.0 \
+            dotnet test --framework net8.0 --filter "Category=RestCoverage" || return 1
+    fi
+
+    python3 -m mock_signalwire.rest_coverage \
+        --mock-url "$url" \
+        --spec-root "$PORTING_SDK_DIR/rest-apis" \
+        --allowlist "$PORTING_SDK_DIR/REST_COVERAGE_BASELINE.md" \
+        --allowlist "$PORT_ROOT/REST_COVERAGE_GAPS.md"
+}
+run_gate "REST-COVERAGE" "every implemented REST route covered success+error (parity + allowlist)" \
+    rest_coverage_gate
+
 # Gate 6: emission — byte-compare FunctionResult.ToDict() vs Python to_dict()
 # across the shared 81-entry corpus. scripts/emit-corpus.sh wraps
 # tools/EmitCorpus so only clean JSON reaches stdout (it builds with MSBuild
