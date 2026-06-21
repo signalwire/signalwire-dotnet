@@ -130,7 +130,18 @@ public static class RelayMockTest
 
         public void Dispose()
         {
-            try { Client.Disconnect(); } catch { /* best effort */ }
+            // Drive the client's FULL async teardown to completion — not just
+            // Disconnect(). Disconnect() cancels the read loop's token but does
+            // NOT await the background reader Task or dispose the socket; that
+            // leaves _readerTask running, and when ReceiveAsync later throws on
+            // the torn-down socket the exception is unobserved and surfaces on a
+            // threadpool/finalizer thread AFTER the test run reports — which
+            // aborts the test host ("Test Run Aborted" despite 0 failures) under
+            // parallel execution. DisposeAsync() awaits the reader drain (and
+            // swallows its fault), so nothing escapes. Block on it here because
+            // Bound is IDisposable and Client is IAsyncDisposable-only.
+            try { Client.DisposeAsync().AsTask().GetAwaiter().GetResult(); }
+            catch { /* best effort */ }
         }
     }
 
