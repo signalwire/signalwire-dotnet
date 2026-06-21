@@ -752,6 +752,7 @@ signalwire.rest.namespaces.compat.CompatTokens.base_path: namespace_field_access
 signalwire.rest.namespaces.compat.CompatTranscriptions.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
 signalwire.rest.namespaces.compat.CompatTranscriptions.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
 
+signalwire.rest.namespaces.datasphere.DatasphereDocuments.update: .NET port emits an explicit PATCH override where Python inherits via CrudResource with _update_method = "PATCH".
 signalwire.rest.namespaces.datasphere.DatasphereNamespace.documents: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
 
 signalwire.rest.namespaces.fabric.CallFlowsResource.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
@@ -760,6 +761,11 @@ signalwire.rest.namespaces.fabric.ConferenceRoomsResource.__init__: .NET port em
 signalwire.rest.namespaces.fabric.ConferenceRoomsResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
 signalwire.rest.namespaces.fabric.FabricAddresses.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
 signalwire.rest.namespaces.fabric.FabricAddresses.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.fabric.FabricResource.__init__: .NET port emits an explicit constructor; Python's CrudWithAddresses.__init__ is inherited.
+signalwire.rest.namespaces.fabric.FabricResource.update: .NET port emits an explicit PATCH override where Python's FabricResource inherits via CrudWithAddresses (PATCH is the CrudResource default in Python).
+signalwire.rest.namespaces.fabric.FabricResourcePUT.__init__: .NET port emits an explicit constructor; Python's CrudWithAddresses.__init__ is inherited.
+signalwire.rest.namespaces.fabric.AutoMaterializedWebhook.__init__: .NET port emits an explicit constructor; Python's FabricResource.__init__ is inherited.
+signalwire.rest.namespaces.fabric.SubscribersResource.list_addresses: .NET port exposes the addresses sub-collection on SubscribersResource (it extends FabricResourcePUT, which carries the addresses sub-route); Python only declares list_addresses on the sibling FabricResourcePUT subclasses.
 signalwire.rest.namespaces.fabric.FabricNamespace.addresses: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
 signalwire.rest.namespaces.fabric.FabricNamespace.addresses_top_level: dotnet_typed_namespace_alias: .NET ships a typed alias for the top-level Addresses sub-resource (covers the cross-fabric `/addresses` endpoint); Python keeps a single `addresses` attribute and lets callers branch by argument.
 signalwire.rest.namespaces.fabric.FabricNamespace.ai_agents: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
@@ -813,6 +819,8 @@ signalwire.rest.namespaces.number_groups.NumberGroupsResource.update: .NET port 
 signalwire.rest.namespaces.project.ProjectNamespace.tokens: namespace_field_accessor: .NET sub-resource getter for the namespace; Python uses attribute access on the namespace instance.
 
 signalwire.rest.namespaces.queues.QueuesResource.update: .NET port emits explicit CRUD where Python inherits via CrudResource.
+
+signalwire.rest.namespaces.verified_callers.VerifiedCallersResource.update: .NET port emits an explicit PUT override where Python inherits via CrudResource with _update_method = "PUT".
 
 signalwire.rest.namespaces.registry.RegistryBrands.__init__: .NET port emits an explicit constructor; Python's BaseResource.__init__ is inherited.
 signalwire.rest.namespaces.registry.RegistryBrands.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.

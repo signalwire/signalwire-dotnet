@@ -32,7 +32,7 @@ public class RestClient : IDisposable
     private Queues? _queues;
     private Recordings? _recordings;
     private NumberGroups? _numberGroups;
-    private CrudResource? _verifiedCallers;
+    private VerifiedCallers? _verifiedCallers;
     private SipProfile? _sipProfile;
     private CrudResource? _lookup;
     private ShortCodes? _shortCodes;
@@ -41,8 +41,8 @@ public class RestClient : IDisposable
     private Registry? _registry;
     private Logs? _logs;
     private Project? _project;
-    private CrudResource? _pubsub;
-    private CrudResource? _chat;
+    private PubSubResource? _pubsub;
+    private ChatResource? _chat;
 
     /// <param name="projectId">Project ID (falls back to SIGNALWIRE_PROJECT_ID env var).</param>
     /// <param name="token">API token (falls back to SIGNALWIRE_API_TOKEN env var).</param>
@@ -120,9 +120,9 @@ public class RestClient : IDisposable
     public NumberGroups NumberGroups =>
         _numberGroups ??= new NumberGroups(_http);
 
-    /// <summary>Verified callers.</summary>
-    public CrudResource VerifiedCallers =>
-        _verifiedCallers ??= new CrudResource(_http, "/api/relay/rest/verified_callers");
+    /// <summary>Verified caller IDs (CRUD + verification flow; update via PUT).</summary>
+    public VerifiedCallers VerifiedCallers =>
+        _verifiedCallers ??= new VerifiedCallers(_http);
 
     /// <summary>SIP profile (singleton at /api/relay/rest/sip_profile;
     /// legacy plural-path /api/relay/rest/sip_profiles preserved for
@@ -158,13 +158,13 @@ public class RestClient : IDisposable
     public Project Project =>
         _project ??= new Project(_http);
 
-    /// <summary>PubSub tokens.</summary>
-    public CrudResource Pubsub =>
-        _pubsub ??= new CrudResource(_http, "/api/relay/rest/pubsub");
+    /// <summary>PubSub tokens (token-only resource at /api/pubsub/tokens).</summary>
+    public PubSubResource Pubsub =>
+        _pubsub ??= new PubSubResource(_http);
 
-    /// <summary>Chat tokens.</summary>
-    public CrudResource Chat =>
-        _chat ??= new CrudResource(_http, "/api/relay/rest/chat");
+    /// <summary>Chat tokens (token-only resource at /api/chat/tokens).</summary>
+    public ChatResource Chat =>
+        _chat ??= new ChatResource(_http);
 
     // ------------------------------------------------------------------
     // IDisposable

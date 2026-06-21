@@ -167,6 +167,11 @@ public class DatasphereDocuments : CrudResource
     public DatasphereDocuments(HttpClient client)
         : base(client, "/api/datasphere/documents") { }
 
+    /// <summary>Update via PATCH (matching Python's _update_method = "PATCH").</summary>
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> data,
+        CancellationToken cancellationToken = default)
+        => Client.PatchAsync(Path(id), data, cancellationToken);
+
     public Task<Dictionary<string, object?>> SearchAsync(Dictionary<string, object?> kwargs)
         => Client.PostAsync(Path("search"), kwargs);
 
@@ -202,6 +207,64 @@ public class Recordings : CrudResource
 {
     public Recordings(HttpClient client)
         : base(client, "/api/relay/rest/recordings") { }
+}
+
+/// <summary>
+/// Verified Caller IDs namespace — CRUD + verification flow (update via PUT).
+///
+/// Mirrors Python ``signalwire.rest.namespaces.verified_callers.VerifiedCallersResource``
+/// (BasePath /api/relay/rest/verified_caller_ids, _update_method = "PUT",
+/// redial_verification + submit_verification). Extends CrudResource and
+/// overrides UpdateAsync to use PUT.
+/// </summary>
+public class VerifiedCallers : CrudResource
+{
+    public VerifiedCallers(HttpClient client)
+        : base(client, "/api/relay/rest/verified_caller_ids") { }
+
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> data,
+        CancellationToken cancellationToken = default)
+        => Client.PutAsync(Path(id), data, cancellationToken);
+
+    /// <summary>Redial the verification call for a caller ID
+    /// (POST /api/relay/rest/verified_caller_ids/{id}/verification).</summary>
+    public Task<Dictionary<string, object?>> RedialVerificationAsync(string callerId)
+        => Client.PostAsync(Path(callerId, "verification"));
+
+    /// <summary>Submit a verification code for a caller ID
+    /// (PUT /api/relay/rest/verified_caller_ids/{id}/verification).</summary>
+    public Task<Dictionary<string, object?>> SubmitVerificationAsync(string callerId, Dictionary<string, object?> kwargs)
+        => Client.PutAsync(Path(callerId, "verification"), kwargs);
+}
+
+/// <summary>
+/// Chat namespace — token generation only.
+///
+/// Mirrors Python ``signalwire.rest.namespaces.chat.ChatResource``
+/// (BaseResource /api/chat/tokens + create_token).
+/// </summary>
+public class ChatResource : CrudResource
+{
+    public ChatResource(HttpClient client) : base(client, "/api/chat/tokens") { }
+
+    /// <summary>Generate a new chat token (POST /api/chat/tokens).</summary>
+    public Task<Dictionary<string, object?>> CreateTokenAsync(Dictionary<string, object?> kwargs)
+        => Client.PostAsync(BasePath, kwargs);
+}
+
+/// <summary>
+/// PubSub namespace — token generation only.
+///
+/// Mirrors Python ``signalwire.rest.namespaces.pubsub.PubSubResource``
+/// (BaseResource /api/pubsub/tokens + create_token).
+/// </summary>
+public class PubSubResource : CrudResource
+{
+    public PubSubResource(HttpClient client) : base(client, "/api/pubsub/tokens") { }
+
+    /// <summary>Generate a new PubSub token (POST /api/pubsub/tokens).</summary>
+    public Task<Dictionary<string, object?>> CreateTokenAsync(Dictionary<string, object?> kwargs)
+        => Client.PostAsync(BasePath, kwargs);
 }
 
 /// <summary>

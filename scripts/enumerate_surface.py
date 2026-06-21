@@ -303,6 +303,18 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
         "signalwire.rest.namespaces.registry", "RegistryNumbers",
     ),
     # ----- Fabric extras (helpers I added in C# for parity) -----
+    # The three CrudWithAddresses subtypes mirror Python's PATCH/PUT/webhook
+    # fabric resource base classes (fabric.py: FabricResource [PATCH update],
+    # FabricResourcePUT [PUT update], AutoMaterializedWebhook).
+    ("SignalWire.REST.Namespaces", "FabricResourcePatch"): (
+        "signalwire.rest.namespaces.fabric", "FabricResource",
+    ),
+    ("SignalWire.REST.Namespaces", "FabricResourcePut"): (
+        "signalwire.rest.namespaces.fabric", "FabricResourcePUT",
+    ),
+    ("SignalWire.REST.Namespaces", "AutoMaterializedWebhookResource"): (
+        "signalwire.rest.namespaces.fabric", "AutoMaterializedWebhook",
+    ),
     ("SignalWire.REST.Namespaces", "FabricAddresses"): (
         "signalwire.rest.namespaces.fabric", "FabricAddresses",
     ),
@@ -357,6 +369,15 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ),
     ("SignalWire.REST.Namespaces", "Queues"): (
         "signalwire.rest.namespaces.queues", "QueuesResource",
+    ),
+    ("SignalWire.REST.Namespaces", "VerifiedCallers"): (
+        "signalwire.rest.namespaces.verified_callers", "VerifiedCallersResource",
+    ),
+    ("SignalWire.REST.Namespaces", "ChatResource"): (
+        "signalwire.rest.namespaces.chat", "ChatResource",
+    ),
+    ("SignalWire.REST.Namespaces", "PubSubResource"): (
+        "signalwire.rest.namespaces.pubsub", "PubSubResource",
     ),
     # ----- PaginatedIterator (Python lives at _pagination, not paginated_iterator) -----
     ("SignalWire.REST", "PaginatedIterator"): (

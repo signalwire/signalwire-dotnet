@@ -15,28 +15,28 @@ public class Fabric
     private const string Base = "/api/fabric/resources";
 
     // Lazily-initialised sub-resources
-    private CrudResource? _subscribers;
-    private CrudResource? _sipEndpoints;
+    private FabricResourcePut? _subscribers;
+    private FabricResourcePut? _sipEndpoints;
     private CrudResource? _addresses;
-    private CrudResource? _callFlows;
-    private CrudResource? _swmlScripts;
+    private FabricResourcePut? _callFlows;
+    private FabricResourcePut? _swmlScripts;
     private CrudResource? _conversations;
-    private CrudResource? _conferenceRooms;
+    private FabricResourcePut? _conferenceRooms;
     private CrudResource? _dialPlans;
     private CrudResource? _freeclimbApps;
     private CrudResource? _callQueues;
-    private CrudResource? _aiAgents;
+    private FabricResourcePatch? _aiAgents;
     private CrudResource? _sipProfiles;
     private CrudResource? _phoneNumbers;
     // Python-parity sub-resources (FabricNamespace.cxml_applications, etc.)
-    private CrudResource? _cxmlApplications;
-    private CrudResource? _cxmlScripts;
-    private CrudResource? _cxmlWebhooks;
-    private CrudResource? _freeswitchConnectors;
-    private CrudResource? _relayApplications;
+    private FabricResourcePut? _cxmlApplications;
+    private FabricResourcePut? _cxmlScripts;
+    private AutoMaterializedWebhookResource? _cxmlWebhooks;
+    private FabricResourcePut? _freeswitchConnectors;
+    private FabricResourcePut? _relayApplications;
     private CrudResource? _resources;
-    private CrudResource? _sipGateways;
-    private CrudResource? _swmlWebhooks;
+    private FabricResourcePatch? _sipGateways;
+    private AutoMaterializedWebhookResource? _swmlWebhooks;
     private CrudResource? _tokens;
     // Python-parity helpers (assignable from tests; not present in the
     // original .NET Fabric surface).
@@ -97,26 +97,26 @@ public class Fabric
     // Sub-resource accessors (lazy)
     // ------------------------------------------------------------------
 
-    public CrudResource Subscribers =>
-        _subscribers ??= new CrudResource(_client, $"{Base}/subscribers");
+    public FabricResourcePut Subscribers =>
+        _subscribers ??= new FabricResourcePut(_client, $"{Base}/subscribers");
 
-    public CrudResource SipEndpoints =>
-        _sipEndpoints ??= new CrudResource(_client, $"{Base}/sip_endpoints");
+    public FabricResourcePut SipEndpoints =>
+        _sipEndpoints ??= new FabricResourcePut(_client, $"{Base}/sip_endpoints");
 
     public CrudResource Addresses =>
         _addresses ??= new CrudResource(_client, $"{Base}/addresses");
 
-    public CrudResource CallFlows =>
-        _callFlows ??= new CrudResource(_client, $"{Base}/call_flows");
+    public FabricResourcePut CallFlows =>
+        _callFlows ??= new FabricResourcePut(_client, $"{Base}/call_flows");
 
-    public CrudResource SwmlScripts =>
-        _swmlScripts ??= new CrudResource(_client, $"{Base}/swml_scripts");
+    public FabricResourcePut SwmlScripts =>
+        _swmlScripts ??= new FabricResourcePut(_client, $"{Base}/swml_scripts");
 
     public CrudResource Conversations =>
         _conversations ??= new CrudResource(_client, $"{Base}/conversations");
 
-    public CrudResource ConferenceRooms =>
-        _conferenceRooms ??= new CrudResource(_client, $"{Base}/conference_rooms");
+    public FabricResourcePut ConferenceRooms =>
+        _conferenceRooms ??= new FabricResourcePut(_client, $"{Base}/conference_rooms");
 
     public CrudResource DialPlans =>
         _dialPlans ??= new CrudResource(_client, $"{Base}/dial_plans");
@@ -127,8 +127,8 @@ public class Fabric
     public CrudResource CallQueues =>
         _callQueues ??= new CrudResource(_client, $"{Base}/call_queues");
 
-    public CrudResource AiAgents =>
-        _aiAgents ??= new CrudResource(_client, $"{Base}/ai_agents");
+    public FabricResourcePatch AiAgents =>
+        _aiAgents ??= new FabricResourcePatch(_client, $"{Base}/ai_agents");
 
     public CrudResource SipProfiles =>
         _sipProfiles ??= new CrudResource(_client, $"{Base}/sip_profiles");
@@ -142,29 +142,29 @@ public class Fabric
     //   signalwire/rest/namespaces/fabric.py::FabricNamespace.__init__
     // ------------------------------------------------------------------
 
-    public CrudResource CxmlApplications =>
-        _cxmlApplications ??= new CrudResource(_client, $"{Base}/cxml_applications");
+    public FabricResourcePut CxmlApplications =>
+        _cxmlApplications ??= new FabricResourcePut(_client, $"{Base}/cxml_applications");
 
-    public CrudResource CxmlScripts =>
-        _cxmlScripts ??= new CrudResource(_client, $"{Base}/cxml_scripts");
+    public FabricResourcePut CxmlScripts =>
+        _cxmlScripts ??= new FabricResourcePut(_client, $"{Base}/cxml_scripts");
 
-    public CrudResource CxmlWebhooks =>
-        _cxmlWebhooks ??= new CrudResource(_client, $"{Base}/cxml_webhooks");
+    public AutoMaterializedWebhookResource CxmlWebhooks =>
+        _cxmlWebhooks ??= new AutoMaterializedWebhookResource(_client, $"{Base}/cxml_webhooks");
 
-    public CrudResource FreeswitchConnectors =>
-        _freeswitchConnectors ??= new CrudResource(_client, $"{Base}/freeswitch_connectors");
+    public FabricResourcePut FreeswitchConnectors =>
+        _freeswitchConnectors ??= new FabricResourcePut(_client, $"{Base}/freeswitch_connectors");
 
-    public CrudResource RelayApplications =>
-        _relayApplications ??= new CrudResource(_client, $"{Base}/relay_applications");
+    public FabricResourcePut RelayApplications =>
+        _relayApplications ??= new FabricResourcePut(_client, $"{Base}/relay_applications");
 
     public CrudResource Resources =>
         _resources ??= new CrudResource(_client, Base);
 
-    public CrudResource SipGateways =>
-        _sipGateways ??= new CrudResource(_client, $"{Base}/sip_gateways");
+    public FabricResourcePatch SipGateways =>
+        _sipGateways ??= new FabricResourcePatch(_client, $"{Base}/sip_gateways");
 
-    public CrudResource SwmlWebhooks =>
-        _swmlWebhooks ??= new CrudResource(_client, $"{Base}/swml_webhooks");
+    public AutoMaterializedWebhookResource SwmlWebhooks =>
+        _swmlWebhooks ??= new AutoMaterializedWebhookResource(_client, $"{Base}/swml_webhooks");
 
     /// <summary>
     /// Fabric tokens resource — note this lives at the top-level

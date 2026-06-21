@@ -8,6 +8,48 @@
 namespace SignalWire.REST.Namespaces;
 
 /// <summary>
+/// Fabric resource that updates via PATCH and exposes the addresses
+/// sub-collection. Mirrors Python's
+/// ``signalwire.rest.namespaces.fabric.FabricResource`` (CrudWithAddresses,
+/// PATCH update).
+/// </summary>
+public class FabricResourcePatch : CrudWithAddresses
+{
+    public FabricResourcePatch(HttpClient client, string basePath)
+        : base(client, basePath) { }
+
+    public override Task<Dictionary<string, object?>> UpdateAsync(
+        string id, Dictionary<string, object?> data,
+        CancellationToken cancellationToken = default)
+        => Client.PatchAsync(Path(id), data, cancellationToken);
+}
+
+/// <summary>
+/// Fabric resource that updates via PUT and exposes the addresses
+/// sub-collection. Mirrors Python's
+/// ``signalwire.rest.namespaces.fabric.FabricResourcePUT``. (CrudResource's
+/// base UpdateAsync already uses PUT; this subclass adds ListAddressesAsync.)
+/// </summary>
+public class FabricResourcePut : CrudWithAddresses
+{
+    public FabricResourcePut(HttpClient client, string basePath)
+        : base(client, basePath) { }
+}
+
+/// <summary>
+/// Fabric webhook resource (cxml_webhooks / swml_webhooks). Updates via PATCH
+/// and exposes the addresses sub-collection (Python's AutoMaterializedWebhook
+/// embeds FabricResource → CrudWithAddresses). Unlike Python, this SDK permits
+/// Create over the wire (matching the Go reference's create_cxml_webhook /
+/// create_swml_webhook coverage).
+/// </summary>
+public class AutoMaterializedWebhookResource : FabricResourcePatch
+{
+    public AutoMaterializedWebhookResource(HttpClient client, string basePath)
+        : base(client, basePath) { }
+}
+
+/// <summary>
 /// Read-only top-level Fabric addresses resource (lives at
 /// /api/fabric/addresses, NOT under /api/fabric/resources).
 ///
@@ -72,6 +114,9 @@ public class FabricResources
 
     public Task<Dictionary<string, object?>> AssignDomainApplicationAsync(string resourceId, Dictionary<string, object?> kwargs)
         => _client.PostAsync(Path(resourceId, "domain_applications"), kwargs);
+
+    public Task<Dictionary<string, object?>> AssignPhoneRouteAsync(string resourceId, Dictionary<string, object?> kwargs)
+        => _client.PostAsync(Path(resourceId, "phone_routes"), kwargs);
 }
 
 /// <summary>
@@ -124,6 +169,9 @@ public class SubscribersHelper
 
     private string Path(params string[] parts) =>
         parts.Length == 0 ? _basePath : _basePath + "/" + string.Join("/", parts);
+
+    public Task<Dictionary<string, object?>> ListAddressesAsync(string subscriberId, Dictionary<string, string>? queryParams = null)
+        => _client.GetAsync(Path(subscriberId, "addresses"), queryParams);
 
     public Task<Dictionary<string, object?>> ListSipEndpointsAsync(string subscriberId, Dictionary<string, string>? queryParams = null)
         => _client.GetAsync(Path(subscriberId, "sip_endpoints"), queryParams);
