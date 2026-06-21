@@ -4666,6 +4666,40 @@
         }
       }
     },
+    "signalwire.core.security.security_utils": {
+      "functions": {
+        "filter_sensitive_headers": {
+          "params": [
+            {
+              "name": "headers",
+              "type": "optional<dict<string,string>>",
+              "required": true
+            }
+          ],
+          "returns": "dict<string,string>"
+        },
+        "is_valid_hostname": {
+          "params": [
+            {
+              "name": "host",
+              "type": "optional<string>",
+              "required": true
+            }
+          ],
+          "returns": "bool"
+        },
+        "redact_url": {
+          "params": [
+            {
+              "name": "url",
+              "type": "optional<string>",
+              "required": true
+            }
+          ],
+          "returns": "optional<string>"
+        }
+      }
+    },
     "signalwire.core.security.session_manager": {
       "classes": {
         "SessionManager": {

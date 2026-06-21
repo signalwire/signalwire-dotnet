@@ -882,6 +882,10 @@ signalwire.core.security.webhook_middleware.WebhookValidationMiddleware: dotnet_
 signalwire.core.security.webhook_validator.WebhookValidator: dotnet_idiom_class_wrapper: static class containing validator functions (Python keeps them at module level)
 signalwire.core.security.webhook_validator.WebhookValidator.validate_request: dotnet_idiom_class_wrapper: see WebhookValidator class entry
 signalwire.core.security.webhook_validator.WebhookValidator.validate_webhook_signature: dotnet_idiom_class_wrapper: see WebhookValidator class entry
+signalwire.core.security.security_utils.SecurityUtils: dotnet_idiom_class_wrapper: static class containing the security-hygiene functions (Python keeps them at module level)
+signalwire.core.security.security_utils.SecurityUtils.filter_sensitive_headers: dotnet_idiom_class_wrapper: see SecurityUtils class entry
+signalwire.core.security.security_utils.SecurityUtils.redact_url: dotnet_idiom_class_wrapper: see SecurityUtils class entry
+signalwire.core.security.security_utils.SecurityUtils.is_valid_hostname: dotnet_idiom_class_wrapper: see SecurityUtils class entry
 
 ### Tier-3 typed RELAY state enums + Device (idiom: type the knowable shape alongside the parity string)
 

@@ -1115,3 +1115,6 @@ signalwire.core.swml_service.SWMLService.security: .NET keeps this as private/in
 signalwire.core.swml_service.SWMLService.verb_registry: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
 signalwire.core.security.webhook_validator.validate_webhook_signature: idiomatic_divergence: implemented as static method on the WebhookValidator class (language idiom); see PORT_ADDITIONS.md
 signalwire.core.security.webhook_validator.validate_request: idiomatic_divergence: implemented as static method on the WebhookValidator class (language idiom); see PORT_ADDITIONS.md
+signalwire.core.security.security_utils.filter_sensitive_headers: idiomatic_divergence: implemented as static method SecurityUtils.FilterSensitiveHeaders (language idiom); see PORT_ADDITIONS.md
+signalwire.core.security.security_utils.redact_url: idiomatic_divergence: implemented as static method SecurityUtils.RedactUrl (language idiom); see PORT_ADDITIONS.md
+signalwire.core.security.security_utils.is_valid_hostname: idiomatic_divergence: implemented as static method SecurityUtils.IsValidHostname (language idiom); see PORT_ADDITIONS.md

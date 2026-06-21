@@ -80,6 +80,11 @@ CLASS_MODULE_MAP: dict[str, str] = {
     # ``signalwire.core.security.webhook_validator`` to mirror Python's
     # module-level ``validate_webhook_signature`` / ``validate_request``.
     "WebhookValidator": "signalwire.core.security.webhook_validator",
+    # SecurityUtils is a static helper class in C# whose methods are projected
+    # to free functions in ``signalwire.core.security.security_utils`` to mirror
+    # Python's module-level ``filter_sensitive_headers`` / ``redact_url`` /
+    # ``is_valid_hostname``.
+    "SecurityUtils": "signalwire.core.security.security_utils",
     # WebhookValidationMiddleware is a port-only adapter (Python ships a
     # FastAPI dependency-factory function instead). Document the addition
     # in PORT_ADDITIONS.md and place the .NET class under the parallel
