@@ -404,6 +404,37 @@ rest_coverage_gate() {
 run_gate "REST-COVERAGE" "every implemented REST route covered success+error (parity + allowlist)" \
     rest_coverage_gate
 
+# Gate 5c: SPEC-PARITY — the routes the SDK actually IMPLEMENTS must equal the
+# canonical spec route set, modulo porting-sdk/SPEC_IMPLEMENTATION_GAPS.md. This
+# is the spec-first guard REST-COVERAGE can't give: REST-COVERAGE only proves
+# *tested* routes match the spec, so a route the SDK implements that the spec
+# doesn't define (or a canonical route the SDK never implemented) would slip past
+# it. Set B is built by tools/RouteRegistry — it constructs the live RestClient,
+# swaps in a recording HTTP transport (records (method, path), returns a stub
+# 200), and reflects over every namespace/sub-resource method, invoking each with
+# sentinel args, so it sees every dispatched route whether or not it's tested (not
+# an AST scrape, not the journal). scripts/route-registry.sh wraps it so only the
+# JSON reaches stdout (MSBuild chatter -> stderr); the shared porting-sdk diff
+# consumes that JSON via --registry-json. No mocks / no network. Same shape as
+# go's Gate 5c.
+spec_parity_gate() {
+    local registry
+    registry="$(mktemp)"
+    if ! bash "$PORT_ROOT/scripts/route-registry.sh" >"$registry" 2>/dev/null; then
+        echo "route-registry emitted an incomplete Set B (uninvokable/no-request method)" >&2
+        rm -f "$registry"
+        return 1
+    fi
+    python3 "$PORTING_SDK_DIR/scripts/diff_spec_implementation.py" \
+        --registry-json "$registry" \
+        --gaps "$PORTING_SDK_DIR/SPEC_IMPLEMENTATION_GAPS.md"
+    local rc=$?
+    rm -f "$registry"
+    return $rc
+}
+run_gate "SPEC-PARITY" "implemented routes == canonical spec (modulo SPEC_IMPLEMENTATION_GAPS.md)" \
+    spec_parity_gate
+
 # Gate 6: emission — byte-compare FunctionResult.ToDict() vs Python to_dict()
 # across the shared 81-entry corpus. scripts/emit-corpus.sh wraps
 # tools/EmitCorpus so only clean JSON reaches stdout (it builds with MSBuild
