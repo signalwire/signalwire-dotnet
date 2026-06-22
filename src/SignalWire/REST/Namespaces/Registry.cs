@@ -18,8 +18,9 @@ namespace SignalWire.REST.Namespaces;
 /// Brands/Campaigns/Orders/Numbers accessors target the per-resource
 /// endpoints under /api/relay/rest/registry/beta.</para>
 /// </summary>
-public class Registry : CrudResource
+public class Registry
 {
+    private readonly HttpClient _client;
     private RegistryBrands? _brands;
     private RegistryCampaigns? _campaigns;
     private RegistryOrders? _orders;
@@ -27,12 +28,17 @@ public class Registry : CrudResource
 
     private const string Beta = "/api/relay/rest/registry/beta";
 
-    public Registry(HttpClient client) : base(client, "/api/relay/rest/registry") { }
+    public Registry(HttpClient client) { _client = client; }
 
-    public RegistryBrands Brands => _brands ??= new RegistryBrands(Client, $"{Beta}/brands");
-    public RegistryCampaigns Campaigns => _campaigns ??= new RegistryCampaigns(Client, $"{Beta}/campaigns");
-    public RegistryOrders Orders => _orders ??= new RegistryOrders(Client, $"{Beta}/orders");
-    public RegistryNumbers Numbers => _numbers ??= new RegistryNumbers(Client, $"{Beta}/numbers");
+    /// <summary>Namespace base path. Python's RegistryNamespace is a plain
+    /// container of beta sub-resources — there is no CRUD at
+    /// /api/relay/rest/registry.</summary>
+    public string BasePath { get; } = "/api/relay/rest/registry";
+
+    public RegistryBrands Brands => _brands ??= new RegistryBrands(_client, $"{Beta}/brands");
+    public RegistryCampaigns Campaigns => _campaigns ??= new RegistryCampaigns(_client, $"{Beta}/campaigns");
+    public RegistryOrders Orders => _orders ??= new RegistryOrders(_client, $"{Beta}/orders");
+    public RegistryNumbers Numbers => _numbers ??= new RegistryNumbers(_client, $"{Beta}/numbers");
 }
 
 /// <summary>10DLC brand management.</summary>

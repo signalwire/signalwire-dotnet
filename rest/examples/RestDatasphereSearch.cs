@@ -35,7 +35,7 @@ T? Safe<T>(string label, Func<T> fn) where T : class
 
 // 1. Upload a document
 Console.WriteLine("Uploading document to Datasphere...");
-var doc = Safe("Upload document", () => client.Datasphere.Create(new Dictionary<string, object>
+var doc = Safe("Upload document", () => client.Datasphere.Documents.Create(new Dictionary<string, object>
 {
     ["url"] = "https://example.com/knowledge-base.pdf",
 }));
@@ -49,7 +49,7 @@ if (doc != null)
     Console.WriteLine("\nChecking document status...");
     Safe("Get document", () =>
     {
-        var details = client.Datasphere.Get(docId);
+        var details = client.Datasphere.Documents.Get(docId);
         Console.WriteLine($"    Status: {details.GetValueOrDefault("status")}");
         return details;
     });
@@ -59,7 +59,7 @@ if (doc != null)
 Console.WriteLine("\nListing Datasphere documents...");
 Safe("List documents", () =>
 {
-    var docs = client.Datasphere.List();
+    var docs = client.Datasphere.Documents.List();
     var data = docs["data"] as List<object> ?? new();
     foreach (var item in data.Take(5))
     {

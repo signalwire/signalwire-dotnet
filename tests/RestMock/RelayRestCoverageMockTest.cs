@@ -34,7 +34,7 @@ public class RelayRestCoverageMockTest : CoverageBase
     private CrudResource NewPhoneNumbers() => new(NewHttp(), "/api/relay/rest/phone_numbers");
     private Addresses NewAddresses() => new(NewHttp());
     private VerifiedCallers NewVerifiedCallers() => new(NewHttp());
-    private CrudResource NewLookup() => new(NewHttp(), "/api/relay/rest/lookup/phone_number");
+    private LookupResource NewLookup() => new(NewHttp());
     private Queues NewQueues() => new(NewHttp());
     private Recordings NewRecordings() => new(NewHttp());
     private NumberGroups NewNumberGroups() => new(NewHttp());
@@ -392,7 +392,7 @@ public class RelayRestCoverageMockTest : CoverageBase
     public async Task Lookup_PhoneNumber_Success()
     {
         if (!Fixture.Available) return;
-        var body = await NewLookup().GetAsync("+15551234567");
+        var body = await NewLookup().PhoneNumberAsync("+15551234567");
         Assert.NotNull(body);
         AssertRoute("GET", "/api/relay/rest/lookup/phone_number/+15551234567", "relay-rest.lookup_phone_number");
     }
@@ -403,7 +403,7 @@ public class RelayRestCoverageMockTest : CoverageBase
         if (!Fixture.Available) return;
         var c = NewLookup();
         var status = await AssertErrorAsync("relay-rest.lookup_phone_number", 404,
-            () => c.GetAsync("+15550000000"));
+            () => c.PhoneNumberAsync("+15550000000"));
         Assert.Equal(404, status);
     }
 

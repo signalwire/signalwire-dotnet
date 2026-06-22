@@ -18,19 +18,24 @@ namespace SignalWire.REST.Namespaces;
 /// Messages/Voice/Fax/Conferences accessors point at the actual per-API
 /// log endpoints.</para>
 /// </summary>
-public class Logs : CrudResource
+public class Logs
 {
+    private readonly HttpClient _client;
     private MessageLogs? _messages;
     private VoiceLogs? _voice;
     private FaxLogs? _fax;
     private ConferenceLogs? _conferences;
 
-    public Logs(HttpClient client) : base(client, "/api/relay/rest/logs") { }
+    public Logs(HttpClient client) { _client = client; }
 
-    public MessageLogs Messages => _messages ??= new MessageLogs(Client, "/api/messaging/logs");
-    public VoiceLogs Voice => _voice ??= new VoiceLogs(Client, "/api/voice/logs");
-    public FaxLogs Fax => _fax ??= new FaxLogs(Client, "/api/fax/logs");
-    public ConferenceLogs Conferences => _conferences ??= new ConferenceLogs(Client, "/api/logs/conferences");
+    /// <summary>Namespace base path. Python's LogsNamespace is a plain container
+    /// of per-API log sub-resources — there is no CRUD at /api/relay/rest/logs.</summary>
+    public string BasePath { get; } = "/api/relay/rest/logs";
+
+    public MessageLogs Messages => _messages ??= new MessageLogs(_client, "/api/messaging/logs");
+    public VoiceLogs Voice => _voice ??= new VoiceLogs(_client, "/api/voice/logs");
+    public FaxLogs Fax => _fax ??= new FaxLogs(_client, "/api/fax/logs");
+    public ConferenceLogs Conferences => _conferences ??= new ConferenceLogs(_client, "/api/logs/conferences");
 }
 
 /// <summary>Message log queries.</summary>

@@ -84,7 +84,7 @@ Safe("List agents", () =>
 Console.WriteLine("\nListing Datasphere documents...");
 Safe("List documents", () =>
 {
-    var docs = client.Datasphere.List();
+    var docs = client.Datasphere.Documents.List();
     var data = docs["data"] as List<object> ?? new();
     foreach (var item in data)
     {

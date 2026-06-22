@@ -20,8 +20,9 @@ namespace SignalWire.REST.Namespaces;
 /// surface continues to work; the per-account collection accessors are
 /// added on top.</para>
 /// </summary>
-public class Compat : CrudResource
+public class Compat
 {
+    private readonly HttpClient _client;
     private readonly string _accountSid;
     private readonly string _baseAccount;
 
@@ -39,26 +40,31 @@ public class Compat : CrudResource
     private CompatTokens? _tokens;
 
     public Compat(HttpClient client, string accountSid)
-        : base(client, $"/api/laml/2010-04-01/Accounts/{accountSid}")
     {
+        _client = client;
         _accountSid = accountSid;
         _baseAccount = $"/api/laml/2010-04-01/Accounts/{accountSid}";
     }
 
     public string AccountSid => _accountSid;
 
-    public CompatAccounts Accounts => _accounts ??= new CompatAccounts(Client);
-    public CompatCalls Calls => _calls ??= new CompatCalls(Client, $"{_baseAccount}/Calls");
-    public CompatMessages Messages => _messages ??= new CompatMessages(Client, $"{_baseAccount}/Messages");
-    public CompatFaxes Faxes => _faxes ??= new CompatFaxes(Client, $"{_baseAccount}/Faxes");
-    public CompatConferences Conferences => _conferences ??= new CompatConferences(Client, $"{_baseAccount}/Conferences");
-    public CompatPhoneNumbers PhoneNumbers => _phoneNumbers ??= new CompatPhoneNumbers(Client, $"{_baseAccount}/IncomingPhoneNumbers");
-    public CompatApplications Applications => _applications ??= new CompatApplications(Client, $"{_baseAccount}/Applications");
-    public CompatLamlBins LamlBins => _lamlBins ??= new CompatLamlBins(Client, $"{_baseAccount}/LamlBins");
-    public CompatQueues Queues => _queues ??= new CompatQueues(Client, $"{_baseAccount}/Queues");
-    public CompatRecordings Recordings => _recordings ??= new CompatRecordings(Client, $"{_baseAccount}/Recordings");
-    public CompatTranscriptions Transcriptions => _transcriptions ??= new CompatTranscriptions(Client, $"{_baseAccount}/Transcriptions");
-    public CompatTokens Tokens => _tokens ??= new CompatTokens(Client, $"{_baseAccount}/tokens");
+    /// <summary>Per-account base prefix. Python's CompatNamespace is a plain
+    /// container of LaML sub-resources — there is no CRUD dispatched on the
+    /// bare /api/laml/2010-04-01/Accounts/{sid} prefix itself.</summary>
+    public string BasePath => _baseAccount;
+
+    public CompatAccounts Accounts => _accounts ??= new CompatAccounts(_client);
+    public CompatCalls Calls => _calls ??= new CompatCalls(_client, $"{_baseAccount}/Calls");
+    public CompatMessages Messages => _messages ??= new CompatMessages(_client, $"{_baseAccount}/Messages");
+    public CompatFaxes Faxes => _faxes ??= new CompatFaxes(_client, $"{_baseAccount}/Faxes");
+    public CompatConferences Conferences => _conferences ??= new CompatConferences(_client, $"{_baseAccount}/Conferences");
+    public CompatPhoneNumbers PhoneNumbers => _phoneNumbers ??= new CompatPhoneNumbers(_client, $"{_baseAccount}/IncomingPhoneNumbers");
+    public CompatApplications Applications => _applications ??= new CompatApplications(_client, $"{_baseAccount}/Applications");
+    public CompatLamlBins LamlBins => _lamlBins ??= new CompatLamlBins(_client, $"{_baseAccount}/LamlBins");
+    public CompatQueues Queues => _queues ??= new CompatQueues(_client, $"{_baseAccount}/Queues");
+    public CompatRecordings Recordings => _recordings ??= new CompatRecordings(_client, $"{_baseAccount}/Recordings");
+    public CompatTranscriptions Transcriptions => _transcriptions ??= new CompatTranscriptions(_client, $"{_baseAccount}/Transcriptions");
+    public CompatTokens Tokens => _tokens ??= new CompatTokens(_client, $"{_baseAccount}/tokens");
 }
 
 /// <summary>Compat account/subproject management. Lives at the top-level

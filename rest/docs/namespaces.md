@@ -48,10 +48,10 @@ client.PhoneNumbers.Delete(numberId);
 Document management and semantic search.
 
 ```csharp
-client.Datasphere.List();
-client.Datasphere.Create(new Dictionary<string, object> { ["url"] = "https://example.com/doc.pdf" });
-client.Datasphere.Get(docId);
-client.Datasphere.Delete(docId);
+client.Datasphere.Documents.List();
+client.Datasphere.Documents.Create(new Dictionary<string, object> { ["url"] = "https://example.com/doc.pdf" });
+client.Datasphere.Documents.Get(docId);
+client.Datasphere.Documents.Delete(docId);
 ```
 
 ### Video
@@ -137,8 +137,10 @@ client.ShortCodes.List();
 
 ### ImportedNumbers
 
+Import an externally-hosted number (create-only).
+
 ```csharp
-client.ImportedNumbers.List();
+client.ImportedNumbers.Create(new Dictionary<string, object> { ["number"] = "+15551234567" });
 ```
 
 ### Mfa
@@ -146,7 +148,7 @@ client.ImportedNumbers.List();
 Multi-factor authentication.
 
 ```csharp
-client.Mfa.Create(new Dictionary<string, object>
+client.Mfa.Sms(new Dictionary<string, object>
 {
     ["to"]      = "+15551234567",
     ["from"]    = "+15559876543",

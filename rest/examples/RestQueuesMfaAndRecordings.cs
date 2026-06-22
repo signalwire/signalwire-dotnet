@@ -71,7 +71,7 @@ Safe("List recordings", () =>
 Console.WriteLine("\nSending MFA verification...");
 Safe("Send MFA", () =>
 {
-    var mfa = client.Mfa.Create(new Dictionary<string, object>
+    var mfa = client.Mfa.Sms(new Dictionary<string, object>
     {
         ["to"]      = "+15551234567",
         ["from"]    = "+15559876543",

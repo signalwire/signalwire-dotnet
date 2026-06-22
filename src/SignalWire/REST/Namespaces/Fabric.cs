@@ -17,27 +17,18 @@ public class Fabric
     // Lazily-initialised sub-resources
     private FabricResourcePut? _subscribers;
     private FabricResourcePut? _sipEndpoints;
-    private CrudResource? _addresses;
-    private FabricResourcePut? _callFlows;
+    private FabricCallFlowsResource? _callFlows;
     private FabricResourcePut? _swmlScripts;
-    private CrudResource? _conversations;
-    private FabricResourcePut? _conferenceRooms;
-    private CrudResource? _dialPlans;
-    private CrudResource? _freeclimbApps;
-    private CrudResource? _callQueues;
+    private FabricConferenceRoomsResource? _conferenceRooms;
     private FabricResourcePatch? _aiAgents;
-    private CrudResource? _sipProfiles;
-    private CrudResource? _phoneNumbers;
     // Python-parity sub-resources (FabricNamespace.cxml_applications, etc.)
-    private FabricResourcePut? _cxmlApplications;
+    private FabricCxmlApplicationsResource? _cxmlApplications;
     private FabricResourcePut? _cxmlScripts;
     private AutoMaterializedWebhookResource? _cxmlWebhooks;
     private FabricResourcePut? _freeswitchConnectors;
     private FabricResourcePut? _relayApplications;
-    private CrudResource? _resources;
     private FabricResourcePatch? _sipGateways;
     private AutoMaterializedWebhookResource? _swmlWebhooks;
-    private CrudResource? _tokens;
     // Python-parity helpers (assignable from tests; not present in the
     // original .NET Fabric surface).
     private FabricAddresses? _fabricAddresses;
@@ -103,38 +94,17 @@ public class Fabric
     public FabricResourcePut SipEndpoints =>
         _sipEndpoints ??= new FabricResourcePut(_client, $"{Base}/sip_endpoints");
 
-    public CrudResource Addresses =>
-        _addresses ??= new CrudResource(_client, $"{Base}/addresses");
-
-    public FabricResourcePut CallFlows =>
-        _callFlows ??= new FabricResourcePut(_client, $"{Base}/call_flows");
+    public FabricCallFlowsResource CallFlows =>
+        _callFlows ??= new FabricCallFlowsResource(_client, $"{Base}/call_flows");
 
     public FabricResourcePut SwmlScripts =>
         _swmlScripts ??= new FabricResourcePut(_client, $"{Base}/swml_scripts");
 
-    public CrudResource Conversations =>
-        _conversations ??= new CrudResource(_client, $"{Base}/conversations");
-
-    public FabricResourcePut ConferenceRooms =>
-        _conferenceRooms ??= new FabricResourcePut(_client, $"{Base}/conference_rooms");
-
-    public CrudResource DialPlans =>
-        _dialPlans ??= new CrudResource(_client, $"{Base}/dial_plans");
-
-    public CrudResource FreeclimbApps =>
-        _freeclimbApps ??= new CrudResource(_client, $"{Base}/freeclimb_apps");
-
-    public CrudResource CallQueues =>
-        _callQueues ??= new CrudResource(_client, $"{Base}/call_queues");
+    public FabricConferenceRoomsResource ConferenceRooms =>
+        _conferenceRooms ??= new FabricConferenceRoomsResource(_client, $"{Base}/conference_rooms");
 
     public FabricResourcePatch AiAgents =>
         _aiAgents ??= new FabricResourcePatch(_client, $"{Base}/ai_agents");
-
-    public CrudResource SipProfiles =>
-        _sipProfiles ??= new CrudResource(_client, $"{Base}/sip_profiles");
-
-    public CrudResource PhoneNumbers =>
-        _phoneNumbers ??= new CrudResource(_client, $"{Base}/phone_numbers");
 
     // ------------------------------------------------------------------
     // Python-parity sub-resources (Python's FabricNamespace exposes
@@ -142,8 +112,8 @@ public class Fabric
     //   signalwire/rest/namespaces/fabric.py::FabricNamespace.__init__
     // ------------------------------------------------------------------
 
-    public FabricResourcePut CxmlApplications =>
-        _cxmlApplications ??= new FabricResourcePut(_client, $"{Base}/cxml_applications");
+    public FabricCxmlApplicationsResource CxmlApplications =>
+        _cxmlApplications ??= new FabricCxmlApplicationsResource(_client, $"{Base}/cxml_applications");
 
     public FabricResourcePut CxmlScripts =>
         _cxmlScripts ??= new FabricResourcePut(_client, $"{Base}/cxml_scripts");
@@ -157,19 +127,10 @@ public class Fabric
     public FabricResourcePut RelayApplications =>
         _relayApplications ??= new FabricResourcePut(_client, $"{Base}/relay_applications");
 
-    public CrudResource Resources =>
-        _resources ??= new CrudResource(_client, Base);
-
     public FabricResourcePatch SipGateways =>
         _sipGateways ??= new FabricResourcePatch(_client, $"{Base}/sip_gateways");
 
     public AutoMaterializedWebhookResource SwmlWebhooks =>
         _swmlWebhooks ??= new AutoMaterializedWebhookResource(_client, $"{Base}/swml_webhooks");
 
-    /// <summary>
-    /// Fabric tokens resource — note this lives at the top-level
-    /// ``/api/fabric/tokens`` path, NOT under ``/api/fabric/resources``.
-    /// </summary>
-    public CrudResource Tokens =>
-        _tokens ??= new CrudResource(_client, "/api/fabric/tokens");
 }
