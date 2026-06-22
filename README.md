@@ -52,10 +52,21 @@ var agent = new AgentBase(new AgentOptions { Name = "my-agent", Route = "/agent"
 agent.AddLanguage("English", "en-US", "inworld.Mark");
 agent.PromptAddSection("Role", "You are a helpful assistant.");
 
-agent.DefineTool("get_time", "Get the current time", new { },
-    (args, rawData) => new FunctionResult($"The time is {DateTime.Now:HH:mm:ss}"));
+agent.DefineTool(
+    name:        "get_time",
+    description: "Get the current time",
+    parameters:  new Dictionary<string, object>(),
+    handler:     (args, rawData) => new FunctionResult($"The time is {DateTime.Now:HH:mm:ss}"));
 
 agent.Run();
+```
+
+Test SWAIG tools locally without a running server using the `swaig-test` CLI ([dotnet-script](https://github.com/dotnet-script/dotnet-script)) against a built assembly:
+
+```bash
+swaig-test --assembly path/to/MyAgent.dll --class My.Namespace.MyAgent --list-tools
+swaig-test --url http://user:pass@localhost:3000/agent --dump-swml
+swaig-test --url http://user:pass@localhost:3000/agent --exec get_time
 ```
 
 ### Agent Features
@@ -74,6 +85,24 @@ agent.Run();
 - **Security** -- auto-generated basic auth, function-specific HMAC tokens
 - **Serverless** -- Azure Functions, AWS Lambda, and auto-detection adapters
 
+### Agent Examples
+
+The [`examples/`](examples/) directory contains working C# examples:
+
+| Example | What it demonstrates |
+|---------|---------------------|
+| [SimpleAgent.cs](examples/SimpleAgent.cs) | POM prompts, SWAIG tools, multilingual support, summaries |
+| [ContextsDemo.cs](examples/ContextsDemo.cs) | Multi-step workflow with context switching and step navigation |
+| [DataMapDemo.cs](examples/DataMapDemo.cs) | Server-side API tools without webhooks |
+| [SkillsDemo.cs](examples/SkillsDemo.cs) | Loading built-in skills (datetime, math) |
+| [CallFlowAndActionsDemo.cs](examples/CallFlowAndActionsDemo.cs) | Call flow verbs, debug events, FunctionResult actions |
+| [SessionAndStateDemo.cs](examples/SessionAndStateDemo.cs) | Global data, post-prompt summaries, session state |
+| [MultiAgentServer.cs](examples/MultiAgentServer.cs) | Multiple agents on one server with `AgentServer` |
+| [LambdaAgent.cs](examples/LambdaAgent.cs) | AWS Lambda deployment |
+| [ComprehensiveDynamicAgent.cs](examples/ComprehensiveDynamicAgent.cs) | Per-request dynamic configuration, multi-tenant routing |
+
+See [examples/README.md](examples/README.md) for the full list organized by category.
+
 ---
 
 ## RELAY Client
@@ -83,28 +112,36 @@ Real-time call control and messaging over WebSocket. The RELAY client connects t
 ```csharp
 using SignalWire.Relay;
 
-var client = new RelayClient(new RelayOptions
+var client = new Client(new Dictionary<string, string>
 {
-    Project = "your-project-id",
-    Token = "your-token",
-    Host = "example.signalwire.com",
-    Contexts = ["default"],
+    ["project"]  = "your-project-id",
+    ["token"]    = "your-token",
+    ["host"]     = "example.signalwire.com",
+    ["contexts"] = "default",
 });
 
-client.OnCall(async call =>
+client.OnCall(async (call, evt) =>
 {
-    await call.Answer();
-    var action = await call.Play(new[] { new TtsMedia("Welcome to SignalWire!") });
-    await action.Wait();
-    await call.Hangup();
+    await call.AnswerAsync();
+    var action = await call.PlayAsync(media: new[]
+    {
+        new Dictionary<string, object>
+        {
+            ["type"]   = "tts",
+            ["params"] = new Dictionary<string, object> { ["text"] = "Welcome to SignalWire!" },
+        },
+    });
+    await action.WaitAsync();
+    await call.HangupAsync();
 });
 
-await client.Run();
+await client.ConnectAsync();
+await client.RunAsync();
 ```
 
-- 57+ calling methods (play, record, collect, detect, tap, stream, AI, conferencing, and more)
+- All calling methods: play, record, collect, connect, detect, fax, tap, stream, AI, conferencing, queues, and more
 - SMS/MMS messaging with delivery tracking
-- Action objects with `Wait()`, `Stop()`, `Pause()`, `Resume()`
+- Action objects with `WaitAsync()`, `Stop()`, `Pause()`, `Resume()`
 - Auto-reconnect with exponential backoff
 
 See the **[RELAY documentation](relay/README.md)** for the full guide, API reference, and examples.
@@ -120,14 +157,21 @@ using SignalWire.REST;
 
 var client = new RestClient("project-id", "token", "example.signalwire.com");
 
-client.Fabric.AiAgents.Create(new { name = "Support Bot" });
-client.Calling.Play(callId, new { play = new[] { new { type = "tts", text = "Hello!" } } });
-client.PhoneNumbers.List(new { area_code = "512" });
-client.Datasphere.Documents.Search(new { query_string = "billing policy" });
+await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
+{
+    ["name"]   = "Support Bot",
+    ["prompt"] = new Dictionary<string, object?> { ["text"] = "You are helpful." },
+});
+await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["area_code"] = "512" });
+await client.Datasphere.Documents.SearchAsync(new Dictionary<string, object?>
+{
+    ["query_string"] = "billing policy",
+});
 ```
 
-- 21 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Compat, and more
-- HttpClient with connection pooling
+- 21 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Compat, Phone Numbers, SIP, Queues, Recordings, and more
+- `Task`-based async API throughout
+- `HttpClient` with connection pooling
 - Dictionary returns -- raw data, no wrapper objects
 
 See the **[REST documentation](rest/README.md)** for the full guide, API reference, and examples.
@@ -140,7 +184,47 @@ See the **[REST documentation](rest/README.md)** for the full guide, API referen
 dotnet add package SignalWire.Sdk
 ```
 
-Requires .NET 8.0+. Works with C#, F#, VB.NET, and any CLR language.
+Targets .NET 8.0, 9.0, and 10.0. Works with C#, F#, VB.NET, and any CLR language.
+
+## Documentation
+
+Full reference documentation is available at **[developer.signalwire.com/sdks/agents-sdk](https://developer.signalwire.com/sdks/agents-sdk)**.
+
+Guides are also available in the [`docs/`](docs/) directory:
+
+### Getting Started
+
+- [Agent Guide](docs/agent_guide.md) -- creating agents, prompt configuration, dynamic setup
+- [Architecture](docs/architecture.md) -- SDK architecture and core concepts
+- [SDK Features](docs/sdk_features.md) -- feature overview, SDK vs raw SWML comparison
+
+### Core Features
+
+- [SWAIG Reference](docs/swaig_reference.md) -- function results, actions, post_data lifecycle
+- [Contexts and Steps](docs/contexts_guide.md) -- structured workflows, navigation, gather mode
+- [DataMap Guide](docs/datamap_guide.md) -- serverless API tools without webhooks
+- [LLM Parameters](docs/llm_parameters.md) -- temperature, top_p, barge confidence tuning
+- [SWML Service Guide](docs/swml_service_guide.md) -- low-level construction of SWML documents
+
+### Skills and Extensions
+
+- [Skills System](docs/skills_system.md) -- built-in skills and the modular framework
+- [Third-Party Skills](docs/third_party_skills.md) -- creating and publishing custom skills
+- [MCP Integration](docs/mcp_integration.md) -- Model Context Protocol integration
+- [MCP Gateway Reference](docs/mcp_gateway_reference.md) -- bridging MCP servers into SWAIG
+- [Skills Parameter Schema](docs/skills_parameter_schema.md) -- skill parameter definitions
+
+### Deployment
+
+- [CLI Guide](docs/cli_guide.md) -- `swaig-test` command reference
+- [Cloud Functions](docs/cloud_functions_guide.md) -- Azure Functions and serverless deployment
+- [Configuration](docs/configuration.md) -- environment variables, SSL, proxy setup
+- [Security](docs/security.md) -- authentication and security model
+
+### Reference
+
+- [API Reference](docs/api_reference.md) -- complete class and method reference
+- [Web Service](docs/web_service.md) -- HTTP server and endpoint details
 
 ## Environment Variables
 
@@ -152,13 +236,23 @@ Requires .NET 8.0+. Works with C#, F#, VB.NET, and any CLR language.
 | `SWML_BASIC_AUTH_USER` | Agents | Basic auth username (default: auto-generated) |
 | `SWML_BASIC_AUTH_PASSWORD` | Agents | Basic auth password (default: auto-generated) |
 | `SWML_PROXY_URL_BASE` | Agents | Base URL when behind a reverse proxy |
+| `SWML_SSL_ENABLED` | Agents | Enable HTTPS (`true`, `1`, `yes`) |
+| `SWML_SSL_CERT_PATH` | Agents | Path to SSL certificate |
+| `SWML_SSL_KEY_PATH` | Agents | Path to SSL private key |
 | `SIGNALWIRE_LOG_LEVEL` | All | Logging level (`debug`, `info`, `warn`, `error`) |
 | `SIGNALWIRE_LOG_MODE` | All | Set to `off` to suppress all logging |
 
 ## Testing
 
 ```bash
+# Build the solution
+dotnet build
+
+# Run the full test suite (xUnit)
 dotnet test
+
+# Run a subset by fully-qualified name
+dotnet test --filter "FullyQualifiedName~LoggerTests"
 ```
 
 ## License
