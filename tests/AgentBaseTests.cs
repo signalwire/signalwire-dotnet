@@ -589,8 +589,16 @@ public class AgentBaseTests : IDisposable
     public void SetFunctionIncludes()
     {
         var agent = MakeAgent();
-        agent.AddFunctionInclude(new Dictionary<string, object> { ["url"] = "https://first.com" });
-        agent.SetFunctionIncludes([new Dictionary<string, object> { ["url"] = "https://replaced.com" }]);
+        agent.AddFunctionInclude(new Dictionary<string, object>
+        {
+            ["url"] = "https://first.com",
+            ["functions"] = new List<string> { "a" },
+        });
+        agent.SetFunctionIncludes([new Dictionary<string, object>
+        {
+            ["url"] = "https://replaced.com",
+            ["functions"] = new List<string> { "b" },
+        }]);
 
         var ai = ExtractAiVerb(agent.RenderSwml());
         var swaig = (Dictionary<string, object>)ai["SWAIG"];
@@ -1015,6 +1023,122 @@ public class AgentBaseTests : IDisposable
         Assert.Same(agent, agent.SetWebHookUrl("http://x"));
         Assert.Same(agent, agent.SetPostPromptUrl("http://x"));
         Assert.Same(agent, agent.ManualSetProxyUrl("http://x"));
+    }
+
+    // =================================================================
+    //  Behavior parity bundle (#190 / #191 / #185 / #182)
+    // =================================================================
+
+    // #190: SetGlobalData MERGES incoming keys over existing rather than
+    // replacing the whole object, matching TypeScript setGlobalData /
+    // Python set_global_data.
+    [Fact]
+    public void SetGlobalData_MergesOverExisting_190()
+    {
+        var agent = MakeAgent();
+        agent.SetGlobalData(new Dictionary<string, object> { ["a"] = 1, ["b"] = 2 });
+        // Second call must NOT clobber prior keys; overlapping key wins.
+        agent.SetGlobalData(new Dictionary<string, object> { ["b"] = 99, ["c"] = 3 });
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var gd = (Dictionary<string, object>)ai["global_data"];
+        Assert.Equal(1, gd["a"]);   // preserved (would be lost under replace)
+        Assert.Equal(99, gd["b"]);  // overwritten on collision
+        Assert.Equal(3, gd["c"]);   // added
+    }
+
+    // #191: SetFunctionIncludes drops entries lacking a url or a list-valued
+    // functions field (matching TypeScript / Python filters) and warns per
+    // dropped entry.
+    [Fact]
+    public void SetFunctionIncludes_DropsInvalidAndWarns_191()
+    {
+        var agent = MakeAgent();
+        var originalErr = Console.Error;
+        var captured = new StringWriter();
+        Console.SetError(captured);
+        try
+        {
+            agent.SetFunctionIncludes(
+            [
+                new Dictionary<string, object>
+                {
+                    ["url"] = "https://valid.com",
+                    ["functions"] = new List<string> { "a" },
+                },
+                new Dictionary<string, object> { ["url"] = "https://no-functions.com" }, // missing functions
+                new Dictionary<string, object> { ["functions"] = new List<string> { "x" } }, // missing url
+            ]);
+        }
+        finally
+        {
+            Console.SetError(originalErr);
+        }
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var swaig = (Dictionary<string, object>)ai["SWAIG"];
+        var includes = (List<Dictionary<string, object>>)swaig["includes"];
+        Assert.Single(includes);
+        Assert.Equal("https://valid.com", includes[0]["url"]);
+
+        var log = captured.ToString();
+        // One warning per dropped entry (two invalid entries above).
+        var dropCount = log.Split("invalid_function_include_dropped").Length - 1;
+        Assert.Equal(2, dropCount);
+    }
+
+    // #185: GetPrompt emits the default fallback prompt when there is no raw
+    // text and no POM sections, matching TypeScript
+    // (`You are ${name}, a helpful AI assistant.`) and Python get_prompt.
+    [Fact]
+    public void GetPrompt_FallsBackToDefault_185()
+    {
+        var agent = new AgentBase(new AgentOptions
+        {
+            Name = "test-agent",
+            BasicAuthUser = "testuser",
+            BasicAuthPassword = "testpass",
+            UsePom = false,
+        });
+        // No SetPromptText, no POM sections.
+        var prompt = agent.GetPrompt();
+        Assert.IsType<string>(prompt);
+        Assert.Equal("You are test-agent, a helpful AI assistant.", prompt);
+    }
+
+    // #182: PromptAddToSection auto-creates the section when it does not exist
+    // (matching TypeScript PomBuilder.addToSection / Python
+    // prompt_add_to_section) instead of silently no-op'ing.
+    [Fact]
+    public void PromptAddToSection_AutoCreatesSection_182()
+    {
+        var agent = MakeAgent();
+        agent.PromptAddToSection("New Section", "Body text.", bullets: ["b1"]);
+
+        var sections = (List<Dictionary<string, object>>)agent.GetPrompt();
+        Assert.Single(sections);
+        Assert.Equal("New Section", sections[0]["title"]);
+        Assert.Equal("Body text.", sections[0]["body"]);
+        Assert.Equal(new List<string> { "b1" }, sections[0]["bullets"]);
+    }
+
+    // #182: PromptAddSubsection auto-creates the parent section when it does
+    // not exist (matching TypeScript PomBuilder.addSubsection / Python
+    // prompt_add_subsection) instead of silently no-op'ing.
+    [Fact]
+    public void PromptAddSubsection_AutoCreatesParent_182()
+    {
+        var agent = MakeAgent();
+        agent.PromptAddSubsection("New Parent", "Detail", "Detail body.");
+
+        var sections = (List<Dictionary<string, object>>)agent.GetPrompt();
+        Assert.Single(sections);
+        Assert.Equal("New Parent", sections[0]["title"]);
+        Assert.True(sections[0].ContainsKey("subsections"));
+        var subs = (List<Dictionary<string, object>>)sections[0]["subsections"];
+        Assert.Single(subs);
+        Assert.Equal("Detail", subs[0]["title"]);
+        Assert.Equal("Detail body.", subs[0]["body"]);
     }
 
     // =================================================================

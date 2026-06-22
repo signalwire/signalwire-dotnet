@@ -299,6 +299,12 @@ public class AgentBase : Service
         string body = "",
         IReadOnlyList<string>? bullets = null)
     {
+        // Auto-create the parent section when it does not yet exist, matching
+        // TypeScript PomBuilder.addSubsection / Python prompt_add_subsection.
+        if (!PromptHasSection(parentTitle))
+        {
+            PromptAddSection(parentTitle);
+        }
         foreach (var section in _pomSections)
         {
             if ((string)section["title"] == parentTitle)
@@ -333,6 +339,12 @@ public class AgentBase : Service
         string? bullet = null,
         IReadOnlyList<string>? bullets = null)
     {
+        // Auto-create the section when it does not yet exist, matching
+        // TypeScript PomBuilder.addToSection / Python prompt_add_to_section.
+        if (!PromptHasSection(title))
+        {
+            PromptAddSection(title);
+        }
         foreach (var section in _pomSections)
         {
             if ((string)section["title"] == title)
@@ -380,7 +392,14 @@ public class AgentBase : Service
         {
             return _pomSections;
         }
-        return _promptText;
+        if (!string.IsNullOrEmpty(_promptText))
+        {
+            return _promptText;
+        }
+        // No raw text and no POM sections: emit the default fallback prompt,
+        // matching TypeScript (`You are ${name}, a helpful AI assistant.`) and
+        // Python (`PromptMixin.get_prompt`) rather than an empty string.
+        return $"You are {Name}, a helpful AI assistant.";
     }
 
     /// <summary>Return the raw prompt text if set, else null.
@@ -636,9 +655,22 @@ public class AgentBase : Service
         return this;
     }
 
+    /// <summary>
+    /// <b>MERGES</b> <paramref name="data"/> into the existing global_data
+    /// object. Despite the name this does NOT replace the existing object:
+    /// existing keys are preserved and incoming keys overwrite only on
+    /// collision. Matches the reference SDKs (TypeScript <c>setGlobalData</c> /
+    /// Python <c>set_global_data</c>), where skills and other callers each
+    /// contribute keys and a replacing assignment would silently clobber their
+    /// contributions. Identical in effect to <see cref="UpdateGlobalData"/>.
+    /// </summary>
     public AgentBase SetGlobalData(Dictionary<string, object> data)
     {
-        _globalData = data;
+        ArgumentNullException.ThrowIfNull(data);
+        foreach (var (key, value) in data)
+        {
+            _globalData[key] = value;
+        }
         return this;
     }
 
@@ -790,11 +822,56 @@ public class AgentBase : Service
         return this;
     }
 
+    /// <summary>
+    /// Replace the entire list of function includes, dropping any entry that
+    /// is not a valid include. A valid include has a truthy <c>url</c> and a
+    /// <c>functions</c> value that is a list. Invalid entries are filtered out
+    /// (matching TypeScript <c>setFunctionIncludes</c> and Python
+    /// <c>set_function_includes</c>, which keep only well-formed entries); a
+    /// warning is logged per dropped entry so a malformed include is caught
+    /// at registration rather than silently disappearing from the SWML.
+    /// </summary>
     public AgentBase SetFunctionIncludes(IReadOnlyList<Dictionary<string, object>> includes)
     {
         ArgumentNullException.ThrowIfNull(includes);
-        _functionIncludes = [.. includes];
+        var valid = new List<Dictionary<string, object>>(includes.Count);
+        foreach (var include in includes)
+        {
+            if (IsValidFunctionInclude(include))
+            {
+                valid.Add(include);
+            }
+            else
+            {
+                _agentLogger.Warn(
+                    "invalid_function_include_dropped: an entry passed to " +
+                    "SetFunctionIncludes is missing a 'url' or a list-valued " +
+                    "'functions' field and was dropped.");
+            }
+        }
+        _functionIncludes = valid;
         return this;
+    }
+
+    /// <summary>A function include is valid when it has a non-empty <c>url</c>
+    /// and a list-valued <c>functions</c> field, matching the reference SDKs'
+    /// filter.</summary>
+    private static bool IsValidFunctionInclude(Dictionary<string, object> include)
+    {
+        if (include is null)
+        {
+            return false;
+        }
+        if (!include.TryGetValue("url", out var url) || url is not string urlStr
+            || string.IsNullOrEmpty(urlStr))
+        {
+            return false;
+        }
+        if (!include.TryGetValue("functions", out var functions) || functions is not System.Collections.IList)
+        {
+            return false;
+        }
+        return true;
     }
 
     public AgentBase SetPromptLlmParams(Dictionary<string, object> parameters)
