@@ -148,7 +148,7 @@ public class RestClientTests : IDisposable
         // Python parity: verified caller IDs live at
         // /api/relay/rest/verified_caller_ids (the old .NET path lacked _ids).
         Assert.Equal("/api/relay/rest/verified_caller_ids", client.VerifiedCallers.BasePath);
-        Assert.Equal("/api/relay/rest/sip_profiles", client.SipProfile.BasePath);
+        Assert.Equal("/api/relay/rest/sip_profile", client.SipProfile.BasePath);
         Assert.Equal("/api/relay/rest/lookup/phone_number", client.Lookup.BasePath);
         Assert.Equal("/api/relay/rest/short_codes", client.ShortCodes.BasePath);
         Assert.Equal("/api/relay/rest/imported_phone_numbers", client.ImportedNumbers.BasePath);
@@ -234,14 +234,14 @@ public class RestClientTests : IDisposable
         Assert.Equal("/api/fabric/resources/addresses", fabric.Addresses.BasePath);
         Assert.Equal("/api/fabric/resources/call_flows", fabric.CallFlows.BasePath);
         Assert.Equal("/api/fabric/resources/swml_scripts", fabric.SwmlScripts.BasePath);
-        Assert.Equal("/api/fabric/resources/conversations", fabric.Conversations.BasePath);
         Assert.Equal("/api/fabric/resources/conference_rooms", fabric.ConferenceRooms.BasePath);
-        Assert.Equal("/api/fabric/resources/dial_plans", fabric.DialPlans.BasePath);
-        Assert.Equal("/api/fabric/resources/freeclimb_apps", fabric.FreeclimbApps.BasePath);
-        Assert.Equal("/api/fabric/resources/call_queues", fabric.CallQueues.BasePath);
         Assert.Equal("/api/fabric/resources/ai_agents", fabric.AiAgents.BasePath);
-        Assert.Equal("/api/fabric/resources/sip_profiles", fabric.SipProfiles.BasePath);
-        Assert.Equal("/api/fabric/resources/phone_numbers", fabric.PhoneNumbers.BasePath);
+        // NOTE: conversations/dial_plans/freeclimb_apps/call_queues/sip_profiles/
+        // phone_numbers were INVENTED fabric sub-resources (present in neither
+        // python's fabric.py nor the fabric spec) — removed for SPEC-PARITY.
+        // Real queues = /api/relay/rest/queues; real phone_numbers =
+        // /api/relay/rest/phone_numbers; real sip profile = the SipProfile
+        // singleton — all kept as their own top-level namespaces.
     }
 
     [Fact]

@@ -253,7 +253,6 @@ signalwire.rest.namespaces.fabric.FabricNamespace.sip_gateways: .NET REST namesp
 signalwire.rest.namespaces.fabric.FabricNamespace.subscribers: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
 signalwire.rest.namespaces.fabric.FabricNamespace.swml_scripts: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
 signalwire.rest.namespaces.fabric.FabricNamespace.swml_webhooks: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
-signalwire.rest.namespaces.fabric.FabricNamespace.tokens: .NET REST namespace accessors return the concrete Resource subclass; Python uses base CrudResource since type inference is dynamic
 signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.__init__: .NET skill ctors are parameterless (Wire(agent, params) sets state post-construction); Python skills take agent and params via __init__
 signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.__init__: .NET skill ctors are parameterless (Wire(agent, params) sets state post-construction); Python skills take agent and params via __init__
 signalwire.skills.registry.SkillRegistry.list_skills: .NET SkillRegistry.ListSkills returns a plain list of skill names (List<string>); Python's list_skills returns the richer list<dict<string,string>> skill-info inventory
@@ -290,6 +289,7 @@ signalwire.rest.namespaces.logs.FaxLogs.list: .NET FaxLogs.ListAsync takes optio
 signalwire.rest.namespaces.logs.MessageLogs.list: .NET MessageLogs.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
 signalwire.rest.namespaces.logs.VoiceLogs.list: .NET VoiceLogs.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params
 signalwire.rest.namespaces.logs.VoiceLogs.list_events: .NET VoiceLogs.ListEventsAsync takes optional Dictionary<string,string> for query params; Python uses **params
+signalwire.rest.namespaces.lookup.LookupResource.phone_number: .NET LookupResource.PhoneNumberAsync takes optional Dictionary<string,string> for query params; Python uses **params - same shape, optional<> wrapper prevents the diff built-in var_keyword/dict equivalence
 signalwire.rest.namespaces.number_groups.NumberGroupsResource.list_memberships: .NET NumberGroups.ListMembershipsAsync takes optional Dictionary<string,string> for query params; Python uses **params
 signalwire.rest.namespaces.queues.QueuesResource.list_members: .NET Queues.ListMembersAsync takes optional Dictionary<string,string> for query params; Python uses **params
 signalwire.rest.namespaces.registry.RegistryBrands.list: .NET RegistryBrands.ListAsync takes optional Dictionary<string,string> for query params; Python uses **params

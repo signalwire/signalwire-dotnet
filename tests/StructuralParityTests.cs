@@ -1130,8 +1130,9 @@ public class StructuralParityTests
         Assert.Equal("/api/fabric/resources/sip_gateways", fabric.SipGateways.BasePath);
         Assert.Equal("/api/fabric/resources/swml_webhooks", fabric.SwmlWebhooks.BasePath);
         // ``resources`` is the catch-all under /api/fabric/resources (no
-        // sub-path); ``tokens`` lives at /api/fabric/tokens (different base).
+        // sub-path). The generic ``tokens`` CRUD accessor was removed for
+        // SPEC-PARITY (no /api/fabric/tokens CRUD route in python or the spec);
+        // the real fabric token POSTs live on TokensApi (FabricTokens).
         Assert.Equal("/api/fabric/resources", fabric.Resources.BasePath);
-        Assert.Equal("/api/fabric/tokens", fabric.Tokens.BasePath);
     }
 }

@@ -340,6 +340,9 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ("SignalWire.REST.Namespaces", "Mfa"): (
         "signalwire.rest.namespaces.mfa", "MfaResource",
     ),
+    ("SignalWire.REST.Namespaces", "LookupResource"): (
+        "signalwire.rest.namespaces.lookup", "LookupResource",
+    ),
     ("SignalWire.REST.Namespaces", "SipProfile"): (
         "signalwire.rest.namespaces.sip_profile", "SipProfileResource",
     ),

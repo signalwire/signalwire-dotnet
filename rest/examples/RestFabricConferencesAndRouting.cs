@@ -67,7 +67,7 @@ Safe("List addresses", () =>
 Console.WriteLine("\nGenerating subscriber token...");
 Safe("Create token", () =>
 {
-    var token = client.Fabric.Tokens.Create(new Dictionary<string, object>
+    var token = client.Fabric.TokensApi.CreateSubscriberToken(new Dictionary<string, object>
     {
         ["subscriber_id"] = "example-subscriber-id",
         ["ttl"]           = 3600,

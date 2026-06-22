@@ -160,7 +160,7 @@ var address = client.Fabric.Addresses.Create(new Dictionary<string, object>
 Generate authentication tokens for subscribers:
 
 ```csharp
-var token = client.Fabric.Tokens.Create(new Dictionary<string, object>
+var token = client.Fabric.TokensApi.CreateSubscriberToken(new Dictionary<string, object>
 {
     ["subscriber_id"] = subscriberId,
     ["ttl"]           = 3600,

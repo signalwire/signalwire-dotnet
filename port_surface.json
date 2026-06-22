@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 897cd2c29bea47386f4fe3a6c2d674e97ce62d93",
+  "generated_from": "signalwire-dotnet @ 7609a6eaa562a033d20f05a84b19abb364d99c38",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -1250,30 +1250,23 @@
           "ai_agents",
           "call_flows",
           "call_flows_ops",
-          "call_queues",
           "client",
           "conference_rooms",
           "conference_rooms_ops",
-          "conversations",
           "cxml_applications",
           "cxml_applications_ops",
           "cxml_scripts",
           "cxml_webhooks",
-          "dial_plans",
-          "freeclimb_apps",
           "freeswitch_connectors",
-          "phone_numbers",
           "relay_applications",
           "resources",
           "resources_generic",
           "sip_endpoints",
           "sip_gateways",
-          "sip_profiles",
           "subscribers",
           "subscribers_ops",
           "swml_scripts",
           "swml_webhooks",
-          "tokens",
           "tokens_api"
         ],
         "FabricResource": [
@@ -1358,6 +1351,16 @@
       },
       "functions": []
     },
+    "signalwire.rest.namespaces.lookup": {
+      "classes": {
+        "LookupResource": [
+          "__init__",
+          "base_path",
+          "phone_number"
+        ]
+      },
+      "functions": []
+    },
     "signalwire.rest.namespaces.mfa": {
       "classes": {
         "MfaResource": [
@@ -1386,6 +1389,7 @@
       "classes": {
         "ProjectNamespace": [
           "__init__",
+          "base_path",
           "tokens"
         ],
         "ProjectTokens": [
@@ -1479,6 +1483,7 @@
       "classes": {
         "SipProfileResource": [
           "__init__",
+          "base_path",
           "get",
           "update"
         ]

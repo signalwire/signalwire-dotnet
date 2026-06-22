@@ -10209,7 +10209,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
+              "returns": "class:signalwire.rest.namespaces.lookup.LookupResource"
             },
             "mfa": {
               "params": [
@@ -13506,15 +13506,6 @@
               ],
               "returns": "class:signalwire.rest.namespaces.fabric.CallFlowsResource"
             },
-            "call_queues": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
             "client": {
               "params": [
                 {
@@ -13541,15 +13532,6 @@
                 }
               ],
               "returns": "class:signalwire.rest.namespaces.fabric.ConferenceRoomsResource"
-            },
-            "conversations": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
             },
             "cxml_applications": {
               "params": [
@@ -13587,24 +13569,6 @@
               ],
               "returns": "class:signalwire.rest.namespaces.fabric.AutoMaterializedWebhook"
             },
-            "dial_plans": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
-            "freeclimb_apps": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
             "freeswitch_connectors": {
               "params": [
                 {
@@ -13613,15 +13577,6 @@
                 }
               ],
               "returns": "class:signalwire.rest.namespaces.fabric.FabricResourcePUT"
-            },
-            "phone_numbers": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
             },
             "relay_applications": {
               "params": [
@@ -13668,15 +13623,6 @@
               ],
               "returns": "class:signalwire.rest.namespaces.fabric.FabricResource"
             },
-            "sip_profiles": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
-            },
             "subscribers": {
               "params": [
                 {
@@ -13712,15 +13658,6 @@
                 }
               ],
               "returns": "class:signalwire.rest.namespaces.fabric.AutoMaterializedWebhook"
-            },
-            "tokens": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "class:signalwire.rest.crud_resource.CrudResource"
             },
             "tokens_api": {
               "params": [
@@ -14510,6 +14447,57 @@
         }
       }
     },
+    "signalwire.rest.namespaces.lookup": {
+      "classes": {
+        "LookupResource": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "client",
+                  "type": "class:signalwire.rest.http_client.HttpClient",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "base_path": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "phone_number": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "e164",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "query_params",
+                  "type": "optional<dict<string,string>>",
+                  "required": false,
+                  "default": null
+                }
+              ],
+              "returns": "dict<string,any>"
+            }
+          }
+        }
+      }
+    },
     "signalwire.rest.namespaces.mfa": {
       "classes": {
         "MfaResource": {
@@ -14710,6 +14698,15 @@
                 }
               ],
               "returns": "void"
+            },
+            "base_path": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
             },
             "tokens": {
               "params": [
@@ -15399,6 +15396,15 @@
                 }
               ],
               "returns": "void"
+            },
+            "base_path": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
             },
             "get": {
               "params": [

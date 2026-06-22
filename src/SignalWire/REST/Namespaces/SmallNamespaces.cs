@@ -29,27 +29,35 @@ public class Mfa : CrudResource
 }
 
 /// <summary>
-/// Project SIP profile (singleton resource — get/update only, update via PUT).
+/// Project SIP profile — a SINGLETON resource (get/update only; update via PUT).
 ///
-/// Mirrors Python ``signalwire.rest.namespaces.sip_profile.SipProfileResource``.
-/// Extends CrudResource for the legacy ``client.SipProfile.BasePath`` test
-/// — the Python-parity singleton path is /api/relay/rest/sip_profile;
-/// the legacy .NET path was /api/relay/rest/sip_profiles. The legacy
-/// accessor target is preserved while ``GetAsync()/UpdateAsync(kwargs)``
-/// hit the singleton path.
+/// Mirrors Python ``signalwire.rest.namespaces.sip_profile.SipProfileResource``
+/// exactly: the only canonical relay-rest routes are
+/// ``GET /api/relay/rest/sip_profile`` and ``PUT /api/relay/rest/sip_profile``.
+/// It deliberately does NOT extend <see cref="CrudResource"/>: the generic
+/// List/Create/Get(id)/Update(id)/Delete(id) verbs (and the legacy plural
+/// ``/sip_profiles`` path) exist in neither python nor the spec, so exposing
+/// them would invent surface the SPEC-PARITY gate forbids.
 /// </summary>
-public class SipProfile : CrudResource
+public class SipProfile
 {
+    private readonly HttpClient _client;
+
     /// <summary>Singleton resource path (Python parity).</summary>
     public const string SingletonPath = "/api/relay/rest/sip_profile";
 
-    public SipProfile(HttpClient client) : base(client, "/api/relay/rest/sip_profiles") { }
+    public SipProfile(HttpClient client) { _client = client; }
 
+    /// <summary>Base (singleton) path — singular, matching python + spec.</summary>
+    public string BasePath { get; } = SingletonPath;
+
+    /// <summary>Retrieve the project SIP profile (GET /api/relay/rest/sip_profile).</summary>
     public Task<Dictionary<string, object?>> GetAsync()
-        => Client.GetAsync(SingletonPath);
+        => _client.GetAsync(SingletonPath);
 
+    /// <summary>Update the project SIP profile (PUT /api/relay/rest/sip_profile).</summary>
     public Task<Dictionary<string, object?>> UpdateAsync(Dictionary<string, object?> kwargs)
-        => Client.PutAsync(SingletonPath, kwargs);
+        => _client.PutAsync(SingletonPath, kwargs);
 }
 
 /// <summary>
@@ -113,18 +121,56 @@ public class ImportedNumbers : CrudResource
 }
 
 /// <summary>
-/// Project namespace — exposes ProjectTokens (PATCH update).
+/// Phone-number lookup (carrier / CNAM).
 ///
-/// Mirrors Python ``signalwire.rest.namespaces.project.ProjectNamespace``.
-/// Extends CrudResource for the legacy ``client.Project.BasePath`` test.
+/// Mirrors Python ``signalwire.rest.namespaces.lookup.LookupResource``: the
+/// ONLY canonical relay-rest route is the single GET
+/// ``/api/relay/rest/lookup/phone_number/{e164}``. It deliberately does NOT
+/// extend <see cref="CrudResource"/> — the generic List/Create/Update/Delete
+/// verbs (and a bare GET/POST on ``/lookup/phone_number``) exist in neither
+/// python nor the spec, so exposing them would invent surface the SPEC-PARITY
+/// gate forbids. ``BasePath`` is retained for the legacy accessor test.
 /// </summary>
-public class Project : CrudResource
+public class LookupResource
 {
+    private readonly HttpClient _client;
+
+    /// <summary>Base path the single GET is dispatched under.</summary>
+    public const string Base = "/api/relay/rest/lookup/phone_number";
+
+    public LookupResource(HttpClient client) { _client = client; }
+
+    /// <summary>Base path (Python parity: lookup is GET-only by e164).</summary>
+    public string BasePath { get; } = Base;
+
+    /// <summary>Look up a phone number by its E.164 value
+    /// (GET /api/relay/rest/lookup/phone_number/{e164}).</summary>
+    public Task<Dictionary<string, object?>> PhoneNumberAsync(
+        string e164, Dictionary<string, string>? queryParams = null)
+        => _client.GetAsync($"{Base}/{e164}", queryParams);
+}
+
+/// <summary>
+/// Project namespace — exposes ProjectTokens (PATCH update) only.
+///
+/// Mirrors Python ``signalwire.rest.namespaces.project.ProjectNamespace``,
+/// which is a tokens-only namespace. It deliberately does NOT extend
+/// <see cref="CrudResource"/>: there is no canonical CRUD route at
+/// ``/api/relay/rest/project`` in python or the spec, so the base
+/// List/Create/Get/Update/Delete verbs would invent surface the SPEC-PARITY
+/// gate forbids. ``BasePath`` is retained for the legacy accessor test.
+/// </summary>
+public class Project
+{
+    private readonly HttpClient _client;
     private ProjectTokens? _tokens;
 
-    public Project(HttpClient client) : base(client, "/api/relay/rest/project") { }
+    public Project(HttpClient client) { _client = client; }
 
-    public ProjectTokens Tokens => _tokens ??= new ProjectTokens(Client);
+    /// <summary>Namespace base path (no CRUD dispatched here — tokens-only).</summary>
+    public string BasePath { get; } = "/api/relay/rest/project";
+
+    public ProjectTokens Tokens => _tokens ??= new ProjectTokens(_client);
 }
 
 /// <summary>Project API tokens — PATCH for update.</summary>

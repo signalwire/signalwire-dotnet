@@ -34,7 +34,7 @@ public class RestClient : IDisposable
     private NumberGroups? _numberGroups;
     private VerifiedCallers? _verifiedCallers;
     private SipProfile? _sipProfile;
-    private CrudResource? _lookup;
+    private LookupResource? _lookup;
     private ShortCodes? _shortCodes;
     private ImportedNumbers? _importedNumbers;
     private Mfa? _mfa;
@@ -125,14 +125,13 @@ public class RestClient : IDisposable
         _verifiedCallers ??= new VerifiedCallers(_http);
 
     /// <summary>SIP profile (singleton at /api/relay/rest/sip_profile;
-    /// legacy plural-path /api/relay/rest/sip_profiles preserved for
-    /// existing tests via BasePath).</summary>
+    /// get/update only — python + spec parity).</summary>
     public SipProfile SipProfile =>
         _sipProfile ??= new SipProfile(_http);
 
-    /// <summary>Phone number lookup.</summary>
-    public CrudResource Lookup =>
-        _lookup ??= new CrudResource(_http, "/api/relay/rest/lookup/phone_number");
+    /// <summary>Phone number lookup (GET-only by e164; python + spec parity).</summary>
+    public LookupResource Lookup =>
+        _lookup ??= new LookupResource(_http);
 
     /// <summary>Short codes (PUT for update).</summary>
     public ShortCodes ShortCodes =>
