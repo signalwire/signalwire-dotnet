@@ -86,9 +86,19 @@ SPAWNED_PIDS=()
 # (8784) and mock_relay on the WS+HTTP pair (8785+9785), matching the
 # defaults in tests/MockTest.cs and tests/RelayMockTest.cs.
 
-MOCK_SIGNALWIRE_PORT="${MOCK_SIGNALWIRE_PORT:-8784}"
-MOCK_RELAY_WS_PORT="${MOCK_RELAY_PORT:-8785}"
-MOCK_RELAY_HTTP_PORT="${MOCK_RELAY_HTTP_PORT:-9785}"
+# Pick a free TCP port on 127.0.0.1 (bind :0, read the OS-assigned port,
+# release). Never reuse a hardcoded port — a leftover or concurrent mock
+# squatting a fixed port otherwise makes the gate hang on its health poll.
+pick_free_port() {
+    python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()'
+}
+
+# Env overrides win; otherwise pick FREE ports rather than hardcoded defaults
+# (mock_signalwire + mock_relay WS/HTTP, all independent).
+MOCK_SIGNALWIRE_PORT="${MOCK_SIGNALWIRE_PORT:-$(pick_free_port)}"
+MOCK_RELAY_WS_PORT="${MOCK_RELAY_PORT:-$(pick_free_port)}"
+MOCK_RELAY_HTTP_PORT="${MOCK_RELAY_HTTP_PORT:-$(pick_free_port)}"
+export MOCK_SIGNALWIRE_PORT MOCK_RELAY_WS_PORT MOCK_RELAY_HTTP_PORT
 
 probe_health() {
     local url="$1"
@@ -213,12 +223,24 @@ dotnet_test_per_framework() {
         fwlog="$(mktemp)"
         fwlogs+=("$fw:$fwlog")
         if [ -n "$dotnet_bin" ]; then
-            "$dotnet_bin" test --framework "$fw" 2>&1 | tee "$fwlog"
+            # Host path (the GitHub runner has dotnet on PATH). The test fixtures
+            # read MOCK_RELAY_PORT (WS) / MOCK_RELAY_HTTP_PORT, but our internal WS
+            # port var is MOCK_RELAY_WS_PORT — so we must RENAME it here, exactly as
+            # the docker branch does via `-e MOCK_RELAY_PORT=$MOCK_RELAY_WS_PORT`.
+            # Without this the fixture sees no MOCK_RELAY_PORT, self-spawns its own
+            # mock_relay, and net10.0 loses the spawn race → "Connection refused".
+            MOCK_SIGNALWIRE_PORT="$MOCK_SIGNALWIRE_PORT" \
+            MOCK_RELAY_PORT="$MOCK_RELAY_WS_PORT" \
+            MOCK_RELAY_HTTP_PORT="$MOCK_RELAY_HTTP_PORT" \
+                "$dotnet_bin" test --framework "$fw" 2>&1 | tee "$fwlog"
             [ "${PIPESTATUS[0]}" -eq 0 ] || { rc=1; failed_fws="$failed_fws $fw"; }
         else
             docker run --rm --network host \
                     --user "$(id -u):$(id -g)" \
                     -e HOME=/tmp \
+                    -e MOCK_SIGNALWIRE_PORT="$MOCK_SIGNALWIRE_PORT" \
+                    -e MOCK_RELAY_PORT="$MOCK_RELAY_WS_PORT" \
+                    -e MOCK_RELAY_HTTP_PORT="$MOCK_RELAY_HTTP_PORT" \
                     -v "$PWD:/src" -w /src \
                     mcr.microsoft.com/dotnet/sdk:10.0 \
                     dotnet test --framework "$fw" 2>&1 | tee "$fwlog"
@@ -357,7 +379,11 @@ run_gate "NO-CHEAT" "audit_no_cheat_tests" \
 # target framework into ONE journal, then checks that journal. Same shape as
 # go's/python's/java's gate.
 rest_coverage_gate() {
-    local port="${REST_COVERAGE_PORT:-8779}"
+    # REST_COVERAGE_PORT override wins; otherwise pick a FREE port (bind :0).
+    # Never reuse a hardcoded port — a leftover/concurrent mock squatting it
+    # otherwise makes the gate hang on its health poll.
+    local port="${REST_COVERAGE_PORT:-$(pick_free_port)}"
+    [ -n "$port" ] || { echo "could not allocate a free port" >&2; return 1; }
     local url="http://127.0.0.1:${port}"
     local mock_pkg_parent="$PORTING_SDK_DIR/test_harness/mock_signalwire"
     (
@@ -368,11 +394,21 @@ rest_coverage_gate() {
     local mock_pid=$!
     # shellcheck disable=SC2064
     trap "kill $mock_pid 2>/dev/null" RETURN
-    local i
+    # Fail LOUD if the mock dies mid-startup or never becomes healthy — never hang.
+    local i ready=0
     for i in $(seq 1 60); do
-        if curl -fsS --max-time 1 "$url/__mock__/health" >/dev/null 2>&1; then break; fi
+        if ! kill -0 "$mock_pid" 2>/dev/null; then
+            echo "mock_signalwire died on port $port — log:" >&2
+            cat "/tmp/rest_cov_mock_dotnet.$$.log" >&2
+            return 1
+        fi
+        if curl -fsS --max-time 1 "$url/__mock__/health" >/dev/null 2>&1; then ready=1; break; fi
         sleep 0.5
     done
+    if [ "$ready" -ne 1 ]; then
+        echo "mock_signalwire on port $port not healthy within 30s" >&2
+        return 1
+    fi
     curl -fsS --max-time 5 -X POST "$url/__mock__/journal/reset" >/dev/null 2>&1
 
     # Run ONLY the coverage-trait tests, on ONE framework (net8.0), so all

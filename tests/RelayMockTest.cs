@@ -539,7 +539,7 @@ public static class RelayMockTest
                     $"RelayMockTest: previous startup failed: {_startupFailure.Message}", _startupFailure);
             }
 
-            var (host, wsPort, httpPort) = ResolveHostPorts();
+            var (host, wsPort, httpPort, portsFromEnv) = ResolveHostPorts();
             var httpUrl = $"http://{host}:{httpPort}";
             var wsUrl = $"ws://{host}:{wsPort}";
 
@@ -547,6 +547,37 @@ public static class RelayMockTest
             {
                 Timeout = TimeSpan.FromSeconds(2)
             };
+
+            // When the ports were given EXPLICITLY (MOCK_RELAY_PORT /
+            // MOCK_RELAY_HTTP_PORT in the environment), a mock is PROMISED on
+            // those ports — e.g. the CI gate spawned one on the host and the
+            // container reuses it over `--network host`. We must REUSE it, not
+            // self-spawn onto a different OS-picked port. A single 2s probe is
+            // too tight under CI load (a slow first connect would fall through
+            // to self-spawn → a mock_relay started inside the container, which
+            // then can't find porting-sdk → 122 cascading "Connection refused").
+            // So: poll the promised endpoint until StartupTimeout, then FAIL
+            // LOUD. Never silently bind a fresh port the gate isn't serving.
+            if (portsFromEnv)
+            {
+                var reuseDeadline = DateTime.UtcNow + StartupTimeout;
+                while (DateTime.UtcNow < reuseDeadline)
+                {
+                    if (ProbeHealth(probeClient, httpUrl))
+                    {
+                        var hr = new Harness(httpUrl, wsUrl, host, wsPort, httpPort);
+                        _sharedHarness = hr;
+                        return hr;
+                    }
+                    Thread.Sleep(150);
+                }
+                _startupFailure = new InvalidOperationException(
+                    $"RelayMockTest: MOCK_RELAY_PORT/MOCK_RELAY_HTTP_PORT were set " +
+                    $"(promising a pre-running mock_relay on {httpUrl} / {wsUrl}), but its health " +
+                    $"endpoint never became reachable within {StartupTimeout}. Refusing to self-spawn " +
+                    $"onto a different port — the gate must keep that mock alive for the whole TEST run.");
+                throw _startupFailure;
+            }
 
             if (ProbeHealth(probeClient, httpUrl))
             {
@@ -606,26 +637,40 @@ public static class RelayMockTest
         return s.Length > 400 ? s[..400] + "..." : s;
     }
 
-    private static (string Host, int WsPort, int HttpPort) ResolveHostPorts()
+    private static (string Host, int WsPort, int HttpPort, bool FromEnv) ResolveHostPorts()
     {
         var host = Environment.GetEnvironmentVariable("MOCK_RELAY_HOST");
         if (string.IsNullOrWhiteSpace(host)) host = "127.0.0.1";
 
+        // Env override wins; otherwise pick a FREE port (bind :0) rather than the
+        // hardcoded default — WS and HTTP control plane picked independently.
         var wsRaw = Environment.GetEnvironmentVariable("MOCK_RELAY_PORT");
-        var wsPort = DefaultWsPort;
-        if (!string.IsNullOrWhiteSpace(wsRaw) && int.TryParse(wsRaw.Trim(), out var w) && w > 0)
-        {
-            wsPort = w;
-        }
+        var wsFromEnv = !string.IsNullOrWhiteSpace(wsRaw) && int.TryParse(wsRaw.Trim(), out var w) && w > 0;
+        var wsPort = wsFromEnv ? int.Parse(wsRaw!.Trim()) : PickFreePort();
 
         var httpRaw = Environment.GetEnvironmentVariable("MOCK_RELAY_HTTP_PORT");
-        var httpPort = DefaultHttpPort;
-        if (!string.IsNullOrWhiteSpace(httpRaw) && int.TryParse(httpRaw.Trim(), out var hp) && hp > 0)
-        {
-            httpPort = hp;
-        }
+        var httpFromEnv = !string.IsNullOrWhiteSpace(httpRaw) && int.TryParse(httpRaw.Trim(), out var hp) && hp > 0;
+        var httpPort = httpFromEnv ? int.Parse(httpRaw!.Trim()) : PickFreePort();
 
-        return (host, wsPort, httpPort);
+        // Either explicit port signals "a mock is promised on these ports"
+        // (the CI gate's host-spawned mock, reused via --network host). In that
+        // mode EnsureServer reuses + fails loud rather than self-spawning.
+        return (host, wsPort, httpPort, wsFromEnv || httpFromEnv);
+    }
+
+    /// <summary>Ask the OS for a free loopback TCP port (bind :0, read it, release).</summary>
+    private static int PickFreePort()
+    {
+        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        try
+        {
+            return ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        }
+        finally
+        {
+            listener.Stop();
+        }
     }
 
     private static Process SpawnMockServer(string host, int wsPort, int httpPort)

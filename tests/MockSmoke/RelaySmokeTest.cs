@@ -48,8 +48,23 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
         Assert.NotNull(_fixture.Harness);
         Assert.StartsWith("ws://", _fixture.Harness.WsUrl);
         Assert.StartsWith("http://", _fixture.Harness.HttpUrl);
-        Assert.Equal(RelayMockTest.DefaultWsPort, _fixture.Harness.WsPort);
-        Assert.Equal(RelayMockTest.DefaultHttpPort, _fixture.Harness.HttpPort);
+        // Ports are dynamic (env override OR an OS-picked free port), never a
+        // hardcoded default — see RelayMockTest.ResolveHostPorts. Assert the
+        // harness bound to a real port, and that it honors the env override
+        // when one is set (the CI gate exports MOCK_RELAY_PORT / _HTTP_PORT).
+        Assert.True(_fixture.Harness.WsPort > 0);
+        Assert.True(_fixture.Harness.HttpPort > 0);
+        AssertMatchesEnvIfSet("MOCK_RELAY_PORT", _fixture.Harness.WsPort);
+        AssertMatchesEnvIfSet("MOCK_RELAY_HTTP_PORT", _fixture.Harness.HttpPort);
+    }
+
+    private static void AssertMatchesEnvIfSet(string envVar, int actualPort)
+    {
+        var raw = Environment.GetEnvironmentVariable(envVar);
+        if (!string.IsNullOrWhiteSpace(raw) && int.TryParse(raw.Trim(), out var want) && want > 0)
+        {
+            Assert.Equal(want, actualPort);
+        }
     }
 
     [Fact]

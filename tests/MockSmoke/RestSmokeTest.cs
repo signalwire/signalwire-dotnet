@@ -52,7 +52,16 @@ public class RestSmokeTest : IClassFixture<MockServerFixture>
         }
         Assert.NotNull(_fixture.Harness);
         Assert.StartsWith("http://", _fixture.Harness.Url);
-        Assert.Equal(MockTest.DefaultPort, _fixture.Harness.Port);
+        // Port is dynamic (env override OR an OS-picked free port), never a
+        // hardcoded default — see MockTest.ResolveHostPort. Assert the harness
+        // bound to a real port, and that it honors MOCK_SIGNALWIRE_PORT when the
+        // CI gate exports it.
+        Assert.True(_fixture.Harness.Port > 0);
+        var raw = Environment.GetEnvironmentVariable("MOCK_SIGNALWIRE_PORT");
+        if (!string.IsNullOrWhiteSpace(raw) && int.TryParse(raw.Trim(), out var want) && want > 0)
+        {
+            Assert.Equal(want, _fixture.Harness.Port);
+        }
     }
 
     [Fact]
