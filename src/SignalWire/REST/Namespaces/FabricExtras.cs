@@ -37,6 +37,69 @@ public class FabricResourcePut : CrudWithAddresses
 }
 
 /// <summary>
+/// Call-flows fabric resource (PUT update). Python's CallFlowsResource serves
+/// the addresses/versions sub-routes at the SINGULAR ``call_flow`` path, not the
+/// plural collection path. Overriding <see cref="ListAddressesAsync"/> to the
+/// singular path keeps it on the canonical route
+/// (GET /api/fabric/resources/call_flow/{id}/addresses) rather than the plural
+/// path CrudWithAddresses would otherwise build.
+/// </summary>
+public class FabricCallFlowsResource : FabricResourcePut
+{
+    private readonly string _singularBase;
+
+    public FabricCallFlowsResource(HttpClient client, string basePath)
+        : base(client, basePath)
+    {
+        ArgumentNullException.ThrowIfNull(basePath);
+        _singularBase = basePath.Replace("/call_flows", "/call_flow", StringComparison.Ordinal);
+    }
+
+    public override Task<Dictionary<string, object?>> ListAddressesAsync(
+        string resourceId, Dictionary<string, string>? queryParams = null)
+        => Client.GetAsync($"{_singularBase}/{resourceId}/addresses", queryParams);
+}
+
+/// <summary>
+/// Conference-rooms fabric resource (PUT update). As with call_flows, the
+/// addresses sub-route is served at the SINGULAR ``conference_room`` path
+/// (GET /api/fabric/resources/conference_room/{id}/addresses) per the spec +
+/// Python's ConferenceRoomsResource.
+/// </summary>
+public class FabricConferenceRoomsResource : FabricResourcePut
+{
+    private readonly string _singularBase;
+
+    public FabricConferenceRoomsResource(HttpClient client, string basePath)
+        : base(client, basePath)
+    {
+        ArgumentNullException.ThrowIfNull(basePath);
+        _singularBase = basePath.Replace("/conference_rooms", "/conference_room", StringComparison.Ordinal);
+    }
+
+    public override Task<Dictionary<string, object?>> ListAddressesAsync(
+        string resourceId, Dictionary<string, string>? queryParams = null)
+        => Client.GetAsync($"{_singularBase}/{resourceId}/addresses", queryParams);
+}
+
+/// <summary>
+/// cXML-applications fabric resource (PUT update). Mirrors Python's
+/// CxmlApplicationsResource: there is NO create route — POST is rejected — so
+/// <see cref="CreateAsync"/> throws instead of dispatching an invented
+/// POST /api/fabric/resources/cxml_applications. List/Get/Update/Delete and the
+/// addresses sub-route remain.
+/// </summary>
+public class FabricCxmlApplicationsResource : FabricResourcePut
+{
+    public FabricCxmlApplicationsResource(HttpClient client, string basePath)
+        : base(client, basePath) { }
+
+    public override Task<Dictionary<string, object?>> CreateAsync(
+        Dictionary<string, object?> data, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException("cXML applications cannot be created via this API");
+}
+
+/// <summary>
 /// Fabric webhook resource (cxml_webhooks / swml_webhooks). Updates via PATCH
 /// and exposes the addresses sub-collection (Python's AutoMaterializedWebhook
 /// embeds FabricResource → CrudWithAddresses). Unlike Python, this SDK permits

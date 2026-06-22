@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 7609a6eaa562a033d20f05a84b19abb364d99c38",
+  "generated_from": "signalwire-dotnet @ 402e2260a53cb0967c752479979aaa22b349d2dc",
   "modules": {
     "signalwire.agent.agent_options": {
       "classes": {
@@ -1021,7 +1021,12 @@
     "signalwire.rest.namespaces.addresses": {
       "classes": {
         "AddressesResource": [
-          "__init__"
+          "__init__",
+          "base_path",
+          "create",
+          "delete",
+          "get",
+          "list"
         ]
       },
       "functions": []
@@ -1079,6 +1084,7 @@
       "classes": {
         "ChatResource": [
           "__init__",
+          "base_path",
           "create_token"
         ]
       },
@@ -1145,6 +1151,7 @@
           "account_sid",
           "accounts",
           "applications",
+          "base_path",
           "calls",
           "conferences",
           "faxes",
@@ -1212,6 +1219,7 @@
         ],
         "DatasphereNamespace": [
           "__init__",
+          "base_path",
           "documents"
         ]
       },
@@ -1235,6 +1243,7 @@
           "list_addresses"
         ],
         "CxmlApplicationsResource": [
+          "__init__",
           "create"
         ],
         "FabricAddresses": [
@@ -1245,7 +1254,6 @@
         ],
         "FabricNamespace": [
           "__init__",
-          "addresses",
           "addresses_top_level",
           "ai_agents",
           "call_flows",
@@ -1259,7 +1267,6 @@
           "cxml_webhooks",
           "freeswitch_connectors",
           "relay_applications",
-          "resources",
           "resources_generic",
           "sip_endpoints",
           "sip_gateways",
@@ -1310,7 +1317,9 @@
     "signalwire.rest.namespaces.imported_numbers": {
       "classes": {
         "ImportedNumbersResource": [
-          "__init__"
+          "__init__",
+          "base_path",
+          "create"
         ]
       },
       "functions": []
@@ -1330,6 +1339,7 @@
         ],
         "LogsNamespace": [
           "__init__",
+          "base_path",
           "conferences",
           "fax",
           "messages",
@@ -1365,6 +1375,7 @@
       "classes": {
         "MfaResource": [
           "__init__",
+          "base_path",
           "call",
           "sms",
           "verify"
@@ -1380,6 +1391,16 @@
           "delete_membership",
           "get_membership",
           "list_memberships",
+          "update"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.phone_numbers": {
+      "classes": {
+        "PhoneNumbersResource": [
+          "__init__",
+          "search",
           "update"
         ]
       },
@@ -1405,6 +1426,7 @@
       "classes": {
         "PubSubResource": [
           "__init__",
+          "base_path",
           "create_token"
         ]
       },
@@ -1425,7 +1447,11 @@
     "signalwire.rest.namespaces.recordings": {
       "classes": {
         "RecordingsResource": [
-          "__init__"
+          "__init__",
+          "base_path",
+          "delete",
+          "get",
+          "list"
         ]
       },
       "functions": []
@@ -1452,6 +1478,7 @@
         ],
         "RegistryNamespace": [
           "__init__",
+          "base_path",
           "brands",
           "campaigns",
           "numbers",
@@ -1474,6 +1501,9 @@
       "classes": {
         "ShortCodesResource": [
           "__init__",
+          "base_path",
+          "get",
+          "list",
           "update"
         ]
       },

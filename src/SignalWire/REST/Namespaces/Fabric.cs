@@ -17,18 +17,16 @@ public class Fabric
     // Lazily-initialised sub-resources
     private FabricResourcePut? _subscribers;
     private FabricResourcePut? _sipEndpoints;
-    private CrudResource? _addresses;
-    private FabricResourcePut? _callFlows;
+    private FabricCallFlowsResource? _callFlows;
     private FabricResourcePut? _swmlScripts;
-    private FabricResourcePut? _conferenceRooms;
+    private FabricConferenceRoomsResource? _conferenceRooms;
     private FabricResourcePatch? _aiAgents;
     // Python-parity sub-resources (FabricNamespace.cxml_applications, etc.)
-    private FabricResourcePut? _cxmlApplications;
+    private FabricCxmlApplicationsResource? _cxmlApplications;
     private FabricResourcePut? _cxmlScripts;
     private AutoMaterializedWebhookResource? _cxmlWebhooks;
     private FabricResourcePut? _freeswitchConnectors;
     private FabricResourcePut? _relayApplications;
-    private CrudResource? _resources;
     private FabricResourcePatch? _sipGateways;
     private AutoMaterializedWebhookResource? _swmlWebhooks;
     // Python-parity helpers (assignable from tests; not present in the
@@ -96,17 +94,14 @@ public class Fabric
     public FabricResourcePut SipEndpoints =>
         _sipEndpoints ??= new FabricResourcePut(_client, $"{Base}/sip_endpoints");
 
-    public CrudResource Addresses =>
-        _addresses ??= new CrudResource(_client, $"{Base}/addresses");
-
-    public FabricResourcePut CallFlows =>
-        _callFlows ??= new FabricResourcePut(_client, $"{Base}/call_flows");
+    public FabricCallFlowsResource CallFlows =>
+        _callFlows ??= new FabricCallFlowsResource(_client, $"{Base}/call_flows");
 
     public FabricResourcePut SwmlScripts =>
         _swmlScripts ??= new FabricResourcePut(_client, $"{Base}/swml_scripts");
 
-    public FabricResourcePut ConferenceRooms =>
-        _conferenceRooms ??= new FabricResourcePut(_client, $"{Base}/conference_rooms");
+    public FabricConferenceRoomsResource ConferenceRooms =>
+        _conferenceRooms ??= new FabricConferenceRoomsResource(_client, $"{Base}/conference_rooms");
 
     public FabricResourcePatch AiAgents =>
         _aiAgents ??= new FabricResourcePatch(_client, $"{Base}/ai_agents");
@@ -117,8 +112,8 @@ public class Fabric
     //   signalwire/rest/namespaces/fabric.py::FabricNamespace.__init__
     // ------------------------------------------------------------------
 
-    public FabricResourcePut CxmlApplications =>
-        _cxmlApplications ??= new FabricResourcePut(_client, $"{Base}/cxml_applications");
+    public FabricCxmlApplicationsResource CxmlApplications =>
+        _cxmlApplications ??= new FabricCxmlApplicationsResource(_client, $"{Base}/cxml_applications");
 
     public FabricResourcePut CxmlScripts =>
         _cxmlScripts ??= new FabricResourcePut(_client, $"{Base}/cxml_scripts");
@@ -131,9 +126,6 @@ public class Fabric
 
     public FabricResourcePut RelayApplications =>
         _relayApplications ??= new FabricResourcePut(_client, $"{Base}/relay_applications");
-
-    public CrudResource Resources =>
-        _resources ??= new CrudResource(_client, Base);
 
     public FabricResourcePatch SipGateways =>
         _sipGateways ??= new FabricResourcePatch(_client, $"{Base}/sip_gateways");

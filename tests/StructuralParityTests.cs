@@ -1129,10 +1129,12 @@ public class StructuralParityTests
         Assert.Equal("/api/fabric/resources/relay_applications", fabric.RelayApplications.BasePath);
         Assert.Equal("/api/fabric/resources/sip_gateways", fabric.SipGateways.BasePath);
         Assert.Equal("/api/fabric/resources/swml_webhooks", fabric.SwmlWebhooks.BasePath);
-        // ``resources`` is the catch-all under /api/fabric/resources (no
-        // sub-path). The generic ``tokens`` CRUD accessor was removed for
-        // SPEC-PARITY (no /api/fabric/tokens CRUD route in python or the spec);
-        // the real fabric token POSTs live on TokensApi (FabricTokens).
-        Assert.Equal("/api/fabric/resources", fabric.Resources.BasePath);
+        // The generic ``Resources`` (bare CrudResource) and ``Tokens`` CRUD
+        // accessors were removed for SPEC-PARITY: neither create/update on
+        // /api/fabric/resources nor a /api/fabric/tokens CRUD route exists in
+        // python or the spec. The real generic resource ops live on
+        // ResourcesGeneric (list/get/delete/list_addresses/assign_*) and the
+        // real fabric token POSTs on TokensApi (FabricTokens).
+        Assert.Equal("/api/fabric/resources", fabric.ResourcesGeneric.BasePath);
     }
 }

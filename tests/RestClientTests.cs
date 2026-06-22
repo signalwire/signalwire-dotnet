@@ -231,7 +231,6 @@ public class RestClientTests : IDisposable
         var fabric = new Fabric(http);
 
         Assert.Equal("/api/fabric/resources/sip_endpoints", fabric.SipEndpoints.BasePath);
-        Assert.Equal("/api/fabric/resources/addresses", fabric.Addresses.BasePath);
         Assert.Equal("/api/fabric/resources/call_flows", fabric.CallFlows.BasePath);
         Assert.Equal("/api/fabric/resources/swml_scripts", fabric.SwmlScripts.BasePath);
         Assert.Equal("/api/fabric/resources/conference_rooms", fabric.ConferenceRooms.BasePath);

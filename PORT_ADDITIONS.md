@@ -911,3 +911,19 @@ signalwire.relay.device.Device.to_dict: dotnet_tier3_typed_object: projects the 
 signalwire.relay.device.Device.from_dict: dotnet_tier3_typed_object: reconstructs a Device from a raw {type, params} dict (e.g. Call.Device or a wire frame), returning null when no type discriminant is present; Python reads the raw dict directly.
 signalwire.relay.device.Device.type: dotnet_tier3_typed_object: read-only string discriminant of the typed Device shape (kept a string — not schema-enumerated); Python uses the raw dict's "type" key.
 signalwire.relay.device.Device.params: dotnet_tier3_typed_object: read-only params payload of the typed Device shape; Python uses the raw dict's "params" key.
+
+# SPEC-PARITY restriction additions (resources de-CRUD'd to match python;
+# explicit base_path accessors + PUT/ctor where C# can't inherit them).
+signalwire.rest.namespaces.addresses.AddressesResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.chat.ChatResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.compat.CompatNamespace.base_path: namespace_field_accessor: .NET accessor for the namespace base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.datasphere.DatasphereNamespace.base_path: namespace_field_accessor: .NET accessor for the namespace base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.fabric.CxmlApplicationsResource.__init__: .NET port emits an explicit constructor; Python's FabricResourcePUT.__init__ is inherited.
+signalwire.rest.namespaces.imported_numbers.ImportedNumbersResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.logs.LogsNamespace.base_path: namespace_field_accessor: .NET accessor for the namespace base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.mfa.MfaResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.phone_numbers.PhoneNumbersResource.update: .NET port emits an explicit PUT override where Python inherits via CrudResource with _update_method = "PUT".
+signalwire.rest.namespaces.pubsub.PubSubResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.recordings.RecordingsResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.registry.RegistryNamespace.base_path: namespace_field_accessor: .NET accessor for the namespace base path; Python uses a class-level attribute.
+signalwire.rest.namespaces.short_codes.ShortCodesResource.base_path: namespace_field_accessor: .NET accessor for the resource's base path; Python uses a class-level attribute.

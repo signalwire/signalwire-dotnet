@@ -14,18 +14,27 @@ namespace SignalWire.REST.Namespaces;
 /// Extends CrudResource so the legacy ``client.Mfa.BasePath`` /
 /// ``client.Mfa.Create`` surface keeps working.
 /// </summary>
-public class Mfa : CrudResource
+public class Mfa
 {
-    public Mfa(HttpClient client) : base(client, "/api/relay/rest/mfa") { }
+    private readonly HttpClient _client;
+    public const string Base = "/api/relay/rest/mfa";
+
+    public Mfa(HttpClient client) { _client = client; }
+
+    /// <summary>Namespace base path. Python's MfaResource extends BaseResource
+    /// (NOT CrudResource): only sms/call/verify exist — no generic CRUD.</summary>
+    public string BasePath { get; } = Base;
+
+    private static string Path(params string[] parts) => Base + "/" + string.Join("/", parts);
 
     public Task<Dictionary<string, object?>> SmsAsync(Dictionary<string, object?> kwargs)
-        => Client.PostAsync(Path("sms"), kwargs);
+        => _client.PostAsync(Path("sms"), kwargs);
 
     public Task<Dictionary<string, object?>> CallAsync(Dictionary<string, object?> kwargs)
-        => Client.PostAsync(Path("call"), kwargs);
+        => _client.PostAsync(Path("call"), kwargs);
 
     public Task<Dictionary<string, object?>> VerifyAsync(string requestId, Dictionary<string, object?> kwargs)
-        => Client.PostAsync(Path(requestId, "verify"), kwargs);
+        => _client.PostAsync(Path(requestId, "verify"), kwargs);
 }
 
 /// <summary>
@@ -67,13 +76,27 @@ public class SipProfile
 /// Extends CrudResource — overrides UpdateAsync to use PUT (matching
 /// Python's _update_method = "PUT" on this resource).
 /// </summary>
-public class ShortCodes : CrudResource
+public class ShortCodes
 {
-    public ShortCodes(HttpClient client) : base(client, "/api/relay/rest/short_codes") { }
+    private readonly HttpClient _client;
+    public const string Base = "/api/relay/rest/short_codes";
 
-    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> data,
-        CancellationToken cancellationToken = default)
-        => Client.PutAsync(Path(id), data, cancellationToken);
+    public ShortCodes(HttpClient client) { _client = client; }
+
+    /// <summary>Python's ShortCodesResource (BaseResource) exposes only
+    /// list/get/update — no create/delete route exists.</summary>
+    public string BasePath { get; } = Base;
+
+    private static string Path(string id) => $"{Base}/{id}";
+
+    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null)
+        => _client.GetAsync(Base, queryParams);
+
+    public Task<Dictionary<string, object?>> GetAsync(string shortCodeId)
+        => _client.GetAsync(Path(shortCodeId));
+
+    public Task<Dictionary<string, object?>> UpdateAsync(string shortCodeId, Dictionary<string, object?> kwargs)
+        => _client.PutAsync(Path(shortCodeId), kwargs);
 }
 
 /// <summary>
@@ -114,10 +137,19 @@ public class NumberGroups : CrudResource
 /// surface keeps working; ``CreateAsync`` is the only method Python
 /// exposes.
 /// </summary>
-public class ImportedNumbers : CrudResource
+public class ImportedNumbers
 {
-    public ImportedNumbers(HttpClient client)
-        : base(client, "/api/relay/rest/imported_phone_numbers") { }
+    private readonly HttpClient _client;
+    public const string Base = "/api/relay/rest/imported_phone_numbers";
+
+    public ImportedNumbers(HttpClient client) { _client = client; }
+
+    /// <summary>Python's ImportedNumbersResource (BaseResource) exposes only
+    /// create — no list/get/update/delete route exists.</summary>
+    public string BasePath { get; } = Base;
+
+    public Task<Dictionary<string, object?>> CreateAsync(Dictionary<string, object?> kwargs)
+        => _client.PostAsync(Base, kwargs);
 }
 
 /// <summary>
@@ -198,13 +230,19 @@ public class ProjectTokens
 /// to /api/datasphere/documents directly; we preserve that surface and
 /// add ``Documents`` accessor for chunk/search per Python parity.
 /// </summary>
-public class DatasphereNs : CrudResource
+public class DatasphereNs
 {
+    private readonly HttpClient _client;
     private DatasphereDocuments? _docs;
 
-    public DatasphereNs(HttpClient client) : base(client, "/api/datasphere/documents") { }
+    public DatasphereNs(HttpClient client) { _client = client; }
 
-    public DatasphereDocuments Documents => _docs ??= new DatasphereDocuments(Client);
+    /// <summary>Namespace base path. Python's DatasphereNamespace is a plain
+    /// container exposing only ``documents`` — the CRUD lives on
+    /// <see cref="DatasphereDocuments"/>, not the namespace.</summary>
+    public string BasePath { get; } = "/api/datasphere/documents";
+
+    public DatasphereDocuments Documents => _docs ??= new DatasphereDocuments(_client);
 }
 
 /// <summary>Datasphere documents (CRUD + search + chunk methods).</summary>
@@ -232,15 +270,62 @@ public class DatasphereDocuments : CrudResource
 }
 
 /// <summary>
+/// Phone numbers namespace — full CRUD plus the available-number ``search``
+/// query.
+///
+/// Mirrors Python ``signalwire.rest.namespaces.phone_numbers.PhoneNumbersResource``
+/// (a CrudResource with _update_method = "PUT" plus ``search`` and the typed
+/// ``set_*`` binding helpers). This port carries the CRUD + ``SearchAsync``; the
+/// typed set_* binding helpers remain a documented surface omission
+/// (PORT_OMISSIONS.md) — they dispatch no route beyond ``update``.
+/// </summary>
+public class PhoneNumbers : CrudResource
+{
+    public PhoneNumbers(HttpClient client)
+        : base(client, "/api/relay/rest/phone_numbers") { }
+
+    /// <summary>Update via PUT (matching Python's _update_method = "PUT").</summary>
+    public override Task<Dictionary<string, object?>> UpdateAsync(string id, Dictionary<string, object?> data,
+        CancellationToken cancellationToken = default)
+        => Client.PutAsync(Path(id), data, cancellationToken);
+
+    /// <summary>Search for available phone numbers
+    /// (GET /api/relay/rest/phone_numbers/search). Mirrors Python's
+    /// ``PhoneNumbersResource.search(**params)``.</summary>
+    public Task<Dictionary<string, object?>> SearchAsync(Dictionary<string, string>? queryParams = null)
+        => Client.GetAsync(Path("search"), queryParams);
+}
+
+/// <summary>
 /// Addresses namespace (Relay top-level addresses, no update).
 ///
 /// Mirrors Python ``signalwire.rest.namespaces.addresses.AddressesResource``.
 /// Inherits CrudResource for the standard list/create/get/delete surface.
 /// </summary>
-public class Addresses : CrudResource
+public class Addresses
 {
-    public Addresses(HttpClient client)
-        : base(client, "/api/relay/rest/addresses") { }
+    private readonly HttpClient _client;
+    public const string Base = "/api/relay/rest/addresses";
+
+    public Addresses(HttpClient client) { _client = client; }
+
+    /// <summary>Python's AddressesResource (BaseResource) exposes
+    /// list/create/get/delete — there is no update route.</summary>
+    public string BasePath { get; } = Base;
+
+    private static string Path(string id) => $"{Base}/{id}";
+
+    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null)
+        => _client.GetAsync(Base, queryParams);
+
+    public Task<Dictionary<string, object?>> CreateAsync(Dictionary<string, object?> kwargs)
+        => _client.PostAsync(Base, kwargs);
+
+    public Task<Dictionary<string, object?>> GetAsync(string addressId)
+        => _client.GetAsync(Path(addressId));
+
+    public Task<Dictionary<string, object?>> DeleteAsync(string addressId)
+        => _client.DeleteAsync(Path(addressId));
 }
 
 /// <summary>
@@ -249,10 +334,27 @@ public class Addresses : CrudResource
 /// Mirrors Python ``signalwire.rest.namespaces.recordings.RecordingsResource``.
 /// Inherits CrudResource for the standard list/get/delete surface.
 /// </summary>
-public class Recordings : CrudResource
+public class Recordings
 {
-    public Recordings(HttpClient client)
-        : base(client, "/api/relay/rest/recordings") { }
+    private readonly HttpClient _client;
+    public const string Base = "/api/relay/rest/recordings";
+
+    public Recordings(HttpClient client) { _client = client; }
+
+    /// <summary>Python's RecordingsResource (BaseResource) exposes
+    /// list/get/delete — there is no create/update route.</summary>
+    public string BasePath { get; } = Base;
+
+    private static string Path(string id) => $"{Base}/{id}";
+
+    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null)
+        => _client.GetAsync(Base, queryParams);
+
+    public Task<Dictionary<string, object?>> GetAsync(string recordingId)
+        => _client.GetAsync(Path(recordingId));
+
+    public Task<Dictionary<string, object?>> DeleteAsync(string recordingId)
+        => _client.DeleteAsync(Path(recordingId));
 }
 
 /// <summary>
@@ -289,13 +391,20 @@ public class VerifiedCallers : CrudResource
 /// Mirrors Python ``signalwire.rest.namespaces.chat.ChatResource``
 /// (BaseResource /api/chat/tokens + create_token).
 /// </summary>
-public class ChatResource : CrudResource
+public class ChatResource
 {
-    public ChatResource(HttpClient client) : base(client, "/api/chat/tokens") { }
+    private readonly HttpClient _client;
+    public const string Base = "/api/chat/tokens";
+
+    public ChatResource(HttpClient client) { _client = client; }
+
+    /// <summary>Python's ChatResource (BaseResource) is token-only:
+    /// create_token POSTs /api/chat/tokens. No list/get/update/delete route.</summary>
+    public string BasePath { get; } = Base;
 
     /// <summary>Generate a new chat token (POST /api/chat/tokens).</summary>
     public Task<Dictionary<string, object?>> CreateTokenAsync(Dictionary<string, object?> kwargs)
-        => Client.PostAsync(BasePath, kwargs);
+        => _client.PostAsync(Base, kwargs);
 }
 
 /// <summary>
@@ -304,13 +413,20 @@ public class ChatResource : CrudResource
 /// Mirrors Python ``signalwire.rest.namespaces.pubsub.PubSubResource``
 /// (BaseResource /api/pubsub/tokens + create_token).
 /// </summary>
-public class PubSubResource : CrudResource
+public class PubSubResource
 {
-    public PubSubResource(HttpClient client) : base(client, "/api/pubsub/tokens") { }
+    private readonly HttpClient _client;
+    public const string Base = "/api/pubsub/tokens";
+
+    public PubSubResource(HttpClient client) { _client = client; }
+
+    /// <summary>Python's PubSubResource (BaseResource) is token-only:
+    /// create_token POSTs /api/pubsub/tokens. No list/get/update/delete route.</summary>
+    public string BasePath { get; } = Base;
 
     /// <summary>Generate a new PubSub token (POST /api/pubsub/tokens).</summary>
     public Task<Dictionary<string, object?>> CreateTokenAsync(Dictionary<string, object?> kwargs)
-        => Client.PostAsync(BasePath, kwargs);
+        => _client.PostAsync(Base, kwargs);
 }
 
 /// <summary>

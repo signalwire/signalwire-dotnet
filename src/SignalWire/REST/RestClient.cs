@@ -24,7 +24,7 @@ public class RestClient : IDisposable
     // ------------------------------------------------------------------
     private Fabric? _fabric;
     private Calling? _calling;
-    private CrudResource? _phoneNumbers;
+    private PhoneNumbers? _phoneNumbers;
     private DatasphereNs? _datasphere;
     private Video? _video;
     private Compat? _compat;
@@ -88,9 +88,9 @@ public class RestClient : IDisposable
     /// <summary>Calling API (37 call-control commands).</summary>
     public Calling Calling => _calling ??= new Calling(_http, _projectId);
 
-    /// <summary>Phone numbers.</summary>
-    public CrudResource PhoneNumbers =>
-        _phoneNumbers ??= new CrudResource(_http, "/api/relay/rest/phone_numbers");
+    /// <summary>Phone numbers (CRUD + available-number search).</summary>
+    public PhoneNumbers PhoneNumbers =>
+        _phoneNumbers ??= new PhoneNumbers(_http);
 
     /// <summary>Datasphere documents.</summary>
     public DatasphereNs Datasphere =>

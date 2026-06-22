@@ -129,30 +129,24 @@ var cxml = client.Fabric.CxmlResources.Create(new Dictionary<string, object>
 
 ## Generic Resources
 
+The generic ``ResourcesGeneric`` accessor lists/gets/deletes any resource type
+and lists its addresses (there is no generic create — create a typed resource,
+e.g. ``SwmlScripts``/``CallFlows``):
+
 ```csharp
-var resource = client.Fabric.Resources.Create(new Dictionary<string, object>
-{
-    ["name"]    = "custom-handler",
-    ["type"]    = "swml_script",
-    ["content"] = swmlContent,
-});
+var resources = client.Fabric.ResourcesGeneric.List();
+var resource  = client.Fabric.ResourcesGeneric.Get(resourceId);
+var addrs     = client.Fabric.ResourcesGeneric.ListAddresses(resourceId);
 ```
 
 ## Addresses
 
-Fabric addresses map phone numbers to resources:
+Top-level Fabric addresses are read-only (list/get); a resource's addresses are
+created by binding a phone number (the server auto-materializes them):
 
 ```csharp
-var address = client.Fabric.Addresses.Create(new Dictionary<string, object>
-{
-    ["name"]        = "Main Number",
-    ["type"]        = "phone_number",
-    ["resource_id"] = resourceId,
-    ["channels"]    = new Dictionary<string, object>
-    {
-        ["voice"] = new Dictionary<string, object> { ["resource_id"] = agentId },
-    },
-});
+var addresses = client.Fabric.AddressesTopLevel.List();
+var address   = client.Fabric.AddressesTopLevel.Get(addressId);
 ```
 
 ## Tokens

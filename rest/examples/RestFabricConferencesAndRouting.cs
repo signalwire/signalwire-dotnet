@@ -40,7 +40,7 @@ Safe("Create cXML", () =>
 Console.WriteLine("\nCreating generic routing resource...");
 Safe("Create resource", () =>
 {
-    var resource = client.Fabric.Resources.Create(new Dictionary<string, object>
+    var resource = client.Fabric.SwmlScripts.Create(new Dictionary<string, object>
     {
         ["name"] = "custom-router",
         ["type"] = "swml_script",
@@ -52,7 +52,7 @@ Safe("Create resource", () =>
 Console.WriteLine("\nListing Fabric addresses...");
 Safe("List addresses", () =>
 {
-    var addresses = client.Fabric.Addresses.List();
+    var addresses = client.Fabric.AddressesTopLevel.List();
     var data = addresses["data"] as List<object> ?? new();
     foreach (var item in data.Take(5))
     {

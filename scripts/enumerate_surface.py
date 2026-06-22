@@ -336,12 +336,24 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ("SignalWire.REST.Namespaces", "CxmlApplicationsHelper"): (
         "signalwire.rest.namespaces.fabric", "CxmlApplicationsResource",
     ),
+    ("SignalWire.REST.Namespaces", "FabricCallFlowsResource"): (
+        "signalwire.rest.namespaces.fabric", "CallFlowsResource",
+    ),
+    ("SignalWire.REST.Namespaces", "FabricConferenceRoomsResource"): (
+        "signalwire.rest.namespaces.fabric", "ConferenceRoomsResource",
+    ),
+    ("SignalWire.REST.Namespaces", "FabricCxmlApplicationsResource"): (
+        "signalwire.rest.namespaces.fabric", "CxmlApplicationsResource",
+    ),
     # ----- Small namespaces (Python files name them with "Resource" suffix) -----
     ("SignalWire.REST.Namespaces", "Mfa"): (
         "signalwire.rest.namespaces.mfa", "MfaResource",
     ),
     ("SignalWire.REST.Namespaces", "LookupResource"): (
         "signalwire.rest.namespaces.lookup", "LookupResource",
+    ),
+    ("SignalWire.REST.Namespaces", "PhoneNumbers"): (
+        "signalwire.rest.namespaces.phone_numbers", "PhoneNumbersResource",
     ),
     ("SignalWire.REST.Namespaces", "SipProfile"): (
         "signalwire.rest.namespaces.sip_profile", "SipProfileResource",
