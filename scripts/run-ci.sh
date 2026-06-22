@@ -223,7 +223,16 @@ dotnet_test_per_framework() {
         fwlog="$(mktemp)"
         fwlogs+=("$fw:$fwlog")
         if [ -n "$dotnet_bin" ]; then
-            "$dotnet_bin" test --framework "$fw" 2>&1 | tee "$fwlog"
+            # Host path (the GitHub runner has dotnet on PATH). The test fixtures
+            # read MOCK_RELAY_PORT (WS) / MOCK_RELAY_HTTP_PORT, but our internal WS
+            # port var is MOCK_RELAY_WS_PORT — so we must RENAME it here, exactly as
+            # the docker branch does via `-e MOCK_RELAY_PORT=$MOCK_RELAY_WS_PORT`.
+            # Without this the fixture sees no MOCK_RELAY_PORT, self-spawns its own
+            # mock_relay, and net10.0 loses the spawn race → "Connection refused".
+            MOCK_SIGNALWIRE_PORT="$MOCK_SIGNALWIRE_PORT" \
+            MOCK_RELAY_PORT="$MOCK_RELAY_WS_PORT" \
+            MOCK_RELAY_HTTP_PORT="$MOCK_RELAY_HTTP_PORT" \
+                "$dotnet_bin" test --framework "$fw" 2>&1 | tee "$fwlog"
             [ "${PIPESTATUS[0]}" -eq 0 ] || { rc=1; failed_fws="$failed_fws $fw"; }
         else
             docker run --rm --network host \
