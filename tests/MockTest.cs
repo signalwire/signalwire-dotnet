@@ -494,12 +494,28 @@ public static class MockTest
         if (string.IsNullOrWhiteSpace(host)) host = "127.0.0.1";
 
         var portRaw = Environment.GetEnvironmentVariable("MOCK_SIGNALWIRE_PORT");
-        var port = DefaultPort;
         if (!string.IsNullOrWhiteSpace(portRaw) && int.TryParse(portRaw.Trim(), out var p) && p > 0)
         {
-            port = p;
+            return (host, p);
         }
-        return (host, port);
+        // No env override: pick a FREE port (bind :0) rather than the hardcoded
+        // default that collides with a stale/concurrent mock and hangs the suite.
+        return (host, PickFreePort());
+    }
+
+    /// <summary>Ask the OS for a free loopback TCP port (bind :0, read it, release).</summary>
+    private static int PickFreePort()
+    {
+        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        try
+        {
+            return ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        }
+        finally
+        {
+            listener.Stop();
+        }
     }
 
     private static Process SpawnMockServer(string host, int port)

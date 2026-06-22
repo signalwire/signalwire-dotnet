@@ -611,21 +611,32 @@ public static class RelayMockTest
         var host = Environment.GetEnvironmentVariable("MOCK_RELAY_HOST");
         if (string.IsNullOrWhiteSpace(host)) host = "127.0.0.1";
 
+        // Env override wins; otherwise pick a FREE port (bind :0) rather than the
+        // hardcoded default — WS and HTTP control plane picked independently.
         var wsRaw = Environment.GetEnvironmentVariable("MOCK_RELAY_PORT");
-        var wsPort = DefaultWsPort;
-        if (!string.IsNullOrWhiteSpace(wsRaw) && int.TryParse(wsRaw.Trim(), out var w) && w > 0)
-        {
-            wsPort = w;
-        }
+        var wsPort = (!string.IsNullOrWhiteSpace(wsRaw) && int.TryParse(wsRaw.Trim(), out var w) && w > 0)
+            ? w : PickFreePort();
 
         var httpRaw = Environment.GetEnvironmentVariable("MOCK_RELAY_HTTP_PORT");
-        var httpPort = DefaultHttpPort;
-        if (!string.IsNullOrWhiteSpace(httpRaw) && int.TryParse(httpRaw.Trim(), out var hp) && hp > 0)
-        {
-            httpPort = hp;
-        }
+        var httpPort = (!string.IsNullOrWhiteSpace(httpRaw) && int.TryParse(httpRaw.Trim(), out var hp) && hp > 0)
+            ? hp : PickFreePort();
 
         return (host, wsPort, httpPort);
+    }
+
+    /// <summary>Ask the OS for a free loopback TCP port (bind :0, read it, release).</summary>
+    private static int PickFreePort()
+    {
+        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        try
+        {
+            return ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        }
+        finally
+        {
+            listener.Stop();
+        }
     }
 
     private static Process SpawnMockServer(string host, int wsPort, int httpPort)
