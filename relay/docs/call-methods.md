@@ -2,7 +2,11 @@
 
 ## Overview
 
-The `Call` object represents a live phone call. It provides async methods for every calling operation.
+The `Call` object represents a live phone call. Simple operations
+(answer, hangup, transfer, send digits, ...) are `async` methods returning a
+`Task`. Media operations (play, record, collect, detect, tap, ...) are
+**synchronous** methods that return an `*Action` handle; you `await` the
+handle's `WaitAsync()` to block until the operation completes.
 
 ## Answer and Hangup
 
@@ -14,46 +18,43 @@ await call.HangupAsync(reason: "busy");
 
 ## Play
 
-Play audio or TTS to the call.
+Play audio or TTS to the call. The typed convenience methods
+(`PlayTts`, `PlayAudio`, `PlaySilence`, `PlayRingtone`) build the media
+shape for you; the generic `Play(extra)` takes a raw RELAY payload. All
+return a `PlayAction` synchronously.
 
 ```csharp
 // TTS
-var action = await call.PlayAsync(media: new[]
-{
-    new Dictionary<string, object>
-    {
-        ["type"]   = "tts",
-        ["params"] = new Dictionary<string, object> { ["text"] = "Hello!" },
-    },
-});
+var action = call.PlayTts("Hello!");
 await action.WaitAsync();
 
 // Audio file
-var action = await call.PlayAsync(media: new[]
+var action = call.PlayAudio("https://example.com/audio.mp3");
+await action.WaitAsync();
+
+// Silence (seconds)
+var action = call.PlaySilence(2);
+await action.WaitAsync();
+
+// Raw payload via the generic Play(extra)
+var action = call.Play(new Dictionary<string, object?>
 {
-    new Dictionary<string, object>
+    ["play"] = new[]
     {
-        ["type"]   = "audio",
-        ["params"] = new Dictionary<string, object> { ["url"] = "https://example.com/audio.mp3" },
+        new Dictionary<string, object>
+        {
+            ["type"]   = "tts",
+            ["params"] = new Dictionary<string, object> { ["text"] = "Hello!" },
+        },
     },
 });
 await action.WaitAsync();
-
-// Silence
-var action = await call.PlayAsync(media: new[]
-{
-    new Dictionary<string, object>
-    {
-        ["type"]   = "silence",
-        ["params"] = new Dictionary<string, object> { ["duration"] = 2 },
-    },
-});
 ```
 
 ## Record
 
 ```csharp
-var action = await call.RecordAsync(new Dictionary<string, object>
+var action = call.Record(new Dictionary<string, object?>
 {
     ["beep"]        = true,
     ["format"]      = "wav",
@@ -62,15 +63,16 @@ var action = await call.RecordAsync(new Dictionary<string, object>
     ["end_silence"] = 5,
 });
 
-var result = await action.WaitAsync();
-// result contains recording URL
+await action.WaitAsync();
+// action.Url contains the recording URL once finished
 ```
 
 ## Play and Collect (DTMF/Speech)
 
 ```csharp
-var action = await call.PlayAndCollectAsync(
-    media: new[]
+var action = call.PlayAndCollect(new Dictionary<string, object?>
+{
+    ["play"] = new[]
     {
         new Dictionary<string, object>
         {
@@ -78,7 +80,7 @@ var action = await call.PlayAndCollectAsync(
             ["params"] = new Dictionary<string, object> { ["text"] = "Press 1 for sales, 2 for support." },
         },
     },
-    collect: new Dictionary<string, object>
+    ["collect"] = new Dictionary<string, object>
     {
         ["digits"] = new Dictionary<string, object>
         {
@@ -86,8 +88,8 @@ var action = await call.PlayAndCollectAsync(
             ["digit_timeout"] = 5.0,
         },
         ["initial_timeout"] = 10.0,
-    }
-);
+    },
+});
 
 var result = await action.WaitAsync();
 ```
@@ -97,8 +99,9 @@ var result = await action.WaitAsync();
 Bridge the call to another destination.
 
 ```csharp
-await call.ConnectAsync(
-    devices: new List<List<Dictionary<string, object>>>
+await call.ConnectAsync(new Dictionary<string, object?>
+{
+    ["devices"] = new List<List<Dictionary<string, object>>>
     {
         new()
         {
@@ -114,15 +117,15 @@ await call.ConnectAsync(
             },
         },
     },
-    ringback: new[]
+    ["ringback"] = new[]
     {
         new Dictionary<string, object>
         {
             ["type"]   = "tts",
             ["params"] = new Dictionary<string, object> { ["text"] = "Please wait." },
         },
-    }
-);
+    },
+});
 ```
 
 ## Detect
@@ -130,7 +133,7 @@ await call.ConnectAsync(
 Run detection on the call (machine, fax, digit).
 
 ```csharp
-var action = await call.DetectAsync(new Dictionary<string, object>
+var action = call.Detect(new Dictionary<string, object?>
 {
     ["type"]   = "machine",
     ["params"] = new Dictionary<string, object>
@@ -148,7 +151,7 @@ var result = await action.WaitAsync();
 Start a media tap (real-time audio stream).
 
 ```csharp
-var action = await call.TapAsync(new Dictionary<string, object>
+var action = call.Tap(new Dictionary<string, object?>
 {
     ["type"]   = "audio",
     ["params"] = new Dictionary<string, object>
@@ -167,21 +170,23 @@ var action = await call.TapAsync(new Dictionary<string, object>
 ## Send Digits
 
 ```csharp
-await call.SendDigitsAsync("1234#");
+await call.SendDigitsAsync(new Dictionary<string, object?> { ["digits"] = "1234#" });
 ```
 
 ## Action Control
 
-Actions returned by Play, Record, Detect, etc. support:
+Actions returned by Play, Record, Detect, etc. support a single async method,
+`WaitAsync()`; stop/pause/resume are synchronous (they fire-and-return a
+sub-command RPC). Pause/Resume exist only on `PlayAction` and `RecordAction`.
 
 ```csharp
-var action = await call.PlayAsync(media: ttsMedia);
+var action = call.PlayTts("Hello!");
 
-await action.WaitAsync();        // Wait for completion
+await action.WaitAsync();        // Wait for completion (default 30s)
 await action.WaitAsync(15);      // Wait with timeout (seconds)
-await action.StopAsync();        // Stop the action
-await action.PauseAsync();       // Pause (play only)
-await action.ResumeAsync();      // Resume (play only)
+action.Stop();                   // Stop the action
+action.Pause();                  // Pause (PlayAction / RecordAction)
+action.Resume();                 // Resume (PlayAction / RecordAction)
 ```
 
 ## Call Properties

@@ -5,7 +5,7 @@
 Add the SignalWire package to your project:
 
 ```bash
-dotnet add package SignalWire
+dotnet add package SignalWire.Sdk
 ```
 
 ## Environment Setup
@@ -34,14 +34,9 @@ client.OnCall(async (call, evt) =>
     Console.WriteLine($"Incoming call: {call.CallId}");
     await call.AnswerAsync();
 
-    var action = await call.PlayAsync(media: new[]
-    {
-        new Dictionary<string, object>
-        {
-            ["type"]   = "tts",
-            ["params"] = new Dictionary<string, object> { ["text"] = "Hello from SignalWire!" },
-        },
-    });
+    // Play* methods are synchronous and return an *Action handle.
+    // Await the handle's WaitAsync() to block until playback finishes.
+    var action = call.PlayTts("Hello from SignalWire!");
     await action.WaitAsync();
 
     await call.HangupAsync();

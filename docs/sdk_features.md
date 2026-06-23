@@ -64,7 +64,7 @@ Real-time call control and messaging over WebSocket using the Blade protocol (JS
 - Auto-reconnect with exponential backoff
 - All calling methods: play, record, collect, connect, detect, fax, tap, stream, AI, conferencing, queues
 - SMS/MMS messaging: send outbound, receive inbound, track delivery state
-- Action objects with `WaitAsync()`, `StopAsync()`, `PauseAsync()`, `ResumeAsync()`
+- Action objects with async `WaitAsync()` plus synchronous `Stop()`, `Pause()`, `Resume()`
 - Typed event classes for all call events
 - Dynamic context subscription/unsubscription
 
@@ -81,7 +81,7 @@ var client = new Client(new Dictionary<string, string>
 client.OnCall(async (call, evt) =>
 {
     await call.AnswerAsync();
-    var action = await call.PlayAsync(media: ttsMedia("Hello!"));
+    var action = call.PlayTts("Hello!");
     await action.WaitAsync();
     await call.HangupAsync();
 });
@@ -116,13 +116,26 @@ HTTP client for all SignalWire APIs. Lazily initializes namespace sub-objects.
 var client = new RestClient(projectId: id, token: tok, space: sp);
 
 // Fabric API
-client.Fabric.AiAgents.Create(name: "Bot", prompt: new() { ["text"] = "Hello" });
+await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
+{
+    ["name"]   = "Bot",
+    ["prompt"] = new Dictionary<string, object> { ["text"] = "Hello" },
+});
 
 // Phone numbers
-var numbers = client.PhoneNumbers.List();
+var numbers = await client.PhoneNumbers.ListAsync();
 
 // Calling
-client.Calling.Dial(from: "+15559876543", to: "+15551234567", url: "https://example.com/handler");
+await client.Calling.DialAsync(new Dictionary<string, object?>
+{
+    ["command"] = "dial",
+    ["params"]  = new Dictionary<string, object>
+    {
+        ["from"] = "+15559876543",
+        ["to"]   = "+15551234567",
+        ["url"]  = "https://example.com/handler",
+    },
+});
 ```
 
 ## .NET-Specific Features

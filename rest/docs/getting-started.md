@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-dotnet add package SignalWire
+dotnet add package SignalWire.Sdk
 ```
 
 ## Environment Setup
@@ -26,11 +26,11 @@ var client = new RestClient(
 );
 
 // List phone numbers
-var numbers = client.PhoneNumbers.List();
+var numbers = await client.PhoneNumbers.ListAsync();
 Console.WriteLine($"Found {((numbers["data"] as List<object>)?.Count ?? 0)} numbers");
 
 // List AI agents
-var agents = client.Fabric.AiAgents.List();
+var agents = await client.Fabric.AiAgents.ListAsync();
 Console.WriteLine($"Found {((agents["data"] as List<object>)?.Count ?? 0)} agents");
 ```
 
@@ -53,10 +53,10 @@ var client = new RestClient();
 ```csharp
 try
 {
-    var result = client.PhoneNumbers.List();
+    var result = await client.PhoneNumbers.ListAsync();
     Console.WriteLine("Success");
 }
-catch (Exception ex)
+catch (SignalWireRestError ex)
 {
     Console.WriteLine($"REST error: {ex.Message}");
 }
@@ -66,27 +66,30 @@ catch (Exception ex)
 
 All namespace resources support standard CRUD:
 
+All CRUD methods are asynchronous and take a `Dictionary` body.
+
 ```csharp
-// List
-var items = client.PhoneNumbers.List();
+// List (optional query params as Dictionary<string, string>)
+var items = await client.PhoneNumbers.ListAsync();
 
 // Create
-var item = client.Fabric.AiAgents.Create(
-    name:   "Bot",
-    prompt: new Dictionary<string, object> { ["text"] = "You are helpful." }
-);
+var item = await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
+{
+    ["name"]   = "Bot",
+    ["prompt"] = new Dictionary<string, object> { ["text"] = "You are helpful." },
+});
 
 // Read
-var agent = client.Fabric.AiAgents.Get(agentId);
+var agent = await client.Fabric.AiAgents.GetAsync(agentId);
 
 // Update
-client.Fabric.AiAgents.Update(agentId, new Dictionary<string, object>
+await client.Fabric.AiAgents.UpdateAsync(agentId, new Dictionary<string, object?>
 {
     ["name"] = "Updated Bot",
 });
 
 // Delete
-client.Fabric.AiAgents.Delete(agentId);
+await client.Fabric.AiAgents.DeleteAsync(agentId);
 ```
 
 ## Next Steps

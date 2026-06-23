@@ -110,9 +110,22 @@ var client = new RestClient(
     space:     Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")!
 );
 
-client.Fabric.AiAgents.Create(name: "Bot", prompt: new() { ["text"] = "You are helpful." });
-client.PhoneNumbers.Search(areaCode: "512");
-client.Calling.Dial(from: "+15559876543", to: "+15551234567", url: "https://example.com/handler");
+await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
+{
+    ["name"]   = "Bot",
+    ["prompt"] = new Dictionary<string, object> { ["text"] = "You are helpful." },
+});
+await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["area_code"] = "512" });
+await client.Calling.DialAsync(new Dictionary<string, object?>
+{
+    ["command"] = "dial",
+    ["params"]  = new Dictionary<string, object>
+    {
+        ["from"] = "+15559876543",
+        ["to"]   = "+15551234567",
+        ["url"]  = "https://example.com/handler",
+    },
+});
 ```
 
 ## RELAY Client
@@ -133,8 +146,7 @@ var client = new Client(new Dictionary<string, string>
 client.OnCall(async (call, evt) =>
 {
     await call.AnswerAsync();
-    var action = await call.PlayAsync(media: new[] { new Dictionary<string, object>
-        { ["type"] = "tts", ["params"] = new Dictionary<string, object> { ["text"] = "Hello!" } } });
+    var action = call.PlayTts("Hello!");
     await action.WaitAsync();
     await call.HangupAsync();
 });

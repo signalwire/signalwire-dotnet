@@ -2,39 +2,40 @@
 
 ## Overview
 
-The Fabric namespace manages AI agents, SWML scripts, subscribers, call flows, SIP endpoints, cXML resources, and more. Each sub-resource supports standard CRUD operations.
+The Fabric namespace manages AI agents, SWML scripts, subscribers, call flows, SIP endpoints, cXML resources, and more. Each sub-resource exposes the async CRUD methods (`ListAsync`/`GetAsync`/`CreateAsync`/`UpdateAsync`/`DeleteAsync`).
 
 ## AI Agents
 
 ```csharp
 // Create
-var agent = client.Fabric.AiAgents.Create(
-    name:   "Support Bot",
-    prompt: new Dictionary<string, object> { ["text"] = "You are a helpful support agent." }
-);
+var agent = await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
+{
+    ["name"]   = "Support Bot",
+    ["prompt"] = new Dictionary<string, object> { ["text"] = "You are a helpful support agent." },
+});
 var agentId = agent["id"].ToString();
 
 // List
-var agents = client.Fabric.AiAgents.List();
+var agents = await client.Fabric.AiAgents.ListAsync();
 
 // Get
-var details = client.Fabric.AiAgents.Get(agentId);
+var details = await client.Fabric.AiAgents.GetAsync(agentId);
 
 // Update
-client.Fabric.AiAgents.Update(agentId, new Dictionary<string, object>
+await client.Fabric.AiAgents.UpdateAsync(agentId, new Dictionary<string, object?>
 {
     ["name"] = "Updated Bot",
 });
 
 // Delete
-client.Fabric.AiAgents.Delete(agentId);
+await client.Fabric.AiAgents.DeleteAsync(agentId);
 ```
 
 ## SWML Scripts
 
 ```csharp
 // Create
-var script = client.Fabric.SwmlScripts.Create(new Dictionary<string, object>
+var script = await client.Fabric.SwmlScripts.CreateAsync(new Dictionary<string, object?>
 {
     ["name"]    = "greeting",
     ["content"] = new Dictionary<string, object>
@@ -53,14 +54,14 @@ var script = client.Fabric.SwmlScripts.Create(new Dictionary<string, object>
 });
 
 // List
-var scripts = client.Fabric.SwmlScripts.List();
+var scripts = await client.Fabric.SwmlScripts.ListAsync();
 ```
 
 ## Subscribers
 
 ```csharp
 // Create a SIP subscriber
-var subscriber = client.Fabric.Subscribers.Create(new Dictionary<string, object>
+var subscriber = await client.Fabric.Subscribers.CreateAsync(new Dictionary<string, object?>
 {
     ["display_name"] = "Alice Smith",
     ["type"]         = "sip",
@@ -69,14 +70,14 @@ var subscriber = client.Fabric.Subscribers.Create(new Dictionary<string, object>
 });
 
 // List
-var subscribers = client.Fabric.Subscribers.List();
+var subscribers = await client.Fabric.Subscribers.ListAsync();
 ```
 
 ## Call Flows
 
 ```csharp
 // Create
-var flow = client.Fabric.CallFlows.Create(new Dictionary<string, object>
+var flow = await client.Fabric.CallFlows.CreateAsync(new Dictionary<string, object?>
 {
     ["name"]    = "main-ivr",
     ["content"] = new Dictionary<string, object>
@@ -98,14 +99,14 @@ var flow = client.Fabric.CallFlows.Create(new Dictionary<string, object>
 });
 
 // List
-var flows = client.Fabric.CallFlows.List();
+var flows = await client.Fabric.CallFlows.ListAsync();
 ```
 
 ## SIP Endpoints
 
 ```csharp
 // Create
-var endpoint = client.Fabric.SipEndpoints.Create(new Dictionary<string, object>
+var endpoint = await client.Fabric.SipEndpoints.CreateAsync(new Dictionary<string, object?>
 {
     ["username"]     = "alice",
     ["password"]     = "secure-password",
@@ -114,13 +115,16 @@ var endpoint = client.Fabric.SipEndpoints.Create(new Dictionary<string, object>
 });
 
 // List
-var endpoints = client.Fabric.SipEndpoints.List();
+var endpoints = await client.Fabric.SipEndpoints.ListAsync();
 ```
 
 ## cXML Resources
 
+cXML is exposed as `CxmlScripts` (inline scripts), `CxmlApplications`, and
+`CxmlWebhooks`:
+
 ```csharp
-var cxml = client.Fabric.CxmlResources.Create(new Dictionary<string, object>
+var cxml = await client.Fabric.CxmlScripts.CreateAsync(new Dictionary<string, object?>
 {
     ["name"] = "conference-handler",
     ["body"] = "<Response><Dial><Conference>room-1</Conference></Dial></Response>",
@@ -134,9 +138,9 @@ and lists its addresses (there is no generic create — create a typed resource,
 e.g. ``SwmlScripts``/``CallFlows``):
 
 ```csharp
-var resources = client.Fabric.ResourcesGeneric.List();
-var resource  = client.Fabric.ResourcesGeneric.Get(resourceId);
-var addrs     = client.Fabric.ResourcesGeneric.ListAddresses(resourceId);
+var resources = await client.Fabric.ResourcesGeneric.ListAsync();
+var resource  = await client.Fabric.ResourcesGeneric.GetAsync(resourceId);
+var addrs     = await client.Fabric.ResourcesGeneric.ListAddressesAsync(resourceId);
 ```
 
 ## Addresses
@@ -145,8 +149,8 @@ Top-level Fabric addresses are read-only (list/get); a resource's addresses are
 created by binding a phone number (the server auto-materializes them):
 
 ```csharp
-var addresses = client.Fabric.AddressesTopLevel.List();
-var address   = client.Fabric.AddressesTopLevel.Get(addressId);
+var addresses = await client.Fabric.AddressesTopLevel.ListAsync();
+var address   = await client.Fabric.AddressesTopLevel.GetAsync(addressId);
 ```
 
 ## Tokens
@@ -154,7 +158,7 @@ var address   = client.Fabric.AddressesTopLevel.Get(addressId);
 Generate authentication tokens for subscribers:
 
 ```csharp
-var token = client.Fabric.TokensApi.CreateSubscriberToken(new Dictionary<string, object>
+var token = await client.Fabric.TokensApi.CreateSubscriberTokenAsync(new Dictionary<string, object?>
 {
     ["subscriber_id"] = subscriberId,
     ["ttl"]           = 3600,

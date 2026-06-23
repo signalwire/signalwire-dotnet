@@ -35,13 +35,15 @@ var message = await client.SendMessageAsync(new Dictionary<string, object?>
 
 Register a message handler to receive inbound messages:
 
+The callback receives the `Message` object and the `Event`:
+
 ```csharp
-client.OnMessage(async (evt, parms) =>
+client.OnMessage(async (message, evt) =>
 {
-    var from    = parms.GetValueOrDefault("from")?.ToString() ?? "unknown";
-    var to      = parms.GetValueOrDefault("to")?.ToString() ?? "unknown";
-    var body    = parms.GetValueOrDefault("body")?.ToString() ?? "";
-    var context = parms.GetValueOrDefault("context")?.ToString() ?? "";
+    var from    = message.FromNumber ?? "unknown";
+    var to      = message.ToNumber ?? "unknown";
+    var body    = message.Body ?? "";
+    var context = message.Context ?? "";
 
     Console.WriteLine($"Inbound message from {from} to {to}: {body}");
 

@@ -58,30 +58,31 @@ All namespace accessors are lazily initialized on first access.
 
 ## CrudResource Methods
 
-All `CrudResource` instances support:
+All `CrudResource` instances expose asynchronous methods returning
+`Task<Dictionary<string, object?>>`:
 
 | Method | Description |
 |--------|-------------|
-| `List()` | List all resources |
-| `Get(id)` | Get a single resource |
-| `Create(data)` | Create a new resource |
-| `Update(id, data)` | Update a resource |
-| `Delete(id)` | Delete a resource |
-| `Search(...)` | Search (where supported) |
+| `ListAsync(queryParams?)` | List resources (`Dictionary<string, string>` query params) |
+| `GetAsync(id)` | Get a single resource |
+| `CreateAsync(data)` | Create a new resource (`Dictionary<string, object?>` body) |
+| `UpdateAsync(id, data)` | Update a resource |
+| `DeleteAsync(id)` | Delete a resource |
+| `SearchAsync(...)` | Search (where supported) |
 
 ## Error Handling
 
 ```csharp
 try
 {
-    var result = client.PhoneNumbers.List();
+    var result = await client.PhoneNumbers.ListAsync();
 }
 catch (ArgumentException ex)
 {
-    // Missing or invalid credentials
+    // Missing or invalid credentials (thrown by the RestClient constructor)
     Console.WriteLine($"Config error: {ex.Message}");
 }
-catch (Exception ex)
+catch (SignalWireRestError ex)
 {
     // HTTP or API error
     Console.WriteLine($"REST error: {ex.Message}");
@@ -94,8 +95,8 @@ The underlying `HttpClient` handles authentication, JSON serialization, and erro
 
 ```csharp
 // Direct HTTP access for custom endpoints
-var response = client.Http.Get("/api/custom/endpoint");
-var result = client.Http.Post("/api/custom/endpoint", new Dictionary<string, object>
+var response = await client.Http.GetAsync("/api/custom/endpoint");
+var result = await client.Http.PostAsync("/api/custom/endpoint", new Dictionary<string, object?>
 {
     ["key"] = "value",
 });

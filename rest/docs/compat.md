@@ -6,8 +6,12 @@ The Compatibility API provides a Twilio-compatible LAML (LaML) surface for migra
 
 ## Making Calls
 
+`Compat` is a container of LaML sub-resources (`Calls`, `Messages`, `Faxes`,
+`Conferences`, ...), each exposing the async CRUD methods. Calls are created on
+`Compat.Calls`:
+
 ```csharp
-var call = client.Compat.Create(new Dictionary<string, object>
+var call = await client.Compat.Calls.CreateAsync(new Dictionary<string, object?>
 {
     ["To"]   = "+15551234567",
     ["From"] = "+15559876543",
@@ -19,7 +23,7 @@ Console.WriteLine($"Call SID: {call["sid"]}");
 ## Sending SMS
 
 ```csharp
-var message = client.Compat.Create(new Dictionary<string, object>
+var message = await client.Compat.Messages.CreateAsync(new Dictionary<string, object?>
 {
     ["To"]   = "+15551234567",
     ["From"] = "+15559876543",
@@ -62,7 +66,7 @@ var client = new RestClient(
 
 ```csharp
 // Same LAML URLs work with SignalWire
-client.Compat.Create(new Dictionary<string, object>
+await client.Compat.Calls.CreateAsync(new Dictionary<string, object?>
 {
     ["To"]   = "+15551234567",
     ["From"] = "+15559876543",
@@ -83,10 +87,11 @@ client.Compat.Create(new Dictionary<string, object>
 
 ```csharp
 // List calls
-var calls = client.Compat.List();
+var calls = await client.Compat.Calls.ListAsync();
 
-// List with filters (append to path)
-var filtered = client.Compat.Http.Get(
-    $"/api/laml/2010-04-01/Accounts/{client.ProjectId}/Calls.json?Status=completed"
-);
+// List with filters (query-param Dictionary)
+var filtered = await client.Compat.Calls.ListAsync(new Dictionary<string, string>
+{
+    ["Status"] = "completed",
+});
 ```

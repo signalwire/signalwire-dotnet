@@ -2,40 +2,54 @@
 
 ## Overview
 
-The Calling namespace provides REST-based call control with 37 commands. These methods control live calls without requiring a WebSocket connection.
+The Calling namespace provides REST-based call control with 37 commands. These
+methods control live calls without requiring a WebSocket connection. Every
+command is asynchronous and returns `Task<Dictionary<string, object?>>`; the
+per-call commands take the `callId` first and the RELAY-style payload as a
+`Dictionary<string, object?>`.
 
 ## Dial
 
+`DialAsync` takes a single payload `Dictionary`:
+
 ```csharp
-client.Calling.Dial(
-    from: "+15559876543",
-    to:   "+15551234567",
-    url:  "https://example.com/call-handler"
-);
+await client.Calling.DialAsync(new Dictionary<string, object?>
+{
+    ["command"] = "dial",
+    ["params"]  = new Dictionary<string, object>
+    {
+        ["from"] = "+15559876543",
+        ["to"]   = "+15551234567",
+        ["url"]  = "https://example.com/call-handler",
+    },
+});
 ```
 
 ## Play
 
 ```csharp
 // TTS
-client.Calling.Play(callId, new Dictionary<string, object>
+await client.Calling.PlayAsync(callId, new Dictionary<string, object?>
 {
     ["type"]   = "tts",
     ["params"] = new Dictionary<string, object> { ["text"] = "Hello!" },
 });
 
 // Audio file
-client.Calling.Play(callId, new Dictionary<string, object>
+await client.Calling.PlayAsync(callId, new Dictionary<string, object?>
 {
     ["type"]   = "audio",
     ["params"] = new Dictionary<string, object> { ["url"] = "https://example.com/audio.mp3" },
 });
 ```
 
+Playback control: `PlayPauseAsync`, `PlayResumeAsync`, `PlayStopAsync`,
+`PlayVolumeAsync` (each takes `callId` + optional payload).
+
 ## Record
 
 ```csharp
-client.Calling.Record(callId, new Dictionary<string, object>
+await client.Calling.RecordAsync(callId, new Dictionary<string, object?>
 {
     ["beep"]      = true,
     ["format"]    = "wav",
@@ -43,10 +57,12 @@ client.Calling.Record(callId, new Dictionary<string, object>
 });
 ```
 
+Record control: `RecordPauseAsync`, `RecordResumeAsync`, `RecordStopAsync`.
+
 ## Collect
 
 ```csharp
-client.Calling.Collect(callId, new Dictionary<string, object>
+await client.Calling.CollectAsync(callId, new Dictionary<string, object?>
 {
     ["digits"] = new Dictionary<string, object>
     {
@@ -56,33 +72,10 @@ client.Calling.Collect(callId, new Dictionary<string, object>
 });
 ```
 
-## Connect
-
-```csharp
-client.Calling.Connect(callId, new Dictionary<string, object>
-{
-    ["devices"] = new List<List<Dictionary<string, object>>>
-    {
-        new()
-        {
-            new Dictionary<string, object>
-            {
-                ["type"]   = "phone",
-                ["params"] = new Dictionary<string, object>
-                {
-                    ["to_number"]   = "+15551234567",
-                    ["from_number"] = "+15559876543",
-                },
-            },
-        },
-    },
-});
-```
-
 ## Detect
 
 ```csharp
-client.Calling.Detect(callId, new Dictionary<string, object>
+await client.Calling.DetectAsync(callId, new Dictionary<string, object?>
 {
     ["type"]   = "machine",
     ["params"] = new Dictionary<string, object>
@@ -96,7 +89,7 @@ client.Calling.Detect(callId, new Dictionary<string, object>
 ## Tap
 
 ```csharp
-client.Calling.Tap(callId, new Dictionary<string, object>
+await client.Calling.TapAsync(callId, new Dictionary<string, object?>
 {
     ["type"]   = "audio",
     ["params"] = new Dictionary<string, object>
@@ -110,7 +103,7 @@ client.Calling.Tap(callId, new Dictionary<string, object>
 ## Stream
 
 ```csharp
-client.Calling.Stream(callId, new Dictionary<string, object>
+await client.Calling.StreamAsync(callId, new Dictionary<string, object?>
 {
     ["url"]       = "wss://listener.example.com/stream",
     ["direction"] = "both",
@@ -120,71 +113,52 @@ client.Calling.Stream(callId, new Dictionary<string, object>
 
 ## AI
 
+The AI commands are `AiMessageAsync`, `AiHoldAsync`, `AiUnholdAsync`, and
+`AiStopAsync`:
+
 ```csharp
-client.Calling.Ai(callId, new Dictionary<string, object>
+await client.Calling.AiMessageAsync(callId, new Dictionary<string, object?>
 {
-    ["prompt"] = new Dictionary<string, object> { ["text"] = "You are helpful." },
-    ["SWAIG"]  = new Dictionary<string, object>
-    {
-        ["functions"] = new List<Dictionary<string, object>>
-        {
-            new()
-            {
-                ["function"]     = "get_info",
-                ["purpose"]      = "Get information",
-                ["web_hook_url"] = "https://example.com/swaig",
-            },
-        },
-    },
+    ["role"]    = "user",
+    ["message"] = "Please summarize the call.",
 });
 ```
 
 ## Transcribe
 
 ```csharp
-client.Calling.Transcribe(callId, new Dictionary<string, object>
+await client.Calling.TranscribeAsync(callId, new Dictionary<string, object?>
 {
     ["language"]  = "en-US",
     ["direction"] = "both",
 });
 ```
 
+Live variants: `LiveTranscribeAsync`, `LiveTranslateAsync`.
+
 ## Denoise
 
 ```csharp
-client.Calling.Denoise(callId, new Dictionary<string, object>());
+await client.Calling.DenoiseAsync(callId);
+await client.Calling.DenoiseStopAsync(callId);
 ```
 
-## Answer / Hangup
+## End and Transfer
 
 ```csharp
-client.Calling.Answer(callId);
-client.Calling.Hangup(callId);
-```
-
-## Send Digits
-
-```csharp
-client.Calling.SendDigits(callId, "1234#");
-```
-
-## Queue
-
-```csharp
-client.Calling.Enqueue(callId, new Dictionary<string, object>
+await client.Calling.EndAsync(callId);
+await client.Calling.TransferAsync(callId, new Dictionary<string, object?>
 {
-    ["queue_name"] = "support",
-    ["max_wait"]   = 300,
+    ["dest"] = "+15551234567",
 });
+await client.Calling.DisconnectAsync(callId);
 ```
 
-## Conference
+## Refer
 
 ```csharp
-client.Calling.Conference(callId, new Dictionary<string, object>
+await client.Calling.ReferAsync(callId, new Dictionary<string, object?>
 {
-    ["name"]  = "team-meeting",
-    ["beep"]  = true,
-    ["muted"] = false,
+    ["to_uri"] = "sip:agent@example.com",
 });
 ```

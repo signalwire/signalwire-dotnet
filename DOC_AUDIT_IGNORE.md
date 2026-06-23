@@ -49,6 +49,9 @@ FromSeconds: System.TimeSpan.FromSeconds
 GetRawText: System.Text.Json.JsonElement.GetRawText
 GetType: System.Object.GetType
 ReadAsStringAsync: System.Net.Http.HttpContent.ReadAsStringAsync
+ReadToEndAsync: System.IO.StreamReader.ReadToEndAsync
+ToDictionary: System.Linq ToDictionary operator
+WriteAsync: Microsoft.AspNetCore.Http.HttpResponse.WriteAsync / System.IO.TextWriter.WriteAsync
 Replace: System.Text.RegularExpressions.Regex.Replace / System.String.Replace
 SetEnvironmentVariable: System.Environment.SetEnvironmentVariable
 ToUpperInvariant: System.String.ToUpperInvariant
