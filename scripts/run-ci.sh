@@ -333,6 +333,34 @@ lint_gate() {
     $dn build src/SignalWire/SignalWire.csproj -c Release --no-incremental
 }
 
+# SWAIG-CLI gate: lightweight shared swaig-test mini-contract (NOT python parity;
+# python's in-process simulator surface is reference-only). Black-box: invokes
+# `bin/swaig-test --help` + golden invocations and asserts the shared verbs are
+# documented and a target-but-no-action invocation errors (the cross-port
+# default). bin/swaig-test is a dotnet-script, so we run it via `dotnet script`.
+# dotnet's swaig-test is an HTTP-probe model (--url, like the 7 wire ports), so
+# we pass --require-url-model. It does NOT implement --simulate-serverless, so
+# the no-serverless clause asserts the flag is rejected as an unknown option
+# (the bin/swaig-test default: case errors on any unknown -flag).
+swaig_cli_gate() {
+    local dn
+    dn="$(dotnet_cmd)"
+    # dotnet-script is the runner for bin/swaig-test. Provision it as a tool-path
+    # tool (idempotent: install is a no-op / fails-harmlessly if already present),
+    # then put it on PATH for the duration of the gate.
+    local toolroot="$PORT_ROOT/.dotnet-tools"
+    if [ ! -x "$toolroot/dotnet-script" ]; then
+        $dn tool install dotnet-script --tool-path "$toolroot" >/dev/null 2>&1 || true
+    fi
+    PATH="$toolroot:$PATH" \
+    python3 "$PORTING_SDK_DIR/scripts/audit_swaig_cli_contract.py" \
+        --port dotnet \
+        --cmd "dotnet script $PORT_ROOT/bin/swaig-test --" \
+        --require-url-model \
+        --default-action-argv='--url|http://user:pass@127.0.0.1:1/' \
+        --no-serverless-argv='--url|http://user:pass@127.0.0.1:1/|--simulate-serverless|lambda|--list-tools'
+}
+
 cd "$PORT_ROOT"
 
 echo "==> running CI gates for $PORT_NAME (porting-sdk at $PORTING_SDK_DIR)"
@@ -514,6 +542,12 @@ run_gate "SKILL-CONTRACT" "diff_skill_contracts vs python reference" \
     python3 "$PORTING_SDK_DIR/scripts/diff_skill_contracts.py" \
         --dump-cmd "bash $PORT_ROOT/scripts/emit-skills.sh" \
         --port-repo "$PORT_ROOT"
+
+# Gate 12: SWAIG-CLI — lightweight shared swaig-test mini-contract (verbs are
+# documented in --help, a target-but-no-action invocation errors, and an
+# unimplemented --simulate-serverless is rejected as an unknown option).
+run_gate "SWAIG-CLI" "swaig-test shared mini-contract (verbs/serverless-reject/default-action)" \
+    swaig_cli_gate
 
 if [ -z "$FAILED_GATES" ]; then
     echo "==> CI PASS"
