@@ -34,6 +34,8 @@
 // resolver below to make sure of that), and we reach the SDK types
 // purely via reflection.
 
+#nullable enable
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -90,7 +92,11 @@ if (!options.HasUrl)
     Environment.Exit(1);
 }
 
-using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+// NB: a plain `var` (not `using var`): a top-level `using var` declaration is a
+// directive-vs-declaration ambiguity under dotnet-script's script compilation
+// (CS1002). The process exits immediately after the action runs, so the OS
+// reclaims the connection — explicit disposal buys nothing for a one-shot CLI.
+var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
 
 // Apply auth if extracted from URL
 if (options.AuthUser is not null && options.AuthPassword is not null)
@@ -501,6 +507,18 @@ static CliOptions ParseArgs(string[] args)
             case "--help":
             case "-h":
                 opts.Help = true;
+                break;
+            default:
+                // Reject unknown options loudly rather than silently ignoring
+                // them. A silently-swallowed flag (e.g. --simulate-serverless,
+                // which this port does not implement) would let a caller think
+                // it took effect. The cross-port swaig-test contract requires an
+                // unknown/unimplemented option to error, not no-op.
+                if (args[i].StartsWith("-"))
+                {
+                    Console.Error.WriteLine($"Error: unknown option '{args[i]}'");
+                    Environment.Exit(2);
+                }
                 break;
         }
     }

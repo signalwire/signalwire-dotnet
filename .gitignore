@@ -13,3 +13,5 @@ TestResults/
 scripts/__pycache__/
 core
 core.*
+# dotnet-script tool provisioned by the SWAIG-CLI gate (scripts/run-ci.sh)
+.dotnet-tools/
