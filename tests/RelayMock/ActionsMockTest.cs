@@ -63,7 +63,7 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
             CallId = callId,
             AutoStates = new() { "created" },
         });
-        await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await done.Task.WaitAsync(RelayMockTest.EventTimeout);
 
         // Mark as answered so subsequent actions don't think the call ended.
         captured!.State = "answered";

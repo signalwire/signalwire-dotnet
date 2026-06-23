@@ -66,7 +66,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
             CallId = callId,
             AutoStates = new() { "created" },
         });
-        await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await done.Task.WaitAsync(RelayMockTest.EventTimeout);
         captured!.State = "answered";
         return bound;
     }
@@ -403,7 +403,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "conv-wait-ans",
                 AutoStates = new() { "created" },
             });
-            await got.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await got.Task.WaitAsync(RelayMockTest.EventTimeout);
             captured!.State = "created";
 
             // Start the waiter BEFORE the answered state lands.
@@ -472,7 +472,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "conv-wait-end",
                 AutoStates = new() { "created" },
             });
-            await got.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await got.Task.WaitAsync(RelayMockTest.EventTimeout);
             captured!.State = "answered";
 
             var waitTask = captured.WaitForEndingAsync(timeout: 5.0);

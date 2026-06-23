@@ -259,7 +259,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
 
         // Bypass the SDK and send the malformed connect directly.
         using var ws = new ClientWebSocket();
-        using var connectCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var connectCts = new CancellationTokenSource(RelayMockTest.EventTimeout);
         await ws.ConnectAsync(new Uri(_fixture.Harness.WsUrl + "/api/relay/ws"), connectCts.Token);
 
         var requestId = Guid.NewGuid().ToString();
@@ -286,7 +286,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
 
         var buffer = new byte[16 * 1024];
         var assembled = new MemoryStream();
-        using var readCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var readCts = new CancellationTokenSource(RelayMockTest.EventTimeout);
         while (true)
         {
             var result = await ws.ReceiveAsync(buffer, readCts.Token);
@@ -317,7 +317,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
 
         // The SDK doesn't have a typed JWT path yet; drive the wire directly.
         using var ws = new ClientWebSocket();
-        using var connectCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var connectCts = new CancellationTokenSource(RelayMockTest.EventTimeout);
         await ws.ConnectAsync(new Uri(_fixture.Harness.WsUrl + "/api/relay/ws"), connectCts.Token);
 
         var requestId = Guid.NewGuid().ToString();
@@ -344,7 +344,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
         // Read response (don't care if it succeeded — we're checking the wire).
         var buffer = new byte[16 * 1024];
         var assembled = new MemoryStream();
-        using var readCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var readCts = new CancellationTokenSource(RelayMockTest.EventTimeout);
         while (true)
         {
             var result = await ws.ReceiveAsync(buffer, readCts.Token);

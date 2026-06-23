@@ -342,7 +342,7 @@ public class MessagingMockTest : IClassFixture<RelayMockServerFixture>
                 ["message_state"] = "received",
                 ["tags"] = new List<string> { "incoming" },
             }));
-            var m = await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            var m = await done.Task.WaitAsync(RelayMockTest.EventTimeout);
             Assert.Equal("in-msg-1", m.MessageId);
             Assert.Equal("inbound", m.Direction);
             Assert.Equal("+15551110000", m.FromNumber);

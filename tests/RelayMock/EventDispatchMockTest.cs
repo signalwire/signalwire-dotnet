@@ -57,7 +57,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
             CallId = callId,
             AutoStates = new() { "created" },
         });
-        await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await done.Task.WaitAsync(RelayMockTest.EventTimeout);
         captured!.State = "answered";
         return bound;
     }
