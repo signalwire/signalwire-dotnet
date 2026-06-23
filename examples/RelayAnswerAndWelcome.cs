@@ -26,27 +26,11 @@ client.OnCall(async (call, evt) =>
     await call.AnswerAsync();
 
     // Play a welcome message
-    var action = await call.PlayAsync(media: new[]
-    {
-        new Dictionary<string, object>
-        {
-            ["type"]   = "tts",
-            ["params"] = new Dictionary<string, object>
-                { ["text"] = "Hello! This is a demo of the RELAY client in .NET." },
-        },
-    });
+    var action = call.PlayTts("Hello! This is a demo of the RELAY client in .NET.");
     await action.WaitAsync();
 
     // Say goodbye
-    var bye = await call.PlayAsync(media: new[]
-    {
-        new Dictionary<string, object>
-        {
-            ["type"]   = "tts",
-            ["params"] = new Dictionary<string, object>
-                { ["text"] = "Thank you for testing. Goodbye!" },
-        },
-    });
+    var bye = call.PlayTts("Thank you for testing. Goodbye!");
     await bye.WaitAsync();
 
     await call.HangupAsync();
