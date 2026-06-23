@@ -105,7 +105,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 ToNumber = "+15552220000",
                 AutoStates = new() { "created" },
             });
-            await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await done.Task.WaitAsync(RelayMockTest.EventTimeout);
 
             Assert.Single(seen);
             Assert.Equal("c-handler", seen[0].CallId);
@@ -136,7 +136,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-dir",
                 AutoStates = new() { "created" },
             });
-            await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await done.Task.WaitAsync(RelayMockTest.EventTimeout);
 
             Assert.Equal("c-dir", callId);
             Assert.Equal("inbound", direction);
@@ -167,7 +167,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 ToNumber = "+15554445566",
                 AutoStates = new() { "created" },
             });
-            await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await done.Task.WaitAsync(RelayMockTest.EventTimeout);
 
             Assert.NotNull(dev);
             var p = dev!["params"] as Dictionary<string, object?>;
@@ -199,7 +199,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-state",
                 AutoStates = new() { "created" },
             });
-            await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await done.Task.WaitAsync(RelayMockTest.EventTimeout);
             Assert.Equal("created", state);
         }
         finally { bound.Client.Disconnect(); }
@@ -228,7 +228,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-ans",
                 AutoStates = new() { "created" },
             });
-            await answered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await answered.Task.WaitAsync(RelayMockTest.EventTimeout);
             await Task.Delay(150);
 
             var ans = bound.Harness.Journal.Recv("calling.answer");
@@ -260,7 +260,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-ans-state",
                 AutoStates = new() { "created" },
             });
-            await handlerReturned.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await handlerReturned.Task.WaitAsync(RelayMockTest.EventTimeout);
 
             // Push state(answered).
             bound.Harness.Push(StatePushFrame("c-ans-state", "answered"));
@@ -299,7 +299,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-hangup",
                 AutoStates = new() { "created" },
             });
-            await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await done.Task.WaitAsync(RelayMockTest.EventTimeout);
             await Task.Delay(150);
 
             // Wire shape MUST be calling.end (this caught a typo where we
@@ -332,7 +332,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-pass",
                 AutoStates = new() { "created" },
             });
-            await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await done.Task.WaitAsync(RelayMockTest.EventTimeout);
             await Task.Delay(150);
 
             var passes = bound.Harness.Journal.Recv("calling.pass");
@@ -377,7 +377,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-seq-2",
                 AutoStates = new() { "created" },
             });
-            await bothDone.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await bothDone.Task.WaitAsync(RelayMockTest.EventTimeout);
 
             Assert.Equal("c-seq-1", seen[0].CallId);
             Assert.Equal("c-seq-2", seen[1].CallId);
@@ -419,7 +419,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "cb-2",
                 AutoStates = new() { "created" },
             });
-            await bothDone.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await bothDone.Task.WaitAsync(RelayMockTest.EventTimeout);
 
             // Push answered to ONLY cb-1.
             bound.Harness.Push(StatePushFrame("cb-1", "answered"));
@@ -460,7 +460,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-scripted",
                 AutoStates = new() { "created" },
             });
-            await handlerDone.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await handlerDone.Task.WaitAsync(RelayMockTest.EventTimeout);
 
             bound.Harness.Push(StatePushFrame("c-scripted", "answered"));
             // Wait for the answered state to land before pushing ended so
@@ -519,7 +519,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-async",
                 AutoStates = new() { "created" },
             });
-            await fired.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await fired.Task.WaitAsync(RelayMockTest.EventTimeout);
             Assert.Equal("c-async", callId);
         }
         finally { bound.Client.Disconnect(); }
@@ -544,7 +544,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-raise",
                 AutoStates = new() { "created" },
             });
-            await fired.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await fired.Task.WaitAsync(RelayMockTest.EventTimeout);
             await Task.Delay(150);
 
             // Client is still alive after the throw.
@@ -672,7 +672,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 CallId = "c-wire",
                 AutoStates = new() { "created" },
             });
-            await done.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await done.Task.WaitAsync(RelayMockTest.EventTimeout);
 
             var sends = bound.Harness.Journal.Send().Where(e =>
             {

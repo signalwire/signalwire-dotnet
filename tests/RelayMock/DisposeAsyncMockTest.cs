@@ -61,7 +61,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         // The server now lists exactly one NEW live session (our connection).
         // The mock issues the id under "id"; the SDK's SessionId reads a
         // different wire key against this mock, so correlate by set-diff.
-        var newIds = await WaitForNewSession(before, TimeSpan.FromSeconds(5));
+        var newIds = await WaitForNewSession(before, RelayMockTest.EventTimeout);
         Assert.NotEmpty(newIds);
 
         // Dispose — closes the socket and frees the handles.
@@ -73,7 +73,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         // async on the server's read loop).
         var gone = await WaitUntil(() =>
             !SessionIds().Overlaps(newIds),
-            TimeSpan.FromSeconds(5));
+            RelayMockTest.EventTimeout);
         Assert.True(gone,
             $"server still lists session(s) [{string.Join(",", newIds)}] after DisposeAsync");
     }
@@ -93,13 +93,13 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         {
             await client.ConnectAsync();
             Assert.True(client.Connected);
-            newIds = await WaitForNewSession(before, TimeSpan.FromSeconds(5));
+            newIds = await WaitForNewSession(before, RelayMockTest.EventTimeout);
             Assert.NotEmpty(newIds);
         } // DisposeAsync invoked here by `await using`.
 
         var gone = await WaitUntil(() =>
             !SessionIds().Overlaps(newIds),
-            TimeSpan.FromSeconds(5));
+            RelayMockTest.EventTimeout);
         Assert.True(gone, "await using did not close the relay session");
     }
 

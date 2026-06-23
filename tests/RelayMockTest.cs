@@ -36,6 +36,18 @@ public static class RelayMockTest
     private static readonly TimeSpan StartupTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan HttpTimeout = TimeSpan.FromSeconds(30);
 
+    /// <summary>
+    /// CI-safe budget for awaiting a single mock&lt;-&gt;client event round-trip
+    /// (an inbound call dispatched to <c>OnCall</c>, a pushed RELAY event reaching
+    /// a handler, or the mock observing a session open/close). Matches
+    /// <see cref="StartupTimeout"/>'s 30s: the round-trip completes in ~200ms when
+    /// healthy, so 30s only ever trips on a genuine hang — never on the slower,
+    /// contended GitHub CI runner (net10 + docker + parallel xUnit load). A
+    /// too-tight 5s deadline here was the latent cause of the intermittent
+    /// <c>TimeoutException</c> failures in the cross-port CI's dotnet leg.
+    /// </summary>
+    public static readonly TimeSpan EventTimeout = TimeSpan.FromSeconds(30);
+
     private static readonly object StateLock = new();
     private static Harness? _sharedHarness;
     private static Exception? _startupFailure;
