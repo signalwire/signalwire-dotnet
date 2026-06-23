@@ -117,7 +117,11 @@ try
     }
     else
     {
-        await DumpSwml(client, options);
+        // Consistent default action: a target with no action flag errors
+        // rather than silently dumping SWML. Matches the cross-port majority
+        // (go/java/ruby/php/perl/rust/cpp/ts all error) and the SWAIG-CLI gate.
+        Console.Error.WriteLine("Error: one of --dump-swml, --list-tools, or --exec is required");
+        Environment.Exit(1);
     }
 }
 catch (HttpRequestException ex)
@@ -198,9 +202,13 @@ static void RunAssemblyMode(CliOptions opts)
         return;
     }
 
-    // Default behaviour: print tool list (the only assembly-mode action
-    // implemented today; --exec/--dump-swml stay URL-only).
-    ListToolsFromInstance(instance, serviceType, opts.Raw);
+    // Consistent default action: assembly mode requires an explicit action
+    // (today only --list-tools is implemented for it). Erroring instead of
+    // silently listing matches the cross-port no-action contract; --exec /
+    // --dump-swml remain URL-only.
+    Console.Error.WriteLine(
+        "Error: --assembly mode requires --list-tools (--exec / --dump-swml are URL-only)");
+    Environment.Exit(1);
 }
 
 static Type ResolveServiceType(Assembly userAsm)
