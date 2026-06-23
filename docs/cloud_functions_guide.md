@@ -30,14 +30,18 @@ func new --name AgentHandler --template "HttpTrigger"
 
 2. **Add the SignalWire SDK reference**:
 ```xml
-<PackageReference Include="SignalWire.Agents" Version="*" />
+<PackageReference Include="SignalWire.Sdk" Version="*" />
 ```
 
-3. **Create the function** (`AgentHandler.cs`):
+3. **Create the function** (`AgentHandler.cs`). The
+`SignalWire.Serverless.Adapter` static class bridges the platform request into
+the agent's `HandleRequest` and returns a platform response dictionary
+(`Adapter.HandleAzure(agent, request)`):
 ```csharp
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using SignalWire.Agent;
+using SignalWire.Serverless;
 
 public class AgentHandler
 {
@@ -57,10 +61,17 @@ public class AgentHandler
     }
 
     [Function("AgentHandler")]
-    public async Task<HttpResponseData> Run(
+    public Dictionary<string, object?> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req)
     {
-        return await _agent.HandleServerlessRequestAsync(req);
+        // Build the request dictionary (method/url/headers/body) from req,
+        // then dispatch through the adapter.
+        var request = new Dictionary<string, object?>
+        {
+            ["method"] = req.Method,
+            ["url"]    = req.Url.ToString(),
+        };
+        return Adapter.HandleAzure(_agent, request);
     }
 }
 ```
@@ -109,31 +120,38 @@ https://username:password@{function-app-name}.azurewebsites.net/api/{function-na
 ```bash
 dotnet new lambda.EmptyFunction --name MyAgentLambda
 cd MyAgentLambda/src/MyAgentLambda
-dotnet add package SignalWire.Agents
-dotnet add package Amazon.Lambda.AspNetCoreServer
+dotnet add package SignalWire.Sdk
+dotnet add package Amazon.Lambda.Core
 ```
 
-2. **Create your handler** (`Function.cs`):
+2. **Create your handler** (`Function.cs`). The handler receives the API
+Gateway event dictionary and passes it (with the agent) to
+`Adapter.HandleLambda`, which returns the API Gateway response
+(`statusCode`/`headers`/`body`):
 ```csharp
-using Amazon.Lambda.AspNetCoreServer;
+using Amazon.Lambda.Core;
 using SignalWire.Agent;
+using SignalWire.Serverless;
 
-public class LambdaFunction : APIGatewayProxyFunction
+public class LambdaFunction
 {
-    protected override void Init(IWebHostBuilder builder)
+    private readonly AgentBase _agent;
+
+    public LambdaFunction()
     {
-        var agent = new AgentBase(new AgentOptions
+        _agent = new AgentBase(new AgentOptions
         {
             Name  = "lambda-agent",
             Route = "/",
         });
 
-        agent.PromptAddSection("Role", "You are a helpful assistant running on AWS Lambda.");
-        agent.AddLanguage("English", "en-US", "inworld.Mark");
-        agent.SetParams(new Dictionary<string, object> { ["ai_model"] = "gpt-4.1-nano" });
-
-        builder.Configure(app => agent.ConfigureLambda(app));
+        _agent.PromptAddSection("Role", "You are a helpful assistant running on AWS Lambda.");
+        _agent.AddLanguage("English", "en-US", "inworld.Mark");
+        _agent.SetParams(new Dictionary<string, object> { ["ai_model"] = "gpt-4.1-nano" });
     }
+
+    public Dictionary<string, object?> Handler(Dictionary<string, object?> apiGatewayEvent)
+        => Adapter.HandleLambda(_agent, apiGatewayEvent);
 }
 ```
 
@@ -160,11 +178,14 @@ export SWML_BASIC_AUTH_PASSWORD="w00t"
 ```bash
 dotnet new web -n MyAgentFunction
 cd MyAgentFunction
-dotnet add package SignalWire.Agents
+dotnet add package SignalWire.Sdk
 dotnet add package Google.Cloud.Functions.Hosting
 ```
 
-2. **Create your function** (`Function.cs`):
+2. **Create your function** (`Function.cs`). Google Cloud Functions has no
+dedicated adapter entry point; dispatch the request straight to the agent's
+`HandleRequest(method, path, headers, body)`, which returns a
+`(Status, Headers, Body)` tuple:
 ```csharp
 using Google.Cloud.Functions.Framework;
 using Microsoft.AspNetCore.Http;
@@ -189,7 +210,17 @@ public class AgentFunction : IHttpFunction
 
     public async Task HandleAsync(HttpContext context)
     {
-        await _agent.HandleServerlessRequestAsync(context);
+        using var reader = new StreamReader(context.Request.Body);
+        var body = await reader.ReadToEndAsync();
+        var headers = context.Request.Headers
+            .ToDictionary(h => h.Key, h => h.Value.ToString());
+
+        var (status, respHeaders, respBody) =
+            _agent.HandleRequest(context.Request.Method, context.Request.Path, headers, body);
+
+        context.Response.StatusCode = status;
+        foreach (var kvp in respHeaders) context.Response.Headers[kvp.Key] = kvp.Value;
+        await context.Response.WriteAsync(respBody);
     }
 }
 ```
@@ -287,8 +318,10 @@ curl -u username:password \
 
 **Environment Detection:**
 ```csharp
-// Check detected mode
-var mode = ExecutionMode.Detect();
+using SignalWire.Serverless;
+
+// Check detected mode: "lambda", "gcf", "azure", "cgi", or "server"
+var mode = Adapter.Detect();
 Console.WriteLine($"Detected mode: {mode}");
 ```
 

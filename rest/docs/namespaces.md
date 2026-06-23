@@ -11,12 +11,16 @@ The `RestClient` exposes 21 lazily-initialized namespace accessors covering ever
 Full Fabric API with sub-resources for AI agents, SWML scripts, subscribers, call flows, and more.
 
 ```csharp
-client.Fabric.AiAgents.List();
-client.Fabric.AiAgents.Create(name: "Bot", prompt: promptDict);
-client.Fabric.SwmlScripts.List();
-client.Fabric.Subscribers.List();
-client.Fabric.CallFlows.List();
-client.Fabric.SipEndpoints.List();
+await client.Fabric.AiAgents.ListAsync();
+await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
+{
+    ["name"]   = "Bot",
+    ["prompt"] = promptDict,
+});
+await client.Fabric.SwmlScripts.ListAsync();
+await client.Fabric.Subscribers.ListAsync();
+await client.Fabric.CallFlows.ListAsync();
+await client.Fabric.SipEndpoints.ListAsync();
 ```
 
 See [Fabric Resources](fabric.md) for details.
@@ -26,7 +30,16 @@ See [Fabric Resources](fabric.md) for details.
 REST-based call control with 37 commands.
 
 ```csharp
-client.Calling.Dial(from: "+15559876543", to: "+15551234567", url: "https://example.com/handler");
+await client.Calling.DialAsync(new Dictionary<string, object?>
+{
+    ["command"] = "dial",
+    ["params"]  = new Dictionary<string, object>
+    {
+        ["from"] = "+15559876543",
+        ["to"]   = "+15551234567",
+        ["url"]  = "https://example.com/handler",
+    },
+});
 ```
 
 See [Calling Commands](calling.md) for details.
@@ -36,11 +49,11 @@ See [Calling Commands](calling.md) for details.
 Phone number management.
 
 ```csharp
-client.PhoneNumbers.List();
-client.PhoneNumbers.Search(areaCode: "512");
-client.PhoneNumbers.Get(numberId);
-client.PhoneNumbers.Update(numberId, new Dictionary<string, object> { ["name"] = "Main Line" });
-client.PhoneNumbers.Delete(numberId);
+await client.PhoneNumbers.ListAsync();
+await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["area_code"] = "512" });
+await client.PhoneNumbers.GetAsync(numberId);
+await client.PhoneNumbers.UpdateAsync(numberId, new Dictionary<string, object?> { ["name"] = "Main Line" });
+await client.PhoneNumbers.DeleteAsync(numberId);
 ```
 
 ### Datasphere
@@ -48,10 +61,10 @@ client.PhoneNumbers.Delete(numberId);
 Document management and semantic search.
 
 ```csharp
-client.Datasphere.Documents.List();
-client.Datasphere.Documents.Create(new Dictionary<string, object> { ["url"] = "https://example.com/doc.pdf" });
-client.Datasphere.Documents.Get(docId);
-client.Datasphere.Documents.Delete(docId);
+await client.Datasphere.Documents.ListAsync();
+await client.Datasphere.Documents.CreateAsync(new Dictionary<string, object?> { ["url"] = "https://example.com/doc.pdf" });
+await client.Datasphere.Documents.GetAsync(docId);
+await client.Datasphere.Documents.DeleteAsync(docId);
 ```
 
 ### Video
@@ -59,10 +72,10 @@ client.Datasphere.Documents.Delete(docId);
 Video rooms, sessions, conferences.
 
 ```csharp
-client.Video.List();
-client.Video.Create(new Dictionary<string, object> { ["name"] = "meeting-room" });
-client.Video.Get(roomId);
-client.Video.Delete(roomId);
+await client.Video.ListAsync();
+await client.Video.CreateAsync(new Dictionary<string, object?> { ["name"] = "meeting-room" });
+await client.Video.GetAsync(roomId);
+await client.Video.DeleteAsync(roomId);
 ```
 
 ### Compat
@@ -70,8 +83,8 @@ client.Video.Delete(roomId);
 Twilio-compatible LAML API.
 
 ```csharp
-client.Compat.List();
-client.Compat.Create(new Dictionary<string, object>
+await client.Compat.Calls.ListAsync();
+await client.Compat.Calls.CreateAsync(new Dictionary<string, object?>
 {
     ["To"]   = "+15551234567",
     ["From"] = "+15559876543",
@@ -84,55 +97,57 @@ See [Compatibility API](compat.md) for details.
 ### Addresses
 
 ```csharp
-client.Addresses.List();
-client.Addresses.Create(new Dictionary<string, object> { ["type"] = "client", ["name"] = "WebClient" });
+await client.Addresses.ListAsync();
+await client.Addresses.CreateAsync(new Dictionary<string, object?> { ["type"] = "client", ["name"] = "WebClient" });
 ```
 
 ### Queues
 
 ```csharp
-client.Queues.List();
-client.Queues.Create(new Dictionary<string, object> { ["name"] = "support-queue" });
+await client.Queues.ListAsync();
+await client.Queues.CreateAsync(new Dictionary<string, object?> { ["name"] = "support-queue" });
 ```
 
 ### Recordings
 
 ```csharp
-client.Recordings.List();
-client.Recordings.Get(recordingId);
-client.Recordings.Delete(recordingId);
+await client.Recordings.ListAsync();
+await client.Recordings.GetAsync(recordingId);
+await client.Recordings.DeleteAsync(recordingId);
 ```
 
 ### NumberGroups
 
 ```csharp
-client.NumberGroups.List();
-client.NumberGroups.Create(new Dictionary<string, object> { ["name"] = "sales-numbers" });
+await client.NumberGroups.ListAsync();
+await client.NumberGroups.CreateAsync(new Dictionary<string, object?> { ["name"] = "sales-numbers" });
 ```
 
 ### VerifiedCallers
 
 ```csharp
-client.VerifiedCallers.List();
-client.VerifiedCallers.Create(new Dictionary<string, object> { ["phone_number"] = "+15551234567" });
+await client.VerifiedCallers.ListAsync();
+await client.VerifiedCallers.CreateAsync(new Dictionary<string, object?> { ["phone_number"] = "+15551234567" });
 ```
 
 ### SipProfile
 
+The SIP profile is a singleton (get/update, no list):
+
 ```csharp
-client.SipProfile.List();
+await client.SipProfile.GetAsync();
 ```
 
 ### Lookup
 
 ```csharp
-client.Lookup.Get("+15551234567");
+await client.Lookup.PhoneNumberAsync("+15551234567");
 ```
 
 ### ShortCodes
 
 ```csharp
-client.ShortCodes.List();
+await client.ShortCodes.ListAsync();
 ```
 
 ### ImportedNumbers
@@ -140,7 +155,7 @@ client.ShortCodes.List();
 Import an externally-hosted number (create-only).
 
 ```csharp
-client.ImportedNumbers.Create(new Dictionary<string, object> { ["number"] = "+15551234567" });
+await client.ImportedNumbers.CreateAsync(new Dictionary<string, object?> { ["number"] = "+15551234567" });
 ```
 
 ### Mfa
@@ -148,7 +163,7 @@ client.ImportedNumbers.Create(new Dictionary<string, object> { ["number"] = "+15
 Multi-factor authentication.
 
 ```csharp
-client.Mfa.Sms(new Dictionary<string, object>
+await client.Mfa.SmsAsync(new Dictionary<string, object?>
 {
     ["to"]      = "+15551234567",
     ["from"]    = "+15559876543",
@@ -158,31 +173,32 @@ client.Mfa.Sms(new Dictionary<string, object>
 
 ### Registry
 
-10DLC brands, campaigns, orders.
+10DLC brands, campaigns, orders. `Registry` is a container of beta
+sub-resources (`Brands`, `Campaigns`, `Orders`, `Numbers`):
 
 ```csharp
-client.Registry.List();
-client.Registry.Create(new Dictionary<string, object>
+await client.Registry.Brands.ListAsync();
+await client.Registry.Brands.CreateAsync(new Dictionary<string, object?>
 {
-    ["type"] = "brand",
     ["name"] = "Acme Corp",
 });
 ```
 
 ### Logs
 
-Message, voice, fax, conference logs.
+Message, voice, fax, conference logs. `Logs` is a container of per-API log
+sub-resources (`Messages`, `Voice`, `Fax`, `Conferences`):
 
 ```csharp
-client.Logs.List();
+await client.Logs.Messages.ListAsync();
 ```
 
 ### Project
 
-Project management.
+Project API tokens (the `Project` namespace exposes `Tokens` only):
 
 ```csharp
-client.Project.Get("self");
+await client.Project.Tokens.CreateAsync(new Dictionary<string, object?> { ["name"] = "ci-token" });
 ```
 
 ### Pubsub
@@ -190,7 +206,7 @@ client.Project.Get("self");
 PubSub tokens.
 
 ```csharp
-client.Pubsub.Create(new Dictionary<string, object> { ["channels"] = new List<string> { "updates" } });
+await client.Pubsub.CreateTokenAsync(new Dictionary<string, object?> { ["channels"] = new List<string> { "updates" } });
 ```
 
 ### Chat
@@ -198,5 +214,5 @@ client.Pubsub.Create(new Dictionary<string, object> { ["channels"] = new List<st
 Chat tokens.
 
 ```csharp
-client.Chat.Create(new Dictionary<string, object> { ["member_id"] = "user-123" });
+await client.Chat.CreateTokenAsync(new Dictionary<string, object?> { ["member_id"] = "user-123" });
 ```

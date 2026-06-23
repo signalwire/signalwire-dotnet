@@ -88,7 +88,7 @@ curl -X POST -u signalwire:password \
 ```bash
 mkdir my-agent && cd my-agent
 dotnet new console
-dotnet add package SignalWire
+dotnet add package SignalWire.Sdk
 ```
 
 ### Minimal Program.cs

@@ -72,11 +72,13 @@ client.OnCall(async (call, evt) =>
 
 ### Message Handler
 
+The callback receives the `Message` object and the `Event`:
+
 ```csharp
-client.OnMessage(async (evt, parms) =>
+client.OnMessage(async (message, evt) =>
 {
-    var from = parms.GetValueOrDefault("from")?.ToString() ?? "unknown";
-    var body = parms.GetValueOrDefault("body")?.ToString() ?? "";
+    var from = message.FromNumber ?? "unknown";
+    var body = message.Body ?? "";
     Console.WriteLine($"Message from {from}: {body}");
 });
 ```

@@ -9,7 +9,7 @@ The MCP-SWAIG Gateway bridges Model Context Protocol (MCP) servers with SignalWi
 The MCP Gateway skill is included in the SignalWire Agents SDK:
 
 ```bash
-dotnet add package SignalWire.Agents
+dotnet add package SignalWire.Sdk
 ```
 
 The gateway server itself is a standalone service. Install with:

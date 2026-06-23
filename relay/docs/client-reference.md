@@ -28,9 +28,8 @@ var client = new Client(new Dictionary<string, string>
 | `Project` | `string` | Project ID |
 | `Token` | `string` | API token |
 | `Host` | `string` | Server hostname |
-| `Contexts` | `List<string>` | Subscribed contexts |
+| `Contexts` | `IReadOnlyList<string>` | Subscribed contexts |
 | `Connected` | `bool` | Connection state |
-| `SessionId` | `string?` | Server-assigned session ID |
 | `Protocol` | `string?` | Negotiated protocol string |
 | `AuthorizationState` | `string?` | Current auth state |
 
@@ -142,12 +141,13 @@ var message = await client.SendMessageAsync(new Dictionary<string, object?>
 
 ### OnMessage()
 
-Register a handler for inbound messages.
+Register a handler for inbound messages. The callback receives the
+`Message` object and the `Event`.
 
 ```csharp
-client.OnMessage(async (evt, parms) =>
+client.OnMessage(async (message, evt) =>
 {
-    Console.WriteLine($"Message: {parms["body"]}");
+    Console.WriteLine($"Message: {message.Body}");
 });
 ```
 

@@ -36,7 +36,7 @@ WebService is designed to serve static files with configurable security features
 WebService is included in the core SignalWire AI Agents SDK:
 
 ```bash
-dotnet add package SignalWire.Agents
+dotnet add package SignalWire.Sdk
 ```
 
 ## Quick Start
