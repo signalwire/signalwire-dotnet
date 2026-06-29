@@ -771,7 +771,10 @@ public class StructuralParityTests
         var main = sections["main"];
         var ai = main.First(v => v.ContainsKey("ai"));
         var config = (Dictionary<string, object>)ai["ai"]!;
-        Assert.Equal("You are helpful", config["prompt"]);
+        // The ai-verb prompt is an OBJECT {"text": ...} (a bare string fatals the call in the
+        // AI engine); see SWMLBuilder.Ai. Matches the Python/Go ports.
+        var prompt = (Dictionary<string, object>)config["prompt"];
+        Assert.Equal("You are helpful", prompt["text"]);
     }
 
     [Fact]

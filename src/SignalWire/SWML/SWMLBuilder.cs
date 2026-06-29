@@ -54,15 +54,19 @@ public class SWMLBuilder
         Dictionary<string, object>? extraParams = null)
     {
         var config = new Dictionary<string, object>();
+        // The SWML ``ai`` verb requires ``prompt`` to be an OBJECT — {"text": ...} or
+        // {"pom": [...]}; a bare string is a fatal error in the AI engine (mod_openai
+        // app_config.c: ``!cJSON_IsObject(prompt)`` fires calling.error and aborts the call),
+        // so wrap accordingly. ``post_prompt`` is the same object contract.
         if (!string.IsNullOrEmpty(promptText))
         {
-            config["prompt"] = promptText;
+            config["prompt"] = new Dictionary<string, object> { ["text"] = promptText };
         }
         else if (promptPom is not null)
         {
             config["prompt"] = new Dictionary<string, object> { ["pom"] = promptPom };
         }
-        if (!string.IsNullOrEmpty(postPrompt)) config["post_prompt"] = postPrompt;
+        if (!string.IsNullOrEmpty(postPrompt)) config["post_prompt"] = new Dictionary<string, object> { ["text"] = postPrompt };
         if (!string.IsNullOrEmpty(postPromptUrl)) config["post_prompt_url"] = postPromptUrl;
         if (swaig is not null) config["SWAIG"] = swaig;
         if (extraParams is not null)
