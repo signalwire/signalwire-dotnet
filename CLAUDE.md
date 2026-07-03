@@ -10,21 +10,34 @@ Languages: C#, F#, VB.NET (any CLR language)
 
 ## Development Commands
 
+Format, lint, and test go through the three canonical wrapper scripts under
+`scripts/`. They self-bootstrap the .NET toolchain (via `scripts/_env.sh`) and
+run from ANY working directory — do NOT invoke `dotnet format` / `dotnet build`
+/ `dotnet test` directly; use these so local and CI behave identically:
+
 ```bash
-# Build
-dotnet build
+# Format (default APPLY; --check = verify-only, the CI mode)
+bash scripts/run-format.sh
+bash scripts/run-format.sh --check
 
-# Run all tests
-dotnet test
+# Lint (analyzer build: AnalysisMode=All, TreatWarningsAsErrors)
+bash scripts/run-lint.sh
 
-# Run specific test file
-dotnet test --filter "FullyQualifiedName~LoggerTests"
+# Test — runs the 3 target frameworks SEPARATELY (net8.0 -> net9.0 -> net10.0);
+# per-TFM serialization avoids the cross-TFM TLS-listener contention. Optional
+# filter arg is passed through to `dotnet test --filter`.
+bash scripts/run-tests.sh
+bash scripts/run-tests.sh "FullyQualifiedName~LoggerTests"
 
-# Build release
-dotnet build -c Release
+# Full local gate set (invokes the three scripts above for FMT/LINT/TEST)
+bash scripts/run-ci.sh
+```
 
-# Pack NuGet package
-dotnet pack -c Release
+Other build tasks (not gated) still use `dotnet` directly:
+
+```bash
+dotnet build -c Release      # build release
+dotnet pack  -c Release      # pack NuGet package
 ```
 
 ## Architecture

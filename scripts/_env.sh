@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# _env.sh — shared, CWD-independent tool bootstrap for signalwire-dotnet.
+#
+# Sourced by scripts/run-format.sh, scripts/run-lint.sh, scripts/run-tests.sh
+# (and available to run-ci.sh) so the .NET toolchain resolves the same way no
+# matter which directory the caller invoked from. Per RUN_LINT_FORMAT_SPEC.md:
+# the tool environment is part of the SCRIPT, not the caller's shell.
+#
+#   REPO           — absolute repo root (resolved from this file's own path)
+#   dotnet_cmd     — echoes a `dotnet` invocation prefix: the host `dotnet` if on
+#                    PATH, else the official SDK docker image. Callers run it as
+#                    `$(dotnet_cmd) <args>`.
+#   dotnet_restore_if_needed — `dotnet restore` the solution once if obj/ caches
+#                    are absent (so a foreign-CWD first run isn't a cold miss).
+#
+# Fail-loud contract: if neither a host `dotnet` nor `docker` is available we
+# print a one-line install hint and exit non-zero — never silently skip.
+
+set -euo pipefail
+
+# Resolve the repo root from THIS script's location, independent of $PWD.
+# (_env.sh lives in <repo>/scripts/, so the repo is its parent's parent... no —
+#  its parent is scripts/, and scripts/'s parent is the repo root.)
+_ENV_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="$(dirname "$_ENV_DIR")"
+export REPO
+
+SLN="$REPO/SignalWire.sln"
+
+# Echo a `dotnet` command prefix: host dotnet if present, else the SDK docker
+# image mounted at /src as the host user with a writable HOME (so MSBuild/NuGet
+# caches work). Mirrors run-ci.sh's historical dotnet_cmd exactly.
+#
+# Set DOTNET_DOCKER_NETWORK_HOST=1 to add `--network host` to the docker
+# fallback (the TEST path needs the container to reach host-spawned mocks); it
+# also forwards MOCK_* env vars into the container.
+dotnet_cmd() {
+    local bin
+    bin="$(command -v dotnet || true)"
+    if [ -n "$bin" ]; then
+        echo "$bin"
+        return 0
+    fi
+    if command -v docker >/dev/null 2>&1; then
+        local net="" mockenv=""
+        if [ "${DOTNET_DOCKER_NETWORK_HOST:-}" = "1" ]; then
+            net="--network host"
+            mockenv="-e MOCK_SIGNALWIRE_PORT=${MOCK_SIGNALWIRE_PORT:-} -e MOCK_RELAY_PORT=${MOCK_RELAY_PORT:-} -e MOCK_RELAY_HTTP_PORT=${MOCK_RELAY_HTTP_PORT:-}"
+        fi
+        echo "docker run --rm $net --user $(id -u):$(id -g) -e HOME=/tmp $mockenv -v $REPO:/src -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet"
+        return 0
+    fi
+    echo "FATAL: neither 'dotnet' nor 'docker' found on PATH." >&2
+    echo "       Install the .NET SDK 10.0 (https://dotnet.microsoft.com/download)" >&2
+    echo "       or Docker (the fallback uses mcr.microsoft.com/dotnet/sdk:10.0)." >&2
+    exit 1
+}
+
+# Restore the solution if the NuGet/obj caches look absent. Cheap no-op once
+# warm; makes a first run from a foreign CWD self-sufficient.
+dotnet_restore_if_needed() {
+    local dn
+    dn="$(dotnet_cmd)"
+    if [ ! -d "$REPO/src/SignalWire/obj" ]; then
+        echo "    (restoring $SLN — first run) ..."
+        # shellcheck disable=SC2086
+        $dn restore "$SLN"
+    fi
+}
+
+export SLN

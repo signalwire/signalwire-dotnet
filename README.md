@@ -234,17 +234,24 @@ Guides are also available in the [`docs/`](docs/) directory:
 | `SIGNALWIRE_LOG_LEVEL` | All | Logging level (`debug`, `info`, `warn`, `error`) |
 | `SIGNALWIRE_LOG_MODE` | All | Set to `off` to suppress all logging |
 
-## Testing
+## Testing, linting, and formatting
+
+Use the canonical wrapper scripts under `scripts/`. They self-bootstrap the
+.NET toolchain and run from any directory, so local runs match CI exactly:
 
 ```bash
-# Build the solution
-dotnet build
+# Run the full test suite (xUnit) — the 3 target frameworks are run SEPARATELY
+# (net8.0 -> net9.0 -> net10.0) to avoid cross-framework listener contention.
+bash scripts/run-tests.sh
 
-# Run the full test suite (xUnit)
-dotnet test
+# Run a subset (filter is passed through to `dotnet test --filter`)
+bash scripts/run-tests.sh "FullyQualifiedName~LoggerTests"
 
-# Run a subset by fully-qualified name
-dotnet test --filter "FullyQualifiedName~LoggerTests"
+# Lint (analyzer build, warnings-as-errors)
+bash scripts/run-lint.sh
+
+# Format the tree (add --check to verify only, as CI does)
+bash scripts/run-format.sh
 ```
 
 ## License

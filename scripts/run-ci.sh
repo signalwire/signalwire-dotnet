@@ -29,6 +29,14 @@
 # image (mcr.microsoft.com/dotnet/sdk:10.0). The same pattern is used in
 # scripts/enumerate_signatures.py for SignatureDump.
 #
+# FMT / LINT / TEST are the three CANONICAL wrapper scripts (they self-bootstrap
+# the toolchain via scripts/_env.sh and run from ANY CWD — RUN_LINT_FORMAT_SPEC):
+#   FMT  -> scripts/run-format.sh  (dotnet format; --check in CI)
+#   LINT -> scripts/run-lint.sh    (dotnet build, AnalysisMode=All, warn-as-error)
+#   TEST -> scripts/run-tests.sh   (dotnet test PER-TFM: net8/9/10 serialized)
+# The gate bodies below delegate to these scripts; nothing invokes the raw tool
+# directly anymore.
+#
 # Mock-server lifecycle: The RestMock + RelayMock tests need
 # `mock_signalwire` (port 8784) and `mock_relay` (ws=8785, http=9785) to
 # be reachable from the container via `--network host`. The .NET SDK
@@ -190,80 +198,24 @@ run_gate() {
     return $rc
 }
 
-# Per-framework runner that returns 0 only when ALL frameworks passed.
-# Sequential to avoid the multi-target race against the shared mock.
+# TEST gate: delegates to scripts/run-tests.sh — the canonical test runner
+# (RUN_LINT_FORMAT_SPEC.md), which loops the 3 target frameworks SEQUENTIALLY
+# (net8.0 → net9.0 → net10.0). Per-TFM serialization is the method that avoids
+# the cross-TFM TLS-listener contention (a known TLS test deadlocks under an
+# all-TFM-at-once `dotnet test SignalWire.sln`); run-tests.sh owns that loop.
 #
-# Prefers a host-installed dotnet (CI runners have it via setup-dotnet,
-# and devs may have it in PATH). Falls back to docker for environments
-# where dotnet isn't installed locally.
-#
-# Docker fallback notes:
-# - `--user $(id -u):$(id -g)` makes the container write build artifacts
-#   (obj/, bin/) as the host user, so the subsequent SIGNATURES gate can
-#   read/write them.
-# - `-e HOME=/tmp` because UID-only `--user` has no entry in the image's
-#   /etc/passwd, so HOME defaults to `/` which is not writable. dotnet's
-#   NuGet/MSBuild needs a writable HOME for ~/.nuget/packages caches.
+# run-ci owns the mock lifecycle: it has already picked free ports and exported
+# MOCK_SIGNALWIRE_PORT / MOCK_RELAY_WS_PORT / MOCK_RELAY_HTTP_PORT and spawned
+# the mocks on the host. The test fixtures read MOCK_RELAY_PORT (WS) — our
+# internal WS var is MOCK_RELAY_WS_PORT — so we RENAME it into MOCK_RELAY_PORT
+# here before invoking the script (else the fixture self-spawns its own
+# mock_relay and loses the spawn race → "Connection refused"). run-tests.sh /
+# _env.sh handle host-vs-docker dotnet resolution.
 dotnet_test_per_framework() {
-    local rc=0
-    local fw
-    local dotnet_bin
-    dotnet_bin="$(command -v dotnet || true)"
-    local failed_fws=""
-    # Per-framework logs kept until the end. The outer run_gate echoes only the
-    # LAST ~400 lines of the whole gate on failure, so a FIRST-framework failure
-    # (net8.0) gets buried under later frameworks' warning spew and becomes
-    # undiagnosable in CI. We capture each framework to its own file and, after
-    # all frameworks run, RE-PRINT every failing framework's output LAST — so the
-    # real error lands inside run_gate's final-400-line window.
-    local -a fwlogs=()
-    for fw in net8.0 net9.0 net10.0; do
-        echo "    --- dotnet test --framework $fw ---"
-        local fwlog
-        fwlog="$(mktemp)"
-        fwlogs+=("$fw:$fwlog")
-        if [ -n "$dotnet_bin" ]; then
-            # Host path (the GitHub runner has dotnet on PATH). The test fixtures
-            # read MOCK_RELAY_PORT (WS) / MOCK_RELAY_HTTP_PORT, but our internal WS
-            # port var is MOCK_RELAY_WS_PORT — so we must RENAME it here, exactly as
-            # the docker branch does via `-e MOCK_RELAY_PORT=$MOCK_RELAY_WS_PORT`.
-            # Without this the fixture sees no MOCK_RELAY_PORT, self-spawns its own
-            # mock_relay, and net10.0 loses the spawn race → "Connection refused".
-            MOCK_SIGNALWIRE_PORT="$MOCK_SIGNALWIRE_PORT" \
-            MOCK_RELAY_PORT="$MOCK_RELAY_WS_PORT" \
-            MOCK_RELAY_HTTP_PORT="$MOCK_RELAY_HTTP_PORT" \
-                "$dotnet_bin" test --framework "$fw" 2>&1 | tee "$fwlog"
-            [ "${PIPESTATUS[0]}" -eq 0 ] || { rc=1; failed_fws="$failed_fws $fw"; }
-        else
-            docker run --rm --network host \
-                    --user "$(id -u):$(id -g)" \
-                    -e HOME=/tmp \
-                    -e MOCK_SIGNALWIRE_PORT="$MOCK_SIGNALWIRE_PORT" \
-                    -e MOCK_RELAY_PORT="$MOCK_RELAY_WS_PORT" \
-                    -e MOCK_RELAY_HTTP_PORT="$MOCK_RELAY_HTTP_PORT" \
-                    -v "$PWD:/src" -w /src \
-                    mcr.microsoft.com/dotnet/sdk:10.0 \
-                    dotnet test --framework "$fw" 2>&1 | tee "$fwlog"
-            [ "${PIPESTATUS[0]}" -eq 0 ] || { rc=1; failed_fws="$failed_fws $fw"; }
-        fi
-    done
-    if [ "$rc" -ne 0 ]; then
-        echo "    dotnet TEST gate: failing framework(s):$failed_fws"
-        local entry f log
-        for entry in "${fwlogs[@]}"; do
-            f="${entry%%:*}"; log="${entry#*:}"
-            case " $failed_fws " in
-                *" $f "*)
-                    echo "    ===== $f FAILED — full output (re-printed last so it survives log truncation) ====="
-                    sed 's/^/    [FAIL '"$f"'] /' "$log"
-                    echo "    ===== end $f output ====="
-                    ;;
-            esac
-        done
-    fi
-    local entry log
-    for entry in "${fwlogs[@]}"; do log="${entry#*:}"; rm -f "$log"; done
-    return $rc
+    MOCK_SIGNALWIRE_PORT="$MOCK_SIGNALWIRE_PORT" \
+    MOCK_RELAY_PORT="$MOCK_RELAY_WS_PORT" \
+    MOCK_RELAY_HTTP_PORT="$MOCK_RELAY_HTTP_PORT" \
+        bash "$PORT_ROOT/scripts/run-tests.sh"
 }
 
 # SURFACE-FRESH gate: prove the committed port_surface.json (Layer B) still
@@ -306,31 +258,20 @@ dotnet_cmd() {
     fi
 }
 
-# FMT gate: dotnet format whitespace (the house style — whitespace/newlines).
-# LOCAL ($CI unset) auto-fixes the tree; CI ($CI=true) verifies read-only and
-# FAILS on any unformatted file. Whitespace-scoped so it stays orthogonal to the
-# LINT gate (analyzers); a reformat is surface/emission-neutral.
+# FMT gate: delegates to scripts/run-format.sh — the canonical formatter
+# (RUN_LINT_FORMAT_SPEC.md). LOCAL ($CI unset) auto-fixes the tree; CI ($CI=true)
+# passes --check (VERIFY-ONLY, --verify-no-changes) and FAILS on any unformatted
+# file. Env bootstrap lives in scripts/_env.sh, sourced by the script.
 fmt_gate() {
-    local dn
-    dn="$(dotnet_cmd)"
-    if [ -n "${CI:-}" ]; then
-        $dn format whitespace SignalWire.sln --verify-no-changes
-    else
-        $dn format whitespace SignalWire.sln
-        if ! git diff --quiet 2>/dev/null; then
-            echo "    (FMT auto-applied whitespace formatting — review & stage)"
-        fi
-    fi
+    bash "$PORT_ROOT/scripts/run-format.sh" ${CI:+--check}
 }
 
-# LINT gate: a clean analyzer build. Directory.Build.props turns the curated
-# analyzer set on with TreatWarningsAsErrors across net8/9/10, so `dotnet build`
-# failing == a lint violation. Builds the src library only (analyzers run there;
-# tests/examples/tools are not the shipped surface).
+# LINT gate: delegates to scripts/run-lint.sh — the canonical linter
+# (RUN_LINT_FORMAT_SPEC.md). A clean analyzer build: Directory.Build.props turns
+# the curated analyzer set on (AnalysisMode=All, TreatWarningsAsErrors) across
+# net8/9/10, so `dotnet build` failing == a lint violation.
 lint_gate() {
-    local dn
-    dn="$(dotnet_cmd)"
-    $dn build src/SignalWire/SignalWire.csproj -c Release --no-incremental
+    bash "$PORT_ROOT/scripts/run-lint.sh"
 }
 
 # SWAIG-CLI gate: lightweight shared swaig-test mini-contract (NOT python parity;
