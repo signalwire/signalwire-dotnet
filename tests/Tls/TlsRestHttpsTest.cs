@@ -32,7 +32,7 @@ public class TlsRestHttpsTest
     private const int Port = 18784;
 
     [Fact]
-    public void RestClient_Https_RealResponse()
+    public async Task RestClient_Https_RealResponse()
     {
         if (TlsHarness.CaCertPath() is null)
         {
@@ -52,13 +52,12 @@ public class TlsRestHttpsTest
 
         // GET a spec-backed collection endpoint over HTTPS. A real JSON response
         // with a "data" array can only come back over a CA-verified TLS session.
-        var resp = addresses.ListAsync(new Dictionary<string, string> { ["page_size"] = "5" })
-            .GetAwaiter().GetResult();
+        var resp = await addresses.ListAsync(new Dictionary<string, string> { ["page_size"] = "5" });
         Assert.True(resp.ContainsKey("data"),
             $"https response missing 'data' key; got keys [{string.Join(", ", resp.Keys)}]");
 
         // Wire proof: the mock journaled the GET on its (HTTPS) control plane.
-        var last = LastJournal(mock.BaseUrl, trustingHttp);
+        var last = await LastJournalAsync(mock.BaseUrl, trustingHttp);
         Assert.Equal("GET", last.Method);
         Assert.Equal("/api/relay/rest/addresses", last.Path);
 
@@ -66,9 +65,9 @@ public class TlsRestHttpsTest
         // trust the test CA, proving real certificate verification.
         var rejecting = TlsHarness.UntrustedValidator();
         using var untrusted = BuildHttp(rejecting.Validate);
-        var ex = Assert.ThrowsAny<Exception>(() =>
+        var ex = await Assert.ThrowsAnyAsync<Exception>(async () =>
         {
-            untrusted.GetAsync(mock.BaseUrl + "/__mock__/health").GetAwaiter().GetResult();
+            await untrusted.GetAsync(mock.BaseUrl + "/__mock__/health");
         });
         Assert.True(
             ex is System.Net.Http.HttpRequestException
@@ -89,9 +88,9 @@ public class TlsRestHttpsTest
 
     private readonly record struct JournalView(string? Method, string? Path);
 
-    private static JournalView LastJournal(string baseUrl, System.Net.Http.HttpClient http)
+    private static async Task<JournalView> LastJournalAsync(string baseUrl, System.Net.Http.HttpClient http)
     {
-        var body = http.GetStringAsync(baseUrl + "/__mock__/journal").GetAwaiter().GetResult();
+        var body = await http.GetStringAsync(baseUrl + "/__mock__/journal");
         using var doc = JsonDocument.Parse(body);
         Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
         var arr = doc.RootElement;
