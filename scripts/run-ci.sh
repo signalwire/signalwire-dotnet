@@ -572,6 +572,16 @@ run_gate "SKILL-CONTRACT" "diff_skill_contracts vs python reference" \
 run_gate "SWAIG-CLI" "swaig-test shared mini-contract (verbs/serverless-reject/default-action)" \
     swaig_cli_gate
 
+# Gate 13: SWAIG-COVERAGE — the FunctionResult builder can emit every engine
+# response action (swaig-response.yaml), or the gap is signed off in
+# SWAIG_COVERAGE_ALLOWLIST.md. Back-pressure for the SWAIG read/response surface
+# (SWAIG_PIPELINE §5); the shared checker scrapes .NET's FunctionResult
+# AddAction("k",…) + _actions.Add(new Dictionary { ["k"] = … }) emission.
+run_gate "SWAIG-COVERAGE" "FunctionResult emits every engine action (or allowlisted)" \
+    python3 "$PORTING_SDK_DIR/scripts/swaig_coverage.py" \
+        --check \
+        --emission "$PORT_ROOT/src/SignalWire/SWAIG/FunctionResult.cs"
+
 if [ -z "$FAILED_GATES" ]; then
     echo "==> CI PASS"
     exit 0

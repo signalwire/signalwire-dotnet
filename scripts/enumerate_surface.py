@@ -595,6 +595,12 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
 
     # class -> ordered list of member names
     members: dict[str, list[str]] = {}
+    # Every class opened in the file (name preserved) — used to surface a
+    # genuinely METHOD-LESS generated-type class, which would otherwise be
+    # dropped (it contributes no member to ``members``). Only emitted for the
+    # generated-type namespaces (see below), so a hand class that legitimately
+    # has no public surface is NOT spuriously added.
+    opened_classes: list[str] = []
 
     for raw_line in text.splitlines():
         line = strip_line_comments(raw_line)
@@ -621,6 +627,7 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
         cls_m = CLASS_RE.match(line)
         if cls_m and "{" in line:
             class_name = cls_m.group(1)
+            opened_classes.append(class_name)
             scope_stack.append(("class", class_name, brace_depth))
             brace_depth += line.count("{") - line.count("}")
             continue
@@ -628,6 +635,7 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
             # Class header on a line without `{` — happens with constraints
             # like `public class Foo<T> where T : new()`. Look ahead to next `{`.
             class_name = cls_m.group(1)
+            opened_classes.append(class_name)
             scope_stack.append(("class", class_name, brace_depth))
             # Don't change brace_depth yet; the next `{` line will handle it.
             continue
@@ -681,6 +689,14 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
                 seen.append(n)
                 seen_set.add(n)
         findings.append((namespace, cls, sorted(seen)))
+    # Surface method-less generated-type classes the member scan produced no
+    # entry for (all-lowercase wire-key property names don't match PROPERTY_RE's
+    # PascalCase name group — and these types are recorded method-less anyway).
+    # Scoped to the generated-type namespaces so hand classes are untouched.
+    if generated_type_module(namespace) is not None:
+        for cls in opened_classes:
+            if cls not in members:
+                findings.append((namespace, cls, []))
     return findings
 
 
@@ -802,6 +818,53 @@ def generated_rest_projection(class_name: str, manifest: dict):
 
 
 # ---------------------------------------------------------------------------
+# Generated method-less TYPE surface (SESSION_CHANGESET item D / H / I)
+# ---------------------------------------------------------------------------
+#
+# The read-side typed payloads + REST wire types are code-generated
+# (scripts/generate_rest.py `emit_types` + generate_swml_verbs.py /
+# generate_relay_protocol.py / generate_swaig_payloads.py) into distinct C#
+# namespaces — one per oracle module — so a type NAME that recurs across modules
+# and collides with an SDK class name lands in the right module BY its C#
+# namespace prefix (winning over the name-keyed module_for_class lookup). These
+# classes are METHOD-LESS on the surface (the reference records a bare type-
+# definition name); the SURFACE-DIFF gen-type leaf fold collapses cross-module
+# duplicates on both sides.
+#
+# A prefix ending "." routes any class under that C# namespace to a FIXED oracle
+# module (SWML-verbs / RELAY-proto / SWAIG payloads). The REST wire types live
+# under Types.<NsMod> and map each <NsMod> to its <ns>_types_generated module.
+_GENERATED_TYPE_NS_FIXED = {
+    "SignalWire.Core.SwmlVerbsGenerated": "signalwire.core.swml_verbs_generated",
+    "SignalWire.Relay.ProtocolTypesGenerated": "signalwire.relay.protocol_types_generated",
+    "SignalWire.Core.PostPromptGenerated": "signalwire.core.post_prompt_generated",
+    "SignalWire.Core.SwaigRequestGenerated": "signalwire.core.swaig_request_generated",
+    "SignalWire.Core.SwaigActionsGenerated": "signalwire.core.swaig_actions_generated",
+}
+_GENERATED_REST_TYPES_NS = "SignalWire.REST.Namespaces.Generated.Types"
+# C# Types sub-namespace segment -> oracle <ns>_types_generated leaf.
+_REST_TYPES_NS_LEAF = {
+    "RelayRest": "relay_rest", "Fabric": "fabric", "Calling": "calling",
+    "Video": "video", "Datasphere": "datasphere", "Logs": "logs",
+    "Message": "message", "Voice": "voice", "Fax": "fax", "Project": "project",
+    "Chat": "chat", "PubSub": "pubsub", "SwmlWebhooks": "swml_webhooks",
+}
+
+
+def generated_type_module(namespace: str):
+    """Return the oracle module for a generated method-less TYPE class by its C#
+    namespace, or ``None`` if this namespace is not a generated-type namespace."""
+    if namespace in _GENERATED_TYPE_NS_FIXED:
+        return _GENERATED_TYPE_NS_FIXED[namespace]
+    if namespace.startswith(_GENERATED_REST_TYPES_NS + "."):
+        ns_mod = namespace[len(_GENERATED_REST_TYPES_NS) + 1:].split(".", 1)[0]
+        leaf = _REST_TYPES_NS_LEAF.get(ns_mod)
+        if leaf:
+            return f"{_REST_MODULE_PREFIX}.{leaf}_types_generated"
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Top-level
 # ---------------------------------------------------------------------------
 
@@ -847,6 +910,16 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
                 entry = modules.setdefault(target_mod, {"classes": {}, "functions": []})
                 existing = entry["classes"].get(class_name, [])
                 entry["classes"][class_name] = sorted(set(existing) | set(method_names))
+                continue
+
+            # Generated method-less TYPE surface (item D/H/I): route by C#
+            # namespace prefix to the oracle module, METHOD-LESS (a bare type
+            # definition — the reference records these with no members on the
+            # surface; the gen-type leaf fold collapses cross-module duplicates).
+            gen_type_mod = generated_type_module(namespace)
+            if gen_type_mod is not None:
+                entry = modules.setdefault(gen_type_mod, {"classes": {}, "functions": []})
+                entry["classes"].setdefault(class_name, [])
                 continue
 
             # Apply CLASS_RENAME_MAP

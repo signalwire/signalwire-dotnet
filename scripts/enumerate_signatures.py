@@ -44,7 +44,7 @@ sys.path.insert(0, str(HERE))
 from enumerate_surface import (  # type: ignore
     CLASS_MODULE_MAP, CLASS_RENAME_MAP, METHOD_RENAMES, MIXIN_PROJECTIONS,
     SKILL_RENAMES, SKIP_METHOD_NAMES, module_for_class, pascal_to_snake,
-    GENERATED_REST_NAMESPACE, load_rest_manifest,
+    GENERATED_REST_NAMESPACE, load_rest_manifest, generated_type_module,
 )
 
 
@@ -211,6 +211,15 @@ def translate_dotnet_type(t: str, aliases: dict[str, str], context: str) -> str:
 def _translate_sdk_class_ref(full_name: str) -> str:
     """Translate ``SignalWire.Foo.Bar`` to ``class:<canonical>``."""
     namespace, _, name = full_name.rpartition(".")
+    # Generated method-less TYPE class (SWML-verbs / RELAY-proto / SWAIG payloads
+    # / REST wire types): route by its C# namespace to the oracle module so a
+    # class-typed field accessor (PostPrompt.post_prompt_data -> PostPromptData,
+    # cross-module PostPromptSwaigLogEntry.post_data -> SwaigRequest) resolves to
+    # the SAME module path the reference records (these modules are NOT folded by
+    # the signature diff's gen: leaf fold, so the module MUST match exactly).
+    gen_type_mod = generated_type_module(namespace)
+    if gen_type_mod is not None:
+        return f"class:{gen_type_mod}.{name}"
     rename = CLASS_RENAME_MAP.get((namespace, name))
     if rename is not None:
         target_module, target_class = rename
@@ -402,6 +411,82 @@ def _oracle_alignment_score(sig: dict, ref_types: list | None) -> int:
 _REST_MODULE_PREFIX = "signalwire.rest.namespaces"
 
 
+# The generated-type oracle MODULES whose classes the reference's SIGNATURE
+# oracle (griffe) records WITH per-field accessors: only the read-side SWML-verbs
+# + SWAIG payload modules. The REST ``<ns>_types_generated`` wire-type modules,
+# the RELAY ``protocol_types_generated`` module, and ``swaig_actions_generated``
+# are ABSENT from the signature oracle entirely (griffe records their TypedDicts
+# method-less / not at all), so a port that emits field accessors for them
+# produces phantom ``missing-reference`` drift. Emit those modules METHOD-LESS on
+# the signature side (surface still carries the type names via enumerate_surface).
+_SIG_ACCESSOR_MODULES = {
+    "signalwire.core.swml_verbs_generated",
+    "signalwire.core.post_prompt_generated",
+    "signalwire.core.swaig_request_generated",
+}
+
+
+def _collect_generated_type(type_entry, name, target_module, aliases, out_modules, failures):
+    """Emit signatures for a generated method-less TYPE class (SESSION_CHANGESET
+    item D3) onto its oracle ``*_generated`` module.
+
+    For the read-side PAYLOAD modules (SWML-verbs / post-prompt / swaig-request —
+    the ones the reference's signature oracle records WITH accessors): one zero-arg
+    accessor per PUBLIC PROPERTY, named by the WIRE KEY VERBATIM (the reference's
+    griffe oracle records the generated field name unchanged — NOT snake-folded, so
+    ``SWAIG``/``call_log``/``allOf`` stay as-is). A class-typed property (a
+    ``$ref``/array-of-``$ref`` field) resolves to a ``class:<module>.<Type>`` return
+    and MATCHES the reference's recorded class-typed accessor; a scalar/collection
+    property returns a primitive the signature diff excuses as a port-side state
+    accessor.
+
+    For the REST wire-type / RELAY-proto / swaig-actions modules (ABSENT from the
+    signature oracle): emit the class METHOD-LESS — no accessors — matching the
+    reference (which records no signature entry for these TypedDicts)."""
+    if target_module not in _SIG_ACCESSOR_MODULES:
+        # Method-less on the signature side (the reference records no accessors).
+        out_modules.setdefault(target_module, {"classes": {}})
+        out_modules[target_module]["classes"].setdefault(name, {"methods": {}})
+        return
+    methods_out: dict = {}
+    for p in type_entry.get("properties", []):
+        pname = p.get("name", "")
+        if not pname or pname.startswith("_"):
+            continue
+        # Wire key VERBATIM — the reference records the field name unchanged
+        # (``SWAIG``/``call_log``/``allOf`` stay as-is; no snake-fold).
+        if pname in methods_out:
+            continue
+        # Return type ``any`` for every payload accessor (the read-side idiom,
+        # mirroring ruby/python's dynamically-typed field accessors). The
+        # reference's griffe oracle records these fields with a rich return
+        # (``class:<Type>`` for a $ref field — incl. union/enum/alias targets and
+        # a griffe-nested ``AIObject.SWAIG`` quirk — and ``list<...>`` / scalar for
+        # others), and ``types_compatible`` treats ``any`` as compatible with ANY
+        # reference return. Recording ``any`` is therefore the drift-neutral,
+        # idiom-blind match — the port's C# property is still concretely typed for
+        # the developer; only the parity-adapter return is generalised. (Typing it
+        # precisely would DRIFT: my generator can't reproduce griffe's exact
+        # class-ref resolution for non-object $ref targets without inventing
+        # surface classes the reference doesn't carry.)
+        params_out = [] if p.get("is_static", False) else [{"name": "self", "kind": "self"}]
+        methods_out[pname] = {"params": params_out, "returns": "any"}
+
+    if not methods_out:
+        # Truly method-less (all properties scalar and none class-typed, OR no
+        # properties): the reference records a bare method-less class. Emit an
+        # empty class shell so the surface/module still carries the type name;
+        # the signature diff treats a member-less class as method-less.
+        out_modules.setdefault(target_module, {"classes": {}})
+        out_modules[target_module]["classes"].setdefault(name, {"methods": {}})
+        return
+
+    out_modules.setdefault(target_module, {"classes": {}})
+    out_modules[target_module]["classes"][name] = {
+        "methods": dict(sorted(methods_out.items())),
+    }
+
+
 def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
                             rest_class_module, rest_containers, rest_surface, rest_sidecar):
     """Emit signatures for a generated-REST class onto the oracle's
@@ -537,6 +622,21 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             _collect_generated_rest(
                 type_entry, name, aliases, out_modules, failures,
                 rest_class_module, rest_containers, rest_surface, rest_sidecar,
+            )
+            continue
+
+        # Generated method-less TYPE class (SWML-verbs / RELAY-proto / SWAIG
+        # payloads / REST wire types): route by its C# namespace to the oracle
+        # module. Emit a zero-arg accessor per PUBLIC PROPERTY, named by the WIRE
+        # KEY VERBATIM (the reference records the field name unchanged — ``SWAIG``
+        # stays ``SWAIG``, ``call_log`` stays ``call_log`` — NOT snake-folded /
+        # canonicalised). A class-typed property resolves to ``class:...`` and
+        # MATCHES the reference's recorded class-typed accessor; a scalar/
+        # collection property is excused by the diff as a port-side state accessor.
+        gen_type_mod = generated_type_module(ns)
+        if gen_type_mod is not None:
+            _collect_generated_type(
+                type_entry, name, gen_type_mod, aliases, out_modules, failures,
             )
             continue
 
