@@ -391,6 +391,17 @@ run_gate "DRIFT" "diff_port_signatures vs python reference" \
 run_gate "SURFACE-FRESH" "check_surface_freshness vs regenerated port_surface.json" \
     surface_fresh_gate
 
+# Gate 4b: GEN-FRESH — the code-generated REST resource layer
+# (src/SignalWire/REST/Namespaces/Generated/**) must match a fresh run of
+# scripts/generate_rest.py against the canonical porting-sdk specs + x-sdk-*
+# markup (SESSION_CHANGESET item A/B). A stale/hand-edited generated file (or a
+# leftover file no longer in the generator output) fails the gate — the .cs
+# resources, the client tree, and the rest_signatures.json sidecar are all
+# checked. Pure-python, no build/mock needed. Mirrors the other ports'
+# GEN-FRESH.
+run_gate "GEN-FRESH" "generate_rest.py --check (generated REST layer matches specs)" \
+    python3 scripts/generate_rest.py --check
+
 # Gate 5: no-cheat
 run_gate "NO-CHEAT" "audit_no_cheat_tests" \
     python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"

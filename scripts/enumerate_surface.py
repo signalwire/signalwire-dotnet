@@ -779,6 +779,69 @@ def emit_class_name(class_name: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Generated-REST projection (SESSION_CHANGESET item A/B)
+# ---------------------------------------------------------------------------
+#
+# The REST resource layer is code-generated (scripts/generate_rest.py) into the
+# ``SignalWire.REST.Namespaces.Generated`` C# namespace. Those classes must
+# project onto the python oracle's per-namespace generated modules
+# ``signalwire.rest.namespaces.<ns>_resources_generated.<Name>`` and the six
+# container classes onto ``signalwire.rest.namespaces._client_tree_generated``.
+#
+# The generator emits a manifest into rest_signatures.json so the projection
+# stays exactly in lock-step with the emitted classes (GEN-FRESH covers it):
+#   * ``class_module``  — resource ClassName -> "<ns>_resources_generated"
+#   * ``containers``    — container ClassName -> "_client_tree_generated"
+#   * ``surface``       — resource ClassName -> the EXACT canonical method-name
+#                         list the oracle records (own-body methods only:
+#                         inherited CRUD ops live on the base and are NOT
+#                         re-recorded; the crud_base structural equivalence
+#                         covers them on the signature side). We take this
+#                         VERBATIM rather than the regex-parsed .cs body, since
+#                         the .cs body under/over-reports (inherited create/
+#                         update absent; inlined ReadResource list/get present).
+#
+# Containers publish only ``__init__`` — their C# property accessors are the
+# .NET instance-attribute idiom (python sets ``self.x = ...`` in __init__), not
+# recorded surface.
+GENERATED_REST_NAMESPACE = "SignalWire.REST.Namespaces.Generated"
+_REST_MODULE_PREFIX = "signalwire.rest.namespaces"
+
+_REST_SIDECAR_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "src" / "SignalWire" / "REST" / "Namespaces" / "Generated" / "rest_signatures.json"
+)
+
+
+def load_rest_manifest() -> dict:
+    """Load the generator's manifest (class_module / containers / surface).
+    Returns empty dicts when absent so the enumerator degrades gracefully
+    pre-generation."""
+    if not _REST_SIDECAR_PATH.is_file():
+        return {"class_module": {}, "containers": {}, "surface": {}, "methods": {}}
+    data = json.loads(_REST_SIDECAR_PATH.read_text(encoding="utf-8"))
+    return {
+        "class_module": data.get("class_module", {}),
+        "containers": data.get("containers", {}),
+        "surface": data.get("surface", {}),
+        "methods": data.get("methods", {}),
+    }
+
+
+def generated_rest_projection(class_name: str, manifest: dict):
+    """Return (target_module, method_name_list) for a generated-REST class, or
+    ``None`` if this class isn't in the manifest (e.g. the ResourceTree partial,
+    which is a .NET-only composition helper the hand RestClient absorbs)."""
+    cm = manifest["class_module"]
+    containers = manifest["containers"]
+    if class_name in cm:
+        return f"{_REST_MODULE_PREFIX}.{cm[class_name]}", manifest["surface"].get(class_name, [])
+    if class_name in containers:
+        return f"{_REST_MODULE_PREFIX}.{containers[class_name]}", ["__init__"]
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Top-level
 # ---------------------------------------------------------------------------
 
@@ -794,6 +857,7 @@ def git_sha(repo: Path) -> str:
 
 def build_snapshot(repo: Path, src_dir: Path) -> dict:
     modules: dict[str, dict] = {}
+    rest_manifest = load_rest_manifest()
 
     cs_files = sorted(src_dir.rglob("*.cs"))
 
@@ -810,6 +874,21 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             continue
 
         for namespace, class_name, methods in findings:
+            # Generated-REST projection (item A/B): the classes under
+            # SignalWire.REST.Namespaces.Generated project onto the oracle's
+            # <ns>_resources_generated / _client_tree_generated modules with the
+            # exact method-name set from the generator manifest (NOT the parsed
+            # .cs body). A class not in the manifest (ResourceTree) is skipped.
+            if namespace == GENERATED_REST_NAMESPACE:
+                proj = generated_rest_projection(class_name, rest_manifest)
+                if proj is None:
+                    continue
+                target_mod, method_names = proj
+                entry = modules.setdefault(target_mod, {"classes": {}, "functions": []})
+                existing = entry["classes"].get(class_name, [])
+                entry["classes"][class_name] = sorted(set(existing) | set(method_names))
+                continue
+
             # Apply CLASS_RENAME_MAP
             if (namespace, class_name) in CLASS_RENAME_MAP:
                 target_mod, target_class = CLASS_RENAME_MAP[(namespace, class_name)]

@@ -688,6 +688,7 @@ signalwire.rest.client.RestClient.chat: namespace_field_accessor: .NET RestClien
 signalwire.rest.client.RestClient.compat: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
 signalwire.rest.client.RestClient.datasphere: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
 signalwire.rest.client.RestClient.fabric: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
+signalwire.rest.client.RestClient.generated: namespace_field_accessor: .NET RestClient accessor for the code-generated REST resource tree (Namespaces/Generated/ResourceTree.cs, SESSION_CHANGESET item A/B); Python exposes the generated resources directly on the client via attribute access. Additive composition; the hand accessors remain the current entry-points during migration.
 signalwire.rest.client.RestClient.http: namespace_field_accessor: .NET RestClient field accessor for the HTTP transport; Python uses attribute access.
 signalwire.rest.client.RestClient.imported_numbers: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.
 signalwire.rest.client.RestClient.logs: namespace_field_accessor: .NET RestClient namespace accessor; Python uses attribute access on the client.

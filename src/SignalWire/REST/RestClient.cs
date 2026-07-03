@@ -44,6 +44,12 @@ public class RestClient : IDisposable
     private PubSubResource? _pubsub;
     private ChatResource? _chat;
 
+    // The code-generated REST resource tree (scripts/generate_rest.py →
+    // Namespaces/Generated/ResourceTree.cs, a partial class). The hand client
+    // composes it so every generated resource + namespace container is reachable
+    // off the one authenticated transport (SESSION_CHANGESET item A/B).
+    private Namespaces.Generated.ResourceTree? _generated;
+
     /// <param name="projectId">Project ID (falls back to SIGNALWIRE_PROJECT_ID env var).</param>
     /// <param name="token">API token (falls back to SIGNALWIRE_API_TOKEN env var).</param>
     /// <param name="space">Space host (falls back to SIGNALWIRE_SPACE env var).</param>
@@ -164,6 +170,18 @@ public class RestClient : IDisposable
     /// <summary>Chat tokens (token-only resource at /api/chat/tokens).</summary>
     public ChatResource Chat =>
         _chat ??= new ChatResource(_http);
+
+    /// <summary>
+    /// The code-generated REST resource tree — every generated resource
+    /// (flat) plus the namespace containers (fabric / video / logs / registry /
+    /// project / datasphere), all lazily constructed off this client's
+    /// authenticated transport. Generated from the canonical REST specs by
+    /// <c>scripts/generate_rest.py</c> (SESSION_CHANGESET item A/B); the hand
+    /// accessors above remain the current public entry-points while the port
+    /// migrates onto this tree.
+    /// </summary>
+    public Namespaces.Generated.ResourceTree Generated =>
+        _generated ??= new Namespaces.Generated.ResourceTree(_http);
 
     // ------------------------------------------------------------------
     // IDisposable

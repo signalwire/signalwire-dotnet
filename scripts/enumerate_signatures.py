@@ -44,6 +44,7 @@ sys.path.insert(0, str(HERE))
 from enumerate_surface import (  # type: ignore
     CLASS_MODULE_MAP, CLASS_RENAME_MAP, METHOD_RENAMES, MIXIN_PROJECTIONS,
     SKILL_RENAMES, SKIP_METHOD_NAMES, module_for_class, pascal_to_snake,
+    GENERATED_REST_NAMESPACE, load_rest_manifest,
 )
 
 
@@ -398,9 +399,126 @@ def _oracle_alignment_score(sig: dict, ref_types: list | None) -> int:
     return score
 
 
+_REST_MODULE_PREFIX = "signalwire.rest.namespaces"
+
+
+def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
+                            rest_class_module, rest_containers, rest_surface, rest_sidecar):
+    """Emit signatures for a generated-REST class onto the oracle's
+    ``<ns>_resources_generated`` / ``_client_tree_generated`` module.
+
+    * Method set is the generator's ``surface`` manifest (own-body methods; the
+      inherited CRUD ops list/get/delete are covered by the oracle's crud_base
+      structural equivalence, so we do NOT emit them here — matching the surface
+      side and avoiding phantom ``missing-reference`` CRUD drift).
+    * Each emitted method's params come from the sidecar (``<Class>::<CsMethod>``)
+      when recorded (operation/command/set/create/update), unfolded as
+      ``[self] + records``; ``__init__`` and any surface method without a sidecar
+      entry fall back to a bare ``[self]`` (constructor / inherited no-arg).
+    * Containers publish only ``__init__``."""
+    is_container = name in rest_containers
+    if name in rest_class_module:
+        target_module = f"{_REST_MODULE_PREFIX}.{rest_class_module[name]}"
+        surface_names = set(rest_surface.get(name, []))
+    elif is_container:
+        target_module = f"{_REST_MODULE_PREFIX}.{rest_containers[name]}"
+        # Container signature surface = __init__ + one zero-arg accessor per
+        # grouped resource (the oracle records each ``self.x = R(http)`` attribute
+        # as a property returning ``class:...<Resource>``). We take these from the
+        # reflected C# accessor properties below.
+        surface_names = {"__init__"}
+    else:
+        # Not in the manifest (the ResourceTree partial) — a .NET-only client
+        # composition helper the hand RestClient absorbs; not oracle surface.
+        return
+
+    # Map canonical method-name -> reflected method entry (for __init__ / any
+    # method we must still type from reflection).
+    reflected: dict[str, dict] = {}
+    for m in type_entry.get("methods", []):
+        mn = m.get("name", "")
+        canon = "__init__" if mn == "__init__" else canonical_method_name(mn)
+        if canon is not None:
+            reflected.setdefault(canon, m)
+
+    methods_out: dict = {}
+
+    # Container accessors: emit each reflected public property as a zero-arg
+    # method returning the grouped resource class (matches the oracle's
+    # attribute-as-property recording). Resources have no such accessors (only
+    # BasePath, which the surface/signature both exclude).
+    if is_container:
+        for p in type_entry.get("properties", []):
+            pcanon = canonical_method_name(p.get("name", ""))
+            if pcanon is None or pcanon in methods_out:
+                continue
+            ctx = f"{target_module}.{name}.{pcanon}"
+            try:
+                ret = translate_dotnet_type(p.get("type", ""), aliases, ctx + "[->]")
+            except TypeTranslationError as e:
+                failures.append(str(e))
+                continue
+            params_out = [] if p.get("is_static", False) else [{"name": "self", "kind": "self"}]
+            methods_out[pcanon] = {"params": params_out, "returns": ret}
+
+    for canon in sorted(surface_names):
+        sidecar_key = f"{name}::{_cs_method_for(canon, reflected)}"
+        if sidecar_key in rest_sidecar:
+            records = [dict(r) for r in rest_sidecar[sidecar_key]]
+            methods_out[canon] = {
+                "params": [{"name": "self", "kind": "self"}] + records,
+                "returns": "dict<string,any>",
+            }
+            continue
+        # No sidecar entry: type from reflection if available, else bare self.
+        m = reflected.get(canon)
+        if m is not None:
+            ctx = f"{target_module}.{name}.{canon}"
+            try:
+                methods_out[canon] = build_signature(
+                    m, aliases, ctx, is_static=m.get("is_static", False),
+                )
+            except TypeTranslationError as e:
+                failures.append(str(e))
+                methods_out[canon] = {"params": [{"name": "self", "kind": "self"}], "returns": "any"}
+        else:
+            methods_out[canon] = {"params": [{"name": "self", "kind": "self"}], "returns": "any"}
+
+    if methods_out:
+        out_modules.setdefault(target_module, {"classes": {}})
+        out_modules[target_module]["classes"][name] = {
+            "methods": dict(sorted(methods_out.items())),
+        }
+
+
+def _cs_method_for(canon: str, reflected: dict) -> str:
+    """The C# method name whose sidecar key matches this canonical name. The
+    sidecar is keyed by the C# method (``SearchAsync``, ``SetAiAgentAsync``,
+    ``CreateAsync``…); recover it from the reflected method whose canonical form
+    equals ``canon``. Falls back to the PascalCase+Async spelling."""
+    m = reflected.get(canon)
+    if m is not None:
+        return m.get("name", "")
+    # Fallback: PascalCase(canon) + "Async" (create -> CreateAsync).
+    pascal = "".join(w[:1].upper() + w[1:] for w in canon.split("_"))
+    return pascal + "Async"
+
+
 def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     out_modules: dict = {}
     failures: list = []
+
+    # Generated-REST manifest (item A/B): drives the <ns>_resources_generated /
+    # _client_tree_generated projection + the keyword/extras/var_keyword param
+    # UNFOLD. .NET reflection can't express keyword-only intent, the open
+    # ``extras`` dict, or the ``params`` var-keyword GET door; the generator
+    # records the canonical param list per method in the sidecar and we splice
+    # it in verbatim (mirrors the PHP port), keeping the reflected ``self``.
+    rest_manifest = load_rest_manifest()
+    rest_class_module = rest_manifest["class_module"]
+    rest_containers = rest_manifest["containers"]
+    rest_surface = rest_manifest["surface"]
+    rest_sidecar = rest_manifest["methods"]
 
     for type_entry in raw.get("types", []):
         ns = type_entry.get("namespace", "")
@@ -410,6 +528,17 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         kind = type_entry.get("kind", "class")
         if kind == "enum":
             continue  # not part of the signature inventory in v1
+
+        # Generated-REST classes (SignalWire.REST.Namespaces.Generated) project
+        # onto the oracle's per-namespace generated modules with the sidecar
+        # unfold. Handled by a dedicated collector so the reflected loose params
+        # are replaced by the canonical recorded shape.
+        if ns == GENERATED_REST_NAMESPACE:
+            _collect_generated_rest(
+                type_entry, name, aliases, out_modules, failures,
+                rest_class_module, rest_containers, rest_surface, rest_sidecar,
+            )
+            continue
 
         # Resolve canonical (module, class) for this type
         rename = CLASS_RENAME_MAP.get((ns, name))

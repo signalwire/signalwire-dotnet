@@ -272,6 +272,14 @@ internal static class Program
         if (t == typeof(SignalWire.REST.HttpClient)) return false;
         var ns = t.Namespace ?? "";
         if (!ns.StartsWith("SignalWire.REST", StringComparison.Ordinal)) return false;
+        // The code-generated REST resource tree (SignalWire.REST.Namespaces.Generated,
+        // reached via RestClient.Generated) is composed but NOT YET the authoritative
+        // route source — the hand namespace accessors still provide Set B during the
+        // A/B→migration window. Excluding it here keeps Set B == the hand surface
+        // (SPEC-PARITY unchanged) until the hand resources are deleted in favour of
+        // the generated tree; at that point this guard is removed so the generated
+        // routes become Set B. (SESSION_CHANGESET item A/B.)
+        if (ns.StartsWith("SignalWire.REST.Namespaces.Generated", StringComparison.Ordinal)) return false;
         return t.IsClass && t != typeof(string);
     }
 
