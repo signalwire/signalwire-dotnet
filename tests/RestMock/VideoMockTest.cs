@@ -6,7 +6,7 @@
  */
 using System.Text.Json;
 using SignalWire.REST;
-using SignalWire.REST.Namespaces;
+using SignalWire.REST.Namespaces.Generated;
 using SignalWire.Tests.Mock;
 using Xunit;
 
@@ -30,10 +30,10 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
         _fixture.Reset();
     }
 
-    private Video NewVideo()
+    private VideoNamespace NewVideo()
     {
         var http = _fixture.NewHttp();
-        return new Video(http);
+        return new VideoNamespace(http);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -67,10 +67,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var video = NewVideo();
-        var body = await video.Rooms.CreateStreamAsync("room-1", new Dictionary<string, object?>
-        {
-            ["url"] = "rtmp://example.com/live",
-        });
+        var body = await video.Rooms.CreateStreamAsync("room-1", url: "rtmp://example.com/live");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -283,10 +280,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var video = NewVideo();
-        var body = await video.Streams.UpdateAsync("stream-2", new Dictionary<string, object?>
-        {
-            ["url"] = "rtmp://example.com/new",
-        });
+        var body = await video.Streams.UpdateAsync("stream-2", url: "rtmp://example.com/new");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();

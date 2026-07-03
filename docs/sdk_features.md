@@ -102,7 +102,6 @@ HTTP client for all SignalWire APIs. Lazily initializes namespace sub-objects.
 | `PhoneNumbers` | Phone number management |
 | `Datasphere` | Document management and semantic search |
 | `Video` | Video rooms, sessions, conferences |
-| `Compat` | Twilio-compatible LAML API |
 | `Addresses` | Address management |
 | `Queues` | Call queues |
 | `Recordings` | Call recordings |

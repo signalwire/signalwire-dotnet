@@ -16,8 +16,9 @@ namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
 /// ResourceTree — generated lazy accessors for every flat REST resource
-/// plus the namespace containers (§8). Composed into the hand RestClient
-/// via a partial-class method GeneratedHttpClient(). Placement resolved from
+/// plus the namespace containers (§8). The hand RestClient INHERITS this
+/// tree so every generated resource + container is reachable directly off
+/// the one authenticated transport. Placement resolved from
 /// x-sdk-namespace.attr + per-resource x-sdk-resource.namespace/attr; base
 /// paths per §4.
 /// </summary>
@@ -49,6 +50,11 @@ public partial class ResourceTree
     {
         _generatedHttp = http;
     }
+
+    /// <summary>The authenticated transport this tree dispatches through
+    /// (exposed to the inheriting RestClient for disposal; protected so it
+    /// is not public route/surface).</summary>
+    protected SignalWire.REST.HttpClient GeneratedHttp => _generatedHttp;
 
     /// <summary>The Addresses resource.</summary>
     public Addresses Addresses => _addresses ??= new Addresses(_generatedHttp);

@@ -6,7 +6,7 @@
  */
 using System.Text.Json;
 using SignalWire.REST;
-using SignalWire.REST.Namespaces;
+using SignalWire.REST.Namespaces.Generated;
 using SignalWire.Tests.Mock;
 using Xunit;
 
@@ -31,10 +31,10 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         _fixture.Reset();
     }
 
-    private Fabric NewFabric()
+    private FabricNamespace NewFabric()
     {
         var http = _fixture.NewHttp();
-        return new Fabric(http);
+        return new FabricNamespace(http);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -51,7 +51,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.AddressesTopLevel.ListAsync();
+        var body = await fabric.Addresses.ListAsync();
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("data"),
             $"missing 'data' in body keys {string.Join(",", body.Keys)}");
@@ -68,7 +68,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.AddressesTopLevel.GetAsync("addr-9001");
+        var body = await fabric.Addresses.GetAsync("addr-9001");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -77,23 +77,10 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         Assert.NotNull(last.MatchedRoute);
     }
 
-    // ---- CxmlApplications.create — deliberate NotImplementedError ---
-
-    [Fact]
-    public async Task CxmlApplications_Create_RaisesNotImplemented()
-    {
-        if (!_fixture.Available) return;
-        var fabric = NewFabric();
-        await Assert.ThrowsAsync<NotImplementedException>(async () =>
-        {
-            await fabric.CxmlApplicationsOps.CreateAsync(new Dictionary<string, object?>
-            {
-                ["name"] = "never_built",
-            });
-        });
-        // Nothing should have hit the wire.
-        Assert.Empty(_fixture.Harness.Journal.All());
-    }
+    // CxmlApplications_Create_RaisesNotImplemented was removed here — the
+    // generated CxmlApplications resource has NO CreateAsync at all (per the
+    // no-create design), so there is nothing to invoke or assert. See
+    // PORT_TEST_OMISSIONS.md.
 
     // ---- CallFlows.list_addresses — singular path ------------------
 
@@ -102,7 +89,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.CallFlowsOps.ListAddressesAsync("cf-1");
+        var body = await fabric.CallFlows.ListAddressesAsync("cf-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("data"));
         Assert.IsType<List<object?>>(body["data"]);
@@ -121,7 +108,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.ConferenceRoomsOps.ListAddressesAsync("cr-1");
+        var body = await fabric.ConferenceRooms.ListAddressesAsync("cr-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("data"));
 
@@ -138,7 +125,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.SubscribersOps.GetSipEndpointAsync("sub-1", "ep-1");
+        var body = await fabric.Subscribers.GetSipEndpointAsync("sub-1", "ep-1");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -152,10 +139,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.SubscribersOps.UpdateSipEndpointAsync("sub-1", "ep-1", new Dictionary<string, object?>
-        {
-            ["username"] = "renamed",
-        });
+        var body = await fabric.Subscribers.UpdateSipEndpointAsync("sub-1", "ep-1", username: "renamed");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -169,7 +153,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.SubscribersOps.DeleteSipEndpointAsync("sub-1", "ep-1");
+        var body = await fabric.Subscribers.DeleteSipEndpointAsync("sub-1", "ep-1");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -185,10 +169,14 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.TokensApi.CreateInviteTokenAsync(new Dictionary<string, object?>
-        {
-            ["email"] = "invitee@example.com",
-        });
+        // `email` is not a typed field on create_subscriber_invite_token; forward
+        // via extras to preserve the exact body.email wire key the assertion checks.
+        var body = await fabric.Tokens.CreateInviteTokenAsync(
+            addressId: "addr-invite-1",
+            extras: new Dictionary<string, object?>
+            {
+                ["email"] = "invitee@example.com",
+            });
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -203,10 +191,14 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.TokensApi.CreateEmbedTokenAsync(new Dictionary<string, object?>
-        {
-            ["allowed_addresses"] = new List<object?> { "addr-1", "addr-2" },
-        });
+        // `token` is the required field; `allowed_addresses` is forwarded via extras
+        // to preserve the exact body.allowed_addresses array the assertion checks.
+        var body = await fabric.Tokens.CreateEmbedTokenAsync(
+            token: "embed-token-1",
+            extras: new Dictionary<string, object?>
+            {
+                ["allowed_addresses"] = new List<object?> { "addr-1", "addr-2" },
+            });
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -226,10 +218,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.TokensApi.RefreshSubscriberTokenAsync(new Dictionary<string, object?>
-        {
-            ["refresh_token"] = "abc-123",
-        });
+        var body = await fabric.Tokens.RefreshSubscriberTokenAsync(refreshToken: "abc-123");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -245,7 +234,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.ResourcesGeneric.ListAsync();
+        var body = await fabric.Resources.ListAsync();
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("data"));
         Assert.IsType<List<object?>>(body["data"]);
@@ -261,7 +250,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.ResourcesGeneric.GetAsync("res-1");
+        var body = await fabric.Resources.GetAsync("res-1");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -274,7 +263,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.ResourcesGeneric.DeleteAsync("res-2");
+        var body = await fabric.Resources.DeleteAsync("res-2");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -288,7 +277,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.ResourcesGeneric.ListAddressesAsync("res-3");
+        var body = await fabric.Resources.ListAddressesAsync("res-3");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("data"));
         Assert.IsType<List<object?>>(body["data"]);
@@ -303,10 +292,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        var body = await fabric.ResourcesGeneric.AssignDomainApplicationAsync("res-4", new Dictionary<string, object?>
-        {
-            ["domain_application_id"] = "da-7",
-        });
+        var body = await fabric.Resources.AssignDomainApplicationAsync("res-4", domainApplicationId: "da-7");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();

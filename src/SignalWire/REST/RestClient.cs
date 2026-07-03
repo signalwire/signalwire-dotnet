@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using SignalWire.REST.Namespaces;
 
 namespace SignalWire.REST;
 
@@ -7,10 +6,19 @@ namespace SignalWire.REST;
 /// Top-level SignalWire REST client.
 ///
 /// Provides lazy access to every API namespace (fabric, calling,
-/// phone_numbers, datasphere, video, compat, etc.). Credentials can be
-/// supplied explicitly or pulled from environment variables.
+/// phone_numbers, datasphere, video, etc.). Credentials can be supplied
+/// explicitly or pulled from environment variables.
+///
+/// The namespace accessors are the code-generated resource tree
+/// (<see cref="Namespaces.Generated.ResourceTree"/>, emitted by
+/// <c>scripts/generate_rest.py</c> from the canonical REST specs). RestClient
+/// INHERITS that tree so every generated resource + namespace container
+/// (<c>Fabric</c>, <c>Calling</c>, <c>PhoneNumbers</c>, …, <c>Chat</c>) is
+/// reachable directly off the one authenticated transport (SESSION_CHANGESET
+/// item A/B). The hand-written per-resource classes were deleted; the generated
+/// tree is now the sole REST surface.
 /// </summary>
-public class RestClient : IDisposable
+public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
 {
     private readonly string _projectId;
     private readonly string _token;
@@ -19,41 +27,17 @@ public class RestClient : IDisposable
     private readonly HttpClient _http;
     private bool _disposed;
 
-    // ------------------------------------------------------------------
-    // 21 lazily-initialised namespace instances
-    // ------------------------------------------------------------------
-    private Fabric? _fabric;
-    private Calling? _calling;
-    private PhoneNumbers? _phoneNumbers;
-    private DatasphereNs? _datasphere;
-    private Video? _video;
-    private Compat? _compat;
-    private Addresses? _addresses;
-    private Queues? _queues;
-    private Recordings? _recordings;
-    private NumberGroups? _numberGroups;
-    private VerifiedCallers? _verifiedCallers;
-    private SipProfile? _sipProfile;
-    private LookupResource? _lookup;
-    private ShortCodes? _shortCodes;
-    private ImportedNumbers? _importedNumbers;
-    private Mfa? _mfa;
-    private Registry? _registry;
-    private Logs? _logs;
-    private Project? _project;
-    private PubSubResource? _pubsub;
-    private ChatResource? _chat;
-
-    // The code-generated REST resource tree (scripts/generate_rest.py →
-    // Namespaces/Generated/ResourceTree.cs, a partial class). The hand client
-    // composes it so every generated resource + namespace container is reachable
-    // off the one authenticated transport (SESSION_CHANGESET item A/B).
-    private Namespaces.Generated.ResourceTree? _generated;
-
     /// <param name="projectId">Project ID (falls back to SIGNALWIRE_PROJECT_ID env var).</param>
     /// <param name="token">API token (falls back to SIGNALWIRE_API_TOKEN env var).</param>
     /// <param name="space">Space host (falls back to SIGNALWIRE_SPACE env var).</param>
     public RestClient(string projectId = "", string token = "", string space = "")
+        : base(BuildHttp(
+            !string.IsNullOrEmpty(projectId) ? projectId
+                : Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID") ?? "",
+            !string.IsNullOrEmpty(token) ? token
+                : Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN") ?? "",
+            !string.IsNullOrEmpty(space) ? space
+                : Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? ""))
     {
         _projectId = !string.IsNullOrEmpty(projectId) ? projectId
             : Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID") ?? "";
@@ -62,15 +46,27 @@ public class RestClient : IDisposable
         _space = !string.IsNullOrEmpty(space) ? space
             : Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "";
 
-        if (string.IsNullOrEmpty(_projectId))
+        _baseUrl = $"https://{_space}";
+        // Re-derive the transport the base already owns so RestClient can dispose it.
+        _http = GeneratedHttp;
+    }
+
+    /// <summary>
+    /// Validate credentials and construct the authenticated transport the
+    /// generated <see cref="Namespaces.Generated.ResourceTree"/> base composes.
+    /// Runs before the base constructor (C# argument evaluation order), so it is
+    /// the single point that enforces the required-credential contract.
+    /// </summary>
+    private static HttpClient BuildHttp(string projectId, string token, string space)
+    {
+        if (string.IsNullOrEmpty(projectId))
             throw new ArgumentException("projectId is required (pass explicitly or set SIGNALWIRE_PROJECT_ID)");
-        if (string.IsNullOrEmpty(_token))
+        if (string.IsNullOrEmpty(token))
             throw new ArgumentException("token is required (pass explicitly or set SIGNALWIRE_API_TOKEN)");
-        if (string.IsNullOrEmpty(_space))
+        if (string.IsNullOrEmpty(space))
             throw new ArgumentException("space is required (pass explicitly or set SIGNALWIRE_SPACE)");
 
-        _baseUrl = $"https://{_space}";
-        _http = new HttpClient(_projectId, _token, _baseUrl);
+        return new HttpClient(projectId, token, $"https://{space}");
     }
 
     // ------------------------------------------------------------------
@@ -83,105 +79,6 @@ public class RestClient : IDisposable
     [SuppressMessage("Usage", "CA1056", Justification = "BaseUrl is a wire string sent verbatim to the SignalWire API.")]
     public string BaseUrl => _baseUrl;
     public HttpClient Http => _http;
-
-    // ------------------------------------------------------------------
-    // Namespace accessors (lazy initialisation)
-    // ------------------------------------------------------------------
-
-    /// <summary>Fabric API (sub-resources: subscribers, sip_endpoints, call_flows, ...).</summary>
-    public Fabric Fabric => _fabric ??= new Fabric(_http);
-
-    /// <summary>Calling API (37 call-control commands).</summary>
-    public Calling Calling => _calling ??= new Calling(_http, _projectId);
-
-    /// <summary>Phone numbers (CRUD + available-number search).</summary>
-    public PhoneNumbers PhoneNumbers =>
-        _phoneNumbers ??= new PhoneNumbers(_http);
-
-    /// <summary>Datasphere documents.</summary>
-    public DatasphereNs Datasphere =>
-        _datasphere ??= new DatasphereNs(_http);
-
-    /// <summary>Video rooms (Python-parity entry-point with sub-namespaces).</summary>
-    public Video Video =>
-        _video ??= new Video(_http);
-
-    /// <summary>Compatibility (Twilio-compatible LaML) API.</summary>
-    public Compat Compat =>
-        _compat ??= new Compat(_http, _projectId);
-
-    /// <summary>Addresses.</summary>
-    public Addresses Addresses =>
-        _addresses ??= new Addresses(_http);
-
-    /// <summary>Queues (Relay queues at /api/relay/rest/queues with member ops).</summary>
-    public Queues Queues =>
-        _queues ??= new Queues(_http);
-
-    /// <summary>Recordings (Relay recordings at /api/relay/rest/recordings).</summary>
-    public Recordings Recordings =>
-        _recordings ??= new Recordings(_http);
-
-    /// <summary>Number groups (with membership operations).</summary>
-    public NumberGroups NumberGroups =>
-        _numberGroups ??= new NumberGroups(_http);
-
-    /// <summary>Verified caller IDs (CRUD + verification flow; update via PUT).</summary>
-    public VerifiedCallers VerifiedCallers =>
-        _verifiedCallers ??= new VerifiedCallers(_http);
-
-    /// <summary>SIP profile (singleton at /api/relay/rest/sip_profile;
-    /// get/update only — python + spec parity).</summary>
-    public SipProfile SipProfile =>
-        _sipProfile ??= new SipProfile(_http);
-
-    /// <summary>Phone number lookup (GET-only by e164; python + spec parity).</summary>
-    public LookupResource Lookup =>
-        _lookup ??= new LookupResource(_http);
-
-    /// <summary>Short codes (PUT for update).</summary>
-    public ShortCodes ShortCodes =>
-        _shortCodes ??= new ShortCodes(_http);
-
-    /// <summary>Imported phone numbers (create only).</summary>
-    public ImportedNumbers ImportedNumbers =>
-        _importedNumbers ??= new ImportedNumbers(_http);
-
-    /// <summary>Multi-factor authentication (sms/call/verify dispatch).</summary>
-    public Mfa Mfa =>
-        _mfa ??= new Mfa(_http);
-
-    /// <summary>Registry (10DLC brands, campaigns, orders, numbers).</summary>
-    public Registry Registry =>
-        _registry ??= new Registry(_http);
-
-    /// <summary>Logs (messages, voice, fax, conferences).</summary>
-    public Logs Logs =>
-        _logs ??= new Logs(_http);
-
-    /// <summary>Project management.</summary>
-    public Project Project =>
-        _project ??= new Project(_http);
-
-    /// <summary>PubSub tokens (token-only resource at /api/pubsub/tokens).</summary>
-    public PubSubResource Pubsub =>
-        _pubsub ??= new PubSubResource(_http);
-
-    /// <summary>Chat tokens (token-only resource at /api/chat/tokens).</summary>
-    public ChatResource Chat =>
-        _chat ??= new ChatResource(_http);
-
-    /// <summary>
-    /// The code-generated REST resource tree — every generated resource
-    /// (flat) plus the namespace containers (fabric / video / logs / registry /
-    /// project / datasphere), all lazily constructed off this client's
-    /// authenticated transport. Generated from the canonical REST specs by
-    /// <c>scripts/generate_rest.py</c> (SESSION_CHANGESET item A/B); the hand
-    /// accessors above remain the current public entry-points while the port
-    /// migrates onto this tree.
-    /// </summary>
-    public Namespaces.Generated.ResourceTree Generated =>
-        _generated ??= new Namespaces.Generated.ResourceTree(_http);
 
     // ------------------------------------------------------------------
     // IDisposable

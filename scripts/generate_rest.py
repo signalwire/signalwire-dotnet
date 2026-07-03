@@ -1241,8 +1241,9 @@ def emit_resource_tree(placed) -> str:
     lines = []
     lines.append("/// <summary>")
     lines.append("/// ResourceTree — generated lazy accessors for every flat REST resource")
-    lines.append("/// plus the namespace containers (§8). Composed into the hand RestClient")
-    lines.append("/// via a partial-class method GeneratedHttpClient(). Placement resolved from")
+    lines.append("/// plus the namespace containers (§8). The hand RestClient INHERITS this")
+    lines.append("/// tree so every generated resource + container is reachable directly off")
+    lines.append("/// the one authenticated transport. Placement resolved from")
     lines.append("/// x-sdk-namespace.attr + per-resource x-sdk-resource.namespace/attr; base")
     lines.append("/// paths per §4.")
     lines.append("/// </summary>")
@@ -1259,6 +1260,11 @@ def emit_resource_tree(placed) -> str:
     lines.append("    {")
     lines.append("        _generatedHttp = http;")
     lines.append("    }")
+    lines.append("")
+    lines.append("    /// <summary>The authenticated transport this tree dispatches through")
+    lines.append("    /// (exposed to the inheriting RestClient for disposal; protected so it")
+    lines.append("    /// is not public route/surface).</summary>")
+    lines.append("    protected SignalWire.REST.HttpClient GeneratedHttp => _generatedHttp;")
     for accessor, cls in flats:
         field = "_" + accessor[:1].lower() + accessor[1:]
         lines.append("")

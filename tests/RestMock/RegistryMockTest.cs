@@ -6,7 +6,7 @@
  */
 using System.Text.Json;
 using SignalWire.REST;
-using SignalWire.REST.Namespaces;
+using SignalWire.REST.Namespaces.Generated;
 using SignalWire.Tests.Mock;
 using Xunit;
 
@@ -33,10 +33,10 @@ public class RegistryMockTest : IClassFixture<MockServerFixture>
         _fixture.Reset();
     }
 
-    private Registry NewRegistry()
+    private RegistryNamespace NewRegistry()
     {
         var http = _fixture.NewHttp();
-        return new Registry(http);
+        return new RegistryNamespace(http);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -128,7 +128,9 @@ public class RegistryMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var registry = NewRegistry();
-        var body = await registry.Campaigns.UpdateAsync("camp-2", new Dictionary<string, object?>
+        // `description` is not a typed field on campaign update; forward via extras
+        // to preserve the exact body.description wire key the assertion checks.
+        var body = await registry.Campaigns.UpdateAsync("camp-2", extras: new Dictionary<string, object?>
         {
             ["description"] = "Updated",
         });
@@ -159,10 +161,12 @@ public class RegistryMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var registry = NewRegistry();
-        var body = await registry.Campaigns.CreateOrderAsync("camp-4", new Dictionary<string, object?>
-        {
-            ["numbers"] = new List<object?> { "pn-1", "pn-2" },
-        });
+        // The spec-authoritative wire field is `phone_numbers` (Python oracle:
+        // create_order(phone_numbers=[...]) → body.phone_numbers). The old hand
+        // test asserted a `numbers` key, which was the hand code's incorrect name;
+        // corrected here to the spec field while preserving the array-shape check.
+        var body = await registry.Campaigns.CreateOrderAsync("camp-4",
+            phoneNumbers: new List<object?> { "pn-1", "pn-2" });
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -170,8 +174,8 @@ public class RegistryMockTest : IClassFixture<MockServerFixture>
         Assert.Equal($"{RegBase}/campaigns/camp-4/orders", last.Path);
         var map = last.BodyMap();
         Assert.NotNull(map);
-        Assert.True(map!.ContainsKey("numbers"));
-        var arr = map["numbers"];
+        Assert.True(map!.ContainsKey("phone_numbers"));
+        var arr = map["phone_numbers"];
         Assert.Equal(JsonValueKind.Array, arr.ValueKind);
         var nums = arr.EnumerateArray().Select(e => e.GetString()).ToList();
         Assert.Equal(new List<string?> { "pn-1", "pn-2" }, nums);

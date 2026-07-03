@@ -1123,8 +1123,8 @@ public class StructuralParityTests
     public void Fabric_PythonParitySubResources_Exposed()
     {
         var http = new SignalWire.REST.HttpClient("p", "t", "https://test.com");
-        var fabric = new SignalWire.REST.Namespaces.Fabric(http);
-        // 9 sub-resources Python exposes that were missing in .NET.
+        var fabric = new SignalWire.REST.Namespaces.Generated.FabricNamespace(http);
+        // 9 sub-resources Python exposes, now served by the generated tree.
         Assert.Equal("/api/fabric/resources/cxml_applications", fabric.CxmlApplications.BasePath);
         Assert.Equal("/api/fabric/resources/cxml_scripts", fabric.CxmlScripts.BasePath);
         Assert.Equal("/api/fabric/resources/cxml_webhooks", fabric.CxmlWebhooks.BasePath);
@@ -1132,12 +1132,9 @@ public class StructuralParityTests
         Assert.Equal("/api/fabric/resources/relay_applications", fabric.RelayApplications.BasePath);
         Assert.Equal("/api/fabric/resources/sip_gateways", fabric.SipGateways.BasePath);
         Assert.Equal("/api/fabric/resources/swml_webhooks", fabric.SwmlWebhooks.BasePath);
-        // The generic ``Resources`` (bare CrudResource) and ``Tokens`` CRUD
-        // accessors were removed for SPEC-PARITY: neither create/update on
-        // /api/fabric/resources nor a /api/fabric/tokens CRUD route exists in
-        // python or the spec. The real generic resource ops live on
-        // ResourcesGeneric (list/get/delete/list_addresses/assign_*) and the
-        // real fabric token POSTs on TokensApi (FabricTokens).
-        Assert.Equal("/api/fabric/resources", fabric.ResourcesGeneric.BasePath);
+        // The generic resource ops live on the generated ``Resources``
+        // (GenericResources: list/get/delete/list_addresses/assign_*) at the
+        // bare /api/fabric/resources path.
+        Assert.Equal("/api/fabric/resources", fabric.Resources.BasePath);
     }
 }

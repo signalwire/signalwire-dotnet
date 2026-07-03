@@ -162,7 +162,7 @@ await client.Datasphere.Documents.SearchAsync(new Dictionary<string, object?>
 });
 ```
 
-- 21 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Compat, Phone Numbers, SIP, Queues, Recordings, and more
+- 20 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Phone Numbers, SIP, Queues, Recordings, and more
 - `Task`-based async API throughout
 - `HttpClient` with connection pooling
 - Dictionary returns -- raw data, no wrapper objects

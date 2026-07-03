@@ -6,7 +6,7 @@
  */
 using System.Text.Json;
 using SignalWire.REST;
-using SignalWire.REST.Namespaces;
+using SignalWire.REST.Namespaces.Generated;
 using SignalWire.Tests.Mock;
 using Xunit;
 
@@ -31,28 +31,15 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         _fixture.Reset();
     }
 
-    private RestClientLike NewClient()
+    /// <summary>Build the code-generated resource tree wired to a fresh mock
+    /// transport. The tree exposes every small namespace (addresses, recordings,
+    /// short_codes, imported_numbers, mfa, sip_profile, number_groups, queues,
+    /// project.tokens, datasphere.documents) — the sole REST surface after the
+    /// hand resources were deleted (SESSION_CHANGESET item A/B).</summary>
+    private ResourceTree NewClient()
     {
         var http = _fixture.NewHttp();
-        return new RestClientLike(http);
-    }
-
-    /// <summary>Lightweight bundle of namespaces wired to the same HttpClient.
-    /// Mirrors the per-test ``signalwire_client`` fixture in Python.</summary>
-    private sealed class RestClientLike
-    {
-        private readonly SignalWire.REST.HttpClient _http;
-        public RestClientLike(SignalWire.REST.HttpClient http) { _http = http; }
-        public Addresses Addresses => new(_http);
-        public Recordings Recordings => new(_http);
-        public ShortCodes ShortCodes => new(_http);
-        public ImportedNumbers ImportedNumbers => new(_http);
-        public Mfa Mfa => new(_http);
-        public SipProfile SipProfile => new(_http);
-        public NumberGroups NumberGroups => new(_http);
-        public Project Project => new(_http);
-        public DatasphereNs Datasphere => new(_http);
-        public Queues Queues => new(_http);
+        return new ResourceTree(http);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)
@@ -94,13 +81,19 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var c = NewClient();
-        var body = await c.Addresses.CreateAsync(new Dictionary<string, object?>
-        {
-            ["address_type"] = "commercial",
-            ["first_name"] = "Ada",
-            ["last_name"] = "Lovelace",
-            ["country"] = "US",
-        });
+        // The generated create closes over the full required field set; supply
+        // them all. The assertions still target address_type/first_name/country.
+        var body = await c.Addresses.CreateAsync(
+            label: "home",
+            country: "US",
+            firstName: "Ada",
+            lastName: "Lovelace",
+            streetNumber: "1",
+            streetName: "Analytical Ave",
+            city: "London",
+            state: "LDN",
+            postalCode: "EC1",
+            addressType: "commercial");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
 
@@ -224,10 +217,10 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var c = NewClient();
-        var body = await c.ShortCodes.UpdateAsync("sc-1", new Dictionary<string, object?>
-        {
-            ["name"] = "Marketing SMS",
-        });
+        // Generated update requires name + message_handler; the assertion targets name.
+        var body = await c.ShortCodes.UpdateAsync("sc-1",
+            name: "Marketing SMS",
+            messageHandler: "laml_webhooks");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
 
@@ -244,13 +237,18 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var c = NewClient();
-        var body = await c.ImportedNumbers.CreateAsync(new Dictionary<string, object?>
-        {
-            ["number"] = "+15551234567",
-            ["sip_username"] = "alice",
-            ["sip_password"] = "secret",
-            ["sip_proxy"] = "sip.example.com",
-        });
+        // number_type is a required typed field; the sip_* fields are not typed
+        // params, so forward them via extras to preserve the exact wire keys the
+        // assertions check.
+        var body = await c.ImportedNumbers.CreateAsync(
+            number: "+15551234567",
+            numberType: "longcode",
+            extras: new Dictionary<string, object?>
+            {
+                ["sip_username"] = "alice",
+                ["sip_password"] = "secret",
+                ["sip_proxy"] = "sip.example.com",
+            });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
 
@@ -269,12 +267,14 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var c = NewClient();
-        var body = await c.Mfa.CallAsync(new Dictionary<string, object?>
-        {
-            ["to"] = "+15551234567",
-            ["from_"] = "+15559876543",
-            ["message"] = "Your code is {code}",
-        });
+        // The spec field is `from` (a reserved word), exposed as the typed `from`
+        // param and mapped to the wire key `from` (Python oracle asserts
+        // sent["from"]). The old hand test asserted a `from_` wire key, which was
+        // the hand code's incorrect name; corrected here to the spec wire key.
+        var body = await c.Mfa.CallAsync(
+            to: "+15551234567",
+            @from: "+15559876543",
+            message: "Your code is {code}");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
 
@@ -282,7 +282,7 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         Assert.Equal("POST", last.Method);
         Assert.Equal("/api/relay/rest/mfa/call", last.Path);
         Assert.Equal("+15551234567", StringField(last, "to"));
-        Assert.Equal("+15559876543", StringField(last, "from_"));
+        Assert.Equal("+15559876543", StringField(last, "from"));
         Assert.Equal("Your code is {code}", StringField(last, "message"));
     }
 
@@ -293,18 +293,20 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var c = NewClient();
-        var body = await c.SipProfile.UpdateAsync(new Dictionary<string, object?>
-        {
-            ["domain"] = "myco.sip.signalwire.com",
-            ["default_codecs"] = new List<object?> { "PCMU", "PCMA" },
-        });
+        // The spec-authoritative wire field is `domain_identifier` (Python oracle:
+        // update(domain_identifier=...) → body.domain_identifier). The old hand
+        // test asserted a `domain` key, which was the hand code's incorrect name;
+        // corrected here to the spec field. default_codecs is unchanged.
+        var body = await c.SipProfile.UpdateAsync(
+            domainIdentifier: "myco",
+            defaultCodecs: new List<object?> { "PCMU", "PCMA" });
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("domain") || body.ContainsKey("default_codecs"));
+        Assert.True(body.ContainsKey("domain_identifier") || body.ContainsKey("default_codecs"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("PUT", last.Method);
         Assert.Equal("/api/relay/rest/sip_profile", last.Path);
-        Assert.Equal("myco.sip.signalwire.com", StringField(last, "domain"));
+        Assert.Equal("myco", StringField(last, "domain_identifier"));
         Assert.Equal(new List<string?> { "PCMU", "PCMA" }, StringListField(last, "default_codecs"));
     }
 
@@ -350,10 +352,7 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var c = NewClient();
-        var body = await c.Project.Tokens.UpdateAsync("tok-1", new Dictionary<string, object?>
-        {
-            ["name"] = "renamed-token",
-        });
+        var body = await c.Project.Tokens.UpdateAsync("tok-1", name: "renamed-token");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
 

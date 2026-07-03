@@ -5,14 +5,16 @@
  * See LICENSE file in the project root for full license information.
  */
 using SignalWire.REST;
-using SignalWire.REST.Namespaces;
+using SignalWire.REST.Namespaces.Generated;
 using SignalWire.Tests.Mock;
 using Xunit;
 
 namespace SignalWire.Tests.RestMock;
 
 /// <summary>
-/// Mock-backed tests for the Logs namespace (messages, voice, fax, conferences).
+/// Mock-backed behavioral tests for the generated Logs namespace (messages,
+/// voice, fax, conferences) — exercises path construction + response parsing
+/// through the code-generated resource tree.
 ///
 /// Translated from
 /// <c>signalwire-python/tests/unit/rest/test_logs_mock.py</c>.
@@ -28,10 +30,10 @@ public class LogsMockTest : IClassFixture<MockServerFixture>
         _fixture.Reset();
     }
 
-    private Logs NewLogs()
+    private LogsNamespace NewLogs()
     {
         var http = _fixture.NewHttp();
-        return new Logs(http);
+        return new LogsNamespace(http);
     }
 
     // ---- Message Logs -----------------------------------------------

@@ -38,7 +38,3 @@ relay-rest.delete_domain_application: sdk-gap — see above.
 
 video.list_logs: sdk-gap — the Video namespace exposes no logs accessor for GET /api/video/logs (same as python).
 video.get_log: sdk-gap — no video logs accessor (see above).
-
-## compatibility — bare per-country available-numbers node
-
-compatibility.list_available_phone_number_resources_by_country: sdk-gap — CompatPhoneNumbers exposes ListAvailableCountries + SearchLocal (/{IsoCountry}/Local) + SearchTollFree (/{IsoCountry}/TollFree), but no method hits the bare /AvailablePhoneNumbers/{IsoCountry} node (same as python).

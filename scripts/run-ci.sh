@@ -402,6 +402,18 @@ run_gate "SURFACE-FRESH" "check_surface_freshness vs regenerated port_surface.js
 run_gate "GEN-FRESH" "generate_rest.py --check (generated REST layer matches specs)" \
     python3 scripts/generate_rest.py --check
 
+# Gate 4c: GEN-FRESH (tests) — the code-generated REST *wire-test* suite
+# (tests/RestMock/Generated/**) must match a fresh run of
+# scripts/generate_rest_tests.py: the full-mock success+error wire tests for
+# every route the GENERATED client dispatches, captured off the real client
+# (tools/RestTestPlan via scripts/rest-test-plan.sh) and joined to the spec
+# operationId — the independent oracle (REST_TEST_GENERATOR_RULES.md, item E). A
+# stale/hand-edited generated test file (or a leftover file no longer emitted)
+# fails the gate. Builds RestTestPlan (net8) to capture the plan; no mock needed
+# for --check. Mirrors the other ports' generated-test GEN-FRESH.
+run_gate "GEN-FRESH-TESTS" "generate_rest_tests.py --check (generated REST wire tests match specs)" \
+    python3 scripts/generate_rest_tests.py --check
+
 # Gate 5: no-cheat
 run_gate "NO-CHEAT" "audit_no_cheat_tests" \
     python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"

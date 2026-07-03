@@ -6,7 +6,7 @@
  */
 using System.Text.Json;
 using SignalWire.REST;
-using SignalWire.REST.Namespaces;
+using SignalWire.REST.Namespaces.Generated;
 using Xunit;
 
 namespace SignalWire.Tests.Tls;

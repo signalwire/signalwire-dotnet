@@ -199,9 +199,6 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ("SignalWire.REST.Namespaces", "Fabric"): (
         "signalwire.rest.namespaces.fabric", "FabricNamespace",
     ),
-    ("SignalWire.REST.Namespaces", "Compat"): (
-        "signalwire.rest.namespaces.compat", "CompatNamespace",
-    ),
     ("SignalWire.REST.Namespaces", "Datasphere"): (
         "signalwire.rest.namespaces.datasphere", "DatasphereNamespace",
     ),
@@ -216,43 +213,6 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ),
     ("SignalWire.REST.Namespaces", "Video"): (
         "signalwire.rest.namespaces.video", "VideoNamespace",
-    ),
-    # ----- Compat sub-resources (Python keeps them all in compat.py) -----
-    ("SignalWire.REST.Namespaces", "CompatAccounts"): (
-        "signalwire.rest.namespaces.compat", "CompatAccounts",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatCalls"): (
-        "signalwire.rest.namespaces.compat", "CompatCalls",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatMessages"): (
-        "signalwire.rest.namespaces.compat", "CompatMessages",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatFaxes"): (
-        "signalwire.rest.namespaces.compat", "CompatFaxes",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatConferences"): (
-        "signalwire.rest.namespaces.compat", "CompatConferences",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatPhoneNumbers"): (
-        "signalwire.rest.namespaces.compat", "CompatPhoneNumbers",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatApplications"): (
-        "signalwire.rest.namespaces.compat", "CompatApplications",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatLamlBins"): (
-        "signalwire.rest.namespaces.compat", "CompatLamlBins",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatQueues"): (
-        "signalwire.rest.namespaces.compat", "CompatQueues",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatRecordings"): (
-        "signalwire.rest.namespaces.compat", "CompatRecordings",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatTranscriptions"): (
-        "signalwire.rest.namespaces.compat", "CompatTranscriptions",
-    ),
-    ("SignalWire.REST.Namespaces", "CompatTokens"): (
-        "signalwire.rest.namespaces.compat", "CompatTokens",
     ),
     # ----- Video sub-resources (Python video.py) -----
     ("SignalWire.REST.Namespaces", "VideoRooms"): (
