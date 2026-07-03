@@ -42,6 +42,11 @@ public sealed class Message
     public bool Completed { get; private set; }
     public string? Result { get; private set; }
 
+    /// <summary>A concise debug representation of this message (Python parity:
+    /// ``Message.__repr__``).</summary>
+    public override string ToString()
+        => $"<Message id={MessageId} state={State}>";
+
     /// <summary>
     /// Build a Message from a params dictionary (as returned by the server).
     /// </summary>

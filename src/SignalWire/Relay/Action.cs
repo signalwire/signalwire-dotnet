@@ -332,6 +332,32 @@ public class CollectAction : Action
         eventType != "calling.call.play";
 }
 
+/// <summary>
+/// Handle for standalone calling.collect operations (a collect without an
+/// accompanying play prompt). Mirrors the Python reference
+/// <c>StandaloneCollectAction</c> in <c>signalwire.relay.call</c>: same shape as
+/// <see cref="CollectAction"/> but always uses the plain <c>collect</c> command
+/// prefix (never <c>play_and_collect</c>).
+/// </summary>
+public class StandaloneCollectAction : Action
+{
+    public StandaloneCollectAction(string controlId, string callId, string nodeId, object client)
+        : base(controlId, callId, nodeId, client) { }
+
+    public override string GetStopMethod() => "calling.collect.stop";
+
+    /// <summary>
+    /// Notify the server to start input timers now rather than waiting for the
+    /// initial-timeout to expire naturally.
+    /// </summary>
+    public void StartInputTimers() =>
+        ExecuteSubcommand("calling.collect.start_input_timers");
+
+    /// <summary>Return the structured collect result from the payload.</summary>
+    public object? CollectResult =>
+        Payload.TryGetValue("result", out var v) ? v : null;
+}
+
 /// <summary>Handle for calling.detect operations.</summary>
 public class DetectAction : Action
 {

@@ -669,3 +669,22 @@ signalwire.relay.device.Device.to_dict: dotnet_tier3_typed_object: projects the 
 signalwire.relay.device.Device.from_dict: dotnet_tier3_typed_object: reconstructs a Device from a raw {type, params} dict (e.g. Call.Device or a wire frame), returning null when no type discriminant is present; Python reads the raw dict directly.
 signalwire.relay.device.Device.type: dotnet_tier3_typed_object: read-only string discriminant of the typed Device shape (kept a string — not schema-enumerated); Python uses the raw dict's "type" key.
 signalwire.relay.device.Device.params: dotnet_tier3_typed_object: read-only params payload of the typed Device shape; Python uses the raw dict's "params" key.
+
+## BedrockAgent options object (item H/I)
+
+The .NET BedrockAgent takes a strongly-typed `BedrockOptions` construction
+object (the C# options-object idiom, matching AgentOptions/ServiceOptions)
+instead of Python's keyword arguments. The properties carry the same
+construction parameters Python passes as `__init__` kwargs; the object itself is
+a .NET-idiom addition with no Python-surface counterpart.
+
+signalwire.agents.bedrock_options.BedrockOptions: dotnet_options_object: typed construction options for BedrockAgent (the C# options-object idiom; Python passes these as __init__ kwargs).
+signalwire.agents.bedrock_options.BedrockOptions.name: dotnet_options_object: agent name construction option (Python __init__ kwarg).
+signalwire.agents.bedrock_options.BedrockOptions.route: dotnet_options_object: HTTP route construction option (Python __init__ kwarg).
+signalwire.agents.bedrock_options.BedrockOptions.system_prompt: dotnet_options_object: system-prompt construction option (Python __init__ kwarg).
+signalwire.agents.bedrock_options.BedrockOptions.voice_id: dotnet_options_object: TTS voice-id construction option (Python __init__ kwarg / set_voice).
+signalwire.agents.bedrock_options.BedrockOptions.temperature: dotnet_options_object: LLM temperature construction option (Python __init__ kwarg / set_llm_temperature).
+signalwire.agents.bedrock_options.BedrockOptions.top_p: dotnet_options_object: LLM top_p construction option (Python __init__ kwarg / inference params).
+signalwire.agents.bedrock_options.BedrockOptions.max_tokens: dotnet_options_object: LLM max-tokens construction option (Python __init__ kwarg / inference params).
+signalwire.agents.bedrock_options.BedrockOptions.basic_auth_user: dotnet_options_object: basic-auth user construction option (Python __init__ kwarg / env).
+signalwire.agents.bedrock_options.BedrockOptions.basic_auth_password: dotnet_options_object: basic-auth password construction option (Python __init__ kwarg / env).

@@ -32,27 +32,31 @@ rules:
   error rather than an empty stub.
 - **`signalwire.skills.<name>.skill_original` / `skill_improved`** —
   Python-experimental skill variants; .NET ships the canonical skill.
-- **`signalwire.agents.bedrock.*`** — Bedrock/AmazonBedrock prefab is
-  Python-only per cross-port skip rule (de-prioritised; user feedback
-  flagged the underlying stack as unimpressive).
 - **`signalwire.cli.build_search.*` / `dokku.*` / `init_project.*` /
   `swaig_test_wrapper.*` / `test_swaig.*` / `types.*` / `simulation.*` /
   `execution.*` / `output.*` / `core.*`** — Python-CLI internal
   scaffolding. .NET CLI is binary-based (`dotnet swaig-test`).
 - **`signalwire.livewire.*`** — LiveWire integration is Python-only.
-- **`signalwire.mcp_gateway.*`** — Standalone MCP gateway server is
-  Python-only; .NET ships the `mcp_gateway` skill only.
+- **`signalwire.mcp_gateway.*`** and the `mcp_gateway` skill
+  (`signalwire.skills.mcp_gateway.*`) — the standalone MCP gateway server
+  AND the gateway skill are Python-only and not ported to any SDK (§I.1
+  user ruling, 2026-07). The real `AgentBase.add_mcp_server` /
+  `enable_mcp_server` oracle methods ARE implemented (distinct from the
+  dropped gateway skill).
 - **`signalwire.pom.pom_tool.*`** — Python CLI helper for rendering a
   POM file from disk; .NET ships POM in-process only.
   (`signalwire.pom.pom` itself IS implemented at
   `src/SignalWire/POM/PromptObjectModel.cs`.)
-- **`signalwire.web.web_service.*`** — Internal Python WebService class;
-  .NET integrates HTTP handling on Service directly.
-- **`signalwire.utils.url_validator.*`** — Internal URL/SSRF validator;
-  .NET inlines equivalent checks at call sites.
 - **`signalwire.utils.schema_utils.*`** — .NET ships
-  `SignalWire.SWML.Schema` with the same surface (recorded in
+  `SignalWire.SWML.Schema`, whose methods are projected onto the
+  `signalwire.utils.schema_utils.SchemaUtils` reference surface by the
+  surface enumerator (extra convenience accessors recorded in
   PORT_ADDITIONS.md).
+
+(Note: `signalwire.web.web_service.WebService`,
+`signalwire.utils.url_validator.validate_url`, and
+`signalwire.agents.bedrock.BedrockAgent` are now IMPLEMENTED — item H/I —
+and are no longer omitted.)
 
 ## Architecture omissions
 
@@ -100,19 +104,6 @@ These are deliberate architectural deltas:
 
 ---
 
-signalwire.add_skill_directory: Module-level skill directory loader (Python uses pkgutil); .NET registers skills in SkillRegistry directly
-signalwire.agents.bedrock.BedrockAgent: Bedrock prefab is Python-only per cross-port skip rule
-signalwire.agents.bedrock.BedrockAgent.__init__: Bedrock prefab is Python-only per cross-port skip rule
-signalwire.agents.bedrock.BedrockAgent.__repr__: Bedrock prefab is Python-only per cross-port skip rule
-signalwire.agents.bedrock.BedrockAgent.set_inference_params: Bedrock prefab is Python-only per cross-port skip rule
-signalwire.agents.bedrock.BedrockAgent.set_llm_model: Bedrock prefab is Python-only per cross-port skip rule
-signalwire.agents.bedrock.BedrockAgent.set_llm_temperature: Bedrock prefab is Python-only per cross-port skip rule
-signalwire.agents.bedrock.BedrockAgent.set_post_prompt_llm_params: Bedrock prefab is Python-only per cross-port skip rule
-signalwire.agents.bedrock.BedrockAgent.set_prompt_llm_params: Bedrock prefab is Python-only per cross-port skip rule
-signalwire.agents.bedrock.BedrockAgent.set_voice: Bedrock prefab is Python-only per cross-port skip rule
-signalwire.agent_server.AgentServer.register_global_routing_callback: Python helpers; .NET AgentServer uses ServeStatic and route-scoped callbacks; Run is on AgentBase
-signalwire.agent_server.AgentServer.run: Python helpers; .NET AgentServer uses ServeStatic and route-scoped callbacks; Run is on AgentBase
-signalwire.agent_server.AgentServer.serve_static_files: Python helpers; .NET AgentServer uses ServeStatic and route-scoped callbacks; Run is on AgentBase
 signalwire.cli.build_search.console_entry_point: Python-only search CLI; .NET ships swaig-test only
 signalwire.cli.build_search.main: Python-only search CLI; .NET ships swaig-test only
 signalwire.cli.build_search.migrate_command: Python-only search CLI; .NET ships swaig-test only
@@ -240,236 +231,78 @@ signalwire.cli.types.DataMapConfig: Python CLI internal types; .NET CLI types ar
 signalwire.cli.types.FunctionInfo: Python CLI internal types; .NET CLI types are language-private
 signalwire.cli.types.PostData: Python CLI internal types; .NET CLI types are language-private
 signalwire.cli.types.VarsData: Python CLI internal types; .NET CLI types are language-private
-signalwire.core.agent_base.AgentBase.auto_map_sip_usernames: Python helpers; .NET exposes Name and inherits GetFullUrl from Service. AutoMapSipUsernames is recorded as a feature gap
-signalwire.core.agent_base.AgentBase.get_full_url: Python helpers; .NET exposes Name and inherits GetFullUrl from Service. AutoMapSipUsernames is recorded as a feature gap
-signalwire.core.agent_base.AgentBase.get_name: Python helpers; .NET exposes Name and inherits GetFullUrl from Service. AutoMapSipUsernames is recorded as a feature gap
-signalwire.core.agent.prompt.manager.PromptManager.define_contexts: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.get_contexts: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.get_post_prompt: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.get_prompt: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.get_raw_prompt: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.__init__: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.prompt_add_section: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.prompt_add_subsection: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.prompt_add_to_section: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.prompt_has_section: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.set_post_prompt: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.set_prompt_pom: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.prompt.manager.PromptManager.set_prompt_text: Python's prompt sub-module; .NET integrates prompt management on AgentBase directly
-signalwire.core.agent.tools.decorator.ToolDecorator.create_class_decorator: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.decorator.ToolDecorator.create_instance_decorator: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.decorator.ToolDecorator: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.registry.ToolRegistry.define_tool: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.registry.ToolRegistry.get_all_functions: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.registry.ToolRegistry.get_function: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.registry.ToolRegistry.has_function: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.registry.ToolRegistry.__init__: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.registry.ToolRegistry: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.registry.ToolRegistry.register_class_decorated_tools: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.registry.ToolRegistry.register_swaig_function: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.registry.ToolRegistry.remove_function: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.type_inference.create_typed_handler_wrapper: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.agent.tools.type_inference.infer_schema: Python's tools sub-module (decorators / type inference); .NET uses explicit DefineTool calls
-signalwire.core.auth_handler.AuthHandler.flask_decorator: Internal Python auth helper; .NET inlines on Service.CheckBasicAuth
-signalwire.core.auth_handler.AuthHandler.get_auth_info: Internal Python auth helper; .NET inlines on Service.CheckBasicAuth
-signalwire.core.auth_handler.AuthHandler.get_fastapi_dependency: Internal Python auth helper; .NET inlines on Service.CheckBasicAuth
-signalwire.core.auth_handler.AuthHandler.__init__: Internal Python auth helper; .NET inlines on Service.CheckBasicAuth
-signalwire.core.auth_handler.AuthHandler: Internal Python auth helper; .NET inlines on Service.CheckBasicAuth
-signalwire.core.auth_handler.AuthHandler.verify_api_key: Internal Python auth helper; .NET inlines on Service.CheckBasicAuth
-signalwire.core.auth_handler.AuthHandler.verify_basic_auth: Internal Python auth helper; .NET inlines on Service.CheckBasicAuth
-signalwire.core.auth_handler.AuthHandler.verify_bearer_token: Internal Python auth helper; .NET inlines on Service.CheckBasicAuth
-signalwire.core.config_loader.ConfigLoader.find_config_file: Internal Python config loader; .NET reads env vars directly
-signalwire.core.config_loader.ConfigLoader.get_config_file: Internal Python config loader; .NET reads env vars directly
-signalwire.core.config_loader.ConfigLoader.get_config: Internal Python config loader; .NET reads env vars directly
-signalwire.core.config_loader.ConfigLoader.get: Internal Python config loader; .NET reads env vars directly
-signalwire.core.config_loader.ConfigLoader.get_section: Internal Python config loader; .NET reads env vars directly
-signalwire.core.config_loader.ConfigLoader.has_config: Internal Python config loader; .NET reads env vars directly
-signalwire.core.config_loader.ConfigLoader.__init__: Internal Python config loader; .NET reads env vars directly
-signalwire.core.config_loader.ConfigLoader: Internal Python config loader; .NET reads env vars directly
-signalwire.core.config_loader.ConfigLoader.merge_with_env: Internal Python config loader; .NET reads env vars directly
-signalwire.core.config_loader.ConfigLoader.substitute_vars: Internal Python config loader; .NET reads env vars directly
-signalwire.core.contexts.ContextBuilder.__init__: Python uses explicit __init__; .NET ContextBuilder uses default constructor on AgentBase.DefineContexts()
-signalwire.core.contexts.create_simple_context: Python module-level convenience; .NET callers use AgentBase.DefineContexts().AddContext('default')
-signalwire.core.data_map.create_expression_tool: Python module-level convenience builders; .NET ships static methods on DataMap with the same names
-signalwire.core.data_map.create_simple_api_tool: Python module-level convenience builders; .NET ships static methods on DataMap with the same names
-signalwire.core.logging_config.configure_logging: Python module-level helpers; .NET ships Logger as a class instead of free functions
-signalwire.core.logging_config.get_execution_mode: Python module-level helpers; .NET ships Logger as a class instead of free functions
-signalwire.core.logging_config.get_logger: Python module-level helpers; .NET ships Logger as a class instead of free functions
-signalwire.core.logging_config.reset_logging_configuration: Python module-level helpers; .NET ships Logger as a class instead of free functions
-signalwire.core.logging_config.strip_control_chars: Python module-level helpers; .NET ships Logger as a class instead of free functions
-signalwire.core.mixins.ai_config_mixin.AIConfigMixin.add_mcp_server: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.ai_config_mixin.AIConfigMixin.enable_mcp_server: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.auth_mixin.AuthMixin.get_basic_auth_credentials: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.auth_mixin.AuthMixin.validate_basic_auth: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.prompt_mixin.PromptMixin.contexts: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.prompt_mixin.PromptMixin.get_post_prompt: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.prompt_mixin.PromptMixin.set_prompt_pom: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.serverless_mixin.ServerlessMixin.handle_serverless_request: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.state_mixin.StateMixin.validate_tool_token: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.tool_mixin.ToolMixin.define_tool: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.tool_mixin.ToolMixin.define_tools: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.tool_mixin.ToolMixin.on_function_call: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.tool_mixin.ToolMixin.register_swaig_function: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.tool_mixin.ToolMixin.tool: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.web_mixin.WebMixin.as_router: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.web_mixin.WebMixin.enable_debug_routes: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.web_mixin.WebMixin.get_app: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.web_mixin.WebMixin.on_request: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.web_mixin.WebMixin.on_swml_request: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.web_mixin.WebMixin.register_routing_callback: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.web_mixin.WebMixin.run: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.web_mixin.WebMixin.serve: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.mixins.web_mixin.WebMixin.setup_graceful_shutdown: Python flattens 9 mixins onto AgentBase; .NET projects them via MIXIN_PROJECTIONS in enumerate_surface.py
-signalwire.core.pom_builder.PomBuilder.add_section: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder.add_subsection: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder.add_to_section: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder.from_sections: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder.get_section: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder.has_section: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder.__init__: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder.render_markdown: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder.render_xml: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder.to_dict: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.pom_builder.PomBuilder.to_json: Internal POM builder; .NET emits POM JSON via prompt_add_section helpers on AgentBase
-signalwire.core.security_config.SecurityConfig.get_basic_auth: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security_config.SecurityConfig.get_cors_config: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security_config.SecurityConfig.get_security_headers: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security_config.SecurityConfig.get_ssl_context_kwargs: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security_config.SecurityConfig.get_url_scheme: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security_config.SecurityConfig.__init__: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security_config.SecurityConfig: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security_config.SecurityConfig.load_from_env: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security_config.SecurityConfig.log_config: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security_config.SecurityConfig.should_allow_host: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security_config.SecurityConfig.validate_ssl_config: Internal Python security defaults; .NET uses CryptographicOperations.FixedTimeEquals throughout
-signalwire.core.security.session_manager.SessionManager.activate_session: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
-signalwire.core.security.session_manager.SessionManager.create_tool_token: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
-signalwire.core.security.session_manager.SessionManager.debug_token: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
-signalwire.core.security.session_manager.SessionManager.end_session: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
-signalwire.core.security.session_manager.SessionManager.generate_token: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
-signalwire.core.security.session_manager.SessionManager.get_session_metadata: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
-signalwire.core.security.session_manager.SessionManager.set_session_metadata: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
-signalwire.core.security.session_manager.SessionManager.validate_tool_token: Python session helpers; .NET ships CreateSession + ValidateToken with equivalent semantics, other helpers folded into the same flow
-signalwire.core.security.webhook_middleware.make_webhook_validation_dependency: Python ships a FastAPI dependency-factory function; .NET ships an equivalent constructable WebhookValidationMiddleware class (recorded in PORT_ADDITIONS.md) since the .NET HTTP integration is HttpListener-based, not async-FastAPI-based
-signalwire.core.skill_base.SkillBase.define_tool: Python convenience method that delegates to AgentBase; .NET ships protected DefineTool() helper inside SkillBase that does the same thing (visible to subclasses, not external callers)
-signalwire.core.skill_base.SkillBase.get_skill_data: Python convenience helpers; .NET inlines equivalent logic on individual skills
-signalwire.core.skill_base.SkillBase.__init__: Python uses an explicit __init__; .NET SkillBase uses the protected Wire(agent, params) flow set up by SkillManager
-signalwire.core.skill_base.SkillBase.update_skill_data: Python convenience helpers; .NET inlines equivalent logic on individual skills
-signalwire.core.skill_base.SkillBase.validate_packages: Python convenience helpers; .NET inlines equivalent logic on individual skills
-signalwire.core.skill_manager.SkillManager.list_loaded_skills: Python convenience; .NET ships ListSkills returning the same data
-signalwire.core.skill_manager.SkillManager.load_skill: Python convenience; .NET ships AddSkill on AgentBase that delegates to SkillManager
-signalwire.core.swaig_function.SWAIGFunction.__call__: Internal Python helper class for SWAIG function defs; .NET stores them as Dictionary<string,object>
-signalwire.core.swaig_function.SWAIGFunction.execute: Internal Python helper class for SWAIG function defs; .NET stores them as Dictionary<string,object>
-signalwire.core.swaig_function.SWAIGFunction.__init__: Internal Python helper class for SWAIG function defs; .NET stores them as Dictionary<string,object>
-signalwire.core.swaig_function.SWAIGFunction: Internal Python helper class for SWAIG function defs; .NET stores them as Dictionary<string,object>
-signalwire.core.swaig_function.SWAIGFunction.to_swaig: Internal Python helper class for SWAIG function defs; .NET stores them as Dictionary<string,object>
-signalwire.core.swaig_function.SWAIGFunction.validate_args: Internal Python helper class for SWAIG function defs; .NET stores them as Dictionary<string,object>
-signalwire.core.swml_builder.SWMLBuilder.add_section: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder.ai: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder.answer: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder.build: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder.__getattr__: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder.hangup: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder.__init__: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder.play: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder.render: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder.reset: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_builder.SWMLBuilder.say: Internal Python builder; .NET ships Document under signalwire.swml.document (PORT_ADDITIONS)
-signalwire.core.swml_handler.AIVerbHandler.build_config: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.AIVerbHandler.get_verb_name: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.AIVerbHandler: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.AIVerbHandler.validate_config: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.SWMLVerbHandler.build_config: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.SWMLVerbHandler.get_verb_name: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.SWMLVerbHandler: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.SWMLVerbHandler.validate_config: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.VerbHandlerRegistry.get_handler: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.VerbHandlerRegistry.has_handler: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.VerbHandlerRegistry.__init__: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.VerbHandlerRegistry: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_handler.VerbHandlerRegistry.register_handler: Internal Python ABC for handlers; .NET integrates handlers on Service directly
-signalwire.core.swml_renderer.SwmlRenderer: Internal Python renderer; .NET renders via Document.ToDict and JsonSerializer
-signalwire.core.swml_renderer.SwmlRenderer.render_function_response_swml: Internal Python renderer; .NET renders via Document.ToDict and JsonSerializer
-signalwire.core.swml_renderer.SwmlRenderer.render_swml: Internal Python renderer; .NET renders via Document.ToDict and JsonSerializer
-signalwire.core.swml_service.SWMLService.add_section: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.add_verb: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.add_verb_to_section: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.as_router: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.full_validation_enabled: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.__getattr__: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.get_basic_auth_credentials: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.get_document: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.manual_set_proxy_url: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.on_request: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.register_verb_handler: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.render_document: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.reset_document: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.serve: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.core.swml_service.SWMLService.stop: Python's SWMLService methods Python ships under signalwire.core.swml_service; .NET ships them under SignalWire.SWML.Service (renamed via CLASS_RENAME_MAP)
-signalwire.list_skills: Module-level convenience; .NET uses SkillRegistry.Instance.ListSkills
-signalwire.list_skills_with_params: Module-level convenience; .NET uses SkillRegistry.Instance.ListSkills + GetParameterSchema
-signalwire.livewire.AgentHandoff.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentHandoff: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent.llm_node: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent.on_enter: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent.on_exit: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent.on_user_turn_completed: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentServer.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentServer: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentServer.rtc_session: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentSession.generate_reply: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentSession.history: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentSession.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentSession.interrupt: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent.session: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentSession: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentSession.say: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentSession.start: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentSession.update_agent: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.AgentSession.userdata: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent.stt_node: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent.tts_node: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent.update_instructions: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Agent.update_tools: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.ChatContext.append: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.ChatContext.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.ChatContext: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.function_tool: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.InferenceLLM.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.InferenceLLM: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.InferenceSTT.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.InferenceSTT: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.InferenceTTS.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.InferenceTTS: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.JobContext.connect: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.JobContext.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.JobContext: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.JobContext.wait_for_participant: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.JobProcess.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.JobProcess: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.CartesiaTTS.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.CartesiaTTS: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.DeepgramSTT.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.DeepgramSTT: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.ElevenLabsTTS.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.ElevenLabsTTS: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.OpenAILLM.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.OpenAILLM: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.SileroVAD.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.SileroVAD: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.plugins.SileroVAD.load: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.Room: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.run_app: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.RunContext.__init__: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.RunContext: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.RunContext.userdata: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.StopResponse: LiveWire integration is Python-only; not exposed cross-port
-signalwire.livewire.ToolError: LiveWire integration is Python-only; not exposed cross-port
+signalwire.core.agent.tools.decorator.ToolDecorator.create_class_decorator: impossible: Python @tool class/instance decorator API relies on the decorator protocol; C# has no method-decorator feature — tools register via DefineTool directly (TS + PHP both omit this as impossible)
+signalwire.core.agent.tools.decorator.ToolDecorator.create_instance_decorator: impossible: Python @tool class/instance decorator API relies on the decorator protocol; C# has no method-decorator feature — tools register via DefineTool directly (TS + PHP both omit this as impossible)
+signalwire.core.agent.tools.decorator.ToolDecorator: impossible: Python @tool class/instance decorator API relies on the decorator protocol; C# has no method-decorator feature — tools register via DefineTool directly (TS + PHP both omit this as impossible)
+signalwire.core.agent.tools.registry.ToolRegistry.register_class_decorated_tools: impossible: Python @tool class/instance decorator API relies on the decorator protocol; C# has no method-decorator feature — tools register via DefineTool directly (TS + PHP both omit this as impossible)
+signalwire.core.auth_handler.AuthHandler.flask_decorator: impossible: framework-bound Flask decorator factory; C# ships webhook auth as ASP.NET middleware (a PORT_ADDITION) — the Flask-decorator FORM has no C# analog (TS/PHP omit likewise)
+signalwire.core.auth_handler.AuthHandler.get_fastapi_dependency: impossible: framework-bound factory returning a FastAPI dependency; C# ships the equivalent as ASP.NET middleware (a PORT_ADDITION) — the FastAPI-dependency FORM has no C# analog (TS/PHP ship native middleware likewise)
+signalwire.core.mixins.tool_mixin.ToolMixin.tool: impossible: Python @tool class/instance decorator API relies on the decorator protocol; C# has no method-decorator feature — tools register via DefineTool directly (TS + PHP both omit this as impossible)
+signalwire.core.mixins.web_mixin.WebMixin.as_router: impossible: returns a FastAPI APIRouter / FastAPI app object; C# exposes HTTP via HttpListener/ASP.NET directly — there is no FastAPI-object analog to return (TS/PHP omit likewise)
+signalwire.core.mixins.web_mixin.WebMixin.get_app: impossible: returns a FastAPI APIRouter / FastAPI app object; C# exposes HTTP via HttpListener/ASP.NET directly — there is no FastAPI-object analog to return (TS/PHP omit likewise)
+signalwire.core.security.webhook_middleware.make_webhook_validation_dependency: impossible: framework-bound factory returning a FastAPI dependency; C# ships the equivalent as ASP.NET middleware (a PORT_ADDITION) — the FastAPI-dependency FORM has no C# analog (TS/PHP ship native middleware likewise)
+signalwire.core.swml_builder.SWMLBuilder.__getattr__: impossible: Python __getattr__ dynamic-dispatch protocol (method_missing); C# has no such interception — SWML verbs are dispatched via explicit AddVerb (TS/PHP omit likewise)
+signalwire.core.swml_service.SWMLService.as_router: impossible: returns a FastAPI APIRouter / FastAPI app object; C# exposes HTTP via HttpListener/ASP.NET directly — there is no FastAPI-object analog to return (TS/PHP omit likewise)
+signalwire.core.swml_service.SWMLService.__getattr__: impossible: Python __getattr__ dynamic-dispatch protocol (method_missing); C# has no such interception — SWML verbs are dispatched via explicit AddVerb (TS/PHP omit likewise)
+signalwire.livewire.AgentHandoff.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentHandoff: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent.llm_node: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent.on_enter: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent.on_exit: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent.on_user_turn_completed: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentServer.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentServer: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentServer.rtc_session: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentSession.generate_reply: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentSession.history: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentSession.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentSession.interrupt: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent.session: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentSession: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentSession.say: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentSession.start: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentSession.update_agent: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.AgentSession.userdata: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent.stt_node: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent.tts_node: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent.update_instructions: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Agent.update_tools: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.ChatContext.append: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.ChatContext.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.ChatContext: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.function_tool: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.InferenceLLM.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.InferenceLLM: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.InferenceSTT.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.InferenceSTT: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.InferenceTTS.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.InferenceTTS: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.JobContext.connect: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.JobContext.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.JobContext: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.JobContext.wait_for_participant: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.JobProcess.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.JobProcess: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.CartesiaTTS.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.CartesiaTTS: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.DeepgramSTT.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.DeepgramSTT: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.ElevenLabsTTS.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.ElevenLabsTTS: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.OpenAILLM.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.OpenAILLM: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.SileroVAD.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.SileroVAD: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.plugins.SileroVAD.load: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.Room: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.run_app: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.RunContext.__init__: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.RunContext: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.RunContext.userdata: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.StopResponse: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
+signalwire.livewire.ToolError: approved: livewire is LiveKit-agents-compat; LiveKit ships no .NET agents SDK (only Python + Node/TS), so it is not ported to .NET — invented surface otherwise (user, 2026-07)
 signalwire.mcp_gateway.gateway_service.main: Standalone MCP gateway server is Python-only; .NET ships the mcp_gateway skill only
 signalwire.mcp_gateway.gateway_service.MCPGateway.__init__: Standalone MCP gateway server is Python-only; .NET ships the mcp_gateway skill only
 signalwire.mcp_gateway.gateway_service.MCPGateway.run: Standalone MCP gateway server is Python-only; .NET ships the mcp_gateway skill only
@@ -509,153 +342,31 @@ signalwire.pom.pom_tool.detect_file_format: Python CLI helper for rendering a PO
 signalwire.pom.pom_tool.load_pom: Python CLI helper for rendering a POM file from disk; .NET ships POM in-process only
 signalwire.pom.pom_tool.main: Python CLI helper for rendering a POM file from disk; .NET ships POM in-process only
 signalwire.pom.pom_tool.render_pom: Python CLI helper for rendering a POM file from disk; .NET ships POM in-process only
-signalwire.prefabs.concierge.ConciergeAgent.check_availability: Registered as DefineTool callbacks (not public methods) per .NET idiom; Python registers them via decorators that produce both methods and tools
-signalwire.prefabs.concierge.ConciergeAgent.get_directions: Registered as DefineTool callbacks (not public methods) per .NET idiom; Python registers them via decorators that produce both methods and tools
-signalwire.prefabs.concierge.ConciergeAgent.on_summary: Inherited from AgentBase.OnSummary; .NET enumerator emits methods on the declaring class only
-signalwire.prefabs.faq_bot.FAQBotAgent.on_summary: Inherited from AgentBase.OnSummary; .NET enumerator emits methods on the declaring class only
-signalwire.prefabs.faq_bot.FAQBotAgent.search_faqs: Registered as DefineTool callback (not public method) per .NET idiom
-signalwire.prefabs.info_gatherer.InfoGathererAgent.on_swml_request: Python override hook; .NET overrides RenderSwml on the AgentBase subclass
-signalwire.prefabs.info_gatherer.InfoGathererAgent.set_question_callback: Python helper for swapping the per-step question source; .NET callers subclass InfoGathererAgent and override the question list
-signalwire.prefabs.info_gatherer.InfoGathererAgent.start_questions: Registered as DefineTool callbacks (not public methods) per .NET idiom
-signalwire.prefabs.info_gatherer.InfoGathererAgent.submit_answer: Registered as DefineTool callbacks (not public methods) per .NET idiom
-signalwire.prefabs.receptionist.ReceptionistAgent.on_summary: Inherited from AgentBase.OnSummary; .NET enumerator emits methods on the declaring class only
-signalwire.prefabs.survey.SurveyAgent.log_response: Registered as DefineTool callbacks (not public methods) per .NET idiom
-signalwire.prefabs.survey.SurveyAgent.on_summary: Inherited from AgentBase.OnSummary; .NET enumerator emits methods on the declaring class only
-signalwire.prefabs.survey.SurveyAgent.validate_response: Registered as DefineTool callbacks (not public methods) per .NET idiom
-signalwire.register_skill: Module-level convenience; .NET uses SkillRegistry.Instance.RegisterSkill
-signalwire.relay.call.Action: Action class lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.Action.__init__: Action constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
-signalwire.relay.call.Action.is_done: Python @property; .NET exposes IsDone as a public property
-signalwire.relay.call.Action.wait: Python uses wait/WaitAsync overloads; .NET ships Action.WaitAsync explicitly
-signalwire.relay.call.AIAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.AIAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
 signalwire.relay.call.AIAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.Call.pass_: Python uses `pass_` to avoid keyword clash; .NET has no clash and exposes Pass on Call
-signalwire.relay.call.Call.__repr__: Python __repr__ helper; .NET uses ToString instead
-signalwire.relay.call.Call.wait_for_ended: Python utility; .NET uses Action.WaitAsync / Call.OnEventCallback patterns
-signalwire.relay.call.Call.wait_for: Python utility; .NET uses Action.WaitAsync / Call.OnEventCallback patterns
-signalwire.relay.call.CollectAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.CollectAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
-signalwire.relay.call.CollectAction.start_input_timers: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
 signalwire.relay.call.CollectAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
 signalwire.relay.call.CollectAction.volume: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.DetectAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.DetectAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
 signalwire.relay.call.DetectAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.FaxAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.FaxAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
 signalwire.relay.call.FaxAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.PayAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.PayAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
 signalwire.relay.call.PayAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.PlayAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.PlayAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
 signalwire.relay.call.PlayAction.pause: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
 signalwire.relay.call.PlayAction.resume: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
 signalwire.relay.call.PlayAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
 signalwire.relay.call.PlayAction.volume: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.RecordAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.RecordAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
 signalwire.relay.call.RecordAction.pause: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
 signalwire.relay.call.RecordAction.resume: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
 signalwire.relay.call.RecordAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.StandaloneCollectAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.StandaloneCollectAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
-signalwire.relay.call.StandaloneCollectAction.start_input_timers: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
 signalwire.relay.call.StandaloneCollectAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.StreamAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.StreamAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
 signalwire.relay.call.StreamAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.TapAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.TapAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
 signalwire.relay.call.TapAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.TranscribeAction: Action subclass lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call (recorded in PORT_ADDITIONS.md)
-signalwire.relay.call.TranscribeAction.__init__: Action subclass constructor lives under SignalWire.Relay in .NET; Python lists it under signalwire.relay.call
 signalwire.relay.call.TranscribeAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.client.RelayClient.__aenter__: Python async-context-manager helper; .NET uses IDisposable / explicit DisconnectAsync
-signalwire.relay.client.RelayClient.__aexit__: Python async-context-manager helper; .NET uses IDisposable / explicit DisconnectAsync
-signalwire.relay.client.RelayClient.__del__: Python finalizer; .NET uses Dispose pattern (not part of public surface)
-signalwire.relay.client.RelayClient.relay_protocol: Python @property accessor; .NET exposes Protocol as a public property
-signalwire.relay.client.RelayError.__init__: Python relay error class; .NET surfaces RPC errors as InvalidOperationException
-signalwire.relay.client.RelayError: Python relay error class; .NET surfaces RPC errors as InvalidOperationException
-signalwire.relay.event.CallingErrorEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.CallingErrorEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.CallReceiveEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.CallReceiveEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.CallStateEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.CallStateEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.CollectEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.CollectEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.ConferenceEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.ConferenceEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.ConnectEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.ConnectEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.DenoiseEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.DenoiseEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.DetectEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.DetectEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.DialEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.DialEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.EchoEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.EchoEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.FaxEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.FaxEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.HoldEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.HoldEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.MessageReceiveEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.MessageReceiveEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.MessageStateEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.MessageStateEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.parse_event: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.PayEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.PayEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.PlayEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.PlayEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.QueueEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.QueueEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.RecordEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.RecordEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.ReferEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.ReferEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.RelayEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.RelayEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.SendDigitsEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.SendDigitsEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.StreamEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.StreamEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.TapEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.TapEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.TranscribeEvent.from_payload: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.event.TranscribeEvent: Python relay event helpers; .NET ships Event class with same surface (recorded in PORT_ADDITIONS.md)
-signalwire.relay.message.Message.is_done: Python @property; .NET exposes IsDone as a public property
-signalwire.relay.message.Message.__repr__: Python __repr__ helper; .NET uses ToString instead (Object override, not surface)
-signalwire.rest._base.BaseResource.__init__: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.BaseResource: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.CrudResource.create: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.CrudResource.delete: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
+signalwire.relay.client.RelayClient.__aenter__: impossible: Python async-context-manager protocol dunder; C# uses IAsyncDisposable / await using on the client instead (TS/PHP omit likewise)
+signalwire.relay.client.RelayClient.__aexit__: impossible: Python async-context-manager protocol dunder; C# uses IAsyncDisposable / await using on the client instead (TS/PHP omit likewise)
+signalwire.relay.client.RelayClient.__del__: impossible: Python finalizer dunder; C# uses IAsyncDisposable/Dispose deterministic cleanup instead (TS/PHP omit likewise)
 signalwire.rest._base.CrudResource.get: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.CrudResource: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
 signalwire.rest._base.CrudResource.list: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.CrudResource.update: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.CrudWithAddresses: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.CrudWithAddresses.list_addresses: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.HttpClient.delete: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.HttpClient.get: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.HttpClient.__init__: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.HttpClient: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.HttpClient.patch: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.HttpClient.post: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.HttpClient.put: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.SignalWireRestError.__init__: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
-signalwire.rest._base.SignalWireRestError: Internal Python REST base; .NET ships HttpClient/CrudResource directly under SignalWire.REST
 signalwire.rest.call_handler.PhoneCallHandler: Phone-binding helper; .NET inlines the wire values on PhoneNumbers helpers (recorded in PORT_ADDITIONS.md)
-signalwire.RestClient: Module-level re-export in Python; .NET ships SignalWire.REST.RestClient
-signalwire.rest.client.RestClient.__init__: Python module-level RestClient ctor; .NET ships RestClient under SignalWire.REST.RestClient
-signalwire.rest.client.RestClient: Python module-level RestClient ctor; .NET ships RestClient under SignalWire.REST.RestClient
-signalwire.rest._pagination.PaginatedIterator.__init__: Python pagination iterator class; .NET callers paginate by repeated CrudResource.List(page=...) calls
-signalwire.rest._pagination.PaginatedIterator.__iter__: Python pagination iterator class; .NET callers paginate by repeated CrudResource.List(page=...) calls
-signalwire.rest._pagination.PaginatedIterator.__next__: Python pagination iterator class; .NET callers paginate by repeated CrudResource.List(page=...) calls
-signalwire.rest._pagination.PaginatedIterator: Python pagination iterator class; .NET callers paginate by repeated CrudResource.List(page=...) calls
+signalwire.rest._pagination.PaginatedIterator.__iter__: impossible: Python iterator-protocol dunder; C# PaginatedIterator implements IAsyncEnumerable (await foreach) instead — no __iter__/__next__ equivalent (TS/PHP omit likewise)
+signalwire.rest._pagination.PaginatedIterator.__next__: impossible: Python iterator-protocol dunder; C# PaginatedIterator implements IAsyncEnumerable (await foreach) instead — no __iter__/__next__ equivalent (TS/PHP omit likewise)
 signalwire.search.document_processor.DocumentProcessor.create_chunks: search subsystem; not ported per skip list
 signalwire.search.document_processor.DocumentProcessor.__init__: search subsystem; not ported per skip list
 signalwire.search.document_processor.DocumentProcessor: search subsystem; not ported per skip list
@@ -703,61 +414,11 @@ signalwire.search.search_service.SearchService.search_direct: search subsystem; 
 signalwire.search.search_service.SearchService: search subsystem; not ported per skip list
 signalwire.search.search_service.SearchService.start: search subsystem; not ported per skip list
 signalwire.search.search_service.SearchService.stop: search subsystem; not ported per skip list
-signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.get_instance_key: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.get_tools: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.__init__: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.claude_skills.skill.ClaudeSkillsSkill.get_instance_key: Internal Python helpers under claude_skills; .NET inlines on ClaudeSkillsSkill
-signalwire.skills.claude_skills.skill.ClaudeSkillsSkill.get_parameter_schema: Internal Python helpers under claude_skills; .NET inlines on ClaudeSkillsSkill
-signalwire.skills.datasphere_serverless.skill.DataSphereServerlessSkill.get_hints: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datasphere_serverless.skill.DataSphereServerlessSkill.get_instance_key: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datasphere_serverless.skill.DataSphereServerlessSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datasphere.skill.DataSphereSkill.cleanup: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datasphere.skill.DataSphereSkill.get_hints: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datasphere.skill.DataSphereSkill.get_instance_key: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datasphere.skill.DataSphereSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datetime.skill.DateTimeSkill: Class capitalisation differs in Python (DateTimeSkill) vs .NET (DatetimeSkill); .NET emits the .NET form (PORT_ADDITIONS lists the .NET name)
-signalwire.skills.datetime.skill.DateTimeSkill.get_hints: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datetime.skill.DateTimeSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datetime.skill.DateTimeSkill.get_prompt_sections: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datetime.skill.DateTimeSkill.register_tools: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.datetime.skill.DateTimeSkill.setup: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
 signalwire.skills.google_maps.skill.GoogleMapsClient.compute_route: Internal Python helper class; .NET inlines equivalent calls on GoogleMapsSkill
 signalwire.skills.google_maps.skill.GoogleMapsClient.__init__: Internal Python helper class; .NET inlines equivalent calls on GoogleMapsSkill
 signalwire.skills.google_maps.skill.GoogleMapsClient: Internal Python helper class; .NET inlines equivalent calls on GoogleMapsSkill
 signalwire.skills.google_maps.skill.GoogleMapsClient.validate_address: Internal Python helper class; .NET inlines equivalent calls on GoogleMapsSkill
-signalwire.skills.google_maps.skill.GoogleMapsSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.info_gatherer.skill.InfoGathererSkill.get_instance_key: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.info_gatherer.skill.InfoGathererSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.joke.skill.JokeSkill.get_hints: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.joke.skill.JokeSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.math.skill.MathSkill.get_hints: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.math.skill.MathSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
 signalwire.skills.mcp_gateway.skill.MCPGatewaySkill.get_parameter_schema: Internal MCP gateway helpers; .NET inlines on McpGatewaySkill
-signalwire.skills.native_vector_search.skill.NativeVectorSearchSkill.cleanup: native vector search is part of the search subsystem; not ported per skip list
-signalwire.skills.native_vector_search.skill.NativeVectorSearchSkill.get_global_data: native vector search is part of the search subsystem; not ported per skip list
-signalwire.skills.native_vector_search.skill.NativeVectorSearchSkill.get_instance_key: native vector search is part of the search subsystem; not ported per skip list
-signalwire.skills.native_vector_search.skill.NativeVectorSearchSkill.get_parameter_schema: native vector search is part of the search subsystem; not ported per skip list
-signalwire.skills.native_vector_search.skill.NativeVectorSearchSkill.get_prompt_sections: native vector search is part of the search subsystem; not ported per skip list
-signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.get_instance_key: Internal helper; .NET inlines on PlayBackgroundFileSkill
-signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.get_parameter_schema: Internal helper; .NET inlines on PlayBackgroundFileSkill
-signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.get_tools: Internal helper; .NET inlines on PlayBackgroundFileSkill
-signalwire.skills.play_background_file.skill.PlayBackgroundFileSkill.__init__: Internal helper; .NET inlines on PlayBackgroundFileSkill
-signalwire.skills.registry.SkillRegistry.add_skill_directory: Python registry helpers; .NET ships SkillRegistry with equivalent methods
-signalwire.skills.registry.SkillRegistry.discover_skills: Python registry helpers; .NET ships SkillRegistry with equivalent methods
-signalwire.skills.registry.SkillRegistry.get_all_skills_schema: Python registry helpers; .NET ships SkillRegistry with equivalent methods
-signalwire.skills.registry.SkillRegistry.get_skill_class: Python registry helpers; .NET ships SkillRegistry with equivalent methods
-signalwire.skills.registry.SkillRegistry.__init__: Python registry helpers; .NET ships SkillRegistry with equivalent methods
-signalwire.skills.registry.SkillRegistry.list_all_skill_sources: Python registry helpers; .NET ships SkillRegistry with equivalent methods
-signalwire.skills.spider.skill.SpiderSkill.cleanup: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.spider.skill.SpiderSkill.get_instance_key: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.spider.skill.SpiderSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.spider.skill.SpiderSkill.__init__: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.swml_transfer.skill.SWMLTransferSkill.get_instance_key: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.swml_transfer.skill.SWMLTransferSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.weather_api.skill.WeatherApiSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.weather_api.skill.WeatherApiSkill.get_tools: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.weather_api.skill.WeatherApiSkill.__init__: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
 signalwire.skills.web_search.skill.GoogleSearchScraper.extract_html_content: Internal Python scraper class; .NET inlines equivalent functionality on WebSearchSkill
 signalwire.skills.web_search.skill.GoogleSearchScraper.extract_reddit_content: Internal Python scraper class; .NET inlines equivalent functionality on WebSearchSkill
 signalwire.skills.web_search.skill.GoogleSearchScraper.extract_text_from_url: Internal Python scraper class; .NET inlines equivalent functionality on WebSearchSkill
@@ -794,41 +455,8 @@ signalwire.skills.web_search.skill_original.WebSearchSkill.get_prompt_sections: 
 signalwire.skills.web_search.skill_original.WebSearchSkill: Python-experimental skill variants; .NET ships canonical skill only
 signalwire.skills.web_search.skill_original.WebSearchSkill.register_tools: Python-experimental skill variants; .NET ships canonical skill only
 signalwire.skills.web_search.skill_original.WebSearchSkill.setup: Python-experimental skill variants; .NET ships canonical skill only
-signalwire.skills.web_search.skill.WebSearchSkill.get_hints: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.web_search.skill.WebSearchSkill.get_instance_key: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.web_search.skill.WebSearchSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.get_hints: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.get_parameter_schema: Inherited from SkillBase; .NET enumerator emits methods on the declaring class only — these resolve via base-class inheritance at runtime (recorded in PORT_ADDITIONS.md as port-only convention)
-signalwire.skills.wikipedia_search.skill.WikipediaSearchSkill.search_wiki: Python module-level convenience; .NET defines search_wiki as the registered tool name (not a class method)
-signalwire.utils.is_serverless_mode: Detection helper; .NET ships SignalWire.Serverless.Adapter.Detect under a different module path
-signalwire.utils.schema_utils.SchemaUtils.full_validation_available: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils.generate_method_body: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils.generate_method_signature: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils.get_all_verb_names: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils.get_verb_parameters: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils.get_verb_properties: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils.get_verb_required_properties: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils.__init__: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils.load_schema: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils.validate_document: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaUtils.validate_verb: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaValidationError.__init__: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.schema_utils.SchemaValidationError: Internal SWML schema helpers; .NET ships SignalWire.SWML.Schema with the same surface (recorded in PORT_ADDITIONS.md)
-signalwire.utils.url_validator.validate_url: Internal URL/SSRF validator; .NET inlines equivalent checks at call sites
-signalwire.web.web_service.WebService.add_directory: Internal Python WebService class; .NET integrates HTTP handling on Service directly
-signalwire.web.web_service.WebService.__init__: Internal Python WebService class; .NET integrates HTTP handling on Service directly
-signalwire.web.web_service.WebService: Internal Python WebService class; .NET integrates HTTP handling on Service directly
-signalwire.web.web_service.WebService.remove_directory: Internal Python WebService class; .NET integrates HTTP handling on Service directly
-signalwire.web.web_service.WebService.start: Internal Python WebService class; .NET integrates HTTP handling on Service directly
-signalwire.web.web_service.WebService.stop: Internal Python WebService class; .NET integrates HTTP handling on Service directly
 signalwire.agent_server.AgentServer.app: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
 signalwire.core.skill_base.SkillBase.logger: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
 signalwire.core.swml_service.SWMLService.schema_utils: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
 signalwire.core.swml_service.SWMLService.security: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
 signalwire.core.swml_service.SWMLService.verb_registry: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
-signalwire.core.security.webhook_validator.validate_webhook_signature: idiomatic_divergence: implemented as static method on the WebhookValidator class (language idiom); see PORT_ADDITIONS.md
-signalwire.core.security.webhook_validator.validate_request: idiomatic_divergence: implemented as static method on the WebhookValidator class (language idiom); see PORT_ADDITIONS.md
-signalwire.core.security.security_utils.filter_sensitive_headers: idiomatic_divergence: implemented as static method SecurityUtils.FilterSensitiveHeaders (language idiom); see PORT_ADDITIONS.md
-signalwire.core.security.security_utils.redact_url: idiomatic_divergence: implemented as static method SecurityUtils.RedactUrl (language idiom); see PORT_ADDITIONS.md
-signalwire.core.security.security_utils.is_valid_hostname: idiomatic_divergence: implemented as static method SecurityUtils.IsValidHostname (language idiom); see PORT_ADDITIONS.md

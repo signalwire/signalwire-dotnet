@@ -27,7 +27,6 @@ public sealed class SkillRegistry
         "info_gatherer",
         "joke",
         "math",
-        "mcp_gateway",
         "native_vector_search",
         "play_background_file",
         "spider",
@@ -49,7 +48,6 @@ public sealed class SkillRegistry
         ["info_gatherer"] = () => new InfoGathererSkill(),
         ["joke"] = () => new JokeSkill(),
         ["math"] = () => new MathSkill(),
-        ["mcp_gateway"] = () => new McpGatewaySkill(),
         ["native_vector_search"] = () => new NativeVectorSearchSkill(),
         ["play_background_file"] = () => new PlayBackgroundFileSkill(),
         ["spider"] = () => new SpiderSkill(),
@@ -178,5 +176,39 @@ public sealed class SkillRegistry
             names.Sort(StringComparer.Ordinal);
             return names;
         }
+    }
+
+    /// <summary>
+    /// Return the parameter schema for every known skill, keyed by skill name
+    /// (mirrors ``SkillRegistry.get_all_skills_schema``).
+    /// </summary>
+    public Dictionary<string, Dictionary<string, object>> GetAllSkillsSchema()
+    {
+        var result = new Dictionary<string, Dictionary<string, object>>();
+        foreach (var name in ListSkills())
+        {
+            var factory = GetFactory(name);
+            if (factory is null)
+            {
+                continue;
+            }
+            result[name] = factory().GetParameterSchema();
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Return the source (builtin vs the external directory) each known skill
+    /// was loaded from (mirrors ``SkillRegistry.list_all_skill_sources``).
+    /// </summary>
+    public Dictionary<string, string> ListAllSkillSources()
+    {
+        var result = new Dictionary<string, string>();
+        var builtins = new HashSet<string>(BuiltinSkillNames, StringComparer.Ordinal);
+        foreach (var name in ListSkills())
+        {
+            result[name] = builtins.Contains(name) ? "builtin" : "external";
+        }
+        return result;
     }
 }

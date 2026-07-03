@@ -11,6 +11,8 @@ namespace SignalWire.Prefabs;
 public class InfoGathererAgent : AgentBase
 {
     private readonly IReadOnlyList<Dictionary<string, object>> _questions;
+    private Func<Dictionary<string, object>, Dictionary<string, object?>, Dictionary<string, object?>,
+        List<Dictionary<string, string>>>? _questionCallback;
 
     /// <param name="name">Agent name (defaults to "info_gatherer").</param>
     /// <param name="questions">List of question dicts with key_name, question_text, and optional confirm.</param>
@@ -55,6 +57,19 @@ public class InfoGathererAgent : AgentBase
                 ["confirmed_by_user"] = new Dictionary<string, object> { ["type"] = "boolean", ["description"] = "User confirmed this answer" },
             },
             SubmitAnswer);
+    }
+
+    /// <summary>
+    /// Register a callback that dynamically supplies the questions per request
+    /// (given the request args / raw data / query params). Mirrors the Python
+    /// reference ``InfoGathererAgent.set_question_callback``.
+    /// </summary>
+    public InfoGathererAgent SetQuestionCallback(
+        Func<Dictionary<string, object>, Dictionary<string, object?>, Dictionary<string, object?>,
+            List<Dictionary<string, string>>> callback)
+    {
+        _questionCallback = callback;
+        return this;
     }
 
     /// <summary>SWAIG tool handler for the ``start_questions`` tool.

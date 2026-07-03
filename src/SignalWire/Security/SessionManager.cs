@@ -24,7 +24,7 @@ public sealed class SessionManager
     }
 
     /// <summary>Get the configured token expiry duration in seconds.</summary>
-    public int TokenExpirySecs => _tokenExpirySecs;
+    internal int TokenExpirySecs => _tokenExpirySecs;
 
     /// <summary>
     /// Create or confirm a session, returning the call ID.
@@ -123,6 +123,66 @@ public sealed class SessionManager
         }
 
         return true;
+    }
+
+    // ------------------------------------------------------------------
+    // Tool-token aliases + legacy session lifecycle (SessionManager parity)
+    // ------------------------------------------------------------------
+
+    /// <summary>Alias of the token generator, kept for cross-port parity.
+    /// (Python parity: ``generate_token`` == C# ``CreateToken``; also exposed as
+    /// ``create_tool_token``.)</summary>
+    public string CreateToolToken(string functionName, string callId)
+        => CreateToken(functionName, callId);
+
+    /// <summary>Alias of <see cref="ValidateToken"/> (``validate_tool_token``).</summary>
+    public bool ValidateToolToken(string functionName, string token, string callId)
+        => ValidateToken(functionName, callId, token);
+
+    /// <summary>Legacy no-op session activation — always succeeds.</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
+    public bool ActivateSession(string callId) => true;
+
+    /// <summary>Legacy no-op session teardown — always succeeds.</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
+    public bool EndSession(string callId) => true;
+
+    /// <summary>Legacy metadata accessor — always returns empty metadata.</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
+    public Dictionary<string, object> GetSessionMetadata(string callId) => [];
+
+    /// <summary>Legacy metadata setter — no-op, always succeeds.</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
+    public bool SetSessionMetadata(string callId, string key, object value) => true;
+
+    /// <summary>Decode a token into its components WITHOUT validating it (for
+    /// debugging). (Python parity: ``debug_token``.)</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
+    public Dictionary<string, object> DebugToken(string token)
+    {
+        ArgumentNullException.ThrowIfNull(token);
+        var result = new Dictionary<string, object>();
+        try
+        {
+            var parts = Base64UrlDecode(token).Split('.');
+            if (parts.Length == 5)
+            {
+                result["call_id"] = parts[0];
+                result["function"] = parts[1];
+                result["expiry"] = parts[2];
+                result["nonce"] = parts[3];
+                result["signature"] = parts[4];
+            }
+            else
+            {
+                result["error"] = "malformed token";
+            }
+        }
+        catch (FormatException)
+        {
+            result["error"] = "undecodable token";
+        }
+        return result;
     }
 
     // ------------------------------------------------------------------

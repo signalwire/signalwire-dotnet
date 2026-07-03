@@ -662,6 +662,20 @@ public class Call
     public Task<Event> WaitForEndingAsync(double? timeout = null)
         => WaitForStateAsync(Constants.CallStateEnding, timeout);
 
+    /// <summary>Wait for the call to reach a specific state (generic wait).
+    /// (Python parity: ``Call.wait_for(event_type, ...)``.)</summary>
+    public Task<Event> WaitForAsync(string state, double? timeout = null)
+        => WaitForStateAsync(state, timeout);
+
+    /// <summary>Wait for the call to reach the ended state.
+    /// (Python parity: ``Call.wait_for_ended``.)</summary>
+    public Task<Event> WaitForEndedAsync(double? timeout = null)
+        => WaitForStateAsync(Constants.CallStateEnded, timeout);
+
+    /// <summary>A concise debug representation of this call (Python parity:
+    /// ``Call.__repr__``).</summary>
+    public override string ToString() => $"<Call id={CallId} state={State}>";
+
     // ------------------------------------------------------------------
     // Private helpers
     // ------------------------------------------------------------------

@@ -59,9 +59,6 @@ public enum SkillName
     /// <summary>math</summary>
     Math,
 
-    /// <summary>mcp_gateway</summary>
-    McpGateway,
-
     /// <summary>native_vector_search</summary>
     NativeVectorSearch,
 
@@ -102,7 +99,6 @@ public static class SkillNameExtensions
         [SkillName.InfoGatherer] = "info_gatherer",
         [SkillName.Joke] = "joke",
         [SkillName.Math] = "math",
-        [SkillName.McpGateway] = "mcp_gateway",
         [SkillName.NativeVectorSearch] = "native_vector_search",
         [SkillName.PlayBackgroundFile] = "play_background_file",
         [SkillName.Spider] = "spider",

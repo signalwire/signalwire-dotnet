@@ -84,6 +84,11 @@ public class AgentBase : Service
     private List<Dictionary<string, object>> _languages;
     private List<Dictionary<string, object>> _pronunciations;
 
+    // -- Multilingual (Mode B) / MCP --
+    private Dictionary<string, object>? _multilingual;
+    private List<Dictionary<string, object>> _mcpServers = [];
+    private bool _mcpServerEnabled;
+
     // -- Params / data --
     private Dictionary<string, object> _params;
     private Dictionary<string, object> _globalData;
@@ -178,6 +183,11 @@ public class AgentBase : Service
         // Languages / pronunciations
         _languages = [];
         _pronunciations = [];
+
+        // Multilingual / MCP
+        _multilingual = null;
+        _mcpServers = [];
+        _mcpServerEnabled = false;
 
         // Params / data
         _params = [];
@@ -618,6 +628,84 @@ public class AgentBase : Service
         ArgumentNullException.ThrowIfNull(languages);
         _languages = [.. languages];
         return this;
+    }
+
+    /// <summary>
+    /// Configure ASR-driven multilingual mode (Mode B). Emits a top-level
+    /// ``multilingual`` object on the AI verb. Mutually exclusive with
+    /// <see cref="SetLanguages"/>: when both are set the server uses
+    /// ``multilingual`` and ignores ``languages``.
+    /// </summary>
+    public AgentBase SetMultilingual(Dictionary<string, object> config)
+    {
+        if (config is { Count: > 0 })
+        {
+            _multilingual = config;
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Add an external MCP server for tool discovery and invocation. Tools are
+    /// discovered via the MCP protocol at session start and registered as SWAIG
+    /// functions. Emits into the SWAIG ``mcp_servers`` array.
+    /// </summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API / used as a config value.")]
+    public AgentBase AddMcpServer(
+        string url,
+        Dictionary<string, string>? headers = null,
+        bool resources = false,
+        Dictionary<string, string>? resourceVars = null)
+    {
+        ArgumentNullException.ThrowIfNull(url);
+        var server = new Dictionary<string, object> { ["url"] = url };
+        if (headers is { Count: > 0 })
+        {
+            server["headers"] = headers;
+        }
+        if (resources)
+        {
+            server["resources"] = true;
+        }
+        if (resourceVars is { Count: > 0 })
+        {
+            server["resource_vars"] = resourceVars;
+        }
+        _mcpServers.Add(server);
+        return this;
+    }
+
+    /// <summary>
+    /// Expose this agent's tool functions as an MCP server endpoint (adds a
+    /// /mcp route speaking JSON-RPC 2.0 / the MCP protocol).
+    /// </summary>
+    public AgentBase EnableMcpServer()
+    {
+        _mcpServerEnabled = true;
+        return this;
+    }
+
+    /// <summary>True when this agent exposes an MCP server endpoint.</summary>
+    internal bool McpServerEnabled => _mcpServerEnabled;
+
+    /// <summary>
+    /// Handle a serverless-platform request (AWS Lambda / Azure Functions /
+    /// CGI). Dispatches to the appropriate <see cref="SignalWire.Serverless.Adapter"/>
+    /// handler based on <paramref name="mode"/> (or the detected execution mode).
+    /// Mirrors ``ServerlessMixin.handle_serverless_request``.
+    /// </summary>
+    public Dictionary<string, object?> HandleServerlessRequest(
+        Dictionary<string, object?>? @event = null,
+        object? context = null,
+        string? mode = null)
+    {
+        mode ??= SignalWire.Serverless.Adapter.Detect();
+        @event ??= [];
+        return mode switch
+        {
+            "azure_function" => SignalWire.Serverless.Adapter.HandleAzure(this, @event),
+            _ => SignalWire.Serverless.Adapter.HandleLambda(this, @event),
+        };
     }
 
     public AgentBase AddPronunciation(string replace, string with, string ignore = "")
@@ -1120,10 +1208,10 @@ public class AgentBase : Service
 
     /// <summary>Manually override the proxy URL used for SWAIG webhook construction.</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
-    public AgentBase ManualSetProxyUrl(string url)
+    public override AgentBase ManualSetProxyUrl(string proxyUrl)
     {
-        ArgumentNullException.ThrowIfNull(url);
-        _manualProxyUrl = url.TrimEnd('/');
+        ArgumentNullException.ThrowIfNull(proxyUrl);
+        _manualProxyUrl = proxyUrl.TrimEnd('/');
         return this;
     }
 
@@ -1256,7 +1344,7 @@ public class AgentBase : Service
             main.Add(new Dictionary<string, object> { [verb] = config });
         }
 
-        return new Dictionary<string, object>
+        var document = new Dictionary<string, object>
         {
             ["version"] = "1.0.0",
             ["sections"] = new Dictionary<string, object>
@@ -1264,6 +1352,25 @@ public class AgentBase : Service
                 ["main"] = main,
             },
         };
+
+        // Post-render transform hook. The base returns the document unchanged;
+        // subclasses (e.g. BedrockAgent) override this to rewrite verbs — mirrors
+        // the Python/Ruby reference where BedrockAgent overrides the private
+        // _render_swml to swap the `ai` verb for `amazon_bedrock`. Kept protected
+        // so it stays off the public SDK surface.
+        return TransformRenderedSwml(document);
+    }
+
+    /// <summary>
+    /// Post-render transform hook applied to the fully-built SWML document. The
+    /// base implementation returns it unchanged; subclasses override to rewrite
+    /// verbs (e.g. <c>BedrockAgent</c> swaps <c>ai</c> for <c>amazon_bedrock</c>).
+    /// Protected so it is not part of the public SDK surface (matches the private
+    /// <c>_render_swml</c> override in the Python/Ruby reference).
+    /// </summary>
+    protected virtual Dictionary<string, object> TransformRenderedSwml(Dictionary<string, object> document)
+    {
+        return document;
     }
 
     /// <summary>Build the AI verb configuration block.</summary>
@@ -1338,6 +1445,14 @@ public class AgentBase : Service
         if (_languages.Count > 0)
         {
             ai["languages"] = _languages;
+        }
+
+        // -- Multilingual (Mode B) --
+        // Mutually exclusive with languages; when both are set the server uses
+        // ``multilingual`` and ignores ``languages`` (mirrors the reference).
+        if (_multilingual is not null)
+        {
+            ai["multilingual"] = _multilingual;
         }
 
         // -- Pronunciations --
@@ -1641,6 +1756,12 @@ public class AgentBase : Service
         if (_functionIncludes.Count > 0)
         {
             swaig["includes"] = _functionIncludes;
+        }
+
+        // MCP servers (external tool discovery via the MCP protocol)
+        if (_mcpServers.Count > 0)
+        {
+            swaig["mcp_servers"] = _mcpServers;
         }
 
         return swaig;

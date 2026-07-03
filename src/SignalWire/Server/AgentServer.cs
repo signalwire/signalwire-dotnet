@@ -109,6 +109,23 @@ public partial class AgentServer
     }
 
     // ==================================================================
+    //  Global routing
+    // ==================================================================
+
+    private Func<Dictionary<string, object?>?, Dictionary<string, string>, object?>? _globalRoutingCallback;
+
+    /// <summary>
+    /// Register a server-wide routing callback invoked for requests before
+    /// per-agent dispatch (mirrors ``AgentServer.register_global_routing_callback``).
+    /// </summary>
+    public AgentServer RegisterGlobalRoutingCallback(
+        Func<Dictionary<string, object?>?, Dictionary<string, string>, object?> callback)
+    {
+        _globalRoutingCallback = callback;
+        return this;
+    }
+
+    // ==================================================================
     //  SIP Routing
     // ==================================================================
 
@@ -160,6 +177,83 @@ public partial class AgentServer
         urlPrefix = NormalizeRoute(urlPrefix);
         _staticRoutes[urlPrefix] = realDir;
         return this;
+    }
+
+    /// <summary>
+    /// Serve static files from <paramref name="directory"/> under
+    /// <paramref name="route"/> (reference-named ``serve_static_files``).
+    /// </summary>
+    [SuppressMessage("Usage", "CA1054:URI-like parameters should not be strings",
+        Justification = "route is a wire route prefix string, not a navigable URI")]
+    public AgentServer ServeStaticFiles(string directory, string route = "/")
+        => ServeStatic(directory, route);
+
+    // ==================================================================
+    //  Serving
+    // ==================================================================
+
+    /// <summary>
+    /// Run the multi-agent HTTP server. Binds an <see cref="System.Net.HttpListener"/>
+    /// on the given host/port (defaulting to the <c>PORT</c> env var or 3000) and
+    /// dispatches each request through <see cref="HandleRequest"/> until the
+    /// process is interrupted. Mirrors ``AgentServer.run``.
+    /// </summary>
+    public void Run(string host = "0.0.0.0", int? port = null)
+    {
+        var boundPort = port ?? ParsePortFromEnv() ?? 3000;
+        using var listener = new System.Net.HttpListener();
+        var bindHost = host is "0.0.0.0" or "" ? "+" : host;
+        try
+        {
+            listener.Prefixes.Add($"http://{bindHost}:{boundPort}/");
+            listener.Start();
+        }
+        catch (System.Net.HttpListenerException)
+        {
+            // Fall back to loopback when the wildcard binding is not permitted.
+            listener.Prefixes.Clear();
+            listener.Prefixes.Add($"http://localhost:{boundPort}/");
+            listener.Start();
+        }
+
+        while (listener.IsListening)
+        {
+            System.Net.HttpListenerContext ctx;
+            try { ctx = listener.GetContext(); }
+            catch (System.Net.HttpListenerException) { break; }
+            catch (InvalidOperationException) { break; }
+
+            var reqHeaders = new Dictionary<string, string>();
+            foreach (string key in ctx.Request.Headers)
+            {
+                reqHeaders[key] = ctx.Request.Headers[key] ?? "";
+            }
+            string reqBody;
+            using (var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
+            {
+                reqBody = reader.ReadToEnd();
+            }
+
+            var (status, respHeaders, body) = HandleRequest(
+                ctx.Request.HttpMethod, ctx.Request.Url?.AbsolutePath ?? "/", reqHeaders, reqBody);
+
+            ctx.Response.StatusCode = status;
+            foreach (var (k, v) in respHeaders)
+            {
+                if (string.Equals(k, "Content-Type", StringComparison.OrdinalIgnoreCase))
+                {
+                    ctx.Response.ContentType = v;
+                }
+                else
+                {
+                    ctx.Response.Headers[k] = v;
+                }
+            }
+            var buffer = System.Text.Encoding.UTF8.GetBytes(body);
+            ctx.Response.ContentLength64 = buffer.Length;
+            ctx.Response.OutputStream.Write(buffer, 0, buffer.Length);
+            ctx.Response.OutputStream.Close();
+        }
     }
 
     // ==================================================================

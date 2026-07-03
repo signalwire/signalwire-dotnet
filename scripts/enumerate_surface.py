@@ -52,6 +52,23 @@ CLASS_MODULE_MAP: dict[str, str] = {
     # -- agent ------------------------------------------------------------
     "AgentBase": "signalwire.core.agent_base",
 
+    # -- item-I implemented subsystems (H/I turn) -------------------------
+    # New hand classes routed to their reference core modules (class name
+    # matches the reference leaf verbatim).
+    "ConfigLoader": "signalwire.core.config_loader",
+    "SecurityConfig": "signalwire.core.security_config",
+    "AuthHandler": "signalwire.core.auth_handler",
+    "WebService": "signalwire.web.web_service",
+    "SwaigFunction": "signalwire.core.swaig_function",
+    "BedrockAgent": "signalwire.agents.bedrock",
+    "PromptManager": "signalwire.core.agent.prompt.manager",
+    "ToolRegistry": "signalwire.core.agent.tools.registry",
+    # SWML verb-handler trio (C# namespace SignalWire.SWML) -> the reference
+    # signalwire.core.swml_handler module.
+    "SWMLVerbHandler": "signalwire.core.swml_handler",
+    "AIVerbHandler": "signalwire.core.swml_handler",
+    "VerbHandlerRegistry": "signalwire.core.swml_handler",
+
     # -- contexts ---------------------------------------------------------
     "Context": "signalwire.core.contexts",
     "ContextBuilder": "signalwire.core.contexts",
@@ -103,7 +120,13 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "SwmlRenderer": "signalwire.core.swml_renderer",
     "UrlValidator": "signalwire.utils.url_validator",
     "ExecutionMode": "signalwire.utils.execution_mode",
+    # REST base layer: Python consolidates every base into signalwire.rest._base;
+    # .NET splits each into its own file/namespace. Route them all to _base so
+    # the module-consolidation idiom compares equal.
     "CrudWithAddresses": "signalwire.rest._base",
+    "CrudResource": "signalwire.rest._base",
+    "HttpClient": "signalwire.rest._base",
+    "SignalWireRestError": "signalwire.rest._base",
 
     # -- relay ------------------------------------------------------------
     "Call": "signalwire.relay.call",
@@ -131,7 +154,38 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "EchoAction": "signalwire.relay.call",
     "QueueAction": "signalwire.relay.call",
     "PromptAction": "signalwire.relay.call",
+    "StandaloneCollectAction": "signalwire.relay.call",
     "Event": "signalwire.relay.event",
+    # -- relay events (item H/I) -----------------------------------------
+    # The reference signalwire.relay.event module declares one typed event
+    # class per RELAY event, each exposing a ``from_payload`` classmethod,
+    # plus a module-level ``parse_event`` free function (projected below).
+    "RelayEvent": "signalwire.relay.event",
+    "CallReceiveEvent": "signalwire.relay.event",
+    "CallStateEvent": "signalwire.relay.event",
+    "CallingErrorEvent": "signalwire.relay.event",
+    "CollectEvent": "signalwire.relay.event",
+    "ConferenceEvent": "signalwire.relay.event",
+    "ConnectEvent": "signalwire.relay.event",
+    "DenoiseEvent": "signalwire.relay.event",
+    "DetectEvent": "signalwire.relay.event",
+    "DialEvent": "signalwire.relay.event",
+    "EchoEvent": "signalwire.relay.event",
+    "FaxEvent": "signalwire.relay.event",
+    "HoldEvent": "signalwire.relay.event",
+    "MessageReceiveEvent": "signalwire.relay.event",
+    "MessageStateEvent": "signalwire.relay.event",
+    "PayEvent": "signalwire.relay.event",
+    "PlayEvent": "signalwire.relay.event",
+    "QueueEvent": "signalwire.relay.event",
+    "RecordEvent": "signalwire.relay.event",
+    "ReferEvent": "signalwire.relay.event",
+    "SendDigitsEvent": "signalwire.relay.event",
+    "StreamEvent": "signalwire.relay.event",
+    "TapEvent": "signalwire.relay.event",
+    "TranscribeEvent": "signalwire.relay.event",
+    # RelayError lives alongside RelayClient in the reference module.
+    "RelayError": "signalwire.relay.client",
 
     # -- prefabs ----------------------------------------------------------
     "ConciergeAgent": "signalwire.prefabs.concierge",
@@ -151,7 +205,6 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "InfoGathererSkill": "signalwire.skills.info_gatherer.skill",
     "JokeSkill": "signalwire.skills.joke.skill",
     "MathSkill": "signalwire.skills.math.skill",
-    "McpGatewaySkill": "signalwire.skills.mcp_gateway.skill",
     "NativeVectorSearchSkill": "signalwire.skills.native_vector_search.skill",
     "PlayBackgroundFileSkill": "signalwire.skills.play_background_file.skill",
     "SpiderSkill": "signalwire.skills.spider.skill",
@@ -368,8 +421,53 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
 SKILL_RENAMES: dict[str, str] = {
     "DatasphereSkill": "DataSphereSkill",
     "DatasphereServerlessSkill": "DataSphereServerlessSkill",
-    "McpGatewaySkill": "MCPGatewaySkill",
     "SwmlTransferSkill": "SWMLTransferSkill",
+    # SWAIG acronym: the reference class is ``SWAIGFunction`` (the C# idiom
+    # PascalCases the acronym to ``SwaigFunction``).
+    "SwaigFunction": "SWAIGFunction",
+    # DateTime: the reference class is ``DateTimeSkill`` (C# PascalCases to
+    # ``DatetimeSkill``).
+    "DatetimeSkill": "DateTimeSkill",
+}
+
+
+# Skill data-carrying PUBLIC PROPERTIES that mirror Python instance attributes
+# (name / description / supports_multiple_instances / version) — set in
+# ``__init__``, NOT recorded on the class surface. Dropped from every skill
+# subclass's surface (they read as additions otherwise; identical idiom to the
+# WebService/event data-property drop).
+_SKILL_PROPERTY_EXTRAS = {
+    "name", "description", "supports_multiple_instances", "version",
+}
+
+# SkillBase-provided methods every skill genuinely INHERITS (real, callable
+# capability): the C# base declares them; the regex enumerator only sees a
+# method where it is re-declared, so a subclass that inherits without overriding
+# shows nothing. Project the reference-recorded subset per skill — restricted to
+# methods that ACTUALLY exist on SkillBase (never invent surface). Keyed by the
+# reference (post-rename) class name.
+_SKILLBASE_INHERITABLE = {
+    "cleanup", "get_global_data", "get_hints", "get_instance_key",
+    "get_parameter_schema", "get_prompt_sections", "register_tools", "setup",
+}
+SKILL_INHERITED_PROJECTIONS: dict[str, list[str]] = {
+    "ApiNinjasTriviaSkill": ["get_instance_key", "get_parameter_schema"],
+    "ClaudeSkillsSkill": ["get_parameter_schema"],
+    "DataSphereSkill": ["cleanup", "get_hints", "get_instance_key", "get_parameter_schema"],
+    "DataSphereServerlessSkill": ["get_hints", "get_instance_key", "get_parameter_schema"],
+    "DateTimeSkill": ["get_hints", "get_parameter_schema"],
+    "GoogleMapsSkill": ["get_parameter_schema"],
+    "InfoGathererSkill": ["get_instance_key", "get_parameter_schema"],
+    "JokeSkill": ["get_hints", "get_parameter_schema"],
+    "MathSkill": ["get_hints", "get_parameter_schema"],
+    "NativeVectorSearchSkill": ["cleanup", "get_global_data", "get_instance_key",
+                                 "get_parameter_schema", "get_prompt_sections"],
+    "PlayBackgroundFileSkill": ["get_instance_key", "get_parameter_schema"],
+    "SpiderSkill": ["cleanup", "get_instance_key", "get_parameter_schema"],
+    "SWMLTransferSkill": ["get_instance_key", "get_parameter_schema"],
+    "WeatherApiSkill": ["get_parameter_schema"],
+    "WebSearchSkill": ["get_hints", "get_instance_key"],
+    "WikipediaSearchSkill": ["get_hints", "get_parameter_schema"],
 }
 
 
@@ -402,11 +500,12 @@ SKIP_METHOD_NAMES: set[str] = {
 MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     ("signalwire.core.mixins.ai_config_mixin", "AIConfigMixin"): [
         "add_function_include", "add_hint", "add_hints", "add_internal_filler",
-        "add_language", "add_pattern_hint", "add_pronunciation",
-        "enable_debug_events",
+        "add_language", "add_mcp_server", "add_pattern_hint", "add_pronunciation",
+        "enable_debug_events", "enable_mcp_server",
         "get_language_params",
         "set_function_includes", "set_global_data", "set_internal_fillers",
-        "set_language_params", "set_languages", "set_native_functions",
+        "set_language_params", "set_languages", "set_multilingual",
+        "set_native_functions",
         "set_param", "set_params",
         "set_post_prompt_llm_params", "set_prompt_llm_params",
         "set_pronunciations", "update_global_data",
@@ -427,9 +526,13 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     # (the user-facing surface is identical — `agent.prompt_manager.X`
     # ≡ `agent.X`). Project the same set so the cross-language audit
     # treats both paths as covered.
+    # PromptManager is a REAL C# class (its own ctor -> __init__ enumerates
+    # directly, merged via the UNION projection below); do NOT list __init__
+    # here or it would be pulled from AgentBase's ctor and stripped off
+    # AgentBase.
     ("signalwire.core.agent.prompt.manager", "PromptManager"): [
-        "define_contexts", "get_contexts", "get_post_prompt", "get_prompt",
-        "get_raw_prompt",
+        "define_contexts", "get_contexts", "get_post_prompt",
+        "get_prompt", "get_raw_prompt",
         "prompt_add_section", "prompt_add_subsection", "prompt_add_to_section",
         "prompt_has_section", "set_post_prompt", "set_prompt_pom",
         "set_prompt_text",
@@ -439,7 +542,9 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     # PromptManager). When .NET's AgentBase exposes GetRawPrompt /
     # GetPostPrompt / GetContexts / SetPromptPom, those should also
     # satisfy PromptMixin parity checks.
-    ("signalwire.core.mixins.serverless_mixin", "ServerlessMixin"): [],
+    ("signalwire.core.mixins.serverless_mixin", "ServerlessMixin"): [
+        "handle_serverless_request",
+    ],
     ("signalwire.core.mixins.skill_mixin", "SkillMixin"): [
         "add_skill", "has_skill", "list_skills", "remove_skill",
     ],
@@ -447,7 +552,8 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
         "validate_tool_token",
     ],
     ("signalwire.core.mixins.tool_mixin", "ToolMixin"): [
-        "define_tool", "on_function_call", "register_swaig_function",
+        "define_tool", "define_tools", "on_function_call",
+        "register_swaig_function",
     ],
     # Python additionally extracted a ``ToolRegistry`` class that the
     # ToolMixin delegates to. Project the same set of query methods to
@@ -461,8 +567,244 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     ("signalwire.core.mixins.web_mixin", "WebMixin"): [
         "enable_debug_routes", "manual_set_proxy_url", "on_request",
         "on_swml_request", "register_routing_callback", "run", "serve",
-        "set_dynamic_config_callback",
+        "set_dynamic_config_callback", "setup_graceful_shutdown",
     ],
+}
+
+# Method-NAME aliases per [module, class]: a C#-idiom method whose snake_case
+# translation differs from the reference (singular/plural, an abbreviation, or
+# a genuinely different idiom name) is renamed to the reference name here so the
+# two compare EQUAL (Rule 2 — reconcile idiom in the enumerator, not omissions).
+# Applied AFTER pascal_to_snake, per class.
+SURFACE_METHOD_ALIASES: dict[tuple[str, str], dict[str, str]] = {
+    # SkillBase: C# singular property/method names -> reference plural.
+    ("signalwire.core.skill_base", "SkillBase"): {
+        "get_hint": "get_hints",
+        "get_prompt_section": "get_prompt_sections",
+        "register_tool": "register_tools",
+        "validate_env_var": "validate_env_vars",
+    },
+    # SkillRegistry: C# factory-name idiom -> reference class-name idiom.
+    ("signalwire.skills.registry", "SkillRegistry"): {
+        "get_factory": "get_skill_class",
+    },
+    ("signalwire.core.security.session_manager", "SessionManager"): {
+        "create_token": "generate_token",
+    },
+    # SWAIGFunction: C# ``Call``/``Invoke`` -> the reference dunder ``__call__``.
+    # (Keyed by the post-rename class name — emit_class_name maps
+    # SwaigFunction -> SWAIGFunction before the alias lookup.)
+    ("signalwire.core.swaig_function", "SWAIGFunction"): {
+        "call": "__call__",
+    },
+    # BedrockAgent: C# ``Repr()`` -> the reference dunder ``__repr__``.
+    ("signalwire.agents.bedrock", "BedrockAgent"): {
+        "repr": "__repr__",
+    },
+    # Call: Python renames the reserved word ``pass`` -> ``pass_``; the C#
+    # ``PassAsync`` translates to ``pass`` -> rename to the reference ``pass_``.
+    ("signalwire.relay.call", "Call"): {
+        "pass": "pass_",
+    },
+    # SkillManager: C# ``ListSkills`` -> the reference ``list_loaded_skills``
+    # (the manager lists the LOADED skills, distinct from the registry's
+    # list_skills of all available skills).
+    ("signalwire.core.skill_manager", "SkillManager"): {
+        "list_skills": "list_loaded_skills",
+    },
+    # RelayClient: the C# ``Protocol`` property -> the reference
+    # ``relay_protocol`` (the negotiated RELAY sub-protocol identity).
+    ("signalwire.relay.client", "RelayClient"): {
+        "protocol": "relay_protocol",
+    },
+}
+
+# Per-[module, class] method names to ADD to the class's surface even though no
+# C# method produces them directly (a reference dunder the class semantically
+# has — e.g. an iterable's ``__iter__``, a constructed object's ``__init__``
+# whose C# ctor is non-public). ONLY for reference-present dunders that the C#
+# idiom expresses without a matching public method-name. NOT a backdoor for
+# undone work — each entry names a real capability the class already has.
+SURFACE_METHOD_INJECTIONS: dict[tuple[str, str], list[str]] = {
+    # SkillRegistry is a singleton (private ctor) but the reference records
+    # ``__init__``; the object is constructed (via Instance) so the capability
+    # exists — the C# ctor is simply private.
+    ("signalwire.skills.registry", "SkillRegistry"): ["__init__"],
+    # C# Schema is a singleton (private ctor) surfaced as SchemaUtils; the
+    # object is constructed via Instance so ``__init__`` capability is real.
+    ("signalwire.utils.schema_utils", "SchemaUtils"): ["__init__"],
+    # Call / Message override C# ToString() (skipped by the enumerator) — the
+    # reference records the ``__repr__`` dunder for both; the capability is real.
+    ("signalwire.relay.call", "Call"): ["__repr__"],
+    ("signalwire.relay.message", "Message"): ["__repr__"],
+    # ContextBuilder / PromptManager / ToolRegistry / SkillBase are constructed
+    # via their (implicit or base) C# ctors — ``__init__`` capability is real,
+    # the enumerator just can't see an implicit ctor.
+    ("signalwire.core.contexts", "ContextBuilder"): ["__init__"],
+    ("signalwire.core.agent.prompt.manager", "PromptManager"): ["__init__"],
+    ("signalwire.core.agent.tools.registry", "ToolRegistry"): ["__init__"],
+    ("signalwire.core.skill_base", "SkillBase"): ["__init__"],
+    # AgentBase inherits Service.GetFullUrl — the reference records get_full_url
+    # on AgentBase itself; the capability is real via inheritance.
+    ("signalwire.core.agent_base", "AgentBase"): ["get_full_url"],
+    # Prefab agents inherit AgentBase.OnSummary / Service.OnSwmlRequest — the
+    # reference records these per-prefab (Python overrides them); the C#
+    # prefabs inherit the same callable capability.
+    ("signalwire.prefabs.concierge", "ConciergeAgent"): ["on_summary"],
+    ("signalwire.prefabs.faq_bot", "FAQBotAgent"): ["on_summary"],
+    ("signalwire.prefabs.receptionist", "ReceptionistAgent"): ["on_summary"],
+    ("signalwire.prefabs.survey", "SurveyAgent"): ["on_summary"],
+    ("signalwire.prefabs.info_gatherer", "InfoGathererAgent"): ["on_swml_request"],
+    # These skills define a Python ``__init__``; the C# skills are constructed
+    # via ``new X()`` in the SkillRegistry factories, so the ctor capability is
+    # real (the implicit C# ctor just isn't visible to the regex enumerator).
+    ("signalwire.skills.api_ninjas_trivia.skill", "ApiNinjasTriviaSkill"): ["__init__"],
+    ("signalwire.skills.play_background_file.skill", "PlayBackgroundFileSkill"): ["__init__"],
+    ("signalwire.skills.spider.skill", "SpiderSkill"): ["__init__"],
+    ("signalwire.skills.weather_api.skill", "WeatherApiSkill"): ["__init__"],
+}
+
+# Static "helper" C# classes whose METHODS are the reference's module-level
+# FREE FUNCTIONS (Python declares them at module scope, not on a class). Map the
+# C# class -> the reference module; its methods move to that module's
+# ``functions[]`` and the class itself is NOT emitted. Method names are
+# translated + alias-mapped first. ``method_aliases`` optionally renames a
+# C#-idiom method to the reference free-function name.
+FREE_FUNCTION_CLASSES: dict[str, dict] = {
+    "SecurityUtils": {
+        "module": "signalwire.core.security.security_utils",
+        "aliases": {"filter_sensitive_header": "filter_sensitive_headers"},
+    },
+    "WebhookValidator": {
+        "module": "signalwire.core.security.webhook_validator",
+        "aliases": {},
+    },
+    "UrlValidator": {
+        "module": "signalwire.utils.url_validator",
+        # only ``validate_url`` is a reference free function; the
+        # resolved-addresses helper is a port-only addition (recorded in
+        # PORT_ADDITIONS.md) — keep just the canonical one.
+        "aliases": {},
+        "keep": {"validate_url"},
+    },
+    "ExecutionMode": {
+        "module": "signalwire.utils",
+        # get_execution_mode lives in logging_config in the reference; only
+        # is_serverless_mode is a signalwire.utils free function.
+        "aliases": {},
+        "keep": {"is_serverless_mode"},
+    },
+    "LoggingConfig": {
+        "module": "signalwire.core.logging_config",
+        "aliases": {},
+    },
+    "TypeInference": {
+        "module": "signalwire.core.agent.tools.type_inference",
+        "aliases": {},
+    },
+    # RelayEvents.parse_event -> the module-level free function.
+    "RelayEvents": {
+        "module": "signalwire.relay.event",
+        "aliases": {},
+        "keep": {"parse_event"},
+    },
+}
+
+# Class-method free-function projections: a C# ``public static`` method on a
+# hand class that the reference exposes as a MODULE-level free function (the
+# class stays, only these named methods move to the module's functions[]).
+# [C#ClassName] -> (reference_module, [method reference-names]).
+FREE_FUNCTION_PROJECTIONS: dict[str, tuple[str, list[str]]] = {
+    # DataMap.create_expression_tool / create_simple_api_tool are module-level
+    # in the reference (signalwire.core.data_map free functions).
+    "DataMap": ("signalwire.core.data_map",
+                ["create_expression_tool", "create_simple_api_tool"]),
+    # ContextBuilder.CreateSimpleContext -> the module-level
+    # signalwire.core.contexts.create_simple_context free function.
+    "ContextBuilder": ("signalwire.core.contexts", ["create_simple_context"]),
+}
+
+# Top-level ``signalwire`` module free functions (Python __init__ re-exports).
+# [C#ClassName] -> [(c#_method_snake, reference_function_name)]; the method is
+# projected onto the ``signalwire`` module's functions[]. ``RestClient`` is a
+# top-level class re-export the reference records as a function name.
+TOPLEVEL_FUNCTION_PROJECTIONS: dict[str, list[tuple[str, str]]] = {
+    "SkillRegistry": [
+        ("register_skill", "register_skill"),
+        ("add_skill_directory", "add_skill_directory"),
+        ("list_skills", "list_skills"),
+        ("get_all_skills_schema", "list_skills_with_params"),
+    ],
+}
+# Additional bare top-level function names the reference records that map to a
+# top-level class re-export (not a projected method).
+TOPLEVEL_FUNCTION_NAMES: list[str] = ["RestClient"]
+
+# Per-[module, class] method ALLOWLIST: for classes whose reference contract is
+# a fixed, known method set, the C# idiom carries extra PUBLIC PROPERTIES that
+# are data attributes (Python sets these as ``self.x = ...`` in ``__init__`` —
+# NOT recorded on the class surface). Intersect the enumerated members with the
+# reference set so those idiomatic data-properties don't read as port additions.
+# A genuinely-missing reference method still surfaces as MISSING (checked
+# separately), so this cannot mask undone work — it only drops idiom noise.
+SURFACE_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
+    ("signalwire.core.swaig_function", "SWAIGFunction"): {
+        "__call__", "__init__", "execute", "to_swaig", "validate_args",
+    },
+    ("signalwire.web.web_service", "WebService"): {
+        "__init__", "add_directory", "remove_directory", "start", "stop",
+    },
+    ("signalwire.relay.call", "StandaloneCollectAction"): {
+        "__init__", "start_input_timers",
+    },
+    # REST base layer — restrict each consolidated base to its reference own
+    # surface (the C# unified CrudResource carries read+write+config helpers that
+    # the reference splits across BaseResource/ReadResource/CrudResource; the
+    # read/base methods are recorded on those reference bases, projected below).
+    ("signalwire.rest._base", "CrudResource"): {
+        "create", "delete", "update",
+    },
+    ("signalwire.rest._base", "HttpClient"): {
+        "__init__", "delete", "get", "patch", "post", "put",
+    },
+    ("signalwire.rest._base", "SignalWireRestError"): {
+        "__init__",
+    },
+    # C# Schema -> reference SchemaUtils: keep exactly the reference own-surface
+    # (the C# helper carries extra convenience accessors recorded as additions).
+    ("signalwire.utils.schema_utils", "SchemaUtils"): {
+        "__init__", "full_validation_available", "generate_method_body",
+        "generate_method_signature", "get_all_verb_names", "get_verb_parameters",
+        "get_verb_properties", "get_verb_required_properties", "load_schema",
+        "validate_document", "validate_verb",
+    },
+}
+# SWMLService is allowlisted SEPARATELY, in post-processing AFTER the mixin
+# projection pools its (unrestricted) methods — many Service methods legitimately
+# satisfy a mixin (define_tool/run/validate_basic_auth/…) while NOT being part of
+# the reference SWMLService's own surface. Restricting inline would starve the
+# mixin pool. The reference SWMLService's exact own-surface set:
+_SWML_SERVICE_ALLOW = {
+    "__getattr__", "__init__", "add_section", "add_verb", "add_verb_to_section",
+    "as_router", "extract_sip_username", "full_validation_enabled",
+    "get_basic_auth_credentials", "get_document", "manual_set_proxy_url",
+    "on_request", "register_routing_callback", "register_verb_handler",
+    "render_document", "reset_document", "serve", "stop",
+}
+# Every reference class in signalwire.relay.event exposes exactly ``from_payload``
+# (the typed data fields are instance attributes, not surface). Restrict all
+# event classes to that single method.
+_RELAY_EVENT_ONLY = {"from_payload"}
+
+# Relay Action mixin bases: the reference splits pause/resume/stop/volume onto
+# PausableAction / StoppableAction / VolumeAction bases that the concrete
+# actions inherit. .NET declares those methods directly on the concrete action
+# classes. Project each method onto the reference base class and REMOVE it from
+# the concrete action so the surface matches. reference_base -> [methods].
+RELAY_ACTION_MIXIN_BASES: dict[str, list[str]] = {
+    "PausableAction": ["pause", "resume"],
+    "StoppableAction": ["stop"],
+    "VolumeAction": ["volume"],
 }
 
 
@@ -878,6 +1220,12 @@ def git_sha(repo: Path) -> str:
         return "N/A"
 
 
+def merge_module_functions(modules: dict, target_mod: str, fns: list[str]) -> None:
+    """Add ``fns`` to a module's ``functions[]`` (deduped, sorted)."""
+    entry = modules.setdefault(target_mod, {"classes": {}, "functions": []})
+    entry["functions"] = sorted(set(entry["functions"]) | set(fns))
+
+
 def build_snapshot(repo: Path, src_dir: Path) -> dict:
     modules: dict[str, dict] = {}
     rest_manifest = load_rest_manifest()
@@ -922,6 +1270,24 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
                 entry["classes"].setdefault(class_name, [])
                 continue
 
+            # Free-function helper classes (item H/I): a C# static helper class
+            # whose methods are the reference's MODULE-LEVEL free functions.
+            # Route the methods to the module's functions[] and DO NOT emit the
+            # class (Python has no such class).
+            if class_name in FREE_FUNCTION_CLASSES:
+                spec = FREE_FUNCTION_CLASSES[class_name]
+                aliases = spec.get("aliases", {})
+                keep = spec.get("keep")
+                fns = []
+                for m in methods:
+                    snake = pascal_to_snake(m)
+                    snake = aliases.get(snake, snake)
+                    if keep is not None and snake not in keep:
+                        continue
+                    fns.append(snake)
+                merge_module_functions(modules, spec["module"], fns)
+                continue
+
             # Apply CLASS_RENAME_MAP
             if (namespace, class_name) in CLASS_RENAME_MAP:
                 target_mod, target_class = CLASS_RENAME_MAP[(namespace, class_name)]
@@ -932,23 +1298,72 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
                 continue
 
             # Translate method names
-            translated = sorted({pascal_to_snake(m) for m in methods})
+            translated = {pascal_to_snake(m) for m in methods}
+
+            # Class-method free-function projection: move selected ``static``
+            # methods off the class onto the reference module's functions[].
+            if class_name in FREE_FUNCTION_PROJECTIONS:
+                proj_mod, proj_names = FREE_FUNCTION_PROJECTIONS[class_name]
+                present = [n for n in proj_names if n in translated]
+                if present:
+                    merge_module_functions(modules, proj_mod, present)
+                    translated -= set(present)
+
+            # Top-level ``signalwire`` module free-function projection.
+            if class_name in TOPLEVEL_FUNCTION_PROJECTIONS:
+                tops = []
+                for c_name, ref_name in TOPLEVEL_FUNCTION_PROJECTIONS[class_name]:
+                    if c_name in translated:
+                        tops.append(ref_name)
+                if tops:
+                    merge_module_functions(modules, "signalwire", tops)
+
+            # Per-class method-name aliases (idiom -> reference name).
+            alias_table = SURFACE_METHOD_ALIASES.get((target_mod, target_class), {})
+            if alias_table:
+                translated = {alias_table.get(m, m) for m in translated}
+
+            # Reference-present dunders the class semantically has.
+            for inj in SURFACE_METHOD_INJECTIONS.get((target_mod, target_class), []):
+                translated.add(inj)
+
+            # Method allowlist: drop idiomatic data-properties for classes with
+            # a fixed reference contract (kept dunders like __init__ survive if
+            # in the allowlist). Relay event classes -> from_payload only.
+            allow = SURFACE_METHOD_ALLOWLIST.get((target_mod, target_class))
+            if allow is not None:
+                translated &= allow
+            elif target_mod == "signalwire.relay.event":
+                translated &= _RELAY_EVENT_ONLY
 
             entry = modules.setdefault(target_mod, {"classes": {}, "functions": []})
             existing = entry["classes"].get(target_class, [])
-            entry["classes"][target_class] = sorted(set(existing) | set(translated))
+            entry["classes"][target_class] = sorted(set(existing) | translated)
 
     # Mixin projections: replicate methods present on AgentBase under each
     # Python mixin module, then REMOVE them from AgentBase so the diff
     # against python_surface.json doesn't flag them as extras (Python keeps
     # them only on the mixin class).
+    #
+    # .NET's AgentBase INHERITS SignalWire.SWML.Service (the SWMLService), so a
+    # method Python composes onto AgentBase via a mixin may live on either the
+    # AgentBase C# file OR the Service base. Pool both so web/tool/auth methods
+    # declared on Service still project (they satisfy AgentBase parity via
+    # inheritance). Projection removes them only from AgentBase's own list.
     ab_module = modules.get("signalwire.core.agent_base", {})
-    ab_methods = set(ab_module.get("classes", {}).get("AgentBase", []))
+    ab_own = set(ab_module.get("classes", {}).get("AgentBase", []))
+    svc_module = modules.get("signalwire.core.swml_service", {})
+    svc_methods = set(svc_module.get("classes", {}).get("SWMLService", []))
+    ab_methods = ab_own | svc_methods
     projected: set[str] = set()
     for (mod, cls), expected_methods in MIXIN_PROJECTIONS.items():
         present = [m for m in expected_methods if m in ab_methods]
         entry = modules.setdefault(mod, {"classes": {}, "functions": []})
-        entry["classes"][cls] = sorted(present)
+        # UNION with any already-enumerated real class surface: PromptManager /
+        # ToolRegistry are REAL C# classes (their own __init__ / methods must be
+        # preserved) that are ALSO projection targets — merge, never overwrite.
+        existing = set(entry["classes"].get(cls, []))
+        entry["classes"][cls] = sorted(existing | set(present))
         projected.update(present)
     if "signalwire.core.agent_base" in modules:
         ab_classes = modules["signalwire.core.agent_base"].get("classes", {})
@@ -956,6 +1371,64 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             ab_classes["AgentBase"] = sorted(
                 set(ab_classes["AgentBase"]) - projected
             )
+
+    # Now restrict SWMLService to its reference own-surface set (mixin pooling
+    # already consumed its full method list above).
+    if "signalwire.core.swml_service" in modules:
+        swml_classes = modules["signalwire.core.swml_service"]["classes"]
+        if "SWMLService" in swml_classes:
+            swml_classes["SWMLService"] = sorted(
+                set(swml_classes["SWMLService"]) & _SWML_SERVICE_ALLOW
+            )
+
+    # Relay Action mixin bases: split pause/resume/stop/volume off the concrete
+    # action classes onto the reference PausableAction / StoppableAction /
+    # VolumeAction bases (Python's inheritance idiom). Remove them from the
+    # concrete actions so the surface compares equal.
+    call_mod = modules.get("signalwire.relay.call")
+    if call_mod is not None:
+        call_classes = call_mod["classes"]
+        mixin_methods: set[str] = set()
+        for base, meths in RELAY_ACTION_MIXIN_BASES.items():
+            call_classes[base] = sorted(meths)
+            mixin_methods.update(meths)
+        for cls_name, cls_meths in list(call_classes.items()):
+            if cls_name in RELAY_ACTION_MIXIN_BASES:
+                continue
+            call_classes[cls_name] = sorted(set(cls_meths) - mixin_methods)
+
+    # REST base-class consolidation (item H): Python declares an abstract base
+    # hierarchy in signalwire.rest._base — BaseResource(__init__) ->
+    # ReadResource(get,list) -> CrudResource(create,delete,update), plus the
+    # method-less FabricResource / FabricResourcePUT PATCH/PUT marker bases. .NET
+    # folds read+base behavior into the single concrete CrudResource (its get /
+    # list / __init__ ARE present). Emit the reference base names in _base so the
+    # consolidated hierarchy compares equal — the capability is real on the C#
+    # CrudResource; only the base-class SPLIT is a language idiom.
+    base_mod = modules.setdefault("signalwire.rest._base", {"classes": {}, "functions": []})
+    base_mod["classes"].setdefault("BaseResource", ["__init__"])
+    base_mod["classes"].setdefault("ReadResource", ["get", "list"])
+    base_mod["classes"].setdefault("FabricResource", [])
+    base_mod["classes"].setdefault("FabricResourcePUT", [])
+
+    # Skill subclasses: drop the data-carrying property extras (name /
+    # description / …) and project the SkillBase-inherited methods each skill's
+    # reference records (real, callable via C# inheritance — see the tables).
+    for mod_name, entry in modules.items():
+        if not (mod_name.startswith("signalwire.skills.")
+                and mod_name.endswith(".skill")):
+            continue
+        for cls_name, meths in list(entry["classes"].items()):
+            kept = [m for m in meths if m not in _SKILL_PROPERTY_EXTRAS]
+            for inj in SKILL_INHERITED_PROJECTIONS.get(cls_name, []):
+                if inj in _SKILLBASE_INHERITABLE and inj not in kept:
+                    kept.append(inj)
+            entry["classes"][cls_name] = sorted(set(kept))
+
+    # Top-level ``signalwire`` module function names that are class re-exports
+    # (e.g. ``RestClient``) — the reference records these in functions[].
+    if TOPLEVEL_FUNCTION_NAMES:
+        merge_module_functions(modules, "signalwire", TOPLEVEL_FUNCTION_NAMES)
 
     # Sort module dict deterministically
     sorted_modules = {k: modules[k] for k in sorted(modules.keys())}

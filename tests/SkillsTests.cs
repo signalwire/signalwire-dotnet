@@ -44,11 +44,12 @@ public class SkillsTests : IDisposable
     // ==================================================================
 
     [Fact]
-    public void Registry_Lists18BuiltinSkills()
+    public void Registry_Lists17BuiltinSkills()
     {
+        // 17 built-ins: mcp_gateway was dropped (Python-only per §I.1 user ruling).
         var registry = SkillRegistry.Instance;
         var skills = registry.ListSkills();
-        Assert.Equal(18, skills.Count);
+        Assert.Equal(17, skills.Count);
     }
 
     [Fact]
@@ -58,7 +59,7 @@ public class SkillsTests : IDisposable
         {
             "api_ninjas_trivia", "claude_skills", "custom_skills", "datasphere",
             "datasphere_serverless", "datetime", "google_maps", "info_gatherer",
-            "joke", "math", "mcp_gateway", "native_vector_search",
+            "joke", "math", "native_vector_search",
             "play_background_file", "spider", "swml_transfer", "weather_api",
             "web_search", "wikipedia_search",
         };

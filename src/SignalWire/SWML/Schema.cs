@@ -183,6 +183,81 @@ public sealed class Schema
         return (errors.Count == 0, errors);
     }
 
+    // ------------------------------------------------------------------
+    // SchemaUtils parity: full-validation availability, property/required
+    // introspection, per-verb validation, and method-source generation.
+    // ------------------------------------------------------------------
+
+    /// <summary>True when full JSON-Schema validation is available (the
+    /// embedded schema loaded with verb definitions). (Python parity:
+    /// ``SchemaUtils.full_validation_available``.)</summary>
+    public bool FullValidationAvailable() => GetVerbNames().Count > 0;
+
+    /// <summary>Get the ``properties`` object for a verb (its parameter
+    /// definitions). (Python parity: ``get_verb_properties``.)</summary>
+    public Dictionary<string, JsonElement> GetVerbProperties(string verbName)
+        => GetVerbParameters(verbName);
+
+    /// <summary>Get the list of required property names for a verb.
+    /// (Python parity: ``get_verb_required_properties``.)</summary>
+    public IReadOnlyList<string> GetVerbRequiredProperties(string verbName)
+    {
+        var verb = GetVerb(verbName);
+        if (verb is null
+            || !verb.Definition.TryGetProperty("required", out var req)
+            || req.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+        return [.. req.EnumerateArray()
+            .Where(e => e.ValueKind == JsonValueKind.String)
+            .Select(e => e.GetString()!)];
+    }
+
+    /// <summary>Validate a single verb configuration against the schema.
+    /// Returns ``(true, [])`` when the verb is known (and, when full
+    /// validation is available, its config type-checks) else
+    /// ``(false, [errors...])``. (Python parity: ``validate_verb``.)</summary>
+    public (bool Valid, List<string> Errors) ValidateVerb(
+        string verbName, Dictionary<string, object?> verbConfig)
+    {
+        ArgumentNullException.ThrowIfNull(verbConfig);
+        var errors = new List<string>();
+        if (!IsValidVerb(verbName))
+        {
+            errors.Add($"unknown verb: {verbName}");
+            return (false, errors);
+        }
+        foreach (var required in GetVerbRequiredProperties(verbName))
+        {
+            if (!verbConfig.ContainsKey(required))
+            {
+                errors.Add($"verb '{verbName}' missing required property '{required}'");
+            }
+        }
+        return (errors.Count == 0, errors);
+    }
+
+    /// <summary>Generate a C#/pseudocode method signature for a verb (used by
+    /// codegen/tooling). (Python parity: ``generate_method_signature``.)</summary>
+    public string GenerateMethodSignature(string verbName)
+    {
+        var parameters = string.Join(", ",
+            GetVerbParameters(verbName).Keys.Select(k => $"object? {k} = null"));
+        return $"public void {verbName}({parameters})";
+    }
+
+    /// <summary>Generate a method-body stub that adds the verb to the document.
+    /// (Python parity: ``generate_method_body``.)</summary>
+    public string GenerateMethodBody(string verbName)
+    {
+        var keys = GetVerbParameters(verbName).Keys.ToList();
+        var assigns = string.Join("\n", keys.Select(
+            k => $"    if ({k} != null) config[\"{k}\"] = {k};"));
+        return $"var config = new Dictionary<string, object>();\n{assigns}\n"
+             + $"AddVerb(\"{verbName}\", config);";
+    }
+
     private void LoadSchema()
     {
         var assembly = Assembly.GetExecutingAssembly();

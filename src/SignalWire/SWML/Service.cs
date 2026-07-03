@@ -68,6 +68,7 @@ public class Service
     public string Route { get; }
     public string Host { get; }
     public int Port { get; }
+    [SuppressMessage("Naming", "CA1721", Justification = "get_document matches the cross-port SWMLService surface (distinct from the Document property).")]
     public Document Document { get; }
 
     public Service(ServiceOptions options)
@@ -243,6 +244,119 @@ public class Service
         Func<Dictionary<string, object?>?, Dictionary<string, string>, object> callback)
     {
         _routingCallbacks[path] = callback;
+    }
+
+    // ------------------------------------------------------------------
+    // Document manipulation (SWMLService parity)
+    // ------------------------------------------------------------------
+
+    private readonly VerbHandlerRegistry _verbHandlers = new();
+
+    /// <summary>Add a new section to the current document.</summary>
+    public bool AddSection(string sectionName)
+    {
+        Document.AddSection(sectionName);
+        return true;
+    }
+
+    /// <summary>Add a verb to the main section of the current document.</summary>
+    public bool AddVerb(string verbName, object config)
+    {
+        Document.AddVerb(verbName, config);
+        return true;
+    }
+
+    /// <summary>Add a verb to a named section of the current document.</summary>
+    public bool AddVerbToSection(string sectionName, string verbName, object config)
+    {
+        Document.AddVerbToSection(sectionName, verbName, config);
+        return true;
+    }
+
+    /// <summary>Reset the current document to an empty state.</summary>
+    public void ResetDocument() => Document.Reset();
+
+    /// <summary>Get the current SWML document as a dictionary.</summary>
+    public Dictionary<string, object> GetDocument() => Document.ToDict();
+
+    /// <summary>Render the current SWML document as a JSON string.</summary>
+    public string RenderDocument() => Document.Render();
+
+    /// <summary>Register a custom verb handler.</summary>
+    public void RegisterVerbHandler(SWMLVerbHandler handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        _verbHandlers.RegisterHandler(handler);
+    }
+
+    /// <summary>True when full JSON-Schema validation is available/enabled
+    /// (the embedded SWML schema loaded and has verb definitions).</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SWMLService surface; binding it to the instance is intentional.")]
+    public bool FullValidationEnabled() => Schema.Instance.FullValidationAvailable();
+
+    // ------------------------------------------------------------------
+    // Web-serving lifecycle (WebMixin / SWMLService parity)
+    // ------------------------------------------------------------------
+
+    private volatile bool _shutdownRequested;
+    private HttpListener? _runningListener;
+
+    /// <summary>Enable debug routes for testing/development. Debug routes are
+    /// always registered by the request handler, so this method exists only for
+    /// backward compatibility and method chaining (Python parity:
+    /// <c>enable_debug_routes</c> is likewise a no-op that returns self).</summary>
+    public virtual Service EnableDebugRoutes()
+    {
+        return this;
+    }
+
+    /// <summary>
+    /// Set up graceful-shutdown handling (SIGINT) — useful under Kubernetes so
+    /// in-flight requests drain before the process exits.
+    /// </summary>
+    public void SetupGracefulShutdown()
+    {
+        Console.CancelKeyPress += (_, args) =>
+        {
+            args.Cancel = true;
+            _shutdownRequested = true;
+        };
+    }
+
+    /// <summary>Manually set the proxy URL base for webhook callbacks
+    /// (SWMLService parity). Subclasses (AgentBase) may override with a
+    /// richer implementation; the base stores the override for
+    /// <see cref="GetProxyUrlBase"/> to prefer.</summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API / used as a config value.")]
+    public virtual Service ManualSetProxyUrl(string proxyUrl)
+    {
+        ArgumentNullException.ThrowIfNull(proxyUrl);
+        _manualProxyUrlBase = proxyUrl.TrimEnd('/');
+        return this;
+    }
+
+    private string? _manualProxyUrlBase;
+
+    /// <summary>The base-level manually-set proxy URL, if any.</summary>
+    [SuppressMessage("Usage", "CA1056", Justification = "URL is a wire string sent verbatim to the SignalWire API / used as a config value.")]
+    protected string? ManualProxyUrlBase => _manualProxyUrlBase;
+
+    /// <summary>Start a web server for this service (alias of <see cref="Run()"/>).</summary>
+    public void Serve() => Run();
+
+    /// <summary>Stop the running web server. Signals the accept loop to exit and
+    /// stops the active listener so the blocking <see cref="Run()"/> call returns.</summary>
+    public void Stop()
+    {
+        _shutdownRequested = true;
+        try
+        {
+            _runningListener?.Stop();
+        }
+        catch (ObjectDisposedException)
+        {
+            // already disposed — nothing to stop
+        }
     }
 
     // ------------------------------------------------------------------
@@ -997,61 +1111,73 @@ public class Service
             }
         }
 
+        // Publish the listener so Stop() can unblock the GetContext() loop, and
+        // clear any stale shutdown request from a prior run.
+        _shutdownRequested = false;
+        _runningListener = listener;
+
         // Stop the blocking GetContext() loop when the caller cancels.
         using var stopReg = cancellationToken.Register(() =>
         {
             try { listener.Stop(); } catch { /* best effort */ }
         });
 
-        while (listener.IsListening)
+        try
         {
-            HttpListenerContext ctx;
-            try { ctx = listener.GetContext(); }
-            catch (HttpListenerException) { break; }
-            catch (ObjectDisposedException) { break; }
-
-            try
+            while (listener.IsListening && !_shutdownRequested)
             {
-                var method = ctx.Request.HttpMethod;
-                var path = ctx.Request.Url?.AbsolutePath ?? "/";
-                var headers = new Dictionary<string, string>();
-                foreach (var key in ctx.Request.Headers.AllKeys)
-                {
-                    if (key is null) continue;
-                    headers[key] = ctx.Request.Headers[key] ?? "";
-                }
-                string body;
-                using (var reader = new System.IO.StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
-                {
-                    body = reader.ReadToEnd();
-                }
+                HttpListenerContext ctx;
+                try { ctx = listener.GetContext(); }
+                catch (HttpListenerException) { break; }
+                catch (ObjectDisposedException) { break; }
 
-                var (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
-                ctx.Response.StatusCode = status;
-                foreach (var (k, v) in responseHeaders)
-                {
-                    // HttpListener handles a few headers specially; ignore set-failures.
-                    try { ctx.Response.Headers[k] = v; } catch (ArgumentException) { }
-                }
-                var buf = Encoding.UTF8.GetBytes(responseBody);
-                ctx.Response.ContentLength64 = buf.Length;
-                ctx.Response.OutputStream.Write(buf, 0, buf.Length);
-            }
-            catch (Exception ex)
-            {
                 try
                 {
-                    ctx.Response.StatusCode = 500;
-                    var buf = Encoding.UTF8.GetBytes($"{{\"error\":\"{ex.GetType().Name}\"}}");
+                    var method = ctx.Request.HttpMethod;
+                    var path = ctx.Request.Url?.AbsolutePath ?? "/";
+                    var headers = new Dictionary<string, string>();
+                    foreach (var key in ctx.Request.Headers.AllKeys)
+                    {
+                        if (key is null) continue;
+                        headers[key] = ctx.Request.Headers[key] ?? "";
+                    }
+                    string body;
+                    using (var reader = new System.IO.StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
+                    {
+                        body = reader.ReadToEnd();
+                    }
+
+                    var (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
+                    ctx.Response.StatusCode = status;
+                    foreach (var (k, v) in responseHeaders)
+                    {
+                        // HttpListener handles a few headers specially; ignore set-failures.
+                        try { ctx.Response.Headers[k] = v; } catch (ArgumentException) { }
+                    }
+                    var buf = Encoding.UTF8.GetBytes(responseBody);
                     ctx.Response.ContentLength64 = buf.Length;
                     ctx.Response.OutputStream.Write(buf, 0, buf.Length);
                 }
-                catch { /* swallow — already in error path */ }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        ctx.Response.StatusCode = 500;
+                        var buf = Encoding.UTF8.GetBytes($"{{\"error\":\"{ex.GetType().Name}\"}}");
+                        ctx.Response.ContentLength64 = buf.Length;
+                        ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+                    }
+                    catch { /* swallow — already in error path */ }
+                }
+                finally
+                {
+                    try { ctx.Response.Close(); } catch { }
+                }
             }
-            finally
-            {
-                try { ctx.Response.Close(); } catch { }
-            }
+        }
+        finally
+        {
+            _runningListener = null;
         }
     }
 

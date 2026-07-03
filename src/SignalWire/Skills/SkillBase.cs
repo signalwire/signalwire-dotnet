@@ -130,7 +130,7 @@ public abstract class SkillBase
     /// Convenience wrapper that merges swaig_fields and delegates to
     /// <see cref="AgentBase.DefineTool"/>.
     /// </summary>
-    protected void DefineTool(
+    public void DefineTool(
         string name,
         string description,
         Dictionary<string, object> parameters,
@@ -149,6 +149,47 @@ public abstract class SkillBase
         }
         Agent.DefineTool(name, description, parameters, handler);
     }
+
+    /// <summary>
+    /// Read this skill instance's namespaced data from the ``global_data``
+    /// carried in a SWAIG handler's raw request data. (Python parity:
+    /// ``SkillBase.get_skill_data``.)
+    /// </summary>
+    public Dictionary<string, object> GetSkillData(Dictionary<string, object?> rawData)
+    {
+        ArgumentNullException.ThrowIfNull(rawData);
+        if (rawData.TryGetValue("global_data", out var gd)
+            && gd is Dictionary<string, object?> global
+            && global.TryGetValue(GetInstanceKey(), out var mine)
+            && mine is Dictionary<string, object> typed)
+        {
+            return typed;
+        }
+        return [];
+    }
+
+    /// <summary>
+    /// Write this skill instance's namespaced data into a FunctionResult's
+    /// global_data update. (Python parity: ``SkillBase.update_skill_data``.)
+    /// </summary>
+    public FunctionResult UpdateSkillData(FunctionResult result, Dictionary<string, object> data)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(data);
+        result.UpdateGlobalData(new Dictionary<string, object>
+        {
+            [GetInstanceKey()] = data,
+        });
+        return result;
+    }
+
+    /// <summary>
+    /// Check whether all packages this skill requires are available. The .NET
+    /// BCL provides the equivalents of the reference's optional Python packages,
+    /// so this returns true unless a subclass overrides it. (Python parity:
+    /// ``SkillBase.validate_packages``.)
+    /// </summary>
+    public virtual bool ValidatePackages() => true;
 
     /// <summary>Return the tool name override from params, or <paramref name="defaultName"/>.</summary>
     protected string GetToolName(string defaultName)

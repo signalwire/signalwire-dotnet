@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
@@ -16,6 +17,17 @@ public sealed class PlayBackgroundFileSkill : SkillBase
     }
 
     public override void RegisterTools(AgentBase agent)
+    {
+        foreach (var funcDef in GetTools())
+        {
+            Agent.RegisterSwaigFunction(funcDef);
+        }
+    }
+
+    /// <summary>Build and return the SWAIG tool definition(s) this skill
+    /// provides. (Python parity: ``get_tools``.)</summary>
+    [SuppressMessage("Design", "CA1002", Justification = "Cross-port surface returns the tool-definition list verbatim.")]
+    public List<Dictionary<string, object>> GetTools()
     {
         var toolName = GetToolName("play_background_file");
         var files = Params.TryGetValue("files", out var f) && f is List<Dictionary<string, object>> fl ? fl : [];
@@ -83,6 +95,6 @@ public sealed class PlayBackgroundFileSkill : SkillBase
             },
         };
 
-        Agent.RegisterSwaigFunction(funcDef);
+        return [funcDef];
     }
 }

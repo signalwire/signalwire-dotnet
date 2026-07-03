@@ -142,6 +142,93 @@ public sealed class WikipediaSearchSkill : SkillBase
             });
     }
 
+    /// <summary>
+    /// Search Wikipedia for <paramref name="query"/> and return the matching
+    /// article summary/summaries as a formatted string. Mirrors the Python
+    /// reference ``WikipediaSearchSkill.search_wiki``.
+    /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort Wikipedia API call; any failure is surfaced to the caller as an in-band error string.")]
+    public string SearchWiki(string query)
+    {
+        query = (query ?? "").Trim();
+        if (query.Length == 0)
+        {
+            return "Please provide a search query for Wikipedia.";
+        }
+
+        var numResults = Params.TryGetValue("num_results", out var nr)
+            ? Math.Max(1, Math.Min(5, Convert.ToInt32(nr, CultureInfo.InvariantCulture)))
+            : 1;
+        var noResultsMessage = Params.TryGetValue("no_results_message", out var nm)
+            ? nm as string ?? "I couldn't find any Wikipedia articles for '{query}'."
+            : "I couldn't find any Wikipedia articles for '{query}'.";
+        var baseUrl = HttpHelper.ApplyBaseUrlOverride(Endpoint, BaseUrlEnv);
+
+        try
+        {
+            var searchParams = new Dictionary<string, string>
+            {
+                ["action"] = "query",
+                ["list"] = "search",
+                ["format"] = "json",
+                ["srsearch"] = query,
+                ["srlimit"] = numResults.ToString(CultureInfo.InvariantCulture),
+            };
+            var (sStatus, _, sParsed) = HttpHelper.GetAsync(baseUrl, searchParams)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+            if (sStatus < 200 || sStatus >= 300 || sParsed is null
+                || sParsed.Value.ValueKind != JsonValueKind.Object
+                || !sParsed.Value.TryGetProperty("query", out var qNode)
+                || qNode.ValueKind != JsonValueKind.Object
+                || !qNode.TryGetProperty("search", out var searchArr)
+                || searchArr.ValueKind != JsonValueKind.Array
+                || searchArr.GetArrayLength() == 0)
+            {
+                return FormatNoResults(noResultsMessage, query);
+            }
+
+            var articles = new List<string>();
+            int taken = 0;
+            foreach (var hit in searchArr.EnumerateArray())
+            {
+                if (taken >= numResults) break;
+                if (hit.ValueKind != JsonValueKind.Object) continue;
+                var title = hit.TryGetProperty("title", out var t) && t.ValueKind == JsonValueKind.String
+                    ? t.GetString() ?? "" : "";
+                if (title.Length == 0) continue;
+                taken++;
+
+                var extractParams = new Dictionary<string, string>
+                {
+                    ["action"] = "query",
+                    ["prop"] = "extracts",
+                    ["exintro"] = "1",
+                    ["explaintext"] = "1",
+                    ["format"] = "json",
+                    ["titles"] = title,
+                };
+                var (eStatus, _, eParsed) = HttpHelper.GetAsync(baseUrl, extractParams)
+                    .ConfigureAwait(false).GetAwaiter().GetResult();
+                if (eStatus < 200 || eStatus >= 300 || eParsed is null
+                    || eParsed.Value.ValueKind != JsonValueKind.Object) continue;
+
+                var extract = ExtractFirstPageText(eParsed.Value);
+                articles.Add(string.IsNullOrEmpty(extract)
+                    ? $"**{title}**\n\nNo summary available for this article."
+                    : $"**{title}**\n\n{extract}");
+            }
+
+            if (articles.Count == 0) return FormatNoResults(noResultsMessage, query);
+            if (articles.Count == 1) return articles[0];
+            var sep = "\n\n" + new string('=', 50) + "\n\n";
+            return string.Join(sep, articles);
+        }
+        catch (Exception ex)
+        {
+            return "Error accessing Wikipedia: " + ex.Message;
+        }
+    }
+
     private static string ExtractFirstPageText(JsonElement root)
     {
         if (!root.TryGetProperty("query", out var q) || q.ValueKind != JsonValueKind.Object) return "";

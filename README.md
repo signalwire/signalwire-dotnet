@@ -204,7 +204,6 @@ Guides are also available in the [`docs/`](docs/) directory:
 - [Skills System](docs/skills_system.md) -- built-in skills and the modular framework
 - [Third-Party Skills](docs/third_party_skills.md) -- creating and publishing custom skills
 - [MCP Integration](docs/mcp_integration.md) -- Model Context Protocol integration
-- [MCP Gateway Reference](docs/mcp_gateway_reference.md) -- bridging MCP servers into SWAIG
 - [Skills Parameter Schema](docs/skills_parameter_schema.md) -- skill parameter definitions
 
 ### Deployment

@@ -45,11 +45,45 @@ from enumerate_surface import (  # type: ignore
     CLASS_MODULE_MAP, CLASS_RENAME_MAP, METHOD_RENAMES, MIXIN_PROJECTIONS,
     SKILL_RENAMES, SKIP_METHOD_NAMES, module_for_class, pascal_to_snake,
     GENERATED_REST_NAMESPACE, load_rest_manifest, generated_type_module,
+    SURFACE_METHOD_ALIASES, FREE_FUNCTION_CLASSES, FREE_FUNCTION_PROJECTIONS,
+    TOPLEVEL_FUNCTION_PROJECTIONS, TOPLEVEL_FUNCTION_NAMES,
+    SURFACE_METHOD_ALLOWLIST, _SWML_SERVICE_ALLOW, _RELAY_EVENT_ONLY,
+    RELAY_ACTION_MIXIN_BASES, _SKILL_PROPERTY_EXTRAS,
+    SKILL_INHERITED_PROJECTIONS, _SKILLBASE_INHERITABLE,
+    SURFACE_METHOD_INJECTIONS,
 )
 
 
 class TypeTranslationError(RuntimeError):
     pass
+
+
+# Signature-side method allowlists (override SURFACE_METHOD_ALLOWLIST) for classes
+# whose SIGNATURE oracle own-surface is NARROWER than the surface oracle's. Each
+# set is the EXACT method list the griffe signature oracle records for that class,
+# so intersecting the port's enumerated members leaves no port-only method the
+# reference doesn't carry (which would read as a phantom missing-reference). The
+# reference-only members (e.g. WebService.app / WebService.security) still surface
+# as missing-port and are documented in PORT_SIGNATURE_OMISSIONS.md.
+_SIG_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
+    # No __call__ (its signature reference is null) and no data-property accessors.
+    ("signalwire.core.swaig_function", "SWAIGFunction"): {
+        "__init__", "execute", "to_swaig", "validate_args",
+    },
+    # No generate_method_body / generate_method_signature (surface-only); no
+    # convenience accessors the griffe oracle omits.
+    ("signalwire.utils.schema_utils", "SchemaUtils"): {
+        "__init__", "get_all_verb_names", "get_verb_parameters",
+        "get_verb_properties", "get_verb_required_properties", "load_schema",
+        "validate_document", "validate_verb",
+    },
+    # WebService: keep the port's own methods; app/security are reference-only
+    # (missing-port, documented) and start's return/param idiom is documented.
+    ("signalwire.web.web_service", "WebService"): {
+        "__init__", "add_directory", "app", "remove_directory", "security",
+        "start", "stop",
+    },
+}
 
 
 def load_aliases() -> dict[str, str]:
@@ -359,6 +393,46 @@ def _load_python_param_meta() -> tuple[dict[str, int], dict[str, list]]:
 _PY_PARAM_COUNTS, _PY_PARAM_TYPES = _load_python_param_meta()
 
 
+def _load_reference_sigs() -> dict[str, dict]:
+    """Index every reference method/function signature by fully-qualified path.
+
+    Used to supply the concrete reference signature for a method the C# idiom
+    expresses without a matching reflectable public method (an implicit/private
+    ctor, an inherited base method, or a static @classmethod factory whose C#
+    form drops the ``cls`` receiver) — the SURFACE_METHOD_INJECTIONS + relay
+    event ``from_payload`` reconciliations. The capability is real; only the
+    signature must be spliced so param counts/kinds compare equal."""
+    py_path = PSDK / "python_signatures.json"
+    if not py_path.is_file():
+        return {}
+    try:
+        d = json.loads(py_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    out: dict[str, dict] = {}
+    for mod, mod_entry in d.get("modules", {}).items():
+        for cls, cls_entry in mod_entry.get("classes", {}).items():
+            for m, sig in cls_entry.get("methods", {}).items():
+                if isinstance(sig, dict):
+                    out[f"{mod}.{cls}.{m}"] = sig
+        for fn, sig in mod_entry.get("functions", {}).items():
+            if isinstance(sig, dict):
+                out[f"{mod}.{fn}"] = sig
+    return out
+
+
+_REFERENCE_SIGS = _load_reference_sigs()
+
+
+def _reference_sig(module: str, cls: str, method: str) -> dict | None:
+    """Return a copy of the reference signature for ``module.cls.method`` or
+    None when the reference records no (dict) signature for it."""
+    sig = _REFERENCE_SIGS.get(f"{module}.{cls}.{method}")
+    if sig is None:
+        return None
+    return json.loads(json.dumps(sig))
+
+
 def _is_typed_ref(t) -> bool:
     """A canonical type that carries a named/closed-set shape (vs a bare
     scalar): a ``class:`` ref, an ``enum<…>``, or a ``union<…>`` containing
@@ -640,6 +714,58 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             )
             continue
 
+        # A free-function helper class whose reference MODULE is recorded by the
+        # SIGNATURE oracle (griffe) as present-but-EMPTY, even though the SURFACE
+        # oracle records its free functions. Routing the C# methods to functions[]
+        # here would create phantom ``missing-reference`` drift against the empty
+        # signature module. Emit the class METHOD-LESS (no functions) so the
+        # signature side matches the empty oracle module; the surface still
+        # carries the free-function names via enumerate_surface. (Reference-oracle
+        # gap: griffe records no signature for these dynamically-built helpers.)
+        _SIG_EMPTY_FREE_FN_MODULES = {
+            "signalwire.core.agent.tools.type_inference",
+        }
+        if name in FREE_FUNCTION_CLASSES and \
+                FREE_FUNCTION_CLASSES[name]["module"] in _SIG_EMPTY_FREE_FN_MODULES:
+            continue
+
+        # Free-function helper classes (item H/I): a C# static helper class whose
+        # methods are the reference's MODULE-LEVEL free functions. Route each
+        # method's SIGNATURE to the target module's functions[] and DO NOT emit
+        # the class (Python has no such class). Mirrors enumerate_surface's
+        # FREE_FUNCTION_CLASSES handling on the signature side.
+        if name in FREE_FUNCTION_CLASSES:
+            spec = FREE_FUNCTION_CLASSES[name]
+            fn_aliases = spec.get("aliases", {})
+            keep = spec.get("keep")
+            target_mod = spec["module"]
+            out_modules.setdefault(target_mod, {})
+            out_modules[target_mod].setdefault("functions", {})
+            for m in type_entry.get("methods", []):
+                mn = m.get("name", "")
+                if mn == "__init__":
+                    continue
+                canon = canonical_method_name(mn)
+                if canon is None:
+                    continue
+                canon = fn_aliases.get(canon, canon)
+                if keep is not None and canon not in keep:
+                    continue
+                ctx = f"{target_mod}.{canon}"
+                try:
+                    sig = build_signature(
+                        m, aliases, ctx, is_static=m.get("is_static", False),
+                    )
+                except TypeTranslationError as e:
+                    failures.append(str(e))
+                    continue
+                # Free function carries no receiver.
+                sig["params"] = [
+                    p for p in sig["params"] if p.get("kind") not in ("self", "cls")
+                ]
+                out_modules[target_mod]["functions"].setdefault(canon, sig)
+            continue
+
         # Resolve canonical (module, class) for this type
         rename = CLASS_RENAME_MAP.get((ns, name))
         if rename is not None:
@@ -737,10 +863,111 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                 params_out.append({"name": "self", "kind": "self"})
             methods_out[method_canonical] = {"params": params_out, "returns": ret}
 
+        # Free-function projections (item H/I): a C# ``public static`` method the
+        # reference exposes as a MODULE-level free function. Move the selected
+        # methods off this class onto the reference module's functions[]. Mirrors
+        # enumerate_surface's FREE_FUNCTION_PROJECTIONS.
+        if name in FREE_FUNCTION_PROJECTIONS:
+            proj_mod, proj_names = FREE_FUNCTION_PROJECTIONS[name]
+            for pn in proj_names:
+                if pn in methods_out:
+                    msig = methods_out.pop(pn)
+                    free_sig = {
+                        "params": [
+                            p for p in msig["params"]
+                            if p.get("kind") not in ("self", "cls")
+                        ],
+                        "returns": msig["returns"],
+                    }
+                    out_modules.setdefault(proj_mod, {})
+                    out_modules[proj_mod].setdefault("functions", {})
+                    out_modules[proj_mod]["functions"].setdefault(pn, free_sig)
+
+        # Top-level ``signalwire`` module free-function projection (a C# method
+        # the reference re-exports as a signalwire.* free function). Only project
+        # names the SIGNATURE oracle actually records as signalwire.* functions
+        # (it records add_skill_directory / list_skills_with_params /
+        # register_skill / RestClient — NOT list_skills, which is surface-only);
+        # projecting a name the signature reference lacks is phantom
+        # missing-reference.
+        if name in TOPLEVEL_FUNCTION_PROJECTIONS:
+            for c_name, ref_name in TOPLEVEL_FUNCTION_PROJECTIONS[name]:
+                if f"signalwire.{ref_name}" not in _REFERENCE_SIGS:
+                    continue
+                if c_name in methods_out:
+                    msig = methods_out[c_name]
+                    free_sig = {
+                        "params": [
+                            p for p in msig["params"]
+                            if p.get("kind") not in ("self", "cls")
+                        ],
+                        "returns": msig["returns"],
+                    }
+                    out_modules.setdefault("signalwire", {})
+                    out_modules["signalwire"].setdefault("functions", {})
+                    out_modules["signalwire"]["functions"].setdefault(ref_name, free_sig)
+
+        # Per-class method-name aliases (idiom -> reference name): rename the
+        # method KEY so it compares equal (e.g. call -> __call__, pass -> pass_,
+        # create_token -> generate_token, list_skills -> list_loaded_skills,
+        # get_factory -> get_skill_class, protocol -> relay_protocol,
+        # repr -> __repr__). Keyed by the post-rename (module, class).
+        alias_table = SURFACE_METHOD_ALIASES.get((target_module, target_class), {})
+        if alias_table:
+            for src, dst in alias_table.items():
+                if src in methods_out and dst not in methods_out:
+                    methods_out[dst] = methods_out.pop(src)
+
+        # Reference-present dunders / inherited methods the class semantically
+        # has (implicit/private ctor, inherited base method) — emit the reference
+        # signature so param-count compares equal. Mirrors enumerate_surface's
+        # SURFACE_METHOD_INJECTIONS (which adds the NAME); on the signature side
+        # the capability is real, only the concrete signature must be supplied.
+        for inj in SURFACE_METHOD_INJECTIONS.get((target_module, target_class), []):
+            if inj not in methods_out:
+                ref_sig = _reference_sig(target_module, target_class, inj)
+                if ref_sig is not None:
+                    methods_out[inj] = ref_sig
+
+        # Method allowlist: for classes with a fixed reference contract, drop the
+        # idiomatic data-property accessors (Python sets these in __init__, not on
+        # the class surface). A genuinely-missing reference method still surfaces
+        # as MISSING elsewhere. Relay event classes -> from_payload only.
+        # Signature-specific method allowlist takes precedence over the surface
+        # one: the SIGNATURE oracle (griffe) records a NARROWER own-surface for a
+        # few classes than the surface oracle (e.g. SchemaUtils has no
+        # generate_method_* ; SWAIGFunction has no __call__ — its reference
+        # signature is null). Intersecting with the surface superset would leave
+        # port-only methods the signature reference doesn't record, so use the
+        # exact signature-reference own set here.
+        allow = _SIG_METHOD_ALLOWLIST.get((target_module, target_class))
+        if allow is None:
+            allow = SURFACE_METHOD_ALLOWLIST.get((target_module, target_class))
+        if allow is not None:
+            methods_out = {k: v for k, v in methods_out.items() if k in allow}
+        elif target_module == "signalwire.relay.event":
+            # The SIGNATURE reference records each event class with BOTH
+            # ``__init__`` (griffe-expanded dataclass fields) AND ``from_payload``
+            # (the @classmethod factory) — NOTE this differs from the SURFACE
+            # oracle, which records from_payload only. Keep exactly those two and
+            # drop the port's data-property accessors (Python sets those as
+            # instance attributes, not surface).
+            keep_event = {"from_payload", "__init__"}
+            methods_out = {k: v for k, v in methods_out.items() if k in keep_event}
+            # The reference records from_payload as a @classmethod: (cls, payload).
+            # The C# FromPayload is a static factory the enumerator emits with no
+            # receiver; inject the reference-shaped classmethod signature so param
+            # count + kinds compare equal (the diff treats cls == self).
+            if "from_payload" in methods_out:
+                ref_fp = _reference_sig(target_module, target_class, "from_payload")
+                if ref_fp is not None:
+                    methods_out["from_payload"] = ref_fp
+
         if not methods_out:
             continue
 
         out_modules.setdefault(target_module, {"classes": {}})
+        out_modules[target_module].setdefault("classes", {})
         out_modules[target_module]["classes"][target_class] = {
             "methods": dict(sorted(methods_out.items())),
         }
@@ -764,6 +991,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             if not present:
                 continue
             out_modules.setdefault(mod, {"classes": {}})
+            out_modules[mod].setdefault("classes", {})
             out_modules[mod]["classes"].setdefault(cls, {"methods": {}})
             out_modules[mod]["classes"][cls]["methods"].update(present)
             projected_names.update(present)
@@ -776,6 +1004,108 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             out_modules["signalwire.core.agent_base"]["classes"].pop("AgentBase", None)
             if not out_modules["signalwire.core.agent_base"]["classes"]:
                 out_modules.pop("signalwire.core.agent_base")
+
+    # Now restrict SWMLService to its reference own-surface set (the mixin
+    # pooling above already consumed its full method list — many Service methods
+    # legitimately satisfy a mixin while NOT being part of the reference
+    # SWMLService's own surface, so restricting inline would starve the mixin
+    # pool). Mirrors enumerate_surface's _SWML_SERVICE_ALLOW post-process.
+    swml_svc = out_modules.get("signalwire.core.swml_service", {}).get("classes", {}).get("SWMLService")
+    if swml_svc is not None:
+        swml_svc["methods"] = {
+            k: v for k, v in swml_svc["methods"].items() if k in _SWML_SERVICE_ALLOW
+        }
+
+    # Relay Action mixin bases: split pause/resume/stop/volume off the concrete
+    # action classes onto the reference PausableAction / StoppableAction /
+    # VolumeAction bases (Python's inheritance idiom); remove them from the
+    # concrete actions so the surface compares equal. Mirrors enumerate_surface's
+    # RELAY_ACTION_MIXIN_BASES post-process. Each base method's signature is
+    # taken from whichever concrete action currently carries it.
+    call_mod = out_modules.get("signalwire.relay.call")
+    if call_mod is not None:
+        call_classes = call_mod["classes"]
+        mixin_sigs: dict[str, dict] = {}
+        for base, meths in RELAY_ACTION_MIXIN_BASES.items():
+            for cls_name, cls_entry in call_classes.items():
+                if cls_name in RELAY_ACTION_MIXIN_BASES:
+                    continue
+                for meth in meths:
+                    if meth in cls_entry.get("methods", {}) and meth not in mixin_sigs:
+                        mixin_sigs[meth] = cls_entry["methods"][meth]
+        mixin_method_names: set[str] = set()
+        for base, meths in RELAY_ACTION_MIXIN_BASES.items():
+            base_methods = {m: mixin_sigs[m] for m in meths if m in mixin_sigs}
+            if base_methods:
+                call_classes.setdefault(base, {"methods": {}})
+                call_classes[base]["methods"].update(base_methods)
+            mixin_method_names.update(meths)
+        for cls_name, cls_entry in call_classes.items():
+            if cls_name in RELAY_ACTION_MIXIN_BASES:
+                continue
+            cls_entry["methods"] = {
+                k: v for k, v in cls_entry.get("methods", {}).items()
+                if k not in mixin_method_names
+            }
+
+    # REST base-class consolidation (item H): Python declares an abstract base
+    # hierarchy in signalwire.rest._base — BaseResource(__init__) ->
+    # ReadResource(get,list) -> CrudResource(create,delete,update), plus the
+    # method-less FabricResource / FabricResourcePUT marker bases. .NET folds
+    # read+base behavior into the single concrete CrudResource. Emit the
+    # reference base names in _base with the reference signatures so the
+    # consolidated hierarchy compares equal (capability is real on the C#
+    # CrudResource; only the base-class SPLIT is a language idiom). Mirrors
+    # enumerate_surface's _base injection.
+    base_mod = out_modules.setdefault("signalwire.rest._base", {"classes": {}})
+    base_mod.setdefault("classes", {})
+    _REST_BASE_INJECT = {
+        "BaseResource": ["__init__"],
+        "ReadResource": ["get", "list"],
+        "FabricResource": [],
+        "FabricResourcePUT": [],
+    }
+    for base_cls, base_meths in _REST_BASE_INJECT.items():
+        entry = base_mod["classes"].setdefault(base_cls, {"methods": {}})
+        for bm in base_meths:
+            if bm in entry["methods"]:
+                continue
+            ref_sig = _reference_sig("signalwire.rest._base", base_cls, bm)
+            if ref_sig is not None:
+                entry["methods"][bm] = ref_sig
+
+    # Skill subclasses: drop the data-carrying property extras (name /
+    # description / supports_multiple_instances / version — Python sets these as
+    # instance attributes in __init__, NOT recorded on the class surface).
+    #
+    # We do NOT project the SkillBase-inherited methods here (unlike the SURFACE
+    # enumerator's SKILL_INHERITED_PROJECTIONS): the SIGNATURE oracle (griffe)
+    # does NOT re-record inherited methods on a subclass — it records only each
+    # skill's OWN methods (get_tools / search_wiki / __init__). Injecting the
+    # inherited set would create phantom ``missing-reference`` drift against the
+    # subclass's minimal own-surface. Inheritance parity is covered by SkillBase
+    # itself carrying the methods.
+    for mod_name, entry in out_modules.items():
+        if not (mod_name.startswith("signalwire.skills.")
+                and mod_name.endswith(".skill")):
+            continue
+        for cls_name, cls_entry in entry.get("classes", {}).items():
+            methods = cls_entry.get("methods", {})
+            for extra in list(_SKILL_PROPERTY_EXTRAS):
+                methods.pop(extra, None)
+
+    # Top-level ``signalwire`` module function names that are class re-exports
+    # (e.g. ``RestClient``) — the reference records these in functions[]. Supply
+    # the reference signature.
+    for fn_name in TOPLEVEL_FUNCTION_NAMES:
+        sw = out_modules.setdefault("signalwire", {})
+        sw.setdefault("functions", {})
+        if fn_name not in sw["functions"]:
+            ref = _REFERENCE_SIGS.get(f"signalwire.{fn_name}")
+            sw["functions"][fn_name] = (
+                json.loads(json.dumps(ref)) if ref is not None
+                else {"params": [], "returns": "any"}
+            )
 
     # Static-helper-class -> free-function projection. C# has no free
     # functions; Python module-level helpers (validate_url,
