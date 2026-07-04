@@ -29,9 +29,6 @@ namespace SignalWire.Tests.Tls;
 /// </summary>
 public class TlsRelayWssTest
 {
-    private const int WsPort = 18785;
-    private const int HttpPort = 19785;
-
     [Fact]
     public async Task RelayClient_Wss_ConnectsAndAuthenticates()
     {
@@ -40,7 +37,11 @@ public class TlsRelayWssTest
             return; // porting-sdk tls harness not adjacent — skip cleanly.
         }
 
-        using var mock = TlsHarness.StartTlsMockRelay(WsPort, HttpPort);
+        // Pick two independent free ports (never hardcoded — RELAY needs WS + HTTP).
+        var wsPort = TlsHarness.FreeTcpPort();
+        var httpPort = TlsHarness.FreeTcpPort();
+
+        using var mock = TlsHarness.StartTlsMockRelay(wsPort, httpPort);
         Assert.True(mock is not null,
             "mock_relay --tls did not become ready (is python3 + porting-sdk available?)");
 
@@ -91,7 +92,7 @@ public class TlsRelayWssTest
         var ex = await Assert.ThrowsAnyAsync<Exception>(async () =>
         {
             await untrusted.ConnectAsync(
-                new Uri($"wss://127.0.0.1:{WsPort}/api/relay/ws"),
+                new Uri($"wss://127.0.0.1:{wsPort}/api/relay/ws"),
                 CancellationToken.None);
         });
         Assert.True(

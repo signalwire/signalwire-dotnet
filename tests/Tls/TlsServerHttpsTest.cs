@@ -46,7 +46,7 @@ public class TlsServerHttpsTest
         var certPath = TlsHarness.ServerCertPath()!;
         var keyPath = TlsHarness.ServerKeyPath()!;
 
-        var port = FreeTcpPort();
+        var port = TlsHarness.FreeTcpPort();
 
         // Mirror Python's SWML_SSL_* env contract. Saved/restored so the env-
         // driven mock spawners in the other TLS tests are unaffected.
@@ -160,14 +160,5 @@ public class TlsServerHttpsTest
             ServerCertificateCustomValidationCallback = validate,
         };
         return new System.Net.Http.HttpClient(handler) { Timeout = TimeSpan.FromSeconds(6) };
-    }
-
-    private static int FreeTcpPort()
-    {
-        var l = new TcpListener(IPAddress.Loopback, 0);
-        l.Start();
-        var port = ((IPEndPoint)l.LocalEndpoint).Port;
-        l.Stop();
-        return port;
     }
 }

@@ -29,8 +29,6 @@ namespace SignalWire.Tests.Tls;
 /// </summary>
 public class TlsRestHttpsTest
 {
-    private const int Port = 18784;
-
     [Fact]
     public async Task RestClient_Https_RealResponse()
     {
@@ -39,10 +37,13 @@ public class TlsRestHttpsTest
             return; // porting-sdk tls harness not adjacent — skip cleanly.
         }
 
+        // Pick a free port (never a hardcoded one — avoids leftover/concurrent collision).
+        var port = TlsHarness.FreeTcpPort();
+
         var validator = TlsHarness.Validator();
         using var trustingHttp = BuildHttp(validator.Validate);
 
-        using var mock = TlsHarness.StartTlsMockSignalwire(Port, trustingHttp);
+        using var mock = TlsHarness.StartTlsMockSignalwire(port, trustingHttp);
         Assert.True(mock is not null,
             "mock_signalwire --tls did not become ready (~15s cold start; is python3 + porting-sdk available?)");
 

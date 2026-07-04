@@ -42,8 +42,8 @@ public class RelayTests : IDisposable
     [Fact]
     public void Constants_CallTerminalStates()
     {
-        Assert.Contains("ended", Constants.CallTerminalStates);
-        Assert.DoesNotContain("ringing", Constants.CallTerminalStates);
+        Assert.Contains("ended", (IEnumerable<string>)Constants.CallTerminalStates);
+        Assert.DoesNotContain("ringing", (IEnumerable<string>)Constants.CallTerminalStates);
     }
 
     [Fact]
@@ -57,22 +57,22 @@ public class RelayTests : IDisposable
     [Fact]
     public void Constants_MessageTerminalStates()
     {
-        Assert.Contains("delivered", Constants.MessageTerminalStates);
-        Assert.Contains("undelivered", Constants.MessageTerminalStates);
-        Assert.Contains("failed", Constants.MessageTerminalStates);
-        Assert.DoesNotContain("queued", Constants.MessageTerminalStates);
+        Assert.Contains("delivered", (IEnumerable<string>)Constants.MessageTerminalStates);
+        Assert.Contains("undelivered", (IEnumerable<string>)Constants.MessageTerminalStates);
+        Assert.Contains("failed", (IEnumerable<string>)Constants.MessageTerminalStates);
+        Assert.DoesNotContain("queued", (IEnumerable<string>)Constants.MessageTerminalStates);
     }
 
     [Fact]
     public void Constants_ActionTerminalStates()
     {
         Assert.True(Constants.ActionTerminalStates.ContainsKey("calling.call.play"));
-        Assert.Contains("finished", Constants.ActionTerminalStates["calling.call.play"]);
-        Assert.Contains("error", Constants.ActionTerminalStates["calling.call.play"]);
+        Assert.Contains("finished", (IEnumerable<string>)Constants.ActionTerminalStates["calling.call.play"]);
+        Assert.Contains("error", (IEnumerable<string>)Constants.ActionTerminalStates["calling.call.play"]);
 
         Assert.True(Constants.ActionTerminalStates.ContainsKey("calling.call.collect"));
-        Assert.Contains("no_input", Constants.ActionTerminalStates["calling.call.collect"]);
-        Assert.Contains("no_match", Constants.ActionTerminalStates["calling.call.collect"]);
+        Assert.Contains("no_input", (IEnumerable<string>)Constants.ActionTerminalStates["calling.call.collect"]);
+        Assert.Contains("no_match", (IEnumerable<string>)Constants.ActionTerminalStates["calling.call.collect"]);
     }
 
     // ==================================================================
