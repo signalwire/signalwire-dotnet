@@ -4,58 +4,38 @@
 # Same script invoked locally (`bash scripts/run-ci.sh`) AND by the
 # GitHub Actions workflow. No drift between local and CI behavior.
 #
-# Gates (in order, fail-fast):
-#   1. dotnet test (via docker SDK image)  — language test runner
-#   2. signature regen                     — python adapter + dotnet build
-#   3. drift gate                          — porting-sdk diff_port_signatures.py
-#   4. surface-fresh gate                  — porting-sdk check_surface_freshness.py
-#                                            (regenerates port_surface.json in
-#                                            place via enumerate_surface.py and
-#                                            fails if the committed copy is stale
-#                                            modulo the generated_from git-sha;
-#                                            closes the Layer-B-not-gated hole —
-#                                            DRIFT gates Layer A signatures only,
-#                                            so port_surface.json could silently
-#                                            rot)
-#   5. no-cheat gate                       — porting-sdk audit_no_cheat_tests.py
-#   6. emission gate                       — porting-sdk diff_port_emission.py
-#                                            (byte-compares tools/EmitCorpus's
-#                                            FunctionResult.ToDict() output vs
-#                                            Python's to_dict() over the shared
-#                                            81-entry corpus; no mocks / network,
-#                                            pure serialisation)
-#
-# `dotnet` is not on host PATH. We use `docker run` with the official SDK
-# image (mcr.microsoft.com/dotnet/sdk:10.0). The same pattern is used in
-# scripts/enumerate_signatures.py for SignatureDump.
+# `dotnet` is not on host PATH in CI. We use `docker run` with the official SDK
+# image (mcr.microsoft.com/dotnet/sdk:10.0) where dotnet is absent locally.
 #
 # FMT / LINT / TEST are the three CANONICAL wrapper scripts (they self-bootstrap
 # the toolchain via scripts/_env.sh and run from ANY CWD — RUN_LINT_FORMAT_SPEC):
 #   FMT  -> scripts/run-format.sh  (dotnet format; --check in CI)
 #   LINT -> scripts/run-lint.sh    (dotnet build, AnalysisMode=All, warn-as-error)
 #   TEST -> scripts/run-tests.sh   (dotnet test PER-TFM: net8/9/10 serialized)
-# The gate bodies below delegate to these scripts; nothing invokes the raw tool
-# directly anymore.
 #
-# Mock-server lifecycle: The RestMock + RelayMock tests need
-# `mock_signalwire` (port 8784) and `mock_relay` (ws=8785, http=9785) to
-# be reachable from the container via `--network host`. The .NET SDK
-# image does NOT have python3 installed, so the in-test fallback that
-# spawns `python -m mock_signalwire` cannot run inside the container —
-# we MUST start the mocks on the host before the docker invocation.
-# This script does that automatically (with a cleanup trap). If the
-# host already has a mock listening on the slot, we leave it alone.
+# GATE SCHEDULING (porting-sdk/scripts/gate_scheduler.sh — CI_PERF S1 + S2):
+#   Gates run CONCURRENTLY up to a cap (SW_CI_JOBS, default nproc), scheduled by
+#   their DATA dependencies:
+#     * S2 concurrent wave: the pure-Python side-effect-free gates (GEN-FRESH*,
+#       DRIFT, NO-CHEAT, EMISSION, SKILL-CONTRACT, SWAIG-COVERAGE, SURFACE-DIFF,
+#       DOC-AUDIT, SWAIG-CLI) overlap — they share no mutable state.
+#     * S1 fail-fast: heavy gates (TEST, LINT, FMT, REST-COVERAGE, SPEC-PARITY) are
+#       deferred behind the cheap wave, so a trivial cheap-gate failure surfaces in
+#       seconds; --fail-fast aborts the run before the docker-based TEST starts.
+#   HARD ordering is data-dependency ONLY:
+#     * DRIFT reads port_signatures.json that SIGNATURES writes → deps=SIGNATURES.
+#     * SURFACE-FRESH regenerates port_surface.json in place (and restores it);
+#       DOC-AUDIT + SURFACE-DIFF read it → all three share res=surface.
+#   The host mock-server lifecycle (mock_signalwire + mock_relay, for the docker
+#   TEST gate reached via --network host) is stood up BEFORE scheduling and torn
+#   down in an EXIT trap, exactly as before.
+#   Per-gate PASS/FAIL + the FAILED_GATES tally preserved exactly; each gate's output
+#   captured + replayed atomically.
 #
-# Multi-target serialization: SignalWire.Tests targets net8.0+net9.0+net10.0.
-# By default `dotnet test` runs all three target frameworks in PARALLEL,
-# and they all hit the SAME shared mock server (port 8784/8785). Tests are
-# now session-isolated WITHIN a framework run (RELAY scopes the journal +
-# scenarios by the handshake `sessionid`; REST scopes by a per-test random
-# project's Authorization header), so in-framework parallelism is enabled
-# (see tests/AssemblyInfo.cs + tests/xunit.runner.json). ACROSS frameworks
-# we still run SEQUENTIALLY: that isolation key is per-client, not
-# per-framework, so two framework runs would still share the one mock's
-# scenario buckets and connection set — a separate mock-lifecycle concern.
+# Multi-target serialization for TEST (net8→net9→net10) is owned by run-tests.sh.
+#
+# Flags:
+#   --fail-fast   stop launching new gates at the first failure (local dev loop).
 
 set -u
 set -o pipefail
@@ -81,28 +61,15 @@ PORTING_SDK_DIR="$(resolve_porting_sdk)" || {
     exit 2
 }
 
-FAILED_GATES=""
 SPAWNED_PIDS=()
 
 # ---------------------------------------------------------------------------
-# Mock-server lifecycle
+# Mock-server lifecycle (probe-then-spawn, trap-cleaned on exit)
 # ---------------------------------------------------------------------------
-#
-# Probe-then-spawn: if a mock is already listening on the slot we don't
-# touch it (someone is debugging). If not, we start it ourselves and
-# trap-clean it on exit. We serve mock_signalwire on a single REST port
-# (8784) and mock_relay on the WS+HTTP pair (8785+9785), matching the
-# defaults in tests/MockTest.cs and tests/RelayMockTest.cs.
-
-# Pick a free TCP port on 127.0.0.1 (bind :0, read the OS-assigned port,
-# release). Never reuse a hardcoded port — a leftover or concurrent mock
-# squatting a fixed port otherwise makes the gate hang on its health poll.
 pick_free_port() {
     python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()'
 }
 
-# Env overrides win; otherwise pick FREE ports rather than hardcoded defaults
-# (mock_signalwire + mock_relay WS/HTTP, all independent).
 MOCK_SIGNALWIRE_PORT="${MOCK_SIGNALWIRE_PORT:-$(pick_free_port)}"
 MOCK_RELAY_WS_PORT="${MOCK_RELAY_PORT:-$(pick_free_port)}"
 MOCK_RELAY_HTTP_PORT="${MOCK_RELAY_HTTP_PORT:-$(pick_free_port)}"
@@ -166,8 +133,6 @@ ensure_mock_relay() {
 
 cleanup_spawned() {
     local pid
-    # `${arr[@]}` on an empty array trips `set -u` on bash < 5.2; guard it so a
-    # clean exit (mocks already running → nothing spawned) doesn't error out.
     [ ${#SPAWNED_PIDS[@]} -eq 0 ] && return 0
     for pid in "${SPAWNED_PIDS[@]}"; do
         if kill -0 "$pid" 2>/dev/null; then
@@ -176,41 +141,17 @@ cleanup_spawned() {
         fi
     done
 }
-
 trap cleanup_spawned EXIT INT TERM
 
-run_gate() {
-    local name="$1"; shift
-    local description="$1"; shift
-    local logfile
-    logfile="$(mktemp)"
-    "$@" >"$logfile" 2>&1
-    local rc=$?
-    if [ "$rc" -eq 0 ]; then
-        echo "[$name] $description ... PASS"
-        rm -f "$logfile"
-        return 0
-    fi
-    echo "[$name] $description ... FAIL: exit $rc"
-    sed 's/^/    /' "$logfile" | tail -40
-    rm -f "$logfile"
-    FAILED_GATES="$FAILED_GATES $name"
-    return $rc
-}
+# shellcheck source=/dev/null
+source "$PORTING_SDK_DIR/scripts/gate_scheduler.sh"
 
-# TEST gate: delegates to scripts/run-tests.sh — the canonical test runner
-# (RUN_LINT_FORMAT_SPEC.md), which loops the 3 target frameworks SEQUENTIALLY
-# (net8.0 → net9.0 → net10.0). Per-TFM serialization is the method that avoids
-# the cross-TFM TLS-listener contention (a known TLS test deadlocks under an
-# all-TFM-at-once `dotnet test SignalWire.sln`); run-tests.sh owns that loop.
-#
-# run-ci owns the mock lifecycle: it has already picked free ports and exported
-# MOCK_SIGNALWIRE_PORT / MOCK_RELAY_WS_PORT / MOCK_RELAY_HTTP_PORT and spawned
-# the mocks on the host. The test fixtures read MOCK_RELAY_PORT (WS) — our
-# internal WS var is MOCK_RELAY_WS_PORT — so we RENAME it into MOCK_RELAY_PORT
-# here before invoking the script (else the fixture self-spawns its own
-# mock_relay and loses the spawn race → "Connection refused"). run-tests.sh /
-# _env.sh handle host-vs-docker dotnet resolution.
+# ---- gate helper functions ---------------------------------------------------
+
+# TEST — the canonical per-TFM (net8→net9→net10 serial) runner. run-ci owns the
+# mock lifecycle (ports picked + exported, mocks spawned before sched_run). The
+# fixtures read MOCK_RELAY_PORT (WS) — our internal WS var is MOCK_RELAY_WS_PORT —
+# so rename it into MOCK_RELAY_PORT before invoking the script.
 dotnet_test_per_framework() {
     MOCK_SIGNALWIRE_PORT="$MOCK_SIGNALWIRE_PORT" \
     MOCK_RELAY_PORT="$MOCK_RELAY_WS_PORT" \
@@ -218,17 +159,8 @@ dotnet_test_per_framework() {
         bash "$PORT_ROOT/scripts/run-tests.sh"
 }
 
-# SURFACE-FRESH gate: prove the committed port_surface.json (Layer B) still
-# matches a fresh regeneration. The DRIFT gate only polices Layer A
-# (port_signatures.json), so without this a Layer-B symbol/shape change could
-# land in source without the committed surface being regenerated — it silently
-# rots. We:
-#   1. snapshot the committed copy (HEAD, with a working-tree fallback),
-#   2. regenerate port_surface.json IN PLACE via the surface enumerator
-#      (pure-regex parse of src/SignalWire/**/*.cs — no docker / build needed,
-#      unlike the SIGNATURES gate's SignatureDump path),
-#   3. compare the two modulo the volatile generated_from git-sha,
-#   4. restore the committed copy unconditionally so the tree is left clean.
+# SURFACE-FRESH — regenerate port_surface.json in place (pure-regex parse of
+# src/**/*.cs; no docker/build), compare modulo the generated_from git-sha, restore.
 surface_fresh_gate() {
     local committed="/tmp/committed_surface.json"
     git show HEAD:port_surface.json > "$committed" 2>/dev/null \
@@ -244,10 +176,7 @@ surface_fresh_gate() {
     return $rc
 }
 
-# Resolve a dotnet invocation: host dotnet if present, else the SDK docker image
-# (same host-or-docker shape as dotnet_test_per_framework). Echoes a command
-# prefix the caller runs as `$(dotnet_cmd) <args>`. Docker maps the repo at /src
-# as the host user with a writable HOME so MSBuild/NuGet caches work.
+# Resolve a dotnet invocation: host dotnet if present, else the SDK docker image.
 dotnet_cmd() {
     local bin
     bin="$(command -v dotnet || true)"
@@ -258,37 +187,90 @@ dotnet_cmd() {
     fi
 }
 
-# FMT gate: delegates to scripts/run-format.sh — the canonical formatter
-# (RUN_LINT_FORMAT_SPEC.md). LOCAL ($CI unset) auto-fixes the tree; CI ($CI=true)
-# passes --check (VERIFY-ONLY, --verify-no-changes) and FAILS on any unformatted
-# file. Env bootstrap lives in scripts/_env.sh, sourced by the script.
 fmt_gate() {
     bash "$PORT_ROOT/scripts/run-format.sh" ${CI:+--check}
 }
 
-# LINT gate: delegates to scripts/run-lint.sh — the canonical linter
-# (RUN_LINT_FORMAT_SPEC.md). A clean analyzer build: Directory.Build.props turns
-# the curated analyzer set on (AnalysisMode=All, TreatWarningsAsErrors) across
-# net8/9/10, so `dotnet build` failing == a lint violation.
 lint_gate() {
     bash "$PORT_ROOT/scripts/run-lint.sh"
 }
 
-# SWAIG-CLI gate: lightweight shared swaig-test mini-contract (NOT python parity;
-# python's in-process simulator surface is reference-only). Black-box: invokes
-# `bin/swaig-test --help` + golden invocations and asserts the shared verbs are
-# documented and a target-but-no-action invocation errors (the cross-port
-# default). bin/swaig-test is a dotnet-script, so we run it via `dotnet script`.
-# dotnet's swaig-test is an HTTP-probe model (--url, like the 7 wire ports), so
-# we pass --require-url-model. It does NOT implement --simulate-serverless, so
-# the no-serverless clause asserts the flag is rejected as an unknown option
-# (the bin/swaig-test default: case errors on any unknown -flag).
+# REST-COVERAGE — spins its own dedicated mock, runs ONLY the RestCoverage-trait
+# tests on net8.0 into one journal, then checks it.
+rest_coverage_gate() {
+    local port="${REST_COVERAGE_PORT:-$(pick_free_port)}"
+    [ -n "$port" ] || { echo "could not allocate a free port" >&2; return 1; }
+    local url="http://127.0.0.1:${port}"
+    local mock_pkg_parent="$PORTING_SDK_DIR/test_harness/mock_signalwire"
+    (
+        cd "$mock_pkg_parent"
+        PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" \
+            python3 -m mock_signalwire --host 127.0.0.1 --port "$port" --log-level error
+    ) >/tmp/rest_cov_mock_dotnet.$$.log 2>&1 &
+    local mock_pid=$!
+    # shellcheck disable=SC2064
+    trap "kill $mock_pid 2>/dev/null" RETURN
+    local i ready=0
+    for i in $(seq 1 60); do
+        if ! kill -0 "$mock_pid" 2>/dev/null; then
+            echo "mock_signalwire died on port $port — log:" >&2
+            cat "/tmp/rest_cov_mock_dotnet.$$.log" >&2
+            return 1
+        fi
+        if curl -fsS --max-time 1 "$url/__mock__/health" >/dev/null 2>&1; then ready=1; break; fi
+        sleep 0.5
+    done
+    if [ "$ready" -ne 1 ]; then
+        echo "mock_signalwire on port $port not healthy within 30s" >&2
+        return 1
+    fi
+    curl -fsS --max-time 5 -X POST "$url/__mock__/journal/reset" >/dev/null 2>&1
+
+    local dn
+    dn="$(command -v dotnet || true)"
+    if [ -n "$dn" ]; then
+        MOCK_SIGNALWIRE_PORT="$port" "$dn" test --framework net8.0 \
+            --filter "Category=RestCoverage" || return 1
+    else
+        MOCK_SIGNALWIRE_PORT="$port" docker run --rm --network host \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -e MOCK_SIGNALWIRE_PORT="$port" \
+            -v "$PWD:/src" -w /src \
+            mcr.microsoft.com/dotnet/sdk:10.0 \
+            dotnet test --framework net8.0 --filter "Category=RestCoverage" || return 1
+    fi
+
+    python3 -m mock_signalwire.rest_coverage \
+        --mock-url "$url" \
+        --spec-root "$PORTING_SDK_DIR/rest-apis" \
+        --allowlist "$PORTING_SDK_DIR/REST_COVERAGE_BASELINE.md" \
+        --allowlist "$PORT_ROOT/REST_COVERAGE_GAPS.md" \
+        --gap-baseline "$PORTING_SDK_DIR/REST_COVERAGE_GAP_BASELINE.md"
+}
+
+# SPEC-PARITY — implemented routes == canonical spec. tools/RouteRegistry drives the
+# live RestClient through a recording transport and captures every dispatched route.
+spec_parity_gate() {
+    local registry
+    registry="$(mktemp)"
+    if ! bash "$PORT_ROOT/scripts/route-registry.sh" >"$registry" 2>/dev/null; then
+        echo "route-registry emitted an incomplete Set B (uninvokable/no-request method)" >&2
+        rm -f "$registry"
+        return 1
+    fi
+    python3 "$PORTING_SDK_DIR/scripts/diff_spec_implementation.py" \
+        --registry-json "$registry" \
+        --gaps "$PORTING_SDK_DIR/SPEC_IMPLEMENTATION_GAPS.md"
+    local rc=$?
+    rm -f "$registry"
+    return $rc
+}
+
+# SWAIG-CLI — the lightweight shared swaig-test mini-contract. bin/swaig-test is a
+# dotnet-script; provision dotnet-script as a tool-path tool, then run it.
 swaig_cli_gate() {
     local dn
     dn="$(dotnet_cmd)"
-    # dotnet-script is the runner for bin/swaig-test. Provision it as a tool-path
-    # tool (idempotent: install is a no-op / fails-harmlessly if already present),
-    # then put it on PATH for the duration of the gate.
     local toolroot="$PORT_ROOT/.dotnet-tools"
     if [ ! -x "$toolroot/dotnet-script" ]; then
         $dn tool install dotnet-script --tool-path "$toolroot" >/dev/null 2>&1 || true
@@ -310,223 +292,82 @@ echo "==> ensuring mock servers are running on host"
 ensure_mock_signalwire || exit 2
 ensure_mock_relay || exit 2
 
-# Gate 1: dotnet test via docker image, serialized per target framework.
-run_gate "TEST" "docker dotnet test (net8/net9/net10 sequential)" \
-    dotnet_test_per_framework
+# ---- register gates ----------------------------------------------------------
+sched_init "$@"
 
-# Gate 2: signature regen — adapter shells out to docker for SignatureDump.
-run_gate "SIGNATURES" "regenerate port_signatures.json" \
-    python3 scripts/enumerate_signatures.py
+sched_gate TEST defer=1 desc="docker dotnet test (net8/net9/net10 sequential)" \
+    --fn dotnet_test_per_framework
 
-# Gate 3: drift gate
-run_gate "DRIFT" "diff_port_signatures vs python reference" \
-    python3 "$PORTING_SDK_DIR/scripts/diff_port_signatures.py" \
+sched_gate SIGNATURES desc="regenerate port_signatures.json" \
+    -- python3 scripts/enumerate_signatures.py
+
+sched_gate DRIFT deps=SIGNATURES desc="diff_port_signatures vs python reference" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_signatures.py" \
         --reference "$PORTING_SDK_DIR/python_signatures.json" \
         --port-signatures "$PORT_ROOT/port_signatures.json" \
         --surface-omissions "$PORT_ROOT/PORT_OMISSIONS.md" \
         --surface-additions "$PORT_ROOT/PORT_ADDITIONS.md" \
         --omissions "$PORT_ROOT/PORT_SIGNATURE_OMISSIONS.md"
 
-# Gate 4: surface-fresh — regenerate port_surface.json (Layer B) in place and
-# fail if the committed copy is stale modulo the generated_from git-sha.
-run_gate "SURFACE-FRESH" "check_surface_freshness vs regenerated port_surface.json" \
-    surface_fresh_gate
+sched_gate SURFACE-FRESH res=surface desc="check_surface_freshness vs regenerated port_surface.json" \
+    --fn surface_fresh_gate
 
-# Gate 4b: GEN-FRESH — the code-generated REST resource layer
-# (src/SignalWire/REST/Namespaces/Generated/**) must match a fresh run of
-# scripts/generate_rest.py against the canonical porting-sdk specs + x-sdk-*
-# markup (SESSION_CHANGESET item A/B). A stale/hand-edited generated file (or a
-# leftover file no longer in the generator output) fails the gate — the .cs
-# resources, the client tree, and the rest_signatures.json sidecar are all
-# checked. Pure-python, no build/mock needed. Mirrors the other ports'
-# GEN-FRESH.
-run_gate "GEN-FRESH" "generate_rest.py --check (generated REST layer matches specs)" \
-    python3 scripts/generate_rest.py --check
+sched_gate GEN-FRESH desc="generate_rest.py --check (generated REST layer matches specs)" \
+    -- python3 scripts/generate_rest.py --check
 
-# Gate 4c: GEN-FRESH (tests) — the code-generated REST *wire-test* suite
-# (tests/RestMock/Generated/**) must match a fresh run of
-# scripts/generate_rest_tests.py: the full-mock success+error wire tests for
-# every route the GENERATED client dispatches, captured off the real client
-# (tools/RestTestPlan via scripts/rest-test-plan.sh) and joined to the spec
-# operationId — the independent oracle (REST_TEST_GENERATOR_RULES.md, item E). A
-# stale/hand-edited generated test file (or a leftover file no longer emitted)
-# fails the gate. Builds RestTestPlan (net8) to capture the plan; no mock needed
-# for --check. Mirrors the other ports' generated-test GEN-FRESH.
-run_gate "GEN-FRESH-TESTS" "generate_rest_tests.py --check (generated REST wire tests match specs)" \
-    python3 scripts/generate_rest_tests.py --check
+sched_gate GEN-FRESH-TESTS desc="generate_rest_tests.py --check (generated REST wire tests match specs)" \
+    -- python3 scripts/generate_rest_tests.py --check
 
-# Gate 5: no-cheat
-run_gate "NO-CHEAT" "audit_no_cheat_tests" \
-    python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"
+sched_gate NO-CHEAT desc="audit_no_cheat_tests" \
+    -- python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"
 
-# Gate 5b: REST-COVERAGE — every canonical REST route the SDK implements must be
-# exercised with BOTH a success (2xx) AND an error (4xx/5xx) response on the
-# correct on-the-wire path (parity). Measured by replaying the mock journal of a
-# REST-coverage suite run through porting-sdk's rest_coverage checker. Accepted
-# gaps — routes with no SDK method, malformed canonical routes, mock-router
-# collisions — are allowlisted: the shared baseline
-# (porting-sdk/REST_COVERAGE_BASELINE.md) + this port's REST_COVERAGE_GAPS.md. A
-# stale entry (route now covered) fails the gate. Self-contained: spins its own
-# mock on a dedicated port, runs ONLY the RestCoverage-trait tests on a SINGLE
-# target framework into ONE journal, then checks that journal. Same shape as
-# go's/python's/java's gate.
-rest_coverage_gate() {
-    # REST_COVERAGE_PORT override wins; otherwise pick a FREE port (bind :0).
-    # Never reuse a hardcoded port — a leftover/concurrent mock squatting it
-    # otherwise makes the gate hang on its health poll.
-    local port="${REST_COVERAGE_PORT:-$(pick_free_port)}"
-    [ -n "$port" ] || { echo "could not allocate a free port" >&2; return 1; }
-    local url="http://127.0.0.1:${port}"
-    local mock_pkg_parent="$PORTING_SDK_DIR/test_harness/mock_signalwire"
-    (
-        cd "$mock_pkg_parent"
-        PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" \
-            python3 -m mock_signalwire --host 127.0.0.1 --port "$port" --log-level error
-    ) >/tmp/rest_cov_mock_dotnet.$$.log 2>&1 &
-    local mock_pid=$!
-    # shellcheck disable=SC2064
-    trap "kill $mock_pid 2>/dev/null" RETURN
-    # Fail LOUD if the mock dies mid-startup or never becomes healthy — never hang.
-    local i ready=0
-    for i in $(seq 1 60); do
-        if ! kill -0 "$mock_pid" 2>/dev/null; then
-            echo "mock_signalwire died on port $port — log:" >&2
-            cat "/tmp/rest_cov_mock_dotnet.$$.log" >&2
-            return 1
-        fi
-        if curl -fsS --max-time 1 "$url/__mock__/health" >/dev/null 2>&1; then ready=1; break; fi
-        sleep 0.5
-    done
-    if [ "$ready" -ne 1 ]; then
-        echo "mock_signalwire on port $port not healthy within 30s" >&2
-        return 1
-    fi
-    curl -fsS --max-time 5 -X POST "$url/__mock__/journal/reset" >/dev/null 2>&1
+sched_gate REST-COVERAGE defer=1 desc="every implemented REST route covered success+error (parity + allowlist)" \
+    --fn rest_coverage_gate
 
-    # Run ONLY the coverage-trait tests, on ONE framework (net8.0), so all
-    # traffic lands in this one mock's single journal. The coverage tests are
-    # journal-scoped per-test (per-test random project) but the checker reads
-    # the GLOBAL journal, so a single-framework serial run is the clean way to
-    # get one journal with every route's success+error pair.
-    local dn rc
-    dn="$(command -v dotnet || true)"
-    if [ -n "$dn" ]; then
-        MOCK_SIGNALWIRE_PORT="$port" "$dn" test --framework net8.0 \
-            --filter "Category=RestCoverage" || return 1
-    else
-        MOCK_SIGNALWIRE_PORT="$port" docker run --rm --network host \
-            --user "$(id -u):$(id -g)" -e HOME=/tmp \
-            -e MOCK_SIGNALWIRE_PORT="$port" \
-            -v "$PWD:/src" -w /src \
-            mcr.microsoft.com/dotnet/sdk:10.0 \
-            dotnet test --framework net8.0 --filter "Category=RestCoverage" || return 1
-    fi
+sched_gate SPEC-PARITY defer=1 desc="implemented routes == canonical spec (modulo SPEC_IMPLEMENTATION_GAPS.md)" \
+    --fn spec_parity_gate
 
-    python3 -m mock_signalwire.rest_coverage \
-        --mock-url "$url" \
-        --spec-root "$PORTING_SDK_DIR/rest-apis" \
-        --allowlist "$PORTING_SDK_DIR/REST_COVERAGE_BASELINE.md" \
-        --allowlist "$PORT_ROOT/REST_COVERAGE_GAPS.md" \
-        --gap-baseline "$PORTING_SDK_DIR/REST_COVERAGE_GAP_BASELINE.md"
-}
-run_gate "REST-COVERAGE" "every implemented REST route covered success+error (parity + allowlist)" \
-    rest_coverage_gate
-
-# Gate 5c: SPEC-PARITY — the routes the SDK actually IMPLEMENTS must equal the
-# canonical spec route set, modulo porting-sdk/SPEC_IMPLEMENTATION_GAPS.md. This
-# is the spec-first guard REST-COVERAGE can't give: REST-COVERAGE only proves
-# *tested* routes match the spec, so a route the SDK implements that the spec
-# doesn't define (or a canonical route the SDK never implemented) would slip past
-# it. Set B is built by tools/RouteRegistry — it constructs the live RestClient,
-# swaps in a recording HTTP transport (records (method, path), returns a stub
-# 200), and reflects over every namespace/sub-resource method, invoking each with
-# sentinel args, so it sees every dispatched route whether or not it's tested (not
-# an AST scrape, not the journal). scripts/route-registry.sh wraps it so only the
-# JSON reaches stdout (MSBuild chatter -> stderr); the shared porting-sdk diff
-# consumes that JSON via --registry-json. No mocks / no network. Same shape as
-# go's Gate 5c.
-spec_parity_gate() {
-    local registry
-    registry="$(mktemp)"
-    if ! bash "$PORT_ROOT/scripts/route-registry.sh" >"$registry" 2>/dev/null; then
-        echo "route-registry emitted an incomplete Set B (uninvokable/no-request method)" >&2
-        rm -f "$registry"
-        return 1
-    fi
-    python3 "$PORTING_SDK_DIR/scripts/diff_spec_implementation.py" \
-        --registry-json "$registry" \
-        --gaps "$PORTING_SDK_DIR/SPEC_IMPLEMENTATION_GAPS.md"
-    local rc=$?
-    rm -f "$registry"
-    return $rc
-}
-run_gate "SPEC-PARITY" "implemented routes == canonical spec (modulo SPEC_IMPLEMENTATION_GAPS.md)" \
-    spec_parity_gate
-
-# Gate 6: emission — byte-compare FunctionResult.ToDict() vs Python to_dict()
-# across the shared 81-entry corpus. scripts/emit-corpus.sh wraps
-# tools/EmitCorpus so only clean JSON reaches stdout (it builds with MSBuild
-# output on stderr, then runs the compiled binary). No mocks / no network —
-# pure serialisation; needs only signalwire-python adjacent (already required).
-run_gate "EMISSION" "diff_port_emission vs python to_dict()" \
-    python3 "$PORTING_SDK_DIR/scripts/diff_port_emission.py" \
+sched_gate EMISSION desc="diff_port_emission vs python to_dict()" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_emission.py" \
         --dump-cmd "bash $PORT_ROOT/scripts/emit-corpus.sh"
 
-# Gate 7: FMT — dotnet format whitespace (local: auto-fix; CI: --verify).
-run_gate "FMT" "dotnet format whitespace (local: auto-fix; CI: --verify)" \
-    fmt_gate
+sched_gate FMT defer=1 desc="dotnet format whitespace (local: auto-fix; CI: --verify)" \
+    --fn fmt_gate
 
-# Gate 8: LINT — clean analyzer build (Directory.Build.props: curated CA set,
-# TreatWarningsAsErrors). A build warning == a lint violation.
-run_gate "LINT" "dotnet build (analyzers, warnings-as-errors)" \
-    lint_gate
+sched_gate LINT defer=1 desc="dotnet build (analyzers, warnings-as-errors)" \
+    --fn lint_gate
 
-# Gate 9: DOC-AUDIT — every symbol referenced in docs/examples resolves to a
-# real entry in port_surface.json (or is excused in DOC_AUDIT_IGNORE.md).
-run_gate "DOC-AUDIT" "audit_docs vs port_surface.json" \
-    python3 "$PORTING_SDK_DIR/scripts/audit_docs.py" \
+sched_gate DOC-AUDIT res=surface desc="audit_docs vs port_surface.json" \
+    -- python3 "$PORTING_SDK_DIR/scripts/audit_docs.py" \
         --root "$PORT_ROOT" \
         --surface "$PORT_ROOT/port_surface.json" \
         --ignore "$PORT_ROOT/DOC_AUDIT_IGNORE.md"
 
-# Gate 10: SURFACE-DIFF — the public symbol set matches the Python reference
-# surface (modulo documented omissions/additions). DRIFT polices signatures;
-# this polices the symbol set.
-run_gate "SURFACE-DIFF" "diff_port_surface vs python_surface.json" \
-    python3 "$PORTING_SDK_DIR/scripts/diff_port_surface.py" \
+sched_gate SURFACE-DIFF res=surface desc="diff_port_surface vs python_surface.json" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_surface.py" \
         --reference "$PORTING_SDK_DIR/python_surface.json" \
         --port-surface "$PORT_ROOT/port_surface.json" \
         --omissions "$PORT_ROOT/PORT_OMISSIONS.md" \
         --additions "$PORT_ROOT/PORT_ADDITIONS.md"
 
-# Gate 11: SKILL-CONTRACT — each built-in skill's SWAIG tool contract
-# (name/parameters/required/enum) matches the Python reference. Sibling of
-# EMISSION for skills; scripts/emit-skills.sh wraps tools/EmitSkills.
-run_gate "SKILL-CONTRACT" "diff_skill_contracts vs python reference" \
-    python3 "$PORTING_SDK_DIR/scripts/diff_skill_contracts.py" \
+sched_gate SKILL-CONTRACT desc="diff_skill_contracts vs python reference" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_skill_contracts.py" \
         --dump-cmd "bash $PORT_ROOT/scripts/emit-skills.sh" \
         --port-repo "$PORT_ROOT"
 
-# Gate 12: SWAIG-CLI — lightweight shared swaig-test mini-contract (verbs are
-# documented in --help, a target-but-no-action invocation errors, and an
-# unimplemented --simulate-serverless is rejected as an unknown option).
-run_gate "SWAIG-CLI" "swaig-test shared mini-contract (verbs/serverless-reject/default-action)" \
-    swaig_cli_gate
+sched_gate SWAIG-CLI desc="swaig-test shared mini-contract (verbs/serverless-reject/default-action)" \
+    --fn swaig_cli_gate
 
-# Gate 13: SWAIG-COVERAGE — the FunctionResult builder can emit every engine
-# response action (swaig-response.yaml), or the gap is signed off in
-# SWAIG_COVERAGE_ALLOWLIST.md. Back-pressure for the SWAIG read/response surface
-# (SWAIG_PIPELINE §5); the shared checker scrapes .NET's FunctionResult
-# AddAction("k",…) + _actions.Add(new Dictionary { ["k"] = … }) emission.
-run_gate "SWAIG-COVERAGE" "FunctionResult emits every engine action (or allowlisted)" \
-    python3 "$PORTING_SDK_DIR/scripts/swaig_coverage.py" \
+sched_gate SWAIG-COVERAGE desc="FunctionResult emits every engine action (or allowlisted)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/swaig_coverage.py" \
         --check \
         --emission "$PORT_ROOT/src/SignalWire/SWAIG/FunctionResult.cs"
 
-if [ -z "$FAILED_GATES" ]; then
+sched_run
+rc=$?
+if [ "$rc" -eq 0 ]; then
     echo "==> CI PASS"
-    exit 0
 else
     echo "==> CI FAIL (gates:$FAILED_GATES )"
-    exit 1
 fi
+exit "$rc"
