@@ -4464,10 +4464,10 @@
                   "required": true
                 },
                 {
-                  "name": "ignore",
-                  "type": "string",
+                  "name": "ignore_case",
+                  "type": "bool",
                   "required": false,
-                  "default": ""
+                  "default": false
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"

@@ -42,8 +42,8 @@ public class RelayTests : IDisposable
     [Fact]
     public void Constants_CallTerminalStates()
     {
-        Assert.True(Constants.CallTerminalStates.Contains("ended"));
-        Assert.False(Constants.CallTerminalStates.Contains("ringing"));
+        Assert.Contains("ended", Constants.CallTerminalStates);
+        Assert.DoesNotContain("ringing", Constants.CallTerminalStates);
     }
 
     [Fact]
@@ -57,22 +57,22 @@ public class RelayTests : IDisposable
     [Fact]
     public void Constants_MessageTerminalStates()
     {
-        Assert.True(Constants.MessageTerminalStates.Contains("delivered"));
-        Assert.True(Constants.MessageTerminalStates.Contains("undelivered"));
-        Assert.True(Constants.MessageTerminalStates.Contains("failed"));
-        Assert.False(Constants.MessageTerminalStates.Contains("queued"));
+        Assert.Contains("delivered", Constants.MessageTerminalStates);
+        Assert.Contains("undelivered", Constants.MessageTerminalStates);
+        Assert.Contains("failed", Constants.MessageTerminalStates);
+        Assert.DoesNotContain("queued", Constants.MessageTerminalStates);
     }
 
     [Fact]
     public void Constants_ActionTerminalStates()
     {
         Assert.True(Constants.ActionTerminalStates.ContainsKey("calling.call.play"));
-        Assert.True(Constants.ActionTerminalStates["calling.call.play"].Contains("finished"));
-        Assert.True(Constants.ActionTerminalStates["calling.call.play"].Contains("error"));
+        Assert.Contains("finished", Constants.ActionTerminalStates["calling.call.play"]);
+        Assert.Contains("error", Constants.ActionTerminalStates["calling.call.play"]);
 
         Assert.True(Constants.ActionTerminalStates.ContainsKey("calling.call.collect"));
-        Assert.True(Constants.ActionTerminalStates["calling.call.collect"].Contains("no_input"));
-        Assert.True(Constants.ActionTerminalStates["calling.call.collect"].Contains("no_match"));
+        Assert.Contains("no_input", Constants.ActionTerminalStates["calling.call.collect"]);
+        Assert.Contains("no_match", Constants.ActionTerminalStates["calling.call.collect"]);
     }
 
     // ==================================================================
@@ -409,7 +409,8 @@ public class RelayTests : IDisposable
             ["node_id"] = "n-1",
             ["tag"] = "tag-1",
             ["context"] = "default",
-            ["state"] = "ringing",
+            // Real RELAY wire key is call_state (relay.c + mock_relay).
+            ["call_state"] = "ringing",
         }, client);
 
         Assert.Equal("c-1", call.CallId);
@@ -433,12 +434,30 @@ public class RelayTests : IDisposable
         var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
+        // Real RELAY wire key is call_state (relay.c + mock_relay).
+        call.DispatchEvent(new Event("calling.call.state", new()
+        {
+            ["call_state"] = "answered",
+        }));
+
+        Assert.Equal("answered", call.State);
+    }
+
+    [Fact]
+    public void Call_DispatchEvent_IgnoresBareStateKey()
+    {
+        // A stray top-level "state" on a call.state event is NOT the call-state
+        // field (that belongs to control_id-routed component events) and must
+        // not move the call's state off its default.
+        var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
+        var call = new Call(new() { ["call_id"] = "c-1" }, client);
+
         call.DispatchEvent(new Event("calling.call.state", new()
         {
             ["state"] = "answered",
         }));
 
-        Assert.Equal("answered", call.State);
+        Assert.Equal("created", call.State);
     }
 
     [Fact]
@@ -456,7 +475,7 @@ public class RelayTests : IDisposable
 
         call.DispatchEvent(new Event("calling.call.state", new()
         {
-            ["state"] = "ended",
+            ["call_state"] = "ended",
             ["end_reason"] = "caller_hangup",
         }));
 
@@ -515,7 +534,7 @@ public class RelayTests : IDisposable
 
         call.DispatchEvent(new Event("calling.call.state", new()
         {
-            ["state"] = "ringing",
+            ["call_state"] = "ringing",
         }));
 
         Assert.NotNull(received);
@@ -725,7 +744,7 @@ public class RelayTests : IDisposable
             ["params"] = new Dictionary<string, object?>
             {
                 ["call_id"] = "c-1",
-                ["state"] = "answered",
+                ["call_state"] = "answered",
             },
         });
 
@@ -745,7 +764,7 @@ public class RelayTests : IDisposable
             ["params"] = new Dictionary<string, object?>
             {
                 ["call_id"] = "c-1",
-                ["state"] = "ended",
+                ["call_state"] = "ended",
             },
         });
 
@@ -768,7 +787,7 @@ public class RelayTests : IDisposable
             {
                 ["call_id"] = "c-dial",
                 ["tag"] = "tag-dial",
-                ["state"] = "ringing",
+                ["call_state"] = "ringing",
             },
         });
 

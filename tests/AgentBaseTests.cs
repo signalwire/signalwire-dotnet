@@ -473,6 +473,22 @@ public class AgentBaseTests : IDisposable
         Assert.Single(pronounce);
         Assert.Equal("SW", pronounce[0]["replace"]);
         Assert.Equal("SignalWire", pronounce[0]["with"]);
+        // ignore_case omitted when false; the old (wrong) `ignore` key never appears.
+        Assert.False(pronounce[0].ContainsKey("ignore_case"));
+        Assert.False(pronounce[0].ContainsKey("ignore"));
+    }
+
+    [Fact]
+    public void AddPronunciationIgnoreCaseEmitsBoolWireKey()
+    {
+        // ignoreCase=true emits the bool wire key `ignore_case: true`
+        // (matches signalwire-agents schema.json + Python add_pronunciation).
+        var agent = MakeAgent();
+        agent.AddPronunciation("AI", "A.I.", ignoreCase: true);
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var pronounce = (List<Dictionary<string, object>>)ai["pronounce"];
+        Assert.Equal(true, pronounce[0]["ignore_case"]);
+        Assert.False(pronounce[0].ContainsKey("ignore"));
     }
 
     [Fact]

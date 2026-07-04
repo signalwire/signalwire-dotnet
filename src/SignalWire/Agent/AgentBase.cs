@@ -708,17 +708,23 @@ public class AgentBase : Service
         };
     }
 
-    public AgentBase AddPronunciation(string replace, string with, string ignore = "")
+    /// <summary>
+    /// Add a pronunciation rule. Mirrors Python
+    /// <c>add_pronunciation(replace, with_text, ignore_case=False)</c>: the SWML
+    /// wire keys are <c>replace</c>, <c>with</c>, and <c>ignore_case</c> (a bool,
+    /// emitted only when true — matches signalwire-agents schema.json
+    /// <c>Pronounce</c>).
+    /// </summary>
+    public AgentBase AddPronunciation(string replace, string with, bool ignoreCase = false)
     {
-        ArgumentNullException.ThrowIfNull(ignore);
         var entry = new Dictionary<string, object>
         {
             ["replace"] = replace,
             ["with"] = with,
         };
-        if (ignore.Length > 0)
+        if (ignoreCase)
         {
-            entry["ignore"] = ignore;
+            entry["ignore_case"] = true;
         }
         _pronunciations.Add(entry);
         return this;
