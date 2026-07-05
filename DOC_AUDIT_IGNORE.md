@@ -48,6 +48,7 @@ Delay: System.Threading.Tasks.Task.Delay
 FromSeconds: System.TimeSpan.FromSeconds
 GetRawText: System.Text.Json.JsonElement.GetRawText
 GetType: System.Object.GetType
+Parse: System primitive .Parse pattern (int.Parse / double.Parse etc.) (.NET stdlib)
 ReadAsStringAsync: System.Net.Http.HttpContent.ReadAsStringAsync
 ReadToEndAsync: System.IO.StreamReader.ReadToEndAsync
 ToDictionary: System.Linq ToDictionary operator
@@ -88,3 +89,17 @@ Conference: doc-only label (e.g. "Conference Bridge"); not a method
 GetDouble: System.Text.Json.JsonElement built-in (.NET stdlib)
 TryGetInt64: System.Text.Json.JsonElement built-in (.NET stdlib)
 TryParse: System primitive .TryParse pattern (int.TryParse etc.) (.NET stdlib)
+
+## Real SDK methods; C#-real name differs from the reference-canonical surface name
+
+These ARE public methods in `src/SignalWire/` (verified in source), but they do not
+resolve against `port_surface.json` because the surface enumerator records the
+Python-reference-canonical name for the cross-port diff, while the examples call the
+real C# name. This is the same doc↔surface idiom mismatch that signalwire-cpp,
+-java, and -go record in their DOC_AUDIT_IGNORE files (e.g. cpp `register_verb_handler`,
+go `Publish`). Not invented surface — the method exists; only its cross-port alias
+differs.
+
+GetFactory: SkillRegistry.GetFactory(string) — src/SignalWire/Skills/SkillRegistry.cs:139; surface enumerator aliases it to the reference name get_skill_class
+Verb: SWMLService.Verb(...) — src/SignalWire/SWML/Service.cs:141,157; dotnet-only verb-emit method with no Python-reference counterpart (Python adds verbs dynamically)
+ListToolNames: SWMLService.ListToolNames() — src/SignalWire/SWML/Service.cs:664 (inherited by AgentBase); dotnet-only accessor with no Python-reference counterpart
