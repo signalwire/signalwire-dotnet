@@ -251,6 +251,95 @@ public class SWMLServiceTests : IDisposable
     }
 
     // ------------------------------------------------------------------
+    // AsRouter: mountable host-app handler (Python parity: WebMixin.as_router /
+    // SWMLService.as_router). The returned RequestDelegate embeds the service's
+    // routes in a host ASP.NET Core app; driving an HttpContext through it must
+    // dispatch the same logic as HandleRequest.
+    // ------------------------------------------------------------------
+
+    private static async Task<(int Status, string Body, Microsoft.AspNetCore.Http.HttpContext Ctx)> DriveRouterAsync(
+        Microsoft.AspNetCore.Http.RequestDelegate router,
+        string method,
+        string path,
+        string? authHeader = null,
+        string? body = null)
+    {
+        var ctx = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+        ctx.Request.Method = method;
+        ctx.Request.Path = path;
+        if (authHeader is not null)
+        {
+            ctx.Request.Headers["Authorization"] = authHeader;
+        }
+        if (body is not null)
+        {
+            ctx.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
+        }
+        var responseStream = new MemoryStream();
+        ctx.Response.Body = responseStream;
+
+        await router(ctx);
+
+        responseStream.Position = 0;
+        using var reader = new StreamReader(responseStream, Encoding.UTF8);
+        var text = await reader.ReadToEndAsync();
+        return (ctx.Response.StatusCode, text, ctx);
+    }
+
+    [Fact]
+    public void AsRouter_ReturnsRequestDelegate()
+    {
+        var svc = MakeService();
+        Microsoft.AspNetCore.Http.RequestDelegate router = svc.AsRouter();
+        Assert.NotNull(router);
+    }
+
+    [Fact]
+    public async Task AsRouter_Health_Returns200_NoAuth()
+    {
+        var svc = MakeService();
+        var (status, body, _) = await DriveRouterAsync(svc.AsRouter(), "GET", "/health");
+
+        Assert.Equal(200, status);
+        Assert.Contains("healthy", body);
+    }
+
+    [Fact]
+    public async Task AsRouter_Root_WithoutAuth_Returns401()
+    {
+        var svc = MakeService();
+        var (status, _, ctx) = await DriveRouterAsync(svc.AsRouter(), "GET", "/");
+
+        Assert.Equal(401, status);
+        Assert.True(ctx.Response.Headers.ContainsKey("WWW-Authenticate"));
+    }
+
+    [Fact]
+    public async Task AsRouter_Root_WithAuth_ReturnsSwml()
+    {
+        var svc = MakeService();
+        var auth = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes("testuser:testpass"));
+        var (status, body, _) = await DriveRouterAsync(svc.AsRouter(), "GET", "/", authHeader: auth);
+
+        Assert.Equal(200, status);
+        Assert.Contains("version", body); // rendered SWML document
+    }
+
+    [Fact]
+    public async Task AsRouter_MatchesHandleRequest()
+    {
+        // The mounted handler must dispatch the identical logic as the standalone
+        // HandleRequest path — same status + body for the same request.
+        var svc = MakeService();
+        var (directStatus, _, directBody) = svc.HandleRequest(
+            "GET", "/health", new Dictionary<string, string>(), null);
+        var (routerStatus, routerBody, _) = await DriveRouterAsync(svc.AsRouter(), "GET", "/health");
+
+        Assert.Equal(directStatus, routerStatus);
+        Assert.Equal(directBody, routerBody);
+    }
+
+    // ------------------------------------------------------------------
     // HTTP: Auth
     // ------------------------------------------------------------------
 

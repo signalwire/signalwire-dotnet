@@ -144,6 +144,13 @@ public sealed class WebService : IDisposable
         {
             // already closed
         }
+        catch (HttpListenerException)
+        {
+            // Best-effort teardown: on some platforms (macOS) closing the
+            // listener can race the OS prefix de-registration and throw
+            // "Address already in use" from RemovePrefixInternal. The listener
+            // is being discarded either way, so swallow it.
+        }
 
         try
         {

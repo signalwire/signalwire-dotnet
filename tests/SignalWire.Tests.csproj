@@ -20,6 +20,13 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
   </ItemGroup>
 
+  <!-- ASP.NET Core: the AsRouter() tests drive a DefaultHttpContext through the
+       returned RequestDelegate (the mountable host-app handler). The SDK itself
+       references this framework for its Kestrel TLS path. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="../src/SignalWire/SignalWire.csproj" />
   </ItemGroup>

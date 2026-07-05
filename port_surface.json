@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 6bab71bb5b7f65e836c8d30a1b94d4679f95a4d6",
+  "generated_from": "signalwire-dotnet @ 152598674a8a221e84f29e92d59ad6ef57657c6e",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -478,6 +478,7 @@
     "signalwire.core.mixins.web_mixin": {
       "classes": {
         "WebMixin": [
+          "as_router",
           "enable_debug_routes",
           "manual_set_proxy_url",
           "on_request",
@@ -713,6 +714,7 @@
           "add_section",
           "add_verb",
           "add_verb_to_section",
+          "as_router",
           "extract_sip_username",
           "full_validation_enabled",
           "get_basic_auth_credentials",

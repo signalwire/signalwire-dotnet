@@ -1040,6 +1040,75 @@ public class Service
     }
 
     /// <summary>
+    /// Return a mountable request handler that embeds this service's routes in a
+    /// host ASP.NET Core application. The returned <see cref="RequestDelegate"/>
+    /// (a <c>Func&lt;HttpContext, Task&gt;</c>) adapts an incoming
+    /// <see cref="HttpContext"/> to this service's framework-agnostic
+    /// <see cref="HandleRequest"/> dispatch, then writes the resulting status,
+    /// headers, and body back onto the response. The caller mounts it onto their
+    /// own app, e.g. <c>app.Map(service.Route, service.AsRouter())</c> or
+    /// <c>app.Run(service.AsRouter())</c>.
+    ///
+    /// This is the .NET analog of Python's <c>WebMixin.as_router</c> /
+    /// <c>SWMLService.as_router</c>, which return a FastAPI-router object the
+    /// caller mounts on a host FastAPI app. The capability — "embed the agent's
+    /// routes in a host app" — is identical; the return unit is expressed in the
+    /// hosting framework's idiom (ASP.NET Core's <see cref="RequestDelegate"/>
+    /// instead of a FastAPI router). The same <see cref="HandleRequest"/> logic
+    /// used by the standalone <see cref="Run()"/> server backs the mounted path,
+    /// so SWML/SWAIG behavior is identical whether hosted or standalone.
+    /// </summary>
+    public RequestDelegate AsRouter() => DispatchAsync;
+
+    /// <summary>
+    /// The <see cref="RequestDelegate"/> body handed out by <see cref="AsRouter"/>:
+    /// adapt an ASP.NET Core <see cref="HttpContext"/> to <see cref="HandleRequest"/>
+    /// and write the response back. Reused by the Kestrel HTTPS server path so the
+    /// mounted and standalone-TLS dispatch share one adapter.
+    /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Per-request handler boundary: a single failed request must not tear down the host pipeline; the failure is surfaced as a 500 response.")]
+    private async Task DispatchAsync(HttpContext http)
+    {
+        ArgumentNullException.ThrowIfNull(http);
+
+        var method = http.Request.Method;
+        var path = http.Request.Path.HasValue ? http.Request.Path.Value! : "/";
+        var headers = new Dictionary<string, string>();
+        foreach (var h in http.Request.Headers)
+        {
+            headers[h.Key] = h.Value.ToString();
+        }
+        string body;
+        using (var reader = new System.IO.StreamReader(http.Request.Body, Encoding.UTF8))
+        {
+            body = await reader.ReadToEndAsync().ConfigureAwait(false);
+        }
+
+        int status;
+        Dictionary<string, string> responseHeaders;
+        string responseBody;
+        try
+        {
+            (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
+        }
+        catch (Exception ex)
+        {
+            status = 500;
+            responseHeaders = new Dictionary<string, string>();
+            responseBody = $"{{\"error\":\"{ex.GetType().Name}\"}}";
+        }
+
+        http.Response.StatusCode = status;
+        foreach (var (k, v) in responseHeaders)
+        {
+            // Content-Length is managed by Kestrel from the body we write.
+            if (string.Equals(k, "Content-Length", StringComparison.OrdinalIgnoreCase)) continue;
+            try { http.Response.Headers[k] = v; } catch { /* reserved header */ }
+        }
+        await http.Response.WriteAsync(responseBody, Encoding.UTF8).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Start a blocking HTTP(S) server bound to <see cref="Host"/>:<see cref="Port"/>.
     /// Each incoming request is dispatched through <see cref="HandleRequest"/>;
     /// the response status / headers / body are written back to the client.
@@ -1207,44 +1276,9 @@ public class Service
         });
 
         var app = builder.Build();
-        app.Run(async http =>
-        {
-            var method = http.Request.Method;
-            var path = http.Request.Path.HasValue ? http.Request.Path.Value! : "/";
-            var headers = new Dictionary<string, string>();
-            foreach (var h in http.Request.Headers)
-            {
-                headers[h.Key] = h.Value.ToString();
-            }
-            string body;
-            using (var reader = new System.IO.StreamReader(http.Request.Body, Encoding.UTF8))
-            {
-                body = await reader.ReadToEndAsync().ConfigureAwait(false);
-            }
-
-            int status;
-            Dictionary<string, string> responseHeaders;
-            string responseBody;
-            try
-            {
-                (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
-            }
-            catch (Exception ex)
-            {
-                status = 500;
-                responseHeaders = new Dictionary<string, string>();
-                responseBody = $"{{\"error\":\"{ex.GetType().Name}\"}}";
-            }
-
-            http.Response.StatusCode = status;
-            foreach (var (k, v) in responseHeaders)
-            {
-                // Content-Length is managed by Kestrel from the body we write.
-                if (string.Equals(k, "Content-Length", StringComparison.OrdinalIgnoreCase)) continue;
-                try { http.Response.Headers[k] = v; } catch { /* reserved header */ }
-            }
-            await http.Response.WriteAsync(responseBody, Encoding.UTF8).ConfigureAwait(false);
-        });
+        // Reuse the same HttpContext→HandleRequest adapter that AsRouter() hands
+        // out, so the standalone-TLS and mounted (host-app) dispatch are identical.
+        app.Run(AsRouter());
 
         _logger.Info($"Service '{Name}' starting with TLS on https://{Host}:{Port}{Route}");
         // Block until cancelled (parity with the HttpListener path's blocking loop).

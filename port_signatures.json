@@ -5204,6 +5204,15 @@
       "classes": {
         "WebMixin": {
           "methods": {
+            "as_router": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.core.web.HostAppRouter"
+            },
             "enable_debug_routes": {
               "params": [
                 {
@@ -8966,6 +8975,15 @@
                 }
               ],
               "returns": "bool"
+            },
+            "as_router": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.core.web.HostAppRouter"
             },
             "extract_sip_username": {
               "params": [
