@@ -34,15 +34,6 @@ cd "$REPO"
 export DOTNET_DOCKER_NETWORK_HOST=1
 DN="$(dotnet_cmd)"
 
-# Clean bin/obj before building. In CI the LINT gate builds with the HOST dotnet
-# (setup-dotnet), and this TEST gate builds inside the docker sdk:10.0 image. Those
-# two SDKs can differ at the patch level, and MSBuild's incremental obj/ state is
-# SDK-version-specific — so the docker build reusing host-built obj/ intermittently
-# fails to resolve types built for the other SDK (observed: CS0234 'SignalWire.Core.Agent
-# does not exist' across all 3 TFMs in CI, while a clean build passes everywhere).
-# Forcing a clean tree makes the docker build self-consistent. Cheap: it's a small SDK.
-find src tests -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} + 2>/dev/null || true
-
 dotnet_restore_if_needed
 
 FRAMEWORKS=(net8.0 net9.0 net10.0)
