@@ -295,7 +295,19 @@ ensure_mock_relay || exit 2
 # ---- register gates ----------------------------------------------------------
 sched_init "$@"
 
-sched_gate TEST defer=1 desc="docker dotnet test (net8/net9/net10 sequential)" \
+# res=dotnetbuild: every gate below that invokes `dotnet build`/`dotnet test`
+# ultimately builds src/SignalWire (directly, or via a tool's ProjectReference)
+# into the SHARED src/SignalWire/obj|bin tree — including the ref assembly
+# obj/<cfg>/<tfm>/ref/SignalWire.dll that csc reads. Running two such builds
+# concurrently lets one truncate/rewrite that ref assembly while another's csc
+# reads it, which surfaced as an intermittent CS0234 ("SignalWire.Core.Agent
+# does not exist") in the TEST gate — green locally (gates ran warm/serial),
+# red in CI (scheduler ran TEST/LINT/REST-COVERAGE/SPEC-PARITY/EMISSION/
+# SKILL-CONTRACT concurrently). Sharing ONE resource label makes the scheduler
+# run them mutually exclusive, so no two dotnet builds ever write the shared
+# obj tree at the same time. (The pure-Python gates keep running concurrently
+# alongside whichever single dotnet gate holds the resource.)
+sched_gate TEST defer=1 res=dotnetbuild desc="docker dotnet test (net8/net9/net10 sequential)" \
     --fn dotnet_test_per_framework
 
 sched_gate SIGNATURES desc="regenerate port_signatures.json" \
@@ -321,20 +333,20 @@ sched_gate GEN-FRESH-TESTS desc="generate_rest_tests.py --check (generated REST 
 sched_gate NO-CHEAT desc="audit_no_cheat_tests" \
     -- python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"
 
-sched_gate REST-COVERAGE defer=1 desc="every implemented REST route covered success+error (parity + allowlist)" \
+sched_gate REST-COVERAGE defer=1 res=dotnetbuild desc="every implemented REST route covered success+error (parity + allowlist)" \
     --fn rest_coverage_gate
 
-sched_gate SPEC-PARITY defer=1 desc="implemented routes == canonical spec (modulo SPEC_IMPLEMENTATION_GAPS.md)" \
+sched_gate SPEC-PARITY defer=1 res=dotnetbuild desc="implemented routes == canonical spec (modulo SPEC_IMPLEMENTATION_GAPS.md)" \
     --fn spec_parity_gate
 
-sched_gate EMISSION desc="diff_port_emission vs python to_dict()" \
+sched_gate EMISSION res=dotnetbuild desc="diff_port_emission vs python to_dict()" \
     -- python3 "$PORTING_SDK_DIR/scripts/diff_port_emission.py" \
         --dump-cmd "bash $PORT_ROOT/scripts/emit-corpus.sh"
 
-sched_gate FMT defer=1 desc="dotnet format whitespace (local: auto-fix; CI: --verify)" \
+sched_gate FMT defer=1 res=dotnetbuild desc="dotnet format whitespace (local: auto-fix; CI: --verify)" \
     --fn fmt_gate
 
-sched_gate LINT defer=1 desc="dotnet build (analyzers, warnings-as-errors)" \
+sched_gate LINT defer=1 res=dotnetbuild desc="dotnet build (analyzers, warnings-as-errors)" \
     --fn lint_gate
 
 sched_gate DOC-AUDIT res=surface desc="audit_docs vs port_surface.json" \
@@ -350,12 +362,12 @@ sched_gate SURFACE-DIFF res=surface desc="diff_port_surface vs python_surface.js
         --omissions "$PORT_ROOT/PORT_OMISSIONS.md" \
         --additions "$PORT_ROOT/PORT_ADDITIONS.md"
 
-sched_gate SKILL-CONTRACT desc="diff_skill_contracts vs python reference" \
+sched_gate SKILL-CONTRACT res=dotnetbuild desc="diff_skill_contracts vs python reference" \
     -- python3 "$PORTING_SDK_DIR/scripts/diff_skill_contracts.py" \
         --dump-cmd "bash $PORT_ROOT/scripts/emit-skills.sh" \
         --port-repo "$PORT_ROOT"
 
-sched_gate SWAIG-CLI desc="swaig-test shared mini-contract (verbs/serverless-reject/default-action)" \
+sched_gate SWAIG-CLI res=dotnetbuild desc="swaig-test shared mini-contract (verbs/serverless-reject/default-action)" \
     --fn swaig_cli_gate
 
 sched_gate SWAIG-COVERAGE desc="FunctionResult emits every engine action (or allowlisted)" \
