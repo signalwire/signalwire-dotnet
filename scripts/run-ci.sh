@@ -41,6 +41,7 @@ set -u
 set -o pipefail
 
 PORT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+mkdir -p "$PORT_ROOT/.sw-tmp"  # repo-local CI scratch (never /tmp)
 PORT_NAME="signalwire-dotnet"
 
 resolve_porting_sdk() {
@@ -102,10 +103,10 @@ ensure_mock_signalwire() {
         PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" \
             python3 -m mock_signalwire --host 127.0.0.1 \
                 --port "$MOCK_SIGNALWIRE_PORT" --log-level error
-    ) >/tmp/mock_signalwire_dotnet_ci.log 2>&1 &
+    ) >"$PORT_ROOT/.sw-tmp/mock_signalwire_dotnet_ci.log" 2>&1 &
     SPAWNED_PIDS+=("$!")
     if ! wait_for_health "$url"; then
-        echo "FATAL: mock_signalwire failed to start; log /tmp/mock_signalwire_dotnet_ci.log" >&2
+        echo "FATAL: mock_signalwire failed to start; log $PORT_ROOT/.sw-tmp/mock_signalwire_dotnet_ci.log" >&2
         return 1
     fi
 }
@@ -123,10 +124,10 @@ ensure_mock_relay() {
             python3 -m mock_relay --host 127.0.0.1 \
                 --ws-port "$MOCK_RELAY_WS_PORT" \
                 --http-port "$MOCK_RELAY_HTTP_PORT" --log-level error
-    ) >/tmp/mock_relay_dotnet_ci.log 2>&1 &
+    ) >"$PORT_ROOT/.sw-tmp/mock_relay_dotnet_ci.log" 2>&1 &
     SPAWNED_PIDS+=("$!")
     if ! wait_for_health "$url"; then
-        echo "FATAL: mock_relay failed to start; log /tmp/mock_relay_dotnet_ci.log" >&2
+        echo "FATAL: mock_relay failed to start; log $PORT_ROOT/.sw-tmp/mock_relay_dotnet_ci.log" >&2
         return 1
     fi
 }
@@ -162,7 +163,7 @@ dotnet_test_per_framework() {
 # SURFACE-FRESH — regenerate port_surface.json in place (pure-regex parse of
 # src/**/*.cs; no docker/build), compare modulo the generated_from git-sha, restore.
 surface_fresh_gate() {
-    local committed="/tmp/committed_surface.json"
+    local committed="$PORT_ROOT/.sw-tmp/committed_surface.json"
     git show HEAD:port_surface.json > "$committed" 2>/dev/null \
         || cp port_surface.json "$committed"
     python3 scripts/enumerate_surface.py
@@ -206,7 +207,7 @@ rest_coverage_gate() {
         cd "$mock_pkg_parent"
         PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" \
             python3 -m mock_signalwire --host 127.0.0.1 --port "$port" --log-level error
-    ) >/tmp/rest_cov_mock_dotnet.$$.log 2>&1 &
+    ) >"$PORT_ROOT/.sw-tmp/rest_cov_mock_dotnet.$$.log" 2>&1 &
     local mock_pid=$!
     # shellcheck disable=SC2064
     trap "kill $mock_pid 2>/dev/null" RETURN
@@ -214,7 +215,7 @@ rest_coverage_gate() {
     for i in $(seq 1 60); do
         if ! kill -0 "$mock_pid" 2>/dev/null; then
             echo "mock_signalwire died on port $port — log:" >&2
-            cat "/tmp/rest_cov_mock_dotnet.$$.log" >&2
+            cat "$PORT_ROOT/.sw-tmp/rest_cov_mock_dotnet.$$.log" >&2
             return 1
         fi
         if curl -fsS --max-time 1 "$url/__mock__/health" >/dev/null 2>&1; then ready=1; break; fi
