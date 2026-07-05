@@ -968,15 +968,15 @@ public class AgentBase : Service
         return true;
     }
 
-    public AgentBase SetPromptLlmParams(Dictionary<string, object> parameters)
+    public AgentBase SetPromptLlmParams(Dictionary<string, object>? parameters = null)
     {
-        _promptLlmParams = parameters;
+        _promptLlmParams = parameters ?? new Dictionary<string, object>();
         return this;
     }
 
-    public AgentBase SetPostPromptLlmParams(Dictionary<string, object> parameters)
+    public AgentBase SetPostPromptLlmParams(Dictionary<string, object>? parameters = null)
     {
-        _postPromptLlmParams = parameters;
+        _postPromptLlmParams = parameters ?? new Dictionary<string, object>();
         return this;
     }
 

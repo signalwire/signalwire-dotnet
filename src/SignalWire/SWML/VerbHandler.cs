@@ -35,7 +35,7 @@ public class SWMLVerbHandler
     /// <summary>
     /// Build a configuration for this verb from the provided arguments.
     /// </summary>
-    public virtual Dictionary<string, object?> BuildConfig(Dictionary<string, object?> kwargs) =>
+    public virtual Dictionary<string, object?> BuildConfig(Dictionary<string, object?>? kwargs = null) =>
         throw new NotImplementedException($"{GetType().Name}.BuildConfig must be implemented");
 }
 
@@ -142,9 +142,9 @@ public class AIVerbHandler : SWMLVerbHandler
     /// contract. Pulls the recognised keys out of <paramref name="kwargs"/> and
     /// delegates to the strongly-typed overload.
     /// </summary>
-    public override Dictionary<string, object?> BuildConfig(Dictionary<string, object?> kwargs)
+    public override Dictionary<string, object?> BuildConfig(Dictionary<string, object?>? kwargs = null)
     {
-        ArgumentNullException.ThrowIfNull(kwargs);
+        kwargs ??= new Dictionary<string, object?>();
 
         var promptText = kwargs.TryGetValue("prompt_text", out var pt) ? pt as string : null;
         var promptPom = kwargs.TryGetValue("prompt_pom", out var pp)

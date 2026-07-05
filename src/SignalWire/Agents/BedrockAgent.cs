@@ -167,7 +167,7 @@ public class BedrockAgent : AgentBase
     /// uses OpenAI configured server-side). Warns and no-ops. (Python parity:
     /// <c>set_post_prompt_llm_params</c>.)
     /// </summary>
-    public new BedrockAgent SetPostPromptLlmParams(Dictionary<string, object> parameters)
+    public new BedrockAgent SetPostPromptLlmParams(Dictionary<string, object>? parameters = null)
     {
         _ = parameters;
         _bedrockLogger.Warn(
@@ -179,7 +179,7 @@ public class BedrockAgent : AgentBase
     /// Set prompt LLM parameters — use <see cref="SetInferenceParams"/> instead for
     /// Bedrock. Warns and no-ops. (Python parity: <c>set_prompt_llm_params</c>.)
     /// </summary>
-    public new BedrockAgent SetPromptLlmParams(Dictionary<string, object> parameters)
+    public new BedrockAgent SetPromptLlmParams(Dictionary<string, object>? parameters = null)
     {
         _ = parameters;
         _bedrockLogger.Warn("set_prompt_llm_params() called - use set_inference_params() for Bedrock");

@@ -12,13 +12,6 @@
               "type": "any",
               "required": false,
               "default": "()"
-            },
-            {
-              "name": "kwargs",
-              "kind": "var_keyword",
-              "type": "any",
-              "required": false,
-              "default": {}
             }
           ],
           "returns": "class:signalwire.rest.client.RestClient"
@@ -561,8 +554,9 @@
                 },
                 {
                   "name": "parameters",
-                  "type": "dict<string,any>",
-                  "required": true
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.agents.bedrock.BedrockAgent"
@@ -575,8 +569,9 @@
                 },
                 {
                   "name": "parameters",
-                  "type": "dict<string,any>",
-                  "required": true
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.agents.bedrock.BedrockAgent"
@@ -4654,8 +4649,9 @@
                 },
                 {
                   "name": "parameters",
-                  "type": "dict<string,any>",
-                  "required": true
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -4668,8 +4664,9 @@
                 },
                 {
                   "name": "parameters",
-                  "type": "dict<string,any>",
-                  "required": true
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -8678,8 +8675,9 @@
                 },
                 {
                   "name": "kwargs",
-                  "type": "dict<string,any>",
-                  "required": true
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "dict<string,any>"
@@ -21754,13 +21752,6 @@
                 {
                   "name": "self",
                   "kind": "self"
-                },
-                {
-                  "name": "params",
-                  "kind": "var_keyword",
-                  "type": "any",
-                  "required": false,
-                  "default": {}
                 }
               ],
               "returns": "dict<string,any>"
