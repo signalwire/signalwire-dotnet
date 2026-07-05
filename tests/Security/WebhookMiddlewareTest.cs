@@ -271,6 +271,74 @@ public class WebhookMiddlewareTest : IDisposable
     }
 
     // =====================================================================
+    // Decomposed cross-port validate() contract (porting-sdk oracle:
+    // signalwire.core.security.webhook_middleware.validate(method, url,
+    // headers, body, *, signing_key) -> optional<(status, headers, body)>).
+    // The .NET port ships this decomposed core AS WebhookValidationMiddleware
+    // .Validate (signing_key bound on the constructed instance); these tests
+    // pin the exact decomposed return shape the enumerator maps to the oracle
+    // free function: null on pass, a (status, headers, body) triple on reject.
+    // =====================================================================
+
+    [Fact]
+    public void Decomposed_ValidateReturnsNullTripleOnValidSignature()
+    {
+        const string url = "http://agent.example.com/webhook";
+        const string body = "{\"event\":\"call.state\"}";
+        var sig = HexHmacSha1(SigningKey, url + body);
+
+        var mw = new WebhookValidationMiddleware(SigningKey);
+        var headers = new Dictionary<string, string>
+        {
+            ["X-SignalWire-Signature"] = sig,
+            ["Host"] = "agent.example.com",
+        };
+
+        // Decomposed contract: pass -> None/null (no reject triple).
+        (int Status, Dictionary<string, string> Headers, string Body)? result =
+            mw.Validate("POST", "/webhook", headers, body);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Decomposed_ValidateReturnsRejectTripleOnBadSignature()
+    {
+        var mw = new WebhookValidationMiddleware(SigningKey);
+        var headers = new Dictionary<string, string>
+        {
+            ["X-SignalWire-Signature"] = new string('0', 40),
+            ["Host"] = "agent.example.com",
+        };
+
+        // Decomposed contract: reject -> a (status, headers, body) triple.
+        var result = mw.Validate("POST", "/webhook", headers, "{}");
+        Assert.NotNull(result);
+        var (status, respHeaders, respBody) = result!.Value;
+        Assert.Equal(403, status);              // status: int
+        Assert.NotNull(respHeaders);            // headers: dict<string,string>
+        Assert.IsType<Dictionary<string, string>>(respHeaders);
+        Assert.Equal("", respBody);             // body: string (no leak)
+    }
+
+    [Fact]
+    public void Decomposed_ValidateHonorsTwilioSignatureAlias()
+    {
+        const string url = "http://agent.example.com/webhook";
+        const string body = "{\"legacy\":true}";
+        var sig = HexHmacSha1(SigningKey, url + body);
+
+        var mw = new WebhookValidationMiddleware(SigningKey);
+        // Only the X-Twilio-Signature alias present (no X-SignalWire-Signature).
+        var headers = new Dictionary<string, string>
+        {
+            ["X-Twilio-Signature"] = sig,
+            ["Host"] = "agent.example.com",
+        };
+
+        Assert.Null(mw.Validate("POST", "/webhook", headers, body));
+    }
+
+    // =====================================================================
     // AgentBase integration — POST / (SWML)
     // =====================================================================
 

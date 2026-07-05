@@ -7341,6 +7341,39 @@
             }
           }
         }
+      },
+      "functions": {
+        "validate": {
+          "params": [
+            {
+              "name": "method",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "url",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "headers",
+              "type": "dict<string,string>",
+              "required": true
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "signing_key",
+              "kind": "keyword",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "returns": "optional<tuple<int,dict<string,string>,string>>"
+        }
       }
     },
     "signalwire.core.security.webhook_validator": {

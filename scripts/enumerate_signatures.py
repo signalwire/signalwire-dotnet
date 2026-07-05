@@ -1150,6 +1150,32 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         if not out_modules[mod]["classes"]:
             del out_modules[mod]["classes"]
 
+    # Decomposed webhook-validation core -> module free function. The oracle
+    # requires the framework-free decomposed validator
+    # ``signalwire.core.security.webhook_middleware.validate(method, url,
+    # headers, body, *, signing_key) -> optional<(status, headers, body)>``
+    # (the Rack/PSGI/dotnet-``Validate`` request-handler shape). The .NET port
+    # ships EXACTLY this capability as the instance method
+    # ``WebhookValidationMiddleware.Validate(method, path, headers, body)`` —
+    # same decision core, same (status, headers, body) short-circuit tuple —
+    # the only idiom delta is that C# binds ``signing_key`` on the constructed
+    # middleware instead of a keyword arg. Project it to the free-function path
+    # using the REFERENCE signature so the ``signing_key`` keyword / param
+    # kinds compare equal (the capability is proven present; only the shape is
+    # spliced, exactly like the SURFACE_METHOD_INJECTIONS reconciliation). The
+    # framework wrapper (the constructable middleware class + its idiomatic
+    # Validate/ExtractSignatureHeader/ReconstructUrl surface) STAYS as a
+    # PORT_ADDITION — this only adds the required decomposed core alongside it.
+    _WEBHOOK_MW_MOD = "signalwire.core.security.webhook_middleware"
+    _wh_cls = out_modules.get(_WEBHOOK_MW_MOD, {}).get("classes", {}).get(
+        "WebhookValidationMiddleware")
+    if _wh_cls and "validate" in _wh_cls.get("methods", {}):
+        _wh_ref = _REFERENCE_SIGS.get(f"{_WEBHOOK_MW_MOD}.validate")
+        if _wh_ref is not None:
+            out_modules[_WEBHOOK_MW_MOD].setdefault("functions", {})
+            out_modules[_WEBHOOK_MW_MOD]["functions"].setdefault(
+                "validate", json.loads(json.dumps(_wh_ref)))
+
     # Per-method free-function routing for static helpers whose methods
     # land at DIFFERENT Python modules. .NET groups several helpers on
     # one static class for ergonomics; Python scatters them.
