@@ -318,6 +318,15 @@ sched_gate GEN-FRESH desc="generate_rest.py --check (generated REST layer matche
 sched_gate GEN-FRESH-TESTS desc="generate_rest_tests.py --check (generated REST wire tests match specs)" \
     -- python3 scripts/generate_rest_tests.py --check
 
+sched_gate GEN-FRESH-RELAY desc="generate_relay_protocol.py --check (generated RELAY types match relay-protocol)" \
+    -- python3 scripts/generate_relay_protocol.py --check
+
+sched_gate GEN-FRESH-SWAIG desc="generate_swaig_payloads.py --check (generated SWAIG payloads match swaig-specs)" \
+    -- python3 scripts/generate_swaig_payloads.py --check
+
+sched_gate GEN-FRESH-SWML desc="generate_swml_verbs.py --check (generated SWML-verb types match schema.json)" \
+    -- python3 scripts/generate_swml_verbs.py --check
+
 sched_gate NO-CHEAT desc="audit_no_cheat_tests" \
     -- python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"
 
