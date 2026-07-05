@@ -80,6 +80,28 @@ jobs:
             pip install ./signalwire-python
           fi
 
+      # TEMP DIAGNOSTIC: the TEST gate fails CS0234 ('SignalWire.Core.Agent does not
+      # exist') for net8/9/10 in CI only — it passes 1800 tests in every local config.
+      # This dumps the exact state so the runner tells us the mechanism instead of
+      # guessing. Remove once the root cause is fixed.
+      - name: DIAGNOSE dotnet CS0234
+        working-directory: signalwire-dotnet
+        continue-on-error: true
+        run: |
+          echo "===== SDKs ====="; dotnet --list-sdks
+          echo "===== RUNTIMES ====="; dotnet --list-runtimes
+          echo "===== which dotnet ====="; command -v dotnet; dotnet --version
+          echo "===== does the SDK build net8.0 STANDALONE? (isolate SDK from tests) ====="
+          dotnet build src/SignalWire/SignalWire.csproj -f net8.0 -c Debug --nologo 2>&1 | tail -30
+          echo "===== does the SDK DLL contain Core.Agent types? ====="
+          find src/SignalWire/bin -name 'SignalWire.dll' | while read d; do
+            echo "-- $d --"; dotnet-ildasm "$d" 2>/dev/null | grep -i 'Core.Agent' | head -3 || \
+            (command -v monodis >/dev/null && monodis "$d" 2>/dev/null | grep -i 'ToolRegistry' | head) || \
+            echo "  (no ildasm; checking types via a tiny probe below)"
+          done
+          echo "===== build the TEST project net8.0 with FULL output ====="
+          dotnet build tests/SignalWire.Tests.csproj -f net8.0 -c Debug --nologo -v n 2>&1 | grep -iE 'error|Agent|AspNetCore|FrameworkReference|-> ' | head -40
+
       - name: Run CI gate script (TEST -> SIGNATURES -> DRIFT -> NO-CHEAT)
         working-directory: signalwire-dotnet
         env:
