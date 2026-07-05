@@ -11,8 +11,15 @@ obj/
 TestResults/
 *.nupkg
 scripts/__pycache__/
-core
-core.*
+# Unix core dumps ONLY. These MUST be anchored (leading /) and match files, not
+# dirs — a bare `core` pattern matches any path component named core at any depth,
+# and on a case-insensitive filesystem (macOS) it also swallowed the entire
+# src/SignalWire/Core/ SOURCE tree, leaving those .cs files untracked. That built a
+# green-but-incomplete SDK on CI's fresh checkout and failed the tests with CS0234
+# (SignalWire.Core.Agent "does not exist"). Anchor + trailing-nothing keeps them
+# scoped to real core dumps at the repo root.
+/core
+/core.[0-9]*
 # dotnet-script tool provisioned by the SWAIG-CLI gate (scripts/run-ci.sh)
 .dotnet-tools/
 
