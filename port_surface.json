@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 152598674a8a221e84f29e92d59ad6ef57657c6e",
+  "generated_from": "signalwire-dotnet @ cef274d0de93afc7eae7639644c96a7aaad9e69d",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -561,10 +561,13 @@
         "WebhookValidationMiddleware": [
           "__init__",
           "extract_signature_header",
-          "reconstruct_url"
+          "reconstruct_url",
+          "validate"
         ]
       },
-      "functions": []
+      "functions": [
+        "validate"
+      ]
     },
     "signalwire.core.security.webhook_validator": {
       "classes": {},
@@ -1010,7 +1013,8 @@
       "classes": {
         "AIAction": [
           "__init__",
-          "get_stop_method"
+          "get_stop_method",
+          "stop"
         ],
         "Action": [
           "__init__",
@@ -1032,6 +1036,7 @@
           "resolve",
           "result",
           "state",
+          "stop",
           "wait"
         ],
         "Call": [
@@ -1116,59 +1121,67 @@
           "collect_result",
           "get_stop_method",
           "handle_event",
-          "start_input_timers"
+          "pause",
+          "resume",
+          "start_input_timers",
+          "stop",
+          "volume"
         ],
         "DetectAction": [
           "__init__",
           "detect_result",
           "get_stop_method",
-          "handle_event"
+          "handle_event",
+          "stop"
         ],
         "FaxAction": [
           "__init__",
           "fax_type",
-          "get_stop_method"
-        ],
-        "PausableAction": [
-          "pause",
-          "resume"
+          "get_stop_method",
+          "stop"
         ],
         "PayAction": [
           "__init__",
-          "get_stop_method"
+          "get_stop_method",
+          "stop"
         ],
         "PlayAction": [
           "__init__",
-          "get_stop_method"
+          "get_stop_method",
+          "pause",
+          "resume",
+          "stop",
+          "volume"
         ],
         "RecordAction": [
           "__init__",
           "duration",
           "get_stop_method",
+          "pause",
+          "resume",
           "size",
+          "stop",
           "url"
         ],
         "StandaloneCollectAction": [
           "__init__",
-          "start_input_timers"
-        ],
-        "StoppableAction": [
+          "start_input_timers",
           "stop"
         ],
         "StreamAction": [
           "__init__",
-          "get_stop_method"
+          "get_stop_method",
+          "stop"
         ],
         "TapAction": [
           "__init__",
-          "get_stop_method"
+          "get_stop_method",
+          "stop"
         ],
         "TranscribeAction": [
           "__init__",
-          "get_stop_method"
-        ],
-        "VolumeAction": [
-          "volume"
+          "get_stop_method",
+          "stop"
         ]
       },
       "functions": []

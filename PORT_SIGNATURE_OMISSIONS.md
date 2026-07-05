@@ -183,6 +183,8 @@ signalwire.relay.call.PlayAction.volume: .NET action subcommand returns the prot
 signalwire.relay.call.RecordAction.__init__: .NET Action subclass ctors take (control_id, call_id, node_id, client) for direct routing; Python passes (call, control_id) and pulls the rest from the Call object
 signalwire.relay.call.RecordAction.pause: .NET action subcommand returns the protocol response Dictionary for inspection; Python returns void since callers chain via the Action object state
 signalwire.relay.call.RecordAction.resume: .NET action subcommand returns the protocol response Dictionary for inspection; Python returns void since callers chain via the Action object state
+signalwire.relay.call.CollectAction.pause: .NET CollectAction.Pause returns void since callers chain via the Action object state; Python returns dict (the protocol response from the pause subcommand)
+signalwire.relay.call.CollectAction.resume: .NET CollectAction.Resume returns void since callers chain via the Action object state; Python returns dict (the protocol response from the resume subcommand)
 signalwire.relay.call.StreamAction.__init__: .NET Action subclass ctors take (control_id, call_id, node_id, client) for direct routing; Python passes (call, control_id) and pulls the rest from the Call object
 signalwire.relay.call.TapAction.__init__: .NET Action subclass ctors take (control_id, call_id, node_id, client) for direct routing; Python passes (call, control_id) and pulls the rest from the Call object
 signalwire.relay.call.TranscribeAction.__init__: .NET Action subclass ctors take (control_id, call_id, node_id, client) for direct routing; Python passes (call, control_id) and pulls the rest from the Call object

@@ -17556,6 +17556,15 @@
                 }
               ],
               "returns": "string"
+            },
+            "stop": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "dict<string,any>"
             }
           }
         },
@@ -17783,6 +17792,15 @@
                 }
               ],
               "returns": "string"
+            },
+            "stop": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
             },
             "wait": {
               "params": [
@@ -18993,11 +19011,58 @@
               ],
               "returns": "void"
             },
+            "pause": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "behavior",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                }
+              ],
+              "returns": "void"
+            },
+            "resume": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
             "start_input_timers": {
               "params": [
                 {
                   "name": "self",
                   "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "stop": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
+            "volume": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "db",
+                  "type": "float",
+                  "required": true
                 }
               ],
               "returns": "void"
@@ -19066,6 +19131,15 @@
                 }
               ],
               "returns": "void"
+            },
+            "stop": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "dict<string,any>"
             }
           }
         },
@@ -19123,28 +19197,15 @@
                 }
               ],
               "returns": "string"
-            }
-          }
-        },
-        "PausableAction": {
-          "methods": {
-            "pause": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "void"
             },
-            "resume": {
+            "stop": {
               "params": [
                 {
                   "name": "self",
                   "kind": "self"
                 }
               ],
-              "returns": "void"
+              "returns": "dict<string,any>"
             }
           }
         },
@@ -19187,6 +19248,15 @@
                 }
               ],
               "returns": "string"
+            },
+            "stop": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "dict<string,any>"
             }
           }
         },
@@ -19229,6 +19299,53 @@
                 }
               ],
               "returns": "string"
+            },
+            "pause": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "behavior",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                }
+              ],
+              "returns": "void"
+            },
+            "resume": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "stop": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
+            "volume": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "db",
+                  "type": "float",
+                  "required": true
+                }
+              ],
+              "returns": "void"
             }
           }
         },
@@ -19281,6 +19398,30 @@
               ],
               "returns": "string"
             },
+            "pause": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "behavior",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                }
+              ],
+              "returns": "void"
+            },
+            "resume": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
             "size": {
               "params": [
                 {
@@ -19289,6 +19430,15 @@
                 }
               ],
               "returns": "int"
+            },
+            "stop": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "dict<string,any>"
             },
             "url": {
               "params": [
@@ -19340,11 +19490,7 @@
                 }
               ],
               "returns": "void"
-            }
-          }
-        },
-        "StoppableAction": {
-          "methods": {
+            },
             "stop": {
               "params": [
                 {
@@ -19352,7 +19498,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "void"
+              "returns": "dict<string,any>"
             }
           }
         },
@@ -19395,6 +19541,15 @@
                 }
               ],
               "returns": "string"
+            },
+            "stop": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "dict<string,any>"
             }
           }
         },
@@ -19437,6 +19592,15 @@
                 }
               ],
               "returns": "string"
+            },
+            "stop": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "dict<string,any>"
             }
           }
         },
@@ -19479,24 +19643,15 @@
                 }
               ],
               "returns": "string"
-            }
-          }
-        },
-        "VolumeAction": {
-          "methods": {
-            "volume": {
+            },
+            "stop": {
               "params": [
                 {
                   "name": "self",
                   "kind": "self"
-                },
-                {
-                  "name": "db",
-                  "type": "float",
-                  "required": true
                 }
               ],
-              "returns": "void"
+              "returns": "dict<string,any>"
             }
           }
         }

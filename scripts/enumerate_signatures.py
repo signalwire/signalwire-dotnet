@@ -48,7 +48,7 @@ from enumerate_surface import (  # type: ignore
     SURFACE_METHOD_ALIASES, FREE_FUNCTION_CLASSES, FREE_FUNCTION_PROJECTIONS,
     TOPLEVEL_FUNCTION_PROJECTIONS, TOPLEVEL_FUNCTION_NAMES,
     SURFACE_METHOD_ALLOWLIST, _SWML_SERVICE_ALLOW, _RELAY_EVENT_ONLY,
-    RELAY_ACTION_MIXIN_BASES, _SKILL_PROPERTY_EXTRAS,
+    RELAY_ACTION_CONTROL_METHODS, _SKILL_PROPERTY_EXTRAS,
     SKILL_INHERITED_PROJECTIONS, _SKILLBASE_INHERITABLE,
     SURFACE_METHOD_INJECTIONS,
 )
@@ -1016,37 +1016,27 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             k: v for k, v in swml_svc["methods"].items() if k in _SWML_SERVICE_ALLOW
         }
 
-    # Relay Action mixin bases: split pause/resume/stop/volume off the concrete
-    # action classes onto the reference PausableAction / StoppableAction /
-    # VolumeAction bases (Python's inheritance idiom); remove them from the
-    # concrete actions so the surface compares equal. Mirrors enumerate_surface's
-    # RELAY_ACTION_MIXIN_BASES post-process. Each base method's signature is
-    # taken from whichever concrete action currently carries it.
+    # Relay Action control surface: the oracle projects stop/pause/resume/volume
+    # directly onto each concrete action. C# declares pause/resume/volume on the
+    # concrete classes (so their signatures are enumerated naturally), while
+    # `stop` lives on the shared Action base (via GetStopMethod) — project the
+    # reference `stop` signature onto each concrete action per
+    # RELAY_ACTION_CONTROL_METHODS. Mirrors enumerate_surface's projection; no
+    # synthetic base classes are emitted.
     call_mod = out_modules.get("signalwire.relay.call")
     if call_mod is not None:
         call_classes = call_mod["classes"]
-        mixin_sigs: dict[str, dict] = {}
-        for base, meths in RELAY_ACTION_MIXIN_BASES.items():
-            for cls_name, cls_entry in call_classes.items():
-                if cls_name in RELAY_ACTION_MIXIN_BASES:
-                    continue
-                for meth in meths:
-                    if meth in cls_entry.get("methods", {}) and meth not in mixin_sigs:
-                        mixin_sigs[meth] = cls_entry["methods"][meth]
-        mixin_method_names: set[str] = set()
-        for base, meths in RELAY_ACTION_MIXIN_BASES.items():
-            base_methods = {m: mixin_sigs[m] for m in meths if m in mixin_sigs}
-            if base_methods:
-                call_classes.setdefault(base, {"methods": {}})
-                call_classes[base]["methods"].update(base_methods)
-            mixin_method_names.update(meths)
-        for cls_name, cls_entry in call_classes.items():
-            if cls_name in RELAY_ACTION_MIXIN_BASES:
+        for cls_name, controls in RELAY_ACTION_CONTROL_METHODS.items():
+            cls_entry = call_classes.get(cls_name)
+            if cls_entry is None:
                 continue
-            cls_entry["methods"] = {
-                k: v for k, v in cls_entry.get("methods", {}).items()
-                if k not in mixin_method_names
-            }
+            methods = cls_entry.setdefault("methods", {})
+            for meth in controls:
+                if meth in methods:
+                    continue
+                ref_sig = _reference_sig("signalwire.relay.call", cls_name, meth)
+                if ref_sig is not None:
+                    methods[meth] = ref_sig
 
     # REST base-class consolidation (item H): Python declares an abstract base
     # hierarchy in signalwire.rest._base — BaseResource(__init__) ->

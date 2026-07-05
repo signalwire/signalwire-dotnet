@@ -796,15 +796,25 @@ _SWML_SERVICE_ALLOW = {
 # event classes to that single method.
 _RELAY_EVENT_ONLY = {"from_payload"}
 
-# Relay Action mixin bases: the reference splits pause/resume/stop/volume onto
-# PausableAction / StoppableAction / VolumeAction bases that the concrete
-# actions inherit. .NET declares those methods directly on the concrete action
-# classes. Project each method onto the reference base class and REMOVE it from
-# the concrete action so the surface matches. reference_base -> [methods].
-RELAY_ACTION_MIXIN_BASES: dict[str, list[str]] = {
-    "PausableAction": ["pause", "resume"],
-    "StoppableAction": ["stop"],
-    "VolumeAction": ["volume"],
+# Relay Action control surface: the reference projects the control methods
+# (stop/pause/resume/volume) directly onto each CONCRETE action (the internal
+# Stoppable/Pausable/Volume bases are NOT cross-port symbols). .NET declares
+# pause/resume/volume directly on the concrete action classes, and `stop` on the
+# shared Action base (invoked via GetStopMethod). Project the canonical control
+# method NAMES onto each concrete action per this map so the surface matches the
+# oracle. reference_action -> [control methods it exposes].
+RELAY_ACTION_CONTROL_METHODS: dict[str, list[str]] = {
+    "PlayAction": ["stop", "pause", "resume", "volume"],
+    "RecordAction": ["stop", "pause", "resume"],
+    "CollectAction": ["stop", "pause", "resume", "volume"],
+    "StandaloneCollectAction": ["stop"],
+    "AIAction": ["stop"],
+    "DetectAction": ["stop"],
+    "FaxAction": ["stop"],
+    "PayAction": ["stop"],
+    "StreamAction": ["stop"],
+    "TapAction": ["stop"],
+    "TranscribeAction": ["stop"],
 }
 
 
@@ -844,8 +854,9 @@ METHOD_RE = re.compile(
     r"(?:(?:override|virtual|static|async|sealed|new|extern|unsafe|readonly|partial)\s+)*"
     # Return type. Two shapes:
     #   plain identifier with generics/arrays/nullable, OR
-    #   parenthesised tuple type like `(string User, string Password)`.
-    r"(?:[A-Za-z_][\w<>?,.\[\] *&]*\s+|\([^)]+\)\s+)?"
+    #   parenthesised tuple type like `(string User, string Password)`,
+    #   optionally nullable: `(int Status, ...)? Validate(`.
+    r"(?:[A-Za-z_][\w<>?,.\[\] *&]*\s+|\([^)]+\)\??\s+)?"
     r"(?P<name>[A-Z][A-Za-z0-9_]*)"
     # Optional generic parameter list, then mandatory opening paren.
     r"(?:\s*<[^>]*>)?\s*\("
@@ -1381,21 +1392,36 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
                 set(swml_classes["SWMLService"]) & _SWML_SERVICE_ALLOW
             )
 
-    # Relay Action mixin bases: split pause/resume/stop/volume off the concrete
-    # action classes onto the reference PausableAction / StoppableAction /
-    # VolumeAction bases (Python's inheritance idiom). Remove them from the
-    # concrete actions so the surface compares equal.
+    # Relay Action control surface: the oracle projects stop/pause/resume/volume
+    # directly onto each concrete action. `stop` lives on the shared C# Action
+    # base (via GetStopMethod) and pause/resume/volume are declared on the
+    # concrete classes; project the canonical control-method names onto each
+    # concrete action per RELAY_ACTION_CONTROL_METHODS so the surface compares
+    # equal to the reference. No synthetic base classes are emitted.
     call_mod = modules.get("signalwire.relay.call")
     if call_mod is not None:
         call_classes = call_mod["classes"]
-        mixin_methods: set[str] = set()
-        for base, meths in RELAY_ACTION_MIXIN_BASES.items():
-            call_classes[base] = sorted(meths)
-            mixin_methods.update(meths)
-        for cls_name, cls_meths in list(call_classes.items()):
-            if cls_name in RELAY_ACTION_MIXIN_BASES:
-                continue
-            call_classes[cls_name] = sorted(set(cls_meths) - mixin_methods)
+        for cls_name, controls in RELAY_ACTION_CONTROL_METHODS.items():
+            if cls_name in call_classes:
+                call_classes[cls_name] = sorted(
+                    set(call_classes[cls_name]) | set(controls)
+                )
+
+    # Webhook middleware decomposed validator: the oracle exposes
+    # ``signalwire.core.security.webhook_middleware.validate`` as a module
+    # free-function (the framework-free request-handler shape). .NET ships this
+    # capability as the instance method WebhookValidationMiddleware.Validate
+    # (signing_key bound on the constructed middleware). Project the free-function
+    # name onto the module so the surface compares equal — mirrors the identical
+    # projection in enumerate_signatures.py. The constructable middleware class +
+    # its idiomatic Validate surface STAYS a PORT_ADDITION alongside the core.
+    _wh_mod = modules.get("signalwire.core.security.webhook_middleware")
+    if _wh_mod is not None:
+        _wh_cls = _wh_mod["classes"].get("WebhookValidationMiddleware")
+        if _wh_cls and "validate" in _wh_cls:
+            _wh_mod.setdefault("functions", [])
+            if "validate" not in _wh_mod["functions"]:
+                _wh_mod["functions"].append("validate")
 
     # REST base-class consolidation (item H): Python declares an abstract base
     # hierarchy in signalwire.rest._base — BaseResource(__init__) ->

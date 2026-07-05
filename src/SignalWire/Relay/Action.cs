@@ -234,7 +234,13 @@ public class PlayAction : Action
 
     public override string GetStopMethod() => "calling.play.stop";
 
-    public void Pause() => ExecuteSubcommand("calling.play.pause");
+    public void Pause(string? behavior = null)
+    {
+        var extras = behavior is null
+            ? null
+            : new Dictionary<string, object?> { ["behavior"] = behavior };
+        ExecuteSubcommand("calling.play.pause", extras);
+    }
 
     public void Resume() => ExecuteSubcommand("calling.play.resume");
 
@@ -294,14 +300,24 @@ public class CollectAction : Action
     public override string GetStopMethod() =>
         _isPlayAndCollect ? "calling.play_and_collect.stop" : "calling.collect.stop";
 
+    /// <summary>Pause the running play_and_collect prompt.</summary>
+    public void Pause(string? behavior = null)
+    {
+        var extras = behavior is null
+            ? null
+            : new Dictionary<string, object?> { ["behavior"] = behavior };
+        ExecuteSubcommand("calling.play_and_collect.pause", extras);
+    }
+
+    /// <summary>Resume a paused play_and_collect prompt.</summary>
+    public void Resume() => ExecuteSubcommand("calling.play_and_collect.resume");
+
     /// <summary>
     /// Notify the server to start input timers now rather than waiting
     /// for the initial-timeout to expire naturally.
     /// </summary>
     public void StartInputTimers() =>
-        ExecuteSubcommand(_isPlayAndCollect
-            ? "calling.collect.start_input_timers"
-            : "calling.collect.start_input_timers");
+        ExecuteSubcommand("calling.collect.start_input_timers");
 
     /// <summary>play_and_collect-only: change playback volume mid-prompt.</summary>
     public void Volume(double db) =>

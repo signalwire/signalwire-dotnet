@@ -605,6 +605,46 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
         finally { bound.Client.Disconnect(); }
     }
 
+    [Fact]
+    public async Task PlayAndCollect_PauseResumeVolume_Journal()
+    {
+        if (Skipped()) return;
+        using var bound = await AnsweredInboundCall("call-pac-prv");
+        try
+        {
+            var call = bound.Client.GetCall("call-pac-prv")!;
+            var action = (CollectAction)call.PlayAndCollect(new()
+            {
+                ["control_id"] = "pac-prv",
+                ["play"] = new List<Dictionary<string, object?>>
+                {
+                    new()
+                    {
+                        ["type"] = "silence",
+                        ["params"] = new Dictionary<string, object?> { ["duration"] = 60 },
+                    },
+                },
+                ["collect"] = new Dictionary<string, object?>
+                {
+                    ["digits"] = new Dictionary<string, object?> { ["max"] = 1 },
+                },
+            });
+            await Task.Delay(100);
+            action.Pause();
+            action.Resume();
+            action.Volume(-3.0);
+            await Task.Delay(200);
+
+            Assert.NotEmpty(bound.Harness.Journal.Recv("calling.play_and_collect.pause"));
+            Assert.NotEmpty(bound.Harness.Journal.Recv("calling.play_and_collect.resume"));
+            var vol = bound.Harness.Journal.Recv("calling.play_and_collect.volume");
+            Assert.NotEmpty(vol);
+            Assert.Equal(-3.0,
+                vol[^1].Params()!.Value.GetProperty("volume").GetDouble());
+        }
+        finally { bound.Client.Disconnect(); }
+    }
+
     // ------------------------------------------------------------------
     // CollectAction (standalone)
     // ------------------------------------------------------------------
