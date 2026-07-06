@@ -62,6 +62,28 @@ PORTING_SDK_DIR="$(resolve_porting_sdk)" || {
     exit 2
 }
 
+# The signalwire-python reference SDK. The Layer-D BEHAVIORAL-* differs must be
+# told where it lives via --python-sdk (unlike diff_port_emission.py they have no
+# ~/src fallback). Resolve it CI-portably the same way as porting-sdk: env-var
+# override, else sibling checkout (the cross-port workflow clones it adjacent).
+resolve_python_sdk() {
+    if [ -n "${PYTHON_SDK:-}" ] && [ -d "$PYTHON_SDK/signalwire" ]; then
+        echo "$PYTHON_SDK"
+        return 0
+    fi
+    if [ -d "$PORT_ROOT/../signalwire-python/signalwire" ]; then
+        (cd "$PORT_ROOT/../signalwire-python" && pwd)
+        return 0
+    fi
+    return 1
+}
+
+PYTHON_SDK_DIR="$(resolve_python_sdk)" || {
+    echo "FATAL: signalwire-python not found, clone it adjacent to this repo" >&2
+    echo "       (expected $PORT_ROOT/../signalwire-python or \$PYTHON_SDK env var)" >&2
+    exit 2
+}
+
 SPAWNED_PIDS=()
 
 # ---------------------------------------------------------------------------
@@ -293,6 +315,19 @@ echo "==> ensuring mock servers are running on host"
 ensure_mock_signalwire || exit 2
 ensure_mock_relay || exit 2
 
+# Pre-build the Layer-D DumpCorpus tool ONCE before scheduling. dump-corpus.sh
+# also builds on each call, but the 5 BEHAVIORAL-* gates share res=behavioral so
+# they serialize; building here first makes each gate's build a no-op incremental
+# and guarantees the tool exists before any gate runs (no concurrent build race
+# on tools/DumpCorpus/bin). Route all MSBuild output to stderr; if dotnet is
+# absent locally the gates fall back to docker in the wrapper, so skip the
+# host pre-build in that case.
+echo "==> pre-building Layer-D DumpCorpus tool"
+if command -v dotnet >/dev/null 2>&1; then
+    dotnet build "$PORT_ROOT/tools/DumpCorpus/DumpCorpus.csproj" -c Release -v quiet 1>&2 \
+        || { echo "FATAL: DumpCorpus pre-build failed" >&2; exit 2; }
+fi
+
 # ---- register gates ----------------------------------------------------------
 sched_init "$@"
 
@@ -340,6 +375,35 @@ sched_gate SPEC-PARITY defer=1 desc="implemented routes == canonical spec (modul
 sched_gate EMISSION desc="diff_port_emission vs python to_dict()" \
     -- python3 "$PORTING_SDK_DIR/scripts/diff_port_emission.py" \
         --dump-cmd "bash $PORT_ROOT/scripts/emit-corpus.sh"
+
+# ---- Layer D: BEHAVIORAL coverage --------------------------------------------
+# Diff the .NET port's runtime behavior (tools/DumpCorpus, one surface each) vs
+# the python oracle. The dump wrapper routes all MSBuild chatter to stderr and
+# writes ONLY the corpus JSON to stdout, so the differ parses a clean object.
+sched_gate BEHAVIORAL-WIRE res=behavioral desc="diff_port_wire vs python oracle (Layer D)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_wire.py" \
+        --port dotnet --python-sdk "$PYTHON_SDK_DIR" \
+        --dump-cmd "bash $PORT_ROOT/scripts/dump-corpus.sh wire"
+
+sched_gate BEHAVIORAL-SWML res=behavioral desc="diff_port_swml vs python oracle (Layer D)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_swml.py" \
+        --port dotnet --python-sdk "$PYTHON_SDK_DIR" \
+        --dump-cmd "bash $PORT_ROOT/scripts/dump-corpus.sh swml"
+
+sched_gate BEHAVIORAL-STATE res=behavioral desc="diff_port_state vs python oracle (Layer D)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_state.py" \
+        --port dotnet --python-sdk "$PYTHON_SDK_DIR" \
+        --dump-cmd "bash $PORT_ROOT/scripts/dump-corpus.sh state"
+
+sched_gate BEHAVIORAL-HTTP res=behavioral desc="diff_port_http vs python oracle (Layer D)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_http.py" \
+        --port dotnet --python-sdk "$PYTHON_SDK_DIR" \
+        --dump-cmd "bash $PORT_ROOT/scripts/dump-corpus.sh http"
+
+sched_gate BEHAVIORAL-WIRE-RELAY res=behavioral desc="diff_port_wire_relay vs python oracle (Layer D)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_wire_relay.py" \
+        --port dotnet --python-sdk "$PYTHON_SDK_DIR" \
+        --dump-cmd "bash $PORT_ROOT/scripts/dump-corpus.sh wire-relay"
 
 sched_gate FMT defer=1 desc="dotnet format whitespace (local: auto-fix; CI: --verify)" \
     --fn fmt_gate
