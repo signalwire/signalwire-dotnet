@@ -93,6 +93,22 @@ public sealed class SkillRegistry
         }
     }
 
+    /// <summary>The names EXPLICITLY registered via <see cref="RegisterSkill"/>,
+    /// sorted — the registration-only state (NOT the discoverable builtin
+    /// inventory). Mirrors Python's observable ``sorted(self._skills.keys())``,
+    /// which is registration-keyed and starts empty. Internal (Python's
+    /// <c>_skills</c> is private) — read only by the Layer-D dump, so it adds no
+    /// public-surface drift.</summary>
+    internal IReadOnlyList<string> GetRegisteredSkillNames()
+    {
+        lock (Lock)
+        {
+            var names = new List<string>(_registeredSkills.Keys);
+            names.Sort(StringComparer.Ordinal);
+            return names;
+        }
+    }
+
     /// <summary>Discover and return all available skills.
     /// Skills resolve on-demand, so there is nothing to eagerly register;
     /// this returns the discoverable inventory (mirrors <see cref="ListSkills"/>).

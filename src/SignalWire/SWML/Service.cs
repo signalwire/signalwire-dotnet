@@ -40,10 +40,6 @@ public class Service
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    private static readonly Regex SipUsernamePattern = new(
-        @"^[a-zA-Z0-9._-]+$",
-        RegexOptions.Compiled);
-
     private const int MaxBodySize = 1_048_576; // 1 MB
 
     private static readonly Regex SwaigFunctionNamePattern = new(
@@ -238,12 +234,34 @@ public class Service
     // Routing callbacks
     // ------------------------------------------------------------------
 
-    /// <summary>Register a callback for a sub-path under the service route.</summary>
+    /// <summary>Register a callback for a sub-path under the service route.
+    /// The path is normalized the same way as the Python reference
+    /// (swml_service.register_routing_callback): trailing slashes are stripped
+    /// and a leading slash is added, so lookup is consistent regardless of the
+    /// caller's spelling (<c>"/sip/"</c> and <c>"sip"</c> both key <c>"/sip"</c>).</summary>
     public void RegisterRoutingCallback(
         string path,
         Func<Dictionary<string, object?>?, Dictionary<string, string>, object?> callback)
     {
-        _routingCallbacks[path] = callback;
+        ArgumentNullException.ThrowIfNull(path);
+        var normalized = path.TrimEnd('/');
+        if (!normalized.StartsWith('/'))
+        {
+            normalized = "/" + normalized;
+        }
+        _routingCallbacks[normalized] = callback;
+    }
+
+    /// <summary>The normalized paths currently registered with a routing
+    /// callback, sorted. Mirrors the Python reference's
+    /// <c>sorted(self._routing_callbacks)</c> observable state. Internal
+    /// (Python's state is underscore-private) — read only by the Layer-D dump,
+    /// so it adds no public-surface drift.</summary>
+    internal IReadOnlyList<string> GetRoutingCallbackPaths()
+    {
+        var paths = new List<string>(_routingCallbacks.Keys);
+        paths.Sort(StringComparer.Ordinal);
+        return paths;
     }
 
     // ------------------------------------------------------------------
@@ -442,13 +460,19 @@ public class Service
             return JsonResponse(404, new { error = "Not found" });
         }
 
-        // Auth required for everything under the route
+        // Auth required for everything under the route. The framework-free
+        // dispatch core returns the BARE triple Python's
+        // _handle_request_core does: (401, {"WWW-Authenticate": "Basic"},
+        // json.dumps({"error": "Unauthorized"})). Content-Type / security
+        // headers are the HTTP layer's concern and are added by the adapters
+        // (DispatchAsync / RunHttp), not baked into the decision core.
         if (!CheckBasicAuth(headers))
         {
-            var authHeaders = SecurityHeaders();
-            authHeaders["Content-Type"] = "text/plain";
-            authHeaders["WWW-Authenticate"] = "Basic realm=\"SignalWire SWML Service\"";
-            return (401, authHeaders, "Unauthorized");
+            var authHeaders = new Dictionary<string, string>
+            {
+                ["WWW-Authenticate"] = "Basic",
+            };
+            return (401, authHeaders, "{\"error\":\"Unauthorized\"}");
         }
 
         // Parse body
@@ -496,8 +520,13 @@ public class Service
             {
                 case string route when route.Length > 0:
                     {
-                        var redirectHeaders = SecurityHeaders();
-                        redirectHeaders["Location"] = route;
+                        // Bare (307, {"Location": route}, "") — matching Python's
+                        // _handle_request_core. Security/Content-Type headers are
+                        // added by the HTTP-layer adapter, not the decision core.
+                        var redirectHeaders = new Dictionary<string, string>
+                        {
+                            ["Location"] = route,
+                        };
                         return (307, redirectHeaders, "");
                     }
                 case null:
@@ -510,14 +539,19 @@ public class Service
         return JsonResponse(404, new { error = "Not found" });
     }
 
-    /// <summary>Handle SWML document request.</summary>
+    /// <summary>Handle SWML document request. Returns the BARE
+    /// <c>(200, {}, body)</c> triple Python's <c>_handle_request_core</c>
+    /// returns — an EMPTY header map. Content-Type is set by the HTTP-layer
+    /// adapters (DispatchAsync / RunHttp), not by the decision core, so the
+    /// decomposed dispatch stays byte-identical across ports.</summary>
     protected virtual (int, Dictionary<string, string>, string) HandleSwmlRequest(
         string method,
         Dictionary<string, object?>? requestData,
         Dictionary<string, string> headers)
     {
         var swml = RenderSwml();
-        return JsonResponse(200, swml);
+        var body = JsonSerializer.Serialize(swml, JsonOptions);
+        return (200, new Dictionary<string, string>(), body);
     }
 
     // ------------------------------------------------------------------
@@ -889,26 +923,24 @@ public class Service
             return null;
         }
 
-        // Extract username from sip:username@host
-        string username;
+        // Mirror Python's extract_sip_username (swml_service.py) branches exactly.
+        // The extractor returns the extracted value VERBATIM — no format
+        // validation (a `tel:` number contains ':'/'+' which a SIP-username regex
+        // would wrongly reject; every other port returns the raw value):
+        //   sip:username@host -> the username part (between "sip:" and "@")
+        //   tel:+1234567890   -> the phone number part (after "tel:")
+        //   otherwise         -> the whole 'to' field.
         if (sipUri.StartsWith("sip:", StringComparison.OrdinalIgnoreCase))
         {
             var afterPrefix = sipUri[4..];
             var atIdx = afterPrefix.IndexOf('@', StringComparison.Ordinal);
-            username = atIdx >= 0 ? afterPrefix[..atIdx] : afterPrefix;
+            return atIdx >= 0 ? afterPrefix[..atIdx] : afterPrefix;
         }
-        else
+        if (sipUri.StartsWith("tel:", StringComparison.OrdinalIgnoreCase))
         {
-            username = sipUri;
+            return sipUri[4..];
         }
-
-        // Validate format
-        if (username.Length > 64 || !SipUsernamePattern.IsMatch(username))
-        {
-            return null;
-        }
-
-        return username;
+        return sipUri;
     }
 
     // ------------------------------------------------------------------
@@ -1009,6 +1041,32 @@ public class Service
             ["X-Frame-Options"] = "DENY",
             ["Cache-Control"] = "no-store",
         };
+    }
+
+    /// <summary>
+    /// Stamp the HTTP-layer headers (security headers + a default
+    /// <c>Content-Type</c>) onto a bare decision-core triple's header map. The
+    /// framework-free <see cref="HandleRequest"/> core returns bare headers
+    /// (Python parity: <c>_handle_request_core</c> returns <c>(status, {}, body)</c>);
+    /// the security + Content-Type headers belong to the wire response and are
+    /// applied only when actually serving over HTTP. Headers the core already
+    /// set (e.g. <c>WWW-Authenticate</c>, <c>Location</c>) are preserved; a
+    /// Content-Type is only defaulted when the core didn't specify one and the
+    /// response carries a body.
+    /// </summary>
+    private static Dictionary<string, string> HttpLayerHeaders(
+        int status, Dictionary<string, string> coreHeaders, string body)
+    {
+        var result = SecurityHeaders();
+        foreach (var (k, v) in coreHeaders)
+        {
+            result[k] = v;
+        }
+        if (!result.ContainsKey("Content-Type") && body.Length > 0)
+        {
+            result["Content-Type"] = "application/json";
+        }
+        return result;
     }
 
     /// <summary>Build a JSON response tuple.</summary>
@@ -1116,7 +1174,11 @@ public class Service
         }
 
         http.Response.StatusCode = status;
-        foreach (var (k, v) in responseHeaders)
+        // The decision core returns a BARE header map (Python parity). The HTTP
+        // layer is what stamps security + Content-Type headers onto the wire
+        // response, so re-apply them here (mirrors Python's FastAPI adapter,
+        // which re-adds them after _handle_request_core).
+        foreach (var (k, v) in HttpLayerHeaders(status, responseHeaders, responseBody))
         {
             // Content-Length is managed by Kestrel from the body we write.
             if (string.Equals(k, "Content-Length", StringComparison.OrdinalIgnoreCase)) continue;
@@ -1235,7 +1297,8 @@ public class Service
 
                     var (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
                     ctx.Response.StatusCode = status;
-                    foreach (var (k, v) in responseHeaders)
+                    // Stamp HTTP-layer headers onto the bare decision-core triple.
+                    foreach (var (k, v) in HttpLayerHeaders(status, responseHeaders, responseBody))
                     {
                         // HttpListener handles a few headers specially; ignore set-failures.
                         try { ctx.Response.Headers[k] = v; } catch (ArgumentException) { }

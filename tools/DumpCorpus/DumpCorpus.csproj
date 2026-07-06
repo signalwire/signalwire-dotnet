@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SignalWire.Tools.DumpCorpus</RootNamespace>
+    <AssemblyName>DumpCorpus</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <BaseOutputPath>bin/DumpCorpus/</BaseOutputPath>
+    <BaseIntermediateOutputPath>obj/DumpCorpus/</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="WireDump.cs" />
+    <Compile Include="SwmlDump.cs" />
+    <Compile Include="StateDump.cs" />
+    <Compile Include="HttpDump.cs" />
+    <Compile Include="WireRelayDump.cs" />
+    <Compile Include="Canon.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SignalWire\SignalWire.csproj" />
+  </ItemGroup>
+</Project>

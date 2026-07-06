@@ -23,6 +23,13 @@
          HttpMessageHandler) to the test assembly only. Internal members are
          invisible to the public-surface audit, so this adds no drift. -->
     <InternalsVisibleTo Include="SignalWire.Tests" />
+    <!-- The Layer-D DUMP program (tools/DumpCorpus) reads observable state via a
+         handful of internal accessors (GetGlobalData / GetSipUsernames /
+         GetRoutingCallbackPaths / GetVerbNames / GetRegisteredSkillNames /
+         LookupSipRoute) so the cross-port behavioral differs can byte-compare
+         against the Python oracle. Keeping these internal (mirrors Python's
+         underscore-private state) means they add NO public-surface drift. -->
+    <InternalsVisibleTo Include="DumpCorpus" />
   </ItemGroup>
 
   <ItemGroup>

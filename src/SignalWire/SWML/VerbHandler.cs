@@ -287,4 +287,15 @@ public class VerbHandlerRegistry
 
     /// <summary>Whether a handler exists for a specific verb.</summary>
     public bool HasHandler(string verbName) => _handlers.ContainsKey(verbName);
+
+    /// <summary>The registered verb names, sorted. Mirrors Python's observable
+    /// <c>sorted(self._handlers.keys())</c> (the registry ships with "ai").
+    /// Internal (Python's <c>_handlers</c> is private) — read only by the
+    /// Layer-D dump, so it adds no public-surface drift.</summary>
+    internal IReadOnlyList<string> GetVerbNames()
+    {
+        var names = new List<string>(_handlers.Keys);
+        names.Sort(StringComparer.Ordinal);
+        return names;
+    }
 }

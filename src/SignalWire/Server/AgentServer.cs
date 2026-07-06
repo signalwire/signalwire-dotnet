@@ -159,6 +159,7 @@ public partial class AgentServer
         return this;
     }
 
+    [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the normalized SIP-username mapping-key form (matches Python's username.lower()).")]
     public AgentServer RegisterSipUsername(string username, string route)
     {
         ArgumentNullException.ThrowIfNull(username);
@@ -169,16 +170,22 @@ public partial class AgentServer
             return this;
         }
         route = NormalizeRoute(route);
-        // Lookups are case-insensitive (dict uses OrdinalIgnoreCase), matching
-        // Python's username.lower().
-        _sipUsernameMapping[username] = route;
+        // Store the username lowercased as the mapping KEY, matching Python's
+        // ``self._sip_username_mapping[username.lower()] = route``. The observable
+        // mapping must therefore be keyed by the lowercased name ("Bob" -> "bob").
+        _sipUsernameMapping[username.ToLowerInvariant()] = route;
         return this;
     }
 
     /// <summary>Look up the agent route registered for a SIP username
-    /// (case-insensitive). (Python parity: ``_lookup_sip_route``.)</summary>
-    private string? LookupSipRoute(string username) =>
-        _sipUsernameMapping.TryGetValue(username, out var route) ? route : null;
+    /// (case-insensitive). Returns null when no mapping exists. Internal, mirroring
+    /// Python's underscore-private ``_lookup_sip_route`` — no public-surface drift;
+    /// the Layer-D dump reads it via InternalsVisibleTo.</summary>
+    internal string? LookupSipRoute(string username)
+    {
+        ArgumentNullException.ThrowIfNull(username);
+        return _sipUsernameMapping.TryGetValue(username, out var route) ? route : null;
+    }
 
     /// <summary>Register the unified SIP routing callback on one agent at the
     /// SIP sub-path. The callback extracts the SIP username from the request
@@ -211,15 +218,16 @@ public partial class AgentServer
     /// <summary>Auto-map an agent's derived SIP username(s) to its route
     /// (Python parity: ``_auto_map_agent_sip_usernames``: clean name + clean
     /// route segment).</summary>
+    [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the normalized SIP-username mapping-key form (matches Python's cleaned .lower() name/route).")]
     private void AutoMapAgentSipUsernames(AgentBase agent, string agentRoute)
     {
-        var cleanName = new string(agent.Name.Where(char.IsLetterOrDigit).ToArray());
+        var cleanName = new string(agent.Name.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
         if (cleanName.Length > 0)
         {
             _sipUsernameMapping[cleanName] = agentRoute;
         }
 
-        var cleanRoute = new string(agentRoute.Where(char.IsLetterOrDigit).ToArray());
+        var cleanRoute = new string(agentRoute.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
         if (cleanRoute.Length > 0)
         {
             _sipUsernameMapping[cleanRoute] = agentRoute;

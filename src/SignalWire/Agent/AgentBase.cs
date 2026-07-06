@@ -96,6 +96,11 @@ public class AgentBase : Service
     private Dictionary<string, object> _params;
     private Dictionary<string, object> _globalData;
 
+    // SIP usernames routed to this agent, stored lowercased so registration is
+    // case-insensitive and de-duplicated — mirroring Python's
+    // AgentBase._sip_usernames set (register_sip_username adds .lower()).
+    private HashSet<string> _sipUsernames = new(StringComparer.Ordinal);
+
     // -- Native functions / fillers / debug --
     private List<string> _nativeFunctions;
     private List<string> _internalFillers;
@@ -288,8 +293,14 @@ public class AgentBase : Service
         var section = new Dictionary<string, object>
         {
             ["title"] = title,
-            ["body"] = body,
         };
+        // Omit an empty body — the POM render_dict only includes `body` when it
+        // is non-empty (Python parity: `if self.body: data["body"] = self.body`),
+        // so a bullets-only section must not carry a phantom "body": "".
+        if (!string.IsNullOrEmpty(body))
+        {
+            section["body"] = body;
+        }
         if (bullets is { Count: > 0 })
         {
             section["bullets"] = bullets.ToList();
@@ -877,6 +888,11 @@ public class AgentBase : Service
         return this;
     }
 
+    /// <summary>The accumulated global-data map (a copy). Mirrors Python's
+    /// observable ``dict(self._global_data)``.</summary>
+    internal IReadOnlyDictionary<string, object> GetGlobalData() =>
+        new Dictionary<string, object>(_globalData);
+
     public AgentBase SetNativeFunctions(IReadOnlyList<string> functions)
     {
         ArgumentNullException.ThrowIfNull(functions);
@@ -1394,10 +1410,29 @@ public class AgentBase : Service
         return this;
     }
 
-    /// <summary>Register a SIP username under this agent's own route — Python
-    /// equivalent of ``register_sip_username(self, sip_username)``.</summary>
-    public AgentBase RegisterSipUsername(string username) =>
-        RegisterSipUsername(username, "");
+    /// <summary>Register a SIP username that should be routed to this agent —
+    /// Python equivalent of ``register_sip_username(self, sip_username)``. The
+    /// username is stored lowercased in a set, so registration is
+    /// case-insensitive and de-duplicated ("Bob"/"BOB"/"bob" collapse to one).
+    /// Read the accumulated set back via <see cref="GetSipUsernames"/>.</summary>
+    [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the normalized SIP-username form (matches Python's sip_username.lower() set semantics).")]
+    public AgentBase RegisterSipUsername(string username)
+    {
+        ArgumentNullException.ThrowIfNull(username);
+        _sipUsernames.Add(username.ToLowerInvariant());
+        return this;
+    }
+
+    /// <summary>The SIP usernames registered to this agent, lowercased and
+    /// sorted. Mirrors Python's observable ``sorted(self._sip_usernames)``.
+    /// Internal (mirrors Python's underscore-private state): only the Layer-D
+    /// dump reads it, so it adds no public-surface drift.</summary>
+    internal IReadOnlyList<string> GetSipUsernames()
+    {
+        var names = new List<string>(_sipUsernames);
+        names.Sort(StringComparer.Ordinal);
+        return names;
+    }
 
     // ======================================================================
     //  SWML Rendering (5-phase pipeline)
@@ -1804,6 +1839,7 @@ public class AgentBase : Service
         clone._pronunciations = DeepCopyList(_pronunciations);
         clone._params = new Dictionary<string, object>(_params);
         clone._globalData = new Dictionary<string, object>(_globalData);
+        clone._sipUsernames = new HashSet<string>(_sipUsernames, StringComparer.Ordinal);
         clone._nativeFunctions = [.. _nativeFunctions];
         clone._internalFillers = [.. _internalFillers];
         clone._promptLlmParams = new Dictionary<string, object>(_promptLlmParams);

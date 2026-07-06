@@ -383,27 +383,38 @@ public class SWMLServiceTests : IDisposable
     // HTTP: Security Headers
     // ------------------------------------------------------------------
 
+    // The framework-free HandleRequest CORE returns the bare (status, headers,
+    // body) triple Python's _handle_request_core returns — an EMPTY header map
+    // on 200 and just {"WWW-Authenticate": "Basic"} on 401. Security /
+    // Content-Type headers are the HTTP layer's concern (stamped by the
+    // DispatchAsync / RunHttp adapters when actually serving), NOT baked into
+    // the decision core. This keeps the decomposed dispatch byte-identical
+    // across ports. The served-path security headers are covered by
+    // WebServiceTests.
     [Fact]
-    public void SecurityHeaders_Present_OnAuthenticatedResponse()
+    public void HandleRequest_200_ReturnsBareHeaders()
     {
         var svc = MakeService();
         var (status, headers, _) = svc.HandleRequest("GET", "/", AuthHeader(), null);
 
         Assert.Equal(200, status);
-        Assert.Equal("nosniff", headers["X-Content-Type-Options"]);
-        Assert.Equal("DENY", headers["X-Frame-Options"]);
-        Assert.Equal("no-store", headers["Cache-Control"]);
+        Assert.Empty(headers);
     }
 
     [Fact]
-    public void SecurityHeaders_Present_On401()
+    public void HandleRequest_401_ReturnsBareWwwAuthenticateAndJsonBody()
     {
         var svc = MakeService();
-        var (_, headers, _) = svc.HandleRequest("GET", "/", new Dictionary<string, string>(), null);
+        var (status, headers, body) = svc.HandleRequest("GET", "/", new Dictionary<string, string>(), null);
 
-        Assert.Equal("nosniff", headers["X-Content-Type-Options"]);
-        Assert.Equal("DENY", headers["X-Frame-Options"]);
-        Assert.Equal("no-store", headers["Cache-Control"]);
+        Assert.Equal(401, status);
+        // ONLY WWW-Authenticate: Basic — no security / Content-Type headers.
+        Assert.Equal("Basic", headers["WWW-Authenticate"]);
+        Assert.Single(headers);
+        Assert.False(headers.ContainsKey("X-Content-Type-Options"));
+        // JSON error body (not plain text), matching every other port + Python.
+        Assert.Contains("\"error\"", body);
+        Assert.Contains("Unauthorized", body);
     }
 
     // ------------------------------------------------------------------
@@ -529,19 +540,33 @@ public class SWMLServiceTests : IDisposable
         Assert.Equal("user.name-test_1", Service.ExtractSipUsername(body));
     }
 
+    // extract_sip_username returns the extracted value VERBATIM — Python (and
+    // every other port) applies NO format/length validation to the username; it
+    // simply splits sip:/tel:/plain and returns the part. A SIP-username regex
+    // would wrongly reject e.g. a tel: number, so no validation is applied.
     [Fact]
-    public void ExtractSipUsername_InvalidChars_ReturnsNull()
+    public void ExtractSipUsername_UnusualChars_ReturnedVerbatim()
     {
         var body = new Dictionary<string, object> { ["to"] = "sip:user;drop@host.com" };
-        Assert.Null(Service.ExtractSipUsername(body));
+        Assert.Equal("user;drop", Service.ExtractSipUsername(body));
     }
 
     [Fact]
-    public void ExtractSipUsername_TooLong_ReturnsNull()
+    public void ExtractSipUsername_LongName_ReturnedVerbatim()
     {
         var longName = new string('a', 65);
         var body = new Dictionary<string, object> { ["to"] = $"sip:{longName}@host.com" };
-        Assert.Null(Service.ExtractSipUsername(body));
+        Assert.Equal(longName, Service.ExtractSipUsername(body));
+    }
+
+    [Fact]
+    public void ExtractSipUsername_TelUri_ReturnsNumber()
+    {
+        var body = new Dictionary<string, object>
+        {
+            ["call"] = new Dictionary<string, object> { ["to"] = "tel:+15551234567" },
+        };
+        Assert.Equal("+15551234567", Service.ExtractSipUsername(body));
     }
 
     [Fact]
