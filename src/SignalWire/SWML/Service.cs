@@ -53,7 +53,7 @@ public class Service
     private readonly Logger _logger;
     private readonly string _basicAuthUser;
     private readonly string _basicAuthPassword;
-    private readonly Dictionary<string, Func<Dictionary<string, object?>?, Dictionary<string, string>, object>> _routingCallbacks = new();
+    private readonly Dictionary<string, Func<Dictionary<string, object?>?, Dictionary<string, string>, object?>> _routingCallbacks = new();
 
     // SWAIG tool registry — lifted from AgentBase so any Service (sidecar,
     // non-agent verb host) can register and dispatch SWAIG functions.
@@ -241,7 +241,7 @@ public class Service
     /// <summary>Register a callback for a sub-path under the service route.</summary>
     public void RegisterRoutingCallback(
         string path,
-        Func<Dictionary<string, object?>?, Dictionary<string, string>, object> callback)
+        Func<Dictionary<string, object?>?, Dictionary<string, string>, object?> callback)
     {
         _routingCallbacks[path] = callback;
     }
@@ -483,11 +483,28 @@ public class Service
             return HandlePostPrompt(requestData, headers);
         }
 
-        // Check routing callbacks
+        // Check routing callbacks. A callback returns (body, headers) -> route|null:
+        //   - a route STRING => 307 redirect + Location (preserves POST method+body),
+        //     mirroring Python swml_service.py:1074-1078 (the served-path routing +
+        //     SIP dispatch contract).
+        //   - null => fall through to the normal SWML document for this route.
+        //   - a dict => emitted as a 200 JSON body (custom event-sink endpoints).
         if (_routingCallbacks.TryGetValue(subPath, out var callback))
         {
             var result = callback(requestData, headers);
-            return JsonResponse(200, result);
+            switch (result)
+            {
+                case string route when route.Length > 0:
+                    {
+                        var redirectHeaders = SecurityHeaders();
+                        redirectHeaders["Location"] = route;
+                        return (307, redirectHeaders, "");
+                    }
+                case null:
+                    return HandleSwmlRequest(method, requestData, headers);
+                default:
+                    return JsonResponse(200, result);
+            }
         }
 
         return JsonResponse(404, new { error = "Not found" });

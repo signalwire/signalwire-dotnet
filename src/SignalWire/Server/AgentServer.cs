@@ -54,7 +54,7 @@ public partial class AgentServer
     private bool _sipRoutingEnabled;
     private string _sipRoute = "/sip";
     private bool _sipAutoMap = true;
-    private readonly Dictionary<string, string> _sipUsernameMapping = [];
+    private readonly Dictionary<string, string> _sipUsernameMapping = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, string> _staticRoutes = [];
 
     public AgentServer(string host = "0.0.0.0", int? port = null, string logLevel = "info")
@@ -82,6 +82,13 @@ public partial class AgentServer
             throw new InvalidOperationException($"Route '{route}' is already registered");
 
         _agents[route] = agent;
+
+        // If SIP routing is already enabled, wire the callback onto this new
+        // agent too (Python registers the callback for agents added later).
+        if (_sipRoutingEnabled)
+        {
+            RegisterSipCallbackOnAgent(agent, route);
+        }
         return this;
     }
 
@@ -137,18 +144,86 @@ public partial class AgentServer
     /// </summary>
     public AgentServer SetupSipRouting(string route = "/sip", bool autoMap = true)
     {
+        ArgumentNullException.ThrowIfNull(route);
         _sipRoutingEnabled = true;
-        _sipRoute = route;
+        _sipRoute = NormalizeRoute(route);
         _sipAutoMap = autoMap;
+
+        // Register the server SIP routing callback on every registered agent at
+        // the SIP sub-path, mirroring Python's setup_sip_routing which does
+        // agent.register_routing_callback(cb, path=route) for each agent.
+        foreach (var (agentRoute, agent) in _agents)
+        {
+            RegisterSipCallbackOnAgent(agent, agentRoute);
+        }
         return this;
     }
 
     public AgentServer RegisterSipUsername(string username, string route)
     {
+        ArgumentNullException.ThrowIfNull(username);
         ArgumentNullException.ThrowIfNull(route);
+        if (!_sipRoutingEnabled)
+        {
+            _logger.Warn("SIP routing is not enabled. Call SetupSipRouting() first.");
+            return this;
+        }
         route = NormalizeRoute(route);
+        // Lookups are case-insensitive (dict uses OrdinalIgnoreCase), matching
+        // Python's username.lower().
         _sipUsernameMapping[username] = route;
         return this;
+    }
+
+    /// <summary>Look up the agent route registered for a SIP username
+    /// (case-insensitive). (Python parity: ``_lookup_sip_route``.)</summary>
+    private string? LookupSipRoute(string username) =>
+        _sipUsernameMapping.TryGetValue(username, out var route) ? route : null;
+
+    /// <summary>Register the unified SIP routing callback on one agent at the
+    /// SIP sub-path. The callback extracts the SIP username from the request
+    /// body and returns the mapped agent route (→ 307 redirect) or null.</summary>
+    private void RegisterSipCallbackOnAgent(AgentBase agent, string agentRoute)
+    {
+        if (_sipAutoMap)
+        {
+            AutoMapAgentSipUsernames(agent, agentRoute);
+        }
+
+        agent.RegisterRoutingCallback(_sipRoute, (body, headers) =>
+        {
+            var sipUsername = SWML.Service.ExtractSipUsername(body);
+            if (!string.IsNullOrEmpty(sipUsername))
+            {
+                _logger.Info($"Extracted SIP username: {sipUsername}");
+                var target = LookupSipRoute(sipUsername);
+                if (target is not null)
+                {
+                    _logger.Info($"Routing SIP request to {target}");
+                    return target;
+                }
+                _logger.Warn($"No route found for SIP username: {sipUsername}");
+            }
+            return null;
+        });
+    }
+
+    /// <summary>Auto-map an agent's derived SIP username(s) to its route
+    /// (Python parity: ``_auto_map_agent_sip_usernames``: clean name + clean
+    /// route segment).</summary>
+    private void AutoMapAgentSipUsernames(AgentBase agent, string agentRoute)
+    {
+        var cleanName = new string(agent.Name.Where(char.IsLetterOrDigit).ToArray());
+        if (cleanName.Length > 0)
+        {
+            _sipUsernameMapping[cleanName] = agentRoute;
+        }
+
+        var cleanRoute = new string(agentRoute.Where(char.IsLetterOrDigit).ToArray());
+        if (cleanRoute.Length > 0)
+        {
+            _sipUsernameMapping[cleanRoute] = agentRoute;
+        }
     }
 
     public bool IsSipRoutingEnabled => _sipRoutingEnabled;

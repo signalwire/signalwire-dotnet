@@ -52,7 +52,8 @@ public class PrefabsTests : IDisposable
     public void InfoGatherer_HasStartQuestionsTool()
     {
         var agent = new InfoGathererAgent("ig", [new Dictionary<string, object> { ["key_name"] = "q1", ["question_text"] = "Q?" }]);
-        var result = agent.OnFunctionCall("start_questions", [], new Dictionary<string, object?>());
+        var result = agent.OnFunctionCall("start_questions", [], TwoQuestionGlobalData(
+            [new Dictionary<string, object> { ["key_name"] = "q1", ["question_text"] = "Q?" }], 0));
         Assert.NotNull(result);
         var response = result!.ToDict()["response"] as string;
         Assert.Contains("Q?", response!);
@@ -62,11 +63,78 @@ public class PrefabsTests : IDisposable
     public void InfoGatherer_HasSubmitAnswerTool()
     {
         var agent = new InfoGathererAgent("ig", [new Dictionary<string, object> { ["key_name"] = "q1", ["question_text"] = "Q?" }]);
-        var result = agent.OnFunctionCall("submit_answer", new Dictionary<string, object> { ["answer"] = "42" }, new Dictionary<string, object?>());
+        var result = agent.OnFunctionCall("submit_answer", new Dictionary<string, object> { ["answer"] = "42" }, TwoQuestionGlobalData(
+            [new Dictionary<string, object> { ["key_name"] = "q1", ["question_text"] = "Q?" }], 0));
         Assert.NotNull(result);
         Assert.IsType<FunctionResult>(result);
-        var response = result!.ToDict()["response"] as string;
-        Assert.Contains("42", response!);
+        // Single-question flow: submitting the only answer completes the flow.
+        var dict = result!.ToDict();
+        Assert.Contains("answered", (dict["response"] as string ?? "").ToLowerInvariant());
+    }
+
+    // Tier-2 contract 3: submit_answer STATE MACHINE (records answer, advances
+    // question_index, presents the 2nd question). This would FAIL the old
+    // "Answer recorded: {answer}" echo stub (no state, no advance).
+    [Fact]
+    public void InfoGatherer_SubmitAnswer_StateMachine()
+    {
+        var questions = new List<Dictionary<string, object>>
+        {
+            new() { ["key_name"] = "name", ["question_text"] = "What is your name?" },
+            new() { ["key_name"] = "email", ["question_text"] = "What is your email?" },
+        };
+        var agent = new InfoGathererAgent("ig", questions);
+
+        // Start at index 0 with 2 questions; submit the first answer.
+        var rawData = TwoQuestionGlobalData(questions, 0);
+        var result = agent.OnFunctionCall(
+            "submit_answer",
+            new Dictionary<string, object> { ["answer"] = "Alice" },
+            rawData);
+        Assert.NotNull(result);
+        var dict = result!.ToDict();
+
+        // (c) the 2nd question is presented.
+        var response = dict["response"] as string ?? "";
+        Assert.Contains("What is your email?", response);
+
+        // (a)+(b) the answer is recorded in global_data.answers AND
+        // question_index advanced to 1 — carried in the set_global_data action.
+        var (answers, newIndex) = ExtractGlobalDataUpdate(dict);
+        Assert.Equal(1, newIndex);
+        Assert.Single(answers);
+        Assert.Equal("name", answers[0]["key_name"]);
+        Assert.Equal("Alice", answers[0]["answer"]);
+    }
+
+    private static Dictionary<string, object?> TwoQuestionGlobalData(
+        List<Dictionary<string, object>> questions, int index) =>
+        new()
+        {
+            ["global_data"] = new Dictionary<string, object?>
+            {
+                ["questions"] = questions.Cast<object>().ToList(),
+                ["question_index"] = index,
+                ["answers"] = new List<object>(),
+            },
+        };
+
+    private static (List<Dictionary<string, object>> Answers, int Index) ExtractGlobalDataUpdate(
+        Dictionary<string, object> dict)
+    {
+        var actions = (List<Dictionary<string, object>>)dict["action"];
+        foreach (var action in actions)
+        {
+            if (action.TryGetValue("set_global_data", out var gd)
+                && gd is Dictionary<string, object> update)
+            {
+                var idx = Convert.ToInt32(update["question_index"], System.Globalization.CultureInfo.InvariantCulture);
+                var answers = ((IEnumerable<object>)update["answers"])
+                    .Cast<Dictionary<string, object>>().ToList();
+                return (answers, idx);
+            }
+        }
+        throw new InvalidOperationException("No set_global_data action found");
     }
 
     // ==================================================================

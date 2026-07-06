@@ -22,13 +22,11 @@ public sealed class InfoGathererSkill : SkillBase
         var completionMessage = Params.TryGetValue("completion_message", out var cm)
             ? cm as string ?? "All questions have been answered. Thank you!"
             : "All questions have been answered. Thank you!";
-        var ns = GetInstanceKey();
 
         var startToolName = prefix.Length > 0 ? prefix + "_start_questions" : "start_questions";
         var submitToolName = prefix.Length > 0 ? prefix + "_submit_answer" : "submit_answer";
 
         var capturedQuestions = questions;
-        var capturedNs = ns;
         var capturedCompletion = completionMessage;
 
         DefineTool(
@@ -37,23 +35,31 @@ public sealed class InfoGathererSkill : SkillBase
             [],
             (args, rawData) =>
             {
+                // Read state from global_data (Python: _handle_start_questions
+                // uses get_skill_data + question_index). Fall back to the
+                // configured questions at index 0 on first call.
+                var state = GetSkillData(rawData);
+                var questions = ReadQuestions(state, capturedQuestions);
+                var questionIndex = ReadIndex(state);
+
                 var result = new FunctionResult();
-                if (capturedQuestions.Count == 0)
+                if (questions.Count == 0 || questionIndex >= questions.Count)
                 {
-                    result.SetResponse("No questions configured.");
+                    result.SetResponse("I don't have any questions to ask.");
                     return result;
                 }
 
-                var firstQuestion = capturedQuestions[0].TryGetValue("question_text", out var qt) ? qt as string ?? "No question text." : "No question text.";
-                result.SetResponse("Starting questions. First question: " + firstQuestion);
-                result.UpdateGlobalData(new Dictionary<string, object>
+                var current = questions[questionIndex];
+                result.SetResponse(GenerateQuestionInstruction(
+                    QuestionText(current), NeedsConfirmation(current),
+                    isFirstQuestion: true, PromptAdd(current),
+                    submitToolName, questionIndex + 1, questions.Count));
+
+                UpdateSkillData(result, new Dictionary<string, object>
                 {
-                    [capturedNs] = new Dictionary<string, object>
-                    {
-                        ["questions"] = capturedQuestions,
-                        ["question_index"] = 0,
-                        ["answers"] = new List<object>(),
-                    },
+                    ["questions"] = questions,
+                    ["question_index"] = questionIndex,
+                    ["answers"] = ReadAnswers(state),
                 });
                 return result;
             });
@@ -79,24 +85,137 @@ public sealed class InfoGathererSkill : SkillBase
             {
                 var result = new FunctionResult();
                 var answer = args.TryGetValue("answer", out var a) ? a as string ?? "" : "";
+                var confirmed = args.TryGetValue("confirmed_by_user", out var c) && c is true;
 
-                if (answer.Length == 0) { result.SetResponse("Please provide an answer."); return result; }
+                var state = GetSkillData(rawData);
+                var questions = ReadQuestions(state, capturedQuestions);
+                var questionIndex = ReadIndex(state);
+                var answers = ReadAnswers(state);
 
-                var totalQuestions = capturedQuestions.Count;
-                var currentIndex = 0;
-                var nextIndex = currentIndex + 1;
-
-                if (nextIndex >= totalQuestions)
+                if (questionIndex >= questions.Count)
                 {
-                    result.SetResponse(capturedCompletion);
+                    result.SetResponse("All questions have already been answered.");
+                    return result;
+                }
+
+                var current = questions[questionIndex];
+                var keyName = current.TryGetValue("key_name", out var kn) ? kn as string ?? "" : "";
+
+                // Enforce confirmation: reject if the question requires
+                // confirmation but confirmed_by_user was not set to true.
+                if (NeedsConfirmation(current) && !confirmed)
+                {
+                    result.SetResponse(
+                        $"Before submitting, you must read the answer \"{answer}\" back to the user "
+                        + "and ask them to confirm it is correct. Then call this function again with "
+                        + "confirmed set to true. If the user says it is wrong, ask the question again.");
+                    return result;
+                }
+
+                var newAnswers = new List<object>(answers)
+                {
+                    new Dictionary<string, object> { ["key_name"] = keyName, ["answer"] = answer },
+                };
+                var newIndex = questionIndex + 1;
+
+                if (newIndex < questions.Count)
+                {
+                    var next = questions[newIndex];
+                    result.SetResponse(GenerateQuestionInstruction(
+                        QuestionText(next), NeedsConfirmation(next),
+                        isFirstQuestion: false, PromptAdd(next),
+                        submitToolName, newIndex + 1, questions.Count));
                 }
                 else
                 {
-                    var nextQuestion = capturedQuestions[nextIndex].TryGetValue("question_text", out var nq) ? nq as string ?? "No question text." : "No question text.";
-                    result.SetResponse("Answer recorded. Next question: " + nextQuestion);
+                    result.SetResponse(capturedCompletion);
+                    result.ToggleFunctions(new List<Dictionary<string, object>>
+                    {
+                        new() { ["function"] = startToolName, ["active"] = false },
+                        new() { ["function"] = submitToolName, ["active"] = false },
+                    });
                 }
+
+                UpdateSkillData(result, new Dictionary<string, object>
+                {
+                    ["questions"] = questions,
+                    ["question_index"] = newIndex,
+                    ["answers"] = newAnswers,
+                });
                 return result;
             });
+    }
+
+    private static List<Dictionary<string, object>> ReadQuestions(
+        Dictionary<string, object> state, List<Dictionary<string, object>> fallback)
+    {
+        if (state.TryGetValue("questions", out var qv) && qv is IEnumerable<object> qenum)
+        {
+            var list = new List<Dictionary<string, object>>();
+            foreach (var item in qenum)
+            {
+                if (item is Dictionary<string, object> qd) { list.Add(qd); }
+            }
+            if (list.Count > 0) { return list; }
+        }
+        return fallback;
+    }
+
+    private static int ReadIndex(Dictionary<string, object> state) =>
+        state.TryGetValue("question_index", out var qi)
+            ? Convert.ToInt32(qi, System.Globalization.CultureInfo.InvariantCulture)
+            : 0;
+
+    private static List<object> ReadAnswers(Dictionary<string, object> state)
+    {
+        var answers = new List<object>();
+        if (state.TryGetValue("answers", out var av) && av is IEnumerable<object> aenum)
+        {
+            answers.AddRange(aenum);
+        }
+        return answers;
+    }
+
+    private static string QuestionText(Dictionary<string, object> question) =>
+        question.TryGetValue("question_text", out var qt) ? qt as string ?? "" : "";
+
+    private static bool NeedsConfirmation(Dictionary<string, object> question) =>
+        question.TryGetValue("confirm", out var c) && c is true;
+
+    private static string PromptAdd(Dictionary<string, object> question) =>
+        question.TryGetValue("prompt_add", out var pa) ? pa as string ?? "" : "";
+
+    private static string GenerateQuestionInstruction(
+        string questionText, bool needsConfirmation, bool isFirstQuestion,
+        string promptAdd, string submitToolName, int questionNumber, int totalQuestions)
+    {
+        string instruction;
+        if (isFirstQuestion)
+        {
+            instruction =
+                $"Ask each question one at a time, wait for the user's answer, "
+                + $"then call {submitToolName} with their answer. Do not reuse previous answers.\n\n"
+                + $"[Question {questionNumber} of {totalQuestions}]: \"{questionText}\"";
+        }
+        else
+        {
+            instruction = $"Previous answer saved. [Question {questionNumber} of {totalQuestions}]: \"{questionText}\"";
+        }
+
+        if (promptAdd.Length > 0)
+        {
+            instruction += $"\nNote: {promptAdd}";
+        }
+
+        if (needsConfirmation)
+        {
+            instruction +=
+                $"\nThis question requires confirmation. Read the answer back to the user "
+                + $"and ask them to confirm it is correct before calling {submitToolName}. "
+                + "If they say it is wrong, ask the question again.";
+        }
+
+        return instruction;
     }
 
     public override Dictionary<string, object> GetGlobalData()

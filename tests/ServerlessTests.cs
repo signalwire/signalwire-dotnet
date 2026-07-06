@@ -184,6 +184,107 @@ public class ServerlessTests : IDisposable
     }
 
     // ==================================================================
+    //  Google Cloud Function handler (Tier-2 contract 5: per-platform dispatch)
+    // ==================================================================
+
+    [Fact]
+    public void HandleGoogleCloudFunction_DispatchesToRealResponse()
+    {
+        var agent = new MockAgent(200, new() { ["Content-Type"] = "application/json" }, "{\"swml\":true}");
+
+        var request = new Dictionary<string, object?>
+        {
+            ["method"] = "POST",
+            ["url"] = "https://region-project.cloudfunctions.net/my_agent/say_hello",
+            ["body"] = "{\"function\":\"say_hello\"}",
+            ["headers"] = new Dictionary<string, object?> { ["Content-Type"] = "application/json" },
+        };
+
+        var result = Adapter.HandleGoogleCloudFunction(agent, request);
+
+        // Real dispatch: a (status, headers, body) response, NOT a fall-through.
+        Assert.Equal(200, result["status"]);
+        Assert.Equal("{\"swml\":true}", result["body"]);
+        Assert.Equal("POST", agent.LastMethod);
+        Assert.Equal("/my_agent/say_hello", agent.LastPath);
+        Assert.Equal("{\"function\":\"say_hello\"}", agent.LastBody);
+    }
+
+    [Fact]
+    public void HandleGoogleCloudFunction_ExplicitPath()
+    {
+        var agent = new MockAgent(200, new(), "ok");
+
+        var request = new Dictionary<string, object?>
+        {
+            ["method"] = "GET",
+            ["path"] = "webhook",
+        };
+
+        var result = Adapter.HandleGoogleCloudFunction(agent, request);
+        Assert.Equal(200, result["status"]);
+        Assert.Equal("GET", agent.LastMethod);
+        Assert.Equal("/webhook", agent.LastPath);
+    }
+
+    // ==================================================================
+    //  CGI handler (Tier-2 contract 5: per-platform dispatch)
+    // ==================================================================
+
+    [Fact]
+    public void HandleCgi_DispatchesFromEnvAndStdin()
+    {
+        var agent = new MockAgent(200, new() { ["Content-Type"] = "application/json" }, "{\"cgi\":true}");
+
+        var body = "{\"call_id\":\"abc\"}";
+        Environment.SetEnvironmentVariable("REQUEST_METHOD", "POST");
+        Environment.SetEnvironmentVariable("PATH_INFO", "/say_hello");
+        Environment.SetEnvironmentVariable(
+            "CONTENT_LENGTH",
+            body.Length.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        try
+        {
+            using var stdin = new StringReader(body);
+            var result = Adapter.HandleCgi(agent, stdin);
+
+            // Real dispatch, not an unsupported/empty handler.
+            Assert.Equal(200, result["status"]);
+            Assert.Equal("{\"cgi\":true}", result["body"]);
+            Assert.Equal("POST", agent.LastMethod);
+            Assert.Equal("/say_hello", agent.LastPath);
+            Assert.Equal(body, agent.LastBody);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("REQUEST_METHOD", null);
+            Environment.SetEnvironmentVariable("PATH_INFO", null);
+            Environment.SetEnvironmentVariable("CONTENT_LENGTH", null);
+        }
+    }
+
+    [Fact]
+    public void HandleCgi_RootPathNoBody()
+    {
+        var agent = new MockAgent(200, new(), "swml-doc");
+
+        Environment.SetEnvironmentVariable("REQUEST_METHOD", "GET");
+        try
+        {
+            using var stdin = new StringReader("");
+            var result = Adapter.HandleCgi(agent, stdin);
+
+            Assert.Equal(200, result["status"]);
+            Assert.Equal("GET", agent.LastMethod);
+            Assert.Equal("/", agent.LastPath);
+            Assert.Null(agent.LastBody);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("REQUEST_METHOD", null);
+        }
+    }
+
+    // ==================================================================
     //  Mock agent for testing
     // ==================================================================
 

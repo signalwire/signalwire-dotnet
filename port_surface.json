@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 4422d6c19ace90e38d93eb07785e84c48e1182b8",
+  "generated_from": "signalwire-dotnet @ 89a4a78578dde975a2b00399da8a8d669f6a5cec",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -2799,6 +2799,8 @@
         "Adapter": [
           "detect",
           "handle_azure",
+          "handle_cgi",
+          "handle_google_cloud_function",
           "handle_lambda",
           "serve"
         ]

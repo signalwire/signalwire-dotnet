@@ -970,13 +970,29 @@ public class AgentBase : Service
 
     public AgentBase SetPromptLlmParams(Dictionary<string, object>? parameters = null)
     {
-        _promptLlmParams = parameters ?? new Dictionary<string, object>();
+        // Merge (not replace) to mirror Python's self._prompt_llm_params.update(params)
+        // (ai_config_mixin.py:669). Calling twice with distinct keys keeps both.
+        if (parameters is not null)
+        {
+            foreach (var (key, value) in parameters)
+            {
+                _promptLlmParams[key] = value;
+            }
+        }
         return this;
     }
 
     public AgentBase SetPostPromptLlmParams(Dictionary<string, object>? parameters = null)
     {
-        _postPromptLlmParams = parameters ?? new Dictionary<string, object>();
+        // Merge (not replace) to mirror Python's self._post_prompt_llm_params.update(params)
+        // (ai_config_mixin.py:703).
+        if (parameters is not null)
+        {
+            foreach (var (key, value) in parameters)
+            {
+                _postPromptLlmParams[key] = value;
+            }
+        }
         return this;
     }
 

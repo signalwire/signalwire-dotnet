@@ -30630,6 +30630,31 @@
               ],
               "returns": "dict<string,any>"
             },
+            "handle_cgi": {
+              "params": [
+                {
+                  "name": "agent",
+                  "type": "class:signalwire.core.swml_service.SWMLService",
+                  "required": true
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
+            "handle_google_cloud_function": {
+              "params": [
+                {
+                  "name": "agent",
+                  "type": "class:signalwire.core.swml_service.SWMLService",
+                  "required": true
+                },
+                {
+                  "name": "request",
+                  "type": "dict<string,any>",
+                  "required": true
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
             "handle_lambda": {
               "params": [
                 {

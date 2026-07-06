@@ -270,10 +270,57 @@ public class AgentServerTests : IDisposable
     public void SipRouting_NormalizesRoute()
     {
         var server = new AgentServer();
+        server.SetupSipRouting(autoMap: false);
         server.RegisterSipUsername("bob", "agent_bob");
 
         var mapping = server.GetSipUsernameMapping();
         Assert.Equal("/agent_bob", mapping["bob"]);
+    }
+
+    // Tier-2 contract 6: SIP routing DISPATCH over the served path. A POST of a
+    // SIP-shaped body to a served route with a routing callback must extract the
+    // username, look up the mapping, and 307-redirect to the target route. A
+    // stored-but-unconsulted mapping (the old dotnet behavior) would 404/200
+    // instead.
+    [Fact]
+    public void SipRouting_ServedDispatch_RedirectsToMappedRoute()
+    {
+        var server = new AgentServer();
+        server.Register(MakeAgent(name: "receptionist", route: "/reception"));
+        server.Register(MakeAgent(name: "support", route: "/support"));
+        server.SetupSipRouting(autoMap: false);
+        server.RegisterSipUsername("support", "/support");
+
+        var body = JsonSerializer.Serialize(new
+        {
+            call = new { to = "sip:support@example.com" },
+        });
+
+        // POST the SIP body to the receptionist agent's served /sip sub-path.
+        var (status, headers, _) = server.HandleRequest("POST", "/reception/sip", AuthHeader(), body);
+
+        Assert.Equal(307, status);
+        Assert.Equal("/support", headers["Location"]);
+    }
+
+    [Fact]
+    public void SipRouting_ServedDispatch_UnknownUsernameFallsThrough()
+    {
+        var server = new AgentServer();
+        server.Register(MakeAgent(name: "receptionist", route: "/reception"));
+        server.SetupSipRouting(autoMap: false);
+
+        var body = JsonSerializer.Serialize(new
+        {
+            call = new { to = "sip:nobody@example.com" },
+        });
+
+        // No mapping for "nobody" -> callback returns null -> falls through to
+        // the agent's SWML document (200), not a redirect.
+        var (status, _, swmlBody) = server.HandleRequest("POST", "/reception/sip", AuthHeader(), body);
+
+        Assert.Equal(200, status);
+        Assert.Contains("version", swmlBody);
     }
 
     // ==================================================================

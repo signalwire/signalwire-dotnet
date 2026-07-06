@@ -332,6 +332,45 @@ public class AgentBaseTests : IDisposable
         Assert.Equal("rachel", languages[0]["voice"]);
     }
 
+    // Tier-2 contract 2: set_prompt_llm_params / set_post_prompt_llm_params
+    // MERGE (not replace). Calling twice with distinct keys must keep BOTH.
+    // A replace-stub (the old dotnet behavior: _promptLlmParams = params) drops
+    // the first key and FAILS these.
+    [Fact]
+    public void SetPromptLlmParams_MergesAcrossCalls()
+    {
+        var agent = MakeAgent();
+        agent.SetPromptText("You are a helpful assistant.");
+        agent.SetPromptLlmParams(new Dictionary<string, object> { ["temperature"] = 0.5 });
+        agent.SetPromptLlmParams(new Dictionary<string, object> { ["top_p"] = 0.9 });
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var prompt = (Dictionary<string, object>)ai["prompt"];
+
+        Assert.True(prompt.ContainsKey("temperature"), "temperature dropped — setter replaced instead of merged");
+        Assert.True(prompt.ContainsKey("top_p"));
+        Assert.Equal(0.5, Convert.ToDouble(prompt["temperature"], System.Globalization.CultureInfo.InvariantCulture));
+        Assert.Equal(0.9, Convert.ToDouble(prompt["top_p"], System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    [Fact]
+    public void SetPostPromptLlmParams_MergesAcrossCalls()
+    {
+        var agent = MakeAgent();
+        agent.SetPromptText("You are a helpful assistant.");
+        agent.SetPostPrompt("Summarize.");
+        agent.SetPostPromptLlmParams(new Dictionary<string, object> { ["temperature"] = 0.3 });
+        agent.SetPostPromptLlmParams(new Dictionary<string, object> { ["top_p"] = 0.8 });
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var postPrompt = (Dictionary<string, object>)ai["post_prompt"];
+
+        Assert.True(postPrompt.ContainsKey("temperature"), "post-prompt temperature dropped — setter replaced instead of merged");
+        Assert.True(postPrompt.ContainsKey("top_p"));
+        Assert.Equal(0.3, Convert.ToDouble(postPrompt["temperature"], System.Globalization.CultureInfo.InvariantCulture));
+        Assert.Equal(0.8, Convert.ToDouble(postPrompt["top_p"], System.Globalization.CultureInfo.InvariantCulture));
+    }
+
     // =================================================================
     //  Per-language params (porting-sdk: signalwire-python 029ca6f)
     // =================================================================
