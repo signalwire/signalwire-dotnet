@@ -65,7 +65,7 @@ signalwire.agent_server.AgentServer.serve_static: Public helper added in .NET; P
 signalwire.core.agent_base.AgentBase.build_ai_verb: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
 signalwire.core.agent_base.AgentBase.clone_for_request: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
 signalwire.core.agent_base.AgentBase.contexts: Public read-only property surface; Python @property accessor with the same name
-signalwire.core.agent_base.AgentBase.handle_request: .NET overrides Service.handle_request on AgentBase to gate POST routes through the webhook signature validator when signing_key is set; Python wires the equivalent via FastAPI Depends() in web_mixin._register_routes
+signalwire.core.agent_base.AgentBase.handle_request: .NET AgentBase overrides Service.handle_request (spliced to the SWMLService reference signature); the reference records handle_request only on SWMLService, so the AgentBase override needs this addition entry to excuse the signature-side missing-reference
 signalwire.core.agent_base.AgentBase.is_webhook_signature_validation_enabled: .NET surfaces a public read-only flag for whether SigningKey is configured; Python users check `bool(agent.signing_key)` directly
 signalwire.core.agent_base.AgentBase.signing_key: Public read-only property exposing the configured Signing Key; Python sets it as an attribute (porting-sdk/webhooks.md AgentBase integration)
 signalwire.agent.agent_options.AgentOptions.signing_key: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
@@ -108,7 +108,6 @@ signalwire.core.swml_service.SWMLService.define_tools: Public method surfaced by
 signalwire.core.swml_service.SWMLService.document: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.swml_service.SWMLService.get_full_url: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.swml_service.SWMLService.get_proxy_url_base: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
-signalwire.core.swml_service.SWMLService.handle_request: Public dispatch entry point on SWMLService; Python uses Flask/FastAPI request objects directly
 signalwire.core.swml_service.SWMLService.host: Public read-only property surface; Python @property accessor with the same name
 signalwire.core.swml_service.SWMLService.list_tool_names: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.core.swml_service.SWMLService.name: Public read-only property surface; Python @property accessor with the same name

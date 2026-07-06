@@ -340,23 +340,6 @@ signalwire.pom.pom_tool.detect_file_format: Python CLI helper for rendering a PO
 signalwire.pom.pom_tool.load_pom: Python CLI helper for rendering a POM file from disk; .NET ships POM in-process only
 signalwire.pom.pom_tool.main: Python CLI helper for rendering a POM file from disk; .NET ships POM in-process only
 signalwire.pom.pom_tool.render_pom: Python CLI helper for rendering a POM file from disk; .NET ships POM in-process only
-signalwire.relay.call.AIAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.CollectAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.CollectAction.volume: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.DetectAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.FaxAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.PayAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.PlayAction.pause: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.PlayAction.resume: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.PlayAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.PlayAction.volume: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.RecordAction.pause: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.RecordAction.resume: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.RecordAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.StandaloneCollectAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.StreamAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.TapAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
-signalwire.relay.call.TranscribeAction.stop: Action subclass methods live under SignalWire.Relay in .NET; Python lists them under signalwire.relay.call
 signalwire.relay.client.RelayClient.__aenter__: impossible: Python async-context-manager protocol dunder; C# uses IAsyncDisposable / await using on the client instead (TS/PHP omit likewise)
 signalwire.relay.client.RelayClient.__aexit__: impossible: Python async-context-manager protocol dunder; C# uses IAsyncDisposable / await using on the client instead (TS/PHP omit likewise)
 signalwire.relay.client.RelayClient.__del__: impossible: Python finalizer dunder; C# uses IAsyncDisposable/Dispose deterministic cleanup instead (TS/PHP omit likewise)

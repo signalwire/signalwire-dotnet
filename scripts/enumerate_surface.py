@@ -787,9 +787,9 @@ SURFACE_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
 _SWML_SERVICE_ALLOW = {
     "__getattr__", "__init__", "add_section", "add_verb", "add_verb_to_section",
     "as_router", "extract_sip_username", "full_validation_enabled",
-    "get_basic_auth_credentials", "get_document", "manual_set_proxy_url",
-    "on_request", "register_routing_callback", "register_verb_handler",
-    "render_document", "reset_document", "serve", "stop",
+    "get_basic_auth_credentials", "get_document", "handle_request",
+    "manual_set_proxy_url", "on_request", "register_routing_callback",
+    "register_verb_handler", "render_document", "reset_document", "serve", "stop",
 }
 # Every reference class in signalwire.relay.event exposes exactly ``from_payload``
 # (the typed data fields are instance attributes, not surface). Restrict all

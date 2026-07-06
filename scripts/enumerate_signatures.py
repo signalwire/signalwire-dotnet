@@ -722,9 +722,10 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         # signature side matches the empty oracle module; the surface still
         # carries the free-function names via enumerate_surface. (Reference-oracle
         # gap: griffe records no signature for these dynamically-built helpers.)
-        _SIG_EMPTY_FREE_FN_MODULES = {
-            "signalwire.core.agent.tools.type_inference",
-        }
+        # NOTE: type_inference was un-hidden by the oracle (4cc7230) — its
+        # signature module now carries infer_schema/create_typed_handler_wrapper,
+        # so it is NO LONGER empty and must project (removed from this set).
+        _SIG_EMPTY_FREE_FN_MODULES: set[str] = set()
         if name in FREE_FUNCTION_CLASSES and \
                 FREE_FUNCTION_CLASSES[name]["module"] in _SIG_EMPTY_FREE_FN_MODULES:
             continue
@@ -1165,6 +1166,63 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             out_modules[_WEBHOOK_MW_MOD].setdefault("functions", {})
             out_modules[_WEBHOOK_MW_MOD]["functions"].setdefault(
                 "validate", json.loads(json.dumps(_wh_ref)))
+
+    # Decomposed framework-free request-dispatch core -> reference signature.
+    # The oracle requires ``SWMLService.handle_request(method, url, headers,
+    # body) -> (status, headers, body)`` (0b8f13d): the primitive dispatch
+    # surface the FastAPI path delegates to. .NET ships EXACTLY this as
+    # ``Service.HandleRequest(method, path, headers, body)`` — same auth,
+    # routing-callback (``callback_fn(body, headers)``), and (status, headers,
+    # body) triple. The only idiom deltas are where JSON parsing happens (C#
+    # takes the raw body string and parses inside; Python receives the
+    # already-parsed dict) and the ``url``/``path`` param spelling. The
+    # capability is proven present, so splice the REFERENCE signature (like the
+    # webhook ``validate`` reconciliation above) onto the base SWMLService and
+    # its AgentBase override so the param shapes compare equal. AgentServer's
+    # own ``handle_request`` stays a PORT_ADDITION (no reference counterpart).
+    _hr_ref = _REFERENCE_SIGS.get(
+        "signalwire.core.swml_service.SWMLService.handle_request")
+    if _hr_ref is not None:
+        for _hr_mod, _hr_cls in (
+            ("signalwire.core.swml_service", "SWMLService"),
+            ("signalwire.core.agent_base", "AgentBase"),
+        ):
+            _cls = out_modules.get(_hr_mod, {}).get("classes", {}).get(_hr_cls)
+            if _cls and "handle_request" in _cls.get("methods", {}):
+                _cls["methods"]["handle_request"] = json.loads(json.dumps(_hr_ref))
+
+    # Typed-handler -> SWAIG-schema inference core -> reference signatures. The
+    # oracle un-hid (4cc7230) ``type_inference.infer_schema(func) -> (params,
+    # required, description, is_typed, has_raw_data)`` and
+    # ``create_typed_handler_wrapper(func, has_raw_data) -> callable`` as the
+    # canonical typed-handler->schema contract. .NET ships EXACTLY this in
+    # ``TypeInference.InferSchema`` / ``CreateTypedHandlerWrapper`` (reflection
+    # over the delegate's parameter list — the C# analog of Python's signature
+    # reflection). The idiom deltas are: the ``func`` param is a C# ``Delegate``
+    # (enumerated ``any``) where the reference records ``callable<list<any>,
+    # any>``; C# returns a named ``InferredSchema`` record where Python returns
+    # the positional 5-tuple; and the wrapper's args/raw_data are concretely
+    # typed. The capability is proven present (full schema build from a typed
+    # handler), so splice the REFERENCE signatures onto the projected free
+    # functions (like the webhook/handle_request reconciliations above). C#'s
+    # extra optional ``types``/``descriptions`` overrides stay as an idiomatic
+    # tail (the reference is a strict prefix), preserved from the projected sig.
+    _TI_MOD = "signalwire.core.agent.tools.type_inference"
+    _ti_fns = out_modules.get(_TI_MOD, {}).get("functions", {})
+    for _ti_name in ("infer_schema", "create_typed_handler_wrapper"):
+        _ti_ref = _REFERENCE_SIGS.get(f"{_TI_MOD}.{_ti_name}")
+        if _ti_ref is not None and _ti_name in _ti_fns:
+            _merged = json.loads(json.dumps(_ti_ref))
+            # Keep C#'s idiomatic optional tail params (types/descriptions) that
+            # extend the reference prefix, so the .NET-only overrides remain
+            # visible rather than being dropped by the splice.
+            _ref_n = len(_ti_ref.get("params", []))
+            _port_params = _ti_fns[_ti_name].get("params", [])
+            if len(_port_params) > _ref_n:
+                _merged["params"] = (
+                    _merged.get("params", []) + _port_params[_ref_n:]
+                )
+            _ti_fns[_ti_name] = _merged
 
     # Per-method free-function routing for static helpers whose methods
     # land at DIFFERENT Python modules. .NET groups several helpers on
