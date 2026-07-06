@@ -4431,6 +4431,26 @@
                   "required": true
                 },
                 {
+                  "name": "speech_fillers",
+                  "type": "optional<list<string>>",
+                  "required": true
+                },
+                {
+                  "name": "function_fillers",
+                  "type": "optional<list<string>>",
+                  "required": true
+                },
+                {
+                  "name": "engine",
+                  "type": "optional<string>",
+                  "required": true
+                },
+                {
+                  "name": "model",
+                  "type": "optional<string>",
+                  "required": true
+                },
+                {
                   "name": "language_params",
                   "type": "optional<dict<string,any>>",
                   "required": true
@@ -4477,9 +4497,25 @@
                   "kind": "self"
                 },
                 {
+                  "name": "hint",
+                  "type": "string",
+                  "required": true
+                },
+                {
                   "name": "pattern",
                   "type": "string",
                   "required": true
+                },
+                {
+                  "name": "replace",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "ignore_case",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -7086,6 +7122,12 @@
                   "type": "int",
                   "required": false,
                   "default": 3600
+                },
+                {
+                  "name": "secret_key",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "void"

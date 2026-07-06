@@ -297,7 +297,7 @@ public class AgentBaseTests : IDisposable
         var agent = MakeAgent();
         agent.AddHint("SignalWire");
         var ai = ExtractAiVerb(agent.RenderSwml());
-        var hints = (List<string>)ai["hints"];
+        var hints = (List<object>)ai["hints"];
         Assert.Contains("SignalWire", hints);
     }
 
@@ -307,16 +307,21 @@ public class AgentBaseTests : IDisposable
         var agent = MakeAgent();
         agent.AddHints(["hello", "world"]);
         var ai = ExtractAiVerb(agent.RenderSwml());
-        Assert.Equal(["hello", "world"], (List<string>)ai["hints"]);
+        Assert.Equal<object>(["hello", "world"], (List<object>)ai["hints"]);
     }
 
     [Fact]
     public void AddPatternHint()
     {
         var agent = MakeAgent();
-        agent.AddPatternHint("\\d{3}-\\d{4}");
+        agent.AddPatternHint("SignalWire", "\\d{3}-\\d{4}", "SignalWire, Inc.");
         var ai = ExtractAiVerb(agent.RenderSwml());
-        Assert.Contains("\\d{3}-\\d{4}", (List<string>)ai["hints"]);
+        var hints = (List<object>)ai["hints"];
+        var structured = Assert.IsType<Dictionary<string, object>>(Assert.Single(hints));
+        Assert.Equal("SignalWire", structured["hint"]);
+        Assert.Equal("\\d{3}-\\d{4}", structured["pattern"]);
+        Assert.Equal("SignalWire, Inc.", structured["replace"]);
+        Assert.Equal(false, structured["ignore_case"]);
     }
 
     [Fact]
@@ -330,6 +335,95 @@ public class AgentBaseTests : IDisposable
         Assert.Equal("English", languages[0]["name"]);
         Assert.Equal("en-US", languages[0]["code"]);
         Assert.Equal("rachel", languages[0]["voice"]);
+    }
+
+    // =================================================================
+    //  Behavioral contract 8: AI/LLM STRUCTURED add_pattern_hint / add_language
+    //  (porting-sdk/BEHAVIORAL_CONTRACTS.md #8)
+    //
+    //  add_pattern_hint must attach a STRUCTURED hint
+    //  ({hint, pattern, replace, ignore_case}) — not a bare string; and
+    //  add_language must carry engine + model + fillers into the rendered
+    //  SWML ai.languages entry. A degraded impl (bare-string hint, no
+    //  engine/model/fillers) FAILS these assertions.
+    // =================================================================
+
+    [Fact]
+    public void Contract8_StructuredPatternHintAndLanguageFillers_SurviveRender()
+    {
+        var agent = MakeAgent();
+
+        // Structured pattern hint WITH a replacement.
+        agent.AddPatternHint(
+            hint: "SignalWire",
+            pattern: "(?i)signal ?wire",
+            replace: "SignalWire",
+            ignoreCase: true);
+
+        // Language WITH explicit engine + model + speech/function fillers.
+        agent.AddLanguage(
+            name: "English",
+            code: "en-US",
+            voice: "josh",
+            speechFillers: ["one moment", "let me check"],
+            functionFillers: ["working on it"],
+            engine: "elevenlabs",
+            model: "eleven_turbo_v2_5",
+            languageParams: null);
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+
+        // -- Pattern hint survives as a structured dict with all 4 fields --
+        var hints = (List<object>)ai["hints"];
+        var structured = Assert.IsType<Dictionary<string, object>>(Assert.Single(hints));
+        Assert.Equal("SignalWire", structured["hint"]);
+        Assert.Equal("(?i)signal ?wire", structured["pattern"]);
+        Assert.Equal("SignalWire", structured["replace"]);
+        Assert.Equal(true, structured["ignore_case"]);
+
+        // -- Language carries engine + model + BOTH filler lists --
+        var languages = (List<Dictionary<string, object>>)ai["languages"];
+        var lang = Assert.Single(languages);
+        Assert.Equal("English", lang["name"]);
+        Assert.Equal("en-US", lang["code"]);
+        Assert.Equal("josh", lang["voice"]);
+        Assert.Equal("elevenlabs", lang["engine"]);
+        Assert.Equal("eleven_turbo_v2_5", lang["model"]);
+        Assert.Equal<object>(["one moment", "let me check"], (IReadOnlyList<string>)lang["speech_fillers"]);
+        Assert.Equal<object>(["working on it"], (IReadOnlyList<string>)lang["function_fillers"]);
+    }
+
+    [Fact]
+    public void Contract8_CombinedVoiceStringParsesEngineModel()
+    {
+        var agent = MakeAgent();
+        // Combined "engine.voice:model" form -> split into 3 keys.
+        agent.AddLanguage("English", "en-US", "elevenlabs.josh:eleven_turbo_v2_5");
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var lang = Assert.Single((List<Dictionary<string, object>>)ai["languages"]);
+        Assert.Equal("josh", lang["voice"]);
+        Assert.Equal("elevenlabs", lang["engine"]);
+        Assert.Equal("eleven_turbo_v2_5", lang["model"]);
+    }
+
+    [Fact]
+    public void Contract8_SingleFillerListUsesDeprecatedFillersKey()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage(
+            name: "English",
+            code: "en-US",
+            voice: "josh",
+            speechFillers: ["um", "uh"],
+            functionFillers: null,
+            engine: null,
+            model: null,
+            languageParams: null);
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var lang = Assert.Single((List<Dictionary<string, object>>)ai["languages"]);
+        Assert.Equal<object>(["um", "uh"], (IReadOnlyList<string>)lang["fillers"]);
+        Assert.False(lang.ContainsKey("speech_fillers"));
+        Assert.False(lang.ContainsKey("function_fillers"));
     }
 
     // Tier-2 contract 2: set_prompt_llm_params / set_post_prompt_llm_params
@@ -1049,7 +1143,7 @@ public class AgentBaseTests : IDisposable
         Assert.Same(agent, agent.PromptAddToSection("S", "more"));
         Assert.Same(agent, agent.AddHint("hint"));
         Assert.Same(agent, agent.AddHints(["h"]));
-        Assert.Same(agent, agent.AddPatternHint("p"));
+        Assert.Same(agent, agent.AddPatternHint("h", "p", "r"));
         Assert.Same(agent, agent.AddLanguage("En", "en", "v"));
         Assert.Same(agent, agent.AddPronunciation("a", "b"));
         Assert.Same(agent, agent.SetParam("k", "v"));

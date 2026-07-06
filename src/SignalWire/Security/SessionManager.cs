@@ -16,11 +16,27 @@ public sealed class SessionManager
     private readonly byte[] _secret;
     private readonly int _tokenExpirySecs;
 
-    public SessionManager(int tokenExpirySecs = DefaultExpiry)
+    /// <summary>
+    /// Create a session manager. When <paramref name="secretKey"/> is supplied
+    /// it is used verbatim (UTF-8) as the HMAC signing key — enabling
+    /// cross-port token interop with a shared key; otherwise a fresh 32-byte
+    /// random secret is generated. Mirrors signalwire-python's
+    /// <c>SessionManager(token_expiry_secs, secret_key)</c>.
+    /// </summary>
+    /// <param name="tokenExpirySecs">Token lifetime in seconds.</param>
+    /// <param name="secretKey">Optional explicit signing key (UTF-8).</param>
+    public SessionManager(int tokenExpirySecs = DefaultExpiry, string? secretKey = null)
     {
         _tokenExpirySecs = tokenExpirySecs;
-        _secret = new byte[32];
-        RandomNumberGenerator.Fill(_secret);
+        if (secretKey is not null)
+        {
+            _secret = Encoding.UTF8.GetBytes(secretKey);
+        }
+        else
+        {
+            _secret = new byte[32];
+            RandomNumberGenerator.Fill(_secret);
+        }
     }
 
     /// <summary>Get the configured token expiry duration in seconds.</summary>

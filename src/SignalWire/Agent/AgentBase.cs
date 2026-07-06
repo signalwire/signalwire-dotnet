@@ -77,8 +77,11 @@ public class AgentBase : Service
     // SWMLService instances can host SWAIG functions). AgentBase inherits.
 
     // -- Hints --
-    private List<string> _hints;
-    private List<string> _patternHints;
+    // Holds a mix of plain string hints and structured pattern-hint dicts
+    // ({hint, pattern, replace, ignore_case}), mirroring Python's
+    // ``self._hints: list[Any]``. Both feed the rendered ``ai.hints`` array.
+    private List<object> _hints;
+    private List<object> _patternHints;
 
     // -- Languages / pronunciations --
     private List<Dictionary<string, object>> _languages;
@@ -527,41 +530,137 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase AddPatternHint(string pattern)
+    /// <summary>
+    /// Add a complex hint with pattern matching. Unlike <see cref="AddHint"/>
+    /// (a bare string), this attaches a STRUCTURED hint
+    /// (<c>{hint, pattern, replace, ignore_case}</c>) into the rendered
+    /// <c>ai.hints</c> array. No-op when any of hint/pattern/replace is empty,
+    /// matching signalwire-python's <c>AIConfigMixin.add_pattern_hint</c>.
+    /// </summary>
+    /// <param name="hint">The hint to match.</param>
+    /// <param name="pattern">Regular-expression pattern.</param>
+    /// <param name="replace">Text to replace the matched hint with.</param>
+    /// <param name="ignoreCase">Whether to ignore case when matching.</param>
+    public AgentBase AddPatternHint(string hint, string pattern, string replace, bool ignoreCase = false)
     {
-        _patternHints.Add(pattern);
+        if (!string.IsNullOrEmpty(hint) && !string.IsNullOrEmpty(pattern) && !string.IsNullOrEmpty(replace))
+        {
+            _patternHints.Add(new Dictionary<string, object>
+            {
+                ["hint"] = hint,
+                ["pattern"] = pattern,
+                ["replace"] = replace,
+                ["ignore_case"] = ignoreCase,
+            });
+        }
         return this;
     }
 
     public AgentBase AddLanguage(string name, string code, string voice)
     {
-        return AddLanguage(name, code, voice, null);
+        return AddLanguage(name, code, voice, null, null, null, null, null);
     }
 
-    /// <summary>
-    /// Add a language configuration with optional per-language engine-specific
-    /// params (e.g. voice stability/similarity for ElevenLabs, model knobs).
-    /// The <c>params</c> key is only emitted into SWML when non-empty, so
-    /// existing language entries stay byte-identical when no params are passed.
-    /// Mirrors signalwire-python's <c>AIConfigMixin.add_language(params=...)</c>.
-    /// </summary>
-    /// <param name="name">Language name (e.g. "English").</param>
-    /// <param name="code">Language code (e.g. "en-US").</param>
-    /// <param name="voice">TTS voice name or combined "engine.voice:model".</param>
-    /// <param name="languageParams">Optional engine-specific params dict.
-    /// <c>null</c> or empty omits the SWML <c>params</c> key.</param>
     public AgentBase AddLanguage(
         string name,
         string code,
         string voice,
         Dictionary<string, object?>? languageParams)
     {
+        return AddLanguage(name, code, voice, null, null, null, null, languageParams);
+    }
+
+    /// <summary>
+    /// Add a language configuration, carrying optional fillers, an explicit
+    /// engine/model, and per-language engine-specific params into the rendered
+    /// SWML <c>ai.languages</c> entry. Mirrors signalwire-python's
+    /// <c>AIConfigMixin.add_language</c>:
+    /// <list type="bullet">
+    /// <item>an explicit <paramref name="engine"/>/<paramref name="model"/>
+    /// is emitted alongside the raw <paramref name="voice"/>;</item>
+    /// <item>otherwise a combined <c>"engine.voice:model"</c> voice string is
+    /// parsed into separate <c>voice</c>/<c>engine</c>/<c>model</c> keys;</item>
+    /// <item>both filler lists emit <c>speech_fillers</c> + <c>function_fillers</c>;
+    /// a single list falls back to the deprecated <c>fillers</c> key.</item>
+    /// </list>
+    /// </summary>
+    /// <param name="name">Language name (e.g. "English").</param>
+    /// <param name="code">Language code (e.g. "en-US").</param>
+    /// <param name="voice">TTS voice name or combined "engine.voice:model".</param>
+    /// <param name="speechFillers">Optional filler phrases for natural speech.</param>
+    /// <param name="functionFillers">Optional filler phrases during function calls.</param>
+    /// <param name="engine">Optional explicit engine name (e.g. "elevenlabs").</param>
+    /// <param name="model">Optional explicit model name.</param>
+    /// <param name="languageParams">Optional engine-specific params dict.
+    /// <c>null</c> or empty omits the SWML <c>params</c> key.</param>
+    public AgentBase AddLanguage(
+        string name,
+        string code,
+        string voice,
+        IReadOnlyList<string>? speechFillers,
+        IReadOnlyList<string>? functionFillers,
+        string? engine,
+        string? model,
+        Dictionary<string, object?>? languageParams)
+    {
+        ArgumentNullException.ThrowIfNull(voice);
+
         var language = new Dictionary<string, object>
         {
             ["name"] = name,
             ["code"] = code,
-            ["voice"] = voice,
         };
+
+        // Voice formatting: explicit engine/model, else parse a combined
+        // "engine.voice:model" string, else use the raw voice.
+        if (!string.IsNullOrEmpty(engine) || !string.IsNullOrEmpty(model))
+        {
+            language["voice"] = voice;
+            if (!string.IsNullOrEmpty(engine))
+            {
+                language["engine"] = engine;
+            }
+            if (!string.IsNullOrEmpty(model))
+            {
+                language["model"] = model;
+            }
+        }
+        else if (voice.Contains('.', StringComparison.Ordinal) && voice.Contains(':', StringComparison.Ordinal))
+        {
+            var colon = voice.IndexOf(':', StringComparison.Ordinal);
+            var engineVoice = voice[..colon];
+            var modelPart = voice[(colon + 1)..];
+            var dot = engineVoice.IndexOf('.', StringComparison.Ordinal);
+            if (dot >= 0)
+            {
+                language["voice"] = engineVoice[(dot + 1)..];
+                language["engine"] = engineVoice[..dot];
+                language["model"] = modelPart;
+            }
+            else
+            {
+                language["voice"] = voice;
+            }
+        }
+        else
+        {
+            language["voice"] = voice;
+        }
+
+        // Fillers: both lists -> speech_fillers + function_fillers; a single
+        // list -> deprecated "fillers" key.
+        var hasSpeech = speechFillers is { Count: > 0 };
+        var hasFunction = functionFillers is { Count: > 0 };
+        if (hasSpeech && hasFunction)
+        {
+            language["speech_fillers"] = speechFillers!;
+            language["function_fillers"] = functionFillers!;
+        }
+        else if (hasSpeech || hasFunction)
+        {
+            language["fillers"] = (hasSpeech ? speechFillers : functionFillers)!;
+        }
+
         // Per-language params (engine-specific tuning, voice settings, etc.).
         // Only emit the key when non-empty so we don't pollute SWML with
         // empty objects.
@@ -1456,7 +1555,9 @@ public class AgentBase : Service
         }
 
         // -- Hints --
-        var allHints = new List<string>(_hints);
+        // Plain string hints and structured pattern-hint dicts share one
+        // ``ai.hints`` array (Python's ``self._hints: list[Any]``).
+        var allHints = new List<object>(_hints);
         allHints.AddRange(_patternHints);
         if (allHints.Count > 0)
         {
