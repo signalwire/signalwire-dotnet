@@ -148,6 +148,36 @@ public class CliTests
     }
 
     [Fact]
+    public void ParseFlags_ParseOnly()
+    {
+        var opts = ParseFullArgs(["--parse-only", "--url", "http://localhost:3000"]);
+        Assert.True(opts.ParseOnly);
+    }
+
+    [Fact]
+    public void ParseFlags_DryRunAlias()
+    {
+        var opts = ParseFullArgs(["--dry-run", "--url", "http://localhost:3000"]);
+        Assert.True(opts.ParseOnly);
+    }
+
+    [Fact]
+    public void ParseFlags_ParseOnly_PositionIndependent_TrailingExec()
+    {
+        // --parse-only recognized even when it trails an --exec (the flag is
+        // consumed by name, so the exec parser never eats it as a function arg).
+        var opts = ParseFullArgs([
+            "--url", "http://localhost:3000",
+            "--exec", "foo",
+            "--param", "bar=1",
+            "--parse-only",
+        ]);
+        Assert.True(opts.ParseOnly);
+        Assert.Equal("foo", opts.Exec);
+        Assert.Equal("1", opts.Params["bar"]);
+    }
+
+    [Fact]
     public void ParseFlags_Combined()
     {
         var opts = ParseFullArgs([
@@ -254,6 +284,10 @@ public class CliTests
                 case "--raw":
                     opts.Raw = true;
                     break;
+                case "--parse-only":
+                case "--dry-run":
+                    opts.ParseOnly = true;
+                    break;
                 case "--verbose":
                     opts.Verbose = true;
                     break;
@@ -279,5 +313,6 @@ public class CliTests
         public bool Raw { get; set; }
         public bool Verbose { get; set; }
         public bool Help { get; set; }
+        public bool ParseOnly { get; set; }
     }
 }

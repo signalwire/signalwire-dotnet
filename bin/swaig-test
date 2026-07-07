@@ -22,6 +22,7 @@
 //   --exec <tool>         Execute a specific SWAIG tool (URL mode)
 //   --param <key=value>   Pass a parameter (repeatable, URL mode --exec)
 //   --raw                 Output raw JSON without formatting
+//   --parse-only          Validate arguments and exit (prints 'parse OK'); alias --dry-run
 //   --verbose             Enable verbose output
 //   --help                Show this help message
 //
@@ -50,6 +51,20 @@ using System.Text;
 using System.Text.Json;
 
 var options = ParseArgs(Args.ToArray());
+
+// ===== PARSE-ONLY / DRY-RUN =====
+// Position-independent: --parse-only / --dry-run is recognized anywhere in the
+// arg list (including trailing an --exec, since ParseArgs consumes flags by name
+// rather than position). ParseArgs has already validated every flag and exited
+// non-zero (2) on an unknown/malformed option before reaching here. On a valid
+// invocation we print exactly "parse OK" and exit 0 WITHOUT loading the agent,
+// touching the filesystem, or hitting the network. Mirrors the Python reference
+// (signalwire/cli/test_swaig.py) and the cross-port DOC-CLI gate contract.
+if (options.ParseOnly)
+{
+    Console.WriteLine("parse OK");
+    return;
+}
 
 if (options.Help)
 {
@@ -501,6 +516,12 @@ static CliOptions ParseArgs(string[] args)
             case "--raw":
                 opts.Raw = true;
                 break;
+            case "--parse-only":
+            case "--dry-run":
+                // Validate args and exit without loading the agent or hitting the
+                // network. Recognized anywhere in argv (position-independent).
+                opts.ParseOnly = true;
+                break;
             case "--verbose":
                 opts.Verbose = true;
                 break;
@@ -573,6 +594,7 @@ Options:
   --exec <tool>         Execute a specific SWAIG tool (URL mode)
   --param <key=value>   Pass a parameter (repeatable, --exec)
   --raw                 Output raw JSON without formatting
+  --parse-only          Validate arguments and exit (prints 'parse OK'); alias --dry-run
   --verbose             Enable verbose output
   --help                Show this help message
 
@@ -617,4 +639,5 @@ class CliOptions
     public bool Raw { get; set; }
     public bool Verbose { get; set; }
     public bool Help { get; set; }
+    public bool ParseOnly { get; set; }
 }
