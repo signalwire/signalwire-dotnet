@@ -106,6 +106,58 @@ def repo_root() -> Path:
 
 
 # ---------------------------------------------------------------------------
+# SDK-surface policy overlay (the single source; NOT wire truth).
+# ---------------------------------------------------------------------------
+# rest-apis/x-sdk-overlay.yaml is the ONE authoritative place that says which spec
+# fields the SDKs hide (dropped from the surface) or deprecate (emitted-but-flagged).
+# It is a policy overlay, not markup in the (often vendored) specs, so the same field
+# is governed once and applied wherever it surfaces (schema.json AIParams + the
+# calling/fabric REST projections + the swml-verbs config type). Every property-
+# emission site consults it by (field name, containing SPEC SCHEMA NAME) — the
+# $defs / components.schemas key AS IT APPEARS IN THE SPEC, NOT the C# type name we
+# later emit — so one `scope` value works cross-port (mirrors the Python reference
+# generate_python_rest_types.py).
+_overlay_cache: dict[str, set[tuple[str, str | None]]] | None = None
+
+
+def _load_overlay() -> dict[str, set[tuple[str, str | None]]]:
+    global _overlay_cache
+    if _overlay_cache is None:
+        path = resolve_porting_sdk() / "rest-apis" / "x-sdk-overlay.yaml"
+
+        def rules(key: str, data: dict) -> set[tuple[str, str | None]]:
+            out: set[tuple[str, str | None]] = set()
+            for entry in data.get(key) or []:
+                if isinstance(entry, dict) and entry.get("field"):
+                    out.add((entry["field"], entry.get("scope")))
+            return out
+
+        data = {}
+        if path.is_file():
+            data = yaml.safe_load(path.read_text()) or {}
+        _overlay_cache = {"hidden": rules("hidden", data), "deprecated": rules("deprecated", data)}
+    return _overlay_cache
+
+
+def _overlay_match(rules: set[tuple[str, str | None]], field: str, schema_name: str | None) -> bool:
+    # A rule matches when its field equals `field` AND (it is unscoped OR its scope
+    # equals the containing SPEC schema name). An unscoped rule matches everywhere;
+    # a scoped rule only inside the schema whose spec name equals its scope.
+    for rf, scope in rules:
+        if rf == field and (scope is None or scope == schema_name):
+            return True
+    return False
+
+
+def _overlay_hidden(field: str, schema_name: str | None = None) -> bool:
+    return _overlay_match(_load_overlay()["hidden"], field, schema_name)
+
+
+def _overlay_deprecated(field: str, schema_name: str | None = None) -> bool:
+    return _overlay_match(_load_overlay()["deprecated"], field, schema_name)
+
+
+# ---------------------------------------------------------------------------
 # Base loading (x-sdk-bases; §2).
 # ---------------------------------------------------------------------------
 
@@ -691,7 +743,7 @@ def _cs_property_name(wire_key: str) -> str:
 
 
 def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: str,
-                          ref_names: dict | None = None) -> str:
+                          ref_names: dict | None = None, schema_name: str | None = None) -> str:
     """Emit one method-less C# data class in namespace ``ns``: a public property
     per wire field (``[JsonPropertyName("<wire key>")]``), typed per
     ``_wire_field_cs_type``. No methods, no constructor. Shared by the REST
@@ -700,7 +752,13 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
 
     ``ref_names`` maps a sibling surfaced-object LEAF name -> its fully-qualified
     C# type name (a ``$ref`` field to one becomes a class-typed property so it
-    MATCHES the reference's recorded class-typed accessor)."""
+    MATCHES the reference's recorded class-typed accessor).
+
+    ``schema_name`` is the SPEC schema name of this type (the $defs /
+    components.schemas key AS IT APPEARS IN THE SPEC — NOT ``cs_name``). It is the
+    scope the SDK-surface overlay (rest-apis/x-sdk-overlay.yaml) matches against:
+    an overlay-hidden field is DROPPED entirely (still on the wire); an
+    overlay-deprecated field is emitted with an ``[Obsolete]`` attribute."""
     ref_names = ref_names or {}
     lines: list[str] = []
     lines.append("/// <summary>")
@@ -716,6 +774,12 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
     used: set[str] = set()
     first = True
     for wire_key, psc in properties.items():
+        # SDK-surface policy comes from the single overlay (rest-apis/x-sdk-overlay.yaml),
+        # NOT from markup in the (often vendored) specs — matched by (field, SPEC schema
+        # name) so one policy applies wherever the field surfaces.
+        if _overlay_hidden(wire_key, schema_name):
+            # hidden: drop from the SDK surface entirely (still on the wire).
+            continue
         prop = _cs_property_name(wire_key)
         while prop.lstrip("@") in used:
             prop = prop + "_"
@@ -725,6 +789,9 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
             lines.append("")
         first = False
         lines.append(f'    /// <summary>Wire field <c>{wire_key}</c>.</summary>')
+        if _overlay_deprecated(wire_key, schema_name):
+            # deprecated: still emitted (back-compat), flagged with [Obsolete].
+            lines.append(f'    [System.Obsolete("Deprecated wire field {wire_key!r}.")]')
         lines.append(f'    [JsonPropertyName({cs_str(wire_key)})]')
         lines.append(f"    public {cs_type} {prop} {{ get; set; }}")
     lines.append("}")
@@ -1585,7 +1652,7 @@ def emit_types(psdk: Path, outs: dict) -> None:
                     outs[fn] = emit_methodless_class(
                         cs_ns, cs_name, node.get("properties") or {},
                         f"{ns_key!r} spec components/schemas {raw_name!r}",
-                        ref_names=ref_names)
+                        ref_names=ref_names, schema_name=raw_name)
 
 
 # ---------------------------------------------------------------------------

@@ -133,20 +133,22 @@ def build_outputs(psdk: Path) -> dict:
         if isinstance(node, dict) and GR.is_object_schema(node)
     }
 
-    def emit(cs_name: str, props: dict, desc: str) -> None:
+    def emit(cs_name: str, props: dict, desc: str, schema_name: str | None = None) -> None:
         if cs_name in emitted_names:
             return
         emitted_names.add(cs_name)
         fn = "/".join(SWML_VERBS_SUBDIR) + f"/{GR.snake(cs_name)}.cs"
+        # schema_name = the SPEC $defs key (NOT cs_name) so the SDK-surface overlay
+        # matches by the spec schema name, e.g. `scope: AIParams`.
         outs[fn] = GR.emit_methodless_class(SWML_VERBS_CS_NS, cs_name, props, desc,
-                                            ref_names=ref_names)
+                                            ref_names=ref_names, schema_name=schema_name)
 
     # 1. One data class per OBJECT $defs schema.
     for raw_name, node in defs.items():
         if not isinstance(node, dict) or not GR.is_object_schema(node):
             continue
         emit(GR.type_name(raw_name), node.get("properties") or {},
-             f"schema.json $defs schema {raw_name!r}")
+             f"schema.json $defs schema {raw_name!r}", schema_name=raw_name)
 
     # 2. One <Verb>Config class per flattenable SWMLMethod.anyOf verb.
     sm = defs.get("SWMLMethod")

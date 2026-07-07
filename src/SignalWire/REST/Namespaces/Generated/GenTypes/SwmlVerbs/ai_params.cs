@@ -60,14 +60,6 @@ public class AIParams
     [JsonPropertyName("asr_speaker_affinity")]
     public Dictionary<string, object?>? asr_speaker_affinity { get; set; }
 
-    /// <summary>Wire field <c>audible_debug</c>.</summary>
-    [JsonPropertyName("audible_debug")]
-    public Dictionary<string, object?>? audible_debug { get; set; }
-
-    /// <summary>Wire field <c>audible_latency</c>.</summary>
-    [JsonPropertyName("audible_latency")]
-    public Dictionary<string, object?>? audible_latency { get; set; }
-
     /// <summary>Wire field <c>background_file</c>.</summary>
     [JsonPropertyName("background_file")]
     public string? background_file { get; set; }
@@ -107,10 +99,6 @@ public class AIParams
     /// <summary>Wire field <c>barge_functions</c>.</summary>
     [JsonPropertyName("barge_functions")]
     public Dictionary<string, object?>? barge_functions { get; set; }
-
-    /// <summary>Wire field <c>cache_mode</c>.</summary>
-    [JsonPropertyName("cache_mode")]
-    public Dictionary<string, object?>? cache_mode { get; set; }
 
     /// <summary>Wire field <c>conscience</c>.</summary>
     [JsonPropertyName("conscience")]
@@ -155,10 +143,6 @@ public class AIParams
     /// <summary>Wire field <c>end_of_speech_timeout</c>.</summary>
     [JsonPropertyName("end_of_speech_timeout")]
     public Dictionary<string, object?>? end_of_speech_timeout { get; set; }
-
-    /// <summary>Wire field <c>enable_accounting</c>.</summary>
-    [JsonPropertyName("enable_accounting")]
-    public Dictionary<string, object?>? enable_accounting { get; set; }
 
     /// <summary>Wire field <c>enable_thinking</c>.</summary>
     [JsonPropertyName("enable_thinking")]
@@ -233,6 +217,7 @@ public class AIParams
     public string? interrupt_prompt { get; set; }
 
     /// <summary>Wire field <c>languages_enabled</c>.</summary>
+    [System.Obsolete("Deprecated wire field 'languages_enabled'.")]
     [JsonPropertyName("languages_enabled")]
     public Dictionary<string, object?>? languages_enabled { get; set; }
 
@@ -347,10 +332,6 @@ public class AIParams
     /// <summary>Wire field <c>tts_number_format</c>.</summary>
     [JsonPropertyName("tts_number_format")]
     public Dictionary<string, object?>? tts_number_format { get; set; }
-
-    /// <summary>Wire field <c>verbose_logs</c>.</summary>
-    [JsonPropertyName("verbose_logs")]
-    public Dictionary<string, object?>? verbose_logs { get; set; }
 
     /// <summary>Wire field <c>video_listening_file</c>.</summary>
     [JsonPropertyName("video_listening_file")]
