@@ -307,6 +307,39 @@ swaig_cli_gate() {
         --no-serverless-argv='--url|http://user:pass@127.0.0.1:1/|--simulate-serverless|lambda|--list-tools'
 }
 
+# ARTIFACT-DENY — authoritative --listing mode. Pack the real NuGet package into
+# a repo-local scratch dir, list its contents with `unzip -l`, and feed that file
+# listing to artifact_deny.py. This is the PUBLISHED set (respects .csproj
+# pack/include rules), not the git-ls-files proxy which over-reports repo files
+# excluded from the package.
+dayone_artifact_deny() {
+    local pkgdir="$PORT_ROOT/.sw-tmp/artifact-deny-pkg"
+    rm -rf "$pkgdir"
+    mkdir -p "$pkgdir"
+    local dn
+    dn="$(dotnet_cmd)"
+    if ! $dn pack "$PORT_ROOT/src/SignalWire/SignalWire.csproj" -c Release \
+            -o "$pkgdir" >"$PORT_ROOT/.sw-tmp/artifact-deny-pack.log" 2>&1; then
+        echo "dotnet pack failed — log:" >&2
+        cat "$PORT_ROOT/.sw-tmp/artifact-deny-pack.log" >&2
+        return 1
+    fi
+    local nupkg
+    nupkg="$(ls "$pkgdir"/*.nupkg 2>/dev/null | head -1)"
+    if [ -z "$nupkg" ]; then
+        echo "dotnet pack produced no .nupkg in $pkgdir" >&2
+        return 1
+    fi
+    # `unzip -Z1` prints ONE clean archive path per line (no header/footer/size
+    # columns), which is exactly what artifact_deny's --listing parser wants.
+    # (Plain `unzip -l` prefixes each line with Length/Date/Time columns, so a
+    # root-level artifact like `port_signatures.json` would fail the split("/")
+    # basename match and be silently missed — `-Z1` is the authoritative form.)
+    unzip -Z1 "$nupkg" \
+        | python3 "$PORTING_SDK_DIR/scripts/artifact_deny.py" \
+            --port dotnet --repo "$PORT_ROOT" --listing -
+}
+
 cd "$PORT_ROOT"
 
 echo "==> running CI gates for $PORT_NAME (porting-sdk at $PORTING_SDK_DIR)"
@@ -436,6 +469,25 @@ sched_gate SWAIG-COVERAGE desc="FunctionResult emits every engine action (or all
     -- python3 "$PORTING_SDK_DIR/scripts/swaig_coverage.py" \
         --check \
         --emission "$PORT_ROOT/src/SignalWire/SWAIG/FunctionResult.cs"
+
+# ---- Day-one deterministic gates (enforced, non-report-only) -----------------
+sched_gate DOC-LANG-PURITY res=dayone desc="no python-verbatim docs in a non-python port" \
+    -- python3 "$PORTING_SDK_DIR/scripts/doc_lang_purity.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate DOC-LINKS res=dayone desc="every relative markdown link resolves to a tracked file" \
+    -- python3 "$PORTING_SDK_DIR/scripts/doc_links.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate ROOT-HYGIENE res=dayone desc="no audit/scratch clutter tracked at repo root (allowlist ROOT_HYGIENE_ALLOW.md)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/root_hygiene.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate IGNORE-LEDGER-VERIFY res=dayone desc="no laundered false-absence entries in DOC_AUDIT_IGNORE.md" \
+    -- python3 "$PORTING_SDK_DIR/scripts/ignore_ledger_verify.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate META-CONSISTENT res=dayone desc="package metadata consistency" \
+    -- python3 "$PORTING_SDK_DIR/scripts/meta_consistent.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate ARTIFACT-DENY res=dayone desc="no porting artifacts in the PUBLISHED package (authoritative listing)" \
+    --fn dayone_artifact_deny
 
 sched_run
 rc=$?
