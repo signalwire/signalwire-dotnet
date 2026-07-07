@@ -289,6 +289,28 @@ spec_parity_gate() {
     return $rc
 }
 
+# ROUTE-COLLISION — cross-references the port's route-registry (operation ->
+# (method, path)) with its surface enumeration to find route-split / crud-dup /
+# orphan-dto latent defects. dotnet HAS a registry (the SAME tools/RouteRegistry
+# program SPEC-PARITY drives), so the gate runs with --registry-json; the surface
+# defaults to <repo>/port_surface.json. Any approved ROUTE_COLLISION_ALLOW.md
+# entries are honored by the gate (dotnet currently has zero splits, so none).
+route_collision_gate() {
+    local registry
+    registry="$(mktemp)"
+    if ! bash "$PORT_ROOT/scripts/route-registry.sh" >"$registry" 2>/dev/null; then
+        echo "route-registry emitted an incomplete Set B (uninvokable/no-request method)" >&2
+        rm -f "$registry"
+        return 1
+    fi
+    python3 "$PORTING_SDK_DIR/scripts/route_collision.py" \
+        --port dotnet --repo "$PORT_ROOT" \
+        --registry-json "$registry"
+    local rc=$?
+    rm -f "$registry"
+    return $rc
+}
+
 # SWAIG-CLI — the lightweight shared swaig-test mini-contract. bin/swaig-test is a
 # dotnet-script; provision dotnet-script as a tool-path tool, then run it.
 swaig_cli_gate() {
@@ -488,6 +510,27 @@ sched_gate META-CONSISTENT res=dayone desc="package metadata consistency" \
 
 sched_gate ARTIFACT-DENY res=dayone desc="no porting artifacts in the PUBLISHED package (authoritative listing)" \
     --fn dayone_artifact_deny
+
+# ---- Tier-5 expansion gates (enforced, non-report-only) ----------------------
+# Backlog burned to zero for dotnet; these enforce so it can't re-rot.
+# ROUTE-COLLISION consumes tools/RouteRegistry (dotnet HAS a registry, same source
+# SPEC-PARITY uses) → res=dayone via route_collision_gate. RELEASE-FRESH enforces
+# because dotnet has publish.yml with gates-before-publish. SEMVER-DIFF is HELD
+# (pending user decision on version bumps) and intentionally NOT wired here.
+sched_gate GEN-TYPE-DEGENERACY res=dayone desc="generated types aren't degenerate loose aliases (modulo GEN_TYPE_DEGENERACY_ALLOW.md)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/gen_type_degeneracy.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate PUBLIC-JARGON res=dayone desc="no internal porting jargon leaked into public doc comments" \
+    -- python3 "$PORTING_SDK_DIR/scripts/public_jargon.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate ROUTE-COLLISION res=dayone desc="no route-split/crud-dup between registry + surface (ROUTE_COLLISION_ALLOW.md honored)" \
+    --fn route_collision_gate
+
+sched_gate GEN-IDIOM res=dayone desc="generated code is not lint-excluded from the idiom linter" \
+    -- python3 "$PORTING_SDK_DIR/scripts/gen_idiom.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate RELEASE-FRESH res=dayone desc="publish workflow runs gates BEFORE publishing" \
+    -- python3 "$PORTING_SDK_DIR/scripts/release_fresh.py" --port dotnet --repo "$PORT_ROOT"
 
 sched_run
 rc=$?
