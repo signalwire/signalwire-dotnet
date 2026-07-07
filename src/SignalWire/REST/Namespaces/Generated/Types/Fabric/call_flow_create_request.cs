@@ -11,13 +11,12 @@ using System.Text.Json.Serialization;
 namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 
 /// <summary>
-/// CallFlowCreateRequest — generated method-less data type ('fabric' spec components/schemas 'CallFlowCreateRequest').
+/// CallFlowCreateRequest — data type for 'fabric' spec components/schemas 'CallFlowCreateRequest'.
 ///
-/// Pure data DTO: a public property per snake wire key (via
-/// JsonPropertyName). No methods and no constructor — the reference
-/// records this as a method-less type definition (bare class name on the
-/// surface). A class-typed field mirrors the reference's recorded accessor;
-/// a scalar/collection field is a port-side state accessor the diff excuses.
+/// A plain data object with one public property per JSON field
+/// (mapped via <see cref="System.Text.Json.Serialization.JsonPropertyNameAttribute"/>).
+/// Used to deserialize responses from and serialize requests to the
+/// SignalWire REST API.
 /// </summary>
 public class CallFlowCreateRequest
 {

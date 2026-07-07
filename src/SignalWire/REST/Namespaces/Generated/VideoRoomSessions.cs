@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// VideoRoomSessions — generated from x-sdk-resource 'VideoRoomSessions' (video spec, base ReadResource).
+/// VideoRoomSessions — REST resource for the video API.
 /// </summary>
 public class VideoRoomSessions
 {
@@ -35,7 +35,7 @@ public class VideoRoomSessions
     /// <summary>Build a full path by appending segments to the base path.</summary>
     protected string Path(params string[] parts)
     {
-        return parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
+        return parts is null || parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
     }
 
     /// <summary>List resources (GET BasePath).</summary>

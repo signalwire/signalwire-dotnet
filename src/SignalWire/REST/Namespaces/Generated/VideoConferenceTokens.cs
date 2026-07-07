@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// VideoConferenceTokens — generated from x-sdk-resource 'VideoConferenceTokens' (video spec, base BaseResource).
+/// VideoConferenceTokens — REST resource for the video API.
 /// </summary>
 public class VideoConferenceTokens
 {
@@ -35,7 +35,7 @@ public class VideoConferenceTokens
     /// <summary>Build a full path by appending segments to the base path.</summary>
     protected string Path(params string[] parts)
     {
-        return parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
+        return parts is null || parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
     }
 
     /// <summary>

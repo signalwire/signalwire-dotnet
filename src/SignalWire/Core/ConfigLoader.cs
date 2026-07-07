@@ -102,7 +102,7 @@ public sealed class ConfigLoader
     /// Recursively substitute environment variables in configuration values,
     /// supporting <c>${VAR|default}</c> syntax. After substitution, string
     /// values that look like booleans/integers/floats are coerced to those
-    /// native types (Python parity). Throws when <paramref name="maxDepth"/> is
+    /// native types (same behavior as Python). Throws when <paramref name="maxDepth"/> is
     /// exhausted.
     /// </summary>
     [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port ConfigLoader surface; binding it to the instance is intentional.")]

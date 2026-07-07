@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// FreeswitchConnectors — generated from x-sdk-resource 'FreeswitchConnectors' (fabric spec, base FabricResource).
+/// FreeswitchConnectors — REST resource for the fabric API.
 /// </summary>
 public class FreeswitchConnectors : SignalWire.REST.CrudWithAddresses
 {

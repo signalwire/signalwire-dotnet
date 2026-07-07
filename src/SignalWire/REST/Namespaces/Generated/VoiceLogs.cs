@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// VoiceLogs — generated from x-sdk-resource 'VoiceLogs' (voice spec, base ReadResource).
+/// VoiceLogs — REST resource for the voice API.
 /// </summary>
 public class VoiceLogs
 {
@@ -35,7 +35,7 @@ public class VoiceLogs
     /// <summary>Build a full path by appending segments to the base path.</summary>
     protected string Path(params string[] parts)
     {
-        return parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
+        return parts is null || parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
     }
 
     /// <summary>List resources (GET BasePath).</summary>

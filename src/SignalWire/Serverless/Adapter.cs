@@ -162,7 +162,7 @@ public static class Adapter
     /// Extracts method, path, headers, and body from the GCF request
     /// dictionary (a normalized Flask-request shape), calls
     /// agent.HandleRequest(), and returns a response dictionary
-    /// (status, headers, body). Python parity:
+    /// (status, headers, body). Equivalent to Python's
     /// ``_handle_google_cloud_function_request``.
     /// </summary>
     public static Dictionary<string, object?> HandleGoogleCloudFunction(
@@ -207,7 +207,7 @@ public static class Adapter
     /// Handle a CGI invocation. Reads the request method / path / body from
     /// the CGI environment variables (REQUEST_METHOD, PATH_INFO, QUERY_STRING,
     /// CONTENT_LENGTH) and stdin, calls agent.HandleRequest(), and returns a
-    /// response dictionary (status, headers, body). Python parity:
+    /// response dictionary (status, headers, body). Equivalent to Python's
     /// the ``mode == "cgi"`` branch of ``handle_serverless_request``.
     /// </summary>
     /// <param name="agent">Agent/Service to dispatch to.</param>

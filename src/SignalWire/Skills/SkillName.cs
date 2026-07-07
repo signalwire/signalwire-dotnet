@@ -9,7 +9,7 @@ namespace SignalWire.Skills;
 /// (and the matching <c>RemoveSkill</c> / <c>HasSkill</c> overloads) accept this
 /// enum OR a string. The enum gives editor autocompletion and makes a typo fail
 /// at the call site — a bare string like <c>"datetiem"</c> only fails at runtime,
-/// on the server. Strings keep parity with the Python reference (which uses a
+/// on the server. Strings keep matching the Python API (which uses a
 /// bare <c>str</c>) and still allow custom / third-party skills that aren't
 /// built in.
 /// </para>
@@ -22,7 +22,7 @@ namespace SignalWire.Skills;
 /// <example>
 /// <code>
 /// agent.AddSkill(SkillName.Datetime);   // typed, autocompleted
-/// agent.AddSkill("datetime");           // string still works (parity)
+/// agent.AddSkill("datetime");           // string still works
 /// agent.AddSkill("my_custom_skill");    // open set: custom skills ok
 /// </code>
 /// </example>

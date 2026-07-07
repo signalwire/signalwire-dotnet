@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// MessageLogs — generated from x-sdk-resource 'MessageLogs' (message spec, base ReadResource).
+/// MessageLogs — REST resource for the message API.
 /// </summary>
 public class MessageLogs
 {
@@ -35,7 +35,7 @@ public class MessageLogs
     /// <summary>Build a full path by appending segments to the base path.</summary>
     protected string Path(params string[] parts)
     {
-        return parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
+        return parts is null || parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
     }
 
     /// <summary>List resources (GET BasePath).</summary>

@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// CxmlApplications — generated from x-sdk-resource 'CxmlApplications' (fabric spec, base BaseResource).
+/// CxmlApplications — REST resource for the fabric API.
 /// </summary>
 public class CxmlApplications
 {
@@ -35,7 +35,7 @@ public class CxmlApplications
     /// <summary>Build a full path by appending segments to the base path.</summary>
     protected string Path(params string[] parts)
     {
-        return parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
+        return parts is null || parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
     }
 
     /// <summary>

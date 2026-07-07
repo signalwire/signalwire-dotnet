@@ -88,7 +88,7 @@ public class Client : IAsyncDisposable
     /// <summary>
     /// Test-only seam to configure the underlying <see cref="ClientWebSocket"/>
     /// before it connects — used by the TLS capability test to trust the
-    /// porting-sdk throwaway CA via a custom
+    /// a throwaway CA via a custom
     /// <c>RemoteCertificateValidationCallback</c> for the WSS handshake.
     /// Internal (invisible to the public-surface audit), mirroring the
     /// existing internal test seams in the SDK; production code leaves it null

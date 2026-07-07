@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// SwmlWebhooks — generated from x-sdk-resource 'SwmlWebhooks' (fabric spec, base FabricResource).
+/// SwmlWebhooks — REST resource for the fabric API.
 /// </summary>
 public class SwmlWebhooks : SignalWire.REST.CrudWithAddresses
 {
@@ -24,7 +24,7 @@ public class SwmlWebhooks : SignalWire.REST.CrudWithAddresses
     {
     }
 
-    /// <summary>Update via PATCH (per x-sdk-resource.update_method).</summary>
+    /// <summary>Update this resource via an HTTP PATCH request.</summary>
     public override Task<Dictionary<string, object?>> UpdateAsync(
         string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)

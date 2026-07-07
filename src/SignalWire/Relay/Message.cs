@@ -32,7 +32,7 @@ public sealed class Message
     /// enum, parsed from <see cref="State"/>. Returns <c>null</c> when
     /// <see cref="State"/> is unset or an unrecognised (e.g. newly-introduced
     /// server) value — read <see cref="State"/> for the raw string in that
-    /// case. Typed convenience alongside the parity-bearing string
+    /// case. Typed convenience alongside the primary string
     /// <see cref="State"/>; agrees with it for known states.
     /// </summary>
     public MessageState? MessageState =>
@@ -42,7 +42,7 @@ public sealed class Message
     public bool Completed { get; private set; }
     public string? Result { get; private set; }
 
-    /// <summary>A concise debug representation of this message (Python parity:
+    /// <summary>A concise debug representation of this message (equivalent to Python's
     /// ``Message.__repr__``).</summary>
     public override string ToString()
         => $"<Message id={MessageId} state={State}>";

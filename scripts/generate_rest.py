@@ -704,13 +704,12 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
     ref_names = ref_names or {}
     lines: list[str] = []
     lines.append("/// <summary>")
-    lines.append(f"/// {cs_name} — generated method-less data type ({source_desc}).")
+    lines.append(f"/// {cs_name} — data type for {source_desc}.")
     lines.append("///")
-    lines.append("/// Pure data DTO: a public property per snake wire key (via")
-    lines.append("/// JsonPropertyName). No methods and no constructor — the reference")
-    lines.append("/// records this as a method-less type definition (bare class name on the")
-    lines.append("/// surface). A class-typed field mirrors the reference's recorded accessor;")
-    lines.append("/// a scalar/collection field is a port-side state accessor the diff excuses.")
+    lines.append("/// A plain data object with one public property per JSON field")
+    lines.append("/// (mapped via <see cref=\"System.Text.Json.Serialization.JsonPropertyNameAttribute\"/>).")
+    lines.append("/// Used to deserialize responses from and serialize requests to the")
+    lines.append("/// SignalWire REST API.")
     lines.append("/// </summary>")
     lines.append(f"public class {cs_name}")
     lines.append("{")
@@ -748,10 +747,9 @@ def emit_type_enum(ns: str, enum_name: str, values: list, source_desc: str) -> s
     enum (method-less, so the surface records the bare class name)."""
     lines: list[str] = []
     lines.append("/// <summary>")
-    lines.append(f"/// {enum_name} — generated public closed-set ({source_desc}).")
-    lines.append("/// Public const string members whose value IS the wire string (the .NET")
-    lines.append("/// closed-set idiom — not a CLR enum type). Method-less: records the bare")
-    lines.append("/// class name like the reference.")
+    lines.append(f"/// {enum_name} — the set of accepted string values for this field.")
+    lines.append("/// Each public <c>const string</c> member is one of the values the API")
+    lines.append("/// accepts; the member's value is the literal wire string to send.")
     lines.append("/// </summary>")
     lines.append(f"public static class {enum_name}")
     lines.append("{")
@@ -1179,7 +1177,7 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
     bp = base_path(spec, anchor, markup)
     lines = []
     lines.append(f"/// <summary>")
-    lines.append(f"/// {name} — generated from x-sdk-resource {name!r} ({spec.name} spec, base {base}).")
+    lines.append(f"/// {name} — REST resource for the {spec.name} API.")
     lines.append(f"/// </summary>")
     lines.append(f"public class {name}")
     lines.append("{")
@@ -1199,7 +1197,7 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
     lines.append("    /// <summary>Build a full path by appending segments to the base path.</summary>")
     lines.append("    protected string Path(params string[] parts)")
     lines.append("    {")
-    lines.append("        return parts.Length == 0 ? BasePath : BasePath + \"/\" + string.Join(\"/\", parts);")
+    lines.append("        return parts is null || parts.Length == 0 ? BasePath : BasePath + \"/\" + string.Join(\"/\", parts);")
     lines.append("    }")
 
     if base == "ReadResource":
@@ -1277,7 +1275,7 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
 
     lines = []
     lines.append(f"/// <summary>")
-    lines.append(f"/// {name} — generated from x-sdk-resource {name!r} ({spec.name} spec, base {base}).")
+    lines.append(f"/// {name} — REST resource for the {spec.name} API.")
     lines.append(f"/// </summary>")
     lines.append(f"public class {name} : SignalWire.REST.{parent}")
     lines.append("{")
@@ -1289,7 +1287,7 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
     # CrudResource base updates via PUT. A PATCH resource overrides UpdateAsync.
     if upd == "PATCH":
         lines.append("")
-        lines.append("    /// <summary>Update via PATCH (per x-sdk-resource.update_method).</summary>")
+        lines.append("    /// <summary>Update this resource via an HTTP PATCH request.</summary>")
         lines.append("    public override Task<Dictionary<string, object?>> UpdateAsync(")
         lines.append("        string id, Dictionary<string, object?> data,")
         lines.append("        CancellationToken cancellationToken = default)")
@@ -1481,12 +1479,10 @@ def emit_resource_tree(placed) -> str:
 
     lines = []
     lines.append("/// <summary>")
-    lines.append("/// ResourceTree — generated lazy accessors for every flat REST resource")
-    lines.append("/// plus the namespace containers (§8). The hand RestClient INHERITS this")
-    lines.append("/// tree so every generated resource + container is reachable directly off")
-    lines.append("/// the one authenticated transport. Placement resolved from")
-    lines.append("/// x-sdk-namespace.attr + per-resource x-sdk-resource.namespace/attr; base")
-    lines.append("/// paths per §4.")
+    lines.append("/// ResourceTree — lazy accessors for every REST resource and")
+    lines.append("/// namespace container. <see cref=\"SignalWire.REST.RestClient\"/> inherits")
+    lines.append("/// this tree, so every resource is reachable directly from an")
+    lines.append("/// authenticated client.")
     lines.append("/// </summary>")
     lines.append("public partial class ResourceTree")
     lines.append("{")

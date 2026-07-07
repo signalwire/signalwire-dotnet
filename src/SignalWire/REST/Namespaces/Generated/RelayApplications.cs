@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// RelayApplications — generated from x-sdk-resource 'RelayApplications' (fabric spec, base FabricResource).
+/// RelayApplications — REST resource for the fabric API.
 /// </summary>
 public class RelayApplications : SignalWire.REST.CrudWithAddresses
 {

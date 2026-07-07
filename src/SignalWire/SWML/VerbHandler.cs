@@ -15,7 +15,7 @@ namespace SignalWire.SWML;
 /// Base interface for SWML verb handlers.
 ///
 /// Verb handlers provide specialized logic for complex SWML verbs that cannot
-/// be handled generically. Python parity: the abstract SWMLVerbHandler ABC.
+/// be handled generically. Equivalent to Python's abstract SWMLVerbHandler ABC.
 /// The base methods throw <see cref="NotImplementedException"/> so a subclass
 /// that forgets to override them fails loudly (the analog of @abstractmethod).
 /// </summary>
@@ -47,7 +47,7 @@ public class SWMLVerbHandler
 /// </summary>
 public class AIVerbHandler : SWMLVerbHandler
 {
-    /// <summary>Top-level AI keys that live outside the params object (Python parity).</summary>
+    /// <summary>Top-level AI keys that live outside the params object (same behavior as Python).</summary>
     private static readonly HashSet<string> TopLevelAiKeys =
         new() { "languages", "hints", "pronounce", "global_data" };
 
@@ -94,7 +94,7 @@ public class AIVerbHandler : SWMLVerbHandler
     /// <paramref name="promptText"/> / <paramref name="promptPom"/> (mutually
     /// exclusive). <c>languages</c>, <c>hints</c>, <c>pronounce</c> and
     /// <c>global_data</c> are placed at the top level; every other extra keyword
-    /// is placed into <c>config["params"]</c> (Python parity).
+    /// is placed into <c>config["params"]</c> (same behavior as Python).
     /// </summary>
     [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port AIVerbHandler surface; binding it to the instance is intentional.")]
     [SuppressMessage("Design", "CA1002", Justification = "Cross-port surface accepts the prompt-POM list verbatim; changing the collection type would break the parity surface.")]
@@ -259,7 +259,7 @@ public class AIVerbHandler : SWMLVerbHandler
 ///
 /// Maintains a registry of handlers for special SWML verbs and provides methods
 /// for accessing them. The "ai" verb handler is registered automatically on
-/// construction (Python parity).
+/// construction (same behavior as Python).
 /// </summary>
 public class VerbHandlerRegistry
 {

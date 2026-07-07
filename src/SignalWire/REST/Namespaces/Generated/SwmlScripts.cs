@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// SwmlScripts — generated from x-sdk-resource 'SwmlScripts' (fabric spec, base FabricResource).
+/// SwmlScripts — REST resource for the fabric API.
 /// </summary>
 public class SwmlScripts : SignalWire.REST.CrudWithAddresses
 {

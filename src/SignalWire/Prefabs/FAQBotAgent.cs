@@ -61,7 +61,7 @@ public class FAQBotAgent : AgentBase
 
     /// <summary>SWAIG tool handler that searches the configured FAQ
     /// knowledge base for the best keyword-scored answer.
-    /// (Python parity: ``FAQBotAgent.search_faqs(args, raw_data)``.)</summary>
+    /// (equivalent to Python's ``FAQBotAgent.search_faqs(args, raw_data)``.)</summary>
     [SuppressMessage("Globalization", "CA1308", Justification = "lowercased query is the normalized value echoed back in the response text verbatim")]
     public FunctionResult SearchFaqs(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {

@@ -30,7 +30,7 @@ namespace SignalWire.Security;
 /// Validates SignalWire webhook signatures for both Scheme A (RELAY/JSON,
 /// hex HMAC-SHA1 over <c>url + rawBody</c>) and Scheme B (Compat/cXML form,
 /// base64 HMAC-SHA1 over <c>url + sortedFormParams</c>) per
-/// <c>porting-sdk/webhooks.md</c>. The contract is byte-identical across all
+/// the webhook signature validation reference. The contract is identical across all
 /// SignalWire SDK ports — see the cross-port test vectors in the spec.
 /// </summary>
 public static class WebhookValidator
@@ -56,7 +56,7 @@ public static class WebhookValidator
     /// <param name="url">
     /// The full URL SignalWire POSTed to (scheme, host, optional port, path,
     /// query). Must match what the platform saw — see the
-    /// <c>URL reconstruction</c> section of <c>porting-sdk/webhooks.md</c>.
+    /// the URL-reconstruction rules for webhook signature validation.
     /// </param>
     /// <param name="rawBody">
     /// The raw request body bytes as a UTF-8 string, BEFORE any JSON / form

@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// ConferenceRooms — generated from x-sdk-resource 'ConferenceRooms' (fabric spec, base FabricResource).
+/// ConferenceRooms — REST resource for the fabric API.
 /// </summary>
 public class ConferenceRooms : SignalWire.REST.CrudWithAddresses
 {

@@ -65,7 +65,7 @@ public class FunctionResult
     /// Serialize to the JSON structure expected by SWAIG.
     /// </summary>
     /// <remarks>
-    /// Byte-parity with the Python reference <c>to_dict()</c>:
+    /// Equivalent to the Python <c>to_dict()</c>:
     /// <list type="bullet">
     /// <item><c>response</c> is included ONLY when non-empty (an empty string is omitted).</item>
     /// <item><c>action</c> is included only when there is at least one action.</item>
@@ -142,7 +142,7 @@ public class FunctionResult
     /// completes and control returns to the agent.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>swml_transfer(dest, ai_response, final=True)</c>:
+    /// Equivalent to the Python <c>swml_transfer(dest, ai_response, final=True)</c>:
     /// emits a two-verb SWML document — <c>{set: {ai_response: ...}}</c> then
     /// <c>{transfer: {dest: ...}}</c> — under the <c>SWML</c> action key, plus a
     /// top-level <c>"transfer": str(final).lower()</c> sibling marking the call
@@ -290,7 +290,7 @@ public class FunctionResult
     /// Send a user event through SWML to update the client UI.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>swml_user_event(event_data)</c>: emits a
+    /// Equivalent to the Python <c>swml_user_event(event_data)</c>: emits a
     /// SWML document <c>{sections: {main: [{user_event: {event: &lt;data&gt;}}]}, version: "1.0.0"}</c>
     /// under the <c>SWML</c> action key (NOT a bare top-level <c>user_event</c>).
     /// </remarks>
@@ -317,7 +317,7 @@ public class FunctionResult
     /// Force the conversation into a specific step in the current context.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>swml_change_step(step_name)</c>:
+    /// Equivalent to the Python <c>swml_change_step(step_name)</c>:
     /// add_action("change_step", step_name) — the action key is "change_step" and
     /// its value is the bare step-name string (not a context_switch dict).
     /// </remarks>
@@ -331,7 +331,7 @@ public class FunctionResult
     /// Force the conversation into a different context.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>swml_change_context(context_name)</c>:
+    /// Equivalent to the Python <c>swml_change_context(context_name)</c>:
     /// add_action("change_context", context_name) — the action key is
     /// "change_context" and its value is the bare context-name string.
     /// </remarks>
@@ -345,7 +345,7 @@ public class FunctionResult
     /// Change the agent's context/prompt during a conversation.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference
+    /// Equivalent to the Python
     /// <c>switch_context(system_prompt=None, user_prompt=None, consolidate=False, full_reset=False)</c>:
     /// when ONLY <paramref name="systemPrompt"/> is set (and the other three are
     /// at their defaults) the <c>context_switch</c> value is the bare
@@ -422,7 +422,7 @@ public class FunctionResult
     /// Play an audio or video file in the background.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>play_background_file(filename, wait=False)</c>:
+    /// Equivalent to the Python <c>play_background_file(filename, wait=False)</c>:
     /// the action key is "playback_bg". When <paramref name="wait"/> is false the
     /// value is the bare filename string; when true it is a
     /// <c>{file: filename, wait: true}</c> object.
@@ -461,7 +461,7 @@ public class FunctionResult
     /// <see cref="RecordDirection"/> enums.
     /// </summary>
     /// <remarks>
-    /// Full parity with the Python reference
+    /// Equivalent to the Python
     /// <c>record_call(control_id, stereo, format, direction, terminators, beep,
     /// input_sensitivity, initial_timeout, end_silence_timeout, max_length,
     /// status_url)</c>, in the same parameter order. The Python reference
@@ -504,12 +504,12 @@ public class FunctionResult
             endSilenceTimeout, maxLength, statusUrl);
 
     /// <summary>
-    /// String-typed parity overload of
+    /// String-typed convenience overload of
     /// <see cref="RecordCall(string, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>:
     /// start background call recording with <paramref name="format"/> and
     /// <paramref name="direction"/> as bare strings, validated at runtime against
     /// the same closed sets ({wav,mp3,mp4} / {speak,listen,both}). This preserves
-    /// parity with the Python reference (which takes bare <c>str</c> arguments and
+    /// matching the Python API (which takes bare <c>str</c> arguments and
     /// raises <c>ValueError</c> on a bad value) and keeps a forward-compatible
     /// escape hatch for a wire value the enum does not yet model. The emitted SWML
     /// is identical to the typed overload — both delegate to the same core. The
@@ -527,7 +527,7 @@ public class FunctionResult
     /// <exception cref="ArgumentException">
     /// If <paramref name="format"/> is not one of <c>wav</c>/<c>mp3</c>/<c>mp4</c>
     /// or <paramref name="direction"/> is not one of <c>speak</c>/<c>listen</c>/<c>both</c>
-    /// (parity with Python's <c>ValueError</c>).
+    /// (matching Python's <c>ValueError</c>).
     /// </exception>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult RecordCall(
@@ -601,7 +601,7 @@ public class FunctionResult
     /// Stop an active background call recording using SWML.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>stop_record_call(control_id=None)</c>:
+    /// Equivalent to the Python <c>stop_record_call(control_id=None)</c>:
     /// the <c>stop_record_call</c> verb (params <c>{}</c>, plus <c>control_id</c>
     /// when set) is wrapped in a SWML document and emitted under the <c>SWML</c>
     /// action key.
@@ -650,7 +650,7 @@ public class FunctionResult
     /// Enable/disable specific SWAIG functions.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>toggle_functions(function_toggles)</c>:
+    /// Equivalent to the Python <c>toggle_functions(function_toggles)</c>:
     /// takes a list of toggle records (each a <c>{function, active}</c> dict) and
     /// passes it through verbatim under the <c>toggle_functions</c> action key — no
     /// reshaping. (The previous <c>Dictionary&lt;string,bool&gt;</c> shape both
@@ -701,7 +701,7 @@ public class FunctionResult
     /// </remarks>
     /// <exception cref="ArgumentException">
     /// If <paramref name="swmlContent"/> is neither a string nor a dictionary
-    /// (parity with Python's <c>TypeError</c>).
+    /// (matching Python's <c>TypeError</c>).
     /// </exception>
     public FunctionResult ExecuteSwml(object swmlContent, bool transfer = false)
     {
@@ -764,7 +764,7 @@ public class FunctionResult
 
     /// <summary>
     /// Join an ad-hoc audio conference (RELAY + CXML calls) using SWML.
-    /// Full parity with the Python reference
+    /// Equivalent to the Python
     /// <c>signalwire/core/function_result.py::join_conference</c>: the conference
     /// <paramref name="name"/> plus 18 optional parameters, each validated to the
     /// same closed sets / bounds as Python, and emitted under its snake_case wire
@@ -773,8 +773,8 @@ public class FunctionResult
     /// otherwise it is a <c>{ "name": ..., ... }</c> object (full form).
     /// </summary>
     /// <remarks>
-    /// This flat, all-string overload is the parity-bearing signature against the
-    /// Python reference (which takes bare <c>str</c> arguments for the closed sets).
+    /// This flat, all-string overload matches the Python API
+    /// (which takes bare <c>str</c> arguments for the closed sets).
     /// For an idiomatic, compile-time-checked alternative see
     /// <see cref="JoinConference(string, JoinConferenceOptions?)"/>, which accepts
     /// the typed <see cref="ConferenceBeep"/> / <see cref="ConferenceRecord"/> /
@@ -930,7 +930,7 @@ public class FunctionResult
     /// Join a RELAY room using SWML.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>join_room(name)</c>: the
+    /// Equivalent to the Python <c>join_room(name)</c>: the
     /// <c>join_room</c> verb (params <c>{name}</c>) is wrapped in a SWML document
     /// and emitted under the <c>SWML</c> action key.
     /// </remarks>
@@ -941,7 +941,7 @@ public class FunctionResult
     /// Send a SIP REFER to a SIP call using SWML.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>sip_refer(to_uri)</c>: the
+    /// Equivalent to the Python <c>sip_refer(to_uri)</c>: the
     /// <c>sip_refer</c> verb (params <c>{to_uri}</c>) is wrapped in a SWML document
     /// and emitted under the <c>SWML</c> action key.
     /// </remarks>
@@ -956,7 +956,7 @@ public class FunctionResult
     /// <see cref="Codec"/> enums.
     /// </summary>
     /// <remarks>
-    /// Full parity with the Python reference
+    /// Equivalent to the Python
     /// <c>tap(uri, control_id, direction, codec, rtp_ptime, status_url)</c>, in the
     /// same parameter order. The Python reference validates the bare-string
     /// <c>direction</c>/<c>codec</c> against the closed sets {speak,hear,both} /
@@ -971,7 +971,7 @@ public class FunctionResult
     /// guards).
     /// </remarks>
     /// <exception cref="ArgumentException">
-    /// If <paramref name="rtpPtime"/> is not a positive integer (parity with
+    /// If <paramref name="rtpPtime"/> is not a positive integer (matching
     /// Python's <c>ValueError</c>); <paramref name="direction"/>/<paramref name="codec"/>
     /// are closed-set enums and so cannot be invalid.
     /// </exception>
@@ -994,11 +994,11 @@ public class FunctionResult
     }
 
     /// <summary>
-    /// String-typed parity overload of
+    /// String-typed convenience overload of
     /// <see cref="Tap(string, string, TapDirection, Codec, int, string?)"/>: start
     /// a background call tap with <paramref name="direction"/> and
     /// <paramref name="codec"/> as bare strings, validated at runtime against the
-    /// same closed sets ({speak,hear,both} / {PCMU,PCMA}). This preserves parity
+    /// same closed sets ({speak,hear,both} / {PCMU,PCMA}). This keeps consistency
     /// with the Python reference (which takes bare <c>str</c> arguments and raises
     /// <c>ValueError</c> on a bad value) and keeps a forward-compatible escape
     /// hatch. The emitted SWML is identical to the typed overload — both delegate
@@ -1020,7 +1020,7 @@ public class FunctionResult
     /// <exception cref="ArgumentException">
     /// If <paramref name="direction"/> is not one of <c>speak</c>/<c>hear</c>/<c>both</c>,
     /// <paramref name="codec"/> is not one of <c>PCMU</c>/<c>PCMA</c>, or
-    /// <paramref name="rtpPtime"/> is not a positive integer (parity with Python's
+    /// <paramref name="rtpPtime"/> is not a positive integer (matching Python's
     /// <c>ValueError</c>).
     /// </exception>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
@@ -1078,7 +1078,7 @@ public class FunctionResult
     /// Stop an active tap stream using SWML.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>stop_tap(control_id=None)</c>: the
+    /// Equivalent to the Python <c>stop_tap(control_id=None)</c>: the
     /// <c>stop_tap</c> verb (params <c>{}</c>, plus <c>control_id</c> when set) is
     /// wrapped in a SWML document and emitted under the <c>SWML</c> action key.
     /// </remarks>
@@ -1093,7 +1093,7 @@ public class FunctionResult
     /// Send a text message to a PSTN phone number using SWML.
     /// </summary>
     /// <remarks>
-    /// Full parity with the Python reference
+    /// Equivalent to the Python
     /// <c>send_sms(to_number, from_number, body=None, media=None, tags=None, region=None)</c>.
     /// Either <paramref name="body"/> or <paramref name="media"/> (or both) must be
     /// provided. The <c>send_sms</c> verb is wrapped in a SWML document and emitted
@@ -1103,7 +1103,7 @@ public class FunctionResult
     /// </remarks>
     /// <exception cref="ArgumentException">
     /// If neither <paramref name="body"/> nor <paramref name="media"/> is provided
-    /// (parity with Python's <c>ValueError("Either body or media must be provided")</c>).
+    /// (matching Python's <c>ValueError("Either body or media must be provided")</c>).
     /// </exception>
     public FunctionResult SendSms(
         string toNumber,
@@ -1135,7 +1135,7 @@ public class FunctionResult
     /// Process a payment using the SWML <c>pay</c> verb.
     /// </summary>
     /// <remarks>
-    /// Full parity with the Python reference
+    /// Equivalent to the Python
     /// <c>pay(payment_connector_url, input_method="dtmf", status_url=None,
     /// payment_method="credit-card", timeout=5, max_attempts=1, security_code=True,
     /// postal_code=True, min_postal_code_length=0, token_type="reusable",
@@ -1239,7 +1239,7 @@ public class FunctionResult
     /// Execute an RPC method on a call using SWML.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference
+    /// Equivalent to the Python
     /// <c>execute_rpc(method, params=None, call_id=None, node_id=None)</c>: the
     /// rpc params dict is keyed <c>{method, call_id?, node_id?, params?}</c> —
     /// <c>call_id</c>/<c>node_id</c> are TOP-LEVEL siblings of <c>method</c>/<c>params</c>,
@@ -1267,7 +1267,7 @@ public class FunctionResult
     /// Dial out to a number with a destination SWML URL using <see cref="ExecuteRpc"/>.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference
+    /// Equivalent to the Python
     /// <c>rpc_dial(to_number, from_number, dest_swml, device_type="phone")</c>:
     /// emits <c>method="dial"</c> with
     /// <c>params={devices: {type: device_type, params: {to_number, from_number}}, dest_swml}</c>.
@@ -1299,7 +1299,7 @@ public class FunctionResult
     /// Inject a message into an AI agent on another call using <see cref="ExecuteRpc"/>.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference
+    /// Equivalent to the Python
     /// <c>rpc_ai_message(call_id, message_text, role="system")</c>: emits
     /// <c>method="ai_message"</c>, <c>call_id</c> as a top-level sibling, and
     /// <c>params={role, message_text}</c>. <paramref name="role"/> remains
@@ -1318,7 +1318,7 @@ public class FunctionResult
     /// Unhold another call using <see cref="ExecuteRpc"/>.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>rpc_ai_unhold(call_id)</c>: emits
+    /// Equivalent to the Python <c>rpc_ai_unhold(call_id)</c>: emits
     /// <c>method="ai_unhold"</c>, <c>call_id</c> as a top-level sibling, and
     /// <c>params={}</c> (empty → omitted by <see cref="ExecuteRpc"/>).
     /// </remarks>
@@ -1331,7 +1331,7 @@ public class FunctionResult
     /// Queue simulated user input.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>simulate_user_input(text)</c>: the
+    /// Equivalent to the Python <c>simulate_user_input(text)</c>: the
     /// action key is <c>user_input</c> (NOT <c>simulate_user_input</c>), with the
     /// bare text string as its value.
     /// </remarks>
@@ -1349,7 +1349,7 @@ public class FunctionResult
     /// Create a payment-prompt structure for use with <see cref="Pay"/>.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference
+    /// Equivalent to the Python
     /// <c>create_payment_prompt(for_situation, actions, card_type=None, error_type=None)</c>:
     /// returns <c>{"for": forSituation, "actions": actions, "card_type"?, "error_type"?}</c>.
     /// The situation string is keyed <c>for</c> (a C# keyword, hence the parameter
@@ -1379,7 +1379,7 @@ public class FunctionResult
     /// Create a payment action for use in payment prompts.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>create_payment_action(action_type, phrase)</c>:
+    /// Equivalent to the Python <c>create_payment_action(action_type, phrase)</c>:
     /// returns <c>{"type": actionType, "phrase": phrase}</c>. <paramref name="actionType"/>
     /// is <c>"Say"</c> (text-to-speech) or <c>"Play"</c> (audio file URL).
     /// </remarks>
@@ -1396,7 +1396,7 @@ public class FunctionResult
     /// Create a payment parameter (name/value pair) for use with <see cref="Pay"/>.
     /// </summary>
     /// <remarks>
-    /// Parity with the Python reference <c>create_payment_parameter(name, value)</c>:
+    /// Equivalent to the Python <c>create_payment_parameter(name, value)</c>:
     /// returns <c>{"name": name, "value": value}</c>.
     /// </remarks>
     public static Dictionary<string, string> CreatePaymentParameter(string name, string value)

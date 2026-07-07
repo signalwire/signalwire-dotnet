@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// VerifiedCallers — generated from x-sdk-resource 'VerifiedCallers' (relay-rest spec, base CrudResource).
+/// VerifiedCallers — REST resource for the relay-rest API.
 /// </summary>
 public class VerifiedCallers : SignalWire.REST.CrudResource
 {

@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// Subscribers — generated from x-sdk-resource 'Subscribers' (fabric spec, base FabricResource).
+/// Subscribers — REST resource for the fabric API.
 /// </summary>
 public class Subscribers : SignalWire.REST.CrudWithAddresses
 {

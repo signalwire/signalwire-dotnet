@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// VideoConferences — generated from x-sdk-resource 'VideoConferences' (video spec, base CrudResource).
+/// VideoConferences — REST resource for the video API.
 /// </summary>
 public class VideoConferences : SignalWire.REST.CrudResource
 {

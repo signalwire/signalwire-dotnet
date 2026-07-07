@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// CallFlows — generated from x-sdk-resource 'CallFlows' (fabric spec, base FabricResource).
+/// CallFlows — REST resource for the fabric API.
 /// </summary>
 public class CallFlows : SignalWire.REST.CrudWithAddresses
 {

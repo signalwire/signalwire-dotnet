@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// Chat — generated from x-sdk-resource 'Chat' (chat spec, base BaseResource).
+/// Chat — REST resource for the chat API.
 /// </summary>
 public class Chat
 {
@@ -35,7 +35,7 @@ public class Chat
     /// <summary>Build a full path by appending segments to the base path.</summary>
     protected string Path(params string[] parts)
     {
-        return parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
+        return parts is null || parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
     }
 
     /// <summary>

@@ -21,7 +21,7 @@ public sealed class SkillManager
         _logger = Logger.GetLogger("skill_manager");
     }
 
-    /// <summary>The skill_manager logger (Python parity:
+    /// <summary>The skill_manager logger (equivalent to Python's
     /// ``SkillManager.logger`` instance attribute).</summary>
     public Logger Logger => _logger;
 

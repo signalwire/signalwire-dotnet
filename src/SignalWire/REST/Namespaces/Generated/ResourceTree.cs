@@ -15,12 +15,10 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// ResourceTree — generated lazy accessors for every flat REST resource
-/// plus the namespace containers (§8). The hand RestClient INHERITS this
-/// tree so every generated resource + container is reachable directly off
-/// the one authenticated transport. Placement resolved from
-/// x-sdk-namespace.attr + per-resource x-sdk-resource.namespace/attr; base
-/// paths per §4.
+/// ResourceTree — lazy accessors for every REST resource and
+/// namespace container. <see cref="SignalWire.REST.RestClient"/> inherits
+/// this tree, so every resource is reachable directly from an
+/// authenticated client.
 /// </summary>
 public partial class ResourceTree
 {

@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// ProjectTokens — generated from x-sdk-resource 'ProjectTokens' (project spec, base BaseResource).
+/// ProjectTokens — REST resource for the project API.
 /// </summary>
 public class ProjectTokens
 {
@@ -35,7 +35,7 @@ public class ProjectTokens
     /// <summary>Build a full path by appending segments to the base path.</summary>
     protected string Path(params string[] parts)
     {
-        return parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
+        return parts is null || parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
     }
 
     /// <summary>

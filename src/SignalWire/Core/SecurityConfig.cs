@@ -161,7 +161,7 @@ public sealed class SecurityConfig
 
     /// <summary>
     /// Get SSL context kwargs for the web server. Returns the certificate and
-    /// key file paths (keyed <c>ssl_certfile</c>/<c>ssl_keyfile</c> for parity
+    /// key file paths (keyed <c>ssl_certfile</c>/<c>ssl_keyfile</c> for API consistency
     /// with the Python reference), or an empty map when SSL is disabled or the
     /// configuration fails validation.
     /// </summary>

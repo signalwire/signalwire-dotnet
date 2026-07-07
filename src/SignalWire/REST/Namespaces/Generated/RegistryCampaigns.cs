@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// RegistryCampaigns — generated from x-sdk-resource 'RegistryCampaigns' (relay-rest spec, base BaseResource).
+/// RegistryCampaigns — REST resource for the relay-rest API.
 /// </summary>
 public class RegistryCampaigns
 {
@@ -35,7 +35,7 @@ public class RegistryCampaigns
     /// <summary>Build a full path by appending segments to the base path.</summary>
     protected string Path(params string[] parts)
     {
-        return parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
+        return parts is null || parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
     }
 
     /// <summary>

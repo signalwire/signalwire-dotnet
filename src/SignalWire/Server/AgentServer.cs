@@ -64,7 +64,7 @@ public partial class AgentServer
         _logger = Logger.GetLogger("agent_server");
     }
 
-    /// <summary>The agent_server logger. (Python parity:
+    /// <summary>The agent_server logger. (equivalent to Python's
     /// ``AgentServer.logger`` instance attribute.)</summary>
     public Logger Logger => _logger;
 
@@ -216,7 +216,7 @@ public partial class AgentServer
     }
 
     /// <summary>Auto-map an agent's derived SIP username(s) to its route
-    /// (Python parity: ``_auto_map_agent_sip_usernames``: clean name + clean
+    /// (equivalent to Python's ``_auto_map_agent_sip_usernames``: clean name + clean
     /// route segment).</summary>
     [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the normalized SIP-username mapping-key form (matches Python's cleaned .lower() name/route).")]
     private void AutoMapAgentSipUsernames(AgentBase agent, string agentRoute)

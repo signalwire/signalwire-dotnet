@@ -14,7 +14,7 @@ namespace SignalWire.Relay;
 /// the additional inbound state (<see cref="Constants.MessageStateReceived"/>).
 /// The reference exposes the state as a bare <c>str</c>; this enum is a typed
 /// alias so callers get autocompletion and a compile-time check, while
-/// <see cref="Message.State"/> stays a string for parity and forward-compat.
+/// <see cref="Message.State"/> stays a string for compatibility and forward-compat.
 /// </para>
 /// <para>
 /// This is the <em>messaging</em> vocabulary and is deliberately

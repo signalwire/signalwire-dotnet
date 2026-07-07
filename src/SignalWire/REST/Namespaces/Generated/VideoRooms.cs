@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// VideoRooms — generated from x-sdk-resource 'VideoRooms' (video spec, base CrudResource).
+/// VideoRooms — REST resource for the video API.
 /// </summary>
 public class VideoRooms : SignalWire.REST.CrudResource
 {

@@ -11,10 +11,9 @@ using System.Text.Json.Serialization;
 namespace SignalWire.REST.Namespaces.Generated.Types.RelayRest;
 
 /// <summary>
-/// PhoneCallHandler — generated public closed-set (x-sdk-enum on components/schemas 'PhoneNumberCallHandlerRequest', 'relay_rest' spec).
-/// Public const string members whose value IS the wire string (the .NET
-/// closed-set idiom — not a CLR enum type). Method-less: records the bare
-/// class name like the reference.
+/// PhoneCallHandler — the set of accepted string values for this field.
+/// Each public <c>const string</c> member is one of the values the API
+/// accepts; the member's value is the literal wire string to send.
 /// </summary>
 public static class PhoneCallHandler
 {

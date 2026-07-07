@@ -152,7 +152,7 @@ public abstract class SkillBase
 
     /// <summary>
     /// Read this skill instance's namespaced data from the ``global_data``
-    /// carried in a SWAIG handler's raw request data. (Python parity:
+    /// carried in a SWAIG handler's raw request data. (equivalent to Python's
     /// ``SkillBase.get_skill_data``.)
     /// </summary>
     public Dictionary<string, object> GetSkillData(Dictionary<string, object?> rawData)
@@ -170,7 +170,7 @@ public abstract class SkillBase
 
     /// <summary>
     /// Write this skill instance's namespaced data into a FunctionResult's
-    /// global_data update. (Python parity: ``SkillBase.update_skill_data``.)
+    /// global_data update. (equivalent to Python's ``SkillBase.update_skill_data``.)
     /// </summary>
     public FunctionResult UpdateSkillData(FunctionResult result, Dictionary<string, object> data)
     {
@@ -186,7 +186,7 @@ public abstract class SkillBase
     /// <summary>
     /// Check whether all packages this skill requires are available. The .NET
     /// BCL provides the equivalents of the reference's optional Python packages,
-    /// so this returns true unless a subclass overrides it. (Python parity:
+    /// so this returns true unless a subclass overrides it. (equivalent to Python's
     /// ``SkillBase.validate_packages``.)
     /// </summary>
     public virtual bool ValidatePackages() => true;

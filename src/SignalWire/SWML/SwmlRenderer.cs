@@ -19,7 +19,7 @@ namespace SignalWire.SWML;
 public static class SwmlRenderer
 {
     /// <summary>Generate a complete SWML document with AI configuration.
-    /// (Python parity: ``SwmlRenderer.render_swml``.)</summary>
+    /// (equivalent to Python's ``SwmlRenderer.render_swml``.)</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API as a SWML/SWAIG field value.")]
     public static string RenderSwml(
         object prompt,
@@ -101,7 +101,7 @@ public static class SwmlRenderer
 
     /// <summary>Generate a SWML document for a SWAIG function response —
     /// plays the response text and queues any follow-up actions.
-    /// (Python parity: ``SwmlRenderer.render_function_response_swml``.)</summary>
+    /// (equivalent to Python's ``SwmlRenderer.render_function_response_swml``.)</summary>
     public static string RenderFunctionResponseSwml(
         string responseText,
         Service service,

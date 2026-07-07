@@ -182,7 +182,7 @@ public class Service
     }
 
     /// <summary>Get the Basic Auth credentials plus the SOURCE of the
-    /// credentials (Python parity:
+    /// credentials (equivalent to Python's
     /// ``get_basic_auth_credentials(include_source=True)``).
     /// Source is one of "provided", "environment", or "generated".</summary>
     public (string User, string Password, string Source) GetBasicAuthCredentialsWithSource()
@@ -208,7 +208,7 @@ public class Service
 
     /// <summary>Validate provided basic-auth credentials against the
     /// configured ones (constant-time comparison)
-    /// (Python parity: ``validate_basic_auth(username, password)``).</summary>
+    /// (equivalent to Python's ``validate_basic_auth(username, password)``).</summary>
     public virtual bool ValidateBasicAuth(string username, string password)
     {
         if (_basicAuthUser is null || _basicAuthPassword is null) return false;
@@ -321,7 +321,7 @@ public class Service
 
     /// <summary>Enable debug routes for testing/development. Debug routes are
     /// always registered by the request handler, so this method exists only for
-    /// backward compatibility and method chaining (Python parity:
+    /// backward compatibility and method chaining (equivalent to Python's
     /// <c>enable_debug_routes</c> is likewise a no-op that returns self).</summary>
     public virtual Service EnableDebugRoutes()
     {
@@ -341,8 +341,8 @@ public class Service
         };
     }
 
-    /// <summary>Manually set the proxy URL base for webhook callbacks
-    /// (SWMLService parity). Subclasses (AgentBase) may override with a
+    /// <summary>Manually set the proxy URL base for webhook callbacks.
+    /// Subclasses (AgentBase) may override with a
     /// richer implementation; the base stores the override for
     /// <see cref="GetProxyUrlBase"/> to prefer.</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API / used as a config value.")]
@@ -394,7 +394,7 @@ public class Service
     /// typically override <see cref="OnSwmlRequest"/> instead of this
     /// method. Return null to use the default SWML rendering, or a
     /// dictionary of modifications to merge in.
-    /// (Python parity: ``WebMixin.on_request``.)</summary>
+    /// (equivalent to Python's ``WebMixin.on_request``.)</summary>
     public virtual Dictionary<string, object>? OnRequest(
         Dictionary<string, object?>? requestData = null,
         string? callbackPath = null)
@@ -404,7 +404,7 @@ public class Service
 
     /// <summary>Customization hook for subclasses to modify SWML based
     /// on request data. Return null to use default rendering, or a
-    /// dictionary of modifications. (Python parity:
+    /// dictionary of modifications. (equivalent to Python's
     /// ``WebMixin.on_swml_request``.)</summary>
     public virtual Dictionary<string, object>? OnSwmlRequest(
         Dictionary<string, object?>? requestData = null,
@@ -670,22 +670,22 @@ public class Service
     }
 
     /// <summary>Check if a SWAIG function is registered
-    /// (Python parity: ``tool_registry.has_function(name)``).</summary>
+    /// (equivalent to Python's ``tool_registry.has_function(name)``).</summary>
     public virtual bool HasFunction(string name) => _tools.ContainsKey(name);
 
     /// <summary>Get a registered SWAIG function by name, or null
-    /// (Python parity: ``tool_registry.get_function(name)``).</summary>
+    /// (equivalent to Python's ``tool_registry.get_function(name)``).</summary>
     public virtual Dictionary<string, object>? GetFunction(string name) =>
         _tools.TryGetValue(name, out var fn) ? fn : null;
 
     /// <summary>Get a snapshot of all registered SWAIG functions
-    /// (Python parity: ``tool_registry.get_all_functions()`` — returns
+    /// (equivalent to Python's ``tool_registry.get_all_functions()`` — returns
     /// a copy so subsequent registrations don't mutate the snapshot).</summary>
     public virtual Dictionary<string, Dictionary<string, object>> GetAllFunctions() =>
         new Dictionary<string, Dictionary<string, object>>(_tools);
 
     /// <summary>Remove a registered SWAIG function. Returns true if
-    /// removed, false if not found (Python parity:
+    /// removed, false if not found (equivalent to Python's
     /// ``tool_registry.remove_function(name)``).</summary>
     public virtual bool RemoveFunction(string name)
     {
@@ -1063,7 +1063,7 @@ public class Service
     /// Stamp the HTTP-layer headers (security headers + a default
     /// <c>Content-Type</c>) onto a bare decision-core triple's header map. The
     /// framework-free <see cref="HandleRequest"/> core returns bare headers
-    /// (Python parity: <c>_handle_request_core</c> returns <c>(status, {}, body)</c>);
+    /// (equivalent to Python's <c>_handle_request_core</c> returns <c>(status, {}, body)</c>);
     /// the security + Content-Type headers belong to the wire response and are
     /// applied only when actually serving over HTTP. Headers the core already
     /// set (e.g. <c>WWW-Authenticate</c>, <c>Location</c>) are preserved; a
@@ -1208,8 +1208,7 @@ public class Service
     /// Each incoming request is dispatched through <see cref="HandleRequest"/>;
     /// the response status / headers / body are written back to the client.
     ///
-    /// Mirrors Python's SWMLService.run() — examples and the porting-sdk
-    /// audit harness call this directly.
+    /// Mirrors Python's SWMLService.run(); call it directly to serve requests.
     ///
     /// Transport selection mirrors Python's <c>SecurityConfig</c> /
     /// uvicorn <c>ssl_certfile</c>/<c>ssl_keyfile</c> path:

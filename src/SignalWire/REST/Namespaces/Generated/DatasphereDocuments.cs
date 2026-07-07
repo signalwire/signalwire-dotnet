@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// DatasphereDocuments — generated from x-sdk-resource 'DatasphereDocuments' (datasphere spec, base CrudResource).
+/// DatasphereDocuments — REST resource for the datasphere API.
 /// </summary>
 public class DatasphereDocuments : SignalWire.REST.CrudResource
 {
@@ -24,7 +24,7 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     {
     }
 
-    /// <summary>Update via PATCH (per x-sdk-resource.update_method).</summary>
+    /// <summary>Update this resource via an HTTP PATCH request.</summary>
     public override Task<Dictionary<string, object?>> UpdateAsync(
         string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)

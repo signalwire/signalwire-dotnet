@@ -145,8 +145,8 @@ public sealed class SessionManager
     // Tool-token aliases + legacy session lifecycle (SessionManager parity)
     // ------------------------------------------------------------------
 
-    /// <summary>Alias of the token generator, kept for cross-port parity.
-    /// (Python parity: ``generate_token`` == C# ``CreateToken``; also exposed as
+    /// <summary>Alias of the token generator, kept for API consistency.
+    /// (equivalent to Python's ``generate_token`` == C# ``CreateToken``; also exposed as
     /// ``create_tool_token``.)</summary>
     public string CreateToolToken(string functionName, string callId)
         => CreateToken(functionName, callId);
@@ -172,7 +172,7 @@ public sealed class SessionManager
     public bool SetSessionMetadata(string callId, string key, object value) => true;
 
     /// <summary>Decode a token into its components WITHOUT validating it (for
-    /// debugging). (Python parity: ``debug_token``.)</summary>
+    /// debugging). (equivalent to Python's ``debug_token``.)</summary>
     [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
     public Dictionary<string, object> DebugToken(string token)
     {

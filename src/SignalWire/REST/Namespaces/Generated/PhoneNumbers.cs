@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// PhoneNumbers — generated from x-sdk-resource 'PhoneNumbers' (relay-rest spec, base CrudResource).
+/// PhoneNumbers — REST resource for the relay-rest API.
 /// </summary>
 public class PhoneNumbers : SignalWire.REST.CrudResource
 {

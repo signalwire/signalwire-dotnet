@@ -13,7 +13,7 @@ namespace SignalWire.Relay;
 /// <see cref="Constants.CallStateCreated"/> .. <see cref="Constants.CallStateEnded"/>.
 /// The reference exposes the state as a bare <c>str</c>; this enum is a typed
 /// alias over those strings so callers get autocompletion and a compile error
-/// on a typo, while <see cref="Call.State"/> stays a string for parity and
+/// on a typo, while <see cref="Call.State"/> stays a string for compatibility and
 /// forward-compatibility.
 /// </para>
 /// <para>

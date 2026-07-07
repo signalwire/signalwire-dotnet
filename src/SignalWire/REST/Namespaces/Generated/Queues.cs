@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// Queues — generated from x-sdk-resource 'Queues' (relay-rest spec, base CrudResource).
+/// Queues — REST resource for the relay-rest API.
 /// </summary>
 public class Queues : SignalWire.REST.CrudResource
 {

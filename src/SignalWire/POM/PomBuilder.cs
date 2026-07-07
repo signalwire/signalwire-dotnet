@@ -21,7 +21,7 @@ public class PomBuilder
         _sections = new Dictionary<string, Section>();
     }
 
-    /// <summary>Add a new section. (Python parity:
+    /// <summary>Add a new section. (equivalent to Python's
     /// ``PomBuilder.add_section``.)</summary>
     public PomBuilder AddSection(
         string title,
@@ -49,7 +49,7 @@ public class PomBuilder
     }
 
     /// <summary>Add content to an existing section (auto-vivifies if
-    /// missing). (Python parity: ``PomBuilder.add_to_section``.)</summary>
+    /// missing). (equivalent to Python's ``PomBuilder.add_to_section``.)</summary>
     public PomBuilder AddToSection(
         string title,
         string? body = null,
@@ -79,7 +79,7 @@ public class PomBuilder
     }
 
     /// <summary>Add a subsection under an existing section
-    /// (auto-vivifies parent if missing). (Python parity:
+    /// (auto-vivifies parent if missing). (equivalent to Python's
     /// ``PomBuilder.add_subsection``.)</summary>
     public PomBuilder AddSubsection(
         string parentTitle,
@@ -96,11 +96,11 @@ public class PomBuilder
     }
 
     /// <summary>Check if a section with the given title exists.
-    /// (Python parity: ``PomBuilder.has_section``.)</summary>
+    /// (equivalent to Python's ``PomBuilder.has_section``.)</summary>
     public bool HasSection(string title) => _sections.ContainsKey(title);
 
     /// <summary>Get a section by title, or null if absent.
-    /// (Python parity: ``PomBuilder.get_section``.)</summary>
+    /// (equivalent to Python's ``PomBuilder.get_section``.)</summary>
     public Section? GetSection(string title) =>
         _sections.TryGetValue(title, out var s) ? s : null;
 
@@ -117,7 +117,7 @@ public class PomBuilder
     public string ToJson() => Pom.ToJson();
 
     /// <summary>Build a PomBuilder from a list of section dicts.
-    /// (Python parity: ``PomBuilder.from_sections`` classmethod.)</summary>
+    /// (equivalent to Python's ``PomBuilder.from_sections`` classmethod.)</summary>
     public static PomBuilder FromSections(IReadOnlyList<Dictionary<string, object>> sections)
     {
         var builder = new PomBuilder();

@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// CxmlWebhooks — generated from x-sdk-resource 'CxmlWebhooks' (fabric spec, base FabricResource).
+/// CxmlWebhooks — REST resource for the fabric API.
 /// </summary>
 public class CxmlWebhooks : SignalWire.REST.CrudWithAddresses
 {
@@ -24,7 +24,7 @@ public class CxmlWebhooks : SignalWire.REST.CrudWithAddresses
     {
     }
 
-    /// <summary>Update via PATCH (per x-sdk-resource.update_method).</summary>
+    /// <summary>Update this resource via an HTTP PATCH request.</summary>
     public override Task<Dictionary<string, object?>> UpdateAsync(
         string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)

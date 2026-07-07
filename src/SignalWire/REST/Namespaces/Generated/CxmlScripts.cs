@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// CxmlScripts — generated from x-sdk-resource 'CxmlScripts' (fabric spec, base FabricResource).
+/// CxmlScripts — REST resource for the fabric API.
 /// </summary>
 public class CxmlScripts : SignalWire.REST.CrudWithAddresses
 {

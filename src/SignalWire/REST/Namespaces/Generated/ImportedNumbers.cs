@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// ImportedNumbers — generated from x-sdk-resource 'ImportedNumbers' (relay-rest spec, base BaseResource).
+/// ImportedNumbers — REST resource for the relay-rest API.
 /// </summary>
 public class ImportedNumbers
 {
@@ -35,7 +35,7 @@ public class ImportedNumbers
     /// <summary>Build a full path by appending segments to the base path.</summary>
     protected string Path(params string[] parts)
     {
-        return parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
+        return parts is null || parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);
     }
 
     /// <summary>

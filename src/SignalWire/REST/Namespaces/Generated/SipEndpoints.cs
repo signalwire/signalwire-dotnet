@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// SipEndpoints — generated from x-sdk-resource 'SipEndpoints' (fabric spec, base FabricResource).
+/// SipEndpoints — REST resource for the fabric API.
 /// </summary>
 public class SipEndpoints : SignalWire.REST.CrudWithAddresses
 {

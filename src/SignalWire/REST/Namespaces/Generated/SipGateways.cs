@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// SipGateways — generated from x-sdk-resource 'SipGateways' (fabric spec, base FabricResource).
+/// SipGateways — REST resource for the fabric API.
 /// </summary>
 public class SipGateways : SignalWire.REST.CrudWithAddresses
 {
@@ -24,7 +24,7 @@ public class SipGateways : SignalWire.REST.CrudWithAddresses
     {
     }
 
-    /// <summary>Update via PATCH (per x-sdk-resource.update_method).</summary>
+    /// <summary>Update this resource via an HTTP PATCH request.</summary>
     public override Task<Dictionary<string, object?>> UpdateAsync(
         string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)

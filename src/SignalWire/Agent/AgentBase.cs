@@ -30,7 +30,7 @@ public sealed class AgentOptions
     /// When set, webhook signature validation is enforced on POST /, /swaig,
     /// /post_prompt — unsigned or invalidly-signed requests get a 403. Falls
     /// back to the <c>SIGNALWIRE_SIGNING_KEY</c> env var if not passed. See
-    /// <c>porting-sdk/webhooks.md</c> for the contract. (Python parity:
+    /// the webhook signature validation reference for the contract. (equivalent to Python's
     /// <c>AgentBase.__init__(signing_key=...)</c>.)
     /// </summary>
     public string? SigningKey { get; init; }
@@ -39,7 +39,7 @@ public sealed class AgentOptions
     /// If true, honor <c>X-Forwarded-Proto</c> / <c>X-Forwarded-Host</c>
     /// headers when reconstructing the URL for signature validation. Default
     /// false because proxy headers are spoofable; opt in only when you
-    /// control the proxy chain. (Python parity:
+    /// control the proxy chain. (equivalent to Python's
     /// <c>AgentBase.__init__(trust_proxy_for_signature=...)</c>.)
     /// </summary>
     public bool TrustProxyForSignature { get; init; }
@@ -144,12 +144,12 @@ public class AgentBase : Service
     /// <summary>The configured Signing Key, or null when validation is
     /// disabled. Read-only — the resolution order
     /// (constructor arg → <c>SIGNALWIRE_SIGNING_KEY</c> env) is fixed at
-    /// construction time. (Python parity: <c>agent.signing_key</c>.)</summary>
+    /// construction time. (equivalent to Python's <c>agent.signing_key</c>.)</summary>
     public string? SigningKey => _signingKey;
 
     /// <summary>True iff signature validation is enabled — i.e. either the
     /// <c>SigningKey</c> option or <c>SIGNALWIRE_SIGNING_KEY</c> env var
-    /// was set at construction time. (Python parity:
+    /// was set at construction time. (equivalent to Python's
     /// <c>bool(agent.signing_key)</c>.)</summary>
     public bool IsWebhookSignatureValidationEnabled => _signingKey is not null;
 
@@ -280,7 +280,7 @@ public class AgentBase : Service
     }
 
     /// <summary>Add a top-level POM section with an optional body, bullets,
-    /// numbering, and subsections. (Python parity: ``prompt_add_section``.)</summary>
+    /// numbering, and subsections. (equivalent to Python's ``prompt_add_section``.)</summary>
     public AgentBase PromptAddSection(
         string title,
         string body = "",
@@ -316,7 +316,7 @@ public class AgentBase : Service
     }
 
     /// <summary>Add a subsection nested under an existing parent section.
-    /// (Python parity: ``prompt_add_subsection(parent_title, title, body, bullets)``.)</summary>
+    /// (equivalent to Python's ``prompt_add_subsection(parent_title, title, body, bullets)``.)</summary>
     public AgentBase PromptAddSubsection(
         string parentTitle,
         string title,
@@ -355,7 +355,7 @@ public class AgentBase : Service
     }
 
     /// <summary>Append body text, a single bullet, and/or bullets list to an
-    /// existing section. (Python parity:
+    /// existing section. (equivalent to Python's
     /// ``prompt_add_to_section(title, body, bullet, bullets)``.)</summary>
     public AgentBase PromptAddToSection(
         string title,
@@ -427,20 +427,20 @@ public class AgentBase : Service
     }
 
     /// <summary>Return the raw prompt text if set, else null.
-    /// (Python parity: ``PromptManager.get_raw_prompt``.)</summary>
+    /// (equivalent to Python's ``PromptManager.get_raw_prompt``.)</summary>
     public string? GetRawPrompt() => string.IsNullOrEmpty(_promptText) ? null : _promptText;
 
     /// <summary>Return the post-prompt text if set, else null.
-    /// (Python parity: ``PromptManager.get_post_prompt``.)</summary>
+    /// (equivalent to Python's ``PromptManager.get_post_prompt``.)</summary>
     public string? GetPostPrompt() => string.IsNullOrEmpty(_postPrompt) ? null : _postPrompt;
 
     /// <summary>Return the contexts configuration if defined, else null.
-    /// (Python parity: ``PromptManager.get_contexts``.)</summary>
+    /// (equivalent to Python's ``PromptManager.get_contexts``.)</summary>
     public Dictionary<string, object>? GetContexts() =>
         _contextBuilder is null ? null : _contextBuilder.ToDict();
 
     /// <summary>Set the prompt as a list-of-section dicts (POM form).
-    /// Throws when ``UsePom`` is false. (Python parity:
+    /// Throws when ``UsePom`` is false. (equivalent to Python's
     /// ``PromptManager.set_prompt_pom``.)</summary>
     public AgentBase SetPromptPom(IReadOnlyList<Dictionary<string, object>> pom)
     {
@@ -454,7 +454,7 @@ public class AgentBase : Service
     }
 
     /// <summary>The prompt as a <see cref="POM.PromptObjectModel"/>
-    /// instance (Python parity: ``agent.pom``). Returns null when
+    /// instance (equivalent to Python's ``agent.pom``). Returns null when
     /// <c>UsePom</c> is false. Materialised on each access from the
     /// internal list-of-dicts so mutations stay round-trip-safe. To
     /// inspect raw section dicts, use <see cref="GetPromptSections"/>.</summary>
@@ -486,7 +486,7 @@ public class AgentBase : Service
     public IReadOnlyList<Dictionary<string, object>> GetPromptSections() => _pomSections;
 
     /// <summary>Create a per-call SWAIG-function token. Returns empty
-    /// string on failure. (Python parity: ``StateMixin._create_tool_token``.)</summary>
+    /// string on failure. (equivalent to Python's ``StateMixin._create_tool_token``.)</summary>
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort token creation; any failure returns an empty string to match the Python reference's swallow-and-fallback behavior.")]
     public string CreateToolToken(string toolName, string callId)
     {
@@ -502,7 +502,7 @@ public class AgentBase : Service
 
     /// <summary>Validate a per-call SWAIG-function token. Rejects
     /// when the function is not registered, when the SessionManager
-    /// rejects the token, or on any error. (Python parity:
+    /// rejects the token, or on any error. (equivalent to Python's
     /// ``StateMixin.validate_tool_token``.)</summary>
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort token validation; any failure is treated as an invalid token (returns false) to match the Python reference's swallow-and-reject behavior.")]
     public bool ValidateToolToken(string functionName, string token, string callId)
@@ -1219,11 +1219,11 @@ public class AgentBase : Service
         return _skillManager;
     }
 
-    /// <summary>Skill manager (Python parity: ``agent.skill_manager``).</summary>
+    /// <summary>Skill manager (equivalent to Python's ``agent.skill_manager``).</summary>
     [SuppressMessage("Naming", "CA1721", Justification = "The SkillManager property and GetSkillManager() both intentionally exist to mirror the Python reference surface (skill_manager + get_skill_manager()).")]
     public SkillManager SkillManager => GetSkillManager();
 
-    /// <summary>Return the agent name (Python parity: ``agent.get_name()``).</summary>
+    /// <summary>Return the agent name (equivalent to Python's ``agent.get_name()``).</summary>
     [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface (Python agent.get_name()).")]
     [SuppressMessage("Naming", "CA1721", Justification = "GetName() and the inherited Name property both intentionally exist to mirror the Python reference surface (get_name() + name).")]
     public string GetName() => Name;
@@ -1233,7 +1233,7 @@ public class AgentBase : Service
     // Python's ``agent.get_full_url(include_auth=False)``.
 
     /// <summary>Enable auto-mapping of SIP usernames to this agent's
-    /// route (Python parity: ``agent.auto_map_sip_usernames()``).
+    /// route (equivalent to Python's ``agent.auto_map_sip_usernames()``).
     /// Chainable.</summary>
     public AgentBase AutoMapSipUsernames()
     {
@@ -1274,7 +1274,7 @@ public class AgentBase : Service
     /// load a built-in skill by its <see cref="SkillName"/> enum member.
     /// Delegates to the string overload via the canonical wire name, so the
     /// loaded skill is identical to passing the bare string. Strings remain
-    /// supported for parity with the Python reference and for custom skills.
+    /// supported for compatibility with the Python API and for custom skills.
     /// </summary>
     public AgentBase AddSkill(SkillName name, Dictionary<string, object>? parameters = null) =>
         AddSkill(name.ToWireName(), parameters);
@@ -1665,7 +1665,7 @@ public class AgentBase : Service
     /// non-signed route): delegates to <see cref="Service.HandleRequest"/>.
     /// </para>
     ///
-    /// <para>(Python parity: <c>web_mixin._register_routes</c> wraps the
+    /// <para>(equivalent to Python's <c>web_mixin._register_routes</c> wraps the
     /// signed POST routes in a FastAPI <c>Depends(sig_dep)</c> dependency
     /// when <c>signing_key</c> is set; this is the .NET equivalent.)</para>
     /// </summary>
@@ -1710,7 +1710,7 @@ public class AgentBase : Service
     /// True iff the request targets a SignalWire-signed POST route under
     /// this agent's <see cref="Service.Route"/>. Signed routes are root
     /// (SWML), <c>/swaig</c>, and <c>/post_prompt</c> — see
-    /// <c>porting-sdk/webhooks.md</c>.
+    /// the webhook signature validation reference.
     /// </summary>
     private bool IsSignedPostRoute(string method, string path)
     {

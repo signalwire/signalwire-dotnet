@@ -15,7 +15,7 @@ public class CrudWithAddresses : CrudResource
         : base(client, basePath) { }
 
     /// <summary>List the addresses sub-collection for a given resource.
-    /// (Python parity:
+    /// (equivalent to Python's
     /// ``CrudWithAddresses.list_addresses(resource_id, **params)``.)</summary>
     public virtual Task<Dictionary<string, object?>> ListAddressesAsync(
         string resourceId,

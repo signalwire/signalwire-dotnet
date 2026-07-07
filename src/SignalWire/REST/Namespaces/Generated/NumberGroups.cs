@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace SignalWire.REST.Namespaces.Generated;
 
 /// <summary>
-/// NumberGroups — generated from x-sdk-resource 'NumberGroups' (relay-rest spec, base CrudResource).
+/// NumberGroups — REST resource for the relay-rest API.
 /// </summary>
 public class NumberGroups : SignalWire.REST.CrudResource
 {

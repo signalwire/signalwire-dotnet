@@ -27,7 +27,7 @@ public class Call
     /// enum, parsed from <see cref="State"/>. Returns <c>null</c> when
     /// <see cref="State"/> is an unrecognised (e.g. newly-introduced server)
     /// value — read <see cref="State"/> for the raw string in that case. This
-    /// is a typed convenience alongside the parity-bearing string
+    /// is a typed convenience alongside the primary string
     /// <see cref="State"/>; it always agrees with it for known states.
     /// </summary>
     public CallState? CallState =>
@@ -657,16 +657,16 @@ public class Call
         => WaitForStateAsync(Constants.CallStateEnding, timeout);
 
     /// <summary>Wait for the call to reach a specific state (generic wait).
-    /// (Python parity: ``Call.wait_for(event_type, ...)``.)</summary>
+    /// (equivalent to Python's ``Call.wait_for(event_type, ...)``.)</summary>
     public Task<Event> WaitForAsync(string state, double? timeout = null)
         => WaitForStateAsync(state, timeout);
 
     /// <summary>Wait for the call to reach the ended state.
-    /// (Python parity: ``Call.wait_for_ended``.)</summary>
+    /// (equivalent to Python's ``Call.wait_for_ended``.)</summary>
     public Task<Event> WaitForEndedAsync(double? timeout = null)
         => WaitForStateAsync(Constants.CallStateEnded, timeout);
 
-    /// <summary>A concise debug representation of this call (Python parity:
+    /// <summary>A concise debug representation of this call (equivalent to Python's
     /// ``Call.__repr__``).</summary>
     public override string ToString() => $"<Call id={CallId} state={State}>";
 
