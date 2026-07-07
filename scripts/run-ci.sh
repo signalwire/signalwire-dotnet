@@ -499,6 +499,9 @@ sched_gate DOC-LANG-PURITY res=dayone desc="no python-verbatim docs in a non-pyt
 sched_gate DOC-LINKS res=dayone desc="every relative markdown link resolves to a tracked file" \
     -- python3 "$PORTING_SDK_DIR/scripts/doc_links.py" --port dotnet --repo "$PORT_ROOT"
 
+sched_gate README-INCLUDE res=dayone desc="doc code blocks are byte-identical to their gate-compiled fixture regions" \
+    -- python3 "$PORTING_SDK_DIR/scripts/readme_include.py" --port dotnet --repo "$PORT_ROOT"
+
 sched_gate ROOT-HYGIENE res=dayone desc="no audit/scratch clutter tracked at repo root (allowlist ROOT_HYGIENE_ALLOW.md)" \
     -- python3 "$PORTING_SDK_DIR/scripts/root_hygiene.py" --port dotnet --repo "$PORT_ROOT"
 
