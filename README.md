@@ -43,6 +43,7 @@ dotnet add package SignalWire.Sdk
 
 Each agent is a self-contained microservice that generates SWML (SignalWire Markup Language) and handles SWAIG (SignalWire AI Gateway) tool calls. The SignalWire platform runs the entire AI pipeline (STT, LLM, TTS) -- your agent just defines the behavior.
 
+<!-- include: examples/QuickstartAgent.cs#agent -->
 ```csharp
 using SignalWire.Agent;
 using SignalWire.SWAIG;
@@ -109,6 +110,7 @@ See [examples/README.md](examples/README.md) for the full list organized by cate
 
 Real-time call control and messaging over WebSocket. The RELAY client connects to SignalWire via the Blade protocol and gives you async control over live phone calls and SMS/MMS.
 
+<!-- include: examples/QuickstartRelay.cs#relay -->
 ```csharp
 using SignalWire.Relay;
 
@@ -145,6 +147,7 @@ See the **[RELAY documentation](relay/README.md)** for the full guide, API refer
 
 Synchronous REST client for managing SignalWire resources and controlling calls over HTTP.
 
+<!-- include: examples/QuickstartRest.cs#rest -->
 ```csharp
 using SignalWire.REST;
 
@@ -156,10 +159,7 @@ await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
     ["prompt"] = new Dictionary<string, object?> { ["text"] = "You are helpful." },
 });
 await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["area_code"] = "512" });
-await client.Datasphere.Documents.SearchAsync(new Dictionary<string, object?>
-{
-    ["query_string"] = "billing policy",
-});
+await client.Datasphere.Documents.SearchAsync("billing policy");
 ```
 
 - 20 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Phone Numbers, SIP, Queues, Recordings, and more
