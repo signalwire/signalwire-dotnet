@@ -571,18 +571,34 @@ public class Service
         bool secure = false)
     {
         ArgumentNullException.ThrowIfNull(parameters);
-        var (properties, required) = NormalizeParameters(parameters);
-        var argument = new Dictionary<string, object>
+
+        // A COMPLETE JSON-Schema (already carrying `type` + `properties`) is
+        // passed through verbatim — NOT re-wrapped — mirroring the Python
+        // reference `SWAIGFunction._ensure_parameter_structure`
+        // (swaig_function.py:124). Re-wrapping a complete schema would nest it as
+        // {type:object, properties:{type:…, properties:…, required:…}} (the
+        // double-wrap bug). Only a bare property map is wrapped in an object
+        // schema and has its per-property `required` flags lifted.
+        Dictionary<string, object> argument;
+        if (parameters.ContainsKey("type") && parameters.ContainsKey("properties"))
         {
-            ["type"] = "object",
-            ["properties"] = properties,
-        };
-        // Emit the top-level JSON-Schema `required` array (the form the model +
-        // validator expect) only when non-empty — matching the Python reference,
-        // which omits the key for an empty required list (swaig_function.py:128).
-        if (required.Count > 0)
+            argument = parameters;
+        }
+        else
         {
-            argument["required"] = required;
+            var (properties, required) = NormalizeParameters(parameters);
+            argument = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["properties"] = properties,
+            };
+            // Emit the top-level JSON-Schema `required` array (the form the model +
+            // validator expect) only when non-empty — matching the Python reference,
+            // which omits the key for an empty required list (swaig_function.py:128).
+            if (required.Count > 0)
+            {
+                argument["required"] = required;
+            }
         }
 
         _tools[name] = new Dictionary<string, object>

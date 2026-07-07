@@ -331,8 +331,10 @@ public class ParameterSchemaTests : IDisposable
         var functions = (List<Dictionary<string, object>>)swaig["functions"];
         var fn = functions.Single(f => (string)f["function"] == "book_appointment");
 
-        // The argument wrapper carries our properties under .properties.
-        var argument = (Dictionary<string, object>)fn["argument"];
+        // The wire shape is canonical `parameters` (Python parity), not the
+        // internal storage-idiom key `argument`; it carries the properties under
+        // .properties.
+        var argument = (Dictionary<string, object>)fn["parameters"];
         Assert.Equal("object", argument["type"]);
         var properties = (Dictionary<string, object>)argument["properties"];
 

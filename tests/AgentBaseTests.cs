@@ -218,7 +218,10 @@ public class AgentBaseTests : IDisposable
         var functions = (List<Dictionary<string, object>>)swaig["functions"];
         Assert.Single(functions);
         Assert.Equal("lookup", functions[0]["function"]);
-        Assert.Equal("Look up a customer", functions[0]["purpose"]);
+        // Wire shape is canonical: `description`/`parameters` (Python parity),
+        // not the internal storage-idiom keys `purpose`/`argument`.
+        Assert.Equal("Look up a customer", functions[0]["description"]);
+        Assert.False(functions[0].ContainsKey("purpose"));
         Assert.False(functions[0].ContainsKey("_handler"));
         Assert.False(functions[0].ContainsKey("_secure"));
     }

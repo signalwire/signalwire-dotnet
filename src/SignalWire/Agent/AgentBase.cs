@@ -1882,14 +1882,35 @@ public class AgentBase : Service
                 continue;
             }
 
-            // Strip internal keys (those starting with _)
+            // Strip internal keys (those starting with _) and normalise the
+            // stored field names to the canonical SWML wire names. The .NET
+            // registry stores tools under the builder-idiom keys `purpose` /
+            // `argument`, but the wire shape the SignalWire server + the Python
+            // reference emit is `description` / `parameters`
+            // (agent_base.py:1053-1056, data_map.py:437-438). Python's DataMap
+            // likewise exposes a `.purpose()` builder yet always renders
+            // `description`/`parameters`. Translate here — the single SWAIG
+            // wire-emission point — so every tool (DefineTool, DataMap via
+            // RegisterSwaigFunction, and skills) renders canonical wire names
+            // without changing the internal storage idiom.
             var funcDef = new Dictionary<string, object>();
             foreach (var (key, value) in tool)
             {
-                if (!key.StartsWith('_'))
+                if (key.StartsWith('_'))
                 {
-                    funcDef[key] = value;
+                    continue;
                 }
+                // Rename to the canonical wire key only when the tool doesn't
+                // already carry that canonical key itself (a raw registered
+                // function that already uses `description`/`parameters` keeps its
+                // own; the builder-idiom alias never clobbers it).
+                var wireKey = key switch
+                {
+                    "purpose" when !tool.ContainsKey("description") => "description",
+                    "argument" when !tool.ContainsKey("parameters") => "parameters",
+                    _ => key,
+                };
+                funcDef[wireKey] = value;
             }
 
             // Add web_hook_url for callable tools (those with a handler)

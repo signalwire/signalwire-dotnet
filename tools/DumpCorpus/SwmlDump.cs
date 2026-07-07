@@ -76,7 +76,51 @@ internal static class SwmlDump
             outMap["swml_add_pronunciation"] = Extract(Render(a), "ai.pronounce");
         }
 
+        // swml_define_tool_complete_schema: define_tool with a COMPLETE
+        // {type,properties,required} schema must render
+        // ai.SWAIG.functions[?function=lookup].parameters as that schema FLAT
+        // (pass-through), NOT double-wrapped. Mirrors the oracle's swaig_fn/field
+        // observe filter (diff_port_swml: pick function by name, then a field).
+        {
+            var a = NewAgent();
+            a.DefineTool(
+                "lookup",
+                "Look up a thing",
+                new Dictionary<string, object>
+                {
+                    ["type"] = "object",
+                    ["properties"] = new Dictionary<string, object>
+                    {
+                        ["q"] = new Dictionary<string, object> { ["type"] = "string" },
+                    },
+                    ["required"] = new List<object?> { "q" },
+                },
+                (args, raw) => new SignalWire.SWAIG.FunctionResult());
+            var functions = Extract(Render(a), "ai.SWAIG.functions");
+            outMap["swml_define_tool_complete_schema"] =
+                SwaigFnField(functions, "lookup", "parameters");
+        }
+
         return outMap;
+    }
+
+    // SwaigFnField mirrors the oracle's swaig_fn/field observe: from a functions
+    // list, pick the entry whose "function" == fnName, then return its <field>.
+    private static object? SwaigFnField(object? functions, string fnName, string field)
+    {
+        if (functions is not List<object?> list)
+        {
+            return null;
+        }
+        foreach (var item in list)
+        {
+            if (item is Dictionary<string, object?> fn
+                && fn.TryGetValue("function", out var f) && f as string == fnName)
+            {
+                return fn.TryGetValue(field, out var v) ? v : null;
+            }
+        }
+        return null;
     }
 
     private static object? Render(AgentBase a) => Canon.Plain(a.RenderSwml());
