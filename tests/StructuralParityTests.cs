@@ -199,7 +199,7 @@ public class StructuralParityTests
     // can be written in .NET as ``client.Fabric.CxmlApplications.List()``.
     //
     // Python parity:
-    //   /home/devuser/src/signalwire-python/signalwire/signalwire/rest/namespaces/fabric.py::FabricNamespace
+    //   signalwire-python/signalwire/signalwire/rest/namespaces/fabric.py::FabricNamespace
     // -------------------------------------------------------------------
 
     // -------------------------------------------------------------------

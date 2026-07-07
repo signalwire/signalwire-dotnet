@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -36,9 +37,18 @@ import yaml
 
 HERE = Path(__file__).resolve().parent
 PORT_ROOT = HERE.parent
-PSDK = (PORT_ROOT.parent / "porting-sdk").resolve()
+# Resolve porting-sdk: $PORTING_SDK -> adjacency (sibling of this repo, the CI +
+# local layout). No hardcoded machine-path fallback — fail loud if unresolved.
+_env_psdk = os.environ.get("PORTING_SDK")
+if _env_psdk:
+    PSDK = Path(_env_psdk).resolve()
+else:
+    PSDK = (PORT_ROOT.parent / "porting-sdk").resolve()
 if not PSDK.is_dir():
-    PSDK = Path("/usr/local/home/devuser/src/porting-sdk")
+    raise SystemExit(
+        "enumerate_signatures.py: porting-sdk not found "
+        "(set $PORTING_SDK or clone it adjacent to this repo)"
+    )
 
 sys.path.insert(0, str(HERE))
 from enumerate_surface import (  # type: ignore
@@ -1298,10 +1308,12 @@ def run_dump() -> dict:
       * stderr is folded into stdout so a build error is visible in the
         exception message even when the dotnet runner only prints to stderr.
     """
-    # Resolve `dotnet` from $PATH (CI / fresh checkouts), with a fallback
-    # to the developer-machine path that pre-dates the PATH-aware variant.
+    # Resolve `dotnet` from $PATH (CI / fresh checkouts). Fail loud if absent —
+    # no hardcoded developer-machine fallback path.
     import shutil
-    dotnet = shutil.which("dotnet") or "/home/devuser/.local/bin/dotnet"
+    dotnet = shutil.which("dotnet")
+    if not dotnet:
+        raise RuntimeError("enumerate_signatures.py: `dotnet` not found on PATH")
     cmd = [
         dotnet, "run", "--project",
         str(HERE / "SignatureDump" / "SignatureDump.csproj"),

@@ -39,7 +39,6 @@ Join: System.String.Join
 Add: List<T>.Add / Dictionary.Add and other collection helpers
 Start: System.Threading.Tasks.Task.Start (and other Start methods)
 Cancel: CancellationTokenSource.Cancel
-Enqueue: ConcurrentQueue<T>.Enqueue / Queue<T>.Enqueue
 Configure: Microsoft.Extensions.DependencyInjection / various .NET DI Configure helpers
 Search: doc-only label (e.g. "Web Search Capability"); not a method on any SDK class
 AddSeconds: System.DateTime.AddSeconds
@@ -79,8 +78,6 @@ AddDirectory: aspirational static-file helper; SDK callers use AgentServer.Serve
 RemoveDirectory: aspirational reverse of AddDirectory; not implemented
 AddMcpServer: aspirational MCP helper; SDK callers use the mcp_gateway skill
 EnableMcpServer: aspirational MCP helper; SDK callers use the mcp_gateway skill
-ConfigureLambda: aspirational serverless helper; SDK callers use SignalWire.Serverless.Adapter directly
-HandleServerlessRequestAsync: aspirational helper; SDK callers use Adapter.Serve()
 OnRequest: aspirational web hook; SDK callers register via RegisterRoutingCallback
 RegisterRawSwaigFunction: aspirational; SDK callers use RegisterSwaigFunction
 ResetDocument: aspirational; SDK callers replace the Document on the Service instance

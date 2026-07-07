@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -29,10 +30,15 @@ GOLDEN = HERE / "golden"
 DUMP_PROJECT = SCRIPTS / "SignatureDump" / "SignatureDump.csproj"
 FIXTURES_PROJECT = SCRIPTS / "SignatureDumpFixtures" / "SignatureDumpFixtures.csproj"
 
+# Resolve `dotnet` from PATH — no hardcoded machine path. Fail loud if absent.
+DOTNET = shutil.which("dotnet")
+if not DOTNET:
+    raise SystemExit("run_goldens.py: `dotnet` not found on PATH")
+
 
 def build_fixtures() -> Path:
     cp = subprocess.run(
-        ["/home/devuser/.local/bin/dotnet", "build", str(FIXTURES_PROJECT)],
+        [DOTNET, "build", str(FIXTURES_PROJECT)],
         capture_output=True, text=True, timeout=300,
     )
     if cp.returncode != 0:
@@ -52,7 +58,7 @@ def run_dump_against(dll: Path) -> dict:
     # DLL by path and dumps types under the GoldenFixtures namespace.
     helper = HERE / "DumpFixtures" / "DumpFixtures.csproj"
     cp = subprocess.run(
-        ["/home/devuser/.local/bin/dotnet", "run", "--project", str(helper),
+        [DOTNET, "run", "--project", str(helper),
          "--", str(dll)],
         capture_output=True, text=True, timeout=300,
     )
