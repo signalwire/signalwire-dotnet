@@ -49,7 +49,7 @@ agent.SetPostPrompt(@"Return a JSON summary of the conversation:
 
 agent.AddHints(new List<string> { "SignalWire", "SWML", "SWAIG" });
 agent.AddPronunciation("API", "A P I");
-agent.AddPronunciation("SIP", "sip", ignore: "true");
+agent.AddPronunciation("SIP", "sip", ignoreCase: true);
 
 // --- Languages ---
 

@@ -234,7 +234,13 @@ public class PlayAction : Action
 
     public override string GetStopMethod() => "calling.play.stop";
 
-    public void Pause() => ExecuteSubcommand("calling.play.pause");
+    public void Pause(string? behavior = null)
+    {
+        var extras = behavior is null
+            ? null
+            : new Dictionary<string, object?> { ["behavior"] = behavior };
+        ExecuteSubcommand("calling.play.pause", extras);
+    }
 
     public void Resume() => ExecuteSubcommand("calling.play.resume");
 
@@ -294,14 +300,24 @@ public class CollectAction : Action
     public override string GetStopMethod() =>
         _isPlayAndCollect ? "calling.play_and_collect.stop" : "calling.collect.stop";
 
+    /// <summary>Pause the running play_and_collect prompt.</summary>
+    public void Pause(string? behavior = null)
+    {
+        var extras = behavior is null
+            ? null
+            : new Dictionary<string, object?> { ["behavior"] = behavior };
+        ExecuteSubcommand("calling.play_and_collect.pause", extras);
+    }
+
+    /// <summary>Resume a paused play_and_collect prompt.</summary>
+    public void Resume() => ExecuteSubcommand("calling.play_and_collect.resume");
+
     /// <summary>
     /// Notify the server to start input timers now rather than waiting
     /// for the initial-timeout to expire naturally.
     /// </summary>
     public void StartInputTimers() =>
-        ExecuteSubcommand(_isPlayAndCollect
-            ? "calling.collect.start_input_timers"
-            : "calling.collect.start_input_timers");
+        ExecuteSubcommand("calling.collect.start_input_timers");
 
     /// <summary>play_and_collect-only: change playback volume mid-prompt.</summary>
     public void Volume(double db) =>
@@ -330,6 +346,32 @@ public class CollectAction : Action
     /// </summary>
     public override bool AcceptsTerminalEvent(string eventType) =>
         eventType != "calling.call.play";
+}
+
+/// <summary>
+/// Handle for standalone calling.collect operations (a collect without an
+/// accompanying play prompt). Mirrors the Python reference
+/// <c>StandaloneCollectAction</c> in <c>signalwire.relay.call</c>: same shape as
+/// <see cref="CollectAction"/> but always uses the plain <c>collect</c> command
+/// prefix (never <c>play_and_collect</c>).
+/// </summary>
+public class StandaloneCollectAction : Action
+{
+    public StandaloneCollectAction(string controlId, string callId, string nodeId, object client)
+        : base(controlId, callId, nodeId, client) { }
+
+    public override string GetStopMethod() => "calling.collect.stop";
+
+    /// <summary>
+    /// Notify the server to start input timers now rather than waiting for the
+    /// initial-timeout to expire naturally.
+    /// </summary>
+    public void StartInputTimers() =>
+        ExecuteSubcommand("calling.collect.start_input_timers");
+
+    /// <summary>Return the structured collect result from the payload.</summary>
+    public object? CollectResult =>
+        Payload.TryGetValue("result", out var v) ? v : null;
 }
 
 /// <summary>Handle for calling.detect operations.</summary>

@@ -27,7 +27,7 @@ public class Call
     /// enum, parsed from <see cref="State"/>. Returns <c>null</c> when
     /// <see cref="State"/> is an unrecognised (e.g. newly-introduced server)
     /// value — read <see cref="State"/> for the raw string in that case. This
-    /// is a typed convenience alongside the parity-bearing string
+    /// is a typed convenience alongside the primary string
     /// <see cref="State"/>; it always agrees with it for known states.
     /// </summary>
     public CallState? CallState =>
@@ -67,10 +67,9 @@ public class Call
         Tag = GetStr(parameters, "tag");
         Context = GetStr(parameters, "context");
         Direction = GetStr(parameters, "direction");
-        // Production wire uses "call_state"; legacy synthetic frames use "state".
-        State = GetStr(parameters, "call_state")
-            ?? GetStr(parameters, "state")
-            ?? Constants.CallStateCreated;
+        // Real RELAY wire key is "call_state" (mod_infrastructure relay.c:
+        // relay_call_to_json emits "call_state"; mock_relay emits the same).
+        State = GetStr(parameters, "call_state") ?? Constants.CallStateCreated;
 
         if (parameters.TryGetValue("device", out var d) && d is Dictionary<string, object?> dev)
             Device = dev;
@@ -98,16 +97,11 @@ public class Call
         // -- call-level state events --
         if (eventType == "calling.call.state")
         {
-            // Production wire shape uses "call_state"; legacy unit tests
-            // sometimes send "state". Accept either.
-            string? newState = null;
+            // Real RELAY wire key is "call_state" (mod_infrastructure relay.c +
+            // mock_relay). NOT "state" — that key belongs to control_id-routed
+            // component events (play/record/collect/…).
             if (parms.TryGetValue("call_state", out var csVal) && csVal is not null)
-                newState = csVal.ToString();
-            else if (evt.State is not null)
-                newState = evt.State;
-
-            if (newState is not null)
-                State = newState;
+                State = csVal.ToString()!;
             if (parms.TryGetValue("end_reason", out var er) && er is not null)
                 EndReason = er.ToString();
             if (parms.TryGetValue("peer", out var p) && p is Dictionary<string, object?> peer)
@@ -661,6 +655,20 @@ public class Call
     /// <summary>Wait until the call is ending (immediate if already ending or past it).</summary>
     public Task<Event> WaitForEndingAsync(double? timeout = null)
         => WaitForStateAsync(Constants.CallStateEnding, timeout);
+
+    /// <summary>Wait for the call to reach a specific state (generic wait).
+    /// (equivalent to Python's ``Call.wait_for(event_type, ...)``.)</summary>
+    public Task<Event> WaitForAsync(string state, double? timeout = null)
+        => WaitForStateAsync(state, timeout);
+
+    /// <summary>Wait for the call to reach the ended state.
+    /// (equivalent to Python's ``Call.wait_for_ended``.)</summary>
+    public Task<Event> WaitForEndedAsync(double? timeout = null)
+        => WaitForStateAsync(Constants.CallStateEnded, timeout);
+
+    /// <summary>A concise debug representation of this call (equivalent to Python's
+    /// ``Call.__repr__``).</summary>
+    public override string ToString() => $"<Call id={CallId} state={State}>";
 
     // ------------------------------------------------------------------
     // Private helpers

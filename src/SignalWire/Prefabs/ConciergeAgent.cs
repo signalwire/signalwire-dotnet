@@ -90,7 +90,7 @@ public class ConciergeAgent : AgentBase
     }
 
     /// <summary>SWAIG tool handler for the ``check_availability`` tool.
-    /// (Python parity: ``ConciergeAgent.check_availability(args, raw_data)``.)</summary>
+    /// (equivalent to Python's ``ConciergeAgent.check_availability(args, raw_data)``.)</summary>
     public FunctionResult CheckAvailability(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
         ArgumentNullException.ThrowIfNull(args);
@@ -102,7 +102,7 @@ public class ConciergeAgent : AgentBase
     }
 
     /// <summary>SWAIG tool handler for the ``get_directions`` tool.
-    /// (Python parity: ``ConciergeAgent.get_directions(args, raw_data)``.)</summary>
+    /// (equivalent to Python's ``ConciergeAgent.get_directions(args, raw_data)``.)</summary>
     public FunctionResult GetDirections(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
         ArgumentNullException.ThrowIfNull(args);

@@ -30,7 +30,7 @@ public sealed class AgentOptions
     /// When set, webhook signature validation is enforced on POST /, /swaig,
     /// /post_prompt — unsigned or invalidly-signed requests get a 403. Falls
     /// back to the <c>SIGNALWIRE_SIGNING_KEY</c> env var if not passed. See
-    /// <c>porting-sdk/webhooks.md</c> for the contract. (Python parity:
+    /// the webhook signature validation reference for the contract. (equivalent to Python's
     /// <c>AgentBase.__init__(signing_key=...)</c>.)
     /// </summary>
     public string? SigningKey { get; init; }
@@ -39,7 +39,7 @@ public sealed class AgentOptions
     /// If true, honor <c>X-Forwarded-Proto</c> / <c>X-Forwarded-Host</c>
     /// headers when reconstructing the URL for signature validation. Default
     /// false because proxy headers are spoofable; opt in only when you
-    /// control the proxy chain. (Python parity:
+    /// control the proxy chain. (equivalent to Python's
     /// <c>AgentBase.__init__(trust_proxy_for_signature=...)</c>.)
     /// </summary>
     public bool TrustProxyForSignature { get; init; }
@@ -77,16 +77,29 @@ public class AgentBase : Service
     // SWMLService instances can host SWAIG functions). AgentBase inherits.
 
     // -- Hints --
-    private List<string> _hints;
-    private List<string> _patternHints;
+    // Holds a mix of plain string hints and structured pattern-hint dicts
+    // ({hint, pattern, replace, ignore_case}), mirroring Python's
+    // ``self._hints: list[Any]``. Both feed the rendered ``ai.hints`` array.
+    private List<object> _hints;
+    private List<object> _patternHints;
 
     // -- Languages / pronunciations --
     private List<Dictionary<string, object>> _languages;
     private List<Dictionary<string, object>> _pronunciations;
 
+    // -- Multilingual (Mode B) / MCP --
+    private Dictionary<string, object>? _multilingual;
+    private List<Dictionary<string, object>> _mcpServers = [];
+    private bool _mcpServerEnabled;
+
     // -- Params / data --
     private Dictionary<string, object> _params;
     private Dictionary<string, object> _globalData;
+
+    // SIP usernames routed to this agent, stored lowercased so registration is
+    // case-insensitive and de-duplicated — mirroring Python's
+    // AgentBase._sip_usernames set (register_sip_username adds .lower()).
+    private HashSet<string> _sipUsernames = new(StringComparer.Ordinal);
 
     // -- Native functions / fillers / debug --
     private List<string> _nativeFunctions;
@@ -131,12 +144,12 @@ public class AgentBase : Service
     /// <summary>The configured Signing Key, or null when validation is
     /// disabled. Read-only — the resolution order
     /// (constructor arg → <c>SIGNALWIRE_SIGNING_KEY</c> env) is fixed at
-    /// construction time. (Python parity: <c>agent.signing_key</c>.)</summary>
+    /// construction time. (equivalent to Python's <c>agent.signing_key</c>.)</summary>
     public string? SigningKey => _signingKey;
 
     /// <summary>True iff signature validation is enabled — i.e. either the
     /// <c>SigningKey</c> option or <c>SIGNALWIRE_SIGNING_KEY</c> env var
-    /// was set at construction time. (Python parity:
+    /// was set at construction time. (equivalent to Python's
     /// <c>bool(agent.signing_key)</c>.)</summary>
     public bool IsWebhookSignatureValidationEnabled => _signingKey is not null;
 
@@ -178,6 +191,11 @@ public class AgentBase : Service
         // Languages / pronunciations
         _languages = [];
         _pronunciations = [];
+
+        // Multilingual / MCP
+        _multilingual = null;
+        _mcpServers = [];
+        _mcpServerEnabled = false;
 
         // Params / data
         _params = [];
@@ -262,7 +280,7 @@ public class AgentBase : Service
     }
 
     /// <summary>Add a top-level POM section with an optional body, bullets,
-    /// numbering, and subsections. (Python parity: ``prompt_add_section``.)</summary>
+    /// numbering, and subsections. (equivalent to Python's ``prompt_add_section``.)</summary>
     public AgentBase PromptAddSection(
         string title,
         string body = "",
@@ -275,8 +293,14 @@ public class AgentBase : Service
         var section = new Dictionary<string, object>
         {
             ["title"] = title,
-            ["body"] = body,
         };
+        // Omit an empty body — the POM render_dict only includes `body` when it
+        // is non-empty (Python parity: `if self.body: data["body"] = self.body`),
+        // so a bullets-only section must not carry a phantom "body": "".
+        if (!string.IsNullOrEmpty(body))
+        {
+            section["body"] = body;
+        }
         if (bullets is { Count: > 0 })
         {
             section["bullets"] = bullets.ToList();
@@ -292,7 +316,7 @@ public class AgentBase : Service
     }
 
     /// <summary>Add a subsection nested under an existing parent section.
-    /// (Python parity: ``prompt_add_subsection(parent_title, title, body, bullets)``.)</summary>
+    /// (equivalent to Python's ``prompt_add_subsection(parent_title, title, body, bullets)``.)</summary>
     public AgentBase PromptAddSubsection(
         string parentTitle,
         string title,
@@ -331,7 +355,7 @@ public class AgentBase : Service
     }
 
     /// <summary>Append body text, a single bullet, and/or bullets list to an
-    /// existing section. (Python parity:
+    /// existing section. (equivalent to Python's
     /// ``prompt_add_to_section(title, body, bullet, bullets)``.)</summary>
     public AgentBase PromptAddToSection(
         string title,
@@ -403,20 +427,20 @@ public class AgentBase : Service
     }
 
     /// <summary>Return the raw prompt text if set, else null.
-    /// (Python parity: ``PromptManager.get_raw_prompt``.)</summary>
+    /// (equivalent to Python's ``PromptManager.get_raw_prompt``.)</summary>
     public string? GetRawPrompt() => string.IsNullOrEmpty(_promptText) ? null : _promptText;
 
     /// <summary>Return the post-prompt text if set, else null.
-    /// (Python parity: ``PromptManager.get_post_prompt``.)</summary>
+    /// (equivalent to Python's ``PromptManager.get_post_prompt``.)</summary>
     public string? GetPostPrompt() => string.IsNullOrEmpty(_postPrompt) ? null : _postPrompt;
 
     /// <summary>Return the contexts configuration if defined, else null.
-    /// (Python parity: ``PromptManager.get_contexts``.)</summary>
+    /// (equivalent to Python's ``PromptManager.get_contexts``.)</summary>
     public Dictionary<string, object>? GetContexts() =>
         _contextBuilder is null ? null : _contextBuilder.ToDict();
 
     /// <summary>Set the prompt as a list-of-section dicts (POM form).
-    /// Throws when ``UsePom`` is false. (Python parity:
+    /// Throws when ``UsePom`` is false. (equivalent to Python's
     /// ``PromptManager.set_prompt_pom``.)</summary>
     public AgentBase SetPromptPom(IReadOnlyList<Dictionary<string, object>> pom)
     {
@@ -430,7 +454,7 @@ public class AgentBase : Service
     }
 
     /// <summary>The prompt as a <see cref="POM.PromptObjectModel"/>
-    /// instance (Python parity: ``agent.pom``). Returns null when
+    /// instance (equivalent to Python's ``agent.pom``). Returns null when
     /// <c>UsePom</c> is false. Materialised on each access from the
     /// internal list-of-dicts so mutations stay round-trip-safe. To
     /// inspect raw section dicts, use <see cref="GetPromptSections"/>.</summary>
@@ -462,7 +486,7 @@ public class AgentBase : Service
     public IReadOnlyList<Dictionary<string, object>> GetPromptSections() => _pomSections;
 
     /// <summary>Create a per-call SWAIG-function token. Returns empty
-    /// string on failure. (Python parity: ``StateMixin._create_tool_token``.)</summary>
+    /// string on failure. (equivalent to Python's ``StateMixin._create_tool_token``.)</summary>
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort token creation; any failure returns an empty string to match the Python reference's swallow-and-fallback behavior.")]
     public string CreateToolToken(string toolName, string callId)
     {
@@ -478,7 +502,7 @@ public class AgentBase : Service
 
     /// <summary>Validate a per-call SWAIG-function token. Rejects
     /// when the function is not registered, when the SessionManager
-    /// rejects the token, or on any error. (Python parity:
+    /// rejects the token, or on any error. (equivalent to Python's
     /// ``StateMixin.validate_tool_token``.)</summary>
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort token validation; any failure is treated as an invalid token (returns false) to match the Python reference's swallow-and-reject behavior.")]
     public bool ValidateToolToken(string functionName, string token, string callId)
@@ -517,41 +541,137 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase AddPatternHint(string pattern)
+    /// <summary>
+    /// Add a complex hint with pattern matching. Unlike <see cref="AddHint"/>
+    /// (a bare string), this attaches a STRUCTURED hint
+    /// (<c>{hint, pattern, replace, ignore_case}</c>) into the rendered
+    /// <c>ai.hints</c> array. No-op when any of hint/pattern/replace is empty,
+    /// matching signalwire-python's <c>AIConfigMixin.add_pattern_hint</c>.
+    /// </summary>
+    /// <param name="hint">The hint to match.</param>
+    /// <param name="pattern">Regular-expression pattern.</param>
+    /// <param name="replace">Text to replace the matched hint with.</param>
+    /// <param name="ignoreCase">Whether to ignore case when matching.</param>
+    public AgentBase AddPatternHint(string hint, string pattern, string replace, bool ignoreCase = false)
     {
-        _patternHints.Add(pattern);
+        if (!string.IsNullOrEmpty(hint) && !string.IsNullOrEmpty(pattern) && !string.IsNullOrEmpty(replace))
+        {
+            _patternHints.Add(new Dictionary<string, object>
+            {
+                ["hint"] = hint,
+                ["pattern"] = pattern,
+                ["replace"] = replace,
+                ["ignore_case"] = ignoreCase,
+            });
+        }
         return this;
     }
 
     public AgentBase AddLanguage(string name, string code, string voice)
     {
-        return AddLanguage(name, code, voice, null);
+        return AddLanguage(name, code, voice, null, null, null, null, null);
     }
 
-    /// <summary>
-    /// Add a language configuration with optional per-language engine-specific
-    /// params (e.g. voice stability/similarity for ElevenLabs, model knobs).
-    /// The <c>params</c> key is only emitted into SWML when non-empty, so
-    /// existing language entries stay byte-identical when no params are passed.
-    /// Mirrors signalwire-python's <c>AIConfigMixin.add_language(params=...)</c>.
-    /// </summary>
-    /// <param name="name">Language name (e.g. "English").</param>
-    /// <param name="code">Language code (e.g. "en-US").</param>
-    /// <param name="voice">TTS voice name or combined "engine.voice:model".</param>
-    /// <param name="languageParams">Optional engine-specific params dict.
-    /// <c>null</c> or empty omits the SWML <c>params</c> key.</param>
     public AgentBase AddLanguage(
         string name,
         string code,
         string voice,
         Dictionary<string, object?>? languageParams)
     {
+        return AddLanguage(name, code, voice, null, null, null, null, languageParams);
+    }
+
+    /// <summary>
+    /// Add a language configuration, carrying optional fillers, an explicit
+    /// engine/model, and per-language engine-specific params into the rendered
+    /// SWML <c>ai.languages</c> entry. Mirrors signalwire-python's
+    /// <c>AIConfigMixin.add_language</c>:
+    /// <list type="bullet">
+    /// <item>an explicit <paramref name="engine"/>/<paramref name="model"/>
+    /// is emitted alongside the raw <paramref name="voice"/>;</item>
+    /// <item>otherwise a combined <c>"engine.voice:model"</c> voice string is
+    /// parsed into separate <c>voice</c>/<c>engine</c>/<c>model</c> keys;</item>
+    /// <item>both filler lists emit <c>speech_fillers</c> + <c>function_fillers</c>;
+    /// a single list falls back to the deprecated <c>fillers</c> key.</item>
+    /// </list>
+    /// </summary>
+    /// <param name="name">Language name (e.g. "English").</param>
+    /// <param name="code">Language code (e.g. "en-US").</param>
+    /// <param name="voice">TTS voice name or combined "engine.voice:model".</param>
+    /// <param name="speechFillers">Optional filler phrases for natural speech.</param>
+    /// <param name="functionFillers">Optional filler phrases during function calls.</param>
+    /// <param name="engine">Optional explicit engine name (e.g. "elevenlabs").</param>
+    /// <param name="model">Optional explicit model name.</param>
+    /// <param name="languageParams">Optional engine-specific params dict.
+    /// <c>null</c> or empty omits the SWML <c>params</c> key.</param>
+    public AgentBase AddLanguage(
+        string name,
+        string code,
+        string voice,
+        IReadOnlyList<string>? speechFillers,
+        IReadOnlyList<string>? functionFillers,
+        string? engine,
+        string? model,
+        Dictionary<string, object?>? languageParams)
+    {
+        ArgumentNullException.ThrowIfNull(voice);
+
         var language = new Dictionary<string, object>
         {
             ["name"] = name,
             ["code"] = code,
-            ["voice"] = voice,
         };
+
+        // Voice formatting: explicit engine/model, else parse a combined
+        // "engine.voice:model" string, else use the raw voice.
+        if (!string.IsNullOrEmpty(engine) || !string.IsNullOrEmpty(model))
+        {
+            language["voice"] = voice;
+            if (!string.IsNullOrEmpty(engine))
+            {
+                language["engine"] = engine;
+            }
+            if (!string.IsNullOrEmpty(model))
+            {
+                language["model"] = model;
+            }
+        }
+        else if (voice.Contains('.', StringComparison.Ordinal) && voice.Contains(':', StringComparison.Ordinal))
+        {
+            var colon = voice.IndexOf(':', StringComparison.Ordinal);
+            var engineVoice = voice[..colon];
+            var modelPart = voice[(colon + 1)..];
+            var dot = engineVoice.IndexOf('.', StringComparison.Ordinal);
+            if (dot >= 0)
+            {
+                language["voice"] = engineVoice[(dot + 1)..];
+                language["engine"] = engineVoice[..dot];
+                language["model"] = modelPart;
+            }
+            else
+            {
+                language["voice"] = voice;
+            }
+        }
+        else
+        {
+            language["voice"] = voice;
+        }
+
+        // Fillers: both lists -> speech_fillers + function_fillers; a single
+        // list -> deprecated "fillers" key.
+        var hasSpeech = speechFillers is { Count: > 0 };
+        var hasFunction = functionFillers is { Count: > 0 };
+        if (hasSpeech && hasFunction)
+        {
+            language["speech_fillers"] = speechFillers!;
+            language["function_fillers"] = functionFillers!;
+        }
+        else if (hasSpeech || hasFunction)
+        {
+            language["fillers"] = (hasSpeech ? speechFillers : functionFillers)!;
+        }
+
         // Per-language params (engine-specific tuning, voice settings, etc.).
         // Only emit the key when non-empty so we don't pollute SWML with
         // empty objects.
@@ -620,17 +740,101 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase AddPronunciation(string replace, string with, string ignore = "")
+    /// <summary>
+    /// Configure ASR-driven multilingual mode (Mode B). Emits a top-level
+    /// ``multilingual`` object on the AI verb. Mutually exclusive with
+    /// <see cref="SetLanguages"/>: when both are set the server uses
+    /// ``multilingual`` and ignores ``languages``.
+    /// </summary>
+    public AgentBase SetMultilingual(Dictionary<string, object> config)
     {
-        ArgumentNullException.ThrowIfNull(ignore);
+        if (config is { Count: > 0 })
+        {
+            _multilingual = config;
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Add an external MCP server for tool discovery and invocation. Tools are
+    /// discovered via the MCP protocol at session start and registered as SWAIG
+    /// functions. Emits into the SWAIG ``mcp_servers`` array.
+    /// </summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API / used as a config value.")]
+    public AgentBase AddMcpServer(
+        string url,
+        Dictionary<string, string>? headers = null,
+        bool resources = false,
+        Dictionary<string, string>? resourceVars = null)
+    {
+        ArgumentNullException.ThrowIfNull(url);
+        var server = new Dictionary<string, object> { ["url"] = url };
+        if (headers is { Count: > 0 })
+        {
+            server["headers"] = headers;
+        }
+        if (resources)
+        {
+            server["resources"] = true;
+        }
+        if (resourceVars is { Count: > 0 })
+        {
+            server["resource_vars"] = resourceVars;
+        }
+        _mcpServers.Add(server);
+        return this;
+    }
+
+    /// <summary>
+    /// Expose this agent's tool functions as an MCP server endpoint (adds a
+    /// /mcp route speaking JSON-RPC 2.0 / the MCP protocol).
+    /// </summary>
+    public AgentBase EnableMcpServer()
+    {
+        _mcpServerEnabled = true;
+        return this;
+    }
+
+    /// <summary>True when this agent exposes an MCP server endpoint.</summary>
+    internal bool McpServerEnabled => _mcpServerEnabled;
+
+    /// <summary>
+    /// Handle a serverless-platform request (AWS Lambda / Azure Functions /
+    /// CGI). Dispatches to the appropriate <see cref="SignalWire.Serverless.Adapter"/>
+    /// handler based on <paramref name="mode"/> (or the detected execution mode).
+    /// Mirrors ``ServerlessMixin.handle_serverless_request``.
+    /// </summary>
+    public Dictionary<string, object?> HandleServerlessRequest(
+        Dictionary<string, object?>? @event = null,
+        object? context = null,
+        string? mode = null)
+    {
+        mode ??= SignalWire.Serverless.Adapter.Detect();
+        @event ??= [];
+        return mode switch
+        {
+            "azure_function" => SignalWire.Serverless.Adapter.HandleAzure(this, @event),
+            _ => SignalWire.Serverless.Adapter.HandleLambda(this, @event),
+        };
+    }
+
+    /// <summary>
+    /// Add a pronunciation rule. Mirrors Python
+    /// <c>add_pronunciation(replace, with_text, ignore_case=False)</c>: the SWML
+    /// wire keys are <c>replace</c>, <c>with</c>, and <c>ignore_case</c> (a bool,
+    /// emitted only when true — matches signalwire-agents schema.json
+    /// <c>Pronounce</c>).
+    /// </summary>
+    public AgentBase AddPronunciation(string replace, string with, bool ignoreCase = false)
+    {
         var entry = new Dictionary<string, object>
         {
             ["replace"] = replace,
             ["with"] = with,
         };
-        if (ignore.Length > 0)
+        if (ignoreCase)
         {
-            entry["ignore"] = ignore;
+            entry["ignore_case"] = true;
         }
         _pronunciations.Add(entry);
         return this;
@@ -683,6 +887,11 @@ public class AgentBase : Service
         }
         return this;
     }
+
+    /// <summary>The accumulated global-data map (a copy). Mirrors Python's
+    /// observable ``dict(self._global_data)``.</summary>
+    internal IReadOnlyDictionary<string, object> GetGlobalData() =>
+        new Dictionary<string, object>(_globalData);
 
     public AgentBase SetNativeFunctions(IReadOnlyList<string> functions)
     {
@@ -874,15 +1083,31 @@ public class AgentBase : Service
         return true;
     }
 
-    public AgentBase SetPromptLlmParams(Dictionary<string, object> parameters)
+    public AgentBase SetPromptLlmParams(Dictionary<string, object>? parameters = null)
     {
-        _promptLlmParams = parameters;
+        // Merge (not replace) to mirror Python's self._prompt_llm_params.update(params)
+        // (ai_config_mixin.py:669). Calling twice with distinct keys keeps both.
+        if (parameters is not null)
+        {
+            foreach (var (key, value) in parameters)
+            {
+                _promptLlmParams[key] = value;
+            }
+        }
         return this;
     }
 
-    public AgentBase SetPostPromptLlmParams(Dictionary<string, object> parameters)
+    public AgentBase SetPostPromptLlmParams(Dictionary<string, object>? parameters = null)
     {
-        _postPromptLlmParams = parameters;
+        // Merge (not replace) to mirror Python's self._post_prompt_llm_params.update(params)
+        // (ai_config_mixin.py:703).
+        if (parameters is not null)
+        {
+            foreach (var (key, value) in parameters)
+            {
+                _postPromptLlmParams[key] = value;
+            }
+        }
         return this;
     }
 
@@ -994,11 +1219,11 @@ public class AgentBase : Service
         return _skillManager;
     }
 
-    /// <summary>Skill manager (Python parity: ``agent.skill_manager``).</summary>
+    /// <summary>Skill manager (equivalent to Python's ``agent.skill_manager``).</summary>
     [SuppressMessage("Naming", "CA1721", Justification = "The SkillManager property and GetSkillManager() both intentionally exist to mirror the Python reference surface (skill_manager + get_skill_manager()).")]
     public SkillManager SkillManager => GetSkillManager();
 
-    /// <summary>Return the agent name (Python parity: ``agent.get_name()``).</summary>
+    /// <summary>Return the agent name (equivalent to Python's ``agent.get_name()``).</summary>
     [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface (Python agent.get_name()).")]
     [SuppressMessage("Naming", "CA1721", Justification = "GetName() and the inherited Name property both intentionally exist to mirror the Python reference surface (get_name() + name).")]
     public string GetName() => Name;
@@ -1008,7 +1233,7 @@ public class AgentBase : Service
     // Python's ``agent.get_full_url(include_auth=False)``.
 
     /// <summary>Enable auto-mapping of SIP usernames to this agent's
-    /// route (Python parity: ``agent.auto_map_sip_usernames()``).
+    /// route (equivalent to Python's ``agent.auto_map_sip_usernames()``).
     /// Chainable.</summary>
     public AgentBase AutoMapSipUsernames()
     {
@@ -1049,7 +1274,7 @@ public class AgentBase : Service
     /// load a built-in skill by its <see cref="SkillName"/> enum member.
     /// Delegates to the string overload via the canonical wire name, so the
     /// loaded skill is identical to passing the bare string. Strings remain
-    /// supported for parity with the Python reference and for custom skills.
+    /// supported for compatibility with the Python API and for custom skills.
     /// </summary>
     public AgentBase AddSkill(SkillName name, Dictionary<string, object>? parameters = null) =>
         AddSkill(name.ToWireName(), parameters);
@@ -1120,10 +1345,10 @@ public class AgentBase : Service
 
     /// <summary>Manually override the proxy URL used for SWAIG webhook construction.</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
-    public AgentBase ManualSetProxyUrl(string url)
+    public override AgentBase ManualSetProxyUrl(string proxyUrl)
     {
-        ArgumentNullException.ThrowIfNull(url);
-        _manualProxyUrl = url.TrimEnd('/');
+        ArgumentNullException.ThrowIfNull(proxyUrl);
+        _manualProxyUrl = proxyUrl.TrimEnd('/');
         return this;
     }
 
@@ -1185,10 +1410,29 @@ public class AgentBase : Service
         return this;
     }
 
-    /// <summary>Register a SIP username under this agent's own route — Python
-    /// equivalent of ``register_sip_username(self, sip_username)``.</summary>
-    public AgentBase RegisterSipUsername(string username) =>
-        RegisterSipUsername(username, "");
+    /// <summary>Register a SIP username that should be routed to this agent —
+    /// Python equivalent of ``register_sip_username(self, sip_username)``. The
+    /// username is stored lowercased in a set, so registration is
+    /// case-insensitive and de-duplicated ("Bob"/"BOB"/"bob" collapse to one).
+    /// Read the accumulated set back via <see cref="GetSipUsernames"/>.</summary>
+    [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the normalized SIP-username form (matches Python's sip_username.lower() set semantics).")]
+    public AgentBase RegisterSipUsername(string username)
+    {
+        ArgumentNullException.ThrowIfNull(username);
+        _sipUsernames.Add(username.ToLowerInvariant());
+        return this;
+    }
+
+    /// <summary>The SIP usernames registered to this agent, lowercased and
+    /// sorted. Mirrors Python's observable ``sorted(self._sip_usernames)``.
+    /// Internal (mirrors Python's underscore-private state): only the Layer-D
+    /// dump reads it, so it adds no public-surface drift.</summary>
+    internal IReadOnlyList<string> GetSipUsernames()
+    {
+        var names = new List<string>(_sipUsernames);
+        names.Sort(StringComparer.Ordinal);
+        return names;
+    }
 
     // ======================================================================
     //  SWML Rendering (5-phase pipeline)
@@ -1256,7 +1500,7 @@ public class AgentBase : Service
             main.Add(new Dictionary<string, object> { [verb] = config });
         }
 
-        return new Dictionary<string, object>
+        var document = new Dictionary<string, object>
         {
             ["version"] = "1.0.0",
             ["sections"] = new Dictionary<string, object>
@@ -1264,6 +1508,25 @@ public class AgentBase : Service
                 ["main"] = main,
             },
         };
+
+        // Post-render transform hook. The base returns the document unchanged;
+        // subclasses (e.g. BedrockAgent) override this to rewrite verbs — mirrors
+        // the Python/Ruby reference where BedrockAgent overrides the private
+        // _render_swml to swap the `ai` verb for `amazon_bedrock`. Kept protected
+        // so it stays off the public SDK surface.
+        return TransformRenderedSwml(document);
+    }
+
+    /// <summary>
+    /// Post-render transform hook applied to the fully-built SWML document. The
+    /// base implementation returns it unchanged; subclasses override to rewrite
+    /// verbs (e.g. <c>BedrockAgent</c> swaps <c>ai</c> for <c>amazon_bedrock</c>).
+    /// Protected so it is not part of the public SDK surface (matches the private
+    /// <c>_render_swml</c> override in the Python/Ruby reference).
+    /// </summary>
+    protected virtual Dictionary<string, object> TransformRenderedSwml(Dictionary<string, object> document)
+    {
+        return document;
     }
 
     /// <summary>Build the AI verb configuration block.</summary>
@@ -1327,7 +1590,9 @@ public class AgentBase : Service
         }
 
         // -- Hints --
-        var allHints = new List<string>(_hints);
+        // Plain string hints and structured pattern-hint dicts share one
+        // ``ai.hints`` array (Python's ``self._hints: list[Any]``).
+        var allHints = new List<object>(_hints);
         allHints.AddRange(_patternHints);
         if (allHints.Count > 0)
         {
@@ -1338,6 +1603,14 @@ public class AgentBase : Service
         if (_languages.Count > 0)
         {
             ai["languages"] = _languages;
+        }
+
+        // -- Multilingual (Mode B) --
+        // Mutually exclusive with languages; when both are set the server uses
+        // ``multilingual`` and ignores ``languages`` (mirrors the reference).
+        if (_multilingual is not null)
+        {
+            ai["multilingual"] = _multilingual;
         }
 
         // -- Pronunciations --
@@ -1392,7 +1665,7 @@ public class AgentBase : Service
     /// non-signed route): delegates to <see cref="Service.HandleRequest"/>.
     /// </para>
     ///
-    /// <para>(Python parity: <c>web_mixin._register_routes</c> wraps the
+    /// <para>(equivalent to Python's <c>web_mixin._register_routes</c> wraps the
     /// signed POST routes in a FastAPI <c>Depends(sig_dep)</c> dependency
     /// when <c>signing_key</c> is set; this is the .NET equivalent.)</para>
     /// </summary>
@@ -1437,7 +1710,7 @@ public class AgentBase : Service
     /// True iff the request targets a SignalWire-signed POST route under
     /// this agent's <see cref="Service.Route"/>. Signed routes are root
     /// (SWML), <c>/swaig</c>, and <c>/post_prompt</c> — see
-    /// <c>porting-sdk/webhooks.md</c>.
+    /// the webhook signature validation reference.
     /// </summary>
     private bool IsSignedPostRoute(string method, string path)
     {
@@ -1566,6 +1839,7 @@ public class AgentBase : Service
         clone._pronunciations = DeepCopyList(_pronunciations);
         clone._params = new Dictionary<string, object>(_params);
         clone._globalData = new Dictionary<string, object>(_globalData);
+        clone._sipUsernames = new HashSet<string>(_sipUsernames, StringComparer.Ordinal);
         clone._nativeFunctions = [.. _nativeFunctions];
         clone._internalFillers = [.. _internalFillers];
         clone._promptLlmParams = new Dictionary<string, object>(_promptLlmParams);
@@ -1608,14 +1882,35 @@ public class AgentBase : Service
                 continue;
             }
 
-            // Strip internal keys (those starting with _)
+            // Strip internal keys (those starting with _) and normalise the
+            // stored field names to the canonical SWML wire names. The .NET
+            // registry stores tools under the builder-idiom keys `purpose` /
+            // `argument`, but the wire shape the SignalWire server + the Python
+            // reference emit is `description` / `parameters`
+            // (agent_base.py:1053-1056, data_map.py:437-438). Python's DataMap
+            // likewise exposes a `.purpose()` builder yet always renders
+            // `description`/`parameters`. Translate here — the single SWAIG
+            // wire-emission point — so every tool (DefineTool, DataMap via
+            // RegisterSwaigFunction, and skills) renders canonical wire names
+            // without changing the internal storage idiom.
             var funcDef = new Dictionary<string, object>();
             foreach (var (key, value) in tool)
             {
-                if (!key.StartsWith('_'))
+                if (key.StartsWith('_'))
                 {
-                    funcDef[key] = value;
+                    continue;
                 }
+                // Rename to the canonical wire key only when the tool doesn't
+                // already carry that canonical key itself (a raw registered
+                // function that already uses `description`/`parameters` keeps its
+                // own; the builder-idiom alias never clobbers it).
+                var wireKey = key switch
+                {
+                    "purpose" when !tool.ContainsKey("description") => "description",
+                    "argument" when !tool.ContainsKey("parameters") => "parameters",
+                    _ => key,
+                };
+                funcDef[wireKey] = value;
             }
 
             // Add web_hook_url for callable tools (those with a handler)
@@ -1641,6 +1936,12 @@ public class AgentBase : Service
         if (_functionIncludes.Count > 0)
         {
             swaig["includes"] = _functionIncludes;
+        }
+
+        // MCP servers (external tool discovery via the MCP protocol)
+        if (_mcpServers.Count > 0)
+        {
+            swaig["mcp_servers"] = _mcpServers;
         }
 
         return swaig;

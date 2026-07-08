@@ -44,11 +44,12 @@ public class SkillsTests : IDisposable
     // ==================================================================
 
     [Fact]
-    public void Registry_Lists18BuiltinSkills()
+    public void Registry_Lists17BuiltinSkills()
     {
+        // 17 built-ins: mcp_gateway was dropped (Python-only per §I.1 user ruling).
         var registry = SkillRegistry.Instance;
         var skills = registry.ListSkills();
-        Assert.Equal(18, skills.Count);
+        Assert.Equal(17, skills.Count);
     }
 
     [Fact]
@@ -58,7 +59,7 @@ public class SkillsTests : IDisposable
         {
             "api_ninjas_trivia", "claude_skills", "custom_skills", "datasphere",
             "datasphere_serverless", "datetime", "google_maps", "info_gatherer",
-            "joke", "math", "mcp_gateway", "native_vector_search",
+            "joke", "math", "native_vector_search",
             "play_background_file", "spider", "swml_transfer", "weather_api",
             "web_search", "wikipedia_search",
         };
@@ -544,6 +545,110 @@ public class SkillsTests : IDisposable
             try { listener.Close(); } catch { }
         });
         return (prefix.TrimEnd('/'), disposable);
+    }
+
+    // ==================================================================
+    //  Tier-2 contract 4: native_vector_search REMOTE HTTP.
+    //  Configure remote_url -> a mock HTTP server; invoke the search tool;
+    //  assert a real POST to <remote_url>/search carried the query, and the
+    //  mock's results are formatted into the FunctionResult (NOT a stub
+    //  string). Fails a "[Would query…]"/"In production…" stub.
+    // ==================================================================
+
+    /// <summary>One-shot HTTP fixture for the nvs `/search` endpoint. Captures
+    /// the request path + body of the first request and returns canned results.
+    /// Binds an ephemeral loopback port so parallel tests don't collide.</summary>
+    private sealed class SearchFixture : IDisposable
+    {
+        private readonly HttpListener _listener;
+        private readonly System.Threading.CancellationTokenSource _cts = new();
+        public string BaseUrl { get; }
+        public string? LastPath { get; private set; }
+        public string? LastBody { get; private set; }
+        private readonly System.Threading.Tasks.TaskCompletionSource _received = new();
+        public Task Received => _received.Task;
+
+        public SearchFixture(string responseJson)
+        {
+            var port = GetFreePort();
+            BaseUrl = $"http://127.0.0.1:{port}";
+            _listener = new HttpListener();
+            _listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+            _listener.Start();
+            Task.Run(async () =>
+            {
+                while (!_cts.IsCancellationRequested)
+                {
+                    try
+                    {
+                        var ctx = await _listener.GetContextAsync().ConfigureAwait(false);
+                        LastPath = ctx.Request.Url?.AbsolutePath;
+                        using (var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
+                        {
+                            LastBody = await reader.ReadToEndAsync().ConfigureAwait(false);
+                        }
+                        _received.TrySetResult();
+                        var bytes = Encoding.UTF8.GetBytes(responseJson);
+                        ctx.Response.StatusCode = 200;
+                        ctx.Response.ContentType = "application/json";
+                        ctx.Response.ContentLength64 = bytes.Length;
+                        await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                        ctx.Response.Close();
+                    }
+                    catch (HttpListenerException) { break; }
+                    catch (ObjectDisposedException) { break; }
+                }
+            });
+        }
+
+        public void Dispose()
+        {
+            _cts.Cancel();
+            try { _listener.Stop(); } catch { }
+            try { _listener.Close(); } catch { }
+        }
+    }
+
+    [Fact]
+    public void NativeVectorSearch_RemoteHttp_PostsQueryAndFormatsResults()
+    {
+        const string responseJson =
+            "{\"results\":[{\"content\":\"The office opens at 9am.\",\"score\":0.87," +
+            "\"metadata\":{\"filename\":\"hours.md\",\"section\":\"Hours\"}}]}";
+        using var fixture = new SearchFixture(responseJson);
+
+        var agent = MakeAgent();
+        var skill = new NativeVectorSearchSkill();
+        skill.Wire(agent, new Dictionary<string, object>
+        {
+            ["remote_url"] = fixture.BaseUrl,
+            ["index_name"] = "kb",
+        });
+        skill.RegisterTools(agent);
+
+        var result = agent.OnFunctionCall(
+            "search_knowledge",
+            new Dictionary<string, object> { ["query"] = "when does the office open" },
+            new Dictionary<string, object?>());
+        Assert.NotNull(result);
+
+        // The skill performs the HTTP call synchronously, so by the time
+        // OnFunctionCall returns the mock has already received the request.
+        Assert.True(fixture.Received.IsCompleted, "no HTTP request reached the mock");
+        Assert.Equal("/search", fixture.LastPath);
+        Assert.NotNull(fixture.LastBody);
+        using (var doc = System.Text.Json.JsonDocument.Parse(fixture.LastBody!))
+        {
+            Assert.Equal("when does the office open", doc.RootElement.GetProperty("query").GetString());
+            Assert.Equal("kb", doc.RootElement.GetProperty("index_name").GetString());
+        }
+
+        // The mock's results are formatted into the FunctionResult (not a stub).
+        var response = (string)result!.ToDict()["response"];
+        Assert.Contains("The office opens at 9am.", response);
+        Assert.Contains("hours.md", response);
+        Assert.DoesNotContain("Would query", response);
+        Assert.DoesNotContain("In production", response);
     }
 
     private static int GetFreePort()

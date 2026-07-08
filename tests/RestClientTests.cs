@@ -1,6 +1,6 @@
 using Xunit;
 using SignalWire.REST;
-using SignalWire.REST.Namespaces;
+using SignalWire.REST.Namespaces.Generated;
 using HttpClient = SignalWire.REST.HttpClient;
 
 namespace SignalWire.Tests;
@@ -91,7 +91,7 @@ public class RestClientTests : IDisposable
         var client = new RestClient("p", "t", "s.signalwire.com");
         var calling = client.Calling;
         Assert.NotNull(calling);
-        Assert.Equal("p", calling.ProjectId);
+        Assert.Equal("/api/calling/calls", calling.BasePath);
     }
 
     [Fact]
@@ -99,13 +99,6 @@ public class RestClientTests : IDisposable
     {
         var client = new RestClient("p", "t", "s.signalwire.com");
         Assert.Equal("/api/relay/rest/phone_numbers", client.PhoneNumbers.BasePath);
-    }
-
-    [Fact]
-    public void Namespace_Compat_Path_IncludesProjectId()
-    {
-        var client = new RestClient("my-proj", "t", "s.signalwire.com");
-        Assert.Contains("my-proj", client.Compat.BasePath);
     }
 
     // ==================================================================
@@ -124,14 +117,16 @@ public class RestClientTests : IDisposable
     public void CrudResource_Datasphere_Path()
     {
         var client = new RestClient("p", "t", "s.signalwire.com");
-        Assert.Equal("/api/datasphere/documents", client.Datasphere.BasePath);
+        // Datasphere is a container; its Documents resource carries the route.
+        Assert.Equal("/api/datasphere/documents", client.Datasphere.Documents.BasePath);
     }
 
     [Fact]
     public void CrudResource_Video_Path()
     {
         var client = new RestClient("p", "t", "s.signalwire.com");
-        Assert.Equal("/api/video/rooms", client.Video.BasePath);
+        // Video is a container; its Rooms resource carries the CRUD route.
+        Assert.Equal("/api/video/rooms", client.Video.Rooms.BasePath);
     }
 
     [Fact]
@@ -149,13 +144,18 @@ public class RestClientTests : IDisposable
         // /api/relay/rest/verified_caller_ids (the old .NET path lacked _ids).
         Assert.Equal("/api/relay/rest/verified_caller_ids", client.VerifiedCallers.BasePath);
         Assert.Equal("/api/relay/rest/sip_profile", client.SipProfile.BasePath);
-        Assert.Equal("/api/relay/rest/lookup/phone_number", client.Lookup.BasePath);
+        // The generated Lookup resource keeps the collection base and composes
+        // the `/phone_number/{e164}` segment in PhoneNumberAsync (spec op
+        // GET /lookup/phone_number/{e164_number}); the hand class had folded
+        // `phone_number` into its BasePath.
+        Assert.Equal("/api/relay/rest/lookup", client.Lookup.BasePath);
         Assert.Equal("/api/relay/rest/short_codes", client.ShortCodes.BasePath);
         Assert.Equal("/api/relay/rest/imported_phone_numbers", client.ImportedNumbers.BasePath);
         Assert.Equal("/api/relay/rest/mfa", client.Mfa.BasePath);
-        Assert.Equal("/api/relay/rest/registry", client.Registry.BasePath);
-        Assert.Equal("/api/relay/rest/logs", client.Logs.BasePath);
-        Assert.Equal("/api/relay/rest/project", client.Project.BasePath);
+        // Registry / Logs / Project are namespace CONTAINERS in the generated
+        // tree (their sub-resources carry the routes), so they have no standalone
+        // BasePath — the hand classes' container-level BasePath was a port-only
+        // artifact removed with the hand surface.
         // Python parity: chat/pubsub are token-only resources at
         // /api/{chat,pubsub}/tokens (the old .NET /api/relay/rest paths were wrong).
         Assert.Equal("/api/pubsub/tokens", client.Pubsub.BasePath);
@@ -220,7 +220,7 @@ public class RestClientTests : IDisposable
     public void Fabric_Subscribers_Path()
     {
         var http = new HttpClient("p", "t", "https://test.com");
-        var fabric = new Fabric(http);
+        var fabric = new FabricNamespace(http);
         Assert.Equal("/api/fabric/resources/subscribers", fabric.Subscribers.BasePath);
     }
 
@@ -228,7 +228,7 @@ public class RestClientTests : IDisposable
     public void Fabric_AllSubResourcePaths()
     {
         var http = new HttpClient("p", "t", "https://test.com");
-        var fabric = new Fabric(http);
+        var fabric = new FabricNamespace(http);
 
         Assert.Equal("/api/fabric/resources/sip_endpoints", fabric.SipEndpoints.BasePath);
         Assert.Equal("/api/fabric/resources/call_flows", fabric.CallFlows.BasePath);
@@ -247,43 +247,34 @@ public class RestClientTests : IDisposable
     public void Fabric_LazySingleton()
     {
         var http = new HttpClient("p", "t", "https://test.com");
-        var fabric = new Fabric(http);
+        var fabric = new FabricNamespace(http);
         Assert.Same(fabric.Subscribers, fabric.Subscribers);
         Assert.Same(fabric.AiAgents, fabric.AiAgents);
     }
 
     // ==================================================================
-    //  Calling methods (3 tests)
+    //  Calling methods (2 tests) — the generated command-dispatch resource
     // ==================================================================
 
     [Fact]
     public void Calling_BasePath()
     {
         var http = new HttpClient("p", "t", "https://test.com");
-        var calling = new Calling(http, "proj-1");
-        Assert.Equal("/api/calling/calls", calling.GetBasePath());
-        Assert.Equal("proj-1", calling.ProjectId);
+        var calling = new Calling(http);
+        Assert.Equal("/api/calling/calls", calling.BasePath);
     }
 
     [Fact]
     public void Calling_MethodCount()
     {
-        // Verify we have the expected number of public async methods.
-        // 37 distinct commands + 1 Python-parity alias (UpdateAsync alongside
-        // UpdateCallAsync) = 38.
+        // The generated command-dispatch Calling resource exposes one typed
+        // method per canonical call-control command (37 commands). This guards
+        // the generator against silently dropping/adding a command method.
         var methods = typeof(Calling)
             .GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Where(m => m.Name.EndsWith("Async"))
+            .Where(m => m.Name.EndsWith("Async", StringComparison.Ordinal))
             .ToList();
 
-        Assert.Equal(38, methods.Count);
-    }
-
-    [Fact]
-    public void Calling_Client_Accessor()
-    {
-        var http = new HttpClient("p", "t", "https://test.com");
-        var calling = new Calling(http, "proj-1");
-        Assert.Same(http, calling.Client);
+        Assert.Equal(37, methods.Count);
     }
 }

@@ -14,11 +14,8 @@
 // to stdout. Exits 0 on success, non-zero on error.
 //
 // Operation map (audit dotted name -> .NET REST namespace path):
-//   - calling.list_calls         -> http.GetAsync("/api/laml/.../Calls.json", args)
-//   - messaging.send             -> http.PostAsync("/api/laml/.../Messages.json", args)
 //   - phone_numbers.list         -> CrudResource("/api/relay/rest/phone_numbers").ListAsync
 //   - fabric.subscribers.list    -> CrudResource("/api/fabric/resources/subscribers").ListAsync
-//   - compatibility.calls.list   -> same as calling.list_calls
 
 using System.Text.Json;
 using SignalWire.REST;
@@ -59,7 +56,7 @@ catch (JsonException)
 // RestClient's constructor auto-prepends "https://" to space, which we
 // don't want when pointing at a loopback fixture URL. Build the
 // HttpClient directly with the explicit fixture URL, then construct
-// CrudResource / Fabric instances against it.
+// CrudResource instances against it.
 SignalWire.REST.HttpClient http;
 try
 {
@@ -76,11 +73,8 @@ try
 {
     result = operation switch
     {
-        "calling.list_calls"        => await CallingListCallsAsync(http, projectId, handlerArgs),
-        "messaging.send"            => await MessagingSendAsync(http, projectId, handlerArgs),
         "phone_numbers.list"        => await new SignalWire.REST.CrudResource(http, "/api/relay/rest/phone_numbers").ListAsync(StringQuery(handlerArgs)),
         "fabric.subscribers.list"   => await new SignalWire.REST.CrudResource(http, "/api/fabric/resources/subscribers").ListAsync(StringQuery(handlerArgs)),
-        "compatibility.calls.list"  => await CallingListCallsAsync(http, projectId, handlerArgs),
         _ => null,
     };
 }
@@ -102,18 +96,6 @@ return 0;
 // ----------------------------------------------------------------------
 //  Operation adapters
 // ----------------------------------------------------------------------
-
-static async Task<object?> CallingListCallsAsync(SignalWire.REST.HttpClient http, string projectId, Dictionary<string, object?> args)
-{
-    var path = $"/api/laml/2010-04-01/Accounts/{projectId}/Calls.json";
-    return await http.GetAsync(path, StringQuery(args));
-}
-
-static async Task<object?> MessagingSendAsync(SignalWire.REST.HttpClient http, string projectId, Dictionary<string, object?> args)
-{
-    var path = $"/api/laml/2010-04-01/Accounts/{projectId}/Messages.json";
-    return await http.PostAsync(path, args);
-}
 
 static Dictionary<string, string> StringQuery(Dictionary<string, object?> args)
 {

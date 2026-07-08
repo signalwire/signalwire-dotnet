@@ -251,6 +251,95 @@ public class SWMLServiceTests : IDisposable
     }
 
     // ------------------------------------------------------------------
+    // AsRouter: mountable host-app handler (Python parity: WebMixin.as_router /
+    // SWMLService.as_router). The returned RequestDelegate embeds the service's
+    // routes in a host ASP.NET Core app; driving an HttpContext through it must
+    // dispatch the same logic as HandleRequest.
+    // ------------------------------------------------------------------
+
+    private static async Task<(int Status, string Body, Microsoft.AspNetCore.Http.HttpContext Ctx)> DriveRouterAsync(
+        Microsoft.AspNetCore.Http.RequestDelegate router,
+        string method,
+        string path,
+        string? authHeader = null,
+        string? body = null)
+    {
+        var ctx = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+        ctx.Request.Method = method;
+        ctx.Request.Path = path;
+        if (authHeader is not null)
+        {
+            ctx.Request.Headers["Authorization"] = authHeader;
+        }
+        if (body is not null)
+        {
+            ctx.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
+        }
+        var responseStream = new MemoryStream();
+        ctx.Response.Body = responseStream;
+
+        await router(ctx);
+
+        responseStream.Position = 0;
+        using var reader = new StreamReader(responseStream, Encoding.UTF8);
+        var text = await reader.ReadToEndAsync();
+        return (ctx.Response.StatusCode, text, ctx);
+    }
+
+    [Fact]
+    public void AsRouter_ReturnsRequestDelegate()
+    {
+        var svc = MakeService();
+        Microsoft.AspNetCore.Http.RequestDelegate router = svc.AsRouter();
+        Assert.NotNull(router);
+    }
+
+    [Fact]
+    public async Task AsRouter_Health_Returns200_NoAuth()
+    {
+        var svc = MakeService();
+        var (status, body, _) = await DriveRouterAsync(svc.AsRouter(), "GET", "/health");
+
+        Assert.Equal(200, status);
+        Assert.Contains("healthy", body);
+    }
+
+    [Fact]
+    public async Task AsRouter_Root_WithoutAuth_Returns401()
+    {
+        var svc = MakeService();
+        var (status, _, ctx) = await DriveRouterAsync(svc.AsRouter(), "GET", "/");
+
+        Assert.Equal(401, status);
+        Assert.True(ctx.Response.Headers.ContainsKey("WWW-Authenticate"));
+    }
+
+    [Fact]
+    public async Task AsRouter_Root_WithAuth_ReturnsSwml()
+    {
+        var svc = MakeService();
+        var auth = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes("testuser:testpass"));
+        var (status, body, _) = await DriveRouterAsync(svc.AsRouter(), "GET", "/", authHeader: auth);
+
+        Assert.Equal(200, status);
+        Assert.Contains("version", body); // rendered SWML document
+    }
+
+    [Fact]
+    public async Task AsRouter_MatchesHandleRequest()
+    {
+        // The mounted handler must dispatch the identical logic as the standalone
+        // HandleRequest path — same status + body for the same request.
+        var svc = MakeService();
+        var (directStatus, _, directBody) = svc.HandleRequest(
+            "GET", "/health", new Dictionary<string, string>(), null);
+        var (routerStatus, routerBody, _) = await DriveRouterAsync(svc.AsRouter(), "GET", "/health");
+
+        Assert.Equal(directStatus, routerStatus);
+        Assert.Equal(directBody, routerBody);
+    }
+
+    // ------------------------------------------------------------------
     // HTTP: Auth
     // ------------------------------------------------------------------
 
@@ -294,27 +383,38 @@ public class SWMLServiceTests : IDisposable
     // HTTP: Security Headers
     // ------------------------------------------------------------------
 
+    // The framework-free HandleRequest CORE returns the bare (status, headers,
+    // body) triple Python's _handle_request_core returns — an EMPTY header map
+    // on 200 and just {"WWW-Authenticate": "Basic"} on 401. Security /
+    // Content-Type headers are the HTTP layer's concern (stamped by the
+    // DispatchAsync / RunHttp adapters when actually serving), NOT baked into
+    // the decision core. This keeps the decomposed dispatch byte-identical
+    // across ports. The served-path security headers are covered by
+    // WebServiceTests.
     [Fact]
-    public void SecurityHeaders_Present_OnAuthenticatedResponse()
+    public void HandleRequest_200_ReturnsBareHeaders()
     {
         var svc = MakeService();
         var (status, headers, _) = svc.HandleRequest("GET", "/", AuthHeader(), null);
 
         Assert.Equal(200, status);
-        Assert.Equal("nosniff", headers["X-Content-Type-Options"]);
-        Assert.Equal("DENY", headers["X-Frame-Options"]);
-        Assert.Equal("no-store", headers["Cache-Control"]);
+        Assert.Empty(headers);
     }
 
     [Fact]
-    public void SecurityHeaders_Present_On401()
+    public void HandleRequest_401_ReturnsBareWwwAuthenticateAndJsonBody()
     {
         var svc = MakeService();
-        var (_, headers, _) = svc.HandleRequest("GET", "/", new Dictionary<string, string>(), null);
+        var (status, headers, body) = svc.HandleRequest("GET", "/", new Dictionary<string, string>(), null);
 
-        Assert.Equal("nosniff", headers["X-Content-Type-Options"]);
-        Assert.Equal("DENY", headers["X-Frame-Options"]);
-        Assert.Equal("no-store", headers["Cache-Control"]);
+        Assert.Equal(401, status);
+        // ONLY WWW-Authenticate: Basic — no security / Content-Type headers.
+        Assert.Equal("Basic", headers["WWW-Authenticate"]);
+        Assert.Single(headers);
+        Assert.False(headers.ContainsKey("X-Content-Type-Options"));
+        // JSON error body (not plain text), matching every other port + Python.
+        Assert.Contains("\"error\"", body);
+        Assert.Contains("Unauthorized", body);
     }
 
     // ------------------------------------------------------------------
@@ -440,19 +540,33 @@ public class SWMLServiceTests : IDisposable
         Assert.Equal("user.name-test_1", Service.ExtractSipUsername(body));
     }
 
+    // extract_sip_username returns the extracted value VERBATIM — Python (and
+    // every other port) applies NO format/length validation to the username; it
+    // simply splits sip:/tel:/plain and returns the part. A SIP-username regex
+    // would wrongly reject e.g. a tel: number, so no validation is applied.
     [Fact]
-    public void ExtractSipUsername_InvalidChars_ReturnsNull()
+    public void ExtractSipUsername_UnusualChars_ReturnedVerbatim()
     {
         var body = new Dictionary<string, object> { ["to"] = "sip:user;drop@host.com" };
-        Assert.Null(Service.ExtractSipUsername(body));
+        Assert.Equal("user;drop", Service.ExtractSipUsername(body));
     }
 
     [Fact]
-    public void ExtractSipUsername_TooLong_ReturnsNull()
+    public void ExtractSipUsername_LongName_ReturnedVerbatim()
     {
         var longName = new string('a', 65);
         var body = new Dictionary<string, object> { ["to"] = $"sip:{longName}@host.com" };
-        Assert.Null(Service.ExtractSipUsername(body));
+        Assert.Equal(longName, Service.ExtractSipUsername(body));
+    }
+
+    [Fact]
+    public void ExtractSipUsername_TelUri_ReturnsNumber()
+    {
+        var body = new Dictionary<string, object>
+        {
+            ["call"] = new Dictionary<string, object> { ["to"] = "tel:+15551234567" },
+        };
+        Assert.Equal("+15551234567", Service.ExtractSipUsername(body));
     }
 
     [Fact]

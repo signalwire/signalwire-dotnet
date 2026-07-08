@@ -9,7 +9,7 @@ namespace SignalWire.Skills;
 /// (and the matching <c>RemoveSkill</c> / <c>HasSkill</c> overloads) accept this
 /// enum OR a string. The enum gives editor autocompletion and makes a typo fail
 /// at the call site — a bare string like <c>"datetiem"</c> only fails at runtime,
-/// on the server. Strings keep parity with the Python reference (which uses a
+/// on the server. Strings keep matching the Python API (which uses a
 /// bare <c>str</c>) and still allow custom / third-party skills that aren't
 /// built in.
 /// </para>
@@ -22,7 +22,7 @@ namespace SignalWire.Skills;
 /// <example>
 /// <code>
 /// agent.AddSkill(SkillName.Datetime);   // typed, autocompleted
-/// agent.AddSkill("datetime");           // string still works (parity)
+/// agent.AddSkill("datetime");           // string still works
 /// agent.AddSkill("my_custom_skill");    // open set: custom skills ok
 /// </code>
 /// </example>
@@ -58,9 +58,6 @@ public enum SkillName
 
     /// <summary>math</summary>
     Math,
-
-    /// <summary>mcp_gateway</summary>
-    McpGateway,
 
     /// <summary>native_vector_search</summary>
     NativeVectorSearch,
@@ -102,7 +99,6 @@ public static class SkillNameExtensions
         [SkillName.InfoGatherer] = "info_gatherer",
         [SkillName.Joke] = "joke",
         [SkillName.Math] = "math",
-        [SkillName.McpGateway] = "mcp_gateway",
         [SkillName.NativeVectorSearch] = "native_vector_search",
         [SkillName.PlayBackgroundFile] = "play_background_file",
         [SkillName.Spider] = "spider",

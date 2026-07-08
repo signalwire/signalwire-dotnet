@@ -6,7 +6,7 @@
  */
 using System.Text.Json;
 using SignalWire.REST;
-using SignalWire.REST.Namespaces;
+using SignalWire.REST.Namespaces.Generated;
 using SignalWire.Tests.Mock;
 using Xunit;
 
@@ -40,7 +40,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     private Calling NewCalling()
     {
         var http = _fixture.NewHttp();
-        return new Calling(http, _fixture.Project);
+        return new Calling(http);
     }
 
     /// <summary>Asserts journal entry shape — method/path/command — and
@@ -89,12 +89,16 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.DialAsync(new Dictionary<string, object?>
-        {
-            ["url"] = "https://example.com/swml",
-            ["to"] = "+15551234567",
-            ["codecs"] = new[] { "OPUS", "G729", "VP8", "PCMA" },
-        });
+        // codecs is a free-form wire value (array here); routed through extras to
+        // preserve the exact params.codecs wire shape the assertion checks.
+        var body = await calling.DialAsync(
+            from: "+15559990000",
+            to: "+15551234567",
+            url: "https://example.com/swml",
+            extras: new Dictionary<string, object?>
+            {
+                ["codecs"] = new[] { "OPUS", "G729", "VP8", "PCMA" },
+            });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "dial", null);
@@ -113,12 +117,16 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.DialAsync(new Dictionary<string, object?>
-        {
-            ["url"] = "https://example.com/swml",
-            ["to"] = "+15551234567",
-            ["codecs"] = "OPUS,G729,VP8,PCMA",
-        });
+        // codecs as a comma-joined string; routed through extras to preserve the
+        // exact params.codecs string wire shape the assertion checks.
+        var body = await calling.DialAsync(
+            from: "+15559990000",
+            to: "+15551234567",
+            url: "https://example.com/swml",
+            extras: new Dictionary<string, object?>
+            {
+                ["codecs"] = "OPUS,G729,VP8,PCMA",
+            });
         Assert.NotNull(body);
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "dial", null);
         Assert.Equal("OPUS,G729,VP8,PCMA", StringParam(p, "codecs"));
@@ -129,11 +137,12 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.UpdateAsync(new Dictionary<string, object?>
-        {
-            ["id"] = "call-1",
-            ["state"] = "hold",
-        });
+        var body = await calling.UpdateAsync(
+            id: "call-1",
+            extras: new Dictionary<string, object?>
+            {
+                ["state"] = "hold",
+            });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "update", null);
@@ -154,8 +163,10 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.transfer", "call-123");
-        Assert.Equal("+15551234567", StringParam(p, "destination"));
-        Assert.Equal("+15559876543", StringParam(p, "from_number"));
+        // Typed API nests the transfer target under the required `dest` param.
+        Assert.True(p.TryGetProperty("dest", out var dest));
+        Assert.Equal("+15551234567", StringParam(dest, "destination"));
+        Assert.Equal("+15559876543", StringParam(dest, "from_number"));
     }
 
     [Fact]
@@ -180,10 +191,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.PlayPauseAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "ctrl-1",
-        });
+        var body = await calling.PlayPauseAsync("call-1", controlId: "ctrl-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.play.pause", "call-1");
@@ -195,10 +203,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.PlayResumeAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "ctrl-1",
-        });
+        var body = await calling.PlayResumeAsync("call-1", controlId: "ctrl-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.play.resume", "call-1");
@@ -210,10 +215,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.PlayStopAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "ctrl-1",
-        });
+        var body = await calling.PlayStopAsync("call-1", controlId: "ctrl-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.play.stop", "call-1");
@@ -225,11 +227,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.PlayVolumeAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "ctrl-1",
-            ["volume"] = 2.5,
-        });
+        var body = await calling.PlayVolumeAsync("call-1", controlId: "ctrl-1", volume: 2.5);
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.play.volume", "call-1");
@@ -243,7 +241,9 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.RecordAsync("call-1", new Dictionary<string, object?>
+        // `record` is not a typed param on the generated method; forward it via extras
+        // to preserve the exact params.record wire shape the assertion checks.
+        var body = await calling.RecordAsync("call-1", extras: new Dictionary<string, object?>
         {
             ["record"] = new Dictionary<string, object?> { ["format"] = "mp3" },
         });
@@ -260,10 +260,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.RecordPauseAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "rec-1",
-        });
+        var body = await calling.RecordPauseAsync("call-1", controlId: "rec-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.record.pause", "call-1");
@@ -275,10 +272,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.RecordResumeAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "rec-1",
-        });
+        var body = await calling.RecordResumeAsync("call-1", controlId: "rec-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.record.resume", "call-1");
@@ -292,11 +286,9 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.CollectAsync("call-1", new Dictionary<string, object?>
-        {
-            ["initial_timeout"] = 5,
-            ["digits"] = new Dictionary<string, object?> { ["max"] = 4 },
-        });
+        var body = await calling.CollectAsync("call-1",
+            initialTimeout: 5,
+            digits: new Dictionary<string, object?> { ["max"] = 4 });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.collect", "call-1");
@@ -308,10 +300,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.CollectStopAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "col-1",
-        });
+        var body = await calling.CollectStopAsync("call-1", controlId: "col-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.collect.stop", "call-1");
@@ -323,10 +312,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.CollectStartInputTimersAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "col-1",
-        });
+        var body = await calling.CollectStartInputTimersAsync("call-1", controlId: "col-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.collect.start_input_timers", "call-1");
@@ -340,13 +326,10 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.DetectAsync("call-1", new Dictionary<string, object?>
+        var body = await calling.DetectAsync("call-1", detect: new Dictionary<string, object?>
         {
-            ["detect"] = new Dictionary<string, object?>
-            {
-                ["type"] = "machine",
-                ["params"] = new Dictionary<string, object?>(),
-            },
+            ["type"] = "machine",
+            ["params"] = new Dictionary<string, object?>(),
         });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
@@ -360,10 +343,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.DetectStopAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "det-1",
-        });
+        var body = await calling.DetectStopAsync("call-1", controlId: "det-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.detect.stop", "call-1");
@@ -375,11 +355,9 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.TapAsync("call-1", new Dictionary<string, object?>
-        {
-            ["tap"] = new Dictionary<string, object?> { ["type"] = "audio" },
-            ["device"] = new Dictionary<string, object?> { ["type"] = "rtp" },
-        });
+        var body = await calling.TapAsync("call-1",
+            tap: new Dictionary<string, object?> { ["type"] = "audio" },
+            device: new Dictionary<string, object?> { ["type"] = "rtp" });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.tap", "call-1");
@@ -392,10 +370,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.TapStopAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "tap-1",
-        });
+        var body = await calling.TapStopAsync("call-1", controlId: "tap-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.tap.stop", "call-1");
@@ -407,10 +382,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.StreamAsync("call-1", new Dictionary<string, object?>
-        {
-            ["url"] = "wss://example.com/audio",
-        });
+        var body = await calling.StreamAsync("call-1", url: "wss://example.com/audio");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.stream", "call-1");
@@ -422,10 +394,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.StreamStopAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "stream-1",
-        });
+        var body = await calling.StreamStopAsync("call-1", controlId: "stream-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.stream.stop", "call-1");
@@ -463,7 +432,9 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.TranscribeAsync("call-1", new Dictionary<string, object?>
+        // `language`/`transcribe` are not typed params; forward via extras to
+        // preserve the exact params wire shape the assertion checks.
+        var body = await calling.TranscribeAsync("call-1", extras: new Dictionary<string, object?>
         {
             ["language"] = "en-US",
             ["transcribe"] = new Dictionary<string, object?> { ["engine"] = "google" },
@@ -479,10 +450,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.TranscribeStopAsync("call-1", new Dictionary<string, object?>
-        {
-            ["control_id"] = "tr-1",
-        });
+        var body = await calling.TranscribeStopAsync("call-1", controlId: "tr-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.transcribe.stop", "call-1");
@@ -518,7 +486,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.AiStopAsync("call-1");
+        var body = await calling.AiStopAsync("call-1", controlId: "ai-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         CommandAssert(_fixture.Harness.Journal.Last(), "calling.ai.stop", "call-1");
@@ -531,10 +499,14 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.LiveTranscribeAsync("call-1", new Dictionary<string, object?>
-        {
-            ["language"] = "en-US",
-        });
+        // Typed method requires `action`; `language` is forwarded via extras to
+        // preserve the exact params.language wire key the assertion checks.
+        var body = await calling.LiveTranscribeAsync("call-1",
+            action: new Dictionary<string, object?>(),
+            extras: new Dictionary<string, object?>
+            {
+                ["language"] = "en-US",
+            });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.live_transcribe", "call-1");
@@ -546,11 +518,15 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.LiveTranslateAsync("call-1", new Dictionary<string, object?>
-        {
-            ["source_language"] = "en",
-            ["target_language"] = "es",
-        });
+        // Typed method requires `action`; source/target languages forwarded via
+        // extras to preserve the exact params wire keys the assertions check.
+        var body = await calling.LiveTranslateAsync("call-1",
+            action: new Dictionary<string, object?>(),
+            extras: new Dictionary<string, object?>
+            {
+                ["source_language"] = "en",
+                ["target_language"] = "es",
+            });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.live_translate", "call-1");
@@ -565,7 +541,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.SendFaxStopAsync("call-1");
+        var body = await calling.SendFaxStopAsync("call-1", controlId: "fax-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         CommandAssert(_fixture.Harness.Journal.Last(), "calling.send_fax.stop", "call-1");
@@ -576,7 +552,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.ReceiveFaxStopAsync("call-1");
+        var body = await calling.ReceiveFaxStopAsync("call-1", controlId: "fax-1");
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         CommandAssert(_fixture.Harness.Journal.Last(), "calling.receive_fax.stop", "call-1");
@@ -589,10 +565,14 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.ReferAsync("call-1", new Dictionary<string, object?>
-        {
-            ["to"] = "sip:other@example.com",
-        });
+        // Typed method requires `device`; `to` forwarded via extras to preserve the
+        // exact params.to wire key the assertion checks.
+        var body = await calling.ReferAsync("call-1",
+            device: new Dictionary<string, object?>(),
+            extras: new Dictionary<string, object?>
+            {
+                ["to"] = "sip:other@example.com",
+            });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.refer", "call-1");
@@ -604,11 +584,15 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var calling = NewCalling();
-        var body = await calling.UserEventAsync("call-1", new Dictionary<string, object?>
-        {
-            ["event_name"] = "my-event",
-            ["payload"] = new Dictionary<string, object?> { ["foo"] = "bar" },
-        });
+        // Typed method requires `event`; event_name/payload forwarded via extras to
+        // preserve the exact params wire keys the assertions check.
+        var body = await calling.UserEventAsync("call-1",
+            @event: new Dictionary<string, object?>(),
+            extras: new Dictionary<string, object?>
+            {
+                ["event_name"] = "my-event",
+                ["payload"] = new Dictionary<string, object?> { ["foo"] = "bar" },
+            });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
         var p = CommandAssert(_fixture.Harness.Journal.Last(), "calling.user_event", "call-1");

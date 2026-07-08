@@ -153,6 +153,110 @@ public static class Adapter
     }
 
     // ------------------------------------------------------------------
+    // Google Cloud Function handler
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Handle a Google Cloud Function invocation.
+    ///
+    /// Extracts method, path, headers, and body from the GCF request
+    /// dictionary (a normalized Flask-request shape), calls
+    /// agent.HandleRequest(), and returns a response dictionary
+    /// (status, headers, body). Equivalent to Python's
+    /// ``_handle_google_cloud_function_request``.
+    /// </summary>
+    public static Dictionary<string, object?> HandleGoogleCloudFunction(
+        SWML.Service agent,
+        Dictionary<string, object?> request)
+    {
+        ArgumentNullException.ThrowIfNull(agent);
+        ArgumentNullException.ThrowIfNull(request);
+        var method = (GetStr(request, "method") ?? "GET").ToUpperInvariant();
+
+        // Prefer an explicit path; else derive it from the request url.
+        var path = GetStr(request, "path");
+        if (path is null)
+        {
+            var url = GetStr(request, "url");
+            path = url is not null && Uri.TryCreate(url, UriKind.Absolute, out var uri)
+                ? uri.AbsolutePath
+                : url ?? "/";
+        }
+
+        if (string.IsNullOrEmpty(path)) { path = "/"; }
+        else if (!path.StartsWith('/')) { path = "/" + path; }
+
+        var body = GetStr(request, "body");
+        var headers = ExtractHeaders(request);
+
+        var (status, responseHeaders, responseBody) = agent.HandleRequest(method, path, headers, body);
+
+        return new Dictionary<string, object?>
+        {
+            ["status"] = status,
+            ["headers"] = responseHeaders,
+            ["body"] = responseBody,
+        };
+    }
+
+    // ------------------------------------------------------------------
+    // CGI handler
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Handle a CGI invocation. Reads the request method / path / body from
+    /// the CGI environment variables (REQUEST_METHOD, PATH_INFO, QUERY_STRING,
+    /// CONTENT_LENGTH) and stdin, calls agent.HandleRequest(), and returns a
+    /// response dictionary (status, headers, body). Equivalent to Python's
+    /// the ``mode == "cgi"`` branch of ``handle_serverless_request``.
+    /// </summary>
+    /// <param name="agent">Agent/Service to dispatch to.</param>
+    public static Dictionary<string, object?> HandleCgi(SWML.Service agent) =>
+        HandleCgi(agent, stdin: null);
+
+    /// <summary>CGI handler with an injectable request-body reader (defaults to
+    /// Console.In). Internal so the public surface stays reader-free; tests
+    /// supply a StringReader.</summary>
+    internal static Dictionary<string, object?> HandleCgi(
+        SWML.Service agent,
+        TextReader? stdin)
+    {
+        ArgumentNullException.ThrowIfNull(agent);
+        var method = (Environment.GetEnvironmentVariable("REQUEST_METHOD") ?? "GET").ToUpperInvariant();
+
+        var pathInfo = Environment.GetEnvironmentVariable("PATH_INFO") ?? "";
+        var path = pathInfo.StartsWith('/') ? pathInfo : "/" + pathInfo;
+
+        var headers = new Dictionary<string, string>();
+        var contentType = Environment.GetEnvironmentVariable("CONTENT_TYPE");
+        if (!string.IsNullOrEmpty(contentType)) { headers["Content-Type"] = contentType; }
+        var httpAuth = Environment.GetEnvironmentVariable("HTTP_AUTHORIZATION");
+        if (!string.IsNullOrEmpty(httpAuth)) { headers["Authorization"] = httpAuth; }
+
+        string? body = null;
+        var contentLength = Environment.GetEnvironmentVariable("CONTENT_LENGTH");
+        if (!string.IsNullOrEmpty(contentLength)
+            && int.TryParse(contentLength, System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture, out var len)
+            && len > 0)
+        {
+            var reader = stdin ?? Console.In;
+            var buffer = new char[len];
+            var read = reader.ReadBlock(buffer, 0, len);
+            body = new string(buffer, 0, read);
+        }
+
+        var (status, responseHeaders, responseBody) = agent.HandleRequest(method, path, headers, body);
+
+        return new Dictionary<string, object?>
+        {
+            ["status"] = status,
+            ["headers"] = responseHeaders,
+            ["body"] = responseBody,
+        };
+    }
+
+    // ------------------------------------------------------------------
     // Serve (auto-detect and run)
     // ------------------------------------------------------------------
 
@@ -185,6 +289,23 @@ public static class Adapter
                     var request = string.IsNullOrEmpty(input) ? new Dictionary<string, object?>()
                         : JsonSerializer.Deserialize<Dictionary<string, object?>>(input) ?? new();
                     var response = HandleAzure(agent, request);
+                    Console.Write(JsonSerializer.Serialize(response));
+                    break;
+                }
+
+            case "gcf":
+                {
+                    var input = Console.In.ReadToEnd();
+                    var request = string.IsNullOrEmpty(input) ? new Dictionary<string, object?>()
+                        : JsonSerializer.Deserialize<Dictionary<string, object?>>(input) ?? new();
+                    var response = HandleGoogleCloudFunction(agent, request);
+                    Console.Write(JsonSerializer.Serialize(response));
+                    break;
+                }
+
+            case "cgi":
+                {
+                    var response = HandleCgi(agent);
                     Console.Write(JsonSerializer.Serialize(response));
                     break;
                 }

@@ -40,10 +40,6 @@ public class Service
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    private static readonly Regex SipUsernamePattern = new(
-        @"^[a-zA-Z0-9._-]+$",
-        RegexOptions.Compiled);
-
     private const int MaxBodySize = 1_048_576; // 1 MB
 
     private static readonly Regex SwaigFunctionNamePattern = new(
@@ -53,7 +49,7 @@ public class Service
     private readonly Logger _logger;
     private readonly string _basicAuthUser;
     private readonly string _basicAuthPassword;
-    private readonly Dictionary<string, Func<Dictionary<string, object?>?, Dictionary<string, string>, object>> _routingCallbacks = new();
+    private readonly Dictionary<string, Func<Dictionary<string, object?>?, Dictionary<string, string>, object?>> _routingCallbacks = new();
 
     // SWAIG tool registry — lifted from AgentBase so any Service (sidecar,
     // non-agent verb host) can register and dispatch SWAIG functions.
@@ -68,6 +64,7 @@ public class Service
     public string Route { get; }
     public string Host { get; }
     public int Port { get; }
+    [SuppressMessage("Naming", "CA1721", Justification = "get_document matches the cross-port SWMLService surface (distinct from the Document property).")]
     public Document Document { get; }
 
     public Service(ServiceOptions options)
@@ -185,7 +182,7 @@ public class Service
     }
 
     /// <summary>Get the Basic Auth credentials plus the SOURCE of the
-    /// credentials (Python parity:
+    /// credentials (equivalent to Python's
     /// ``get_basic_auth_credentials(include_source=True)``).
     /// Source is one of "provided", "environment", or "generated".</summary>
     public (string User, string Password, string Source) GetBasicAuthCredentialsWithSource()
@@ -211,7 +208,7 @@ public class Service
 
     /// <summary>Validate provided basic-auth credentials against the
     /// configured ones (constant-time comparison)
-    /// (Python parity: ``validate_basic_auth(username, password)``).</summary>
+    /// (equivalent to Python's ``validate_basic_auth(username, password)``).</summary>
     public virtual bool ValidateBasicAuth(string username, string password)
     {
         if (_basicAuthUser is null || _basicAuthPassword is null) return false;
@@ -237,12 +234,147 @@ public class Service
     // Routing callbacks
     // ------------------------------------------------------------------
 
-    /// <summary>Register a callback for a sub-path under the service route.</summary>
+    /// <summary>Register a callback for a sub-path under the service route.
+    /// The path is normalized the same way as the Python reference
+    /// (swml_service.register_routing_callback): trailing slashes are stripped
+    /// and a leading slash is added, so lookup is consistent regardless of the
+    /// caller's spelling (<c>"/sip/"</c> and <c>"sip"</c> both key <c>"/sip"</c>).</summary>
     public void RegisterRoutingCallback(
         string path,
-        Func<Dictionary<string, object?>?, Dictionary<string, string>, object> callback)
+        Func<Dictionary<string, object?>?, Dictionary<string, string>, object?> callback)
     {
-        _routingCallbacks[path] = callback;
+        ArgumentNullException.ThrowIfNull(path);
+        var normalized = path.TrimEnd('/');
+        if (!normalized.StartsWith('/'))
+        {
+            normalized = "/" + normalized;
+        }
+        _routingCallbacks[normalized] = callback;
+    }
+
+    /// <summary>The normalized paths currently registered with a routing
+    /// callback, sorted. Mirrors the Python reference's
+    /// <c>sorted(self._routing_callbacks)</c> observable state. Internal
+    /// (Python's state is underscore-private) — read only by the Layer-D dump,
+    /// so it adds no public-surface drift.</summary>
+    internal IReadOnlyList<string> GetRoutingCallbackPaths()
+    {
+        var paths = new List<string>(_routingCallbacks.Keys);
+        paths.Sort(StringComparer.Ordinal);
+        return paths;
+    }
+
+    // ------------------------------------------------------------------
+    // Document manipulation (SWMLService parity)
+    // ------------------------------------------------------------------
+
+    private readonly VerbHandlerRegistry _verbHandlers = new();
+
+    /// <summary>Add a new section to the current document.</summary>
+    public bool AddSection(string sectionName)
+    {
+        Document.AddSection(sectionName);
+        return true;
+    }
+
+    /// <summary>Add a verb to the main section of the current document.</summary>
+    public bool AddVerb(string verbName, object config)
+    {
+        Document.AddVerb(verbName, config);
+        return true;
+    }
+
+    /// <summary>Add a verb to a named section of the current document.</summary>
+    public bool AddVerbToSection(string sectionName, string verbName, object config)
+    {
+        Document.AddVerbToSection(sectionName, verbName, config);
+        return true;
+    }
+
+    /// <summary>Reset the current document to an empty state.</summary>
+    public void ResetDocument() => Document.Reset();
+
+    /// <summary>Get the current SWML document as a dictionary.</summary>
+    public Dictionary<string, object> GetDocument() => Document.ToDict();
+
+    /// <summary>Render the current SWML document as a JSON string.</summary>
+    public string RenderDocument() => Document.Render();
+
+    /// <summary>Register a custom verb handler.</summary>
+    public void RegisterVerbHandler(SWMLVerbHandler handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        _verbHandlers.RegisterHandler(handler);
+    }
+
+    /// <summary>True when full JSON-Schema validation is available/enabled
+    /// (the embedded SWML schema loaded and has verb definitions).</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SWMLService surface; binding it to the instance is intentional.")]
+    public bool FullValidationEnabled() => Schema.Instance.FullValidationAvailable();
+
+    // ------------------------------------------------------------------
+    // Web-serving lifecycle (WebMixin / SWMLService parity)
+    // ------------------------------------------------------------------
+
+    private volatile bool _shutdownRequested;
+    private HttpListener? _runningListener;
+
+    /// <summary>Enable debug routes for testing/development. Debug routes are
+    /// always registered by the request handler, so this method exists only for
+    /// backward compatibility and method chaining (equivalent to Python's
+    /// <c>enable_debug_routes</c> is likewise a no-op that returns self).</summary>
+    public virtual Service EnableDebugRoutes()
+    {
+        return this;
+    }
+
+    /// <summary>
+    /// Set up graceful-shutdown handling (SIGINT) — useful under Kubernetes so
+    /// in-flight requests drain before the process exits.
+    /// </summary>
+    public void SetupGracefulShutdown()
+    {
+        Console.CancelKeyPress += (_, args) =>
+        {
+            args.Cancel = true;
+            _shutdownRequested = true;
+        };
+    }
+
+    /// <summary>Manually set the proxy URL base for webhook callbacks.
+    /// Subclasses (AgentBase) may override with a
+    /// richer implementation; the base stores the override for
+    /// <see cref="GetProxyUrlBase"/> to prefer.</summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API / used as a config value.")]
+    public virtual Service ManualSetProxyUrl(string proxyUrl)
+    {
+        ArgumentNullException.ThrowIfNull(proxyUrl);
+        _manualProxyUrlBase = proxyUrl.TrimEnd('/');
+        return this;
+    }
+
+    private string? _manualProxyUrlBase;
+
+    /// <summary>The base-level manually-set proxy URL, if any.</summary>
+    [SuppressMessage("Usage", "CA1056", Justification = "URL is a wire string sent verbatim to the SignalWire API / used as a config value.")]
+    protected string? ManualProxyUrlBase => _manualProxyUrlBase;
+
+    /// <summary>Start a web server for this service (alias of <see cref="Run()"/>).</summary>
+    public void Serve() => Run();
+
+    /// <summary>Stop the running web server. Signals the accept loop to exit and
+    /// stops the active listener so the blocking <see cref="Run()"/> call returns.</summary>
+    public void Stop()
+    {
+        _shutdownRequested = true;
+        try
+        {
+            _runningListener?.Stop();
+        }
+        catch (ObjectDisposedException)
+        {
+            // already disposed — nothing to stop
+        }
     }
 
     // ------------------------------------------------------------------
@@ -262,7 +394,7 @@ public class Service
     /// typically override <see cref="OnSwmlRequest"/> instead of this
     /// method. Return null to use the default SWML rendering, or a
     /// dictionary of modifications to merge in.
-    /// (Python parity: ``WebMixin.on_request``.)</summary>
+    /// (equivalent to Python's ``WebMixin.on_request``.)</summary>
     public virtual Dictionary<string, object>? OnRequest(
         Dictionary<string, object?>? requestData = null,
         string? callbackPath = null)
@@ -272,7 +404,7 @@ public class Service
 
     /// <summary>Customization hook for subclasses to modify SWML based
     /// on request data. Return null to use default rendering, or a
-    /// dictionary of modifications. (Python parity:
+    /// dictionary of modifications. (equivalent to Python's
     /// ``WebMixin.on_swml_request``.)</summary>
     public virtual Dictionary<string, object>? OnSwmlRequest(
         Dictionary<string, object?>? requestData = null,
@@ -328,13 +460,19 @@ public class Service
             return JsonResponse(404, new { error = "Not found" });
         }
 
-        // Auth required for everything under the route
+        // Auth required for everything under the route. The framework-free
+        // dispatch core returns the BARE triple Python's
+        // _handle_request_core does: (401, {"WWW-Authenticate": "Basic"},
+        // json.dumps({"error": "Unauthorized"})). Content-Type / security
+        // headers are the HTTP layer's concern and are added by the adapters
+        // (DispatchAsync / RunHttp), not baked into the decision core.
         if (!CheckBasicAuth(headers))
         {
-            var authHeaders = SecurityHeaders();
-            authHeaders["Content-Type"] = "text/plain";
-            authHeaders["WWW-Authenticate"] = "Basic realm=\"SignalWire SWML Service\"";
-            return (401, authHeaders, "Unauthorized");
+            var authHeaders = new Dictionary<string, string>
+            {
+                ["WWW-Authenticate"] = "Basic",
+            };
+            return (401, authHeaders, "{\"error\":\"Unauthorized\"}");
         }
 
         // Parse body
@@ -369,24 +507,51 @@ public class Service
             return HandlePostPrompt(requestData, headers);
         }
 
-        // Check routing callbacks
+        // Check routing callbacks. A callback returns (body, headers) -> route|null:
+        //   - a route STRING => 307 redirect + Location (preserves POST method+body),
+        //     mirroring Python swml_service.py:1074-1078 (the served-path routing +
+        //     SIP dispatch contract).
+        //   - null => fall through to the normal SWML document for this route.
+        //   - a dict => emitted as a 200 JSON body (custom event-sink endpoints).
         if (_routingCallbacks.TryGetValue(subPath, out var callback))
         {
             var result = callback(requestData, headers);
-            return JsonResponse(200, result);
+            switch (result)
+            {
+                case string route when route.Length > 0:
+                    {
+                        // Bare (307, {"Location": route}, "") — matching Python's
+                        // _handle_request_core. Security/Content-Type headers are
+                        // added by the HTTP-layer adapter, not the decision core.
+                        var redirectHeaders = new Dictionary<string, string>
+                        {
+                            ["Location"] = route,
+                        };
+                        return (307, redirectHeaders, "");
+                    }
+                case null:
+                    return HandleSwmlRequest(method, requestData, headers);
+                default:
+                    return JsonResponse(200, result);
+            }
         }
 
         return JsonResponse(404, new { error = "Not found" });
     }
 
-    /// <summary>Handle SWML document request.</summary>
+    /// <summary>Handle SWML document request. Returns the BARE
+    /// <c>(200, {}, body)</c> triple Python's <c>_handle_request_core</c>
+    /// returns — an EMPTY header map. Content-Type is set by the HTTP-layer
+    /// adapters (DispatchAsync / RunHttp), not by the decision core, so the
+    /// decomposed dispatch stays byte-identical across ports.</summary>
     protected virtual (int, Dictionary<string, string>, string) HandleSwmlRequest(
         string method,
         Dictionary<string, object?>? requestData,
         Dictionary<string, string> headers)
     {
         var swml = RenderSwml();
-        return JsonResponse(200, swml);
+        var body = JsonSerializer.Serialize(swml, JsonOptions);
+        return (200, new Dictionary<string, string>(), body);
     }
 
     // ------------------------------------------------------------------
@@ -406,18 +571,34 @@ public class Service
         bool secure = false)
     {
         ArgumentNullException.ThrowIfNull(parameters);
-        var (properties, required) = NormalizeParameters(parameters);
-        var argument = new Dictionary<string, object>
+
+        // A COMPLETE JSON-Schema (already carrying `type` + `properties`) is
+        // passed through verbatim — NOT re-wrapped — mirroring the Python
+        // reference `SWAIGFunction._ensure_parameter_structure`
+        // (swaig_function.py:124). Re-wrapping a complete schema would nest it as
+        // {type:object, properties:{type:…, properties:…, required:…}} (the
+        // double-wrap bug). Only a bare property map is wrapped in an object
+        // schema and has its per-property `required` flags lifted.
+        Dictionary<string, object> argument;
+        if (parameters.ContainsKey("type") && parameters.ContainsKey("properties"))
         {
-            ["type"] = "object",
-            ["properties"] = properties,
-        };
-        // Emit the top-level JSON-Schema `required` array (the form the model +
-        // validator expect) only when non-empty — matching the Python reference,
-        // which omits the key for an empty required list (swaig_function.py:128).
-        if (required.Count > 0)
+            argument = parameters;
+        }
+        else
         {
-            argument["required"] = required;
+            var (properties, required) = NormalizeParameters(parameters);
+            argument = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["properties"] = properties,
+            };
+            // Emit the top-level JSON-Schema `required` array (the form the model +
+            // validator expect) only when non-empty — matching the Python reference,
+            // which omits the key for an empty required list (swaig_function.py:128).
+            if (required.Count > 0)
+            {
+                argument["required"] = required;
+            }
         }
 
         _tools[name] = new Dictionary<string, object>
@@ -489,22 +670,22 @@ public class Service
     }
 
     /// <summary>Check if a SWAIG function is registered
-    /// (Python parity: ``tool_registry.has_function(name)``).</summary>
+    /// (equivalent to Python's ``tool_registry.has_function(name)``).</summary>
     public virtual bool HasFunction(string name) => _tools.ContainsKey(name);
 
     /// <summary>Get a registered SWAIG function by name, or null
-    /// (Python parity: ``tool_registry.get_function(name)``).</summary>
+    /// (equivalent to Python's ``tool_registry.get_function(name)``).</summary>
     public virtual Dictionary<string, object>? GetFunction(string name) =>
         _tools.TryGetValue(name, out var fn) ? fn : null;
 
     /// <summary>Get a snapshot of all registered SWAIG functions
-    /// (Python parity: ``tool_registry.get_all_functions()`` — returns
+    /// (equivalent to Python's ``tool_registry.get_all_functions()`` — returns
     /// a copy so subsequent registrations don't mutate the snapshot).</summary>
     public virtual Dictionary<string, Dictionary<string, object>> GetAllFunctions() =>
         new Dictionary<string, Dictionary<string, object>>(_tools);
 
     /// <summary>Remove a registered SWAIG function. Returns true if
-    /// removed, false if not found (Python parity:
+    /// removed, false if not found (equivalent to Python's
     /// ``tool_registry.remove_function(name)``).</summary>
     public virtual bool RemoveFunction(string name)
     {
@@ -758,26 +939,24 @@ public class Service
             return null;
         }
 
-        // Extract username from sip:username@host
-        string username;
+        // Mirror Python's extract_sip_username (swml_service.py) branches exactly.
+        // The extractor returns the extracted value VERBATIM — no format
+        // validation (a `tel:` number contains ':'/'+' which a SIP-username regex
+        // would wrongly reject; every other port returns the raw value):
+        //   sip:username@host -> the username part (between "sip:" and "@")
+        //   tel:+1234567890   -> the phone number part (after "tel:")
+        //   otherwise         -> the whole 'to' field.
         if (sipUri.StartsWith("sip:", StringComparison.OrdinalIgnoreCase))
         {
             var afterPrefix = sipUri[4..];
             var atIdx = afterPrefix.IndexOf('@', StringComparison.Ordinal);
-            username = atIdx >= 0 ? afterPrefix[..atIdx] : afterPrefix;
+            return atIdx >= 0 ? afterPrefix[..atIdx] : afterPrefix;
         }
-        else
+        if (sipUri.StartsWith("tel:", StringComparison.OrdinalIgnoreCase))
         {
-            username = sipUri;
+            return sipUri[4..];
         }
-
-        // Validate format
-        if (username.Length > 64 || !SipUsernamePattern.IsMatch(username))
-        {
-            return null;
-        }
-
-        return username;
+        return sipUri;
     }
 
     // ------------------------------------------------------------------
@@ -880,6 +1059,32 @@ public class Service
         };
     }
 
+    /// <summary>
+    /// Stamp the HTTP-layer headers (security headers + a default
+    /// <c>Content-Type</c>) onto a bare decision-core triple's header map. The
+    /// framework-free <see cref="HandleRequest"/> core returns bare headers
+    /// (equivalent to Python's <c>_handle_request_core</c> returns <c>(status, {}, body)</c>);
+    /// the security + Content-Type headers belong to the wire response and are
+    /// applied only when actually serving over HTTP. Headers the core already
+    /// set (e.g. <c>WWW-Authenticate</c>, <c>Location</c>) are preserved; a
+    /// Content-Type is only defaulted when the core didn't specify one and the
+    /// response carries a body.
+    /// </summary>
+    private static Dictionary<string, string> HttpLayerHeaders(
+        int status, Dictionary<string, string> coreHeaders, string body)
+    {
+        var result = SecurityHeaders();
+        foreach (var (k, v) in coreHeaders)
+        {
+            result[k] = v;
+        }
+        if (!result.ContainsKey("Content-Type") && body.Length > 0)
+        {
+            result["Content-Type"] = "application/json";
+        }
+        return result;
+    }
+
     /// <summary>Build a JSON response tuple.</summary>
     private static (int, Dictionary<string, string>, string) JsonResponse(int status, object data)
     {
@@ -926,12 +1131,84 @@ public class Service
     }
 
     /// <summary>
+    /// Return a mountable request handler that embeds this service's routes in a
+    /// host ASP.NET Core application. The returned <see cref="RequestDelegate"/>
+    /// (a <c>Func&lt;HttpContext, Task&gt;</c>) adapts an incoming
+    /// <see cref="HttpContext"/> to this service's framework-agnostic
+    /// <see cref="HandleRequest"/> dispatch, then writes the resulting status,
+    /// headers, and body back onto the response. The caller mounts it onto their
+    /// own app, e.g. <c>app.Map(service.Route, service.AsRouter())</c> or
+    /// <c>app.Run(service.AsRouter())</c>.
+    ///
+    /// This is the .NET analog of Python's <c>WebMixin.as_router</c> /
+    /// <c>SWMLService.as_router</c>, which return a FastAPI-router object the
+    /// caller mounts on a host FastAPI app. The capability — "embed the agent's
+    /// routes in a host app" — is identical; the return unit is expressed in the
+    /// hosting framework's idiom (ASP.NET Core's <see cref="RequestDelegate"/>
+    /// instead of a FastAPI router). The same <see cref="HandleRequest"/> logic
+    /// used by the standalone <see cref="Run()"/> server backs the mounted path,
+    /// so SWML/SWAIG behavior is identical whether hosted or standalone.
+    /// </summary>
+    public RequestDelegate AsRouter() => DispatchAsync;
+
+    /// <summary>
+    /// The <see cref="RequestDelegate"/> body handed out by <see cref="AsRouter"/>:
+    /// adapt an ASP.NET Core <see cref="HttpContext"/> to <see cref="HandleRequest"/>
+    /// and write the response back. Reused by the Kestrel HTTPS server path so the
+    /// mounted and standalone-TLS dispatch share one adapter.
+    /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Per-request handler boundary: a single failed request must not tear down the host pipeline; the failure is surfaced as a 500 response.")]
+    private async Task DispatchAsync(HttpContext http)
+    {
+        ArgumentNullException.ThrowIfNull(http);
+
+        var method = http.Request.Method;
+        var path = http.Request.Path.HasValue ? http.Request.Path.Value! : "/";
+        var headers = new Dictionary<string, string>();
+        foreach (var h in http.Request.Headers)
+        {
+            headers[h.Key] = h.Value.ToString();
+        }
+        string body;
+        using (var reader = new System.IO.StreamReader(http.Request.Body, Encoding.UTF8))
+        {
+            body = await reader.ReadToEndAsync().ConfigureAwait(false);
+        }
+
+        int status;
+        Dictionary<string, string> responseHeaders;
+        string responseBody;
+        try
+        {
+            (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
+        }
+        catch (Exception ex)
+        {
+            status = 500;
+            responseHeaders = new Dictionary<string, string>();
+            responseBody = $"{{\"error\":\"{ex.GetType().Name}\"}}";
+        }
+
+        http.Response.StatusCode = status;
+        // The decision core returns a BARE header map (Python parity). The HTTP
+        // layer is what stamps security + Content-Type headers onto the wire
+        // response, so re-apply them here (mirrors Python's FastAPI adapter,
+        // which re-adds them after _handle_request_core).
+        foreach (var (k, v) in HttpLayerHeaders(status, responseHeaders, responseBody))
+        {
+            // Content-Length is managed by Kestrel from the body we write.
+            if (string.Equals(k, "Content-Length", StringComparison.OrdinalIgnoreCase)) continue;
+            try { http.Response.Headers[k] = v; } catch { /* reserved header */ }
+        }
+        await http.Response.WriteAsync(responseBody, Encoding.UTF8).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Start a blocking HTTP(S) server bound to <see cref="Host"/>:<see cref="Port"/>.
     /// Each incoming request is dispatched through <see cref="HandleRequest"/>;
     /// the response status / headers / body are written back to the client.
     ///
-    /// Mirrors Python's SWMLService.run() — examples and the porting-sdk
-    /// audit harness call this directly.
+    /// Mirrors Python's SWMLService.run(); call it directly to serve requests.
     ///
     /// Transport selection mirrors Python's <c>SecurityConfig</c> /
     /// uvicorn <c>ssl_certfile</c>/<c>ssl_keyfile</c> path:
@@ -997,61 +1274,74 @@ public class Service
             }
         }
 
+        // Publish the listener so Stop() can unblock the GetContext() loop, and
+        // clear any stale shutdown request from a prior run.
+        _shutdownRequested = false;
+        _runningListener = listener;
+
         // Stop the blocking GetContext() loop when the caller cancels.
         using var stopReg = cancellationToken.Register(() =>
         {
             try { listener.Stop(); } catch { /* best effort */ }
         });
 
-        while (listener.IsListening)
+        try
         {
-            HttpListenerContext ctx;
-            try { ctx = listener.GetContext(); }
-            catch (HttpListenerException) { break; }
-            catch (ObjectDisposedException) { break; }
-
-            try
+            while (listener.IsListening && !_shutdownRequested)
             {
-                var method = ctx.Request.HttpMethod;
-                var path = ctx.Request.Url?.AbsolutePath ?? "/";
-                var headers = new Dictionary<string, string>();
-                foreach (var key in ctx.Request.Headers.AllKeys)
-                {
-                    if (key is null) continue;
-                    headers[key] = ctx.Request.Headers[key] ?? "";
-                }
-                string body;
-                using (var reader = new System.IO.StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
-                {
-                    body = reader.ReadToEnd();
-                }
+                HttpListenerContext ctx;
+                try { ctx = listener.GetContext(); }
+                catch (HttpListenerException) { break; }
+                catch (ObjectDisposedException) { break; }
 
-                var (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
-                ctx.Response.StatusCode = status;
-                foreach (var (k, v) in responseHeaders)
-                {
-                    // HttpListener handles a few headers specially; ignore set-failures.
-                    try { ctx.Response.Headers[k] = v; } catch (ArgumentException) { }
-                }
-                var buf = Encoding.UTF8.GetBytes(responseBody);
-                ctx.Response.ContentLength64 = buf.Length;
-                ctx.Response.OutputStream.Write(buf, 0, buf.Length);
-            }
-            catch (Exception ex)
-            {
                 try
                 {
-                    ctx.Response.StatusCode = 500;
-                    var buf = Encoding.UTF8.GetBytes($"{{\"error\":\"{ex.GetType().Name}\"}}");
+                    var method = ctx.Request.HttpMethod;
+                    var path = ctx.Request.Url?.AbsolutePath ?? "/";
+                    var headers = new Dictionary<string, string>();
+                    foreach (var key in ctx.Request.Headers.AllKeys)
+                    {
+                        if (key is null) continue;
+                        headers[key] = ctx.Request.Headers[key] ?? "";
+                    }
+                    string body;
+                    using (var reader = new System.IO.StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
+                    {
+                        body = reader.ReadToEnd();
+                    }
+
+                    var (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
+                    ctx.Response.StatusCode = status;
+                    // Stamp HTTP-layer headers onto the bare decision-core triple.
+                    foreach (var (k, v) in HttpLayerHeaders(status, responseHeaders, responseBody))
+                    {
+                        // HttpListener handles a few headers specially; ignore set-failures.
+                        try { ctx.Response.Headers[k] = v; } catch (ArgumentException) { }
+                    }
+                    var buf = Encoding.UTF8.GetBytes(responseBody);
                     ctx.Response.ContentLength64 = buf.Length;
                     ctx.Response.OutputStream.Write(buf, 0, buf.Length);
                 }
-                catch { /* swallow — already in error path */ }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        ctx.Response.StatusCode = 500;
+                        var buf = Encoding.UTF8.GetBytes($"{{\"error\":\"{ex.GetType().Name}\"}}");
+                        ctx.Response.ContentLength64 = buf.Length;
+                        ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+                    }
+                    catch { /* swallow — already in error path */ }
+                }
+                finally
+                {
+                    try { ctx.Response.Close(); } catch { }
+                }
             }
-            finally
-            {
-                try { ctx.Response.Close(); } catch { }
-            }
+        }
+        finally
+        {
+            _runningListener = null;
         }
     }
 
@@ -1081,44 +1371,9 @@ public class Service
         });
 
         var app = builder.Build();
-        app.Run(async http =>
-        {
-            var method = http.Request.Method;
-            var path = http.Request.Path.HasValue ? http.Request.Path.Value! : "/";
-            var headers = new Dictionary<string, string>();
-            foreach (var h in http.Request.Headers)
-            {
-                headers[h.Key] = h.Value.ToString();
-            }
-            string body;
-            using (var reader = new System.IO.StreamReader(http.Request.Body, Encoding.UTF8))
-            {
-                body = await reader.ReadToEndAsync().ConfigureAwait(false);
-            }
-
-            int status;
-            Dictionary<string, string> responseHeaders;
-            string responseBody;
-            try
-            {
-                (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
-            }
-            catch (Exception ex)
-            {
-                status = 500;
-                responseHeaders = new Dictionary<string, string>();
-                responseBody = $"{{\"error\":\"{ex.GetType().Name}\"}}";
-            }
-
-            http.Response.StatusCode = status;
-            foreach (var (k, v) in responseHeaders)
-            {
-                // Content-Length is managed by Kestrel from the body we write.
-                if (string.Equals(k, "Content-Length", StringComparison.OrdinalIgnoreCase)) continue;
-                try { http.Response.Headers[k] = v; } catch { /* reserved header */ }
-            }
-            await http.Response.WriteAsync(responseBody, Encoding.UTF8).ConfigureAwait(false);
-        });
+        // Reuse the same HttpContext→HandleRequest adapter that AsRouter() hands
+        // out, so the standalone-TLS and mounted (host-app) dispatch are identical.
+        app.Run(AsRouter());
 
         _logger.Info($"Service '{Name}' starting with TLS on https://{Host}:{Port}{Route}");
         // Block until cancelled (parity with the HttpListener path's blocking loop).

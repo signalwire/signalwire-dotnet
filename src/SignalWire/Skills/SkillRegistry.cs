@@ -27,7 +27,6 @@ public sealed class SkillRegistry
         "info_gatherer",
         "joke",
         "math",
-        "mcp_gateway",
         "native_vector_search",
         "play_background_file",
         "spider",
@@ -49,7 +48,6 @@ public sealed class SkillRegistry
         ["info_gatherer"] = () => new InfoGathererSkill(),
         ["joke"] = () => new JokeSkill(),
         ["math"] = () => new MathSkill(),
-        ["mcp_gateway"] = () => new McpGatewaySkill(),
         ["native_vector_search"] = () => new NativeVectorSearchSkill(),
         ["play_background_file"] = () => new PlayBackgroundFileSkill(),
         ["spider"] = () => new SpiderSkill(),
@@ -95,10 +93,26 @@ public sealed class SkillRegistry
         }
     }
 
+    /// <summary>The names EXPLICITLY registered via <see cref="RegisterSkill"/>,
+    /// sorted — the registration-only state (NOT the discoverable builtin
+    /// inventory). Mirrors Python's observable ``sorted(self._skills.keys())``,
+    /// which is registration-keyed and starts empty. Internal (Python's
+    /// <c>_skills</c> is private) — read only by the Layer-D dump, so it adds no
+    /// public-surface drift.</summary>
+    internal IReadOnlyList<string> GetRegisteredSkillNames()
+    {
+        lock (Lock)
+        {
+            var names = new List<string>(_registeredSkills.Keys);
+            names.Sort(StringComparer.Ordinal);
+            return names;
+        }
+    }
+
     /// <summary>Discover and return all available skills.
     /// Skills resolve on-demand, so there is nothing to eagerly register;
     /// this returns the discoverable inventory (mirrors <see cref="ListSkills"/>).
-    /// (Python parity: ``SkillRegistry.discover_skills`` now returns
+    /// (equivalent to Python's ``SkillRegistry.discover_skills`` now returns
     /// ``list_skills()`` — it was a no-op until the reference stub was fixed.)</summary>
     public IReadOnlyList<string> DiscoverSkills()
     {
@@ -106,7 +120,7 @@ public sealed class SkillRegistry
     }
 
     /// <summary>The skill_registry logger.
-    /// (Python parity: ``SkillRegistry.logger`` instance attribute.)</summary>
+    /// (equivalent to Python's ``SkillRegistry.logger`` instance attribute.)</summary>
     public Logger Logger { get; } = Logger.GetLogger("skill_registry");
 
     private readonly List<string> _externalPaths = new();
@@ -118,7 +132,7 @@ public sealed class SkillRegistry
     /// <summary>Add a directory to the external skill-source path list.
     /// .NET ports loading skills from disk SHOULD consult this list.
     /// Throws when the path does not exist or is not a directory.
-    /// (Python parity: ``SkillRegistry.add_skill_directory(path)``.)</summary>
+    /// (equivalent to Python's ``SkillRegistry.add_skill_directory(path)``.)</summary>
     public void AddSkillDirectory(string path)
     {
         if (string.IsNullOrEmpty(path))
@@ -178,5 +192,39 @@ public sealed class SkillRegistry
             names.Sort(StringComparer.Ordinal);
             return names;
         }
+    }
+
+    /// <summary>
+    /// Return the parameter schema for every known skill, keyed by skill name
+    /// (mirrors ``SkillRegistry.get_all_skills_schema``).
+    /// </summary>
+    public Dictionary<string, Dictionary<string, object>> GetAllSkillsSchema()
+    {
+        var result = new Dictionary<string, Dictionary<string, object>>();
+        foreach (var name in ListSkills())
+        {
+            var factory = GetFactory(name);
+            if (factory is null)
+            {
+                continue;
+            }
+            result[name] = factory().GetParameterSchema();
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Return the source (builtin vs the external directory) each known skill
+    /// was loaded from (mirrors ``SkillRegistry.list_all_skill_sources``).
+    /// </summary>
+    public Dictionary<string, string> ListAllSkillSources()
+    {
+        var result = new Dictionary<string, string>();
+        var builtins = new HashSet<string>(BuiltinSkillNames, StringComparer.Ordinal);
+        foreach (var name in ListSkills())
+        {
+            result[name] = builtins.Contains(name) ? "builtin" : "external";
+        }
+        return result;
     }
 }

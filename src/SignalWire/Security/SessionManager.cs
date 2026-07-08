@@ -16,15 +16,31 @@ public sealed class SessionManager
     private readonly byte[] _secret;
     private readonly int _tokenExpirySecs;
 
-    public SessionManager(int tokenExpirySecs = DefaultExpiry)
+    /// <summary>
+    /// Create a session manager. When <paramref name="secretKey"/> is supplied
+    /// it is used verbatim (UTF-8) as the HMAC signing key — enabling
+    /// cross-port token interop with a shared key; otherwise a fresh 32-byte
+    /// random secret is generated. Mirrors signalwire-python's
+    /// <c>SessionManager(token_expiry_secs, secret_key)</c>.
+    /// </summary>
+    /// <param name="tokenExpirySecs">Token lifetime in seconds.</param>
+    /// <param name="secretKey">Optional explicit signing key (UTF-8).</param>
+    public SessionManager(int tokenExpirySecs = DefaultExpiry, string? secretKey = null)
     {
         _tokenExpirySecs = tokenExpirySecs;
-        _secret = new byte[32];
-        RandomNumberGenerator.Fill(_secret);
+        if (secretKey is not null)
+        {
+            _secret = Encoding.UTF8.GetBytes(secretKey);
+        }
+        else
+        {
+            _secret = new byte[32];
+            RandomNumberGenerator.Fill(_secret);
+        }
     }
 
     /// <summary>Get the configured token expiry duration in seconds.</summary>
-    public int TokenExpirySecs => _tokenExpirySecs;
+    internal int TokenExpirySecs => _tokenExpirySecs;
 
     /// <summary>
     /// Create or confirm a session, returning the call ID.
@@ -123,6 +139,66 @@ public sealed class SessionManager
         }
 
         return true;
+    }
+
+    // ------------------------------------------------------------------
+    // Tool-token aliases + legacy session lifecycle (SessionManager parity)
+    // ------------------------------------------------------------------
+
+    /// <summary>Alias of the token generator, kept for API consistency.
+    /// (equivalent to Python's ``generate_token`` == C# ``CreateToken``; also exposed as
+    /// ``create_tool_token``.)</summary>
+    public string CreateToolToken(string functionName, string callId)
+        => CreateToken(functionName, callId);
+
+    /// <summary>Alias of <see cref="ValidateToken"/> (``validate_tool_token``).</summary>
+    public bool ValidateToolToken(string functionName, string token, string callId)
+        => ValidateToken(functionName, callId, token);
+
+    /// <summary>Legacy no-op session activation — always succeeds.</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
+    public bool ActivateSession(string callId) => true;
+
+    /// <summary>Legacy no-op session teardown — always succeeds.</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
+    public bool EndSession(string callId) => true;
+
+    /// <summary>Legacy metadata accessor — always returns empty metadata.</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
+    public Dictionary<string, object> GetSessionMetadata(string callId) => [];
+
+    /// <summary>Legacy metadata setter — no-op, always succeeds.</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
+    public bool SetSessionMetadata(string callId, string key, object value) => true;
+
+    /// <summary>Decode a token into its components WITHOUT validating it (for
+    /// debugging). (equivalent to Python's ``debug_token``.)</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
+    public Dictionary<string, object> DebugToken(string token)
+    {
+        ArgumentNullException.ThrowIfNull(token);
+        var result = new Dictionary<string, object>();
+        try
+        {
+            var parts = Base64UrlDecode(token).Split('.');
+            if (parts.Length == 5)
+            {
+                result["call_id"] = parts[0];
+                result["function"] = parts[1];
+                result["expiry"] = parts[2];
+                result["nonce"] = parts[3];
+                result["signature"] = parts[4];
+            }
+            else
+            {
+                result["error"] = "malformed token";
+            }
+        }
+        catch (FormatException)
+        {
+            result["error"] = "undecodable token";
+        }
+        return result;
     }
 
     // ------------------------------------------------------------------

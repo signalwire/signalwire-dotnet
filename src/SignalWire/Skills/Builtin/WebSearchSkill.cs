@@ -449,7 +449,7 @@ public sealed class WebSearchSkill : SkillBase
     /// <summary>
     /// Apply the optional response_prefix / response_postfix around a non-empty
     /// result body. Shared by the scraped and snippet-fallback paths; the error
-    /// and no-results branches deliberately stay unwrapped (Python parity).
+    /// and no-results branches deliberately stay unwrapped (same behavior as Python).
     /// </summary>
     private static string WrapResponse(string response, string prefix, string postfix)
     {

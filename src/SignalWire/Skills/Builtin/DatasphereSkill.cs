@@ -14,7 +14,7 @@ namespace SignalWire.Skills.Builtin;
 /// POSTs a JSON body to <c>https://&lt;space_name&gt;.signalwire.com
 /// /api/datasphere/documents/search</c> with HTTP Basic auth
 /// (project_id : token). Real DataSphere returns matches under
-/// <c>chunks</c>; the porting-sdk audit fixture uses <c>results</c>;
+/// <c>chunks</c>; some services use <c>results</c>;
 /// accept either so the skill round-trips against the live API and the
 /// offline audit alike (matching the precedent already in Java/PHP/Perl/
 /// Rust).

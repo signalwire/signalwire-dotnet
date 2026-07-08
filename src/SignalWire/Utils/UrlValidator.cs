@@ -24,7 +24,7 @@ public static class UrlValidator
 
     /// <summary>Validate that a URL is safe to fetch (not pointing to
     /// private/internal resources). Returns true when safe, false when
-    /// rejected. (Python parity:
+    /// rejected. (equivalent to Python's
     /// ``signalwire.utils.url_validator.validate_url(url, allow_private)``.)</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API and validated as text; converting churns call sites.")]
     public static bool ValidateUrl(string url, bool allowPrivate = false)

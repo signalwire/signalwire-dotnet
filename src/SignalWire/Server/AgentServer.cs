@@ -54,7 +54,7 @@ public partial class AgentServer
     private bool _sipRoutingEnabled;
     private string _sipRoute = "/sip";
     private bool _sipAutoMap = true;
-    private readonly Dictionary<string, string> _sipUsernameMapping = [];
+    private readonly Dictionary<string, string> _sipUsernameMapping = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, string> _staticRoutes = [];
 
     public AgentServer(string host = "0.0.0.0", int? port = null, string logLevel = "info")
@@ -64,7 +64,7 @@ public partial class AgentServer
         _logger = Logger.GetLogger("agent_server");
     }
 
-    /// <summary>The agent_server logger. (Python parity:
+    /// <summary>The agent_server logger. (equivalent to Python's
     /// ``AgentServer.logger`` instance attribute.)</summary>
     public Logger Logger => _logger;
 
@@ -82,6 +82,13 @@ public partial class AgentServer
             throw new InvalidOperationException($"Route '{route}' is already registered");
 
         _agents[route] = agent;
+
+        // If SIP routing is already enabled, wire the callback onto this new
+        // agent too (Python registers the callback for agents added later).
+        if (_sipRoutingEnabled)
+        {
+            RegisterSipCallbackOnAgent(agent, route);
+        }
         return this;
     }
 
@@ -109,6 +116,23 @@ public partial class AgentServer
     }
 
     // ==================================================================
+    //  Global routing
+    // ==================================================================
+
+    private Func<Dictionary<string, object?>?, Dictionary<string, string>, object?>? _globalRoutingCallback;
+
+    /// <summary>
+    /// Register a server-wide routing callback invoked for requests before
+    /// per-agent dispatch (mirrors ``AgentServer.register_global_routing_callback``).
+    /// </summary>
+    public AgentServer RegisterGlobalRoutingCallback(
+        Func<Dictionary<string, object?>?, Dictionary<string, string>, object?> callback)
+    {
+        _globalRoutingCallback = callback;
+        return this;
+    }
+
+    // ==================================================================
     //  SIP Routing
     // ==================================================================
 
@@ -120,18 +144,94 @@ public partial class AgentServer
     /// </summary>
     public AgentServer SetupSipRouting(string route = "/sip", bool autoMap = true)
     {
+        ArgumentNullException.ThrowIfNull(route);
         _sipRoutingEnabled = true;
-        _sipRoute = route;
+        _sipRoute = NormalizeRoute(route);
         _sipAutoMap = autoMap;
+
+        // Register the server SIP routing callback on every registered agent at
+        // the SIP sub-path, mirroring Python's setup_sip_routing which does
+        // agent.register_routing_callback(cb, path=route) for each agent.
+        foreach (var (agentRoute, agent) in _agents)
+        {
+            RegisterSipCallbackOnAgent(agent, agentRoute);
+        }
         return this;
     }
 
+    [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the normalized SIP-username mapping-key form (matches Python's username.lower()).")]
     public AgentServer RegisterSipUsername(string username, string route)
     {
+        ArgumentNullException.ThrowIfNull(username);
         ArgumentNullException.ThrowIfNull(route);
+        if (!_sipRoutingEnabled)
+        {
+            _logger.Warn("SIP routing is not enabled. Call SetupSipRouting() first.");
+            return this;
+        }
         route = NormalizeRoute(route);
-        _sipUsernameMapping[username] = route;
+        // Store the username lowercased as the mapping KEY, matching Python's
+        // ``self._sip_username_mapping[username.lower()] = route``. The observable
+        // mapping must therefore be keyed by the lowercased name ("Bob" -> "bob").
+        _sipUsernameMapping[username.ToLowerInvariant()] = route;
         return this;
+    }
+
+    /// <summary>Look up the agent route registered for a SIP username
+    /// (case-insensitive). Returns null when no mapping exists. Internal, mirroring
+    /// Python's underscore-private ``_lookup_sip_route`` — no public-surface drift;
+    /// the Layer-D dump reads it via InternalsVisibleTo.</summary>
+    internal string? LookupSipRoute(string username)
+    {
+        ArgumentNullException.ThrowIfNull(username);
+        return _sipUsernameMapping.TryGetValue(username, out var route) ? route : null;
+    }
+
+    /// <summary>Register the unified SIP routing callback on one agent at the
+    /// SIP sub-path. The callback extracts the SIP username from the request
+    /// body and returns the mapped agent route (→ 307 redirect) or null.</summary>
+    private void RegisterSipCallbackOnAgent(AgentBase agent, string agentRoute)
+    {
+        if (_sipAutoMap)
+        {
+            AutoMapAgentSipUsernames(agent, agentRoute);
+        }
+
+        agent.RegisterRoutingCallback(_sipRoute, (body, headers) =>
+        {
+            var sipUsername = SWML.Service.ExtractSipUsername(body);
+            if (!string.IsNullOrEmpty(sipUsername))
+            {
+                _logger.Info($"Extracted SIP username: {sipUsername}");
+                var target = LookupSipRoute(sipUsername);
+                if (target is not null)
+                {
+                    _logger.Info($"Routing SIP request to {target}");
+                    return target;
+                }
+                _logger.Warn($"No route found for SIP username: {sipUsername}");
+            }
+            return null;
+        });
+    }
+
+    /// <summary>Auto-map an agent's derived SIP username(s) to its route
+    /// (equivalent to Python's ``_auto_map_agent_sip_usernames``: clean name + clean
+    /// route segment).</summary>
+    [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the normalized SIP-username mapping-key form (matches Python's cleaned .lower() name/route).")]
+    private void AutoMapAgentSipUsernames(AgentBase agent, string agentRoute)
+    {
+        var cleanName = new string(agent.Name.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
+        if (cleanName.Length > 0)
+        {
+            _sipUsernameMapping[cleanName] = agentRoute;
+        }
+
+        var cleanRoute = new string(agentRoute.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
+        if (cleanRoute.Length > 0)
+        {
+            _sipUsernameMapping[cleanRoute] = agentRoute;
+        }
     }
 
     public bool IsSipRoutingEnabled => _sipRoutingEnabled;
@@ -160,6 +260,83 @@ public partial class AgentServer
         urlPrefix = NormalizeRoute(urlPrefix);
         _staticRoutes[urlPrefix] = realDir;
         return this;
+    }
+
+    /// <summary>
+    /// Serve static files from <paramref name="directory"/> under
+    /// <paramref name="route"/> (reference-named ``serve_static_files``).
+    /// </summary>
+    [SuppressMessage("Usage", "CA1054:URI-like parameters should not be strings",
+        Justification = "route is a wire route prefix string, not a navigable URI")]
+    public AgentServer ServeStaticFiles(string directory, string route = "/")
+        => ServeStatic(directory, route);
+
+    // ==================================================================
+    //  Serving
+    // ==================================================================
+
+    /// <summary>
+    /// Run the multi-agent HTTP server. Binds an <see cref="System.Net.HttpListener"/>
+    /// on the given host/port (defaulting to the <c>PORT</c> env var or 3000) and
+    /// dispatches each request through <see cref="HandleRequest"/> until the
+    /// process is interrupted. Mirrors ``AgentServer.run``.
+    /// </summary>
+    public void Run(string host = "0.0.0.0", int? port = null)
+    {
+        var boundPort = port ?? ParsePortFromEnv() ?? 3000;
+        using var listener = new System.Net.HttpListener();
+        var bindHost = host is "0.0.0.0" or "" ? "+" : host;
+        try
+        {
+            listener.Prefixes.Add($"http://{bindHost}:{boundPort}/");
+            listener.Start();
+        }
+        catch (System.Net.HttpListenerException)
+        {
+            // Fall back to loopback when the wildcard binding is not permitted.
+            listener.Prefixes.Clear();
+            listener.Prefixes.Add($"http://localhost:{boundPort}/");
+            listener.Start();
+        }
+
+        while (listener.IsListening)
+        {
+            System.Net.HttpListenerContext ctx;
+            try { ctx = listener.GetContext(); }
+            catch (System.Net.HttpListenerException) { break; }
+            catch (InvalidOperationException) { break; }
+
+            var reqHeaders = new Dictionary<string, string>();
+            foreach (string key in ctx.Request.Headers)
+            {
+                reqHeaders[key] = ctx.Request.Headers[key] ?? "";
+            }
+            string reqBody;
+            using (var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
+            {
+                reqBody = reader.ReadToEnd();
+            }
+
+            var (status, respHeaders, body) = HandleRequest(
+                ctx.Request.HttpMethod, ctx.Request.Url?.AbsolutePath ?? "/", reqHeaders, reqBody);
+
+            ctx.Response.StatusCode = status;
+            foreach (var (k, v) in respHeaders)
+            {
+                if (string.Equals(k, "Content-Type", StringComparison.OrdinalIgnoreCase))
+                {
+                    ctx.Response.ContentType = v;
+                }
+                else
+                {
+                    ctx.Response.Headers[k] = v;
+                }
+            }
+            var buffer = System.Text.Encoding.UTF8.GetBytes(body);
+            ctx.Response.ContentLength64 = buffer.Length;
+            ctx.Response.OutputStream.Write(buffer, 0, buffer.Length);
+            ctx.Response.OutputStream.Close();
+        }
     }
 
     // ==================================================================

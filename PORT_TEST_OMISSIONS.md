@@ -3789,3 +3789,14 @@ suite; the omission is the test-name mismatch, not the behaviour.
 - test_zero_param_tool: covered by `dotnet test` under broader-grained xUnit test methods
 - test_zero_rate_limit: covered by `dotnet test` under broader-grained xUnit test methods
 - test_zero_request_timeout: covered by `dotnet test` under broader-grained xUnit test methods
+
+## REST behavioral-mock migration to generated typed API (feat/rest-generated)
+
+- FabricMockTest.CxmlApplications_Create_RaisesNotImplemented: removed. The
+  hand test asserted that CxmlApplications.create raises NotImplementedError.
+  The generated CxmlApplications resource intentionally has NO CreateAsync (the
+  no-create design — CxmlApplications = BaseResource + [list,get,update,delete,
+  list_addresses]), so there is no create method to invoke or assert against.
+  The generated wire suite (FabricGeneratedTest) covers CxmlApplications' actual
+  surface; the absence-of-create is now a compile-time guarantee, not a runtime
+  throw. No behavioral coverage lost.

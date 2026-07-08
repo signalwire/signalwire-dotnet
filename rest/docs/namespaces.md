@@ -78,22 +78,6 @@ await client.Video.GetAsync(roomId);
 await client.Video.DeleteAsync(roomId);
 ```
 
-### Compat
-
-Twilio-compatible LAML API.
-
-```csharp
-await client.Compat.Calls.ListAsync();
-await client.Compat.Calls.CreateAsync(new Dictionary<string, object?>
-{
-    ["To"]   = "+15551234567",
-    ["From"] = "+15559876543",
-    ["Url"]  = "https://example.com/twiml",
-});
-```
-
-See [Compatibility API](compat.md) for details.
-
 ### Addresses
 
 ```csharp

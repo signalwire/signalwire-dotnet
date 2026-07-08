@@ -11,7 +11,7 @@ namespace SignalWire.SWAIG;
 /// value is <c>"true"</c>, <c>"false"</c>, <c>"onEnter"</c>, or <c>"onExit"</c>),
 /// so it is a genuine closed set rather than a free-form string. The typed
 /// <c>JoinConference(string, JoinConferenceOptions?)</c> overload accepts this
-/// enum; the flat string overload preserves parity with the Python reference
+/// enum; the flat string overload preserves matching the Python API
 /// (which takes a bare <c>str</c> validated to the same closed set).
 /// </para>
 /// <para>

@@ -21,7 +21,7 @@ public class SWMLBuilder
         Service = service;
     }
 
-    /// <summary>Add an ``answer`` verb. (Python parity:
+    /// <summary>Add an ``answer`` verb. (equivalent to Python's
     /// ``SWMLBuilder.answer(max_duration, codecs)``.)</summary>
     public SWMLBuilder Answer(int? maxDuration = null, string? codecs = null)
     {
@@ -32,7 +32,7 @@ public class SWMLBuilder
         return this;
     }
 
-    /// <summary>Add a ``hangup`` verb. (Python parity:
+    /// <summary>Add a ``hangup`` verb. (equivalent to Python's
     /// ``SWMLBuilder.hangup(reason)``.)</summary>
     public SWMLBuilder Hangup(string? reason = null)
     {
@@ -42,7 +42,7 @@ public class SWMLBuilder
         return this;
     }
 
-    /// <summary>Add an ``ai`` verb. (Python parity:
+    /// <summary>Add an ``ai`` verb. (equivalent to Python's
     /// ``SWMLBuilder.ai(prompt_text, prompt_pom, post_prompt, post_prompt_url, swaig, ...)``.)</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API as a SWML field value.")]
     public SWMLBuilder Ai(
@@ -54,15 +54,19 @@ public class SWMLBuilder
         Dictionary<string, object>? extraParams = null)
     {
         var config = new Dictionary<string, object>();
+        // The SWML ``ai`` verb requires ``prompt`` to be an OBJECT — {"text": ...} or
+        // {"pom": [...]}; a bare string is a fatal error in the AI engine (mod_openai
+        // app_config.c: ``!cJSON_IsObject(prompt)`` fires calling.error and aborts the call),
+        // so wrap accordingly. ``post_prompt`` is the same object contract.
         if (!string.IsNullOrEmpty(promptText))
         {
-            config["prompt"] = promptText;
+            config["prompt"] = new Dictionary<string, object> { ["text"] = promptText };
         }
         else if (promptPom is not null)
         {
             config["prompt"] = new Dictionary<string, object> { ["pom"] = promptPom };
         }
-        if (!string.IsNullOrEmpty(postPrompt)) config["post_prompt"] = postPrompt;
+        if (!string.IsNullOrEmpty(postPrompt)) config["post_prompt"] = new Dictionary<string, object> { ["text"] = postPrompt };
         if (!string.IsNullOrEmpty(postPromptUrl)) config["post_prompt_url"] = postPromptUrl;
         if (swaig is not null) config["SWAIG"] = swaig;
         if (extraParams is not null)
@@ -73,7 +77,7 @@ public class SWMLBuilder
         return this;
     }
 
-    /// <summary>Add a ``play`` verb. (Python parity:
+    /// <summary>Add a ``play`` verb. (equivalent to Python's
     /// ``SWMLBuilder.play(url, urls, volume, say_text, say_voice, say_language)``.)</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API as a SWML field value.")]
     public SWMLBuilder Play(
@@ -96,7 +100,7 @@ public class SWMLBuilder
     }
 
     /// <summary>Add a ``say`` verb (synthesized speech).
-    /// (Python parity: ``SWMLBuilder.say(text, voice, language)``.)</summary>
+    /// (equivalent to Python's ``SWMLBuilder.say(text, voice, language)``.)</summary>
     public SWMLBuilder Say(string text, string? voice = null, string? language = null)
     {
         var config = new Dictionary<string, object> { ["text"] = text };
@@ -107,7 +111,7 @@ public class SWMLBuilder
     }
 
     /// <summary>Add a section to the underlying document.
-    /// (Python parity: ``SWMLBuilder.add_section``.)</summary>
+    /// (equivalent to Python's ``SWMLBuilder.add_section``.)</summary>
     public SWMLBuilder AddSection(string sectionName)
     {
         Service.Document.AddSection(sectionName);
@@ -115,15 +119,15 @@ public class SWMLBuilder
     }
 
     /// <summary>Build the SWML document as a dict.
-    /// (Python parity: ``SWMLBuilder.build``.)</summary>
+    /// (equivalent to Python's ``SWMLBuilder.build``.)</summary>
     public Dictionary<string, object> Build() => Service.Document.ToDict();
 
     /// <summary>Render the SWML document as a JSON string.
-    /// (Python parity: ``SWMLBuilder.render``.)</summary>
+    /// (equivalent to Python's ``SWMLBuilder.render``.)</summary>
     public string Render() => JsonSerializer.Serialize(Build());
 
     /// <summary>Reset the underlying document.
-    /// (Python parity: ``SWMLBuilder.reset``.)</summary>
+    /// (equivalent to Python's ``SWMLBuilder.reset``.)</summary>
     public SWMLBuilder Reset()
     {
         Service.Document.Reset();

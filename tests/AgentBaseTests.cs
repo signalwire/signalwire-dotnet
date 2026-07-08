@@ -218,7 +218,10 @@ public class AgentBaseTests : IDisposable
         var functions = (List<Dictionary<string, object>>)swaig["functions"];
         Assert.Single(functions);
         Assert.Equal("lookup", functions[0]["function"]);
-        Assert.Equal("Look up a customer", functions[0]["purpose"]);
+        // Wire shape is canonical: `description`/`parameters` (Python parity),
+        // not the internal storage-idiom keys `purpose`/`argument`.
+        Assert.Equal("Look up a customer", functions[0]["description"]);
+        Assert.False(functions[0].ContainsKey("purpose"));
         Assert.False(functions[0].ContainsKey("_handler"));
         Assert.False(functions[0].ContainsKey("_secure"));
     }
@@ -297,7 +300,7 @@ public class AgentBaseTests : IDisposable
         var agent = MakeAgent();
         agent.AddHint("SignalWire");
         var ai = ExtractAiVerb(agent.RenderSwml());
-        var hints = (List<string>)ai["hints"];
+        var hints = (List<object>)ai["hints"];
         Assert.Contains("SignalWire", hints);
     }
 
@@ -307,16 +310,21 @@ public class AgentBaseTests : IDisposable
         var agent = MakeAgent();
         agent.AddHints(["hello", "world"]);
         var ai = ExtractAiVerb(agent.RenderSwml());
-        Assert.Equal(["hello", "world"], (List<string>)ai["hints"]);
+        Assert.Equal<object>(["hello", "world"], (List<object>)ai["hints"]);
     }
 
     [Fact]
     public void AddPatternHint()
     {
         var agent = MakeAgent();
-        agent.AddPatternHint("\\d{3}-\\d{4}");
+        agent.AddPatternHint("SignalWire", "\\d{3}-\\d{4}", "SignalWire, Inc.");
         var ai = ExtractAiVerb(agent.RenderSwml());
-        Assert.Contains("\\d{3}-\\d{4}", (List<string>)ai["hints"]);
+        var hints = (List<object>)ai["hints"];
+        var structured = Assert.IsType<Dictionary<string, object>>(Assert.Single(hints));
+        Assert.Equal("SignalWire", structured["hint"]);
+        Assert.Equal("\\d{3}-\\d{4}", structured["pattern"]);
+        Assert.Equal("SignalWire, Inc.", structured["replace"]);
+        Assert.Equal(false, structured["ignore_case"]);
     }
 
     [Fact]
@@ -330,6 +338,134 @@ public class AgentBaseTests : IDisposable
         Assert.Equal("English", languages[0]["name"]);
         Assert.Equal("en-US", languages[0]["code"]);
         Assert.Equal("rachel", languages[0]["voice"]);
+    }
+
+    // =================================================================
+    //  Behavioral contract 8: AI/LLM STRUCTURED add_pattern_hint / add_language
+    //  (porting-sdk/BEHAVIORAL_CONTRACTS.md #8)
+    //
+    //  add_pattern_hint must attach a STRUCTURED hint
+    //  ({hint, pattern, replace, ignore_case}) — not a bare string; and
+    //  add_language must carry engine + model + fillers into the rendered
+    //  SWML ai.languages entry. A degraded impl (bare-string hint, no
+    //  engine/model/fillers) FAILS these assertions.
+    // =================================================================
+
+    [Fact]
+    public void Contract8_StructuredPatternHintAndLanguageFillers_SurviveRender()
+    {
+        var agent = MakeAgent();
+
+        // Structured pattern hint WITH a replacement.
+        agent.AddPatternHint(
+            hint: "SignalWire",
+            pattern: "(?i)signal ?wire",
+            replace: "SignalWire",
+            ignoreCase: true);
+
+        // Language WITH explicit engine + model + speech/function fillers.
+        agent.AddLanguage(
+            name: "English",
+            code: "en-US",
+            voice: "josh",
+            speechFillers: ["one moment", "let me check"],
+            functionFillers: ["working on it"],
+            engine: "elevenlabs",
+            model: "eleven_turbo_v2_5",
+            languageParams: null);
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+
+        // -- Pattern hint survives as a structured dict with all 4 fields --
+        var hints = (List<object>)ai["hints"];
+        var structured = Assert.IsType<Dictionary<string, object>>(Assert.Single(hints));
+        Assert.Equal("SignalWire", structured["hint"]);
+        Assert.Equal("(?i)signal ?wire", structured["pattern"]);
+        Assert.Equal("SignalWire", structured["replace"]);
+        Assert.Equal(true, structured["ignore_case"]);
+
+        // -- Language carries engine + model + BOTH filler lists --
+        var languages = (List<Dictionary<string, object>>)ai["languages"];
+        var lang = Assert.Single(languages);
+        Assert.Equal("English", lang["name"]);
+        Assert.Equal("en-US", lang["code"]);
+        Assert.Equal("josh", lang["voice"]);
+        Assert.Equal("elevenlabs", lang["engine"]);
+        Assert.Equal("eleven_turbo_v2_5", lang["model"]);
+        Assert.Equal<object>(["one moment", "let me check"], (IReadOnlyList<string>)lang["speech_fillers"]);
+        Assert.Equal<object>(["working on it"], (IReadOnlyList<string>)lang["function_fillers"]);
+    }
+
+    [Fact]
+    public void Contract8_CombinedVoiceStringParsesEngineModel()
+    {
+        var agent = MakeAgent();
+        // Combined "engine.voice:model" form -> split into 3 keys.
+        agent.AddLanguage("English", "en-US", "elevenlabs.josh:eleven_turbo_v2_5");
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var lang = Assert.Single((List<Dictionary<string, object>>)ai["languages"]);
+        Assert.Equal("josh", lang["voice"]);
+        Assert.Equal("elevenlabs", lang["engine"]);
+        Assert.Equal("eleven_turbo_v2_5", lang["model"]);
+    }
+
+    [Fact]
+    public void Contract8_SingleFillerListUsesDeprecatedFillersKey()
+    {
+        var agent = MakeAgent();
+        agent.AddLanguage(
+            name: "English",
+            code: "en-US",
+            voice: "josh",
+            speechFillers: ["um", "uh"],
+            functionFillers: null,
+            engine: null,
+            model: null,
+            languageParams: null);
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var lang = Assert.Single((List<Dictionary<string, object>>)ai["languages"]);
+        Assert.Equal<object>(["um", "uh"], (IReadOnlyList<string>)lang["fillers"]);
+        Assert.False(lang.ContainsKey("speech_fillers"));
+        Assert.False(lang.ContainsKey("function_fillers"));
+    }
+
+    // Tier-2 contract 2: set_prompt_llm_params / set_post_prompt_llm_params
+    // MERGE (not replace). Calling twice with distinct keys must keep BOTH.
+    // A replace-stub (the old dotnet behavior: _promptLlmParams = params) drops
+    // the first key and FAILS these.
+    [Fact]
+    public void SetPromptLlmParams_MergesAcrossCalls()
+    {
+        var agent = MakeAgent();
+        agent.SetPromptText("You are a helpful assistant.");
+        agent.SetPromptLlmParams(new Dictionary<string, object> { ["temperature"] = 0.5 });
+        agent.SetPromptLlmParams(new Dictionary<string, object> { ["top_p"] = 0.9 });
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var prompt = (Dictionary<string, object>)ai["prompt"];
+
+        Assert.True(prompt.ContainsKey("temperature"), "temperature dropped — setter replaced instead of merged");
+        Assert.True(prompt.ContainsKey("top_p"));
+        Assert.Equal(0.5, Convert.ToDouble(prompt["temperature"], System.Globalization.CultureInfo.InvariantCulture));
+        Assert.Equal(0.9, Convert.ToDouble(prompt["top_p"], System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    [Fact]
+    public void SetPostPromptLlmParams_MergesAcrossCalls()
+    {
+        var agent = MakeAgent();
+        agent.SetPromptText("You are a helpful assistant.");
+        agent.SetPostPrompt("Summarize.");
+        agent.SetPostPromptLlmParams(new Dictionary<string, object> { ["temperature"] = 0.3 });
+        agent.SetPostPromptLlmParams(new Dictionary<string, object> { ["top_p"] = 0.8 });
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var postPrompt = (Dictionary<string, object>)ai["post_prompt"];
+
+        Assert.True(postPrompt.ContainsKey("temperature"), "post-prompt temperature dropped — setter replaced instead of merged");
+        Assert.True(postPrompt.ContainsKey("top_p"));
+        Assert.Equal(0.3, Convert.ToDouble(postPrompt["temperature"], System.Globalization.CultureInfo.InvariantCulture));
+        Assert.Equal(0.8, Convert.ToDouble(postPrompt["top_p"], System.Globalization.CultureInfo.InvariantCulture));
     }
 
     // =================================================================
@@ -473,6 +609,22 @@ public class AgentBaseTests : IDisposable
         Assert.Single(pronounce);
         Assert.Equal("SW", pronounce[0]["replace"]);
         Assert.Equal("SignalWire", pronounce[0]["with"]);
+        // ignore_case omitted when false; the old (wrong) `ignore` key never appears.
+        Assert.False(pronounce[0].ContainsKey("ignore_case"));
+        Assert.False(pronounce[0].ContainsKey("ignore"));
+    }
+
+    [Fact]
+    public void AddPronunciationIgnoreCaseEmitsBoolWireKey()
+    {
+        // ignoreCase=true emits the bool wire key `ignore_case: true`
+        // (matches signalwire-agents schema.json + Python add_pronunciation).
+        var agent = MakeAgent();
+        agent.AddPronunciation("AI", "A.I.", ignoreCase: true);
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        var pronounce = (List<Dictionary<string, object>>)ai["pronounce"];
+        Assert.Equal(true, pronounce[0]["ignore_case"]);
+        Assert.False(pronounce[0].ContainsKey("ignore"));
     }
 
     [Fact]
@@ -994,7 +1146,7 @@ public class AgentBaseTests : IDisposable
         Assert.Same(agent, agent.PromptAddToSection("S", "more"));
         Assert.Same(agent, agent.AddHint("hint"));
         Assert.Same(agent, agent.AddHints(["h"]));
-        Assert.Same(agent, agent.AddPatternHint("p"));
+        Assert.Same(agent, agent.AddPatternHint("h", "p", "r"));
         Assert.Same(agent, agent.AddLanguage("En", "en", "v"));
         Assert.Same(agent, agent.AddPronunciation("a", "b"));
         Assert.Same(agent, agent.SetParam("k", "v"));

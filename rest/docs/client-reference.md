@@ -39,7 +39,6 @@ All namespace accessors are lazily initialized on first access.
 | `PhoneNumbers` | `CrudResource` | Phone number management |
 | `Datasphere` | `CrudResource` | Document management and search |
 | `Video` | `CrudResource` | Video rooms |
-| `Compat` | `CrudResource` | Twilio-compatible LAML |
 | `Addresses` | `CrudResource` | Address management |
 | `Queues` | `CrudResource` | Call queues |
 | `Recordings` | `CrudResource` | Call recordings |

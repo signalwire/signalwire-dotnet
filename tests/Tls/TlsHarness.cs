@@ -39,6 +39,28 @@ public static class TlsHarness
     private static string? _certsDir;
 
     /// <summary>
+    /// Ask the OS for a free loopback TCP port (bind :0, read the assigned port,
+    /// release it). NEVER return a hardcoded port — a fixed port collides with a
+    /// leftover or concurrent listener. There is an inherent bind-then-release
+    /// window, but the TLS tests run inside the serialized GlobalState collection
+    /// (and run-tests.sh serializes the target frameworks), so no two TLS mocks
+    /// contend for a port at once. This is the shared picker for all TLS tests.
+    /// </summary>
+    public static int FreeTcpPort()
+    {
+        var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        l.Start();
+        try
+        {
+            return ((System.Net.IPEndPoint)l.LocalEndpoint).Port;
+        }
+        finally
+        {
+            l.Stop();
+        }
+    }
+
+    /// <summary>
     /// Locate <c>porting-sdk/test_harness/tls</c> adjacent to the repo, run the
     /// idempotent <c>gen_certs.sh</c> (a no-op when the leaf cert is still
     /// valid), and return the absolute path to the <c>certs/</c> directory.

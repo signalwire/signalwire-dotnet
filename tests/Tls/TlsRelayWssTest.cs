@@ -29,18 +29,19 @@ namespace SignalWire.Tests.Tls;
 /// </summary>
 public class TlsRelayWssTest
 {
-    private const int WsPort = 18785;
-    private const int HttpPort = 19785;
-
     [Fact]
-    public void RelayClient_Wss_ConnectsAndAuthenticates()
+    public async Task RelayClient_Wss_ConnectsAndAuthenticates()
     {
         if (TlsHarness.CaCertPath() is null)
         {
             return; // porting-sdk tls harness not adjacent — skip cleanly.
         }
 
-        using var mock = TlsHarness.StartTlsMockRelay(WsPort, HttpPort);
+        // Pick two independent free ports (never hardcoded — RELAY needs WS + HTTP).
+        var wsPort = TlsHarness.FreeTcpPort();
+        var httpPort = TlsHarness.FreeTcpPort();
+
+        using var mock = TlsHarness.StartTlsMockRelay(wsPort, httpPort);
         Assert.True(mock is not null,
             "mock_relay --tls did not become ready (is python3 + porting-sdk available?)");
 
@@ -62,7 +63,7 @@ public class TlsRelayWssTest
 
         try
         {
-            client.ConnectAsync().GetAwaiter().GetResult();
+            await client.ConnectAsync();
 
             // Behavioral proof the TLS session carried a real RELAY handshake:
             // the mock issues a protocol string in the signalwire.connect result
@@ -75,7 +76,7 @@ public class TlsRelayWssTest
             // Wire proof: the mock journaled the inbound signalwire.connect frame
             // on the same (TLS) WebSocket. Journal is served over the plain-HTTP
             // control plane (mock_relay keeps it HTTP even in --tls).
-            Assert.True(SawRecv(mock.HttpUrl, "signalwire.connect"),
+            Assert.True(await SawRecvAsync(mock.HttpUrl, "signalwire.connect"),
                 "mock journal has no recv signalwire.connect frame over the WSS connection");
         }
         finally
@@ -88,11 +89,11 @@ public class TlsRelayWssTest
         var rejecting = TlsHarness.UntrustedValidator();
         using var untrusted = new ClientWebSocket();
         untrusted.Options.RemoteCertificateValidationCallback = rejecting.Validate;
-        var ex = Assert.ThrowsAny<Exception>(() =>
+        var ex = await Assert.ThrowsAnyAsync<Exception>(async () =>
         {
-            untrusted.ConnectAsync(
-                new Uri($"wss://127.0.0.1:{WsPort}/api/relay/ws"),
-                CancellationToken.None).GetAwaiter().GetResult();
+            await untrusted.ConnectAsync(
+                new Uri($"wss://127.0.0.1:{wsPort}/api/relay/ws"),
+                CancellationToken.None);
         });
         Assert.True(
             ex is WebSocketException || ex.InnerException is System.Security.Authentication.AuthenticationException
@@ -104,10 +105,10 @@ public class TlsRelayWssTest
     /// True iff the mock journaled an inbound (SDK→server) frame with the given
     /// JSON-RPC method, proving traffic crossed the WSS link.
     /// </summary>
-    private static bool SawRecv(string httpUrl, string method)
+    private static async Task<bool> SawRecvAsync(string httpUrl, string method)
     {
         using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-        var body = http.GetStringAsync(httpUrl + "/__mock__/journal").GetAwaiter().GetResult();
+        var body = await http.GetStringAsync(httpUrl + "/__mock__/journal");
         using var doc = JsonDocument.Parse(body);
         if (doc.RootElement.ValueKind != JsonValueKind.Array) return false;
         foreach (var entry in doc.RootElement.EnumerateArray())

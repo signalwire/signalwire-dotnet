@@ -78,7 +78,7 @@ public class SurveyAgent : AgentBase
     }
 
     /// <summary>SWAIG tool handler for the ``validate_response`` tool.
-    /// (Python parity: ``SurveyAgent.validate_response``.)</summary>
+    /// (equivalent to Python's ``SurveyAgent.validate_response``.)</summary>
     [SuppressMessage("Globalization", "CA1308", Justification = "normalized lowercase preserves the existing yes/no response value verbatim")]
     public FunctionResult ValidateResponse(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
@@ -132,7 +132,7 @@ public class SurveyAgent : AgentBase
     }
 
     /// <summary>SWAIG tool handler for the ``log_response`` tool.
-    /// (Python parity: ``SurveyAgent.log_response``.)</summary>
+    /// (equivalent to Python's ``SurveyAgent.log_response``.)</summary>
     [SuppressMessage("Performance", "CA1822", Justification = "instance method matches the cross-port SWAIG tool-handler surface")]
     public FunctionResult LogResponse(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {

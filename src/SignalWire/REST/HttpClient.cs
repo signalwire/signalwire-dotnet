@@ -221,7 +221,24 @@ public class HttpClient : IDisposable
         try
         {
             var doc = JsonDocument.Parse(responseBody);
-            return JsonElementToDict(doc.RootElement);
+            var root = doc.RootElement;
+            // A list endpoint can return a bare top-level JSON array (e.g. the
+            // fabric sub-resource collection routes). The client's uniform
+            // return type is Dictionary<string, object?>, so wrap a top-level
+            // array under the canonical "data" key — the same key the paginator
+            // reads — instead of throwing. Mirrors the go port
+            // (pkg/rest/client.go: array root → map{"data": arr}).
+            if (root.ValueKind == JsonValueKind.Array)
+            {
+                return new() { ["data"] = JsonElementToObject(root) };
+            }
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                // A bare scalar/null 2xx body is non-canonical; surface it under
+                // "data" rather than crashing on EnumerateObject.
+                return new() { ["data"] = JsonElementToObject(root) };
+            }
+            return JsonElementToDict(root);
         }
         catch (JsonException)
         {

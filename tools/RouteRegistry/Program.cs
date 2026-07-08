@@ -117,7 +117,12 @@ internal static class Program
             BaseAddress = new Uri("http://127.0.0.1:0"),
         };
         var swHttp = new SignalWire.REST.HttpClient(Sentinel, "t", "http://127.0.0.1:0", recordingHttp);
+        // RestClient inherits the generated ResourceTree; the resources dispatch
+        // through the tree's base `_generatedHttp` field, so swap THAT (RestClient's
+        // own `_http` is only used for Dispose). Both are set before any resource is
+        // lazily materialised, so the recording transport is what every route hits.
         SetPrivateField(client, "_http", swHttp);
+        SetPrivateField(client, "_generatedHttp", swHttp);
 
         var routes = new SortedDictionary<string, RouteRec>(StringComparer.Ordinal);
         var skipped = new List<SkipRec>();
@@ -272,6 +277,11 @@ internal static class Program
         if (t == typeof(SignalWire.REST.HttpClient)) return false;
         var ns = t.Namespace ?? "";
         if (!ns.StartsWith("SignalWire.REST", StringComparison.Ordinal)) return false;
+        // The code-generated REST resource tree (SignalWire.REST.Namespaces.Generated)
+        // is now the authoritative and sole route source: the hand namespace classes
+        // were deleted and RestClient inherits the generated ResourceTree, so its
+        // accessors (which live in the Generated namespace) ARE Set B. (SESSION_CHANGESET
+        // item A/B/C complete.)
         return t.IsClass && t != typeof(string);
     }
 
@@ -322,7 +332,12 @@ internal static class Program
         if (u == typeof(string)) { value = Sentinel; return true; }
         if (u == typeof(CancellationToken)) { value = CancellationToken.None; return true; }
         if (u == typeof(bool)) { value = false; return true; }
-        if (u == typeof(int) || u == typeof(long)) { value = Activator.CreateInstance(u); return true; }
+        if (u == typeof(int) || u == typeof(long)
+            || u == typeof(double) || u == typeof(float) || u == typeof(decimal))
+        {
+            value = Activator.CreateInstance(u);
+            return true;
+        }
 
         // Dictionary<string,object?> body, Dictionary<string,string> queryParams:
         // empty, non-null instances. A nullable/optional dict param may default to
@@ -351,9 +366,14 @@ internal static class Program
 
     private static void SetPrivateField(object obj, string name, object value)
     {
-        var f = obj.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)
-            ?? throw new InvalidOperationException($"field {name} not found on {obj.GetType()}");
-        f.SetValue(obj, value);
+        // Walk the type hierarchy so a private field declared on a BASE type
+        // (e.g. ResourceTree._generatedHttp, which RestClient inherits) is found.
+        for (var t = obj.GetType(); t is not null; t = t.BaseType)
+        {
+            var f = t.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
+            if (f is not null) { f.SetValue(obj, value); return; }
+        }
+        throw new InvalidOperationException($"field {name} not found on {obj.GetType()} or its bases");
     }
 
     // ---- recording transport ----------------------------------------------

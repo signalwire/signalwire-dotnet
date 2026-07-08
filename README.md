@@ -43,6 +43,7 @@ dotnet add package SignalWire.Sdk
 
 Each agent is a self-contained microservice that generates SWML (SignalWire Markup Language) and handles SWAIG (SignalWire AI Gateway) tool calls. The SignalWire platform runs the entire AI pipeline (STT, LLM, TTS) -- your agent just defines the behavior.
 
+<!-- include: examples/QuickstartAgent.cs#agent -->
 ```csharp
 using SignalWire.Agent;
 using SignalWire.SWAIG;
@@ -109,6 +110,7 @@ See [examples/README.md](examples/README.md) for the full list organized by cate
 
 Real-time call control and messaging over WebSocket. The RELAY client connects to SignalWire via the Blade protocol and gives you async control over live phone calls and SMS/MMS.
 
+<!-- include: examples/QuickstartRelay.cs#relay -->
 ```csharp
 using SignalWire.Relay;
 
@@ -145,6 +147,7 @@ See the **[RELAY documentation](relay/README.md)** for the full guide, API refer
 
 Synchronous REST client for managing SignalWire resources and controlling calls over HTTP.
 
+<!-- include: examples/QuickstartRest.cs#rest -->
 ```csharp
 using SignalWire.REST;
 
@@ -156,13 +159,10 @@ await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
     ["prompt"] = new Dictionary<string, object?> { ["text"] = "You are helpful." },
 });
 await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["area_code"] = "512" });
-await client.Datasphere.Documents.SearchAsync(new Dictionary<string, object?>
-{
-    ["query_string"] = "billing policy",
-});
+await client.Datasphere.Documents.SearchAsync("billing policy");
 ```
 
-- 21 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Compat, Phone Numbers, SIP, Queues, Recordings, and more
+- 20 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Phone Numbers, SIP, Queues, Recordings, and more
 - `Task`-based async API throughout
 - `HttpClient` with connection pooling
 - Dictionary returns -- raw data, no wrapper objects
@@ -204,7 +204,6 @@ Guides are also available in the [`docs/`](docs/) directory:
 - [Skills System](docs/skills_system.md) -- built-in skills and the modular framework
 - [Third-Party Skills](docs/third_party_skills.md) -- creating and publishing custom skills
 - [MCP Integration](docs/mcp_integration.md) -- Model Context Protocol integration
-- [MCP Gateway Reference](docs/mcp_gateway_reference.md) -- bridging MCP servers into SWAIG
 - [Skills Parameter Schema](docs/skills_parameter_schema.md) -- skill parameter definitions
 
 ### Deployment
@@ -235,17 +234,24 @@ Guides are also available in the [`docs/`](docs/) directory:
 | `SIGNALWIRE_LOG_LEVEL` | All | Logging level (`debug`, `info`, `warn`, `error`) |
 | `SIGNALWIRE_LOG_MODE` | All | Set to `off` to suppress all logging |
 
-## Testing
+## Testing, linting, and formatting
+
+Use the canonical wrapper scripts under `scripts/`. They self-bootstrap the
+.NET toolchain and run from any directory, so local runs match CI exactly:
 
 ```bash
-# Build the solution
-dotnet build
+# Run the full test suite (xUnit) — the 3 target frameworks are run SEPARATELY
+# (net8.0 -> net9.0 -> net10.0) to avoid cross-framework listener contention.
+bash scripts/run-tests.sh
 
-# Run the full test suite (xUnit)
-dotnet test
+# Run a subset (filter is passed through to `dotnet test --filter`)
+bash scripts/run-tests.sh "FullyQualifiedName~LoggerTests"
 
-# Run a subset by fully-qualified name
-dotnet test --filter "FullyQualifiedName~LoggerTests"
+# Lint (analyzer build, warnings-as-errors)
+bash scripts/run-lint.sh
+
+# Format the tree (add --check to verify only, as CI does)
+bash scripts/run-format.sh
 ```
 
 ## License

@@ -16,8 +16,8 @@ namespace SignalWire.SWAIG;
 /// state, not a caller choice).
 /// <see cref="FunctionResult.RecordCall(RecordFormat, RecordDirection, string, bool)"/>
 /// accepts this enum OR a string: the enum gives editor autocompletion and turns
-/// a typo into a compile error, while the string overload preserves parity with
-/// the Python reference (which takes a bare <c>str</c>).
+/// a typo into a compile error, while the string overload also accepts
+/// the plain wire string (which is all the Python API takes).
 /// </para>
 /// <para>
 /// Each member maps to its canonical wire value via
@@ -28,7 +28,7 @@ namespace SignalWire.SWAIG;
 /// <example>
 /// <code>
 /// result.RecordCall(direction: RecordDirection.Listen);  // typed, autocompleted
-/// result.RecordCall("rec-1", false, "wav", "listen");     // string still works (parity)
+/// result.RecordCall("rec-1", false, "wav", "listen");     // string still works
 /// </code>
 /// </example>
 /// </remarks>

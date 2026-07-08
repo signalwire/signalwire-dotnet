@@ -36,7 +36,7 @@ namespace SignalWire.Tests.Tls;
 public class TlsServerHttpsTest
 {
     [Fact]
-    public void Service_Https_ServesVerifiedEndpoint()
+    public async Task Service_Https_ServesVerifiedEndpoint()
     {
         var certsDir = TlsHarness.EnsureCertsDir();
         if (certsDir is null)
@@ -46,7 +46,7 @@ public class TlsServerHttpsTest
         var certPath = TlsHarness.ServerCertPath()!;
         var keyPath = TlsHarness.ServerKeyPath()!;
 
-        var port = FreeTcpPort();
+        var port = TlsHarness.FreeTcpPort();
 
         // Mirror Python's SWML_SSL_* env contract. Saved/restored so the env-
         // driven mock spawners in the other TLS tests are unaffected.
@@ -90,16 +90,16 @@ public class TlsServerHttpsTest
                 }
                 try
                 {
-                    resp = client.GetAsync(baseUrl + "/health").GetAwaiter().GetResult();
+                    resp = await client.GetAsync(baseUrl + "/health");
                     break;
                 }
-                catch (Exception ex) { lastErr = ex; Thread.Sleep(150); }
+                catch (Exception ex) { lastErr = ex; await Task.Delay(150); }
             }
             Assert.True(resp is not null,
                 "server /health never became reachable over https: " + (lastErr?.Message ?? "timeout"));
 
             Assert.Equal(HttpStatusCode.OK, resp!.StatusCode);
-            var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var body = await resp.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(body);
             var status = doc.RootElement.TryGetProperty("status", out var s) ? s.GetString() : null;
             Assert.Equal("healthy", status);
@@ -108,9 +108,9 @@ public class TlsServerHttpsTest
             // rejected, proving the server presents a cert that is actually verified.
             var rejecting = TlsHarness.UntrustedValidator();
             using var untrusted = BuildHttp(rejecting.Validate);
-            var ex2 = Assert.ThrowsAny<Exception>(() =>
+            var ex2 = await Assert.ThrowsAnyAsync<Exception>(async () =>
             {
-                untrusted.GetAsync(baseUrl + "/health").GetAwaiter().GetResult();
+                await untrusted.GetAsync(baseUrl + "/health");
             });
             // The untrusted client must NOT obtain a healthy response — the
             // positive control above already proved the server presents a cert a
@@ -134,7 +134,17 @@ public class TlsServerHttpsTest
         finally
         {
             cts.Cancel();
-            try { serverTask?.Wait(TimeSpan.FromSeconds(5)); } catch { /* shutdown race */ }
+            // Await the server task's shutdown (bounded), rather than a blocking
+            // .Wait() — keeps the whole test off blocking task ops (xUnit1031) so
+            // it can't deadlock the sync context.
+            if (serverTask is not null)
+            {
+                try
+                {
+                    await Task.WhenAny(serverTask, Task.Delay(TimeSpan.FromSeconds(5)));
+                }
+                catch { /* shutdown race */ }
+            }
             Environment.SetEnvironmentVariable("SWML_SSL_ENABLED", prevEnabled);
             Environment.SetEnvironmentVariable("SWML_SSL_CERT_PATH", prevCert);
             Environment.SetEnvironmentVariable("SWML_SSL_KEY_PATH", prevKey);
@@ -150,14 +160,5 @@ public class TlsServerHttpsTest
             ServerCertificateCustomValidationCallback = validate,
         };
         return new System.Net.Http.HttpClient(handler) { Timeout = TimeSpan.FromSeconds(6) };
-    }
-
-    private static int FreeTcpPort()
-    {
-        var l = new TcpListener(IPAddress.Loopback, 0);
-        l.Start();
-        var port = ((IPEndPoint)l.LocalEndpoint).Port;
-        l.Stop();
-        return port;
     }
 }

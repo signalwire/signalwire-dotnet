@@ -174,7 +174,6 @@ The purpose of tests, examples, and docs is to **prove** complete implementation
   - [x] PhoneNumbers
   - [x] Datasphere
   - [x] Video
-  - [x] Compat (Twilio LAML)
   - [x] Addresses, Queues, Recordings
   - [x] NumberGroups, VerifiedCallers, SipProfile
   - [x] Lookup, ShortCodes, ImportedNumbers
@@ -217,11 +216,10 @@ Documentation and examples prove the implementation is complete and usable. The 
 
 ### Top-level rest/ directory (REQUIRED)
 - [x] rest/README.md (API overview, namespace examples in target language)
-- [x] rest/docs/ (getting-started, namespaces, calling, fabric, compat, client-reference)
+- [x] rest/docs/ (getting-started, namespaces, calling, fabric, client-reference)
 - [x] rest/examples/rest_10dlc_registration.* (proves: registry namespace)
 - [x] rest/examples/rest_calling_ivr_and_ai.* (proves: calling namespace)
 - [x] rest/examples/rest_calling_play_and_record.* (proves: calling play/record)
-- [x] rest/examples/rest_compat_laml.* (proves: compat namespace)
 - [x] rest/examples/rest_datasphere_search.* (proves: datasphere namespace)
 - [x] rest/examples/rest_fabric_conferences_and_routing.* (proves: fabric sub-resources)
 - [x] rest/examples/rest_fabric_subscribers_and_sip.* (proves: fabric SIP)

@@ -20,8 +20,8 @@ namespace SignalWire.SWAIG;
 /// one of the two verbs.
 /// <see cref="FunctionResult.Tap(string, TapDirection, Codec, string, int, string?)"/>
 /// accepts this enum OR a string: the enum gives editor autocompletion and turns
-/// a typo into a compile error, while the string overload preserves parity with
-/// the Python reference (which takes a bare <c>str</c>).
+/// a typo into a compile error, while the string overload also accepts
+/// the plain wire string (which is all the Python API takes).
 /// </para>
 /// <para>
 /// Each member maps to its canonical wire value via
@@ -32,7 +32,7 @@ namespace SignalWire.SWAIG;
 /// <example>
 /// <code>
 /// result.Tap("rtp://1.2.3.4:5000", TapDirection.Hear, Codec.Pcmu);  // typed, autocompleted
-/// result.Tap("rtp://1.2.3.4:5000", direction: "hear", codec: "PCMU"); // string still works (parity)
+/// result.Tap("rtp://1.2.3.4:5000", direction: "hear", codec: "PCMU"); // string still works
 /// </code>
 /// </example>
 /// </remarks>

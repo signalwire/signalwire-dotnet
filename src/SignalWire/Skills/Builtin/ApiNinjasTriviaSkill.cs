@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
@@ -23,6 +24,17 @@ public sealed class ApiNinjasTriviaSkill : SkillBase
     }
 
     public override void RegisterTools(AgentBase agent)
+    {
+        foreach (var funcDef in GetTools())
+        {
+            Agent.RegisterSwaigFunction(funcDef);
+        }
+    }
+
+    /// <summary>Build and return the SWAIG tool definition(s) this skill
+    /// provides. (equivalent to Python's ``get_tools``.)</summary>
+    [SuppressMessage("Design", "CA1002", Justification = "Cross-port surface returns the tool-definition list verbatim.")]
+    public List<Dictionary<string, object>> GetTools()
     {
         var toolName = GetToolName("get_trivia");
         var apiKey = Params.TryGetValue("api_key", out var k) ? k as string ?? "" : "";
@@ -71,6 +83,6 @@ public sealed class ApiNinjasTriviaSkill : SkillBase
             },
         };
 
-        Agent.RegisterSwaigFunction(funcDef);
+        return [funcDef];
     }
 }

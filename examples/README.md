@@ -38,8 +38,8 @@ dotnet run -- examples/SimpleAgent.cs
 | File | Description |
 |------|-------------|
 | [ContextsDemo.cs](ContextsDemo.cs) | Multi-step context navigation with personas |
-| [CallFlow.cs](CallFlow.cs) | Call flow verbs, debug events, and FunctionResult actions |
-| [SessionState.cs](SessionState.cs) | Session lifecycle: global data, summary, tool actions |
+| [CallFlowAndActionsDemo.cs](CallFlowAndActionsDemo.cs) | Call flow verbs, debug events, and FunctionResult actions |
+| [SessionAndStateDemo.cs](SessionAndStateDemo.cs) | Session lifecycle: global data, summary, tool actions |
 | [GatherInfoDemo.cs](GatherInfoDemo.cs) | Contexts gather_info mode for structured data collection |
 
 ## SWAIG and DataMap Examples
@@ -79,7 +79,6 @@ dotnet run -- examples/SimpleAgent.cs
 | File | Description |
 |------|-------------|
 | [McpAgent.cs](McpAgent.cs) | MCP client and server: expose and consume MCP tools |
-| [McpGatewayDemo.cs](McpGatewayDemo.cs) | MCP gateway skill: bridge MCP servers to SWAIG |
 
 ## SWML Service Examples
 
@@ -97,17 +96,17 @@ dotnet run -- examples/SimpleAgent.cs
 
 | File | Description |
 |------|-------------|
-| [PrefabInfoGatherer.cs](PrefabInfoGatherer.cs) | InfoGatherer prefab for structured data collection |
-| [DynamicInfoGatherer.cs](DynamicInfoGatherer.cs) | InfoGatherer with dynamic question sets via callback |
+| [InfoGathererExample.cs](InfoGathererExample.cs) | InfoGatherer prefab for structured data collection |
+| [DynamicInfoGathererExample.cs](DynamicInfoGathererExample.cs) | InfoGatherer with dynamic question sets via callback |
 | [PrefabSurvey.cs](PrefabSurvey.cs) | Survey prefab with rating, yes/no, and open-ended questions |
-| [SurveyAgent.cs](SurveyAgent.cs) | Extended survey with product feedback questions |
-| [ReceptionistAgent.cs](ReceptionistAgent.cs) | Receptionist prefab for automated call routing |
-| [ConciergeAgent.cs](ConciergeAgent.cs) | Hotel concierge with reservations and transport tools |
+| [SurveyAgentExample.cs](SurveyAgentExample.cs) | Extended survey with product feedback questions |
+| [ReceptionistAgentExample.cs](ReceptionistAgentExample.cs) | Receptionist prefab for automated call routing |
+| [ConciergeAgentExample.cs](ConciergeAgentExample.cs) | Hotel concierge with reservations and transport tools |
 | [FaqBotAgent.cs](FaqBotAgent.cs) | FAQ bot with embedded knowledge base |
 
 ## RELAY and REST Examples
 
 | File | Description |
 |------|-------------|
-| [RelayDemo.cs](RelayDemo.cs) | RELAY client: answer inbound calls and play TTS |
+| [RelayAnswerAndWelcome.cs](RelayAnswerAndWelcome.cs) | RELAY client: answer inbound calls and play TTS |
 | [RestDemo.cs](RestDemo.cs) | REST client: list resources across APIs |

@@ -20,7 +20,7 @@ namespace SignalWire.SWAIG;
 /// This record is a .NET-idiomatic convenience (a single options object instead
 /// of 18 positional arguments). The flat, all-string
 /// <see cref="FunctionResult.JoinConference(string, bool, string, bool, bool, string?, int, string, string?, string, string?, string?, string?, string, string?, string, string, object?)"/>
-/// overload remains the parity-bearing signature against the Python reference;
+/// overload remains the primary signature matching the Python API;
 /// the convenience overload delegates straight to it via each enum's
 /// <c>ToWireName()</c>, so the emitted <c>join_conference</c> action is identical.
 /// </para>

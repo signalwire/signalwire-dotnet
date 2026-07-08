@@ -37,7 +37,6 @@ client.Calling.Dial(
 - Full Fabric API: resource types with CRUD + addresses, tokens, and generic resources
 - Datasphere: document management and semantic search
 - Video: rooms, sessions, recordings, conferences, tokens, streams
-- Compatibility API: full Twilio-compatible LAML surface
 - Phone number management, 10DLC registry, MFA, logs, and more
 - Lightweight HTTP via `HttpClient`
 - Dictionary returns -- raw data, no wrapper objects to learn
@@ -48,7 +47,6 @@ client.Calling.Dial(
 - [Client Reference](docs/client-reference.md) -- RestClient constructor, namespaces, error handling
 - [Fabric Resources](docs/fabric.md) -- managing AI agents, SWML scripts, subscribers, call flows, and more
 - [Calling Commands](docs/calling.md) -- REST-based call control (dial, play, record, collect, AI, etc.)
-- [Compatibility API](docs/compat.md) -- Twilio-compatible LAML endpoints
 - [All Namespaces](docs/namespaces.md) -- phone numbers, video, datasphere, logs, registry, and more
 
 ## Examples
@@ -58,7 +56,6 @@ client.Calling.Dial(
 | [Rest10DlcRegistration.cs](examples/Rest10DlcRegistration.cs) | 10DLC brand and campaign compliance registration |
 | [RestCallingIvrAndAi.cs](examples/RestCallingIvrAndAi.cs) | IVR input, AI operations, live transcription, tap, stream |
 | [RestCallingPlayAndRecord.cs](examples/RestCallingPlayAndRecord.cs) | Media operations: play, record, transcribe, denoise |
-| [RestCompatLaml.cs](examples/RestCompatLaml.cs) | Twilio-compatible LAML migration |
 | [RestDatasphereSearch.cs](examples/RestDatasphereSearch.cs) | Upload document, run semantic search |
 | [RestFabricConferencesAndRouting.cs](examples/RestFabricConferencesAndRouting.cs) | Conferences, cXML resources, generic routing, tokens |
 | [RestFabricSubscribersAndSip.cs](examples/RestFabricSubscribersAndSip.cs) | Provision SIP-enabled users on Fabric |

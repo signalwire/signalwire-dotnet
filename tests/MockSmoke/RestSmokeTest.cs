@@ -74,14 +74,17 @@ public class RestSmokeTest : IClassFixture<MockServerFixture>
             return;
         }
 
-        // Build a real HttpClient + Calling namespace pointed at the mock.
+        // Build a real HttpClient + a live spec-backed CRUD resource pointed at
+        // the mock. Uses the phone_numbers collection (a real canonical route) —
+        // this is a transport/journal/adjacency smoke test, not a route-coverage
+        // test, so any live GET-able collection works.
         var http = _fixture.NewHttp();
-        var compatBasePath = $"/api/laml/2010-04-01/Accounts/{_fixture.Project}";
-        var compat = new CrudResource(http, compatBasePath);
+        var basePath = "/api/relay/rest/phone_numbers";
+        var resource = new CrudResource(http, basePath);
 
         // Drive the SDK through a real socket. The mock will synthesize a JSON
         // body from the OpenAPI spec — we just need it to return 2xx.
-        var result = await compat.ListAsync();
+        var result = await resource.ListAsync();
 
         // Behavioral assertion: SDK exposed a non-null dict back to us.
         Assert.NotNull(result);
@@ -91,7 +94,7 @@ public class RestSmokeTest : IClassFixture<MockServerFixture>
         // work end-to-end.
         var entry = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", entry.Method);
-        Assert.Equal(compatBasePath, entry.Path);
+        Assert.Equal(basePath, entry.Path);
         Assert.NotNull(entry.Headers);
         Assert.True(entry.Headers!.ContainsKey("authorization"),
             $"expected authorization header in journal entry; got: {string.Join(",", entry.Headers.Keys)}");
@@ -122,11 +125,11 @@ public class RestSmokeTest : IClassFixture<MockServerFixture>
         // Issue a request — the journal should still record it (regardless of
         // whether the override matched a registered route).
         var http = _fixture.NewHttp();
-        var compat = new CrudResource(http, $"/api/laml/2010-04-01/Accounts/{_fixture.Project}");
+        var resource = new CrudResource(http, "/api/relay/rest/phone_numbers");
 
         try
         {
-            await compat.ListAsync();
+            await resource.ListAsync();
         }
         catch (SignalWireRestError)
         {
