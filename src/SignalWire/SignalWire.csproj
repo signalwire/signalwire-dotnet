@@ -40,7 +40,7 @@
   <ItemGroup>
     <!-- YamlDotNet is the .NET-idiomatic YAML library; used by POM
          to mirror Python's ``PromptObjectModel.from_yaml/to_yaml``. -->
-    <PackageReference Include="YamlDotNet" Version="18.0.0" />
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 
   <ItemGroup>
