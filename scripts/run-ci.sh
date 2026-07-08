@@ -26,6 +26,10 @@
 #     * DRIFT reads port_signatures.json that SIGNATURES writes → deps=SIGNATURES.
 #     * SURFACE-FRESH regenerates port_surface.json in place (and restores it);
 #       DOC-AUDIT + SURFACE-DIFF read it → all three share res=surface.
+#     * The five heavy gates all drive MSBuild over shared bin/obj outputs
+#       (TEST+REST-COVERAGE: tests Debug; LINT+SPEC-PARITY: src Release; FMT:
+#       sln restore + local source rewrite) → all five share res=msbuild
+#       (see the comment at the TEST gate for the concrete race).
 #   The host mock-server lifecycle (mock_signalwire + mock_relay, for the docker
 #   TEST gate reached via --network host) is stood up BEFORE scheduling and torn
 #   down in an EXIT trap, exactly as before.
@@ -386,7 +390,23 @@ fi
 # ---- register gates ----------------------------------------------------------
 sched_init "$@"
 
-sched_gate TEST defer=1 desc="docker dotnet test (net8/net9/net10 sequential)" \
+# res=msbuild — the five deferred heavy gates each drive MSBuild over the SAME
+# project outputs, and two concurrent MSBuild processes race on shared bin/obj
+# files (a shared MUTABLE FILE is a data dependency, per the scheduler doctrine):
+#   * TEST + REST-COVERAGE both `dotnet test` the sln → both build
+#     SignalWire.Tests Debug/net8.0 into the same tests/bin+obj;
+#     GenerateRuntimeConfigurationFiles writes runtimeconfig.json with NO retry,
+#     so the overlap intermittently dies with IOException "file is being used by
+#     another process" (seen in the cross-port matrix 2026-07-08).
+#   * LINT (src Release, --no-incremental forced rewrite) + SPEC-PARITY (builds
+#     tools/RouteRegistry Release, whose ProjectReference rebuilds SignalWire
+#     Release) share src/SignalWire/bin+obj/Release.
+#   * FMT restores the sln (cold tests/obj writes) and locally runs in APPLY
+#     mode, rewriting source files while the other gates compile them.
+# One shared resource label serializes all five, making the collision
+# structurally impossible; REST-COVERAGE then builds warm after TEST, so the
+# added wall time is mostly just its own test execution.
+sched_gate TEST defer=1 res=msbuild desc="docker dotnet test (net8/net9/net10 sequential)" \
     --fn dotnet_test_per_framework
 
 sched_gate SIGNATURES desc="regenerate port_signatures.json" \
@@ -421,10 +441,10 @@ sched_gate GEN-FRESH-SWML desc="generate_swml_verbs.py --check (generated SWML-v
 sched_gate NO-CHEAT desc="audit_no_cheat_tests" \
     -- python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"
 
-sched_gate REST-COVERAGE defer=1 desc="every implemented REST route covered success+error (parity + allowlist)" \
+sched_gate REST-COVERAGE defer=1 res=msbuild desc="every implemented REST route covered success+error (parity + allowlist)" \
     --fn rest_coverage_gate
 
-sched_gate SPEC-PARITY defer=1 desc="implemented routes == canonical spec (modulo SPEC_IMPLEMENTATION_GAPS.md)" \
+sched_gate SPEC-PARITY defer=1 res=msbuild desc="implemented routes == canonical spec (modulo SPEC_IMPLEMENTATION_GAPS.md)" \
     --fn spec_parity_gate
 
 sched_gate EMISSION desc="diff_port_emission vs python to_dict()" \
@@ -460,10 +480,10 @@ sched_gate BEHAVIORAL-WIRE-RELAY res=behavioral desc="diff_port_wire_relay vs py
         --port dotnet --python-sdk "$PYTHON_SDK_DIR" \
         --dump-cmd "bash $PORT_ROOT/scripts/dump-corpus.sh wire-relay"
 
-sched_gate FMT defer=1 desc="dotnet format whitespace (local: auto-fix; CI: --verify)" \
+sched_gate FMT defer=1 res=msbuild desc="dotnet format whitespace (local: auto-fix; CI: --verify)" \
     --fn fmt_gate
 
-sched_gate LINT defer=1 desc="dotnet build (analyzers, warnings-as-errors)" \
+sched_gate LINT defer=1 res=msbuild desc="dotnet build (analyzers, warnings-as-errors)" \
     --fn lint_gate
 
 sched_gate DOC-AUDIT res=surface desc="audit_docs vs port_surface.json" \
