@@ -127,7 +127,27 @@ public sealed class WebService : IDisposable
         _listener = listener;
         Port = bindPort;
         _cts = new CancellationTokenSource();
-        _loop = Task.Run(() => AcceptLoop(listener, _cts.Token));
+        // The accept loop blocks synchronously in GetContext() for the life of
+        // the service, so it must own a dedicated thread. On the shared
+        // ThreadPool (Task.Run) it competes with every other queued work item:
+        // under pool starvation the loop can sit UNSCHEDULED while clients
+        // burn their timeouts waiting for a connection (three WebServiceTests
+        // timed out together this way under xUnit parallelism, net9 matrix run
+        // 28939151975). LongRunning gives the loop its own thread, and the
+        // ready-gate below keeps Start() from returning a port nobody is
+        // serving yet.
+        using var ready = new ManualResetEventSlim(false);
+        var token = _cts.Token;
+        _loop = Task.Factory.StartNew(
+            () => AcceptLoop(listener, token, ready),
+            token,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
+        if (!ready.Wait(TimeSpan.FromSeconds(10)))
+        {
+            throw new InvalidOperationException(
+                $"WebService accept loop failed to start within 10s (port {bindPort})");
+        }
         return bindPort;
     }
 
@@ -202,8 +222,18 @@ public sealed class WebService : IDisposable
     // --- internals -----------------------------------------------------------
 
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort request handling; any failure is surfaced to the caller as an in-band error (logged and the response closed) so one bad request never tears down the accept loop.")]
-    private void AcceptLoop(HttpListener listener, CancellationToken token)
+    private void AcceptLoop(HttpListener listener, CancellationToken token, ManualResetEventSlim? ready = null)
     {
+        try
+        {
+            ready?.Set();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Start() timed out waiting and disposed the gate; it already
+            // threw to its caller — just serve until Stop() like normal.
+        }
+
         while (!token.IsCancellationRequested && listener.IsListening)
         {
             HttpListenerContext context;
