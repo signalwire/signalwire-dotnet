@@ -282,10 +282,35 @@ public static class TlsHarness
     }
 
     /// <summary>
+    /// Pick a fresh loopback port and spawn <c>mock_signalwire --tls</c>,
+    /// RETRYING on a fresh port if the mock fails to bind/become ready — same
+    /// bind-release port-steal race the RELAY overload guards against (see its
+    /// remarks). Returns the bound port via <paramref name="port"/>.
+    /// </summary>
+    public static TlsMockSignalwire? StartTlsMockSignalwire(
+        System.Net.Http.HttpClient trustingClient, out int port, int attempts = 4)
+    {
+        port = 0;
+        for (var i = 0; i < attempts; i++)
+        {
+            var p = FreeTcpPort();
+            var mock = StartTlsMockSignalwire(p, trustingClient);
+            if (mock is not null)
+            {
+                port = p;
+                return mock;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Spawn <c>python -m mock_signalwire --tls</c> on <paramref name="port"/>.
     /// Returns null when porting-sdk is not adjacent or the server fails to
     /// become ready (poll allows for the ~15s cold start). The caller supplies a
-    /// CA-trusting HttpClient to probe <c>/__mock__/health</c> over HTTPS.
+    /// CA-trusting HttpClient to probe <c>/__mock__/health</c> over HTTPS. Prefer
+    /// the retrying <see cref="StartTlsMockSignalwire(System.Net.Http.HttpClient, out int, int)"/>
+    /// overload for tests.
     /// </summary>
     public static TlsMockSignalwire? StartTlsMockSignalwire(int port, System.Net.Http.HttpClient trustingClient)
     {
@@ -330,9 +355,52 @@ public static class TlsHarness
     }
 
     /// <summary>
+    /// Pick fresh loopback ports and spawn <c>mock_relay --tls</c>, RETRYING on
+    /// a fresh port pair if the mock fails to bind/become ready.
+    ///
+    /// <para>Why retry: FreeTcpPort() binds :0, reads the port, then releases it
+    /// — an inherent time-of-check-to-time-of-use window in which a concurrent
+    /// test (or the very next FreeTcpPort call) can steal that port before the
+    /// python mock rebinds it. When that happens the mock never becomes healthy
+    /// and a single-attempt spawn returns null, failing the test on a race that
+    /// has nothing to do with the code under test. This was the intermittent
+    /// dotnet TLS-listener flake ("they share one mock/listener slot", per
+    /// scripts/run-tests.sh). Retrying on a NEW port pair makes a stolen port a
+    /// non-event: the next attempt gets different ports.</para>
+    ///
+    /// <para>Returns null only when mock_relay is genuinely unavailable
+    /// (porting-sdk not adjacent) or every attempt failed — a real, loud
+    /// failure, not a hang.</para>
+    /// </summary>
+    /// <param name="wsPort">bound WS port of the started mock (out)</param>
+    /// <param name="httpPort">bound HTTP control-plane port (out)</param>
+    public static TlsMockRelay? StartTlsMockRelay(out int wsPort, out int httpPort, int attempts = 4)
+    {
+        wsPort = 0;
+        httpPort = 0;
+        for (var i = 0; i < attempts; i++)
+        {
+            var ws = FreeTcpPort();
+            var http = FreeTcpPort();
+            var mock = StartTlsMockRelay(ws, http);
+            if (mock is not null)
+            {
+                wsPort = ws;
+                httpPort = http;
+                return mock;
+            }
+            // Attempt failed (likely a stolen port in the bind-release window or
+            // a slow cold start). Try again on a fresh pair.
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Spawn <c>python -m mock_relay --tls</c> on <paramref name="wsPort"/> /
     /// <paramref name="httpPort"/>. The control plane stays plain HTTP, so the
     /// readiness probe uses a normal HttpClient. Returns null when unavailable.
+    /// Prefer the retrying <see cref="StartTlsMockRelay(out int, out int, int)"/>
+    /// overload for tests — it removes the port-steal race.
     /// </summary>
     public static TlsMockRelay? StartTlsMockRelay(int wsPort, int httpPort)
     {

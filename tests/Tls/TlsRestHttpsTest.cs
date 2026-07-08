@@ -37,13 +37,12 @@ public class TlsRestHttpsTest
             return; // porting-sdk tls harness not adjacent — skip cleanly.
         }
 
-        // Pick a free port (never a hardcoded one — avoids leftover/concurrent collision).
-        var port = TlsHarness.FreeTcpPort();
-
         var validator = TlsHarness.Validator();
         using var trustingHttp = BuildHttp(validator.Validate);
 
-        using var mock = TlsHarness.StartTlsMockSignalwire(port, trustingHttp);
+        // Spawn the mock, retrying on a fresh port if one is stolen in the
+        // bind-release window (the TLS-listener contention flake).
+        using var mock = TlsHarness.StartTlsMockSignalwire(trustingHttp, out _);
         Assert.True(mock is not null,
             "mock_signalwire --tls did not become ready (~15s cold start; is python3 + porting-sdk available?)");
 
