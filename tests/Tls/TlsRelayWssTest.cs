@@ -37,11 +37,9 @@ public class TlsRelayWssTest
             return; // porting-sdk tls harness not adjacent — skip cleanly.
         }
 
-        // Pick two independent free ports (never hardcoded — RELAY needs WS + HTTP).
-        var wsPort = TlsHarness.FreeTcpPort();
-        var httpPort = TlsHarness.FreeTcpPort();
-
-        using var mock = TlsHarness.StartTlsMockRelay(wsPort, httpPort);
+        // Pick free ports and spawn the mock, RETRYING on a fresh pair if a port
+        // is stolen in the bind-release window (the TLS-listener contention flake).
+        using var mock = TlsHarness.StartTlsMockRelay(out var wsPort, out _);
         Assert.True(mock is not null,
             "mock_relay --tls did not become ready (is python3 + porting-sdk available?)");
 
