@@ -18,17 +18,17 @@ var client = new RestClient(
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-void Safe(string label, Action fn)
+async Task Safe(string label, Func<Task> fn)
 {
-    try { fn(); Console.WriteLine($"  {label}: OK"); }
+    try { await fn(); Console.WriteLine($"  {label}: OK"); }
     catch (Exception ex) { Console.WriteLine($"  {label}: failed ({ex.Message})"); }
 }
 
 // 1. Create a cXML resource for conferencing
 Console.WriteLine("Creating cXML conference resource...");
-Safe("Create cXML", () =>
+await Safe("Create cXML", async () =>
 {
-    var cxml = client.Fabric.CxmlResources.Create(new Dictionary<string, object>
+    var cxml = await client.Fabric.CxmlScripts.CreateAsync(new Dictionary<string, object>
     {
         ["name"] = "team-conference",
         ["body"] = @"<Response><Dial><Conference>team-room</Conference></Dial></Response>",
@@ -38,9 +38,9 @@ Safe("Create cXML", () =>
 
 // 2. Create a generic Fabric resource
 Console.WriteLine("\nCreating generic routing resource...");
-Safe("Create resource", () =>
+await Safe("Create resource", async () =>
 {
-    var resource = client.Fabric.SwmlScripts.Create(new Dictionary<string, object>
+    var resource = await client.Fabric.SwmlScripts.CreateAsync(new Dictionary<string, object>
     {
         ["name"] = "custom-router",
         ["type"] = "swml_script",
@@ -50,10 +50,10 @@ Safe("Create resource", () =>
 
 // 3. List addresses
 Console.WriteLine("\nListing Fabric addresses...");
-Safe("List addresses", () =>
+await Safe("List addresses", async () =>
 {
-    var addresses = client.Fabric.AddressesTopLevel.List();
-    var data = addresses["data"] as List<object> ?? new();
+    var addresses = await client.Fabric.Addresses.ListAsync();
+    var data = addresses.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data.Take(5))
     {
         if (item is Dictionary<string, object?> a)
@@ -65,22 +65,20 @@ Safe("List addresses", () =>
 
 // 4. Generate a subscriber token
 Console.WriteLine("\nGenerating subscriber token...");
-Safe("Create token", () =>
+await Safe("Create token", async () =>
 {
-    var token = client.Fabric.TokensApi.CreateSubscriberToken(new Dictionary<string, object>
-    {
-        ["subscriber_id"] = "example-subscriber-id",
-        ["ttl"]           = 3600,
-    });
+    var token = await client.Fabric.Tokens.CreateSubscriberTokenAsync(
+        reference: "example-subscriber-id",
+        expireAt:  3600);
     Console.WriteLine($"    Token generated (expires in 1h)");
 });
 
 // 5. List queues
 Console.WriteLine("\nListing queues...");
-Safe("List queues", () =>
+await Safe("List queues", async () =>
 {
-    var queues = client.Queues.List();
-    var data = queues["data"] as List<object> ?? new();
+    var queues = await client.Queues.ListAsync();
+    var data = queues.GetValueOrDefault("data") as List<object> ?? new();
     Console.WriteLine($"    Found {data.Count} queues");
 });
 

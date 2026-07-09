@@ -4,11 +4,22 @@
 
 All SignalWire services support optional JSON configuration files with environment variable substitution. Services continue to work without any configuration file.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using System.Collections.Generic;
+// Shared context for the fragments below: a constructed `agent`.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+```
+
 ## Quick Start
 
 ### Zero Configuration
 
 ```csharp
+using System;
+using SignalWire.Agent;
+
 var agent = new AgentBase(new AgentOptions { Name = "my-agent", Route = "/agent" });
 agent.Run();
 ```
@@ -88,6 +99,9 @@ Config values support `${VAR_NAME|default}` syntax:
 ### Constructor Parameters
 
 ```csharp
+using System;
+using SignalWire.Agent;
+
 var agent = new AgentBase(new AgentOptions
 {
     Name              = "my-agent",
@@ -121,6 +135,9 @@ agent.SetParams(new Dictionary<string, object>
 ### REST Client Configuration
 
 ```csharp
+using System;
+using SignalWire.REST;
+
 // From constructor
 var client = new RestClient(
     projectId: "your-project-id",
@@ -129,12 +146,15 @@ var client = new RestClient(
 );
 
 // From environment variables
-var client = new RestClient(); // Uses SIGNALWIRE_PROJECT_ID, SIGNALWIRE_API_TOKEN, SIGNALWIRE_SPACE
+var clientFromEnv = new RestClient(); // Uses SIGNALWIRE_PROJECT_ID, SIGNALWIRE_API_TOKEN, SIGNALWIRE_SPACE
 ```
 
 ### RELAY Client Configuration
 
 ```csharp
+using System.Collections.Generic;
+using SignalWire.Relay;
+
 var client = new Client(new Dictionary<string, string>
 {
     ["project"]  = "your-project-id",

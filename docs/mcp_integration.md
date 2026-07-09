@@ -7,11 +7,21 @@ The SDK supports the [Model Context Protocol (MCP)](https://modelcontextprotocol
 
 These features are independent and can be used separately or together.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using System.Collections.Generic;
+// Shared context for the fragments below: a constructed `agent`.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+```
+
 ## Adding External MCP Servers
 
 Use `AddMcpServer()` to connect your agent to remote MCP servers. Tools are discovered at call start via the MCP protocol and added to the AI's tool list alongside your defined tools.
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using SignalWire.Agent;
 
 var agent = new AgentBase(new AgentOptions
@@ -76,6 +86,8 @@ Tools from all servers are merged into one list. If an MCP tool has the same nam
 Use `EnableMcpServer()` to add an MCP endpoint at `/mcp` on your agent's server. Any MCP client can connect and use your defined tools.
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
@@ -136,6 +148,8 @@ Your tools are now available in Claude Desktop conversations.
 The two features are independent:
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 

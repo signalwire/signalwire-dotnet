@@ -1,8 +1,22 @@
 # REST Client Reference (.NET)
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.REST;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+// Context for the illustrative FRAGMENTS below (Error Handling / HTTP Client).
+// The Constructor snippet opens with `using System;` so it is a self-contained
+// unit and this preamble is NOT prepended to it.
+RestClient client = new RestClient("project", "token", "example.signalwire.com");
+```
+
 ## Constructor
 
 ```csharp
+using System;
+using SignalWire.REST;
+
 var client = new RestClient(
     projectId: "your-project-id",
     token:     "your-api-token",

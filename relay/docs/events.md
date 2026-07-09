@@ -4,6 +4,16 @@
 
 The RELAY client dispatches typed events for all call state changes, action completions, and messaging updates. Events are routed to the correct Call or Message object by `call_id` or `message_id`.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Relay;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+// Shared context: a connected RELAY `client` (see Getting Started).
+Client client = null!;
+```
+
 ## Event Class
 
 ```csharp

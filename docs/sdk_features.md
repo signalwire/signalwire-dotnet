@@ -2,6 +2,15 @@
 
 ## Overview
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using System.Collections.Generic;
+// Shared context for the fragments below: a constructed `agent` and a `config`.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+var config = new Dictionary<string, object> { ["url"] = "say:hi" };
+```
+
 The SignalWire .NET SDK provides three main capabilities:
 
 1. **AI Agent Framework** -- Build voice AI agents as HTTP microservices
@@ -71,6 +80,10 @@ Real-time call control and messaging over WebSocket using the Blade protocol (JS
 ### Example
 
 ```csharp
+using System.Collections.Generic;
+using SignalWire.Relay;
+
+string projectId = "project", apiToken = "token";
 var client = new Client(new Dictionary<string, string>
 {
     ["project"]  = projectId,
@@ -112,6 +125,10 @@ HTTP client for all SignalWire APIs. Lazily initializes namespace sub-objects.
 ### Example
 
 ```csharp
+using System.Collections.Generic;
+using SignalWire.REST;
+
+string id = "project", tok = "token", sp = "example.signalwire.com";
 var client = new RestClient(projectId: id, token: tok, space: sp);
 
 // Fabric API
@@ -125,16 +142,10 @@ await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
 var numbers = await client.PhoneNumbers.ListAsync();
 
 // Calling
-await client.Calling.DialAsync(new Dictionary<string, object?>
-{
-    ["command"] = "dial",
-    ["params"]  = new Dictionary<string, object>
-    {
-        ["from"] = "+15559876543",
-        ["to"]   = "+15551234567",
-        ["url"]  = "https://example.com/handler",
-    },
-});
+await client.Calling.DialAsync(
+    from: "+15559876543",
+    to:   "+15551234567",
+    url:  "https://example.com/handler");
 ```
 
 ## .NET-Specific Features

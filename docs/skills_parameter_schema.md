@@ -4,6 +4,14 @@
 
 Each built-in skill accepts configuration parameters that control its behavior. This document lists the parameter schema for every built-in skill.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using System.Collections.Generic;
+// Shared context for the fragments below: a constructed `agent`.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+```
+
 ## datetime
 
 Provides date, time, and timezone conversion tools.

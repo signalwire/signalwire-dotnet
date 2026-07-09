@@ -4,12 +4,21 @@
 
 DataMap provides declarative SWAIG tools that execute on SignalWire's servers, without requiring your own webhook infrastructure. DataMap tools can call external APIs, match expressions, and return structured responses.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using SignalWire.DataMap;
+using SignalWire.SWAIG;
+using System.Collections.Generic;
+// Shared context for the builder-method fragments below: an `agent` and a
+// `dm` DataMap under construction.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+DataMap dm = new DataMap("my_function");
+```
+
 ## Quick Start
 
 ```csharp
-using SignalWire.DataMap;
-using SignalWire.SWAIG;
-
 var weather = new DataMap("get_weather")
     .Description("Get weather for a location")
     .Parameter("location", "string", "City name", required: true)
@@ -26,7 +35,10 @@ agent.RegisterSwaigFunction(weather.ToSwaigFunction());
 Create a new DataMap with the given function name.
 
 ```csharp
-var dm = new DataMap("my_function");
+using System;
+using SignalWire.DataMap;
+
+var dm2 = new DataMap("my_function");
 ```
 
 ### Description() / Purpose()

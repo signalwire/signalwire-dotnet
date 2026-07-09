@@ -4,6 +4,14 @@
 
 The SignalWire .NET SDK provides a unified security configuration system with secure defaults for HTTPS, basic authentication, and security headers.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using System.Collections.Generic;
+// Shared context for the fragments below: a constructed `agent`.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+```
+
 ## Quick Start
 
 ### Basic HTTPS Setup
@@ -56,16 +64,23 @@ export SWML_BASIC_AUTH_PASSWORD=mysecurepassword
 When no credentials are provided, the SDK generates secure credentials automatically:
 
 ```csharp
+using System;
+using SignalWire.Agent;
+
 var agent = new AgentBase(new AgentOptions { Name = "my-agent" });
 
-// Credentials are auto-generated
-Console.WriteLine($"User: {agent.BasicAuthUser()}");
-Console.WriteLine($"Pass: {agent.BasicAuthPassword()}");
+// Credentials are auto-generated; GetBasicAuthCredentials() returns the resolved pair
+var (user, password) = agent.GetBasicAuthCredentials();
+Console.WriteLine($"User: {user}");
+Console.WriteLine($"Pass: {password}");
 ```
 
 ### Explicit Credentials
 
 ```csharp
+using System;
+using SignalWire.Agent;
+
 var agent = new AgentBase(new AgentOptions
 {
     Name              = "my-agent",

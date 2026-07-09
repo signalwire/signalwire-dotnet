@@ -4,6 +4,14 @@
 
 LLM parameters control the AI model's behavior during conversations. These can be set at the prompt level (via `SetPromptLlmParams`) and the post-prompt level (via `SetPostPromptLlmParams`).
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using System.Collections.Generic;
+// Shared context for the fragments below: a constructed `agent`.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+```
+
 ## Setting LLM Parameters
 
 ### Prompt LLM Parameters

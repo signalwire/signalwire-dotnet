@@ -4,6 +4,16 @@
 
 The Fabric namespace manages AI agents, SWML scripts, subscribers, call flows, SIP endpoints, cXML resources, and more. Each sub-resource exposes the async CRUD methods (`ListAsync`/`GetAsync`/`CreateAsync`/`UpdateAsync`/`DeleteAsync`).
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.REST;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+// Shared context the fragments below assume: a constructed `client` and id placeholders.
+RestClient client = new RestClient("project", "token", "example.signalwire.com");
+string resourceId = "res-uuid", addressId = "addr-uuid", subscriberId = "sub-uuid";
+```
+
 ## AI Agents
 
 ```csharp
@@ -133,14 +143,14 @@ var cxml = await client.Fabric.CxmlScripts.CreateAsync(new Dictionary<string, ob
 
 ## Generic Resources
 
-The generic ``ResourcesGeneric`` accessor lists/gets/deletes any resource type
+The generic ``Resources`` accessor lists/gets/deletes any resource type
 and lists its addresses (there is no generic create — create a typed resource,
 e.g. ``SwmlScripts``/``CallFlows``):
 
 ```csharp
-var resources = await client.Fabric.ResourcesGeneric.ListAsync();
-var resource  = await client.Fabric.ResourcesGeneric.GetAsync(resourceId);
-var addrs     = await client.Fabric.ResourcesGeneric.ListAddressesAsync(resourceId);
+var resources = await client.Fabric.Resources.ListAsync();
+var resource  = await client.Fabric.Resources.GetAsync(resourceId);
+var addrs     = await client.Fabric.Resources.ListAddressesAsync(resourceId);
 ```
 
 ## Addresses
@@ -149,8 +159,8 @@ Top-level Fabric addresses are read-only (list/get); a resource's addresses are
 created by binding a phone number (the server auto-materializes them):
 
 ```csharp
-var addresses = await client.Fabric.AddressesTopLevel.ListAsync();
-var address   = await client.Fabric.AddressesTopLevel.GetAsync(addressId);
+var addresses = await client.Fabric.Addresses.ListAsync();
+var address   = await client.Fabric.Addresses.GetAsync(addressId);
 ```
 
 ## Tokens
@@ -158,9 +168,7 @@ var address   = await client.Fabric.AddressesTopLevel.GetAsync(addressId);
 Generate authentication tokens for subscribers:
 
 ```csharp
-var token = await client.Fabric.TokensApi.CreateSubscriberTokenAsync(new Dictionary<string, object?>
-{
-    ["subscriber_id"] = subscriberId,
-    ["ttl"]           = 3600,
-});
+var token = await client.Fabric.Tokens.CreateSubscriberTokenAsync(
+    reference: subscriberId,
+    expireAt:  3600);
 ```

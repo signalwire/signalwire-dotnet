@@ -14,6 +14,7 @@ For a genuine thin `[Fact]` that must stay, prefer the in-code marker over a
 `file:line` entry (markers ride with the code through reflow; line numbers
 drift):
 
+<!-- snippet: no-compile test-illustration (xUnit [Fact] fragment; xUnit isn't referenced by the SDK build) -->
 ```csharp
 [Fact]
 public void SmokeConstructor() {  // no-cheat: smoke test — exercises the build path only

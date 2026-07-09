@@ -18,17 +18,17 @@ var client = new RestClient(
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-void Safe(string label, Action fn)
+async Task Safe(string label, Func<Task> fn)
 {
-    try { fn(); Console.WriteLine($"  {label}: OK"); }
+    try { await fn(); Console.WriteLine($"  {label}: OK"); }
     catch (Exception ex) { Console.WriteLine($"  {label}: failed ({ex.Message})"); }
 }
 
 // 1. Create a SWML script
 Console.WriteLine("Creating SWML script...");
-Safe("Create SWML script", () =>
+await Safe("Create SWML script", async () =>
 {
-    var script = client.Fabric.SwmlScripts.Create(new Dictionary<string, object>
+    var script = await client.Fabric.SwmlScripts.CreateAsync(new Dictionary<string, object>
     {
         ["name"]    = "greeting-script",
         ["content"] = new Dictionary<string, object>
@@ -51,9 +51,9 @@ Safe("Create SWML script", () =>
 
 // 2. Create a call flow with AI
 Console.WriteLine("\nCreating AI call flow...");
-Safe("Create call flow", () =>
+await Safe("Create call flow", async () =>
 {
-    var flow = client.Fabric.CallFlows.Create(new Dictionary<string, object>
+    var flow = await client.Fabric.CallFlows.CreateAsync(new Dictionary<string, object>
     {
         ["name"]    = "ai-support-flow",
         ["content"] = new Dictionary<string, object>
@@ -85,10 +85,10 @@ Safe("Create call flow", () =>
 
 // 3. List SWML scripts
 Console.WriteLine("\nListing SWML scripts...");
-Safe("List scripts", () =>
+await Safe("List scripts", async () =>
 {
-    var scripts = client.Fabric.SwmlScripts.List();
-    var data = scripts["data"] as List<object> ?? new();
+    var scripts = await client.Fabric.SwmlScripts.ListAsync();
+    var data = scripts.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data.Take(5))
     {
         if (item is Dictionary<string, object?> s)
@@ -100,10 +100,10 @@ Safe("List scripts", () =>
 
 // 4. List call flows
 Console.WriteLine("\nListing call flows...");
-Safe("List call flows", () =>
+await Safe("List call flows", async () =>
 {
-    var flows = client.Fabric.CallFlows.List();
-    var data = flows["data"] as List<object> ?? new();
+    var flows = await client.Fabric.CallFlows.ListAsync();
+    var data = flows.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data.Take(5))
     {
         if (item is Dictionary<string, object?> f)

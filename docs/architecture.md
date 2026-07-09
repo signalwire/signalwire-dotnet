@@ -4,6 +4,15 @@
 
 The SignalWire AI Agents SDK for .NET provides a framework for building, deploying, and managing AI agents as microservices. Agents are self-contained web applications that expose HTTP endpoints to interact with the SignalWire platform. The SDK handles HTTP routing, prompt management, SWAIG tool execution, and SWML document generation.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using SignalWire.Contexts;
+using System.Collections.Generic;
+// Shared context for the Contexts fragment below: a constructed `agent` + builder.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+```
+
 ## Core Components
 
 ### Class Hierarchy
@@ -69,6 +78,7 @@ Function Call ──> Expression Processing ──> Webhook Execution ──> Re
 ### Builder Pattern
 
 ```csharp
+using System;
 using SignalWire.DataMap;
 using SignalWire.SWAIG;
 
@@ -86,14 +96,17 @@ The contexts system (`SignalWire.Contexts.ContextBuilder`) enables multi-step, m
 ```csharp
 var ctx = agent.DefineContexts();
 
-ctx.AddContext("sales", new Dictionary<string, object>
+var sales = ctx.AddContext("sales")
+    .SetSystemPrompt("You are Franklin, a sales consultant.");
+sales.AddStep("greeting", new Dictionary<string, object>
 {
-    ["system_prompt"] = "You are Franklin, a sales consultant.",
-    ["steps"] = new List<Dictionary<string, object>>
-    {
-        new() { ["name"] = "greeting", ["prompt"] = "Greet the customer.", ["valid_steps"] = new List<string> { "needs" } },
-        new() { ["name"] = "needs", ["prompt"] = "Gather requirements.", ["valid_contexts"] = new List<string> { "support" } },
-    },
+    ["text"]        = "Greet the customer.",
+    ["valid_steps"] = new List<string> { "needs" },
+});
+sales.AddStep("needs", new Dictionary<string, object>
+{
+    ["text"]           = "Gather requirements.",
+    ["valid_contexts"] = new List<string> { "support" },
 });
 ```
 
@@ -102,6 +115,8 @@ ctx.AddContext("sales", new Dictionary<string, object>
 The REST client (`SignalWire.REST.RestClient`) provides HTTP access to all SignalWire APIs:
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using SignalWire.REST;
 
 var client = new RestClient(
@@ -116,16 +131,10 @@ await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
     ["prompt"] = new Dictionary<string, object> { ["text"] = "You are helpful." },
 });
 await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["area_code"] = "512" });
-await client.Calling.DialAsync(new Dictionary<string, object?>
-{
-    ["command"] = "dial",
-    ["params"]  = new Dictionary<string, object>
-    {
-        ["from"] = "+15559876543",
-        ["to"]   = "+15551234567",
-        ["url"]  = "https://example.com/handler",
-    },
-});
+await client.Calling.DialAsync(
+    from: "+15559876543",
+    to:   "+15551234567",
+    url:  "https://example.com/handler");
 ```
 
 ## RELAY Client
@@ -133,6 +142,8 @@ await client.Calling.DialAsync(new Dictionary<string, object?>
 The RELAY client (`SignalWire.Relay.Client`) provides real-time call control over WebSocket using async/await:
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using SignalWire.Relay;
 
 var client = new Client(new Dictionary<string, string>

@@ -60,16 +60,9 @@ Console.WriteLine($"Dialing {toNumber} from {fromNumber} -- call_id: {call.CallI
 Console.WriteLine("Call answered -- playing TTS");
 
 // Play TTS
-var playAction = await call.PlayAsync(media: new[]
-{
-    new Dictionary<string, object>
-    {
-        ["type"]   = "tts",
-        ["params"] = new Dictionary<string, object> { ["text"] = "Welcome to SignalWire" },
-    },
-});
+var playAction = call.PlayTts("Welcome to SignalWire");
 
-await playAction.WaitAsync(timeout: 15);
+await playAction.WaitAsync(timeoutSeconds: 15);
 Console.WriteLine("Playback finished -- hanging up");
 
 await call.HangupAsync();

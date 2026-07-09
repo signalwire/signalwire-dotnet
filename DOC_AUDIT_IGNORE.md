@@ -73,7 +73,6 @@ and should be cleaned up in a separate doc/example sweep. Listed here
 so `audit_docs.py` can pass while the cleanup is staged.
 
 AddHangupVerb: doc/example shorthand; SDK callers use Verb("hangup", new() {})
-AddRoute: aspirational helper; SDK callers register routes via RegisterRoutingCallback
 AddDirectory: aspirational static-file helper; SDK callers use AgentServer.ServeStatic
 RemoveDirectory: aspirational reverse of AddDirectory; not implemented
 AddMcpServer: aspirational MCP helper; SDK callers use the mcp_gateway skill

@@ -4,9 +4,21 @@
 
 This guide walks you through building AI voice agents with the SignalWire .NET SDK. Agents are HTTP microservices that serve SWML documents and handle SWAIG function calls.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using SignalWire.SWAIG;
+using System.Collections.Generic;
+// Shared context for the fragments below: a constructed `agent` and a `result`.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+FunctionResult result = new FunctionResult("ok");
+```
+
 ## Creating Your First Agent
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
@@ -142,7 +154,7 @@ agent.OnSummary((summary, rawData, headers) =>
 ```csharp
 agent.AddHints(new List<string> { "SignalWire", "SWML", "SWAIG" });
 agent.AddPronunciation("API", "A P I");
-agent.AddPronunciation("SIP", "sip", ignore: "true");
+agent.AddPronunciation("SIP", "sip", ignoreCase: true);
 ```
 
 ## Languages
@@ -199,7 +211,12 @@ agent.Run(); // Starts HTTP server on configured host:port
 ### Multi-Agent Server
 
 ```csharp
+using System;
+using SignalWire.Agent;
 using SignalWire.Server;
+
+var agent1 = new AgentBase(new AgentOptions { Name = "agent-1", Route = "/one" });
+var agent2 = new AgentBase(new AgentOptions { Name = "agent-2", Route = "/two" });
 
 var server = new AgentServer(host: "0.0.0.0", port: 3000);
 server.Register(agent1);
@@ -231,6 +248,9 @@ agent.AddPostAiVerb("play", new Dictionary<string, object>
 Basic auth is enabled by default with auto-generated credentials:
 
 ```csharp
+using System;
+using SignalWire.Agent;
+
 var agent = new AgentBase(new AgentOptions
 {
     Name             = "my-agent",
@@ -238,7 +258,8 @@ var agent = new AgentBase(new AgentOptions
     BasicAuthPassword = "mysecretpass",    // optional, auto-generated if omitted
 });
 
-Console.WriteLine($"Auth: {agent.BasicAuthUser()}:{agent.BasicAuthPassword()}");
+var (user, password) = agent.GetBasicAuthCredentials();
+Console.WriteLine($"Auth: {user}:{password}");
 ```
 
 ## Constructor Options

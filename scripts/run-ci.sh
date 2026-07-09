@@ -512,6 +512,40 @@ sched_gate SWAIG-COVERAGE desc="FunctionResult emits every engine action (or all
         --check \
         --emission "$PORT_ROOT/src/SignalWire/SWAIG/FunctionResult.cs"
 
+# ---- §C1 doc/example/CLI execution gates -------------------------------------
+# SNIPPET-COMPILE: every documented C# snippet compiles against the built SDK
+# assembly (deleted/renamed SDK symbols fail). Each doc page carries a
+# `<!-- snippet-setup -->` preamble declaring its shared context (client/agent/
+# result/dm/call…); genuine non-compilable fragments (data-literals, signature-
+# only, external-platform-deps, xUnit test-illustration) carry
+# `<!-- snippet: no-compile … -->` markers. Heavy (per-snippet MSBuild) →
+# defer=1 res=msbuild.
+sched_gate SNIPPET-COMPILE defer=1 res=msbuild desc="documented C# snippets compile against the built SDK" \
+    -- python3 "$PORTING_SDK_DIR/scripts/snippet_compile.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate DOC-CLI desc="documented swaig-test invocations parse (line-detected; dotnet CLI not built here)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/doc_cli.py" --port dotnet --repo "$PORT_ROOT"
+
+# EXAMPLES-RUN + SNIPPET-RUN self-skip for dotnet (compiled port; examples have no
+# dotnet-run target, and snippet_run is dynamic-ports only) — they exit 0 with a
+# note. Wired for parity so the tier graduates automatically if a run target is added.
+sched_gate EXAMPLES-RUN defer=1 desc="shipped examples load/start (dotnet: SKIPPED-WITH-NOTE, no run target)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/examples_run.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate SNIPPET-RUN defer=1 desc="dynamic-port doc snippets run to zero exit (dotnet: self-skips, compiled port)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/snippet_run.py" --port dotnet --repo "$PORT_ROOT" --report-only
+
+# ---- §G anti-laundering ledger gate ------------------------------------------
+sched_gate SUPPRESSION-LEDGER res=dayone desc="no un-ledgered analyzer suppressions (SUPPRESSIONS_LEDGER.md)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/suppression_ledger.py" --port dotnet --repo "$PORT_ROOT"
+
+# ---- §D1 packaging -----------------------------------------------------------
+# PACKAGE-SMOKE: the published nupkg (SignalWire.Sdk) must build, install into a
+# clean consumer, and import+construct a RestClient. Heavy (dotnet pack + a
+# consumer build) → defer=1 res=msbuild.
+sched_gate PACKAGE-SMOKE defer=1 res=msbuild desc="published nupkg imports + constructs a client from a clean install" \
+    -- python3 "$PORTING_SDK_DIR/scripts/package_smoke.py" --port dotnet --repo "$PORT_ROOT"
+
 # ---- Day-one deterministic gates (enforced, non-report-only) -----------------
 sched_gate DOC-LANG-PURITY res=dayone desc="no python-verbatim docs in a non-python port" \
     -- python3 "$PORTING_SDK_DIR/scripts/doc_lang_purity.py" --port dotnet --repo "$PORT_ROOT"

@@ -2,15 +2,24 @@
 
 SWAIG (SignalWire AI Gateway) is the platform's AI tool-calling system. It connects the AI's decisions to actions like call transfers, SMS, recordings, and API calls, with native access to the media stack. This document covers the `FunctionResult` class and the SWAIG post_data format.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.SWAIG;
+using System.Collections.Generic;
+// Shared context for the action fragments below: a `result` FunctionResult.
+FunctionResult result = new FunctionResult("ok");
+```
+
 ## FunctionResult Methods
 
 ### Basic Construction
 
 ```csharp
+using System;
 using SignalWire.SWAIG;
 
-var result = new FunctionResult("Hello, I'll help you with that");
-var result = new FunctionResult("Processing...", postProcess: true);
+var basic          = new FunctionResult("Hello, I'll help you with that");
+var withPostProcess = new FunctionResult("Processing...", postProcess: true);
 ```
 
 ### Call Control Actions
@@ -21,7 +30,7 @@ Transfer/connect call to another destination using SWML.
 
 ```csharp
 result.Connect("+15551234567", final: true);
-result.Connect("support@company.com", final: false, from: "+15559876543");
+result.Connect("support@company.com", final: false, fromAddr: "+15559876543");
 ```
 
 #### SendSms()
@@ -30,18 +39,18 @@ Send SMS message to a PSTN phone number.
 
 ```csharp
 result.SendSms(
-    to:   "+15551234567",
-    from: "+15559876543",
-    body: "Your order has been confirmed!"
+    toNumber:   "+15551234567",
+    fromNumber: "+15559876543",
+    body:       "Your order has been confirmed!"
 );
 
 // With media
 result.SendSms(
-    to:    "+15551234567",
-    from:  "+15559876543",
-    body:  "See attached receipt.",
-    media: new List<string> { "https://example.com/receipt.jpg" },
-    tags:  new List<string> { "order", "confirmation" }
+    toNumber:   "+15551234567",
+    fromNumber: "+15559876543",
+    body:       "See attached receipt.",
+    media:      new List<string> { "https://example.com/receipt.jpg" },
+    tags:       new List<string> { "order", "confirmation" }
 );
 ```
 
@@ -50,8 +59,10 @@ result.SendSms(
 Start background call recording.
 
 ```csharp
-result.RecordCall();
-result.RecordCall(controlId: "support_001", stereo: true, format: "mp3");
+// The canonical overload takes the closed-set enums RecordFormat / RecordDirection.
+// Pass one of the enum args (here `format:`) so the call resolves to it unambiguously.
+result.RecordCall(format: RecordFormat.Wav);
+result.RecordCall(controlId: "support_001", stereo: true, format: RecordFormat.Mp3);
 ```
 
 #### StopRecordCall()
@@ -150,7 +161,7 @@ result.SwmlChangeStep("needs_assessment");
 
 ```csharp
 result.ReplaceInHistory("The customer asked about pricing.");
-result.ReplaceInHistory(useSummary: true);   // Replace with AI summary
+result.ReplaceInHistory();   // No text → replace with the AI summary (defaults to true)
 ```
 
 ### Media Actions
@@ -197,10 +208,10 @@ result.SetEndOfSpeechTimeout(1500);  // 1.5 seconds
 #### ToggleFunctions()
 
 ```csharp
-result.ToggleFunctions(new Dictionary<string, bool>
+result.ToggleFunctions(new List<Dictionary<string, object>>
 {
-    ["transfer_call"] = false,
-    ["lookup_order"]  = true,
+    new() { ["function"] = "transfer_call", ["active"] = false },
+    new() { ["function"] = "lookup_order",  ["active"] = true },
 });
 ```
 
@@ -265,10 +276,10 @@ result.Tap("wss://listener.example.com/stream", direction: "both", codec: "PCMU"
 
 ```csharp
 result.Pay(
-    connectorUrl: "https://payments.example.com/process",
-    inputMethod:  "dtmf",
-    timeout:      600,
-    maxAttempts:  3
+    paymentConnectorUrl: "https://payments.example.com/process",
+    inputMethod:         "dtmf",
+    timeout:             600,
+    maxAttempts:         3
 );
 ```
 
@@ -287,7 +298,10 @@ result.ExecuteRpc("calling.dial", new Dictionary<string, object>
 #### RpcDial()
 
 ```csharp
-result.RpcDial(to: "+15551234567", from: "+15559876543", callTimeout: 30);
+result.RpcDial(
+    toNumber:   "+15551234567",
+    fromNumber: "+15559876543",
+    destSwml:   "https://example.com/handler.swml");
 ```
 
 #### SimulateUserInput()
@@ -301,9 +315,12 @@ result.SimulateUserInput("I need help with my billing");
 All methods return `this` for fluent chaining:
 
 ```csharp
-var result = new FunctionResult("Transferring to support.")
+using System.Collections.Generic;
+using SignalWire.SWAIG;
+
+var chained = new FunctionResult("Transferring to support.")
     .UpdateGlobalData(new Dictionary<string, object> { ["dept"] = "support" })
-    .RecordCall(stereo: true)
+    .RecordCall(stereo: true, format: RecordFormat.Wav)
     .Connect("+15551234567");
 ```
 
