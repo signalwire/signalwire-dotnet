@@ -2408,6 +2408,12 @@
                   "type": "optional<string>",
                   "required": false,
                   "default": null
+                },
+                {
+                  "name": "isolated",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
                 }
               ],
               "returns": "void"

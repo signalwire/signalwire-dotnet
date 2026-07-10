@@ -1003,4 +1003,94 @@ public class ContextsTests
         var ctx = new Context("default");
         Assert.Throws<ArgumentException>(() => ctx.SetHistory("nope"));
     }
+
+    // =================================================================
+    //  gather isolated flag
+    // =================================================================
+
+    [Fact]
+    public void GatherQuestion_IsolatedOmittedWhenNull()
+    {
+        var q = new GatherQuestion(new Dictionary<string, object> { ["key"] = "k", ["question"] = "Q?" });
+        Assert.False(q.ToDict().ContainsKey("isolated"));
+    }
+
+    [Fact]
+    public void GatherQuestion_IsolatedTrueEmitted()
+    {
+        var q = new GatherQuestion(new Dictionary<string, object>
+        {
+            ["key"] = "k",
+            ["question"] = "Q?",
+            ["isolated"] = true,
+        });
+        Assert.True((bool)q.ToDict()["isolated"]);
+    }
+
+    [Fact]
+    public void GatherQuestion_IsolatedFalseEmitted()
+    {
+        // Explicit False IS on the wire — it can override an isolated gather.
+        var q = new GatherQuestion(new Dictionary<string, object>
+        {
+            ["key"] = "k",
+            ["question"] = "Q?",
+            ["isolated"] = false,
+        });
+        var dict = q.ToDict();
+        Assert.True(dict.ContainsKey("isolated"));
+        Assert.False((bool)dict["isolated"]!);
+    }
+
+    [Fact]
+    public void GatherInfo_IsolatedOmittedWhenFalse()
+    {
+        var gi = new GatherInfo(isolated: false);
+        gi.AddQuestion(new Dictionary<string, object> { ["key"] = "k", ["question"] = "Q?" });
+        Assert.False(gi.ToDict().ContainsKey("isolated"));
+    }
+
+    [Fact]
+    public void GatherInfo_IsolatedTrueEmitted()
+    {
+        var gi = new GatherInfo(isolated: true);
+        gi.AddQuestion(new Dictionary<string, object> { ["key"] = "k", ["question"] = "Q?" });
+        Assert.True((bool)gi.ToDict()["isolated"]);
+    }
+
+    [Fact]
+    public void Step_SetGatherInfo_IsolatedFlowsToGather()
+    {
+        var step = new Step("s").SetText("t");
+        step.SetGatherInfo(new Dictionary<string, object> { ["isolated"] = true });
+        step.AddGatherQuestion(new Dictionary<string, object> { ["key"] = "k", ["question"] = "Q?" });
+        var gi = (Dictionary<string, object>)step.ToDict()["gather_info"];
+        Assert.True((bool)gi["isolated"]);
+    }
+
+    [Fact]
+    public void Step_AddGatherQuestion_IsolatedOverridePrecedence()
+    {
+        // Gather isolated=true is the default; a per-question isolated=false overrides.
+        var step = new Step("s").SetText("t");
+        step.SetGatherInfo(new Dictionary<string, object> { ["isolated"] = true });
+        step.AddGatherQuestion(new Dictionary<string, object>
+        {
+            ["key"] = "inherit",
+            ["question"] = "Q1?",
+        });
+        step.AddGatherQuestion(new Dictionary<string, object>
+        {
+            ["key"] = "override",
+            ["question"] = "Q2?",
+            ["isolated"] = false,
+        });
+        var gi = (Dictionary<string, object>)step.ToDict()["gather_info"];
+        Assert.True((bool)gi["isolated"]);
+        var questions = (List<Dictionary<string, object>>)gi["questions"];
+        // Inheriting question omits isolated (None); overriding question emits false.
+        Assert.False(questions[0].ContainsKey("isolated"));
+        Assert.True(questions[1].ContainsKey("isolated"));
+        Assert.False((bool)questions[1]["isolated"]!);
+    }
 }
