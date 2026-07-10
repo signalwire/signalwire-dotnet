@@ -946,4 +946,61 @@ public class ContextsTests
         Assert.Same(step, step.SetResetConsolidate(true));
         Assert.Same(step, step.SetResetFullReset(true));
     }
+
+    // =================================================================
+    //  set_history (Step + Context)
+    // =================================================================
+
+    [Theory]
+    [InlineData("keep")]
+    [InlineData("default")]
+    [InlineData("hide")]
+    public void Step_SetHistory_EmitsWhenSet(string mode)
+    {
+        var step = new Step("s").SetText("t");
+        Assert.Same(step, step.SetHistory(mode));
+        Assert.Equal(mode, step.ToDict()["history"]);
+    }
+
+    [Fact]
+    public void Step_History_OmittedWhenUnset()
+    {
+        var step = new Step("s").SetText("t");
+        Assert.False(step.ToDict().ContainsKey("history"));
+    }
+
+    [Fact]
+    public void Step_SetHistory_InvalidModeThrows()
+    {
+        var step = new Step("s").SetText("t");
+        var ex = Assert.Throws<ArgumentException>(() => step.SetHistory("bogus"));
+        Assert.Contains("keep", ex.Message);
+    }
+
+    [Theory]
+    [InlineData("keep")]
+    [InlineData("default")]
+    [InlineData("hide")]
+    public void Context_SetHistory_EmitsWhenSet(string mode)
+    {
+        var ctx = new Context("default");
+        ctx.AddStep("s", new Dictionary<string, object> { ["text"] = "t" });
+        Assert.Same(ctx, ctx.SetHistory(mode));
+        Assert.Equal(mode, ctx.ToDict()["history"]);
+    }
+
+    [Fact]
+    public void Context_History_OmittedWhenUnset()
+    {
+        var ctx = new Context("default");
+        ctx.AddStep("s", new Dictionary<string, object> { ["text"] = "t" });
+        Assert.False(ctx.ToDict().ContainsKey("history"));
+    }
+
+    [Fact]
+    public void Context_SetHistory_InvalidModeThrows()
+    {
+        var ctx = new Context("default");
+        Assert.Throws<ArgumentException>(() => ctx.SetHistory("nope"));
+    }
 }
