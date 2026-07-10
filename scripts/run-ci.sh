@@ -520,8 +520,7 @@ sched_gate SWAIG-COVERAGE desc="FunctionResult emits every engine action (or all
 # only, external-platform-deps, xUnit test-illustration) carry
 # `<!-- snippet: no-compile … -->` markers. Heavy (per-snippet MSBuild) →
 # defer=1 res=msbuild.
-sched_gate SNIPPET-COMPILE defer=1 res=msbuild desc="documented C# snippets compile against the built SDK" \
-    -- python3 "$PORTING_SDK_DIR/scripts/snippet_compile.py" --port dotnet --repo "$PORT_ROOT"
+sched_gate SNIPPET-COMPILE tier=nightly defer=1 res=msbuild desc="documented C# snippets compile against the built SDK" \    -- python3 "$PORTING_SDK_DIR/scripts/snippet_compile.py" --port dotnet --repo "$PORT_ROOT"
 
 sched_gate DOC-CLI desc="documented swaig-test invocations parse (line-detected; dotnet CLI not built here)" \
     -- python3 "$PORTING_SDK_DIR/scripts/doc_cli.py" --port dotnet --repo "$PORT_ROOT"
@@ -529,11 +528,9 @@ sched_gate DOC-CLI desc="documented swaig-test invocations parse (line-detected;
 # EXAMPLES-RUN + SNIPPET-RUN self-skip for dotnet (compiled port; examples have no
 # dotnet-run target, and snippet_run is dynamic-ports only) — they exit 0 with a
 # note. Wired for parity so the tier graduates automatically if a run target is added.
-sched_gate EXAMPLES-RUN defer=1 desc="shipped examples load/start (dotnet: SKIPPED-WITH-NOTE, no run target)" \
-    -- python3 "$PORTING_SDK_DIR/scripts/examples_run.py" --port dotnet --repo "$PORT_ROOT"
+sched_gate EXAMPLES-RUN tier=nightly defer=1 desc="shipped examples load/start (dotnet: SKIPPED-WITH-NOTE, no run target)" \    -- python3 "$PORTING_SDK_DIR/scripts/examples_run.py" --port dotnet --repo "$PORT_ROOT"
 
-sched_gate SNIPPET-RUN defer=1 desc="dynamic-port doc snippets run to zero exit (dotnet: self-skips, compiled port)" \
-    -- python3 "$PORTING_SDK_DIR/scripts/snippet_run.py" --port dotnet --repo "$PORT_ROOT" --report-only
+sched_gate SNIPPET-RUN tier=nightly defer=1 desc="dynamic-port doc snippets run to zero exit (dotnet: self-skips, compiled port)" \    -- python3 "$PORTING_SDK_DIR/scripts/snippet_run.py" --port dotnet --repo "$PORT_ROOT" --report-only
 
 # ---- §G anti-laundering ledger gate ------------------------------------------
 sched_gate SUPPRESSION-LEDGER res=dayone desc="no un-ledgered analyzer suppressions (SUPPRESSIONS_LEDGER.md)" \
