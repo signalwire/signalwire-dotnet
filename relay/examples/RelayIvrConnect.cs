@@ -37,14 +37,16 @@ client.OnCall(async (call, evt) =>
     Console.WriteLine($"Incoming call: {call.CallId}");
     await call.AnswerAsync();
 
-    // Play greeting and collect a single digit
-    var collectAction = await call.PlayAndCollectAsync(
-        media: new[]
+    // Play greeting and collect a single digit. Media/media-control methods are
+    // synchronous and return an *Action; await the handle's WaitAsync().
+    var collectAction = call.PlayAndCollect(new Dictionary<string, object?>
+    {
+        ["play"] = new List<Dictionary<string, object>>
         {
             Tts("Welcome to SignalWire!"),
             Tts("Press 1 for sales. Press 2 for support. Press 0 to speak with an agent."),
         },
-        collect: new Dictionary<string, object>
+        ["collect"] = new Dictionary<string, object>
         {
             ["digits"] = new Dictionary<string, object>
             {
@@ -52,14 +54,14 @@ client.OnCall(async (call, evt) =>
                 ["digit_timeout"] = 5.0,
             },
             ["initial_timeout"] = 10.0,
-        }
-    );
+        },
+    });
 
-    var resultEvent = await collectAction.WaitAsync();
+    await collectAction.WaitAsync();
     var digits = "";
 
-    if (resultEvent?.Params is { } parms
-        && parms.GetValueOrDefault("result") is Dictionary<string, object?> result)
+    // CollectAction.CollectResult holds the collect result payload once finished.
+    if (collectAction.CollectResult is Dictionary<string, object?> result)
     {
         var resultType = result.GetValueOrDefault("type")?.ToString() ?? "";
         if (resultType == "digit"
@@ -75,34 +77,26 @@ client.OnCall(async (call, evt) =>
     {
         case "1":
         {
-            var action = await call.PlayAsync(media: new[]
-            {
-                Tts("Thank you for your interest! A sales representative will be with you shortly."),
-            });
+            var action = call.Play(new Dictionary<string, object?> { ["play"] = new List<Dictionary<string, object>> { Tts("Thank you for your interest! A sales representative will be with you shortly.") } });
             await action.WaitAsync();
             break;
         }
         case "2":
         {
-            var action = await call.PlayAsync(media: new[]
-            {
-                Tts("Please hold while we connect you to our support team."),
-            });
+            var action = call.Play(new Dictionary<string, object?> { ["play"] = new List<Dictionary<string, object>> { Tts("Please hold while we connect you to our support team.") } });
             await action.WaitAsync();
             break;
         }
         case "0":
         {
-            var action = await call.PlayAsync(media: new[]
-            {
-                Tts("Connecting you to an agent now. Please hold."),
-            });
+            var action = call.Play(new Dictionary<string, object?> { ["play"] = new List<Dictionary<string, object>> { Tts("Connecting you to an agent now. Please hold.") } });
             await action.WaitAsync();
 
             Console.WriteLine($"Connecting to {AgentNumber}");
 
-            await call.ConnectAsync(
-                devices: new List<List<Dictionary<string, object>>>
+            await call.ConnectAsync(new Dictionary<string, object?>
+            {
+                ["devices"] = new List<List<Dictionary<string, object>>>
                 {
                     new()
                     {
@@ -120,18 +114,15 @@ client.OnCall(async (call, evt) =>
                         },
                     },
                 },
-                ringback: new[] { Tts("Please wait while we connect your call.") }
-            );
+                ["ringback"] = new List<Dictionary<string, object>> { Tts("Please wait while we connect your call.") },
+            });
 
             Console.WriteLine($"Connected call ended: {call.CallId}");
             return;
         }
         default:
         {
-            var action = await call.PlayAsync(media: new[]
-            {
-                Tts("We didn't receive a valid selection."),
-            });
+            var action = call.Play(new Dictionary<string, object?> { ["play"] = new List<Dictionary<string, object>> { Tts("We didn't receive a valid selection.") } });
             await action.WaitAsync();
             break;
         }

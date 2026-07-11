@@ -2155,6 +2155,20 @@
               ],
               "returns": "class:signalwire.core.contexts.Context"
             },
+            "set_history": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "history",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "class:signalwire.core.contexts.Context"
+            },
             "set_initial_step": {
               "params": [
                 {
@@ -2394,6 +2408,12 @@
                   "type": "optional<string>",
                   "required": false,
                   "default": null
+                },
+                {
+                  "name": "isolated",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
                 }
               ],
               "returns": "void"
@@ -2609,6 +2629,20 @@
                 {
                   "name": "opts",
                   "type": "dict<string,any>",
+                  "required": true
+                }
+              ],
+              "returns": "class:signalwire.core.contexts.Step"
+            },
+            "set_history": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "history",
+                  "type": "string",
                   "required": true
                 }
               ],
@@ -9469,24 +9503,6 @@
               ],
               "returns": "any"
             },
-            "audible_debug": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "any"
-            },
-            "audible_latency": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "any"
-            },
             "background_file": {
               "params": [
                 {
@@ -9533,15 +9549,6 @@
               "returns": "any"
             },
             "barge_min_words": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "any"
-            },
-            "cache_mode": {
               "params": [
                 {
                   "name": "self",
@@ -9650,15 +9657,6 @@
               "returns": "any"
             },
             "eleven_labs_stability": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "any"
-            },
-            "enable_accounting": {
               "params": [
                 {
                   "name": "self",
@@ -10136,15 +10134,6 @@
               "returns": "any"
             },
             "vad_config": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "any"
-            },
-            "verbose_logs": {
               "params": [
                 {
                   "name": "self",

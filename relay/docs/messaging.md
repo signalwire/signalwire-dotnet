@@ -4,6 +4,21 @@
 
 The RELAY client supports sending and receiving SMS/MMS messages over WebSocket. Messages are tracked with delivery state updates.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Relay;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+// Shared context: a connected RELAY `client` (see Getting Started) and a
+// prepared parameters dict. Declared here so each fragment resolves.
+Client client = null!;
+var params_ = new Dictionary<string, object?>
+{
+    ["from"] = "+15559876543", ["to"] = "+15551234567", ["body"] = "hi",
+};
+```
+
 ## Sending Messages
 
 ```csharp
@@ -89,6 +104,10 @@ var message = await client.SendMessageAsync(params_);
 Messages are received on subscribed contexts:
 
 ```csharp
+using System.Collections.Generic;
+using SignalWire.Relay;
+
+string projectId = "your-project-id", apiToken = "your-api-token";
 var client = new Client(new Dictionary<string, string>
 {
     ["project"]  = projectId,

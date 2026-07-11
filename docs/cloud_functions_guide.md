@@ -37,6 +37,7 @@ func new --name AgentHandler --template "HttpTrigger"
 `SignalWire.Serverless.Adapter` static class bridges the platform request into
 the agent's `HandleRequest` and returns a platform response dictionary
 (`Adapter.HandleAzure(agent, request)`):
+<!-- snippet: no-compile platform-deps (requires the Microsoft.Azure.Functions.Worker packages, not referenced by the SDK build) -->
 ```csharp
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -128,6 +129,7 @@ dotnet add package Amazon.Lambda.Core
 Gateway event dictionary and passes it (with the agent) to
 `Adapter.HandleLambda`, which returns the API Gateway response
 (`statusCode`/`headers`/`body`):
+<!-- snippet: no-compile platform-deps (requires the Amazon.Lambda.* packages, not referenced by the SDK build) -->
 ```csharp
 using Amazon.Lambda.Core;
 using SignalWire.Agent;
@@ -186,6 +188,7 @@ dotnet add package Google.Cloud.Functions.Hosting
 dedicated adapter entry point; dispatch the request straight to the agent's
 `HandleRequest(method, path, headers, body)`, which returns a
 `(Status, Headers, Body)` tuple:
+<!-- snippet: no-compile platform-deps (requires the Google.Cloud.Functions.Framework packages, not referenced by the SDK build) -->
 ```csharp
 using Google.Cloud.Functions.Framework;
 using Microsoft.AspNetCore.Http;
@@ -245,11 +248,13 @@ https://{region}-{project-id}.cloudfunctions.net/{function-name}
 All platforms support HTTP Basic Authentication:
 
 ```csharp
+using SignalWire.Agent;
+
 var agent = new AgentBase(new AgentOptions
 {
-    Name     = "my-agent",
-    Username = "your-username",
-    Password = "your-password",
+    Name              = "my-agent",
+    BasicAuthUser     = "your-username",
+    BasicAuthPassword = "your-password",
 });
 ```
 
@@ -318,6 +323,7 @@ curl -u username:password \
 
 **Environment Detection:**
 ```csharp
+using System;
 using SignalWire.Serverless;
 
 // Check detected mode: "lambda", "gcf", "azure", "cgi", or "server"
@@ -327,6 +333,9 @@ Console.WriteLine($"Detected mode: {mode}");
 
 **URL Generation:**
 ```csharp
+using System;
+using SignalWire.Agent;
+
 var agent = new AgentBase(new AgentOptions { Name = "test" });
 Console.WriteLine($"Base URL: {agent.GetFullUrl()}");
 Console.WriteLine($"Auth URL: {agent.GetFullUrl(includeAuth: true)}");
@@ -340,6 +349,7 @@ Console.WriteLine($"Auth URL: {agent.GetFullUrl(includeAuth: true)}");
 ### Debugging
 
 Enable debug logging:
+<!-- snippet: no-compile platform-deps (requires Microsoft.Extensions.Logging, an ASP.NET Core framework assembly not referenced in the snippet-compile context) -->
 ```csharp
 using Microsoft.Extensions.Logging;
 

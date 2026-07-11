@@ -18,39 +18,39 @@ var client = new RestClient(
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-void Safe(string label, Action fn)
+async Task Safe(string label, Func<Task> fn)
 {
-    try { fn(); Console.WriteLine($"  {label}: OK"); }
+    try { await fn(); Console.WriteLine($"  {label}: OK"); }
     catch (Exception ex) { Console.WriteLine($"  {label}: failed ({ex.Message})"); }
 }
 
 var callId = "example-call-id";  // Replace with a real call ID
 
-// 1. Play TTS
+// 1. Play TTS (PlayAsync takes callId + a `play` list of media objects)
 Console.WriteLine("Playing TTS...");
-Safe("Play TTS", () => client.Calling.Play(callId, new Dictionary<string, object>
+await Safe("Play TTS", () => client.Calling.PlayAsync(callId, new List<object?>
 {
-    ["type"]   = "tts",
-    ["params"] = new Dictionary<string, object>
+    new Dictionary<string, object?>
     {
-        ["text"] = "Welcome! Please leave a message after the beep.",
+        ["type"]   = "tts",
+        ["params"] = new Dictionary<string, object> { ["text"] = "Welcome! Please leave a message after the beep." },
     },
 }));
 
 // 2. Play audio file
 Console.WriteLine("\nPlaying audio file...");
-Safe("Play audio", () => client.Calling.Play(callId, new Dictionary<string, object>
+await Safe("Play audio", () => client.Calling.PlayAsync(callId, new List<object?>
 {
-    ["type"]   = "audio",
-    ["params"] = new Dictionary<string, object>
+    new Dictionary<string, object?>
     {
-        ["url"] = "https://cdn.signalwire.com/default-music/welcome.mp3",
+        ["type"]   = "audio",
+        ["params"] = new Dictionary<string, object> { ["url"] = "https://cdn.signalwire.com/default-music/welcome.mp3" },
     },
 }));
 
-// 3. Start recording
+// 3. Start recording (audio settings go in the `audio` dictionary)
 Console.WriteLine("\nStarting recording...");
-Safe("Record", () => client.Calling.Record(callId, new Dictionary<string, object>
+await Safe("Record", () => client.Calling.RecordAsync(callId, audio: new Dictionary<string, object?>
 {
     ["beep"]        = true,
     ["format"]      = "wav",
@@ -61,22 +61,18 @@ Safe("Record", () => client.Calling.Record(callId, new Dictionary<string, object
 
 // 4. Start transcription
 Console.WriteLine("\nStarting transcription...");
-Safe("Transcribe", () => client.Calling.Transcribe(callId, new Dictionary<string, object>
-{
-    ["language"]  = "en-US",
-    ["direction"] = "both",
-}));
+await Safe("Transcribe", () => client.Calling.TranscribeAsync(callId));
 
 // 5. Enable denoise
 Console.WriteLine("\nEnabling denoise...");
-Safe("Denoise", () => client.Calling.Denoise(callId, new Dictionary<string, object>()));
+await Safe("Denoise", () => client.Calling.DenoiseAsync(callId));
 
 // 6. List existing recordings
 Console.WriteLine("\nListing recordings...");
-Safe("List recordings", () =>
+await Safe("List recordings", async () =>
 {
-    var recordings = client.Recordings.List();
-    var data = recordings["data"] as List<object> ?? new();
+    var recordings = await client.Recordings.ListAsync();
+    var data = recordings.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data.Take(5))
     {
         if (item is Dictionary<string, object?> r)

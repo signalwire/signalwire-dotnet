@@ -4,9 +4,21 @@
 
 The core class for building AI agents. Extends `Service` with prompt management, SWAIG tool dispatch, context switching, and skills.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using SignalWire.Server;
+using System.Collections.Generic;
+// Shared context for the AgentServer fragment below: a constructed `agent`.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+```
+
 ### Constructor
 
 ```csharp
+using System;
+using SignalWire.Agent;
+
 var agent = new AgentBase(new AgentOptions
 {
     Name  = "my-agent",

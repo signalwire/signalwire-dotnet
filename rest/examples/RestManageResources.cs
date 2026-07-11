@@ -18,11 +18,11 @@ var client = new RestClient(
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-T? Safe<T>(string label, Func<T> fn) where T : class
+async Task<T?> Safe<T>(string label, Func<Task<T>> fn) where T : class
 {
     try
     {
-        var result = fn();
+        var result = await fn();
         Console.WriteLine($"  {label}: OK");
         return result;
     }
@@ -35,17 +35,18 @@ T? Safe<T>(string label, Func<T> fn) where T : class
 
 // 1. Create an AI agent
 Console.WriteLine("Creating AI agent...");
-var agent = client.Fabric.AiAgents.Create(
-    name:   "Demo Support Bot",
-    prompt: new Dictionary<string, object> { ["text"] = "You are a friendly support agent for Acme Corp." }
-);
-var agentId = agent["id"]?.ToString() ?? "";
+var agent = await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
+{
+    ["name"]   = "Demo Support Bot",
+    ["prompt"] = new Dictionary<string, object> { ["text"] = "You are a friendly support agent for Acme Corp." },
+});
+var agentId = agent.GetValueOrDefault("id")?.ToString() ?? "";
 Console.WriteLine($"  Created agent: {agentId}");
 
 // 2. List all AI agents
 Console.WriteLine("\nListing AI agents...");
-var agents = client.Fabric.AiAgents.List();
-var agentData = agents["data"] as List<object> ?? new();
+var agents = await client.Fabric.AiAgents.ListAsync();
+var agentData = agents.GetValueOrDefault("data") as List<object> ?? new();
 foreach (var item in agentData.Take(5))
 {
     if (item is Dictionary<string, object?> a)
@@ -54,12 +55,13 @@ foreach (var item in agentData.Take(5))
     }
 }
 
-// 3. Search for a phone number
+// 3. Search for a phone number (search filters use the wire query-param names)
 Console.WriteLine("\nSearching for available phone numbers...");
-Safe("Search numbers", () =>
+await Safe("Search numbers", async () =>
 {
-    var available = client.PhoneNumbers.Search(areaCode: "512", maxResults: 3);
-    var data = available["data"] as List<object> ?? new();
+    var available = await client.PhoneNumbers.SearchAsync(
+        new Dictionary<string, string> { ["areacode"] = "512", ["max_results"] = "3" });
+    var data = available.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data)
     {
         if (item is Dictionary<string, object?> n)
@@ -70,19 +72,17 @@ Safe("Search numbers", () =>
     return available;
 });
 
-// 4. Place a test call (requires valid numbers)
+// 4. Place a test call via REST (requires valid numbers)
 Console.WriteLine("\nPlacing a test call...");
-Safe("Dial", () =>
+await Safe("Dial", async () =>
 {
-    client.Calling.Dial(
+    return await client.Calling.DialAsync(
         from: "+15559876543",
         to:   "+15551234567",
-        url:  "https://example.com/call-handler"
-    );
-    return "ok";
+        url:  "https://example.com/call-handler");
 });
 
 // 5. Clean up
 Console.WriteLine($"\nDeleting agent {agentId}...");
-client.Fabric.AiAgents.Delete(agentId);
+await client.Fabric.AiAgents.DeleteAsync(agentId);
 Console.WriteLine("  Deleted.");

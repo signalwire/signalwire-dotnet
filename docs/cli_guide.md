@@ -60,6 +60,9 @@ SIGNALWIRE_LOG_LEVEL=debug dotnet run
 You can render and inspect the SWML document an agent produces:
 
 ```csharp
+using System;
+using SignalWire.Agent;
+
 var agent = new AgentBase(new AgentOptions { Name = "test" });
 agent.PromptAddSection("Role", "You are helpful.");
 

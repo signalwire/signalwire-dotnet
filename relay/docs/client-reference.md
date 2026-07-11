@@ -1,8 +1,24 @@
 # Client Reference (.NET)
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Relay;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+// Shared context for the method FRAGMENTS below: a connected RELAY `client`.
+// The Constructor snippet opens with `using System;` so it is self-contained
+// and this preamble is NOT prepended to it.
+Client client = null!;
+```
+
 ## Constructor
 
 ```csharp
+using System;
+using System.Collections.Generic;
+using SignalWire.Relay;
+
 var client = new Client(new Dictionary<string, string>
 {
     ["project"]  = "your-project-id",

@@ -16,7 +16,20 @@ export SIGNALWIRE_SPACE=example.signalwire.com
 
 ## First Program
 
+<!-- snippet-setup -->
 ```csharp
+using SignalWire.REST;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+// Context for the illustrative FRAGMENTS on this page (Error Handling / CRUD).
+// The full programs below open with `using System;` so they are compiled as
+// self-contained units and this preamble is NOT prepended to them.
+RestClient client = new RestClient("project", "token", "example.signalwire.com");
+string agentId = "agent-uuid";
+```
+
+```csharp
+using System;
 using SignalWire.REST;
 
 var client = new RestClient(
@@ -37,6 +50,9 @@ Console.WriteLine($"Found {((agents["data"] as List<object>)?.Count ?? 0)} agent
 ## Constructor Options
 
 ```csharp
+using System;
+using SignalWire.REST;
+
 // Explicit credentials
 var client = new RestClient(
     projectId: "your-project-id",
@@ -45,7 +61,7 @@ var client = new RestClient(
 );
 
 // From environment variables (all three fall back to env vars)
-var client = new RestClient();
+var clientFromEnv = new RestClient();
 ```
 
 ## Error Handling

@@ -18,18 +18,18 @@ var client = new RestClient(
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-void Safe(string label, Action fn)
+async Task Safe(string label, Func<Task> fn)
 {
-    try { fn(); Console.WriteLine($"  {label}: OK"); }
+    try { await fn(); Console.WriteLine($"  {label}: OK"); }
     catch (Exception ex) { Console.WriteLine($"  {label}: failed ({ex.Message})"); }
 }
 
 // 1. List current phone numbers
 Console.WriteLine("Listing current phone numbers...");
-Safe("List numbers", () =>
+await Safe("List numbers", async () =>
 {
-    var numbers = client.PhoneNumbers.List();
-    var data = numbers["data"] as List<object> ?? new();
+    var numbers = await client.PhoneNumbers.ListAsync();
+    var data = numbers.GetValueOrDefault("data") as List<object> ?? new();
     Console.WriteLine($"    Found {data.Count} numbers");
     foreach (var item in data.Take(5))
     {
@@ -42,10 +42,10 @@ Safe("List numbers", () =>
 
 // 2. Search for available numbers
 Console.WriteLine("\nSearching available numbers (area code 512)...");
-Safe("Search 512", () =>
+await Safe("Search 512", async () =>
 {
-    var available = client.PhoneNumbers.Search(areaCode: "512", maxResults: 5);
-    var data = available["data"] as List<object> ?? new();
+    var available = await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacode"] = "512", ["max_results"] = "5" });
+    var data = available.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data)
     {
         if (item is Dictionary<string, object?> n)
@@ -57,10 +57,10 @@ Safe("Search 512", () =>
 
 // 3. Search for toll-free numbers
 Console.WriteLine("\nSearching toll-free numbers...");
-Safe("Search toll-free", () =>
+await Safe("Search toll-free", async () =>
 {
-    var available = client.PhoneNumbers.Search(areaCode: "800", maxResults: 3);
-    var data = available["data"] as List<object> ?? new();
+    var available = await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacode"] = "800", ["max_results"] = "3" });
+    var data = available.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data)
     {
         if (item is Dictionary<string, object?> n)
@@ -72,27 +72,27 @@ Safe("Search toll-free", () =>
 
 // 4. Look up a number
 Console.WriteLine("\nLooking up a number...");
-Safe("Lookup", () =>
+await Safe("Lookup", async () =>
 {
-    var info = client.Lookup.Get("+15551234567");
+    var info = await client.Lookup.PhoneNumberAsync("+15551234567");
     Console.WriteLine($"    Carrier: {info.GetValueOrDefault("carrier_name") ?? "unknown"}");
 });
 
 // 5. List number groups
 Console.WriteLine("\nListing number groups...");
-Safe("List groups", () =>
+await Safe("List groups", async () =>
 {
-    var groups = client.NumberGroups.List();
-    var data = groups["data"] as List<object> ?? new();
+    var groups = await client.NumberGroups.ListAsync();
+    var data = groups.GetValueOrDefault("data") as List<object> ?? new();
     Console.WriteLine($"    Found {data.Count} number groups");
 });
 
 // 6. List verified callers
 Console.WriteLine("\nListing verified callers...");
-Safe("List verified callers", () =>
+await Safe("List verified callers", async () =>
 {
-    var callers = client.VerifiedCallers.List();
-    var data = callers["data"] as List<object> ?? new();
+    var callers = await client.VerifiedCallers.ListAsync();
+    var data = callers.GetValueOrDefault("data") as List<object> ?? new();
     Console.WriteLine($"    Found {data.Count} verified callers");
 });
 

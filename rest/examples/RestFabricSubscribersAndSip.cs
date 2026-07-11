@@ -18,17 +18,17 @@ var client = new RestClient(
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-void Safe(string label, Action fn)
+async Task Safe(string label, Func<Task> fn)
 {
-    try { fn(); Console.WriteLine($"  {label}: OK"); }
+    try { await fn(); Console.WriteLine($"  {label}: OK"); }
     catch (Exception ex) { Console.WriteLine($"  {label}: failed ({ex.Message})"); }
 }
 
 // 1. Create a SIP subscriber
 Console.WriteLine("Creating SIP subscriber...");
-Safe("Create subscriber", () =>
+await Safe("Create subscriber", async () =>
 {
-    var subscriber = client.Fabric.Subscribers.Create(new Dictionary<string, object>
+    var subscriber = await client.Fabric.Subscribers.CreateAsync(new Dictionary<string, object>
     {
         ["display_name"] = "Alice Smith",
         ["type"]         = "sip",
@@ -40,9 +40,9 @@ Safe("Create subscriber", () =>
 
 // 2. Create a SIP endpoint
 Console.WriteLine("\nCreating SIP endpoint...");
-Safe("Create SIP endpoint", () =>
+await Safe("Create SIP endpoint", async () =>
 {
-    var endpoint = client.Fabric.SipEndpoints.Create(new Dictionary<string, object>
+    var endpoint = await client.Fabric.SipEndpoints.CreateAsync(new Dictionary<string, object>
     {
         ["username"]     = "alice",
         ["password"]     = "secure-sip-password",
@@ -54,10 +54,10 @@ Safe("Create SIP endpoint", () =>
 
 // 3. List subscribers
 Console.WriteLine("\nListing subscribers...");
-Safe("List subscribers", () =>
+await Safe("List subscribers", async () =>
 {
-    var subscribers = client.Fabric.Subscribers.List();
-    var data = subscribers["data"] as List<object> ?? new();
+    var subscribers = await client.Fabric.Subscribers.ListAsync();
+    var data = subscribers.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data.Take(5))
     {
         if (item is Dictionary<string, object?> s)
@@ -69,10 +69,10 @@ Safe("List subscribers", () =>
 
 // 4. List SIP endpoints
 Console.WriteLine("\nListing SIP endpoints...");
-Safe("List endpoints", () =>
+await Safe("List endpoints", async () =>
 {
-    var endpoints = client.Fabric.SipEndpoints.List();
-    var data = endpoints["data"] as List<object> ?? new();
+    var endpoints = await client.Fabric.SipEndpoints.ListAsync();
+    var data = endpoints.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data.Take(5))
     {
         if (item is Dictionary<string, object?> e)
@@ -82,13 +82,12 @@ Safe("List endpoints", () =>
     }
 });
 
-// 5. List SIP profiles
-Console.WriteLine("\nListing SIP profiles...");
-Safe("List SIP profiles", () =>
+// 5. Get the SIP profile (a singleton — get/update, no list)
+Console.WriteLine("\nGetting SIP profile...");
+await Safe("Get SIP profile", async () =>
 {
-    var profiles = client.SipProfile.List();
-    var data = profiles["data"] as List<object> ?? new();
-    Console.WriteLine($"    Found {data.Count} SIP profiles");
+    var profile = await client.SipProfile.GetAsync();
+    Console.WriteLine($"    SIP profile: {profile.GetValueOrDefault("id")}");
 });
 
 Console.WriteLine("\nSubscribers and SIP demo complete.");

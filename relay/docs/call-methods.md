@@ -8,6 +8,16 @@ The `Call` object represents a live phone call. Simple operations
 **synchronous** methods that return an `*Action` handle; you `await` the
 handle's `WaitAsync()` to block until the operation completes.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Relay;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+// Shared context: `call` is a live Call delivered to your OnCall handler
+// (see the Getting Started page). Declared here so each fragment resolves.
+Call call = null!;
+```
+
 ## Answer and Hangup
 
 ```csharp
@@ -29,15 +39,15 @@ var action = call.PlayTts("Hello!");
 await action.WaitAsync();
 
 // Audio file
-var action = call.PlayAudio("https://example.com/audio.mp3");
+action = call.PlayAudio("https://example.com/audio.mp3");
 await action.WaitAsync();
 
 // Silence (seconds)
-var action = call.PlaySilence(2);
+action = call.PlaySilence(2);
 await action.WaitAsync();
 
 // Raw payload via the generic Play(extra)
-var action = call.Play(new Dictionary<string, object?>
+action = call.Play(new Dictionary<string, object?>
 {
     ["play"] = new[]
     {

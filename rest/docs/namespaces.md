@@ -4,6 +4,19 @@
 
 The `RestClient` exposes 21 lazily-initialized namespace accessors covering every SignalWire API surface.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.REST;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+// Shared context the fragments below assume: a constructed `client` (see the
+// Getting Started page) and a few id placeholders. Declared here so each example
+// resolves under the compile checker without repeating the boilerplate.
+RestClient client = new RestClient("project", "token", "example.signalwire.com");
+string numberId = "pn-uuid", docId = "doc-uuid", roomId = "room-uuid", recordingId = "rec-uuid";
+var promptDict = new Dictionary<string, object> { ["text"] = "You are helpful." };
+```
+
 ## Namespace Reference
 
 ### Fabric
@@ -30,16 +43,10 @@ See [Fabric Resources](fabric.md) for details.
 REST-based call control with 37 commands.
 
 ```csharp
-await client.Calling.DialAsync(new Dictionary<string, object?>
-{
-    ["command"] = "dial",
-    ["params"]  = new Dictionary<string, object>
-    {
-        ["from"] = "+15559876543",
-        ["to"]   = "+15551234567",
-        ["url"]  = "https://example.com/handler",
-    },
-});
+await client.Calling.DialAsync(
+    from: "+15559876543",
+    to:   "+15551234567",
+    url:  "https://example.com/handler");
 ```
 
 See [Calling Commands](calling.md) for details.
@@ -72,17 +79,19 @@ await client.Datasphere.Documents.DeleteAsync(docId);
 Video rooms, sessions, conferences.
 
 ```csharp
-await client.Video.ListAsync();
-await client.Video.CreateAsync(new Dictionary<string, object?> { ["name"] = "meeting-room" });
-await client.Video.GetAsync(roomId);
-await client.Video.DeleteAsync(roomId);
+await client.Video.Rooms.ListAsync();
+await client.Video.Rooms.CreateAsync(new Dictionary<string, object?> { ["name"] = "meeting-room" });
+await client.Video.Rooms.GetAsync(roomId);
+await client.Video.Rooms.DeleteAsync(roomId);
 ```
 
 ### Addresses
 
 ```csharp
 await client.Addresses.ListAsync();
-await client.Addresses.CreateAsync(new Dictionary<string, object?> { ["type"] = "client", ["name"] = "WebClient" });
+// create takes the required positional fields:
+await client.Addresses.CreateAsync(
+    "Office", "US", "Jane", "Doe", "123", "Main St", "Austin", "TX", "78701");
 ```
 
 ### Queues
@@ -139,7 +148,7 @@ await client.ShortCodes.ListAsync();
 Import an externally-hosted number (create-only).
 
 ```csharp
-await client.ImportedNumbers.CreateAsync(new Dictionary<string, object?> { ["number"] = "+15551234567" });
+await client.ImportedNumbers.CreateAsync(number: "+15551234567", numberType: "longcode");
 ```
 
 ### Mfa
@@ -147,12 +156,10 @@ await client.ImportedNumbers.CreateAsync(new Dictionary<string, object?> { ["num
 Multi-factor authentication.
 
 ```csharp
-await client.Mfa.SmsAsync(new Dictionary<string, object?>
-{
-    ["to"]      = "+15551234567",
-    ["from"]    = "+15559876543",
-    ["message"] = "Your verification code is: {code}",
-});
+await client.Mfa.SmsAsync(
+    to:      "+15551234567",
+    from:    "+15559876543",
+    message: "Your verification code is: {code}");
 ```
 
 ### Registry
@@ -182,7 +189,9 @@ await client.Logs.Messages.ListAsync();
 Project API tokens (the `Project` namespace exposes `Tokens` only):
 
 ```csharp
-await client.Project.Tokens.CreateAsync(new Dictionary<string, object?> { ["name"] = "ci-token" });
+await client.Project.Tokens.CreateAsync(
+    name:        "ci-token",
+    permissions: new List<object?> { "calling", "messaging" });
 ```
 
 ### Pubsub
@@ -190,7 +199,9 @@ await client.Project.Tokens.CreateAsync(new Dictionary<string, object?> { ["name
 PubSub tokens.
 
 ```csharp
-await client.Pubsub.CreateTokenAsync(new Dictionary<string, object?> { ["channels"] = new List<string> { "updates" } });
+await client.Pubsub.CreateTokenAsync(
+    ttl:      3600,
+    channels: new Dictionary<string, object?> { ["updates"] = new Dictionary<string, object?>() });
 ```
 
 ### Chat
@@ -198,5 +209,8 @@ await client.Pubsub.CreateTokenAsync(new Dictionary<string, object?> { ["channel
 Chat tokens.
 
 ```csharp
-await client.Chat.CreateTokenAsync(new Dictionary<string, object?> { ["member_id"] = "user-123" });
+await client.Chat.CreateTokenAsync(
+    ttl:      3600,
+    channels: new Dictionary<string, object?> { ["room-1"] = new Dictionary<string, object?>() },
+    memberId: "user-123");
 ```

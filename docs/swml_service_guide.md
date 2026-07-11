@@ -4,11 +4,21 @@
 
 The `Service` class is the base for all SignalWire HTTP services. It manages a SWML `Document`, provides schema-driven verb methods, handles HTTP requests with Basic authentication, and supports routing callbacks. `AgentBase` extends `Service` with AI-specific features.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using System;
+using System.Collections.Generic;
+// Shared context for the fragments below: a constructed `agent`.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+```
+
 ## Service Class
 
 ### Constructor
 
 ```csharp
+using System;
 using SignalWire.SWML;
 
 var service = new Service(new ServiceOptions
@@ -40,13 +50,14 @@ The `Document` class builds SWML documents with schema validation.
 ### Creating Documents
 
 ```csharp
+using System.Collections.Generic;
+using SignalWire.SWML;
+
 var doc = new Document();
-doc.AddSection("main", new List<Dictionary<string, object>>
-{
-    new() { ["answer"] = new Dictionary<string, object>() },
-    new() { ["play"] = new Dictionary<string, object> { ["url"] = "say:Hello" } },
-    new() { ["hangup"] = new Dictionary<string, object>() },
-});
+doc.AddSection("main");                                 // create the section
+doc.AddVerbToSection("main", "answer", new Dictionary<string, object>());
+doc.AddVerbToSection("main", "play",   new Dictionary<string, object> { ["url"] = "say:Hello" });
+doc.AddVerbToSection("main", "hangup", new Dictionary<string, object>());
 ```
 
 ### Schema Validation
@@ -120,7 +131,7 @@ You can add custom routes to a service:
 
 ```csharp
 // AgentBase inherits routing from Service
-agent.AddRoute("/custom-endpoint", (requestData, headers) =>
+agent.RegisterRoutingCallback("/custom-endpoint", (requestData, headers) =>
 {
     return new { status = "ok", timestamp = DateTime.UtcNow };
 });

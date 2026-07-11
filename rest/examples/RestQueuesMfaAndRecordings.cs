@@ -18,17 +18,17 @@ var client = new RestClient(
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-void Safe(string label, Action fn)
+async Task Safe(string label, Func<Task> fn)
 {
-    try { fn(); Console.WriteLine($"  {label}: OK"); }
+    try { await fn(); Console.WriteLine($"  {label}: OK"); }
     catch (Exception ex) { Console.WriteLine($"  {label}: failed ({ex.Message})"); }
 }
 
 // 1. Create a queue
 Console.WriteLine("Creating call queue...");
-Safe("Create queue", () =>
+await Safe("Create queue", async () =>
 {
-    var queue = client.Queues.Create(new Dictionary<string, object>
+    var queue = await client.Queues.CreateAsync(new Dictionary<string, object>
     {
         ["name"]     = "support-queue",
         ["max_size"] = 50,
@@ -38,10 +38,10 @@ Safe("Create queue", () =>
 
 // 2. List queues
 Console.WriteLine("\nListing queues...");
-Safe("List queues", () =>
+await Safe("List queues", async () =>
 {
-    var queues = client.Queues.List();
-    var data = queues["data"] as List<object> ?? new();
+    var queues = await client.Queues.ListAsync();
+    var data = queues.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data.Take(5))
     {
         if (item is Dictionary<string, object?> q)
@@ -53,10 +53,10 @@ Safe("List queues", () =>
 
 // 3. List recordings
 Console.WriteLine("\nListing recordings...");
-Safe("List recordings", () =>
+await Safe("List recordings", async () =>
 {
-    var recordings = client.Recordings.List();
-    var data = recordings["data"] as List<object> ?? new();
+    var recordings = await client.Recordings.ListAsync();
+    var data = recordings.GetValueOrDefault("data") as List<object> ?? new();
     Console.WriteLine($"    Found {data.Count} recordings");
     foreach (var item in data.Take(5))
     {
@@ -69,23 +69,21 @@ Safe("List recordings", () =>
 
 // 4. Send MFA verification code
 Console.WriteLine("\nSending MFA verification...");
-Safe("Send MFA", () =>
+await Safe("Send MFA", async () =>
 {
-    var mfa = client.Mfa.Sms(new Dictionary<string, object>
-    {
-        ["to"]      = "+15551234567",
-        ["from"]    = "+15559876543",
-        ["message"] = "Your verification code is: {code}",
-    });
+    var mfa = await client.Mfa.SmsAsync(
+        to:      "+15551234567",
+        from:    "+15559876543",
+        message: "Your verification code is: {code}");
     Console.WriteLine($"    MFA ID: {mfa.GetValueOrDefault("id")}");
 });
 
 // 5. List logs
 Console.WriteLine("\nListing call logs...");
-Safe("List logs", () =>
+await Safe("List logs", async () =>
 {
-    var logs = client.Logs.List();
-    var data = logs["data"] as List<object> ?? new();
+    var logs = await client.Logs.Messages.ListAsync();
+    var data = logs.GetValueOrDefault("data") as List<object> ?? new();
     Console.WriteLine($"    Found {data.Count} log entries");
 });
 

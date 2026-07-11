@@ -14,20 +14,21 @@ var client = new RestClient(
 );
 
 // Create an AI agent
-var agent = client.Fabric.AiAgents.Create(
-    name:   "Support Bot",
-    prompt: new Dictionary<string, object> { ["text"] = "You are a helpful support agent." }
-);
+var agent = await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
+{
+    ["name"]   = "Support Bot",
+    ["prompt"] = new Dictionary<string, object> { ["text"] = "You are a helpful support agent." },
+});
 
 // Search for a phone number
-var results = client.PhoneNumbers.Search(areaCode: "512");
+var results = await client.PhoneNumbers.SearchAsync(
+    new Dictionary<string, string> { ["areacode"] = "512" });
 
 // Place a call via REST
-client.Calling.Dial(
+await client.Calling.DialAsync(
     from: "+15559876543",
     to:   "+15551234567",
-    url:  "https://example.com/call-handler"
-);
+    url:  "https://example.com/call-handler");
 ```
 
 ## Features

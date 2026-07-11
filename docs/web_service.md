@@ -42,18 +42,17 @@ dotnet add package SignalWire.Sdk
 ## Quick Start
 
 ```csharp
-using SignalWire.Services;
+using System.Collections.Generic;
+using SignalWire.Web;
 
 // Create a service to serve files
-var service = new WebService(new WebServiceOptions
-{
-    Port = 8002,
-    Directories = new Dictionary<string, string>
+var service = new WebService(
+    port: 8002,
+    directories: new Dictionary<string, string>
     {
         ["/docs"]   = "./documentation",
         ["/assets"] = "./static/assets",
-    },
-});
+    });
 
 // Start the service
 service.Start();
@@ -68,21 +67,22 @@ WebService can be configured through multiple methods (in order of priority):
 ### 1. Constructor Parameters
 
 ```csharp
-var service = new WebService(new WebServiceOptions
-{
-    Port                    = 8002,
-    Directories             = new Dictionary<string, string>
+using System.Collections.Generic;
+using SignalWire.Web;
+
+var service = new WebService(
+    port: 8002,
+    directories: new Dictionary<string, string>
     {
         ["/docs"]   = "./documentation",
         ["/assets"] = "./static",
     },
-    BasicAuth               = ("admin", "secret"),
-    EnableDirectoryBrowsing = true,
-    AllowedExtensions       = new[] { ".html", ".css", ".js" },
-    BlockedExtensions       = new[] { ".env", ".key" },
-    MaxFileSize             = 100 * 1024 * 1024, // 100 MB
-    EnableCors              = true,
-});
+    basicAuth:               ("admin", "secret"),
+    enableDirectoryBrowsing: true,
+    allowedExtensions:       new List<string> { ".html", ".css", ".js" },
+    blockedExtensions:       new List<string> { ".env", ".key" },
+    maxFileSize:             100 * 1024 * 1024, // 100 MB
+    enableCors:              true);
 ```
 
 ### 2. Environment Variables
@@ -164,10 +164,9 @@ WebService prevents access outside designated directories:
 #### File Size Limits
 Default maximum file size is 100 MB. Configure with:
 ```csharp
-var service = new WebService(new WebServiceOptions
-{
-    MaxFileSize = 50 * 1024 * 1024 // 50 MB
-});
+using SignalWire.Web;
+
+var service = new WebService(maxFileSize: 50 * 1024 * 1024); // 50 MB
 ```
 
 ### Security Headers
@@ -180,54 +179,10 @@ Automatically adds security headers to all responses:
 
 ## HTTPS/SSL Support
 
-WebService provides multiple ways to enable HTTPS:
-
-### Method 1: Environment Variables
-
-```bash
-# Using file paths
-export SWML_SSL_CERT="/path/to/cert.pem"
-export SWML_SSL_KEY="/path/to/key.pem"
-```
-
-### Method 2: Direct Parameters
-
-```csharp
-var service = new WebService(new WebServiceOptions
-{
-    Directories = new Dictionary<string, string> { ["/docs"] = "./docs" }
-});
-
-service.Start(
-    sslCert: "/path/to/cert.pem",
-    sslKey:  "/path/to/key.pem"
-);
-// Service available at https://localhost:8002
-```
-
-### Method 3: Configuration File
-
-```json
-{
-    "security": {
-        "ssl_enabled": true,
-        "ssl_cert": "/etc/ssl/certs/server.crt",
-        "ssl_key": "/etc/ssl/private/server.key"
-    }
-}
-```
-
-### Generating Self-Signed Certificates
-
-For development/testing:
-
-```bash
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem \
-    -days 365 -nodes -subj "/CN=localhost"
-
-export SWML_SSL_CERT="cert.pem"
-export SWML_SSL_KEY="key.pem"
-```
+`WebService` serves plain HTTP. For TLS, terminate HTTPS at a reverse proxy
+(Nginx/Apache) in front of the service — see [Nginx Reverse Proxy](#nginx-reverse-proxy)
+under Deployment Patterns. (The `AgentBase`/`SWMLService` server terminates TLS directly
+via Kestrel; `WebService` does not.)
 
 ## API Endpoints
 
@@ -267,16 +222,15 @@ Serve files from mounted directories
 ### Basic File Serving
 
 ```csharp
-using SignalWire.Services;
+using System.Collections.Generic;
+using SignalWire.Web;
 
-var service = new WebService(new WebServiceOptions
-{
-    Directories = new Dictionary<string, string>
+var service = new WebService(
+    directories: new Dictionary<string, string>
     {
         ["/docs"] = "./documentation",
         ["/api"]  = "./api-specs",
-    },
-});
+    });
 service.Start();
 
 // Files accessible at:
@@ -287,11 +241,12 @@ service.Start();
 ### With Directory Browsing
 
 ```csharp
-var service = new WebService(new WebServiceOptions
-{
-    Directories             = new Dictionary<string, string> { ["/files"] = "./public" },
-    EnableDirectoryBrowsing = true,
-});
+using System.Collections.Generic;
+using SignalWire.Web;
+
+var service = new WebService(
+    directories: new Dictionary<string, string> { ["/files"] = "./public" },
+    enableDirectoryBrowsing: true);
 service.Start();
 
 // Browse files at: http://localhost:8002/files/
@@ -300,17 +255,20 @@ service.Start();
 ### Restricted File Types
 
 ```csharp
-var service = new WebService(new WebServiceOptions
-{
-    Directories             = new Dictionary<string, string> { ["/web"] = "./www" },
-    AllowedExtensions       = new[] { ".html", ".css", ".js", ".png", ".jpg", ".woff2" },
-    EnableDirectoryBrowsing = false,
-});
+using System.Collections.Generic;
+using SignalWire.Web;
+
+var service = new WebService(
+    directories: new Dictionary<string, string> { ["/web"] = "./www" },
+    allowedExtensions: new List<string> { ".html", ".css", ".js", ".png", ".jpg", ".woff2" },
+    enableDirectoryBrowsing: false);
 ```
 
 ### Dynamic Directory Management
 
 ```csharp
+using SignalWire.Web;
+
 var service = new WebService();
 
 service.AddDirectory("/docs",    "./documentation");
@@ -324,11 +282,12 @@ service.Start();
 ### With Custom Authentication
 
 ```csharp
-var service = new WebService(new WebServiceOptions
-{
-    Directories = new Dictionary<string, string> { ["/private"] = "./sensitive-docs" },
-    BasicAuth   = ("admin", "super-secret-password"),
-});
+using System.Collections.Generic;
+using SignalWire.Web;
+
+var service = new WebService(
+    directories: new Dictionary<string, string> { ["/private"] = "./sensitive-docs" },
+    basicAuth:   ("admin", "super-secret-password"));
 service.Start();
 ```
 
@@ -340,18 +299,17 @@ Run WebService as a dedicated static file server:
 
 ```csharp
 // Program.cs
-using SignalWire.Services;
+using System.Collections.Generic;
+using SignalWire.Web;
 
-var service = new WebService(new WebServiceOptions
-{
-    Port        = 8002,
-    Directories = new Dictionary<string, string>
+var service = new WebService(
+    port: 8002,
+    directories: new Dictionary<string, string>
     {
         ["/docs"]      = "/var/www/docs",
         ["/assets"]    = "/var/www/assets",
         ["/downloads"] = "/var/www/downloads",
-    },
-});
+    });
 service.Start();
 ```
 
@@ -360,17 +318,17 @@ service.Start();
 Run WebService alongside your AI agents on different ports:
 
 ```csharp
+using System.Collections.Generic;
+using System.Threading;
 using SignalWire.Agent;
-using SignalWire.Services;
+using SignalWire.Web;
 
 // Start WebService in background
 var webThread = new Thread(() =>
 {
-    var web = new WebService(new WebServiceOptions
-    {
-        Port        = 8002,
-        Directories = new Dictionary<string, string> { ["/docs"] = "./agent-docs" },
-    });
+    var web = new WebService(
+        port: 8002,
+        directories: new Dictionary<string, string> { ["/docs"] = "./agent-docs" });
     web.Start();
 });
 webThread.IsBackground = true;
@@ -452,42 +410,39 @@ server {
 
 ## API Reference
 
-### WebServiceOptions Class
+### WebService Constructor
 
+<!-- snippet: no-compile signature-only (constructor signature reference, no body) -->
 ```csharp
-public class WebServiceOptions
-{
-    public int Port { get; set; } = 8002;
-    public Dictionary<string, string>? Directories { get; set; }
-    public (string Username, string Password)? BasicAuth { get; set; }
-    public string? ConfigFile { get; set; }
-    public bool EnableDirectoryBrowsing { get; set; } = false;
-    public string[]? AllowedExtensions { get; set; }
-    public string[]? BlockedExtensions { get; set; }
-    public int MaxFileSize { get; set; } = 100 * 1024 * 1024;
-    public bool EnableCors { get; set; } = true;
-}
+public WebService(
+    int port = 8002,
+    Dictionary<string, string>? directories = null,
+    (string User, string Password)? basicAuth = null,
+    bool enableDirectoryBrowsing = false,
+    List<string>? allowedExtensions = null,
+    List<string>? blockedExtensions = null,
+    long maxFileSize = 100 * 1024 * 1024,
+    bool enableCors = true)
 ```
 
 ### WebService Methods
 
 #### Start()
+<!-- snippet: no-compile signature-only (method signature reference, no body) -->
 ```csharp
-public void Start(
-    string host = "0.0.0.0",
-    int? port = null,
-    string? sslCert = null,
-    string? sslKey = null)
+public int Start(string host = "127.0.0.1", int? port = null)
 ```
-Start the web service.
+Start the web service; returns the bound port.
 
 #### AddDirectory()
+<!-- snippet: no-compile signature-only (method signature reference, no body) -->
 ```csharp
 public void AddDirectory(string route, string directory)
 ```
 Add a new directory to serve.
 
 #### RemoveDirectory()
+<!-- snippet: no-compile signature-only (method signature reference, no body) -->
 ```csharp
 public void RemoveDirectory(string route)
 ```

@@ -22,14 +22,7 @@ client.OnCall(async (call, evt) =>
     Console.WriteLine($"Incoming call: {call.CallId}");
     await call.AnswerAsync();
 
-    var action = await call.PlayAsync(media: new[]
-    {
-        new Dictionary<string, object>
-        {
-            ["type"]   = "tts",
-            ["params"] = new Dictionary<string, object> { ["text"] = "Welcome to SignalWire!" },
-        },
-    });
+    var action = call.PlayTts("Welcome to SignalWire!");
     await action.WaitAsync();
 
     await call.HangupAsync();

@@ -27,6 +27,35 @@ public static class ReservedToolNames
     };
 }
 
+// -- History visibility modes --
+
+/// <summary>
+/// Valid values for a step's or context's <c>history</c> visibility mode,
+/// controlling what the model still sees when a step is entered.
+///
+/// <list type="bullet">
+/// <item><c>keep</c> — nothing is cleared: every prior step's instructions
+/// and dialogue stay in the model's context.</item>
+/// <item><c>default</c> — prior step instructions are hidden; the dialogue
+/// is kept. This is the behavior when unset.</item>
+/// <item><c>hide</c> — prior instructions hidden AND the prior dialogue
+/// pulled out of the model's context. The only way back in is an explicit
+/// <c>${step_history.*}</c> reference in the new prompt.</item>
+/// </list>
+/// </summary>
+internal static class HistoryModes
+{
+    public static readonly IReadOnlyList<string> Values = ["keep", "default", "hide"];
+
+    public static string Validate(string mode)
+    {
+        if (!Values.Contains(mode))
+            throw new ArgumentException(
+                $"history must be one of [keep, default, hide], got '{mode}'", nameof(mode));
+        return mode;
+    }
+}
+
 // -- GatherQuestion --
 
 public class GatherQuestion
@@ -37,6 +66,8 @@ public class GatherQuestion
     private readonly bool _confirm;
     private readonly string? _prompt;
     private readonly List<string>? _functions;
+    // Tri-state: null means "inherit the gather_info default"
+    private readonly bool? _isolated;
 
     public GatherQuestion(Dictionary<string, object> opts)
     {
@@ -47,6 +78,7 @@ public class GatherQuestion
         _confirm = opts.TryGetValue("confirm", out var c) && c is true;
         _prompt = opts.TryGetValue("prompt", out var p) ? (string)p : null;
         _functions = opts.TryGetValue("functions", out var f) ? (List<string>)f : null;
+        _isolated = opts.TryGetValue("isolated", out var iso) ? (bool?)iso : null;
     }
 
     public string Key => _key;
@@ -62,6 +94,8 @@ public class GatherQuestion
         if (_confirm) map["confirm"] = true;
         if (_prompt is not null) map["prompt"] = _prompt;
         if (_functions is { Count: > 0 }) map["functions"] = _functions;
+        // Emitted even when False, so it can override an isolated gather
+        if (_isolated is not null) map["isolated"] = _isolated;
         return map;
     }
 }
@@ -74,12 +108,14 @@ public class GatherInfo
     private readonly string? _outputKey;
     private readonly string? _completionAction;
     private readonly string? _prompt;
+    private readonly bool _isolated;
 
-    public GatherInfo(string? outputKey = null, string? completionAction = null, string? prompt = null)
+    public GatherInfo(string? outputKey = null, string? completionAction = null, string? prompt = null, bool isolated = false)
     {
         _outputKey = outputKey;
         _completionAction = completionAction;
         _prompt = prompt;
+        _isolated = isolated;
     }
 
     public GatherInfo AddQuestion(Dictionary<string, object> opts)
@@ -100,6 +136,7 @@ public class GatherInfo
         if (_prompt is not null) map["prompt"] = _prompt;
         if (_outputKey is not null) map["output_key"] = _outputKey;
         if (_completionAction is not null) map["completion_action"] = _completionAction;
+        if (_isolated) map["isolated"] = true;
         return map;
     }
 }
@@ -123,6 +160,8 @@ public class Step
     private string? _resetUserPrompt;
     private bool _resetConsolidate;
     private bool _resetFullReset;
+    // Visibility of everything that came before this step
+    private string? _history;
 
     public Step(string name) { _name = name; }
 
@@ -223,13 +262,48 @@ public class Step
     public Step SetSkipUserTurn(bool skip) { _skipUserTurn = skip; return this; }
     public Step SetSkipToNextStep(bool skip) { _skipToNextStep = skip; return this; }
 
+    /// <summary>
+    /// Control what the model still sees when this step is entered.
+    ///
+    /// <para>The mode applies at the moment this step is entered and governs
+    /// everything that came before it — including the turn that triggered the
+    /// transition. It does not affect this step's own turns, which accumulate
+    /// fresh. Nothing is deleted: the call log keeps every message.</para>
+    ///
+    /// <list type="bullet">
+    /// <item><c>keep</c> — clear nothing. Every prior step's instructions and
+    /// dialogue stay visible to the model.</item>
+    /// <item><c>default</c> — hide the prior step instructions, keep the
+    /// user/assistant dialogue. This is the default when unset.</item>
+    /// <item><c>hide</c> — hide the prior instructions AND pull the prior
+    /// dialogue out of the model's context. Pair it with a
+    /// <c>${step_history.*}</c> reference in this step's text to choose
+    /// exactly what comes back.</item>
+    /// </list>
+    /// </summary>
+    /// <param name="history">One of "keep", "default", or "hide".</param>
+    /// <exception cref="ArgumentException">if history is not one of the three modes.</exception>
+    public Step SetHistory(string history) { _history = HistoryModes.Validate(history); return this; }
+
+    /// <summary>
+    /// Enable info gathering for this step. Questions are presented one at a
+    /// time via dynamic step instruction re-injection.
+    ///
+    /// <para>Recognized <paramref name="opts"/> keys: <c>output_key</c>,
+    /// <c>completion_action</c>, <c>prompt</c>, and <c>isolated</c>.
+    /// <c>isolated</c> (bool, default false) becomes the default for every
+    /// question in this gather: when true a question is asked with the
+    /// sibling Q&amp;A hidden from the model, so it must ask rather than
+    /// derive the answer. A question's own <c>isolated</c> overrides it.</para>
+    /// </summary>
     public Step SetGatherInfo(Dictionary<string, object> opts)
     {
         ArgumentNullException.ThrowIfNull(opts);
         _gatherInfo = new GatherInfo(
             opts.TryGetValue("output_key", out var ok) ? (string)ok : null,
             opts.TryGetValue("completion_action", out var ca) ? (string)ca : null,
-            opts.TryGetValue("prompt", out var p) ? (string)p : null);
+            opts.TryGetValue("prompt", out var p) ? (string)p : null,
+            opts.TryGetValue("isolated", out var iso) && iso is true);
         return this;
     }
 
@@ -312,6 +386,7 @@ public class Step
         if (_end) map["end"] = true;
         if (_skipUserTurn) map["skip_user_turn"] = true;
         if (_skipToNextStep) map["skip_to_next_step"] = true;
+        if (_history is not null) map["history"] = _history;
 
         var resetObj = new Dictionary<string, object>();
         if (_resetSystemPrompt is not null) resetObj["system_prompt"] = _resetSystemPrompt;
@@ -347,6 +422,8 @@ public class Context
     private List<Dictionary<string, object>> _systemPromptSections = [];
     private Dictionary<string, List<string>>? _enterFillers;
     private Dictionary<string, List<string>>? _exitFillers;
+    // Default visibility mode for the steps in this context
+    private string? _history;
 
     public Context(string name) { _name = name; }
     public string Name => _name;
@@ -479,6 +556,17 @@ public class Context
     public Context SetConsolidate(bool consolidate) { _consolidate = consolidate; return this; }
     public Context SetFullReset(bool fullReset) { _fullReset = fullReset; return this; }
     public Context SetUserPrompt(string userPrompt) { _userPrompt = userPrompt; return this; }
+
+    /// <summary>
+    /// Set the default visibility mode for every step in this context.
+    ///
+    /// <para>A step's own <see cref="Step.SetHistory"/> overrides this. See
+    /// <see cref="Step.SetHistory"/> for what each mode does.</para>
+    /// </summary>
+    /// <param name="history">One of "keep", "default", or "hide".</param>
+    /// <exception cref="ArgumentException">if history is not one of the three modes.</exception>
+    public Context SetHistory(string history) { _history = HistoryModes.Validate(history); return this; }
+
     /// <summary>
     /// Mark this context as isolated — entering it wipes conversation
     /// history.
@@ -574,6 +662,8 @@ public class Context
 
         if (_enterFillers is not null) map["enter_fillers"] = _enterFillers;
         if (_exitFillers is not null) map["exit_fillers"] = _exitFillers;
+
+        if (_history is not null) map["history"] = _history;
 
         return map;
     }

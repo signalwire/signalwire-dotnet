@@ -1,9 +1,7 @@
 // 10DLC Brand and Campaign Compliance Registration
 //
-// Demonstrates the 10DLC registration workflow:
-//   1. Register a brand
-//   2. Create a campaign
-//   3. Assign numbers to the campaign
+// Demonstrates the 10DLC brand workflow via the Registry namespace
+// (Brands / Campaigns / Numbers / Orders sub-resources).
 //
 // Set these env vars:
 //   SIGNALWIRE_PROJECT_ID
@@ -21,11 +19,11 @@ var client = new RestClient(
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-T? Safe<T>(string label, Func<T> fn) where T : class
+async Task<T?> Safe<T>(string label, Func<Task<T>> fn) where T : class
 {
     try
     {
-        var result = fn();
+        var result = await fn();
         Console.WriteLine($"  {label}: OK");
         return result;
     }
@@ -36,11 +34,10 @@ T? Safe<T>(string label, Func<T> fn) where T : class
     }
 }
 
-// 1. Register a brand
+// 1. Register a brand (Registry.Brands.CreateAsync takes the request body)
 Console.WriteLine("Registering 10DLC brand...");
-var brand = Safe("Create brand", () => client.Registry.Create(new Dictionary<string, object>
+var brand = await Safe("Create brand", () => client.Registry.Brands.CreateAsync(new Dictionary<string, object?>
 {
-    ["type"]         = "brand",
     ["name"]         = "Acme Corp",
     ["entity_type"]  = "PRIVATE_PROFIT",
     ["ein"]          = "12-3456789",
@@ -56,33 +53,18 @@ var brand = Safe("Create brand", () => client.Registry.Create(new Dictionary<str
 
 if (brand != null)
 {
-    var brandId = brand["id"]?.ToString() ?? "";
+    var brandId = brand.GetValueOrDefault("id")?.ToString() ?? "";
     Console.WriteLine($"  Brand ID: {brandId}");
-
-    // 2. Create a campaign
-    Console.WriteLine("\nCreating 10DLC campaign...");
-    var campaign = Safe("Create campaign", () => client.Registry.Create(new Dictionary<string, object>
-    {
-        ["type"]            = "campaign",
-        ["brand_id"]        = brandId,
-        ["use_case"]        = "CUSTOMER_CARE",
-        ["description"]     = "Customer support notifications",
-        ["sample_message1"] = "Your order #12345 has shipped.",
-        ["sample_message2"] = "Your appointment is confirmed for tomorrow at 2pm.",
-    }));
-
-    if (campaign != null)
-    {
-        Console.WriteLine($"  Campaign ID: {campaign["id"]}");
-    }
+    // Campaigns are provisioned against a brand via a 10DLC order
+    // (client.Registry.Campaigns.CreateOrderAsync / client.Registry.Orders).
 }
 
 // 3. List existing brands
 Console.WriteLine("\nListing registered brands...");
-Safe("List brands", () =>
+await Safe("List brands", async () =>
 {
-    var brands = client.Registry.List();
-    var data = brands["data"] as List<object> ?? new();
+    var brands = await client.Registry.Brands.ListAsync();
+    var data = brands.GetValueOrDefault("data") as List<object> ?? new();
     foreach (var item in data.Take(5))
     {
         if (item is Dictionary<string, object?> b)

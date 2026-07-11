@@ -4,9 +4,21 @@
 
 The skills system provides modular, reusable capabilities that can be added to any agent with a single method call. Skills automatically register their tools, hints, global data, and prompt sections.
 
+<!-- snippet-setup -->
+```csharp
+using SignalWire.Agent;
+using SignalWire.Skills;
+using System;
+using System.Collections.Generic;
+// Shared context for the fragments below: a constructed `agent`.
+AgentBase agent = new AgentBase(new AgentOptions { Name = "a", Route = "/a" });
+string apiKey = "key", engineId = "engine";
+```
+
 ## Quick Start
 
 ```csharp
+using System;
 using SignalWire.Agent;
 
 var agent = new AgentBase(new AgentOptions { Name = "assistant", Route = "/assistant" });
@@ -58,7 +70,7 @@ agent.RemoveSkill("datetime");
 Get names of all loaded skills.
 
 ```csharp
-List<string> loaded = agent.ListSkills();
+IReadOnlyList<string> loaded = agent.ListSkills();
 foreach (var name in loaded)
 {
     Console.WriteLine($"  - {name}");
@@ -110,6 +122,8 @@ catch (Exception e)
 Custom skills extend `SkillBase` and implement `Setup()` and `RegisterTools()`:
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using SignalWire.Skills;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
@@ -119,14 +133,15 @@ public class WeatherSkill : SkillBase
     public override string Name => "weather";
     public override string Description => "Get weather information";
 
-    public override void Setup(AgentBase agent, Dictionary<string, object>? parameters)
+    public override bool Setup(AgentBase agent, Dictionary<string, object> parameters)
     {
         agent.AddHints(new List<string> { "weather", "temperature", "forecast" });
         agent.PromptAddSection("Weather",
             "You can check the weather using the get_weather tool.");
+        return true;
     }
 
-    public override void RegisterTools(AgentBase agent, Dictionary<string, object>? parameters)
+    public override void RegisterTools(AgentBase agent)
     {
         agent.DefineTool(
             name:        "get_weather",
@@ -151,6 +166,7 @@ public class WeatherSkill : SkillBase
 
 Register custom skills in the `SkillRegistry`:
 
+<!-- snippet: no-compile references-page-class (WeatherSkill is the subclass defined in the block above) -->
 ```csharp
-SkillRegistry.Register("weather", () => new WeatherSkill());
+SkillRegistry.Instance.RegisterSkill("weather", () => new WeatherSkill());
 ```

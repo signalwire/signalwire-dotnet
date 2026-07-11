@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 89a4a78578dde975a2b00399da8a8d669f6a5cec",
+  "generated_from": "signalwire-dotnet @ da9665481b9557c06da8babc1d906ee32f46f142",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -216,6 +216,7 @@
           "set_enter_fillers",
           "set_exit_fillers",
           "set_full_reset",
+          "set_history",
           "set_initial_step",
           "set_isolated",
           "set_post_prompt",
@@ -259,6 +260,7 @@
           "set_end",
           "set_functions",
           "set_gather_info",
+          "set_history",
           "set_reset_consolidate",
           "set_reset_full_reset",
           "set_reset_system_prompt",
