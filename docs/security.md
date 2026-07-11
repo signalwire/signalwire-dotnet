@@ -56,7 +56,7 @@ export SWML_BASIC_AUTH_PASSWORD=mysecurepassword
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SWML_RATE_LIMIT` | `100` | Requests per minute per IP |
+| `SWML_RATE_LIMIT` | `60` | Requests per minute per IP |
 | `SWML_USE_HSTS` | `true` | Emit the HTTP Strict-Transport-Security header |
 | `SWML_HSTS_MAX_AGE` | `31536000` | HSTS `max-age` in seconds (default 1 year) |
 
