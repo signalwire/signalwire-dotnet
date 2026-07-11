@@ -1266,6 +1266,14 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
                 if proj is None:
                     continue
                 target_mod, method_names = proj
+                # ``paginate`` is inherited from ReadResource: the python SURFACE
+                # oracle records it ONLY on the _base ReadResource class, NOT on
+                # each subclass (unlike the SIGNATURE oracle, which re-records it
+                # per subclass — see enumerate_signatures' surface manifest). Drop
+                # it from the subclass surface set so SURFACE-DIFF matches the
+                # reference; the base copy is injected below. (Mirrors list/get,
+                # which the manifest already keeps off the subclass surface.)
+                method_names = [m for m in method_names if m != "paginate"]
                 entry = modules.setdefault(target_mod, {"classes": {}, "functions": []})
                 existing = entry["classes"].get(class_name, [])
                 entry["classes"][class_name] = sorted(set(existing) | set(method_names))
@@ -1433,7 +1441,7 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     # CrudResource; only the base-class SPLIT is a language idiom.
     base_mod = modules.setdefault("signalwire.rest._base", {"classes": {}, "functions": []})
     base_mod["classes"].setdefault("BaseResource", ["__init__"])
-    base_mod["classes"].setdefault("ReadResource", ["get", "list"])
+    base_mod["classes"].setdefault("ReadResource", ["get", "list", "paginate"])
     base_mod["classes"].setdefault("FabricResource", [])
     base_mod["classes"].setdefault("FabricResourcePUT", [])
 

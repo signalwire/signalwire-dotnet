@@ -199,8 +199,11 @@ public class HttpClient : IDisposable
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
+            // Transport failure: no HTTP status/body, but the caller can still
+            // branch on which request (method + path) failed. Thread url+method
+            // through the full envelope.
             throw new SignalWireRestError(
-                $"{method} {path} failed: {ex.Message}", 0, "", ex);
+                $"{method} {path} failed: {ex.Message}", 0, "", path, method, ex);
         }
 
         var statusCode = (int)response.StatusCode;
@@ -208,8 +211,10 @@ public class HttpClient : IDisposable
 
         if (statusCode < 200 || statusCode >= 300)
         {
+            // Full failure envelope: status, body, url (the request path), method
+            // — so a caller can distinguish 400/404/422 and read the server body.
             throw new SignalWireRestError(
-                $"{method} {path} returned {statusCode}", statusCode, responseBody);
+                $"{method} {path} returned {statusCode}", statusCode, responseBody, path, method);
         }
 
         // 204 No Content or empty body

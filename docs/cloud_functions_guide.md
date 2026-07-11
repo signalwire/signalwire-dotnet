@@ -97,7 +97,7 @@ Set these in your Azure Function App settings:
 
 ```bash
 SIGNALWIRE_PROJECT_ID="your-project-id"
-SIGNALWIRE_TOKEN="your-token"
+SIGNALWIRE_API_TOKEN="your-token"
 AGENT_USERNAME="your-username"
 AGENT_PASSWORD="your-password"
 ```
@@ -167,7 +167,7 @@ dotnet lambda deploy-function MyAgentLambda \
 
 ```bash
 export SIGNALWIRE_PROJECT_ID="your-project-id"
-export SIGNALWIRE_TOKEN="your-token"
+export SIGNALWIRE_API_TOKEN="your-token"
 export SWML_BASIC_AUTH_USER="dev"
 export SWML_BASIC_AUTH_PASSWORD="w00t"
 ```

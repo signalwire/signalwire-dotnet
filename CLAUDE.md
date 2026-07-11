@@ -51,7 +51,7 @@ dotnet pack  -c Release      # pack NuGet package
 5. **FunctionResult** (`SWAIG/FunctionResult.cs`) -- Fluent builder for tool responses (40+ actions)
 6. **DataMap** (`DataMap/DataMap.cs`) -- Server-side API tools
 7. **Contexts** (`Contexts/`) -- Multi-step conversation workflows
-8. **Skills** (`Skills/`) -- 18 built-in skills with registry/manager
+8. **Skills** (`Skills/`) -- 17 built-in skills with registry/manager
 9. **Prefabs** (`Prefabs/`) -- 5 ready-made agent patterns
 10. **AgentServer** (`Server/AgentServer.cs`) -- Multi-agent hosting
 11. **RelayClient** (`Relay/Client.cs`) -- WebSocket real-time call control

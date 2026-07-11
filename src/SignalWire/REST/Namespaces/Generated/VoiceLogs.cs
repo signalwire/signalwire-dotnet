@@ -53,6 +53,15 @@ public class VoiceLogs
         return Client.GetAsync(Path(id), cancellationToken: cancellationToken);
     }
 
+    /// <summary>Iterate every item across all pages of this resource's
+    /// list endpoint, following ``links.next`` cursors (lazy — no request
+    /// fires until iteration). Mirrors Python ``ReadResource.paginate``.</summary>
+    public SignalWire.REST.PaginatedIterator Paginate(
+        Dictionary<string, string>? queryParams = null)
+    {
+        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data");
+    }
+
     /// <summary>
     /// Generated from operation <c>list_voice_log_events</c> (GET /logs/{id}/events).
     /// </summary>

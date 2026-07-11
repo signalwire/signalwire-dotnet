@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ da9665481b9557c06da8babc1d906ee32f46f142",
+  "generated_from": "signalwire-dotnet @ af2195f24db26cf67039b084c441129b611c190f",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -1541,7 +1541,8 @@
         ],
         "ReadResource": [
           "get",
-          "list"
+          "list",
+          "paginate"
         ],
         "SignalWireRestError": [
           "__init__"

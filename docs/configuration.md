@@ -74,6 +74,7 @@ Config values support `${VAR_NAME|default}` syntax:
 | `SIGNALWIRE_PROJECT_ID` | - | Project ID for REST/RELAY clients |
 | `SIGNALWIRE_API_TOKEN` | - | API token for REST/RELAY clients |
 | `SIGNALWIRE_SPACE` | - | Space hostname (e.g. `example.signalwire.com`) |
+| `SIGNALWIRE_RELAY_SCHEME` | `wss` | WebSocket scheme for the RELAY client (`wss` or `ws`) |
 | `SIGNALWIRE_LOG_LEVEL` | `info` | Log level (`debug`, `info`, `warn`, `error`) |
 
 ### Server Configuration

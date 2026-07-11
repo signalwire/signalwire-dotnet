@@ -1284,6 +1284,15 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
         lines.append("    {")
         lines.append("        return Client.GetAsync(Path(id), cancellationToken: cancellationToken);")
         lines.append("    }")
+        lines.append("")
+        lines.append("    /// <summary>Iterate every item across all pages of this resource's")
+        lines.append("    /// list endpoint, following ``links.next`` cursors (lazy — no request")
+        lines.append("    /// fires until iteration). Mirrors Python ``ReadResource.paginate``.</summary>")
+        lines.append("    public SignalWire.REST.PaginatedIterator Paginate(")
+        lines.append("        Dictionary<string, string>? queryParams = null)")
+        lines.append("    {")
+        lines.append("        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: \"data\");")
+        lines.append("    }")
 
     _emit_declared_and_sets(spec, anchor, markup, base, lines)
     lines.append("}")
@@ -1415,8 +1424,11 @@ def _declared_surface_names(spec: Spec, anchor: str, markup: dict, base: str) ->
     if base in ("CrudResource", "FabricResource"):
         names.update({"create", "update"})
     elif base == "ReadResource":
-        # list/get inherited from the base — not recorded on the subclass.
-        pass
+        # list/get inherited from the base — not recorded on the subclass. But
+        # the python oracle DOES record ``paginate`` on each ReadResource
+        # subclass (the log resources + FabricAddresses), so surface it here.
+        # .NET realizes it as the inline ``Paginate`` returning PaginatedIterator.
+        names.add("paginate")
     elif base == "BaseResource":
         # Every operation of a BaseResource IS a declared method (already added).
         pass
