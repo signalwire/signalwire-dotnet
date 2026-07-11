@@ -85,6 +85,12 @@ internal static class Program
         // double-count / mis-handle the enumerator. (Only HttpClient declares it;
         // HttpClient is excluded from the walk, so this is defensive.)
         ["*.ListAllAsync"] = "pagination wrapper over ListAsync (same GET route, already in Set B via ListAsync)",
+
+        // Paginate returns a lazy PaginatedIterator that follows the cursor via
+        // the already-covered list route on iteration and issues no HTTP request
+        // itself, so it is not a distinct wire route. Mirrors the python
+        // reference's paginate skip + go's *.Paginate skip.
+        ["*.Paginate"] = "client-side pagination helper, not a route (issues no HTTP request; follows the covered list route lazily)",
     };
 
     private static string? SkipReason(string resource, string method)

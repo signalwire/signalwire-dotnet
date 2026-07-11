@@ -300,4 +300,75 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         Assert.Equal("/api/fabric/resources/res-4/domain_applications", last.Path);
         Assert.Equal("da-7", StringField(last, "domain_application_id"));
     }
+
+    // ---- paginate() parity: the resource-layer lazy cursor iterator ----------
+
+    [Fact]
+    public void Addresses_Paginate_IsLazy()
+    {
+        // Constructing the iterator via the resource's Paginate() must NOT fire
+        // any HTTP — the first fetch is deferred until iteration begins.
+        if (!_fixture.Available) return;
+        var fabric = NewFabric();
+
+        var it = fabric.Addresses.Paginate(
+            new Dictionary<string, string> { ["page_size"] = "2" });
+
+        Assert.NotNull(it);
+        Assert.IsType<PaginatedIterator>(it);
+        // No request went out on construction.
+        Assert.Empty(_fixture.Harness.Journal.All());
+    }
+
+    [Fact]
+    public async Task Addresses_Paginate_FollowsCursorAcrossTwoPages()
+    {
+        if (!_fixture.Available) return;
+
+        // Page 1 carries a next cursor; page 2 is terminal (no next link).
+        _fixture.Harness.Scenarios.Set("fabric.list_fabric_addresses", 200,
+            new Dictionary<string, object?>
+            {
+                ["data"] = new List<object?>
+                {
+                    new Dictionary<string, object?> { ["id"] = "addr-1" },
+                    new Dictionary<string, object?> { ["id"] = "addr-2" },
+                },
+                ["links"] = new Dictionary<string, object?>
+                {
+                    ["next"] = "http://example.com/api/fabric/addresses?cursor=page2",
+                },
+            });
+        _fixture.Harness.Scenarios.Set("fabric.list_fabric_addresses", 200,
+            new Dictionary<string, object?>
+            {
+                ["data"] = new List<object?>
+                {
+                    new Dictionary<string, object?> { ["id"] = "addr-3" },
+                },
+                ["links"] = new Dictionary<string, object?>(),
+            });
+
+        var fabric = NewFabric();
+        var it = fabric.Addresses.Paginate();
+
+        var ids = new List<string?>();
+        await foreach (var item in it)
+        {
+            ids.Add((string?)item["id"]);
+        }
+
+        // Every item across both pages is yielded, in order.
+        Assert.Equal(new List<string?> { "addr-1", "addr-2", "addr-3" }, ids);
+
+        // Exactly two GETs at the collection path; the second carries the cursor
+        // parsed from page 1's links.next — proving the cursor was followed.
+        var gets = _fixture.Harness.Journal.All()
+            .Where(e => e.Path == "/api/fabric/addresses")
+            .ToList();
+        Assert.Equal(2, gets.Count);
+        Assert.NotNull(gets[1].QueryParams);
+        Assert.True(gets[1].QueryParams!.ContainsKey("cursor"));
+        Assert.Equal(new List<string> { "page2" }, gets[1].QueryParams["cursor"]);
+    }
 }

@@ -160,7 +160,8 @@
       "update"
     ],
     "FabricAddresses": [
-      "__init__"
+      "__init__",
+      "paginate"
     ],
     "FabricTokens": [
       "__init__",
@@ -171,7 +172,8 @@
       "refresh_subscriber_token"
     ],
     "FaxLogs": [
-      "__init__"
+      "__init__",
+      "paginate"
     ],
     "FreeswitchConnectors": [
       "__init__",
@@ -196,7 +198,8 @@
       "phone_number"
     ],
     "MessageLogs": [
-      "__init__"
+      "__init__",
+      "paginate"
     ],
     "Mfa": [
       "__init__",
@@ -351,7 +354,8 @@
       "__init__",
       "list_events",
       "list_members",
-      "list_recordings"
+      "list_recordings",
+      "paginate"
     ],
     "VideoRoomTokens": [
       "__init__",
@@ -372,7 +376,8 @@
     ],
     "VoiceLogs": [
       "__init__",
-      "list_events"
+      "list_events",
+      "paginate"
     ]
   },
   "methods": {

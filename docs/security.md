@@ -41,6 +41,7 @@ export SWML_BASIC_AUTH_PASSWORD=mysecurepassword
 | `SWML_SSL_ENABLED` | `false` | Enable HTTPS |
 | `SWML_SSL_CERT_PATH` | - | Path to SSL certificate |
 | `SWML_SSL_KEY_PATH` | - | Path to SSL private key |
+| `SWML_SSL_VERIFY_MODE` | `CERT_REQUIRED` | Peer-certificate verification mode |
 | `SWML_DOMAIN` | - | Domain name for URL generation |
 
 ### Authentication
@@ -49,13 +50,23 @@ export SWML_BASIC_AUTH_PASSWORD=mysecurepassword
 |----------|---------|-------------|
 | `SWML_BASIC_AUTH_USER` | `signalwire` | Basic auth username |
 | `SWML_BASIC_AUTH_PASSWORD` | *auto-generated* | Basic auth password (32-char token) |
+| `SIGNALWIRE_SIGNING_KEY` | - | Signing key used to validate inbound webhook signatures |
 
 ### Security Headers
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SWML_ALLOWED_ORIGINS` | `*` | CORS allowed origins |
-| `SWML_RATE_LIMIT` | `100` | Requests per minute per IP |
+| `SWML_RATE_LIMIT` | `60` | Requests per minute per IP |
+| `SWML_USE_HSTS` | `true` | Emit the HTTP Strict-Transport-Security header |
+| `SWML_HSTS_MAX_AGE` | `31536000` | HSTS `max-age` in seconds (default 1 year) |
+
+### Request Limits and URL Validation
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SWML_MAX_REQUEST_SIZE` | `10485760` | Maximum inbound request body size in bytes (default 10MB) |
+| `SWML_REQUEST_TIMEOUT` | `30` | Per-request timeout in seconds |
+| `SWML_ALLOW_PRIVATE_URLS` | `false` | Allow SWML/webhook URLs that resolve to private/loopback addresses (SSRF guard bypass) |
 
 ## Authentication Details
 
@@ -127,5 +138,4 @@ This ensures SWAIG webhook URLs and post-prompt URLs use the correct public addr
 3. Configure a reverse proxy (nginx, Caddy, etc.) for TLS termination
 4. Set `SWML_DOMAIN` to your public domain
 5. Use `ManualSetProxyUrl()` when behind a load balancer
-6. Restrict `SWML_ALLOWED_ORIGINS` to your specific domains
-7. Store credentials in environment variables, not in source code
+6. Store credentials in environment variables, not in source code

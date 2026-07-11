@@ -33,6 +33,28 @@ public class CrudResource
         return Client.GetAsync(BasePath, queryParams, cancellationToken);
     }
 
+    /// <summary>
+    /// Iterate every item across all pages of this resource's list endpoint.
+    ///
+    /// <see cref="ListAsync"/> returns a single raw page (the server's first
+    /// response). For endpoints that paginate on the wire (a ``links.next`` /
+    /// ``page_token`` in the response), <c>Paginate</c> returns a lazy
+    /// <see cref="PaginatedIterator"/> that follows those links and yields each
+    /// item — the caller no longer hand-builds the path + token loop:
+    /// <code>
+    /// await foreach (var item in resource.Paginate())
+    ///     ...
+    /// </code>
+    /// Wires the resource layer to the tested <see cref="PaginatedIterator"/>
+    /// (which walks <c>resp["data"]</c> and follows <c>resp["links"]["next"]</c>).
+    /// Mirrors Python ``ReadResource.paginate(**params) -> PaginatedIterator``.
+    /// Construction is lazy: no request fires until iteration begins.
+    /// </summary>
+    public virtual PaginatedIterator Paginate(Dictionary<string, string>? queryParams = null)
+    {
+        return new PaginatedIterator(Client, BasePath, queryParams, dataKey: "data");
+    }
+
     /// <summary>Create a new resource (POST basePath).</summary>
     public virtual Task<Dictionary<string, object?>> CreateAsync(
         Dictionary<string, object?> data,

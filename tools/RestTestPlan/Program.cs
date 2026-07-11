@@ -219,6 +219,10 @@ internal static class Program
             // ListAllAsync is the pagination wrapper (IAsyncEnumerable) over
             // ListAsync — same GET route, awkward to drive; ListAsync covers it.
             if (m.Name == "ListAllAsync") continue;
+            // Paginate returns a lazy PaginatedIterator that follows the cursor
+            // via the already-covered list route on iteration and issues no HTTP
+            // request itself — a client-side helper, not a distinct wire route.
+            if (m.Name == "Paginate") continue;
             if (!seen.Add(m.Name)) continue;
             outl.Add(new MethodRec(m.Name, m));
         }

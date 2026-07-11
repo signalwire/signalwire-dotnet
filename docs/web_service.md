@@ -90,12 +90,12 @@ var service = new WebService(
 ```bash
 # Basic authentication
 export SWML_BASIC_AUTH_USER="admin"
-export SWML_BASIC_AUTH_PASS="secretpassword"
+export SWML_BASIC_AUTH_PASSWORD="secretpassword"
 
 # SSL/HTTPS configuration
 export SWML_SSL_ENABLED=true
-export SWML_SSL_CERT="/path/to/cert.pem"
-export SWML_SSL_KEY="/path/to/key.pem"
+export SWML_SSL_CERT_PATH="/path/to/cert.pem"
+export SWML_SSL_KEY_PATH="/path/to/key.pem"
 
 # Security settings
 export SWML_ALLOWED_HOSTS="example.com,*.example.com"
@@ -141,7 +141,7 @@ Create a `web.json` or `swml_web.json` file:
 WebService implements HTTP Basic Authentication. Credentials can be set via:
 
 1. **Constructor**: `BasicAuth = ("username", "password")`
-2. **Environment**: `SWML_BASIC_AUTH_USER` and `SWML_BASIC_AUTH_PASS`
+2. **Environment**: `SWML_BASIC_AUTH_USER` and `SWML_BASIC_AUTH_PASSWORD`
 3. **Config file**: `security.basic_auth` section
 4. **Auto-generated**: If not specified, generates random credentials
 

@@ -1062,7 +1062,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     base_mod.setdefault("classes", {})
     _REST_BASE_INJECT = {
         "BaseResource": ["__init__"],
-        "ReadResource": ["get", "list"],
+        "ReadResource": ["get", "list", "paginate"],
         "FabricResource": [],
         "FabricResourcePUT": [],
     }
