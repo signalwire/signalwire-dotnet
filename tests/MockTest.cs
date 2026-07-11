@@ -250,8 +250,28 @@ public static class MockTest
         /// another test's requests); unscoped harnesses see the whole journal.</summary>
         public List<JournalEntry> All()
         {
-            var resp = _http.GetAsync(_baseUrl + "/__mock__/journal")
-                .GetAwaiter().GetResult();
+            // Retry the journal GET on a transient socket/transport failure. The mock
+            // is a local process the harness already treats as occasionally-blippy (the
+            // startup health probe loops); a momentary ConnectionReset on this read has
+            // flaked net10 REST-COVERAGE tests in the cross-port matrix. The GET is
+            // idempotent, so a bounded retry is safe and eliminates the failure class.
+            HttpResponseMessage resp = null!;
+            for (var attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    resp = _http.GetAsync(_baseUrl + "/__mock__/journal")
+                        .GetAwaiter().GetResult();
+                    break;
+                }
+                catch (Exception e) when (
+                    attempt < 4
+                    && (e is HttpRequestException
+                        || e.InnerException is System.Net.Sockets.SocketException))
+                {
+                    System.Threading.Thread.Sleep(50 * attempt);
+                }
+            }
             if (resp.StatusCode != HttpStatusCode.OK)
             {
                 throw new InvalidOperationException(
