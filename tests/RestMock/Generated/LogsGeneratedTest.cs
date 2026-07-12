@@ -31,6 +31,12 @@ using Xunit;
 namespace SignalWire.Tests.RestMock.Generated;
 
 /// <summary>Generated full-mock REST wire tests for the 'logs' namespace.</summary>
+// [Collection] serializes all RestCoverage classes onto one xUnit collection:
+// they share one mock + one journal and each resets it in its ctor, so xUnit's
+// default per-class parallelism lets classes wipe each other's recorded route
+// hits (intermittent "route not covered"). xUnit reads [Collection] with
+// inherit:false, so it must sit on the CONCRETE class, not only CoverageBase.
+[Collection("RestCoverage")]
 [Trait("Category", "RestCoverage")]
 public class LogsGeneratedTest : CoverageBase
 {
