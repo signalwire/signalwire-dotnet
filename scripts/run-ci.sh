@@ -575,8 +575,8 @@ sched_gate README-INCLUDE res=dayone desc="doc code blocks are byte-identical to
 sched_gate ROOT-HYGIENE res=dayone desc="no audit/scratch clutter tracked at repo root (allowlist ROOT_HYGIENE_ALLOW.md)" \
     -- python3 "$PORTING_SDK_DIR/scripts/root_hygiene.py" --port dotnet --repo "$PORT_ROOT"
 
-sched_gate IGNORE-LEDGER-VERIFY res=dayone desc="no laundered false-absence entries in DOC_AUDIT_IGNORE.md" \
-    -- python3 "$PORTING_SDK_DIR/scripts/ignore_ledger_verify.py" --port dotnet --repo "$PORT_ROOT"
+sched_gate IGNORE-LEDGER-VERIFY res=dayone desc="no laundered false-absence entries in DOC_AUDIT_IGNORE.md (strict: reason/approver/date required)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/ignore_ledger_verify.py" --port dotnet --repo "$PORT_ROOT" --require-fields
 
 sched_gate META-CONSISTENT res=dayone desc="package metadata consistency" \
     -- python3 "$PORTING_SDK_DIR/scripts/meta_consistent.py" --port dotnet --repo "$PORT_ROOT"
@@ -588,8 +588,12 @@ sched_gate ARTIFACT-DENY res=dayone desc="no porting artifacts in the PUBLISHED 
 # Backlog burned to zero for dotnet; these enforce so it can't re-rot.
 # ROUTE-COLLISION consumes tools/RouteRegistry (dotnet HAS a registry, same source
 # SPEC-PARITY uses) → res=dayone via route_collision_gate. RELEASE-FRESH enforces
-# because dotnet has publish.yml with gates-before-publish. SEMVER-DIFF is HELD
-# (pending user decision on version bumps) and intentionally NOT wired here.
+# because dotnet has publish.yml with gates-before-publish. SEMVER-DIFF is wired
+# and blocking: the release floor is the committed port_signatures.baseline.json
+# (baseline_version 3.0.0); the version in SignalWire.csproj must reflect any
+# surface change vs that floor.
+sched_gate SEMVER-DIFF res=dayone desc="version bump matches the API surface change vs the release-floor baseline" \
+    -- python3 "$PORTING_SDK_DIR/scripts/semver_diff.py" --port dotnet --repo "$PORT_ROOT"
 sched_gate GEN-TYPE-DEGENERACY res=dayone desc="generated types aren't degenerate loose aliases (modulo GEN_TYPE_DEGENERACY_ALLOW.md)" \
     -- python3 "$PORTING_SDK_DIR/scripts/gen_type_degeneracy.py" --port dotnet --repo "$PORT_ROOT"
 

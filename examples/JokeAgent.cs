@@ -30,7 +30,7 @@ agent.AddLanguage("English", "en-US", "inworld.Mark");
 agent.SetParams(new Dictionary<string, object> { ["ai_model"] = "gpt-4.1-nano" });
 
 // Register joke function with raw data_map configuration
-agent.RegisterRawSwaigFunction(new Dictionary<string, object>
+agent.RegisterSwaigFunction(new Dictionary<string, object>
 {
     ["function"]    = "get_joke",
     ["description"] = "Tell a joke",

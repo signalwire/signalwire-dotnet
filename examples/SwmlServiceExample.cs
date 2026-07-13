@@ -77,7 +77,7 @@ service.AddVerb("switch", new Dictionary<string, object>
     },
 });
 
-service.AddHangupVerb();
+service.AddVerb("hangup", new Dictionary<string, object>());
 
 var (user, pass) = service.GetBasicAuthCredentials();
 Console.WriteLine("Starting SWML Service at http://0.0.0.0:3000/simple");

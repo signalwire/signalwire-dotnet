@@ -22,7 +22,7 @@ sales.AddVerb("play", new Dictionary<string, object>
 {
     ["url"] = "say:All sales representatives are busy. Please try again later.",
 });
-sales.AddHangupVerb();
+sales.AddVerb("hangup", new Dictionary<string, object>());
 
 // --- Support route ---
 var support = new SWMLService(name: "support", route: "/support");
@@ -36,7 +36,7 @@ support.AddVerb("connect", new Dictionary<string, object>
     ["to"]      = "+15553334444",
     ["timeout"] = 30,
 });
-support.AddHangupVerb();
+support.AddVerb("hangup", new Dictionary<string, object>());
 
 // --- After-hours route ---
 var afterHours = new SWMLService(name: "after-hours", route: "/after-hours");
@@ -58,7 +58,7 @@ afterHours.AddVerb("play", new Dictionary<string, object>
 {
     ["url"] = "say:Thank you for your message. Goodbye.",
 });
-afterHours.AddHangupVerb();
+afterHours.AddVerb("hangup", new Dictionary<string, object>());
 
 Console.WriteLine("Starting SWML Service Routing Example");
 Console.WriteLine("  /sales       - Sales department");

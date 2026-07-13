@@ -19,6 +19,7 @@ audit pipeline (which this repo cannot edit). Verified reader per file below.
 - audit_coverage.json — required audit-contract file read by porting-sdk audit_coverage_map.py (orchestrator, 2026-07-06)
 - audit_coverage_baseline.json — required audit-contract file read by porting-sdk audit_coverage_map.py (orchestrator, 2026-07-06)
 - port_signatures.json — regenerated + read at root by scripts/run-ci.sh, scripts/enumerate_signatures.py, and porting-sdk diff_port_signatures.py (orchestrator, 2026-07-06)
+- port_signatures.baseline.json — SEMVER-DIFF release-floor snapshot read at the repo root by porting-sdk semver_diff.py (BASELINE_FILE); moving it breaks the gate (w32-dotnet, 2026-07-13)
 - port_surface.json — regenerated + read at root by scripts/run-ci.sh, scripts/enumerate_surface.py, and porting-sdk audit_docs.py/ignore_ledger_verify.py (orchestrator, 2026-07-06)
 - ARTIFACT_DENY_ALLOW.md — the artifact_deny allowlist, required at root by porting-sdk artifact_deny.py (orchestrator, 2026-07-06)
 - ROOT_HYGIENE_ALLOW.md — this allowlist itself, required at root by porting-sdk root_hygiene.py (orchestrator, 2026-07-06)

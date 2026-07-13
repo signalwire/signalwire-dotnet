@@ -25,7 +25,7 @@ service.AddVerb("prompt", new Dictionary<string, object>
     ["max_digits"] = 1,
     ["terminators"] = "#",
 });
-service.AddHangupVerb();
+service.AddVerb("hangup", new Dictionary<string, object>());
 
 // Dynamic routing based on POST data
 service.OnRequest((requestData) =>
@@ -96,7 +96,7 @@ service.OnRequest((requestData) =>
         });
     }
 
-    service.AddHangupVerb();
+    service.AddVerb("hangup", new Dictionary<string, object>());
 });
 
 var (user, pass) = service.GetBasicAuthCredentials();

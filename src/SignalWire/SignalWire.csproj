@@ -5,7 +5,7 @@
     <RootNamespace>SignalWire</RootNamespace>
     <AssemblyName>SignalWire</AssemblyName>
     <PackageId>SignalWire.Sdk</PackageId>
-    <Version>1.1.2</Version>
+    <Version>3.0.2</Version>
     <Authors>SignalWire</Authors>
     <Description>SignalWire SDK for .NET — build AI voice agents, control live calls over WebSocket, and manage resources over REST.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

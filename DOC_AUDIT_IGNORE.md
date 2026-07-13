@@ -59,30 +59,20 @@ GetAwaiter: System.Threading.Tasks.Task<T>.GetAwaiter
 GetResult: System.Runtime.CompilerServices.TaskAwaiter.GetResult
 TryGetProperty: System.Text.Json.JsonElement.TryGetProperty
 ParseAdd: System.Net.Http.Headers.HttpHeaderValueCollection<T>.ParseAdd
+GetDouble: System.Text.Json.JsonElement.GetDouble (.NET stdlib)
+TryGetInt64: System.Text.Json.JsonElement.TryGetInt64 (.NET stdlib)
+SetMinimumLevel: Microsoft.Extensions.Logging.LoggingBuilderExtensions.SetMinimumLevel (.NET stdlib)
 
-## Phantom APIs in docs/examples (TRACKED — examples need cleanup)
-
-These methods/classes are referenced in the docs or examples but DON'T
-exist in `src/SignalWire/`. The references are stale or aspirational
-and should be cleaned up in a separate doc/example sweep. Listed here
-so `audit_docs.py` can pass while the cleanup is staged.
-
-AddHangupVerb: doc/example shorthand; SDK callers use Verb("hangup", new() {})
-RegisterRawSwaigFunction: aspirational; SDK callers use RegisterSwaigFunction
-SetMinimumLevel: aspirational logger helper; SDK callers use SIGNALWIRE_LOG_LEVEL env var
-GetDouble: System.Text.Json.JsonElement built-in (.NET stdlib)
-TryGetInt64: System.Text.Json.JsonElement built-in (.NET stdlib)
-
-## Real SDK methods; C#-real name differs from the reference-canonical surface name
+## Real SDK methods; C#-real name is an idiom rename of the reference-canonical surface name
 
 These ARE public methods in `src/SignalWire/` (verified in source), but they do not
 resolve against `port_surface.json` because the surface enumerator records the
 Python-reference-canonical name for the cross-port diff, while the examples call the
 real C# name. This is the same doc↔surface idiom mismatch that signalwire-cpp,
 -java, and -go record in their DOC_AUDIT_IGNORE files (e.g. cpp `register_verb_handler`,
-go `Publish`). Not invented surface — the method exists; only its cross-port alias
+go `Publish`). Not invented surface — the method exists; only its cross-port idiom alias
 differs.
 
-GetFactory: SkillRegistry.GetFactory(string) — src/SignalWire/Skills/SkillRegistry.cs:139; surface enumerator aliases it to the reference name get_skill_class
-Verb: SWMLService.Verb(...) — src/SignalWire/SWML/Service.cs:141,157; dotnet-only verb-emit method with no Python-reference counterpart (Python adds verbs dynamically)
-ListToolNames: SWMLService.ListToolNames() — src/SignalWire/SWML/Service.cs:664 (inherited by AgentBase); dotnet-only accessor with no Python-reference counterpart
+GetFactory: SkillRegistry.GetFactory(string) — src/SignalWire/Skills/SkillRegistry.cs:155; surface enumerator aliases it to the reference name get_skill_class
+Verb: SWMLService.Verb(...) — src/SignalWire/SWML/Service.cs:137,153; dotnet-only verb-emit method with no Python-reference counterpart (Python adds verbs dynamically)
+ListToolNames: SWMLService.ListToolNames() — src/SignalWire/SWML/Service.cs:731 (inherited by AgentBase); dotnet-only accessor with no Python-reference counterpart

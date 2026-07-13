@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
@@ -20,7 +21,19 @@ public class HttpClient : IDisposable
     private readonly string _token;
     private readonly string _baseUrl;
     private readonly string _authHeader;
-    private readonly string _userAgent = "signalwire-agents-dotnet-rest/1.0";
+    private static readonly string _userAgent = BuildUserAgent();
+
+    // The REST user-agent is `<pkg>/<package-version>`; the version is read from
+    // the shipped assembly (AssemblyInformationalVersion, populated by the
+    // csproj <Version>) rather than hardcoded, so it always tracks the release.
+    private static string BuildUserAgent()
+    {
+        var asm = typeof(HttpClient).Assembly;
+        var info = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        // Strip any build metadata suffix (e.g. "3.0.0+abc123") the SDK appends.
+        var version = (info ?? asm.GetName().Version?.ToString() ?? "0.0.0").Split('+')[0];
+        return $"signalwire-agents-dotnet-rest/{version}";
+    }
 
     [SuppressMessage("Usage", "CA1054", Justification = "baseUrl is a wire string sent verbatim to the SignalWire API.")]
     public HttpClient(string projectId, string token, string baseUrl)
