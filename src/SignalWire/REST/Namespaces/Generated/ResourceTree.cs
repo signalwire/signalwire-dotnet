@@ -35,6 +35,7 @@ public partial class ResourceTree
     private SipProfile? _sipProfile;
     private VerifiedCallers? _verifiedCallers;
     private Calling? _calling;
+    private Projects? _projects;
     private Chat? _chat;
     private PubSub? _pubsub;
     private RegistryNamespace? _registry;
@@ -89,6 +90,9 @@ public partial class ResourceTree
 
     /// <summary>The Calling resource.</summary>
     public Calling Calling => _calling ??= new Calling(_generatedHttp);
+
+    /// <summary>The Projects resource.</summary>
+    public Projects Projects => _projects ??= new Projects(_generatedHttp);
 
     /// <summary>The Chat resource.</summary>
     public Chat Chat => _chat ??= new Chat(_generatedHttp);

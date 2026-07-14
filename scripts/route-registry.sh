@@ -32,7 +32,13 @@ dotnet_bin="$(command -v dotnet || true)"
 
 if [ -n "$dotnet_bin" ]; then
     "$dotnet_bin" build "$PROJ" -c Release -v quiet 1>&2 || exit 1
-    dll="$(find tools/RouteRegistry/bin -name RouteRegistry.dll | head -1)"
+    # Pick the DLL the build JUST produced. A prior build under an older SDK
+    # output layout can leave an orphan RouteRegistry.dll at a sibling path
+    # (bin/RouteRegistry/release/RouteRegistry.dll vs the current
+    # .../release/net8.0/RouteRegistry.dll); an unordered `find | head -1`
+    # would run the STALE one and silently emit a Set B missing the newest
+    # resources. Select the most-recently-modified copy instead.
+    dll="$(find tools/RouteRegistry/bin -name RouteRegistry.dll -exec ls -t {} + 2>/dev/null | head -1)"
     if [ -z "$dll" ]; then
         echo "route-registry.sh: RouteRegistry.dll not found after build" >&2
         exit 1
@@ -47,7 +53,7 @@ else
         bash -c '
             set -e
             dotnet build '"$PROJ"' -c Release -v quiet 1>&2
-            dll=$(find tools/RouteRegistry/bin -name RouteRegistry.dll | head -1)
+            dll=$(find tools/RouteRegistry/bin -name RouteRegistry.dll -exec ls -t {} + 2>/dev/null | head -1)
             if [ -z "$dll" ]; then
                 echo "route-registry.sh: RouteRegistry.dll not found after build" >&2
                 exit 1

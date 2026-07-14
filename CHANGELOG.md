@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.1.0] - 2026-07-14
+
+### REST
+- Added the **Projects** resource (`client.Projects`) — full CRUD over the
+  native `/api/projects` project-management API (list/get/create/update/delete of
+  projects and subprojects), plus `RotateSigningKeyAsync(id)` (POST
+  `/api/projects/{id}/signing-key/rotate`). Distinct from the singular
+  `client.Project` token namespace. Every route is covered by success and error
+  wire tests over the shared mock. Generated from the canonical
+  `rest-apis/projects` spec via the spec-driven REST generator.
+
 ## [3.0.2] - 2026-07-13
 
 - Unify the package version onto the cross-port 3.0.2 release line and
