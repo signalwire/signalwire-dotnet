@@ -34,6 +34,7 @@ Audit-contract files (read in place by porting-sdk audit scripts):
 - audit_coverage.json — porting-audit contract file; outside src/SignalWire, not in the .nupkg (orchestrator, 2026-07-06)
 - audit_coverage_baseline.json — porting-audit contract file; outside src/SignalWire, not in the .nupkg (orchestrator, 2026-07-06)
 - port_signatures.json — porting-audit contract file; outside src/SignalWire, not in the .nupkg (orchestrator, 2026-07-06)
+- port_signatures.baseline.json — load-bearing SEMVER-DIFF release-floor file; mirrors port_signatures.json; must be at root, must not ship; outside src/SignalWire, not in the .nupkg (w32-dotnet, 2026-07-13)
 - port_surface.json — porting-audit contract file; outside src/SignalWire, not in the .nupkg (orchestrator, 2026-07-06)
 
 Cross-port audit harnesses (separate example projects, run in place by porting-sdk; never referenced by the library pack):

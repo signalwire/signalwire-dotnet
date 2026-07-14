@@ -24,6 +24,19 @@ namespace SignalWire.Tests.RestMock;
 /// The whole-suite journal is what the REST-COVERAGE gate replays, so these
 /// tests are the single source of success+error traffic for the gate.
 /// </summary>
+/// <summary>xUnit collection that serializes every RestCoverage test class.
+/// The whole suite shares ONE mock server + ONE journal (the gate replays that
+/// single journal), and each class resets the journal in its ctor. Under xUnit's
+/// default per-class parallelism those resets race across classes — a class
+/// constructing (and resetting) while another's route hits sit in the journal
+/// erases them, so routes intermittently read as uncovered (video/voice/relay-
+/// rest were the observed victims). Assigning every CoverageBase-derived class to
+/// this one collection makes xUnit run them sequentially, so the shared journal
+/// deterministically accumulates every route's success+error traffic.</summary>
+[CollectionDefinition("RestCoverage", DisableParallelization = true)]
+public sealed class RestCoverageCollection { }
+
+[Collection("RestCoverage")]
 [Trait("Category", "RestCoverage")]
 public abstract class CoverageBase : IClassFixture<MockServerFixture>
 {

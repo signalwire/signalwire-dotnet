@@ -37,7 +37,7 @@ voicemail.AddVerb("play", new Dictionary<string, object>
 {
     ["url"] = "say:Thank you for your message. Goodbye!",
 });
-voicemail.AddHangupVerb();
+voicemail.AddVerb("hangup", new Dictionary<string, object>());
 
 var (user, pass) = voicemail.GetBasicAuthCredentials();
 Console.WriteLine($"Starting voicemail service at http://0.0.0.0:3000/voicemail");

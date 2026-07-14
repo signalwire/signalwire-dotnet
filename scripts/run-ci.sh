@@ -526,6 +526,22 @@ sched_gate SNIPPET-COMPILE tier=nightly defer=1 res=msbuild desc="documented C# 
 sched_gate DOC-CLI desc="documented swaig-test invocations parse (line-detected; dotnet CLI not built here)" \
     -- python3 "$PORTING_SDK_DIR/scripts/doc_cli.py" --port dotnet --repo "$PORT_ROOT"
 
+# Wave-3 doc/API-truth gates — deterministic source/doc analysis (no build, no
+# mock, ~1.3s for all six). Per-PR tier: cheap enough to catch doc/API drift at
+# PR time rather than a day later in nightly.
+sched_gate ERROR-ENVELOPE desc="REST error carries the full (status,body,url,method) envelope + raised on >=400" \
+    -- python3 "$PORTING_SDK_DIR/scripts/error_envelope.py" --port dotnet --repo "$PORT_ROOT"
+sched_gate DEAD-PUBLIC-ERROR desc="exported error types are raised/caught/user-signalled (no dead error surface)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/dead_public_error.py" --port dotnet --repo "$PORT_ROOT"
+sched_gate PAGINATION-WIRED desc="shipped iterator-protocol paginator is wired into list()" \
+    -- python3 "$PORTING_SDK_DIR/scripts/pagination_wired.py" --port dotnet --repo "$PORT_ROOT"
+sched_gate DOC-ENV desc="documented SIGNALWIRE_*/SWML_* env vars <=> code-read vars agree" \
+    -- python3 "$PORTING_SDK_DIR/scripts/doc_env.py" --port dotnet --repo "$PORT_ROOT"
+sched_gate COUNT-CLAIM desc="numeric doc claims (skills/namespaces) match reality" \
+    -- python3 "$PORTING_SDK_DIR/scripts/count_claim.py" --port dotnet --repo "$PORT_ROOT"
+sched_gate ACCESSOR-TRUTH desc="documented backtick method() refs exist in source" \
+    -- python3 "$PORTING_SDK_DIR/scripts/accessor_truth.py" --port dotnet --repo "$PORT_ROOT"
+
 # EXAMPLES-RUN + SNIPPET-RUN self-skip for dotnet (compiled port; examples have no
 # dotnet-run target, and snippet_run is dynamic-ports only) — they exit 0 with a
 # note. Wired for parity so the tier graduates automatically if a run target is added.
@@ -559,8 +575,8 @@ sched_gate README-INCLUDE res=dayone desc="doc code blocks are byte-identical to
 sched_gate ROOT-HYGIENE res=dayone desc="no audit/scratch clutter tracked at repo root (allowlist ROOT_HYGIENE_ALLOW.md)" \
     -- python3 "$PORTING_SDK_DIR/scripts/root_hygiene.py" --port dotnet --repo "$PORT_ROOT"
 
-sched_gate IGNORE-LEDGER-VERIFY res=dayone desc="no laundered false-absence entries in DOC_AUDIT_IGNORE.md" \
-    -- python3 "$PORTING_SDK_DIR/scripts/ignore_ledger_verify.py" --port dotnet --repo "$PORT_ROOT"
+sched_gate IGNORE-LEDGER-VERIFY res=dayone desc="no laundered false-absence entries in DOC_AUDIT_IGNORE.md (strict: reason/approver/date required)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/ignore_ledger_verify.py" --port dotnet --repo "$PORT_ROOT" --require-fields
 
 sched_gate META-CONSISTENT res=dayone desc="package metadata consistency" \
     -- python3 "$PORTING_SDK_DIR/scripts/meta_consistent.py" --port dotnet --repo "$PORT_ROOT"
@@ -572,8 +588,12 @@ sched_gate ARTIFACT-DENY res=dayone desc="no porting artifacts in the PUBLISHED 
 # Backlog burned to zero for dotnet; these enforce so it can't re-rot.
 # ROUTE-COLLISION consumes tools/RouteRegistry (dotnet HAS a registry, same source
 # SPEC-PARITY uses) → res=dayone via route_collision_gate. RELEASE-FRESH enforces
-# because dotnet has publish.yml with gates-before-publish. SEMVER-DIFF is HELD
-# (pending user decision on version bumps) and intentionally NOT wired here.
+# because dotnet has publish.yml with gates-before-publish. SEMVER-DIFF is wired
+# and blocking: the release floor is the committed port_signatures.baseline.json
+# (baseline_version 3.0.0); the version in SignalWire.csproj must reflect any
+# surface change vs that floor.
+sched_gate SEMVER-DIFF res=dayone desc="version bump matches the API surface change vs the release-floor baseline" \
+    -- python3 "$PORTING_SDK_DIR/scripts/semver_diff.py" --port dotnet --repo "$PORT_ROOT"
 sched_gate GEN-TYPE-DEGENERACY res=dayone desc="generated types aren't degenerate loose aliases (modulo GEN_TYPE_DEGENERACY_ALLOW.md)" \
     -- python3 "$PORTING_SDK_DIR/scripts/gen_type_degeneracy.py" --port dotnet --repo "$PORT_ROOT"
 

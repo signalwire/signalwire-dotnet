@@ -24,7 +24,6 @@ GetValueOrDefault: Dictionary<TKey,TValue>.GetValueOrDefault
 IsNullOrEmpty: System.String static helper
 IsNullOrWhiteSpace: System.String static helper
 NewGuid: System.Guid.NewGuid
-Next: System.Random.Next
 Serialize: System.Text.Json.JsonSerializer.Serialize
 Split: System.String.Split
 Take: System.Linq Take operator
@@ -37,10 +36,7 @@ WriteLine: System.Console.WriteLine
 WriteLineAsync: System.IO.TextWriter.WriteLineAsync
 Join: System.String.Join
 Add: List<T>.Add / Dictionary.Add and other collection helpers
-Start: System.Threading.Tasks.Task.Start (and other Start methods)
 Cancel: CancellationTokenSource.Cancel
-Configure: Microsoft.Extensions.DependencyInjection / various .NET DI Configure helpers
-Search: doc-only label (e.g. "Web Search Capability"); not a method on any SDK class
 AddSeconds: System.DateTime.AddSeconds
 Contains: System.Linq Contains operator / String.Contains
 Delay: System.Threading.Tasks.Task.Delay
@@ -57,45 +53,26 @@ SetEnvironmentVariable: System.Environment.SetEnvironmentVariable
 ToUpperInvariant: System.String.ToUpperInvariant
 TrimEnd: System.String.TrimEnd
 TryCreate: System.Uri.TryCreate
-Trim: System.String.Trim
 EnumerateObject: System.Text.Json.JsonElement.EnumerateObject
 EscapeDataString: System.Uri.EscapeDataString
 GetAwaiter: System.Threading.Tasks.Task<T>.GetAwaiter
 GetResult: System.Runtime.CompilerServices.TaskAwaiter.GetResult
 TryGetProperty: System.Text.Json.JsonElement.TryGetProperty
 ParseAdd: System.Net.Http.Headers.HttpHeaderValueCollection<T>.ParseAdd
+GetDouble: System.Text.Json.JsonElement.GetDouble (.NET stdlib)
+TryGetInt64: System.Text.Json.JsonElement.TryGetInt64 (.NET stdlib)
+SetMinimumLevel: Microsoft.Extensions.Logging.LoggingBuilderExtensions.SetMinimumLevel (.NET stdlib)
 
-## Phantom APIs in docs/examples (TRACKED — examples need cleanup)
-
-These methods/classes are referenced in the docs or examples but DON'T
-exist in `src/SignalWire/`. The references are stale or aspirational
-and should be cleaned up in a separate doc/example sweep. Listed here
-so `audit_docs.py` can pass while the cleanup is staged.
-
-AddHangupVerb: doc/example shorthand; SDK callers use Verb("hangup", new() {})
-AddDirectory: aspirational static-file helper; SDK callers use AgentServer.ServeStatic
-RemoveDirectory: aspirational reverse of AddDirectory; not implemented
-AddMcpServer: aspirational MCP helper; SDK callers use the mcp_gateway skill
-EnableMcpServer: aspirational MCP helper; SDK callers use the mcp_gateway skill
-OnRequest: aspirational web hook; SDK callers register via RegisterRoutingCallback
-RegisterRawSwaigFunction: aspirational; SDK callers use RegisterSwaigFunction
-ResetDocument: aspirational; SDK callers replace the Document on the Service instance
-SetMinimumLevel: aspirational logger helper; SDK callers use SIGNALWIRE_LOG_LEVEL env var
-Conference: doc-only label (e.g. "Conference Bridge"); not a method
-GetDouble: System.Text.Json.JsonElement built-in (.NET stdlib)
-TryGetInt64: System.Text.Json.JsonElement built-in (.NET stdlib)
-TryParse: System primitive .TryParse pattern (int.TryParse etc.) (.NET stdlib)
-
-## Real SDK methods; C#-real name differs from the reference-canonical surface name
+## Real SDK methods; C#-real name is an idiom rename of the reference-canonical surface name
 
 These ARE public methods in `src/SignalWire/` (verified in source), but they do not
 resolve against `port_surface.json` because the surface enumerator records the
 Python-reference-canonical name for the cross-port diff, while the examples call the
 real C# name. This is the same doc↔surface idiom mismatch that signalwire-cpp,
 -java, and -go record in their DOC_AUDIT_IGNORE files (e.g. cpp `register_verb_handler`,
-go `Publish`). Not invented surface — the method exists; only its cross-port alias
+go `Publish`). Not invented surface — the method exists; only its cross-port idiom alias
 differs.
 
-GetFactory: SkillRegistry.GetFactory(string) — src/SignalWire/Skills/SkillRegistry.cs:139; surface enumerator aliases it to the reference name get_skill_class
-Verb: SWMLService.Verb(...) — src/SignalWire/SWML/Service.cs:141,157; dotnet-only verb-emit method with no Python-reference counterpart (Python adds verbs dynamically)
-ListToolNames: SWMLService.ListToolNames() — src/SignalWire/SWML/Service.cs:664 (inherited by AgentBase); dotnet-only accessor with no Python-reference counterpart
+GetFactory: SkillRegistry.GetFactory(string) — src/SignalWire/Skills/SkillRegistry.cs:155; surface enumerator aliases it to the reference name get_skill_class
+Verb: SWMLService.Verb(...) — src/SignalWire/SWML/Service.cs:137,153; dotnet-only verb-emit method with no Python-reference counterpart (Python adds verbs dynamically)
+ListToolNames: SWMLService.ListToolNames() — src/SignalWire/SWML/Service.cs:731 (inherited by AgentBase); dotnet-only accessor with no Python-reference counterpart

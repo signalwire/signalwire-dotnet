@@ -26,7 +26,7 @@ voicemail.AddVerb("play", new Dictionary<string, object>
 {
     ["url"] = "say:Thank you for your message. Goodbye!",
 });
-voicemail.AddHangupVerb();
+voicemail.AddVerb("hangup", new Dictionary<string, object>());
 
 // --- IVR Menu ---
 
@@ -92,7 +92,7 @@ transfer.AddVerb("record", new Dictionary<string, object>
     ["max_length"]  = 120,
     ["terminators"] = "#",
 });
-transfer.AddHangupVerb();
+transfer.AddVerb("hangup", new Dictionary<string, object>());
 
 Console.WriteLine("Starting Basic SWML Service");
 Console.WriteLine("  /voicemail - Voicemail service");
