@@ -486,10 +486,16 @@ sched_gate FMT defer=1 res=msbuild desc="dotnet format whitespace (local: auto-f
 sched_gate LINT defer=1 res=msbuild desc="dotnet build (analyzers, warnings-as-errors)" \
     --fn lint_gate
 
-sched_gate DOC-AUDIT res=surface desc="audit_docs vs port_surface.json" \
+# DOC-AUDIT resolves doc/example refs against the CANONICAL surface AND the native
+# sidecar (port_surface_native.json — the real C# member names, Async suffix intact).
+# The sidecar lets a genuinely-present async member (call.AnswerAsync()) resolve while
+# a phantom (Action StopAsync, only sync Stop exists) stays unresolved. Idiom via the
+# enumerator, not a doc omission (RULES §2).
+sched_gate DOC-AUDIT res=surface desc="audit_docs vs port_surface.json (+native sidecar)" \
     -- python3 "$PORTING_SDK_DIR/scripts/audit_docs.py" \
         --root "$PORT_ROOT" \
         --surface "$PORT_ROOT/port_surface.json" \
+        --native-names "$PORT_ROOT/port_surface_native.json" \
         --ignore "$PORT_ROOT/DOC_AUDIT_IGNORE.md"
 
 sched_gate SURFACE-DIFF res=surface desc="diff_port_surface vs python_surface.json" \
