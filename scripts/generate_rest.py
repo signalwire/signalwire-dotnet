@@ -88,8 +88,8 @@ except ImportError:  # pragma: no cover
 # placement.
 _NS_ORDER = (
     "relay-rest", "fabric", "calling", "video", "datasphere",
-    "logs", "message", "voice", "fax", "project", "projects", "chat", "pubsub",
-    "swml-webhooks",
+    "logs", "message", "messages", "voice", "fax", "project", "projects", "chat",
+    "pubsub", "swml-webhooks",
 )
 
 # PascalCase Types sub-namespace overrides where the mechanical PascalCase of the
@@ -621,7 +621,11 @@ def body_params(spec: Spec, cls: str, cs_method: str,
     build: list[str] = []
     doc: list[str] = []
     records: list[dict] = list(leading)
-    build.append("        var body = new Dictionary<string, object?>();")
+    # Local dict identifier uses a leading underscore so it can NEVER collide
+    # with a body-field param name: snake_to_camel never emits a leading
+    # underscore, so a wire field literally named ``body`` (messages spec) maps
+    # to the C# param ``body`` while the assembly dict stays ``_reqBody``.
+    build.append("        var _reqBody = new Dictionary<string, object?>();")
     for wire_name, schema, required in ordered_fields(fields):
         ident = _dedupe_param(escape_param(wire_name), used)
         pt = cs_param_type(spec, schema, required)
@@ -631,13 +635,13 @@ def body_params(spec: Spec, cls: str, cs_method: str,
         rec: dict = {"name": wire_name, "kind": "keyword", "type": ct, "required": required}
         if required:
             cs_params.append(f"{pt} {ident}")
-            build.append(f"        body[{cs_str(wire_name)}] = {ident};")
+            build.append(f"        _reqBody[{cs_str(wire_name)}] = {ident};")
         else:
             cs_params.append(f"{pt} {ident} = null")
             rec["default"] = None
             build.append(f"        if ({ident} is not null)")
             build.append("        {")
-            build.append(f"            body[{cs_str(wire_name)}] = {ident};")
+            build.append(f"            _reqBody[{cs_str(wire_name)}] = {ident};")
             build.append("        }")
         records.append(rec)
     # trailing forward-compat door — the oracle's keyword ``extras``.
@@ -652,7 +656,7 @@ def body_params(spec: Spec, cls: str, cs_method: str,
     build.append("        {")
     build.append(f"            foreach (var kv in {extras_id})")
     build.append("            {")
-    build.append("                body[kv.Key] = kv.Value;")
+    build.append("                _reqBody[kv.Key] = kv.Value;")
     build.append("            }")
     build.append("        }")
     _register_sidecar(cls, cs_method, records)
@@ -1017,7 +1021,7 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
             doc = ["    /// <summary>",
                    f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path}).",
                    "    /// </summary>"] + field_doc
-            call_line = f"        return Client.{verb_fn}({path_expr}, body, cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, cancellationToken);"
         else:
             # §5.2 union body → a single ``Dictionary<string,object?> body`` param.
             body_id = _dedupe_param("body", used)

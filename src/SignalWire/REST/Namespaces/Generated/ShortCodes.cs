@@ -70,40 +70,40 @@ public class ShortCodes
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> UpdateAsync(string id, string name, string messageHandler, string? messageRequestUrl = null, string? messageRequestMethod = null, string? messageFallbackUrl = null, string? messageFallbackMethod = null, string? messageLamlApplicationId = null, string? messageRelayContext = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["name"] = name;
-        body["message_handler"] = messageHandler;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["name"] = name;
+        _reqBody["message_handler"] = messageHandler;
         if (messageRequestUrl is not null)
         {
-            body["message_request_url"] = messageRequestUrl;
+            _reqBody["message_request_url"] = messageRequestUrl;
         }
         if (messageRequestMethod is not null)
         {
-            body["message_request_method"] = messageRequestMethod;
+            _reqBody["message_request_method"] = messageRequestMethod;
         }
         if (messageFallbackUrl is not null)
         {
-            body["message_fallback_url"] = messageFallbackUrl;
+            _reqBody["message_fallback_url"] = messageFallbackUrl;
         }
         if (messageFallbackMethod is not null)
         {
-            body["message_fallback_method"] = messageFallbackMethod;
+            _reqBody["message_fallback_method"] = messageFallbackMethod;
         }
         if (messageLamlApplicationId is not null)
         {
-            body["message_laml_application_id"] = messageLamlApplicationId;
+            _reqBody["message_laml_application_id"] = messageLamlApplicationId;
         }
         if (messageRelayContext is not null)
         {
-            body["message_relay_context"] = messageRelayContext;
+            _reqBody["message_relay_context"] = messageRelayContext;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), body, cancellationToken);
+        return Client.PutAsync(Path(id), _reqBody, cancellationToken);
     }
 }

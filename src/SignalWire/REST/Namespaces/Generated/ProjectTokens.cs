@@ -47,21 +47,21 @@ public class ProjectTokens
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateAsync(string name, List<object?> permissions, string? subprojectId = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["name"] = name;
-        body["permissions"] = permissions;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["name"] = name;
+        _reqBody["permissions"] = permissions;
         if (subprojectId is not null)
         {
-            body["subproject_id"] = subprojectId;
+            _reqBody["subproject_id"] = subprojectId;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, body, cancellationToken);
+        return Client.PostAsync(BasePath, _reqBody, cancellationToken);
     }
 
     /// <summary>
@@ -72,23 +72,23 @@ public class ProjectTokens
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> UpdateAsync(string tokenId, string? name = null, List<object?>? permissions = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
+        var _reqBody = new Dictionary<string, object?>();
         if (name is not null)
         {
-            body["name"] = name;
+            _reqBody["name"] = name;
         }
         if (permissions is not null)
         {
-            body["permissions"] = permissions;
+            _reqBody["permissions"] = permissions;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PatchAsync(Path(tokenId), body, cancellationToken);
+        return Client.PatchAsync(Path(tokenId), _reqBody, cancellationToken);
     }
 
     /// <summary>

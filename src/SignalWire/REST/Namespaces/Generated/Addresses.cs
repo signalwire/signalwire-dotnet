@@ -64,32 +64,32 @@ public class Addresses
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateAsync(string label, string country, string firstName, string lastName, string streetNumber, string streetName, string city, string state, string postalCode, string? addressType = null, string? addressNumber = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["label"] = label;
-        body["country"] = country;
-        body["first_name"] = firstName;
-        body["last_name"] = lastName;
-        body["street_number"] = streetNumber;
-        body["street_name"] = streetName;
-        body["city"] = city;
-        body["state"] = state;
-        body["postal_code"] = postalCode;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["label"] = label;
+        _reqBody["country"] = country;
+        _reqBody["first_name"] = firstName;
+        _reqBody["last_name"] = lastName;
+        _reqBody["street_number"] = streetNumber;
+        _reqBody["street_name"] = streetName;
+        _reqBody["city"] = city;
+        _reqBody["state"] = state;
+        _reqBody["postal_code"] = postalCode;
         if (addressType is not null)
         {
-            body["address_type"] = addressType;
+            _reqBody["address_type"] = addressType;
         }
         if (addressNumber is not null)
         {
-            body["address_number"] = addressNumber;
+            _reqBody["address_number"] = addressNumber;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, body, cancellationToken);
+        return Client.PostAsync(BasePath, _reqBody, cancellationToken);
     }
 
     /// <summary>

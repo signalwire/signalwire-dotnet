@@ -54,19 +54,19 @@ public class RegistryCampaigns
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> UpdateAsync(string id, string? name = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
+        var _reqBody = new Dictionary<string, object?>();
         if (name is not null)
         {
-            body["name"] = name;
+            _reqBody["name"] = name;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), body, cancellationToken);
+        return Client.PutAsync(Path(id), _reqBody, cancellationToken);
     }
 
     /// <summary>
@@ -95,22 +95,22 @@ public class RegistryCampaigns
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateOrderAsync(string id, List<object?>? phoneNumbers = null, string? statusCallbackUrl = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
+        var _reqBody = new Dictionary<string, object?>();
         if (phoneNumbers is not null)
         {
-            body["phone_numbers"] = phoneNumbers;
+            _reqBody["phone_numbers"] = phoneNumbers;
         }
         if (statusCallbackUrl is not null)
         {
-            body["status_callback_url"] = statusCallbackUrl;
+            _reqBody["status_callback_url"] = statusCallbackUrl;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "orders"), body, cancellationToken);
+        return Client.PostAsync(Path(id, "orders"), _reqBody, cancellationToken);
     }
 }

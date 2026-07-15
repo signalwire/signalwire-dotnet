@@ -62,83 +62,83 @@ public class VideoRoomTokens
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateAsync(string roomName, string? userName = null, List<object?>? permissions = null, string? joinFrom = null, string? joinUntil = null, string? removeAt = null, int? removeAfterSecondsElapsed = null, bool? joinAudioMuted = null, bool? joinVideoMuted = null, bool? autoCreateRoom = null, bool? enableRoomPreviews = null, string? roomDisplayName = null, bool? endRoomSessionOnLeave = null, string? joinAs = null, string? mediaAllowed = null, Dictionary<string, object?>? roomMeta = null, Dictionary<string, object?>? meta = null, bool? syncAudioVideo = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["room_name"] = roomName;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["room_name"] = roomName;
         if (userName is not null)
         {
-            body["user_name"] = userName;
+            _reqBody["user_name"] = userName;
         }
         if (permissions is not null)
         {
-            body["permissions"] = permissions;
+            _reqBody["permissions"] = permissions;
         }
         if (joinFrom is not null)
         {
-            body["join_from"] = joinFrom;
+            _reqBody["join_from"] = joinFrom;
         }
         if (joinUntil is not null)
         {
-            body["join_until"] = joinUntil;
+            _reqBody["join_until"] = joinUntil;
         }
         if (removeAt is not null)
         {
-            body["remove_at"] = removeAt;
+            _reqBody["remove_at"] = removeAt;
         }
         if (removeAfterSecondsElapsed is not null)
         {
-            body["remove_after_seconds_elapsed"] = removeAfterSecondsElapsed;
+            _reqBody["remove_after_seconds_elapsed"] = removeAfterSecondsElapsed;
         }
         if (joinAudioMuted is not null)
         {
-            body["join_audio_muted"] = joinAudioMuted;
+            _reqBody["join_audio_muted"] = joinAudioMuted;
         }
         if (joinVideoMuted is not null)
         {
-            body["join_video_muted"] = joinVideoMuted;
+            _reqBody["join_video_muted"] = joinVideoMuted;
         }
         if (autoCreateRoom is not null)
         {
-            body["auto_create_room"] = autoCreateRoom;
+            _reqBody["auto_create_room"] = autoCreateRoom;
         }
         if (enableRoomPreviews is not null)
         {
-            body["enable_room_previews"] = enableRoomPreviews;
+            _reqBody["enable_room_previews"] = enableRoomPreviews;
         }
         if (roomDisplayName is not null)
         {
-            body["room_display_name"] = roomDisplayName;
+            _reqBody["room_display_name"] = roomDisplayName;
         }
         if (endRoomSessionOnLeave is not null)
         {
-            body["end_room_session_on_leave"] = endRoomSessionOnLeave;
+            _reqBody["end_room_session_on_leave"] = endRoomSessionOnLeave;
         }
         if (joinAs is not null)
         {
-            body["join_as"] = joinAs;
+            _reqBody["join_as"] = joinAs;
         }
         if (mediaAllowed is not null)
         {
-            body["media_allowed"] = mediaAllowed;
+            _reqBody["media_allowed"] = mediaAllowed;
         }
         if (roomMeta is not null)
         {
-            body["room_meta"] = roomMeta;
+            _reqBody["room_meta"] = roomMeta;
         }
         if (meta is not null)
         {
-            body["meta"] = meta;
+            _reqBody["meta"] = meta;
         }
         if (syncAudioVideo is not null)
         {
-            body["sync_audio_video"] = syncAudioVideo;
+            _reqBody["sync_audio_video"] = syncAudioVideo;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, body, cancellationToken);
+        return Client.PostAsync(BasePath, _reqBody, cancellationToken);
     }
 }

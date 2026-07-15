@@ -46,37 +46,37 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateSipEndpointAsync(string subscriberId, string username, string password, string? callerId = null, string? sendAs = null, List<object?>? ciphers = null, List<object?>? codecs = null, string? encryption = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["username"] = username;
-        body["password"] = password;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["username"] = username;
+        _reqBody["password"] = password;
         if (callerId is not null)
         {
-            body["caller_id"] = callerId;
+            _reqBody["caller_id"] = callerId;
         }
         if (sendAs is not null)
         {
-            body["send_as"] = sendAs;
+            _reqBody["send_as"] = sendAs;
         }
         if (ciphers is not null)
         {
-            body["ciphers"] = ciphers;
+            _reqBody["ciphers"] = ciphers;
         }
         if (codecs is not null)
         {
-            body["codecs"] = codecs;
+            _reqBody["codecs"] = codecs;
         }
         if (encryption is not null)
         {
-            body["encryption"] = encryption;
+            _reqBody["encryption"] = encryption;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(subscriberId, "sip_endpoints"), body, cancellationToken);
+        return Client.PostAsync(Path(subscriberId, "sip_endpoints"), _reqBody, cancellationToken);
     }
 
     /// <summary>
@@ -101,43 +101,43 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> UpdateSipEndpointAsync(string subscriberId, string id, string? username = null, string? password = null, string? callerId = null, string? sendAs = null, List<object?>? ciphers = null, List<object?>? codecs = null, string? encryption = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
+        var _reqBody = new Dictionary<string, object?>();
         if (username is not null)
         {
-            body["username"] = username;
+            _reqBody["username"] = username;
         }
         if (password is not null)
         {
-            body["password"] = password;
+            _reqBody["password"] = password;
         }
         if (callerId is not null)
         {
-            body["caller_id"] = callerId;
+            _reqBody["caller_id"] = callerId;
         }
         if (sendAs is not null)
         {
-            body["send_as"] = sendAs;
+            _reqBody["send_as"] = sendAs;
         }
         if (ciphers is not null)
         {
-            body["ciphers"] = ciphers;
+            _reqBody["ciphers"] = ciphers;
         }
         if (codecs is not null)
         {
-            body["codecs"] = codecs;
+            _reqBody["codecs"] = codecs;
         }
         if (encryption is not null)
         {
-            body["encryption"] = encryption;
+            _reqBody["encryption"] = encryption;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PatchAsync(Path(subscriberId, "sip_endpoints", id), body, cancellationToken);
+        return Client.PatchAsync(Path(subscriberId, "sip_endpoints", id), _reqBody, cancellationToken);
     }
 
     /// <summary>

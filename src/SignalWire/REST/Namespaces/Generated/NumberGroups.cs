@@ -40,16 +40,16 @@ public class NumberGroups : SignalWire.REST.CrudResource
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> AddMembershipAsync(string groupId, string phoneNumberId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["phone_number_id"] = phoneNumberId;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["phone_number_id"] = phoneNumberId;
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(groupId, "number_group_memberships"), body, cancellationToken);
+        return Client.PostAsync(Path(groupId, "number_group_memberships"), _reqBody, cancellationToken);
     }
 
     /// <summary>

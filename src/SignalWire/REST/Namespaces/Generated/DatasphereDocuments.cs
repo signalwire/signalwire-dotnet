@@ -46,44 +46,44 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> SearchAsync(string queryString, List<object?>? tags = null, string? documentId = null, double? distance = null, int? count = null, string? language = null, List<object?>? posToExpand = null, int? maxSynonyms = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["query_string"] = queryString;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["query_string"] = queryString;
         if (tags is not null)
         {
-            body["tags"] = tags;
+            _reqBody["tags"] = tags;
         }
         if (documentId is not null)
         {
-            body["document_id"] = documentId;
+            _reqBody["document_id"] = documentId;
         }
         if (distance is not null)
         {
-            body["distance"] = distance;
+            _reqBody["distance"] = distance;
         }
         if (count is not null)
         {
-            body["count"] = count;
+            _reqBody["count"] = count;
         }
         if (language is not null)
         {
-            body["language"] = language;
+            _reqBody["language"] = language;
         }
         if (posToExpand is not null)
         {
-            body["pos_to_expand"] = posToExpand;
+            _reqBody["pos_to_expand"] = posToExpand;
         }
         if (maxSynonyms is not null)
         {
-            body["max_synonyms"] = maxSynonyms;
+            _reqBody["max_synonyms"] = maxSynonyms;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path("search"), body, cancellationToken);
+        return Client.PostAsync(Path("search"), _reqBody, cancellationToken);
     }
 
     /// <summary>

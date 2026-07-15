@@ -76,71 +76,71 @@ public class CxmlApplications
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> UpdateAsync(string id, string? displayName = null, string? accountSid = null, string? voiceUrl = null, Dictionary<string, object?>? voiceMethod = null, string? voiceFallbackUrl = null, Dictionary<string, object?>? voiceFallbackMethod = null, string? statusCallback = null, Dictionary<string, object?>? statusCallbackMethod = null, string? smsUrl = null, Dictionary<string, object?>? smsMethod = null, string? smsFallbackUrl = null, Dictionary<string, object?>? smsFallbackMethod = null, string? smsStatusCallback = null, Dictionary<string, object?>? smsStatusCallbackMethod = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
+        var _reqBody = new Dictionary<string, object?>();
         if (displayName is not null)
         {
-            body["display_name"] = displayName;
+            _reqBody["display_name"] = displayName;
         }
         if (accountSid is not null)
         {
-            body["account_sid"] = accountSid;
+            _reqBody["account_sid"] = accountSid;
         }
         if (voiceUrl is not null)
         {
-            body["voice_url"] = voiceUrl;
+            _reqBody["voice_url"] = voiceUrl;
         }
         if (voiceMethod is not null)
         {
-            body["voice_method"] = voiceMethod;
+            _reqBody["voice_method"] = voiceMethod;
         }
         if (voiceFallbackUrl is not null)
         {
-            body["voice_fallback_url"] = voiceFallbackUrl;
+            _reqBody["voice_fallback_url"] = voiceFallbackUrl;
         }
         if (voiceFallbackMethod is not null)
         {
-            body["voice_fallback_method"] = voiceFallbackMethod;
+            _reqBody["voice_fallback_method"] = voiceFallbackMethod;
         }
         if (statusCallback is not null)
         {
-            body["status_callback"] = statusCallback;
+            _reqBody["status_callback"] = statusCallback;
         }
         if (statusCallbackMethod is not null)
         {
-            body["status_callback_method"] = statusCallbackMethod;
+            _reqBody["status_callback_method"] = statusCallbackMethod;
         }
         if (smsUrl is not null)
         {
-            body["sms_url"] = smsUrl;
+            _reqBody["sms_url"] = smsUrl;
         }
         if (smsMethod is not null)
         {
-            body["sms_method"] = smsMethod;
+            _reqBody["sms_method"] = smsMethod;
         }
         if (smsFallbackUrl is not null)
         {
-            body["sms_fallback_url"] = smsFallbackUrl;
+            _reqBody["sms_fallback_url"] = smsFallbackUrl;
         }
         if (smsFallbackMethod is not null)
         {
-            body["sms_fallback_method"] = smsFallbackMethod;
+            _reqBody["sms_fallback_method"] = smsFallbackMethod;
         }
         if (smsStatusCallback is not null)
         {
-            body["sms_status_callback"] = smsStatusCallback;
+            _reqBody["sms_status_callback"] = smsStatusCallback;
         }
         if (smsStatusCallbackMethod is not null)
         {
-            body["sms_status_callback_method"] = smsStatusCallbackMethod;
+            _reqBody["sms_status_callback_method"] = smsStatusCallbackMethod;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), body, cancellationToken);
+        return Client.PutAsync(Path(id), _reqBody, cancellationToken);
     }
 
     /// <summary>
