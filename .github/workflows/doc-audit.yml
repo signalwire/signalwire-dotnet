@@ -31,12 +31,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout signalwire-dotnet
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: signalwire-dotnet
 
       - name: Checkout porting-sdk (contains audit_docs.py)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: signalwire/porting-sdk
           path: porting-sdk
