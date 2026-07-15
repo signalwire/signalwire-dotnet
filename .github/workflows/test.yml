@@ -29,12 +29,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout signalwire-dotnet
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: signalwire-dotnet
 
       - name: Checkout porting-sdk (mock_relay + mock_signalwire test harnesses)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: signalwire/porting-sdk
           path: porting-sdk
@@ -44,7 +44,7 @@ jobs:
       # signalwire-python oracle (FunctionResult), which pulls fastapi via
       # signalwire/__init__. Check it out so the EMISSION gate has its reference.
       - name: Checkout signalwire-python (EMISSION oracle)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: signalwire/signalwire-python
           path: signalwire-python
