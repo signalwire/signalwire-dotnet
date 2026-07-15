@@ -548,14 +548,47 @@ sched_gate COUNT-CLAIM desc="numeric doc claims (skills/namespaces) match realit
 sched_gate ACCESSOR-TRUTH desc="documented backtick method() refs exist in source" \
     -- python3 "$PORTING_SDK_DIR/scripts/accessor_truth.py" --port dotnet --repo "$PORT_ROOT"
 
+# ---- gate-enforcement quartet (plan Parts A1/C2/2.4/2.2) ---------------------
+# DOC-WIRE + STATUS-CLAIM are per-PR (cheap deterministic doc/source checks).
+# WAIT-LIVENESS is nightly (spawns a live-mock dump program). STRICT-MOCKS
+# (MOCK_RELAY_STRICT=1) rides EXAMPLES-RUN/SNIPPET-RUN on the nightly tier.
+# GATE-INVENTORY is deliberately NOT wired per-port: gen_gate_inventory.py resolves
+# its reference as a sibling signalwire-typescript checkout, absent in a port's CI
+# layout (→ exit 2); it is porting-sdk-side and already runs in porting-sdk's CI.
+#
+# DOC-WIRE (§A1) — the documented REST doc fixtures put the SPEC wire shape on the
+# wire (areacode not area_code, nested params:{text} not a flat item). doc_wire.py
+# spawns its OWN flag-mode mock (free port, self-cleaning) and replays the doc
+# fixtures via tools/DocWire, failing on any journaled wire_violations. Cheap/blocking.
+sched_gate DOC-WIRE desc="documented REST doc fixtures put the spec wire shape on the wire (areacode/params:{text})" \
+    -- python3 "$PORTING_SDK_DIR/scripts/doc_wire.py" --port dotnet --repo "$PORT_ROOT" \
+        --runner "bash $PORT_ROOT/scripts/doc_wire_runner.sh"
+
+# STATUS-CLAIM (§C2) — no false capability/status claims in docs (e.g. "not yet
+# implemented" next to a shipped method). Deterministic source/doc analysis, cheap.
+sched_gate STATUS-CLAIM res=surface desc="doc status/capability claims match the shipped surface" \
+    -- python3 "$PORTING_SDK_DIR/scripts/status_claim.py" --port dotnet --repo "$PORT_ROOT" \
+        --surface "$PORT_ROOT/port_surface.json"
+
+# WAIT-LIVENESS (§2.4) — the RELAY Action.WaitAsync() liveness contract: wait()
+# BLOCKS until the deferred completing event arrives, then returns (never a no-op
+# early return, never a hung wait). tools/WaitLivenessDump drives play/record +
+# WaitAsync against a live mock and emits the classification, diffed against the
+# python-oracle golden. Nightly (spawns a live-mock dump program).
+sched_gate WAIT-LIVENESS tier=nightly defer=1 desc="Action.WaitAsync() liveness corpus matches the python-oracle golden classification" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_wait_liveness.py" \
+        --port dotnet --python-sdk "$PYTHON_SDK_DIR" \
+        --dump-cmd "bash $PORT_ROOT/scripts/wait-liveness-dump.sh"
+
 # EXAMPLES-RUN + SNIPPET-RUN self-skip for dotnet (compiled port; examples have no
 # dotnet-run target, and snippet_run is dynamic-ports only) — they exit 0 with a
-# note. Wired for parity so the tier graduates automatically if a run target is added.
-sched_gate EXAMPLES-RUN tier=nightly defer=1 desc="shipped examples load/start (dotnet: SKIPPED-WITH-NOTE, no run target)" \
-    -- python3 "$PORTING_SDK_DIR/scripts/examples_run.py" --port dotnet --repo "$PORT_ROOT"
+# note. STRICT-MOCKS (MOCK_RELAY_STRICT=1) is set for parity so the moment a run
+# target is added, a wrong-wire example fails LOUD against the strict mock.
+sched_gate EXAMPLES-RUN tier=nightly defer=1 desc="shipped examples load/start (dotnet: SKIPPED-WITH-NOTE, no run target; STRICT-MOCKS: MOCK_RELAY_STRICT=1)" \
+    -- env MOCK_RELAY_STRICT=1 python3 "$PORTING_SDK_DIR/scripts/examples_run.py" --port dotnet --repo "$PORT_ROOT"
 
-sched_gate SNIPPET-RUN tier=nightly defer=1 desc="dynamic-port doc snippets run to zero exit (dotnet: self-skips, compiled port)" \
-    -- python3 "$PORTING_SDK_DIR/scripts/snippet_run.py" --port dotnet --repo "$PORT_ROOT" --report-only
+sched_gate SNIPPET-RUN tier=nightly defer=1 desc="dynamic-port doc snippets run to zero exit (dotnet: self-skips, compiled port; STRICT-MOCKS: MOCK_RELAY_STRICT=1)" \
+    -- env MOCK_RELAY_STRICT=1 python3 "$PORTING_SDK_DIR/scripts/snippet_run.py" --port dotnet --repo "$PORT_ROOT"
 
 # ---- §G anti-laundering ledger gate ------------------------------------------
 sched_gate SUPPRESSION-LEDGER res=dayone desc="no un-ledgered analyzer suppressions (SUPPRESSIONS_LEDGER.md)" \

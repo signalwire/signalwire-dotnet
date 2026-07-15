@@ -130,7 +130,7 @@ await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
     ["name"]   = "Bot",
     ["prompt"] = new Dictionary<string, object> { ["text"] = "You are helpful." },
 });
-await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["area_code"] = "512" });
+await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacode"] = "512" });
 await client.Calling.DialAsync(
     from: "+15559876543",
     to:   "+15551234567",
