@@ -20291,17 +20291,26 @@
                   "kind": "self"
                 },
                 {
-                  "name": "message",
-                  "type": "string",
+                  "name": "code",
+                  "type": "int",
                   "required": true
                 },
                 {
-                  "name": "inner_exception",
-                  "type": "any",
+                  "name": "message",
+                  "type": "string",
                   "required": true
                 }
               ],
               "returns": "void"
+            },
+            "code": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "int"
             }
           }
         }

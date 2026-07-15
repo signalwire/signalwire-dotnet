@@ -293,6 +293,7 @@ signalwire.rest.signal_wire_rest_error.SignalWireRestError.__init__: .NET ships 
 signalwire.rest.signal_wire_rest_error.SignalWireRestError: .NET ships SignalWireRestError under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.signal_wire_rest_error.SignalWireRestError.response_body: .NET ships SignalWireRestError under SignalWire.REST; Python's path is signalwire.rest._base
 signalwire.rest.signal_wire_rest_error.SignalWireRestError.status_code: .NET ships SignalWireRestError under SignalWire.REST; Python's path is signalwire.rest._base
+signalwire.relay.client.RelayError.code: .NET exposes the RELAY error code as a read-only `Code` property; Python sets it as the `self.code` instance attribute in `RelayError.__init__` (which the surface enumerator records only as `__init__`) — same error code, .NET property vs Python instance attr
 signalwire.serverless.adapter.Adapter.detect: .NET ships Adapter class; Python uses ServerlessMixin on AgentBase + signalwire.utils.is_serverless_mode
 signalwire.serverless.adapter.Adapter.handle_azure: .NET ships Adapter class; Python uses ServerlessMixin on AgentBase + signalwire.utils.is_serverless_mode
 signalwire.serverless.adapter.Adapter.handle_cgi: .NET ships Adapter class; Python uses ServerlessMixin on AgentBase + signalwire.utils.is_serverless_mode

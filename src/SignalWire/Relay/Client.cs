@@ -644,9 +644,12 @@ public class Client : IAsyncDisposable
         {
             if (data.TryGetValue("error", out var errVal) && errVal is Dictionary<string, object?> err)
             {
-                var code = err.GetValueOrDefault("code")?.ToString() ?? "0";
+                var codeStr = err.GetValueOrDefault("code")?.ToString() ?? "0";
                 var message = err.GetValueOrDefault("message")?.ToString() ?? "Unknown RPC error";
-                tcs.TrySetException(new InvalidOperationException($"{message} (code={code})"));
+                // A RELAY server-reported RPC error is a RelayError (mirrors the
+                // Python reference client.py:651 raise RelayError(code, message)).
+                var code = int.TryParse(codeStr, out var c) ? c : -1;
+                tcs.TrySetException(new RelayError(code, message));
             }
             else
             {
@@ -861,8 +864,10 @@ public class Client : IAsyncDisposable
             }
             catch (OperationCanceledException)
             {
-                throw new InvalidOperationException(
-                    $"Dial timed out waiting for answer (tag={tag})");
+                // A dial that never resolves within the deadline is a RELAY
+                // operation failure (mirrors Python client.py:667 raise
+                // RelayError(-1, "Request timeout …")).
+                throw new RelayError(-1, $"Dial timed out waiting for answer (tag={tag})");
             }
         }
         finally
@@ -1016,8 +1021,9 @@ public class Client : IAsyncDisposable
 
         if (dialState == Constants.DialStateFailed)
         {
-            tcs.TrySetException(new InvalidOperationException(
-                $"Dial failed (tag={tag})"));
+            // A server-reported dial failure is a RelayError (mirrors the Python
+            // reference client.py:1080 RelayError(-1, f"Dial failed (tag={tag})")).
+            tcs.TrySetException(new RelayError(-1, $"Dial failed (tag={tag})"));
             return;
         }
 
