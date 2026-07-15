@@ -58,34 +58,34 @@ public class SipProfile
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> UpdateAsync(string? domainIdentifier = null, List<object?>? defaultCodecs = null, List<object?>? defaultCiphers = null, string? defaultEncryption = null, string? defaultSendAs = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
+        var _reqBody = new Dictionary<string, object?>();
         if (domainIdentifier is not null)
         {
-            body["domain_identifier"] = domainIdentifier;
+            _reqBody["domain_identifier"] = domainIdentifier;
         }
         if (defaultCodecs is not null)
         {
-            body["default_codecs"] = defaultCodecs;
+            _reqBody["default_codecs"] = defaultCodecs;
         }
         if (defaultCiphers is not null)
         {
-            body["default_ciphers"] = defaultCiphers;
+            _reqBody["default_ciphers"] = defaultCiphers;
         }
         if (defaultEncryption is not null)
         {
-            body["default_encryption"] = defaultEncryption;
+            _reqBody["default_encryption"] = defaultEncryption;
         }
         if (defaultSendAs is not null)
         {
-            body["default_send_as"] = defaultSendAs;
+            _reqBody["default_send_as"] = defaultSendAs;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(BasePath, body, cancellationToken);
+        return Client.PutAsync(BasePath, _reqBody, cancellationToken);
     }
 }

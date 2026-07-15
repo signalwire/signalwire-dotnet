@@ -54,16 +54,16 @@ public class VideoStreams
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> UpdateAsync(string id, string url, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["url"] = url;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["url"] = url;
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), body, cancellationToken);
+        return Client.PutAsync(Path(id), _reqBody, cancellationToken);
     }
 
     /// <summary>

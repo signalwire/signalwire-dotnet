@@ -81,17 +81,17 @@ public class GenericResources
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> AssignPhoneRouteAsync(string id, string phoneRouteId, string handler, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["phone_route_id"] = phoneRouteId;
-        body["handler"] = handler;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["phone_route_id"] = phoneRouteId;
+        _reqBody["handler"] = handler;
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "phone_routes"), body, cancellationToken);
+        return Client.PostAsync(Path(id, "phone_routes"), _reqBody, cancellationToken);
     }
 
     /// <summary>
@@ -101,15 +101,15 @@ public class GenericResources
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> AssignDomainApplicationAsync(string id, string domainApplicationId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["domain_application_id"] = domainApplicationId;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["domain_application_id"] = domainApplicationId;
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "domain_applications"), body, cancellationToken);
+        return Client.PostAsync(Path(id, "domain_applications"), _reqBody, cancellationToken);
     }
 }

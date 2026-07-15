@@ -47,20 +47,20 @@ public class ImportedNumbers
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateAsync(string number, string numberType, List<object?>? capabilities = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["number"] = number;
-        body["number_type"] = numberType;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["number"] = number;
+        _reqBody["number_type"] = numberType;
         if (capabilities is not null)
         {
-            body["capabilities"] = capabilities;
+            _reqBody["capabilities"] = capabilities;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, body, cancellationToken);
+        return Client.PostAsync(BasePath, _reqBody, cancellationToken);
     }
 }

@@ -48,24 +48,24 @@ public class Chat
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateTokenAsync(int ttl, Dictionary<string, object?> channels, string? memberId = null, Dictionary<string, object?>? state = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["ttl"] = ttl;
-        body["channels"] = channels;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["ttl"] = ttl;
+        _reqBody["channels"] = channels;
         if (memberId is not null)
         {
-            body["member_id"] = memberId;
+            _reqBody["member_id"] = memberId;
         }
         if (state is not null)
         {
-            body["state"] = state;
+            _reqBody["state"] = state;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, body, cancellationToken);
+        return Client.PostAsync(BasePath, _reqBody, cancellationToken);
     }
 }

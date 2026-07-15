@@ -49,15 +49,15 @@ public class VideoConferences : SignalWire.REST.CrudResource
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateStreamAsync(string id, string url, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["url"] = url;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["url"] = url;
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "streams"), body, cancellationToken);
+        return Client.PostAsync(Path(id, "streams"), _reqBody, cancellationToken);
     }
 }

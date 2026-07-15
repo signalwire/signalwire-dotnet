@@ -39,15 +39,15 @@ public class VerifiedCallers : SignalWire.REST.CrudResource
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> SubmitVerificationAsync(string id, string verificationCode, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["verification_code"] = verificationCode;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["verification_code"] = verificationCode;
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id, "verification"), body, cancellationToken);
+        return Client.PutAsync(Path(id, "verification"), _reqBody, cancellationToken);
     }
 }

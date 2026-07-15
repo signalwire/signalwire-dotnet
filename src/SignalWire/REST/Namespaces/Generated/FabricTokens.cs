@@ -56,60 +56,60 @@ public class FabricTokens
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateSubscriberTokenAsync(string reference, int? expireAt = null, string? applicationId = null, string? password = null, string? firstName = null, string? lastName = null, string? displayName = null, string? jobTitle = null, string? timeZone = null, string? country = null, string? region = null, string? companyName = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["reference"] = reference;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["reference"] = reference;
         if (expireAt is not null)
         {
-            body["expire_at"] = expireAt;
+            _reqBody["expire_at"] = expireAt;
         }
         if (applicationId is not null)
         {
-            body["application_id"] = applicationId;
+            _reqBody["application_id"] = applicationId;
         }
         if (password is not null)
         {
-            body["password"] = password;
+            _reqBody["password"] = password;
         }
         if (firstName is not null)
         {
-            body["first_name"] = firstName;
+            _reqBody["first_name"] = firstName;
         }
         if (lastName is not null)
         {
-            body["last_name"] = lastName;
+            _reqBody["last_name"] = lastName;
         }
         if (displayName is not null)
         {
-            body["display_name"] = displayName;
+            _reqBody["display_name"] = displayName;
         }
         if (jobTitle is not null)
         {
-            body["job_title"] = jobTitle;
+            _reqBody["job_title"] = jobTitle;
         }
         if (timeZone is not null)
         {
-            body["time_zone"] = timeZone;
+            _reqBody["time_zone"] = timeZone;
         }
         if (country is not null)
         {
-            body["country"] = country;
+            _reqBody["country"] = country;
         }
         if (region is not null)
         {
-            body["region"] = region;
+            _reqBody["region"] = region;
         }
         if (companyName is not null)
         {
-            body["company_name"] = companyName;
+            _reqBody["company_name"] = companyName;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/subscribers/tokens", body, cancellationToken);
+        return Client.PostAsync("/api/fabric/subscribers/tokens", _reqBody, cancellationToken);
     }
 
     /// <summary>
@@ -119,16 +119,16 @@ public class FabricTokens
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> RefreshSubscriberTokenAsync(string refreshToken, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["refresh_token"] = refreshToken;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["refresh_token"] = refreshToken;
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/subscribers/tokens/refresh", body, cancellationToken);
+        return Client.PostAsync("/api/fabric/subscribers/tokens/refresh", _reqBody, cancellationToken);
     }
 
     /// <summary>
@@ -139,20 +139,20 @@ public class FabricTokens
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateInviteTokenAsync(string addressId, int? expiresAt = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["address_id"] = addressId;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["address_id"] = addressId;
         if (expiresAt is not null)
         {
-            body["expires_at"] = expiresAt;
+            _reqBody["expires_at"] = expiresAt;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/subscriber/invites", body, cancellationToken);
+        return Client.PostAsync("/api/fabric/subscriber/invites", _reqBody, cancellationToken);
     }
 
     /// <summary>
@@ -163,20 +163,20 @@ public class FabricTokens
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateGuestTokenAsync(List<object?> allowedAddresses, int? expireAt = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["allowed_addresses"] = allowedAddresses;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["allowed_addresses"] = allowedAddresses;
         if (expireAt is not null)
         {
-            body["expire_at"] = expireAt;
+            _reqBody["expire_at"] = expireAt;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/guests/tokens", body, cancellationToken);
+        return Client.PostAsync("/api/fabric/guests/tokens", _reqBody, cancellationToken);
     }
 
     /// <summary>
@@ -186,15 +186,15 @@ public class FabricTokens
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CreateEmbedTokenAsync(string token, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["token"] = token;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["token"] = token;
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/embeds/tokens", body, cancellationToken);
+        return Client.PostAsync("/api/fabric/embeds/tokens", _reqBody, cancellationToken);
     }
 }

@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 2d7f6d6dd97fcb0265abd134f92083d705ecf1ca",
+  "generated_from": "signalwire-dotnet @ 2fa49d88c606cf2421ecbccf41b443894806941f",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -2410,6 +2410,31 @@
         "Types_StatusCodes_StatusCode401": [],
         "Types_StatusCodes_StatusCode404": [],
         "Types_StatusCodes_StatusCode500": []
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.messages_resources_generated": {
+      "classes": {
+        "Messages": [
+          "__init__",
+          "create",
+          "update"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.messages_types_generated": {
+      "classes": {
+        "CreateMessageRequest": [],
+        "Message": [],
+        "MessagesCreateStatusCode422": [],
+        "MessagesUpdateStatusCode422": [],
+        "Types_StatusCodes_RestApiErrorItem": [],
+        "Types_StatusCodes_StatusCode400": [],
+        "Types_StatusCodes_StatusCode401": [],
+        "Types_StatusCodes_StatusCode404": [],
+        "Types_StatusCodes_StatusCode500": [],
+        "UpdateMessageRequest": []
       },
       "functions": []
     },

@@ -51,40 +51,40 @@ public class Mfa
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> SmsAsync(string to, string? from = null, string? message = null, int? tokenLength = null, int? validFor = null, int? maxAttempts = null, bool? allowAlphas = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["to"] = to;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["to"] = to;
         if (from is not null)
         {
-            body["from"] = from;
+            _reqBody["from"] = from;
         }
         if (message is not null)
         {
-            body["message"] = message;
+            _reqBody["message"] = message;
         }
         if (tokenLength is not null)
         {
-            body["token_length"] = tokenLength;
+            _reqBody["token_length"] = tokenLength;
         }
         if (validFor is not null)
         {
-            body["valid_for"] = validFor;
+            _reqBody["valid_for"] = validFor;
         }
         if (maxAttempts is not null)
         {
-            body["max_attempts"] = maxAttempts;
+            _reqBody["max_attempts"] = maxAttempts;
         }
         if (allowAlphas is not null)
         {
-            body["allow_alphas"] = allowAlphas;
+            _reqBody["allow_alphas"] = allowAlphas;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path("sms"), body, cancellationToken);
+        return Client.PostAsync(Path("sms"), _reqBody, cancellationToken);
     }
 
     /// <summary>
@@ -100,40 +100,40 @@ public class Mfa
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> CallAsync(string to, string? from = null, string? message = null, int? tokenLength = null, int? validFor = null, int? maxAttempts = null, bool? allowAlphas = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["to"] = to;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["to"] = to;
         if (from is not null)
         {
-            body["from"] = from;
+            _reqBody["from"] = from;
         }
         if (message is not null)
         {
-            body["message"] = message;
+            _reqBody["message"] = message;
         }
         if (tokenLength is not null)
         {
-            body["token_length"] = tokenLength;
+            _reqBody["token_length"] = tokenLength;
         }
         if (validFor is not null)
         {
-            body["valid_for"] = validFor;
+            _reqBody["valid_for"] = validFor;
         }
         if (maxAttempts is not null)
         {
-            body["max_attempts"] = maxAttempts;
+            _reqBody["max_attempts"] = maxAttempts;
         }
         if (allowAlphas is not null)
         {
-            body["allow_alphas"] = allowAlphas;
+            _reqBody["allow_alphas"] = allowAlphas;
         }
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path("call"), body, cancellationToken);
+        return Client.PostAsync(Path("call"), _reqBody, cancellationToken);
     }
 
     /// <summary>
@@ -143,15 +143,15 @@ public class Mfa
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     public Task<Dictionary<string, object?>> VerifyAsync(string requestId, string token, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
     {
-        var body = new Dictionary<string, object?>();
-        body["token"] = token;
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["token"] = token;
         if (extras is not null)
         {
             foreach (var kv in extras)
             {
-                body[kv.Key] = kv.Value;
+                _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(requestId, "verify"), body, cancellationToken);
+        return Client.PostAsync(Path(requestId, "verify"), _reqBody, cancellationToken);
     }
 }
