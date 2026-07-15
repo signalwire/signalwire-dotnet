@@ -1200,6 +1200,7 @@ _REST_TYPES_NS_LEAF = {
     "RelayRest": "relay_rest", "Fabric": "fabric", "Calling": "calling",
     "Video": "video", "Datasphere": "datasphere", "Logs": "logs",
     "Message": "message", "Voice": "voice", "Fax": "fax", "Project": "project",
+    "Projects": "projects",
     "Chat": "chat", "PubSub": "pubsub", "SwmlWebhooks": "swml_webhooks",
 }
 

@@ -24,6 +24,7 @@
     "NumberGroups": "relay_rest_resources_generated",
     "PhoneNumbers": "relay_rest_resources_generated",
     "ProjectTokens": "project_resources_generated",
+    "Projects": "projects_resources_generated",
     "PubSub": "pubsub_resources_generated",
     "Queues": "relay_rest_resources_generated",
     "Recordings": "relay_rest_resources_generated",
@@ -233,6 +234,12 @@
       "__init__",
       "create",
       "delete",
+      "update"
+    ],
+    "Projects": [
+      "__init__",
+      "create",
+      "rotate_signing_key",
       "update"
     ],
     "PubSub": [
@@ -2664,6 +2671,14 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      }
+    ],
+    "Projects::RotateSigningKeyAsync": [
+      {
+        "name": "id",
+        "kind": "positional",
+        "type": "string",
+        "required": true
       }
     ],
     "PubSub::CreateTokenAsync": [

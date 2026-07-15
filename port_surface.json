@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ af2195f24db26cf67039b084c441129b611c190f",
+  "generated_from": "signalwire-dotnet @ 2d7f6d6dd97fcb0265abd134f92083d705ecf1ca",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -2434,6 +2434,30 @@
         "Types_StatusCodes_StatusCode404": [],
         "Types_StatusCodes_StatusCode500": [],
         "UpdateTokenRequest": []
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.projects_resources_generated": {
+      "classes": {
+        "Projects": [
+          "__init__",
+          "create",
+          "rotate_signing_key",
+          "update"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.rest.namespaces.projects_types_generated": {
+      "classes": {
+        "Project": [],
+        "ProjectCreate": [],
+        "ProjectList": [],
+        "ProjectStatusCode422": [],
+        "Types_StatusCodes_RestApiErrorItem": [],
+        "Types_StatusCodes_StatusCode401": [],
+        "Types_StatusCodes_StatusCode403": [],
+        "Types_StatusCodes_StatusCode404": []
       },
       "functions": []
     },

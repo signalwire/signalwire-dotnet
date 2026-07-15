@@ -27761,6 +27761,105 @@
         }
       }
     },
+    "signalwire.rest.namespaces.projects_resources_generated": {
+      "classes": {
+        "Projects": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "client",
+                  "type": "class:signalwire.rest._base.HttpClient",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            },
+            "create": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "rotate_signing_key": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "kind": "positional",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "returns": "dict<string,any>"
+            },
+            "update": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "cancellation_token",
+                  "type": "any",
+                  "required": false,
+                  "default": null
+                }
+              ],
+              "returns": "dict<string,any>"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.rest.namespaces.projects_types_generated": {
+      "classes": {
+        "Project": {
+          "methods": {}
+        },
+        "ProjectCreate": {
+          "methods": {}
+        },
+        "ProjectList": {
+          "methods": {}
+        },
+        "ProjectStatusCode422": {
+          "methods": {}
+        },
+        "Types_StatusCodes_RestApiErrorItem": {
+          "methods": {}
+        },
+        "Types_StatusCodes_StatusCode401": {
+          "methods": {}
+        },
+        "Types_StatusCodes_StatusCode403": {
+          "methods": {}
+        },
+        "Types_StatusCodes_StatusCode404": {
+          "methods": {}
+        }
+      }
+    },
     "signalwire.rest.namespaces.pubsub_resources_generated": {
       "classes": {
         "PubSub": {
