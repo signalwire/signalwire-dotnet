@@ -23,16 +23,19 @@ public class HttpClient : IDisposable
     private readonly string _authHeader;
     private static readonly string _userAgent = BuildUserAgent();
 
-    // The REST user-agent is `<pkg>/<package-version>`; the version is read from
-    // the shipped assembly (AssemblyInformationalVersion, populated by the
-    // csproj <Version>) rather than hardcoded, so it always tracks the release.
+    // The REST user-agent is `signalwire-dotnet/<package-version>`, aligned to the
+    // Python reference's fixed form `signalwire-python/<version>` (SDK_BUG_LEDGER
+    // P1: the old `signalwire-agents-*-rest/1.0` was both a wrong product token and
+    // a stale `/1.0`). The product token is stable `signalwire-dotnet`; the version
+    // is read from the shipped assembly (AssemblyInformationalVersion, populated by
+    // the csproj <Version>) rather than hardcoded, so it always tracks the release.
     private static string BuildUserAgent()
     {
         var asm = typeof(HttpClient).Assembly;
         var info = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        // Strip any build metadata suffix (e.g. "3.0.0+abc123") the SDK appends.
+        // Strip any build metadata suffix (e.g. "3.2.0+abc123") the SDK appends.
         var version = (info ?? asm.GetName().Version?.ToString() ?? "0.0.0").Split('+')[0];
-        return $"signalwire-agents-dotnet-rest/{version}";
+        return $"signalwire-dotnet/{version}";
     }
 
     [SuppressMessage("Usage", "CA1054", Justification = "baseUrl is a wire string sent verbatim to the SignalWire API.")]

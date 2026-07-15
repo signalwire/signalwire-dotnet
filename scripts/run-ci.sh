@@ -368,7 +368,15 @@ dayone_artifact_deny() {
 
 cd "$PORT_ROOT"
 
+# GATE-ENFORCEMENT: dotnet's Wave-A findings are BLOCKING, not report-only. The
+# widened doc/suppression/error/count gates (audit_docs, suppression_ledger,
+# dead_public_error, count_claim, semver_diff, …) fail on any finding. The full red
+# list was burned to zero before this flip; a NEW Wave-A violation now turns CI red
+# at PR time. (Exported so every scheduler worker subshell inherits it.)
+export SW_WAVE_A_REPORT_ONLY=0
+
 echo "==> running CI gates for $PORT_NAME (porting-sdk at $PORTING_SDK_DIR)"
+echo "==> wave-A gate findings are BLOCKING (SW_WAVE_A_REPORT_ONLY=$SW_WAVE_A_REPORT_ONLY)"
 
 echo "==> ensuring mock servers are running on host"
 ensure_mock_signalwire || exit 2
@@ -627,12 +635,23 @@ sched_gate ARTIFACT-DENY res=dayone desc="no porting artifacts in the PUBLISHED 
 # Backlog burned to zero for dotnet; these enforce so it can't re-rot.
 # ROUTE-COLLISION consumes tools/RouteRegistry (dotnet HAS a registry, same source
 # SPEC-PARITY uses) → res=dayone via route_collision_gate. RELEASE-FRESH enforces
-# because dotnet has publish.yml with gates-before-publish. SEMVER-DIFF is wired
-# and blocking: the release floor is the committed port_signatures.baseline.json
-# (baseline_version 3.0.0); the version in SignalWire.csproj must reflect any
-# surface change vs that floor.
-sched_gate SEMVER-DIFF res=dayone desc="version bump matches the API surface change vs the release-floor baseline" \
-    -- python3 "$PORTING_SDK_DIR/scripts/semver_diff.py" --port dotnet --repo "$PORT_ROOT"
+# because dotnet has publish.yml with gates-before-publish.
+#
+# SEMVER-DIFF is the ONE report-only gate in this otherwise fully-blocking run.
+# Plan item 1.9 requires the release-floor baseline to be TAG-ANCHORED
+# (generated_from_tag/tag_sha, generated from `git show <last-release-tag>`), but
+# signalwire-dotnet has NO v3.x release tag to anchor to (tags stop earlier), so
+# port_signatures.baseline.json is an unanchored working-tree snapshot. Both the
+# 1.9 anchor finding AND the bump-class verdict are measured against that invalid
+# floor — the RelayError(code, message) parity fix (aligning to the Python
+# reference) reads as a "breaking retype vs 3.0.2" only because 3.0.2 predates the
+# parity work in an unanchorable baseline. This is the cross-port 1.9 design
+# contradiction (the 2026-07-13 decision decoupled the baseline from tags; item 1.9
+# requires a tag anchor), adjudicated separately. Do NOT fake a tag — leave
+# report-only and flag; the version-bump decision (major bump vs SEMVER_DIFF_ALLOW
+# for the RelayError ctor) is a human release call once the baseline is anchorable.
+sched_gate SEMVER-DIFF res=dayone desc="version bump vs release-floor baseline (REPORT-ONLY: 1.9 tag-anchor blocker — no v3.x tag)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/semver_diff.py" --port dotnet --repo "$PORT_ROOT" --report-only
 sched_gate GEN-TYPE-DEGENERACY res=dayone desc="generated types aren't degenerate loose aliases (modulo GEN_TYPE_DEGENERACY_ALLOW.md)" \
     -- python3 "$PORTING_SDK_DIR/scripts/gen_type_degeneracy.py" --port dotnet --repo "$PORT_ROOT"
 
