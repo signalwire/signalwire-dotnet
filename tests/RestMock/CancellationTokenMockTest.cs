@@ -6,6 +6,7 @@
  */
 using System.Net.Sockets;
 using SignalWire.REST;
+using SignalWire.REST.Namespaces.Generated;
 using SignalWire.Tests.Mock;
 using Xunit;
 
@@ -100,6 +101,43 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
                 new Dictionary<string, object?> { ["name"] = "x" }, cts.Token));
 
         Assert.Empty(_fixture.Harness.Journal.All());
+    }
+
+    [Fact]
+    public async Task CallingCommand_PreCancelledToken_PropagatesCancellationAndDoesNotReachWire()
+    {
+        if (Skipped()) return;
+        var calling = new Calling(_fixture.NewHttp());
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel(); // cancel BEFORE issuing the command
+
+        // The command-dispatch surface now threads CancellationToken from the
+        // generated method through ExecuteAsync to the HttpClient POST — the same
+        // idiom CrudResource uses. A pre-cancelled token must abort with
+        // OperationCanceledException and never hit the wire.
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => calling.DialAsync(
+                from: "+15559990000", to: "+15551234567",
+                cancellationToken: cts.Token));
+
+        Assert.Empty(_fixture.Harness.Journal.All());
+    }
+
+    [Fact]
+    public async Task CallingCommand_DefaultToken_StillReachesWire()
+    {
+        if (Skipped()) return;
+        var calling = new Calling(_fixture.NewHttp());
+
+        // No token argument: the new optional param defaults to
+        // CancellationToken.None and the command completes normally.
+        var body = await calling.DialAsync(from: "+15559990000", to: "+15551234567");
+        Assert.NotNull(body);
+
+        var last = _fixture.Harness.Journal.Last();
+        Assert.Equal("POST", last.Method);
+        Assert.Equal("/api/calling/calls", last.Path);
     }
 
     // ------------------------------------------------------------------
