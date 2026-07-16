@@ -606,7 +606,7 @@ sched_gate SUPPRESSION-LEDGER res=dayone desc="no un-ledgered analyzer suppressi
 # PACKAGE-SMOKE: the published nupkg (SignalWire.Sdk) must build, install into a
 # clean consumer, and import+construct a RestClient. Heavy (dotnet pack + a
 # consumer build) → defer=1 res=msbuild.
-sched_gate PACKAGE-SMOKE defer=1 res=msbuild desc="published nupkg imports + constructs a client from a clean install" \
+sched_gate PACKAGE-SMOKE tier=nightly defer=1 res=msbuild desc="published nupkg imports + constructs a client from a clean install" \
     -- python3 "$PORTING_SDK_DIR/scripts/package_smoke.py" --port dotnet --repo "$PORT_ROOT"
 
 # ---- Day-one deterministic gates (enforced, non-report-only) -----------------
@@ -625,7 +625,7 @@ sched_gate ROOT-HYGIENE res=dayone desc="no audit/scratch clutter tracked at rep
 sched_gate IGNORE-LEDGER-VERIFY res=dayone desc="no laundered false-absence entries in DOC_AUDIT_IGNORE.md (strict: reason/approver/date required)" \
     -- python3 "$PORTING_SDK_DIR/scripts/ignore_ledger_verify.py" --port dotnet --repo "$PORT_ROOT" --require-fields
 
-sched_gate META-CONSISTENT res=dayone desc="package metadata consistency" \
+sched_gate META-CONSISTENT tier=nightly res=dayone desc="package metadata consistency" \
     -- python3 "$PORTING_SDK_DIR/scripts/meta_consistent.py" --port dotnet --repo "$PORT_ROOT"
 
 sched_gate ARTIFACT-DENY res=dayone desc="no porting artifacts in the PUBLISHED package (authoritative listing)" \
