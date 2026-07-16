@@ -1482,6 +1482,46 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     }
 
 
+def build_native_names(repo: Path, src_dir: Path) -> dict:
+    """Emit the port's REAL native C# member names — PascalCase, ``Async`` suffix
+    intact, class names verbatim — as a flat sorted set.
+
+    ``port_surface.json`` records the CANONICAL (python-oracle, snake_case) surface
+    so SURFACE-DIFF compares equal to the reference; that translation strips the
+    ``Async`` suffix and snake_cases everything (``AnswerAsync`` -> ``answer``). A
+    documentation example, though, references the actual shipped C# member
+    (``call.AnswerAsync()``), which the canonical surface cannot resolve.
+
+    DOC-AUDIT resolves doc references against this sidecar (via ``--native-names``)
+    so a GENUINELY-present async method resolves, while a PHANTOM (``StopAsync`` on
+    an Action that only has sync ``Stop()``) still fails — the sidecar carries only
+    the members that are actually declared ``public`` in the source. This is idiom
+    reconciled through the enumerator (RULES §2), NOT a doc-audit omission/ledger.
+    """
+    cs_files = sorted(src_dir.rglob("*.cs"))
+    names: set[str] = set()
+    for path in cs_files:
+        rel = path.relative_to(repo).as_posix()
+        if "/obj/" in rel or "/bin/" in rel:
+            continue
+        try:
+            findings = parse_cs_file(path)
+        except Exception as e:  # pragma: no cover
+            print(f"warning: failed to parse {path}: {e}", file=sys.stderr)
+            continue
+        for _namespace, class_name, methods in findings:
+            names.add(class_name)
+            for m in methods:
+                if m == "__init__":
+                    continue
+                names.add(m)
+    return {
+        "version": "1",
+        "generated_from": f"signalwire-dotnet @ {git_sha(repo)}",
+        "native_names": sorted(names),
+    }
+
+
 def main(argv: list[str]) -> int:
     repo = Path(__file__).resolve().parent.parent
     default_src = repo / "src" / "SignalWire"
@@ -1513,20 +1553,34 @@ def main(argv: list[str]) -> int:
     snapshot = build_snapshot(repo, args.src_dir)
     rendered = json.dumps(snapshot, indent=2, sort_keys=True) + "\n"
 
+    native = build_native_names(repo, args.src_dir)
+    native_rendered = json.dumps(native, indent=2, sort_keys=True) + "\n"
+    native_output = args.output.with_name("port_surface_native.json")
+
+    def strip_meta(s: str) -> str:
+        obj = json.loads(s)
+        obj.pop("generated_from", None)
+        return json.dumps(obj, indent=2, sort_keys=True) + "\n"
+
     if args.check:
         if not args.output.is_file():
             print(f"error: {args.output} does not exist", file=sys.stderr)
             return 1
         existing = args.output.read_text(encoding="utf-8")
-
-        def strip_meta(s: str) -> str:
-            obj = json.loads(s)
-            obj.pop("generated_from", None)
-            return json.dumps(obj, indent=2, sort_keys=True) + "\n"
-
         if strip_meta(rendered) != strip_meta(existing):
             print(
                 "DRIFT: port_surface.json is stale relative to source.\n"
+                "  Regenerate:\n"
+                "    python3 scripts/enumerate_surface.py",
+                file=sys.stderr,
+            )
+            return 1
+        if not native_output.is_file():
+            print(f"error: {native_output} does not exist", file=sys.stderr)
+            return 1
+        if strip_meta(native_rendered) != strip_meta(native_output.read_text(encoding="utf-8")):
+            print(
+                "DRIFT: port_surface_native.json is stale relative to source.\n"
                 "  Regenerate:\n"
                 "    python3 scripts/enumerate_surface.py",
                 file=sys.stderr,
@@ -1538,6 +1592,7 @@ def main(argv: list[str]) -> int:
         sys.stdout.write(rendered)
     else:
         args.output.write_text(rendered, encoding="utf-8")
+        native_output.write_text(native_rendered, encoding="utf-8")
         n_modules = len(snapshot["modules"])
         n_classes = sum(len(m["classes"]) for m in snapshot["modules"].values())
         n_methods = sum(

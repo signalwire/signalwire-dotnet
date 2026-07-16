@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 2fa49d88c606cf2421ecbccf41b443894806941f",
+  "generated_from": "signalwire-dotnet @ 478a44e9c5633a3e411e99003618d18a026bb788",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -1242,7 +1242,8 @@
           "unreceive"
         ],
         "RelayError": [
-          "__init__"
+          "__init__",
+          "code"
         ]
       },
       "functions": []

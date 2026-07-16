@@ -37,7 +37,7 @@ await client.RunAsync();
 - Auto-reconnect with exponential backoff
 - All calling methods: play, record, collect, connect, detect, fax, tap, stream, AI, conferencing, queues, and more
 - SMS/MMS messaging: send outbound messages, receive inbound messages, track delivery state
-- Action objects with `WaitAsync()`, `StopAsync()`, `PauseAsync()`, `ResumeAsync()` for controllable operations
+- Action objects with `WaitAsync()` plus synchronous `Stop()`, `Pause()`, `Resume()` for controllable operations
 - Typed event classes for all call events
 - Dynamic context subscription/unsubscription
 - Thread-safe `ConcurrentDictionary` correlation maps

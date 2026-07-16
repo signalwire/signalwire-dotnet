@@ -368,7 +368,15 @@ dayone_artifact_deny() {
 
 cd "$PORT_ROOT"
 
+# GATE-ENFORCEMENT: dotnet's Wave-A findings are BLOCKING, not report-only. The
+# widened doc/suppression/error/count gates (audit_docs, suppression_ledger,
+# dead_public_error, count_claim, semver_diff, …) fail on any finding. The full red
+# list was burned to zero before this flip; a NEW Wave-A violation now turns CI red
+# at PR time. (Exported so every scheduler worker subshell inherits it.)
+export SW_WAVE_A_REPORT_ONLY=0
+
 echo "==> running CI gates for $PORT_NAME (porting-sdk at $PORTING_SDK_DIR)"
+echo "==> wave-A gate findings are BLOCKING (SW_WAVE_A_REPORT_ONLY=$SW_WAVE_A_REPORT_ONLY)"
 
 echo "==> ensuring mock servers are running on host"
 ensure_mock_signalwire || exit 2
@@ -486,10 +494,16 @@ sched_gate FMT defer=1 res=msbuild desc="dotnet format whitespace (local: auto-f
 sched_gate LINT defer=1 res=msbuild desc="dotnet build (analyzers, warnings-as-errors)" \
     --fn lint_gate
 
-sched_gate DOC-AUDIT res=surface desc="audit_docs vs port_surface.json" \
+# DOC-AUDIT resolves doc/example refs against the CANONICAL surface AND the native
+# sidecar (port_surface_native.json — the real C# member names, Async suffix intact).
+# The sidecar lets a genuinely-present async member (call.AnswerAsync()) resolve while
+# a phantom (Action StopAsync, only sync Stop exists) stays unresolved. Idiom via the
+# enumerator, not a doc omission (RULES §2).
+sched_gate DOC-AUDIT res=surface desc="audit_docs vs port_surface.json (+native sidecar)" \
     -- python3 "$PORTING_SDK_DIR/scripts/audit_docs.py" \
         --root "$PORT_ROOT" \
         --surface "$PORT_ROOT/port_surface.json" \
+        --native-names "$PORT_ROOT/port_surface_native.json" \
         --ignore "$PORT_ROOT/DOC_AUDIT_IGNORE.md"
 
 sched_gate SURFACE-DIFF res=surface desc="diff_port_surface vs python_surface.json" \
@@ -542,14 +556,47 @@ sched_gate COUNT-CLAIM desc="numeric doc claims (skills/namespaces) match realit
 sched_gate ACCESSOR-TRUTH desc="documented backtick method() refs exist in source" \
     -- python3 "$PORTING_SDK_DIR/scripts/accessor_truth.py" --port dotnet --repo "$PORT_ROOT"
 
+# ---- gate-enforcement quartet (plan Parts A1/C2/2.4/2.2) ---------------------
+# DOC-WIRE + STATUS-CLAIM are per-PR (cheap deterministic doc/source checks).
+# WAIT-LIVENESS is nightly (spawns a live-mock dump program). STRICT-MOCKS
+# (MOCK_RELAY_STRICT=1) rides EXAMPLES-RUN/SNIPPET-RUN on the nightly tier.
+# GATE-INVENTORY is deliberately NOT wired per-port: gen_gate_inventory.py resolves
+# its reference as a sibling signalwire-typescript checkout, absent in a port's CI
+# layout (→ exit 2); it is porting-sdk-side and already runs in porting-sdk's CI.
+#
+# DOC-WIRE (§A1) — the documented REST doc fixtures put the SPEC wire shape on the
+# wire (areacode not area_code, nested params:{text} not a flat item). doc_wire.py
+# spawns its OWN flag-mode mock (free port, self-cleaning) and replays the doc
+# fixtures via tools/DocWire, failing on any journaled wire_violations. Cheap/blocking.
+sched_gate DOC-WIRE desc="documented REST doc fixtures put the spec wire shape on the wire (areacode/params:{text})" \
+    -- python3 "$PORTING_SDK_DIR/scripts/doc_wire.py" --port dotnet --repo "$PORT_ROOT" \
+        --runner "bash $PORT_ROOT/scripts/doc_wire_runner.sh"
+
+# STATUS-CLAIM (§C2) — no false capability/status claims in docs (e.g. "not yet
+# implemented" next to a shipped method). Deterministic source/doc analysis, cheap.
+sched_gate STATUS-CLAIM res=surface desc="doc status/capability claims match the shipped surface" \
+    -- python3 "$PORTING_SDK_DIR/scripts/status_claim.py" --port dotnet --repo "$PORT_ROOT" \
+        --surface "$PORT_ROOT/port_surface.json"
+
+# WAIT-LIVENESS (§2.4) — the RELAY Action.WaitAsync() liveness contract: wait()
+# BLOCKS until the deferred completing event arrives, then returns (never a no-op
+# early return, never a hung wait). tools/WaitLivenessDump drives play/record +
+# WaitAsync against a live mock and emits the classification, diffed against the
+# python-oracle golden. Nightly (spawns a live-mock dump program).
+sched_gate WAIT-LIVENESS tier=nightly defer=1 desc="Action.WaitAsync() liveness corpus matches the python-oracle golden classification" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_wait_liveness.py" \
+        --port dotnet --python-sdk "$PYTHON_SDK_DIR" \
+        --dump-cmd "bash $PORT_ROOT/scripts/wait-liveness-dump.sh"
+
 # EXAMPLES-RUN + SNIPPET-RUN self-skip for dotnet (compiled port; examples have no
 # dotnet-run target, and snippet_run is dynamic-ports only) — they exit 0 with a
-# note. Wired for parity so the tier graduates automatically if a run target is added.
-sched_gate EXAMPLES-RUN tier=nightly defer=1 desc="shipped examples load/start (dotnet: SKIPPED-WITH-NOTE, no run target)" \
-    -- python3 "$PORTING_SDK_DIR/scripts/examples_run.py" --port dotnet --repo "$PORT_ROOT"
+# note. STRICT-MOCKS (MOCK_RELAY_STRICT=1) is set for parity so the moment a run
+# target is added, a wrong-wire example fails LOUD against the strict mock.
+sched_gate EXAMPLES-RUN tier=nightly defer=1 desc="shipped examples load/start (dotnet: SKIPPED-WITH-NOTE, no run target; STRICT-MOCKS: MOCK_RELAY_STRICT=1)" \
+    -- env MOCK_RELAY_STRICT=1 python3 "$PORTING_SDK_DIR/scripts/examples_run.py" --port dotnet --repo "$PORT_ROOT"
 
-sched_gate SNIPPET-RUN tier=nightly defer=1 desc="dynamic-port doc snippets run to zero exit (dotnet: self-skips, compiled port)" \
-    -- python3 "$PORTING_SDK_DIR/scripts/snippet_run.py" --port dotnet --repo "$PORT_ROOT" --report-only
+sched_gate SNIPPET-RUN tier=nightly defer=1 desc="dynamic-port doc snippets run to zero exit (dotnet: self-skips, compiled port; STRICT-MOCKS: MOCK_RELAY_STRICT=1)" \
+    -- env MOCK_RELAY_STRICT=1 python3 "$PORTING_SDK_DIR/scripts/snippet_run.py" --port dotnet --repo "$PORT_ROOT"
 
 # ---- §G anti-laundering ledger gate ------------------------------------------
 sched_gate SUPPRESSION-LEDGER res=dayone desc="no un-ledgered analyzer suppressions (SUPPRESSIONS_LEDGER.md)" \
@@ -588,12 +635,23 @@ sched_gate ARTIFACT-DENY res=dayone desc="no porting artifacts in the PUBLISHED 
 # Backlog burned to zero for dotnet; these enforce so it can't re-rot.
 # ROUTE-COLLISION consumes tools/RouteRegistry (dotnet HAS a registry, same source
 # SPEC-PARITY uses) → res=dayone via route_collision_gate. RELEASE-FRESH enforces
-# because dotnet has publish.yml with gates-before-publish. SEMVER-DIFF is wired
-# and blocking: the release floor is the committed port_signatures.baseline.json
-# (baseline_version 3.0.0); the version in SignalWire.csproj must reflect any
-# surface change vs that floor.
-sched_gate SEMVER-DIFF res=dayone desc="version bump matches the API surface change vs the release-floor baseline" \
-    -- python3 "$PORTING_SDK_DIR/scripts/semver_diff.py" --port dotnet --repo "$PORT_ROOT"
+# because dotnet has publish.yml with gates-before-publish.
+#
+# SEMVER-DIFF is the ONE report-only gate in this otherwise fully-blocking run.
+# Plan item 1.9 requires the release-floor baseline to be TAG-ANCHORED
+# (generated_from_tag/tag_sha, generated from `git show <last-release-tag>`), but
+# signalwire-dotnet has NO v3.x release tag to anchor to (tags stop earlier), so
+# port_signatures.baseline.json is an unanchored working-tree snapshot. Both the
+# 1.9 anchor finding AND the bump-class verdict are measured against that invalid
+# floor — the RelayError(code, message) parity fix (aligning to the Python
+# reference) reads as a "breaking retype vs 3.0.2" only because 3.0.2 predates the
+# parity work in an unanchorable baseline. This is the cross-port 1.9 design
+# contradiction (the 2026-07-13 decision decoupled the baseline from tags; item 1.9
+# requires a tag anchor), adjudicated separately. Do NOT fake a tag — leave
+# report-only and flag; the version-bump decision (major bump vs SEMVER_DIFF_ALLOW
+# for the RelayError ctor) is a human release call once the baseline is anchorable.
+sched_gate SEMVER-DIFF res=dayone desc="version bump vs release-floor baseline (REPORT-ONLY: 1.9 tag-anchor blocker — no v3.x tag)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/semver_diff.py" --port dotnet --repo "$PORT_ROOT" --report-only
 sched_gate GEN-TYPE-DEGENERACY res=dayone desc="generated types aren't degenerate loose aliases (modulo GEN_TYPE_DEGENERACY_ALLOW.md)" \
     -- python3 "$PORTING_SDK_DIR/scripts/gen_type_degeneracy.py" --port dotnet --repo "$PORT_ROOT"
 

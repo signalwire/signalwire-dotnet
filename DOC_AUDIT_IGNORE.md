@@ -62,6 +62,7 @@ ParseAdd: System.Net.Http.Headers.HttpHeaderValueCollection<T>.ParseAdd
 GetDouble: System.Text.Json.JsonElement.GetDouble (.NET stdlib)
 TryGetInt64: System.Text.Json.JsonElement.TryGetInt64 (.NET stdlib)
 SetMinimumLevel: Microsoft.Extensions.Logging.LoggingBuilderExtensions.SetMinimumLevel (.NET stdlib)
+SendAsync: System.Net.Http.HttpClient.SendAsync (.NET stdlib) — the BCL HttpClient method, used in examples/SkillsAuditHarness.cs against a raw HttpClient
 
 ## Real SDK methods; C#-real name is an idiom rename of the reference-canonical surface name
 

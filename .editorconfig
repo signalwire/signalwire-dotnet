@@ -55,17 +55,23 @@ dotnet_diagnostic.CA1724.severity = none
 # rule violation, the fix is in the TEMPLATE (scripts/generate_*.py), not a
 # suppression.
 #
-# The per-rule `none` entries below are the ONLY exemptions, and each is a
-# WIRE-MANDATED shape/name the generated DTOs and command dispatchers cannot
-# avoid: they mirror the REST/RELAY/SWML/SWAIG schema field names and payload
-# shapes exactly (via [JsonPropertyName]) so the emitted wire bytes match the
-# server. Renaming or re-typing them to satisfy the analyzer would break the
-# wire contract. All OTHER analyzer rules stay ON (error) over generated code.
+# The per-rule `none` entries below are the ONLY exemptions. Each is justified
+# either by the WIRE shape (a value/type System.Text.Json must round-trip
+# verbatim) OR by CROSS-PORT SURFACE PARITY (a name the python-reference oracle
+# records, that SURFACE-DIFF + StructuralParity compare dotnet against). Every
+# entry is recorded in SUPPRESSION_LEDGER.md with a reason, approver, and date.
+# All OTHER analyzer rules stay ON (error) over generated code.
 [src/SignalWire/REST/Namespaces/Generated/**.cs]
 generated_code = false
 
-# CA1707 — underscores in identifiers. DTO properties + closed-set const members
-# ARE the snake_case wire keys / wire string values (global_data, call_id, …).
+# CA1707 — underscores in identifiers. NOTE: property NAMES are decoupled from
+# the wire via [JsonPropertyName], so "renaming breaks the wire" is NOT the
+# reason. The real, gate-enforced reason is CROSS-PORT SURFACE PARITY: the python
+# oracle records the generated TYPE names WITH underscores (Types_StatusCodes_
+# StatusCode404, CreateStatusCode422, … — 117 such types) and the closed-set
+# const MEMBER names mirror the wire string VALUES (relay_context = "relay_
+# context"). SURFACE-DIFF fails if dotnet renames the type names; the const
+# member/value pairing is the wire enum. See SUPPRESSION_LEDGER.md.
 dotnet_diagnostic.CA1707.severity = none
 
 # CA2227 — collection properties should be read-only. DTOs are deserialization

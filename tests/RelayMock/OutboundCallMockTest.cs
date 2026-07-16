@@ -354,7 +354,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 });
             });
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            var ex = await Assert.ThrowsAsync<RelayError>(
                 () => bound.Client.DialAsync(new()
                 {
                     ["devices"] = new List<List<Dictionary<string, object?>>>
@@ -376,7 +376,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             // Don't arm any dial scenario. SDK should time out.
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            var ex = await Assert.ThrowsAsync<RelayError>(
                 () => bound.Client.DialAsync(new()
                 {
                     ["devices"] = new List<List<Dictionary<string, object?>>>

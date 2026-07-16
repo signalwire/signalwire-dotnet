@@ -57,7 +57,7 @@ Phone number management.
 
 ```csharp
 await client.PhoneNumbers.ListAsync();
-await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["area_code"] = "512" });
+await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacode"] = "512" });
 await client.PhoneNumbers.GetAsync(numberId);
 await client.PhoneNumbers.UpdateAsync(numberId, new Dictionary<string, object?> { ["name"] = "Main Line" });
 await client.PhoneNumbers.DeleteAsync(numberId);
