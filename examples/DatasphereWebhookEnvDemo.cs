@@ -4,7 +4,7 @@
 // with configuration from environment variables.
 //
 // Required: SIGNALWIRE_SPACE_NAME, SIGNALWIRE_PROJECT_ID,
-//           SIGNALWIRE_TOKEN, DATASPHERE_DOCUMENT_ID
+//           SIGNALWIRE_API_TOKEN, DATASPHERE_DOCUMENT_ID
 
 using SignalWire.Agent;
 
@@ -16,7 +16,7 @@ string GetRequired(string name)
 
 var spaceName  = GetRequired("SIGNALWIRE_SPACE_NAME");
 var projectId  = GetRequired("SIGNALWIRE_PROJECT_ID");
-var token      = GetRequired("SIGNALWIRE_TOKEN");
+var token      = GetRequired("SIGNALWIRE_API_TOKEN");
 var documentId = GetRequired("DATASPHERE_DOCUMENT_ID");
 
 var count    = int.Parse(Environment.GetEnvironmentVariable("DATASPHERE_COUNT") ?? "3");

@@ -10,8 +10,8 @@ var spaceName  = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE_NAME")
                  ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE_NAME");
 var projectId  = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                  ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID");
-var token      = Environment.GetEnvironmentVariable("SIGNALWIRE_TOKEN")
-                 ?? throw new InvalidOperationException("Set SIGNALWIRE_TOKEN");
+var token      = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+                 ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN");
 var documentId = Environment.GetEnvironmentVariable("DATASPHERE_DOCUMENT_ID")
                  ?? throw new InvalidOperationException("Set DATASPHERE_DOCUMENT_ID");
 
