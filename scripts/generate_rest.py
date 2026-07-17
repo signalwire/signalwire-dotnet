@@ -1248,7 +1248,8 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
     lines.append("    public string BasePath => BasePathConst;")
     lines.append("")
     lines.append("    private Task<Dictionary<string, object?>> ExecuteAsync(")
-    lines.append("        string command, string? callId, Dictionary<string, object?> parms)")
+    lines.append("        string command, string? callId, Dictionary<string, object?> parms,")
+    lines.append("        CancellationToken cancellationToken = default)")
     lines.append("    {")
     lines.append("        var body = new Dictionary<string, object?>")
     lines.append("        {")
@@ -1259,7 +1260,7 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
     lines.append("        {")
     lines.append("            body[\"id\"] = callId;")
     lines.append("        }")
-    lines.append("        return _http.PostAsync(BasePathConst, body);")
+    lines.append("        return _http.PostAsync(BasePathConst, body, cancellationToken);")
     lines.append("    }")
     mapping = (spec.schemas.get(request).get("discriminator") or {}).get("mapping") or {}
     for cmd in commands:
@@ -1312,6 +1313,10 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         build.append("        }")
         _register_sidecar(name, mname, records)
 
+        # CancellationToken is a C#-async idiom param (not a wire param): it is
+        # threaded through to the HttpClient call but deliberately NOT recorded
+        # in the sidecar surface, mirroring CrudResource's CT params.
+        field_cs.append("CancellationToken cancellationToken = default")
         sig = ", ".join(id_cs + field_cs)
         call_arg = "callId" if with_id else "null"
         lines.append("")
@@ -1322,7 +1327,7 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         lines.append(f"    public Task<Dictionary<string, object?>> {mname}({sig})")
         lines.append("    {")
         lines.extend(build)
-        lines.append(f"        return ExecuteAsync({cs_str(cmd)}, {call_arg}, parms);")
+        lines.append(f"        return ExecuteAsync({cs_str(cmd)}, {call_arg}, parms, cancellationToken);")
         lines.append("    }")
     lines.append("}")
     return GEN_HEADER.format(desc=f"Generated command-dispatch resource for the {spec.name!r} namespace.") + "\n" + "\n".join(lines) + "\n"
