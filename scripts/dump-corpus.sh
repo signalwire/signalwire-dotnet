@@ -9,7 +9,7 @@
 # to stderr and execs the built DLL, whose only stdout write is the JSON.
 #
 # Usage (from the signalwire-dotnet repo root):
-#   bash scripts/dump-corpus.sh <surface>       # surface ∈ wire|swml|state|http|wire-relay
+#   bash scripts/dump-corpus.sh <surface>       # surface ∈ wire|swml|state|http|wire-relay|envelope
 #   python3 .../diff_port_wire.py --port dotnet \
 #       --dump-cmd 'bash scripts/dump-corpus.sh wire' --python-sdk ~/src/signalwire-python
 #
@@ -21,7 +21,7 @@ set -o pipefail
 
 SURFACE="${1:-}"
 if [ -z "$SURFACE" ]; then
-    echo "usage: dump-corpus.sh <wire|swml|state|http|wire-relay>" >&2
+    echo "usage: dump-corpus.sh <wire|swml|state|http|wire-relay|envelope>" >&2
     exit 2
 fi
 

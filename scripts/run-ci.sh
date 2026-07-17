@@ -383,7 +383,7 @@ ensure_mock_signalwire || exit 2
 ensure_mock_relay || exit 2
 
 # Pre-build the Layer-D DumpCorpus tool ONCE before scheduling. dump-corpus.sh
-# also builds on each call, but the 5 BEHAVIORAL-* gates share res=behavioral so
+# also builds on each call, but the 6 BEHAVIORAL-* gates share res=behavioral so
 # they serialize; building here first makes each gate's build a no-op incremental
 # and guarantees the tool exists before any gate runs (no concurrent build race
 # on tools/DumpCorpus/bin). Route all MSBuild output to stderr; if dotnet is
@@ -487,6 +487,11 @@ sched_gate BEHAVIORAL-WIRE-RELAY res=behavioral desc="diff_port_wire_relay vs py
     -- python3 "$PORTING_SDK_DIR/scripts/diff_port_wire_relay.py" \
         --port dotnet --python-sdk "$PYTHON_SDK_DIR" \
         --dump-cmd "bash $PORT_ROOT/scripts/dump-corpus.sh wire-relay"
+
+sched_gate BEHAVIORAL-ENVELOPE res=behavioral desc="diff_port_envelope: REST error-envelope + transport error typed (Layer D, plan 1.3b)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_envelope.py" \
+        --port dotnet --python-sdk "$PYTHON_SDK_DIR" \
+        --dump-cmd "bash $PORT_ROOT/scripts/dump-corpus.sh envelope"
 
 sched_gate FMT defer=1 res=msbuild desc="dotnet format whitespace (local: auto-fix; CI: --verify)" \
     --fn fmt_gate
