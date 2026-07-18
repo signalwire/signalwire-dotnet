@@ -185,6 +185,62 @@ public class RestClientTests : IDisposable
     }
 
     // ==================================================================
+    //  Transport error (plan 1.3b): SignalWireRestTransportError
+    // ==================================================================
+
+    [Fact]
+    public void SignalWireRestTransportError_IsA_SignalWireRestError()
+    {
+        // A caller catching the base family type must catch the transport
+        // subclass too — the whole point of making it a member of the family.
+        var inner = new HttpRequestException("Connection refused");
+        var err = new SignalWireRestTransportError(
+            "GET /api/test failed: Connection refused", "/api/test", "GET", inner);
+
+        Assert.IsAssignableFrom<SignalWireRestError>(err);
+    }
+
+    [Fact]
+    public void SignalWireRestTransportError_Properties_NoStatusSentinelAndEmptyBody()
+    {
+        var inner = new HttpRequestException("Connection refused");
+        var err = new SignalWireRestTransportError(
+            "GET /api/test failed: Connection refused", "/api/test", "GET", inner);
+
+        // 0 is this port's no-status sentinel for "no HTTP response was ever
+        // received" (matches the PHP port's convention).
+        Assert.Equal(0, err.StatusCode);
+        Assert.Equal(string.Empty, err.ResponseBody);
+        Assert.Equal("/api/test", err.Url);
+        Assert.Equal("GET", err.Method);
+    }
+
+    [Fact]
+    public void SignalWireRestTransportError_PreservesInnerException()
+    {
+        // The C# equivalent of Python's `raise ... from exc` — the underlying
+        // transport exception must be reachable via InnerException so a caller
+        // can inspect the real cause (SocketException, TLS failure, etc).
+        var inner = new HttpRequestException("Connection refused");
+        var err = new SignalWireRestTransportError(
+            "GET /api/test failed: Connection refused", "/api/test", "GET", inner);
+
+        Assert.Same(inner, err.InnerException);
+    }
+
+    [Fact]
+    public void SignalWireRestTransportError_ToString_ContainsMessageAndInner()
+    {
+        var inner = new HttpRequestException("Connection refused");
+        var err = new SignalWireRestTransportError(
+            "GET /api/test failed: Connection refused", "/api/test", "GET", inner);
+        var str = err.ToString();
+
+        Assert.Contains("Connection refused", str);
+        Assert.Contains("/api/test", str);
+    }
+
+    // ==================================================================
     //  HttpClient (3 tests)
     // ==================================================================
 

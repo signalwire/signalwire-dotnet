@@ -18405,6 +18405,11 @@
                   "kind": "self"
                 },
                 {
+                  "name": "action",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
                   "name": "extra",
                   "type": "optional<dict<string,any>>",
                   "required": false,
@@ -18418,6 +18423,17 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "action",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "status_url",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
                 },
                 {
                   "name": "extra",
@@ -22105,6 +22121,39 @@
                 },
                 {
                   "name": "response_body",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "inner_exception",
+                  "type": "any",
+                  "required": true
+                }
+              ],
+              "returns": "void"
+            }
+          }
+        },
+        "SignalWireRestTransportError": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "message",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "url",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "method",
                   "type": "string",
                   "required": true
                 },

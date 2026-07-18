@@ -127,6 +127,9 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "CrudResource": "signalwire.rest._base",
     "HttpClient": "signalwire.rest._base",
     "SignalWireRestError": "signalwire.rest._base",
+    # plan 1.3b: the transport-failure typed error. Same module as its base
+    # (Python consolidates the whole REST base layer into signalwire.rest._base).
+    "SignalWireRestTransportError": "signalwire.rest._base",
 
     # -- relay ------------------------------------------------------------
     "Call": "signalwire.relay.call",

@@ -251,11 +251,32 @@ public class Call
     public Task<Dictionary<string, object?>> ClearDigitBindingsAsync()
         => ExecuteAsync("calling.clear_digit_bindings");
 
-    public Task<Dictionary<string, object?>> LiveTranscribeAsync(Dictionary<string, object?>? extra = null)
-        => ExecuteAsync("calling.live_transcribe", extra);
+    public Task<Dictionary<string, object?>> LiveTranscribeAsync(
+        Dictionary<string, object?> action, Dictionary<string, object?>? extra = null)
+    {
+        var parms = new Dictionary<string, object?> { ["action"] = action };
+        if (extra is not null)
+        {
+            foreach (var kvp in extra) parms[kvp.Key] = kvp.Value;
+        }
+        return ExecuteAsync("calling.live_transcribe", parms);
+    }
 
-    public Task<Dictionary<string, object?>> LiveTranslateAsync(Dictionary<string, object?>? extra = null)
-        => ExecuteAsync("calling.live_translate", extra);
+    [SuppressMessage("Usage", "CA1054", Justification = "statusUrl is a wire string sent verbatim to the SignalWire API")]
+    public Task<Dictionary<string, object?>> LiveTranslateAsync(
+        Dictionary<string, object?> action, string? statusUrl = null, Dictionary<string, object?>? extra = null)
+    {
+        var parms = new Dictionary<string, object?> { ["action"] = action };
+        if (statusUrl is not null)
+        {
+            parms["status_url"] = statusUrl;
+        }
+        if (extra is not null)
+        {
+            foreach (var kvp in extra) parms[kvp.Key] = kvp.Value;
+        }
+        return ExecuteAsync("calling.live_translate", parms);
+    }
 
     public Task<Dictionary<string, object?>> JoinRoomAsync(Dictionary<string, object?>? extra = null)
         => ExecuteAsync("calling.join_room", extra);

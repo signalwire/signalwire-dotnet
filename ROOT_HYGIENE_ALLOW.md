@@ -25,3 +25,4 @@ audit pipeline (which this repo cannot edit). Verified reader per file below.
 - SUPPRESSION_LEDGER.md — required audit-contract file read at root by porting-sdk suppression_ledger.py (SUPPRESSION-LEDGER gate); records every analyzer-severity disable with reason/approver/date (mike@signalwire.com, 2026-07-15)
 - ARTIFACT_DENY_ALLOW.md — the artifact_deny allowlist, required at root by porting-sdk artifact_deny.py (orchestrator, 2026-07-06)
 - ROOT_HYGIENE_ALLOW.md — this allowlist itself, required at root by porting-sdk root_hygiene.py (orchestrator, 2026-07-06)
+- WIRE_VIOLATIONS_ALLOW.md — STRICT-MOCKS signed-exception ledger read by porting-sdk assert_no_wire_violations.py / examples_run.py / snippet_run.py at repo root (mike@signalwire.com, 2026-07-18)

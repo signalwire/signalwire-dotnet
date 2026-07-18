@@ -215,11 +215,17 @@ public class HttpClient : IDisposable
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            // Transport failure: no HTTP status/body, but the caller can still
-            // branch on which request (method + path) failed. Thread url+method
-            // through the full envelope.
-            throw new SignalWireRestError(
-                $"{method} {path} failed: {ex.Message}", 0, "", path, method, ex);
+            // Transport failure (connection refused / DNS / reset / TLS — the
+            // request never reached a server): no HTTP status/body exists, but
+            // the caller can still branch on which request (method + path)
+            // failed. Raise the TYPED transport error (plan 1.3b) — a member of
+            // the SignalWireRestError family — rather than leaking the bare
+            // HttpRequestException/TaskCanceledException, so a single `catch
+            // (SignalWireRestError)` handles both HTTP and transport failures.
+            // The original exception is preserved via InnerException (the C#
+            // equivalent of Python's `raise ... from exc`).
+            throw new SignalWireRestTransportError(
+                $"{method} {path} failed: {ex.Message}", path, method, ex);
         }
 
         var statusCode = (int)response.StatusCode;

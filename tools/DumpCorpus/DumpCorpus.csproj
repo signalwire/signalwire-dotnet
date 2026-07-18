@@ -17,6 +17,7 @@
     <Compile Include="StateDump.cs" />
     <Compile Include="HttpDump.cs" />
     <Compile Include="WireRelayDump.cs" />
+    <Compile Include="EnvelopeDump.cs" />
     <Compile Include="Canon.cs" />
   </ItemGroup>
   <ItemGroup>

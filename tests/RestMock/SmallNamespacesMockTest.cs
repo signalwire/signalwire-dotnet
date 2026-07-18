@@ -4,6 +4,7 @@
  * Licensed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
+using System.Linq;
 using System.Text.Json;
 using SignalWire.REST;
 using SignalWire.REST.Namespaces.Generated;
@@ -237,18 +238,12 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var c = NewClient();
-        // number_type is a required typed field; the sip_* fields are not typed
-        // params, so forward them via extras to preserve the exact wire keys the
-        // assertions check.
+        // ImportPhoneNumberRequest declares number, number_type, capabilities —
+        // no sip_* fields (the old hand test invented sip_username/password/proxy).
         var body = await c.ImportedNumbers.CreateAsync(
             number: "+15551234567",
             numberType: "longcode",
-            extras: new Dictionary<string, object?>
-            {
-                ["sip_username"] = "alice",
-                ["sip_password"] = "secret",
-                ["sip_proxy"] = "sip.example.com",
-            });
+            capabilities: new List<object?> { "sms", "voice" });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
 
@@ -256,8 +251,12 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         Assert.Equal("POST", last.Method);
         Assert.Equal("/api/relay/rest/imported_phone_numbers", last.Path);
         Assert.Equal("+15551234567", StringField(last, "number"));
-        Assert.Equal("alice", StringField(last, "sip_username"));
-        Assert.Equal("sip.example.com", StringField(last, "sip_proxy"));
+        Assert.Equal("longcode", StringField(last, "number_type"));
+        var map = last.BodyMap();
+        Assert.NotNull(map);
+        Assert.True(map!.ContainsKey("capabilities"));
+        var caps = map["capabilities"].EnumerateArray().Select(e => e.GetString()).ToList();
+        Assert.Equal(new List<string?> { "sms", "voice" }, caps);
     }
 
     // ---- MFA --------------------------------------------------------

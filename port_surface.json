@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 478a44e9c5633a3e411e99003618d18a026bb788",
+  "generated_from": "signalwire-dotnet @ 4d65fa6b0a5b86a1405f7e5c3322349f2dc44906",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -1546,6 +1546,9 @@
           "paginate"
         ],
         "SignalWireRestError": [
+          "__init__"
+        ],
+        "SignalWireRestTransportError": [
           "__init__"
         ]
       },

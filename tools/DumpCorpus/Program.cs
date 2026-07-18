@@ -15,7 +15,7 @@
 // Usage (from the signalwire-dotnet repo root):
 //
 //     dotnet run --project tools/DumpCorpus -- <surface>
-//         <surface> ∈ { wire, swml, state, http, wire-relay }
+//         <surface> ∈ { wire, swml, state, http, wire-relay, envelope }
 //
 // or via the clean-stdout wrapper (mirrors scripts/emit-corpus.sh):
 //
@@ -27,7 +27,7 @@ using SignalWire.Tools.DumpCorpus;
 
 if (args.Length != 1)
 {
-    Console.Error.WriteLine("usage: DumpCorpus <wire|swml|state|http|wire-relay>");
+    Console.Error.WriteLine("usage: DumpCorpus <wire|swml|state|http|wire-relay|envelope>");
     return 2;
 }
 
@@ -40,6 +40,7 @@ try
         "state" => StateDump.Build(),
         "http" => HttpDump.Build(),
         "wire-relay" => await WireRelayDump.BuildAsync().ConfigureAwait(false),
+        "envelope" => await EnvelopeDump.BuildAsync().ConfigureAwait(false),
         _ => throw new ArgumentException($"unknown surface '{args[0]}'"),
     };
 

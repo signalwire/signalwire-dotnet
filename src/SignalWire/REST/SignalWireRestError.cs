@@ -7,7 +7,7 @@ namespace SignalWire.REST;
 /// or encounters a transport-level error.
 /// </summary>
 [SuppressMessage("Naming", "CA1710", Justification = "SignalWireRestError is the cross-port surface name shared across all 10 SDK ports; renaming would break parity.")]
-public sealed class SignalWireRestError : Exception
+public class SignalWireRestError : Exception
 {
     /// <summary>HTTP status code from the response (0 for transport errors).</summary>
     public int StatusCode { get; }
