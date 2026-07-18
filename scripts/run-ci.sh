@@ -44,6 +44,10 @@
 set -u
 set -o pipefail
 
+# STRICT-MOCKS 400-mode (plan §2.2c): strict is the default now.
+export MOCK_SIGNALWIRE_STRICT="${MOCK_SIGNALWIRE_STRICT:-1}"
+export MOCK_RELAY_STRICT="${MOCK_RELAY_STRICT:-1}"
+
 PORT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 mkdir -p "$PORT_ROOT/.sw-tmp"  # repo-local CI scratch (never /tmp)
 PORT_NAME="signalwire-dotnet"
