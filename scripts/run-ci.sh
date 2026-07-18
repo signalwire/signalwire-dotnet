@@ -272,7 +272,16 @@ rest_coverage_gate() {
         --spec-root "$PORTING_SDK_DIR/rest-apis" \
         --allowlist "$PORTING_SDK_DIR/REST_COVERAGE_BASELINE.md" \
         --allowlist "$PORT_ROOT/REST_COVERAGE_GAPS.md" \
-        --gap-baseline "$PORTING_SDK_DIR/REST_COVERAGE_GAP_BASELINE.md"
+        --gap-baseline "$PORTING_SDK_DIR/REST_COVERAGE_GAP_BASELINE.md" || return 1
+
+    # STRICT-MOCKS §2.2a — fail the gate on ANY journaled wire_violation from the
+    # SAME live mock + journal the coverage replay just drove (Category=RestCoverage
+    # only — the hand-authored Category=RestMock fixtures never reach this journal,
+    # so no test-group exclusion is needed here the way php/cpp required). Reads
+    # the mock's own spec-vs-wire judgement rather than re-deriving it.
+    python3 "$PORTING_SDK_DIR/scripts/assert_no_wire_violations.py" \
+        --rest-mock-url "$url" \
+        --allowlist "$PORT_ROOT/WIRE_VIOLATIONS_ALLOW.md"
 }
 
 # SPEC-PARITY — implemented routes == canonical spec. tools/RouteRegistry drives the
@@ -377,6 +386,17 @@ export SW_WAVE_A_REPORT_ONLY=0
 
 echo "==> running CI gates for $PORT_NAME (porting-sdk at $PORTING_SDK_DIR)"
 echo "==> wave-A gate findings are BLOCKING (SW_WAVE_A_REPORT_ONLY=$SW_WAVE_A_REPORT_ONLY)"
+
+# STRICT-MOCKS §2.2b — the shared mock_relay (spawned below, consumed by the TEST
+# gate's full run-tests.sh pass) runs in STRICT mode: an unknown RELAY frame field
+# / duplicate command-id is rejected with an error frame instead of silently
+# journaled, so a wrong RELAY wire shape fails the RELAY unit tests rather than
+# being accepted. Must be exported BEFORE ensure_mock_relay so the mock_relay
+# subprocess inherits it (the flag is read server-side, per-frame, from its own
+# environment). Deliberately NOT setting MOCK_SIGNALWIRE_STRICT here — no global
+# REST-strict default flip; only REST-COVERAGE's dedicated mock enforces REST
+# wire-truth (via the journal-read consumer above), matching every other port.
+export MOCK_RELAY_STRICT=1
 
 echo "==> ensuring mock servers are running on host"
 ensure_mock_signalwire || exit 2

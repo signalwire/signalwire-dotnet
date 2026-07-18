@@ -169,21 +169,23 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        // `email` is not a typed field on create_subscriber_invite_token; forward
-        // via extras to preserve the exact body.email wire key the assertion checks.
+        // SubscriberInviteTokenCreateRequest declares address_id (required) +
+        // expires_at (optional) — exercise the real typed expiresAt param instead
+        // of the old hand test's invented `email` extras key.
         var body = await fabric.Tokens.CreateInviteTokenAsync(
             addressId: "addr-invite-1",
-            extras: new Dictionary<string, object?>
-            {
-                ["email"] = "invitee@example.com",
-            });
+            expiresAt: 7200);
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", last.Method);
         // subscriber/invites uses singular 'subscriber'.
         Assert.Equal("/api/fabric/subscriber/invites", last.Path);
-        Assert.Equal("invitee@example.com", StringField(last, "email"));
+        var map = last.BodyMap();
+        Assert.NotNull(map);
+        Assert.Equal("addr-invite-1", StringField(last, "address_id"));
+        Assert.True(map!.ContainsKey("expires_at"));
+        Assert.Equal(7200, map["expires_at"].GetInt32());
     }
 
     [Fact]
@@ -191,14 +193,9 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
-        // `token` is the required field; `allowed_addresses` is forwarded via extras
-        // to preserve the exact body.allowed_addresses array the assertion checks.
-        var body = await fabric.Tokens.CreateEmbedTokenAsync(
-            token: "embed-token-1",
-            extras: new Dictionary<string, object?>
-            {
-                ["allowed_addresses"] = new List<object?> { "addr-1", "addr-2" },
-            });
+        // EmbedsTokensRequest declares only `token` (the old hand test forwarded
+        // an invented `allowed_addresses` extras key with no spec support).
+        var body = await fabric.Tokens.CreateEmbedTokenAsync(token: "embed-token-1");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
@@ -206,11 +203,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         Assert.Equal("/api/fabric/embeds/tokens", last.Path);
         var map = last.BodyMap();
         Assert.NotNull(map);
-        Assert.True(map!.ContainsKey("allowed_addresses"));
-        var arr = map["allowed_addresses"];
-        Assert.Equal(JsonValueKind.Array, arr.ValueKind);
-        var list = arr.EnumerateArray().Select(e => e.GetString()).ToList();
-        Assert.Equal(new List<string?> { "addr-1", "addr-2" }, list);
+        Assert.Equal("embed-token-1", StringField(last, "token"));
     }
 
     [Fact]
@@ -325,7 +318,10 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
 
-        // Page 1 carries a next cursor; page 2 is terminal (no next link).
+        // Page 1 carries a next cursor; page 2 is terminal (no next link). The
+        // wire param the fabric list endpoint round-trips is `page_token` (a cursor
+        // token that starts with PA/PB), NOT a fictional `cursor` param — the real
+        // server returns links.next with page_token=, so the fixture mirrors that.
         _fixture.Harness.Scenarios.Set("fabric.list_fabric_addresses", 200,
             new Dictionary<string, object?>
             {
@@ -336,7 +332,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
                 },
                 ["links"] = new Dictionary<string, object?>
                 {
-                    ["next"] = "http://example.com/api/fabric/addresses?cursor=page2",
+                    ["next"] = "http://example.com/api/fabric/addresses?page_token=PA_page2",
                 },
             });
         _fixture.Harness.Scenarios.Set("fabric.list_fabric_addresses", 200,
@@ -361,14 +357,14 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         // Every item across both pages is yielded, in order.
         Assert.Equal(new List<string?> { "addr-1", "addr-2", "addr-3" }, ids);
 
-        // Exactly two GETs at the collection path; the second carries the cursor
-        // parsed from page 1's links.next — proving the cursor was followed.
+        // Exactly two GETs at the collection path; the second carries the
+        // page_token parsed from page 1's links.next — proving the cursor was followed.
         var gets = _fixture.Harness.Journal.All()
             .Where(e => e.Path == "/api/fabric/addresses")
             .ToList();
         Assert.Equal(2, gets.Count);
         Assert.NotNull(gets[1].QueryParams);
-        Assert.True(gets[1].QueryParams!.ContainsKey("cursor"));
-        Assert.Equal(new List<string> { "page2" }, gets[1].QueryParams["cursor"]);
+        Assert.True(gets[1].QueryParams!.ContainsKey("page_token"));
+        Assert.Equal(new List<string> { "PA_page2" }, gets[1].QueryParams["page_token"]);
     }
 }

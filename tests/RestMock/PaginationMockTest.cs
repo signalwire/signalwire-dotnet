@@ -73,7 +73,10 @@ public class PaginationMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
 
-        // Stage two scenarios: page 1 has next cursor, page 2 is terminal.
+        // Stage two scenarios: page 1 has next cursor, page 2 is terminal. The
+        // wire param the fabric list endpoint round-trips is `page_token` (a cursor
+        // token that starts with PA/PB), NOT a fictional `cursor` param — the real
+        // server returns links.next with page_token=, so the fixture mirrors that.
         _fixture.Harness.Scenarios.Set(FabricAddressesEndpointId, 200,
             new Dictionary<string, object?>
             {
@@ -84,7 +87,7 @@ public class PaginationMockTest : IClassFixture<MockServerFixture>
                 },
                 ["links"] = new Dictionary<string, object?>
                 {
-                    ["next"] = "http://example.com/api/fabric/addresses?cursor=page2",
+                    ["next"] = "http://example.com/api/fabric/addresses?page_token=PA_page2",
                 },
             });
         _fixture.Harness.Scenarios.Set(FabricAddressesEndpointId, 200,
@@ -114,10 +117,10 @@ public class PaginationMockTest : IClassFixture<MockServerFixture>
             .Where(e => e.Path == FabricAddressesPath)
             .ToList();
         Assert.Equal(2, gets.Count);
-        // Second fetch carries cursor=page2.
+        // Second fetch carries the page_token parsed from page 1's next link.
         Assert.NotNull(gets[1].QueryParams);
-        Assert.True(gets[1].QueryParams!.ContainsKey("cursor"));
-        Assert.Equal(new List<string> { "page2" }, gets[1].QueryParams["cursor"]);
+        Assert.True(gets[1].QueryParams!.ContainsKey("page_token"));
+        Assert.Equal(new List<string> { "PA_page2" }, gets[1].QueryParams["page_token"]);
     }
 
     [Fact]

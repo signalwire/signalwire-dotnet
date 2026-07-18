@@ -94,9 +94,11 @@ public class RegistryMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var registry = NewRegistry();
+        // createCampaign takes the full CreateManagedCampaignRequest body; the
+        // spec field is `sms_use_case` (not `usecase`, the hand code's invented key).
         var body = await registry.Brands.CreateCampaignAsync("brand-2", new Dictionary<string, object?>
         {
-            ["usecase"] = "LOW_VOLUME",
+            ["sms_use_case"] = "LOW_VOLUME",
             ["description"] = "MFA",
         });
         Assert.NotNull(body);
@@ -104,7 +106,7 @@ public class RegistryMockTest : IClassFixture<MockServerFixture>
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", last.Method);
         Assert.Equal($"{RegBase}/brands/brand-2/campaigns", last.Path);
-        Assert.Equal("LOW_VOLUME", StringField(last, "usecase"));
+        Assert.Equal("LOW_VOLUME", StringField(last, "sms_use_case"));
         Assert.Equal("MFA", StringField(last, "description"));
     }
 
@@ -128,18 +130,15 @@ public class RegistryMockTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available) return;
         var registry = NewRegistry();
-        // `description` is not a typed field on campaign update; forward via extras
-        // to preserve the exact body.description wire key the assertion checks.
-        var body = await registry.Campaigns.UpdateAsync("camp-2", extras: new Dictionary<string, object?>
-        {
-            ["description"] = "Updated",
-        });
+        // UpdateCampaignRequest exposes only `name`; the old hand test forwarded
+        // an invented `description` key via extras.
+        var body = await registry.Campaigns.UpdateAsync("camp-2", name: "Updated Campaign");
         Assert.NotNull(body);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("PUT", last.Method);
         Assert.Equal($"{RegBase}/campaigns/camp-2", last.Path);
-        Assert.Equal("Updated", StringField(last, "description"));
+        Assert.Equal("Updated Campaign", StringField(last, "name"));
     }
 
     [Fact]
