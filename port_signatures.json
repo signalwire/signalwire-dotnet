@@ -18405,6 +18405,11 @@
                   "kind": "self"
                 },
                 {
+                  "name": "action",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
                   "name": "extra",
                   "type": "optional<dict<string,any>>",
                   "required": false,
@@ -18418,6 +18423,17 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "action",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "status_url",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
                 },
                 {
                   "name": "extra",

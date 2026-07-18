@@ -243,6 +243,22 @@ internal static class WireRelayDump
         });
         outMap["relay_send_fax"] = Frame("calling.send_fax", client.LastFrame("calling.send_fax"));
 
+        // relay_live_transcribe: params.action MUST be wrapped (not forwarded flat).
+        await call.LiveTranscribeAsync(new Dictionary<string, object?>
+        {
+            ["start"] = new Dictionary<string, object?> { ["lang"] = "en" },
+        }).ConfigureAwait(false);
+        outMap["relay_live_transcribe"] = Frame("calling.live_transcribe", client.LastFrame("calling.live_transcribe"));
+
+        // relay_live_translate: params.action wrapped + optional status_url sibling.
+        await call.LiveTranslateAsync(
+            new Dictionary<string, object?>
+            {
+                ["start"] = new Dictionary<string, object?> { ["from_lang"] = "en", ["to_lang"] = "es" },
+            },
+            statusUrl: "https://x/cb").ConfigureAwait(false);
+        outMap["relay_live_translate"] = Frame("calling.live_translate", client.LastFrame("calling.live_translate"));
+
         // ---- control-ops (Action methods) ----
 
         // relay_play_stop
