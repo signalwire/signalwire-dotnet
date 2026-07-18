@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 4d65fa6b0a5b86a1405f7e5c3322349f2dc44906",
+  "generated_from": "signalwire-dotnet @ e09e45d6690e4595a5eb025b6c46887bc8a17056",
   "native_names": [
     "AI",
     "AIAction",
@@ -1340,7 +1340,6 @@
     "ShouldLog",
     "SignalWireErrorBody",
     "SignalWireRestError",
-    "SignalWireRestTransportError",
     "SignalwireConnectParams",
     "SignalwireConnectResult",
     "SignalwireDisconnectParams",
