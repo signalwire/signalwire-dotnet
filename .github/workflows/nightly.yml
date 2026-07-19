@@ -45,7 +45,9 @@ jobs:
         run: |
           set -euo pipefail
           port_sha='${{ github.sha }}'
-          psdk_sha=$(GH_TOKEN="$PSDK_TOKEN" gh api repos/signalwire/porting-sdk/commits/main --jq .sha)
+          # Fingerprint the PINNED porting-sdk branch (matches the checkout ref
+          # below). REVERT to main when plan/a-bar-2026-07-18 merges.
+          psdk_sha=$(GH_TOKEN="$PSDK_TOKEN" gh api 'repos/signalwire/porting-sdk/commits/plan%2Fa-bar-2026-07-18' --jq .sha)
           py_sha=$(gh api repos/signalwire/signalwire-python/commits/main --jq .sha)
           echo "cache_key=nightly-green-v1-${port_sha}-${psdk_sha}-${py_sha}" >> "$GITHUB_OUTPUT"
           echo "inputs -> port=$port_sha psdk=$psdk_sha python=$py_sha"
@@ -85,6 +87,10 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: signalwire/porting-sdk
+          # PINNED to the plan branch (gates call scripts not yet on porting-sdk
+          # main: check_wired_modes.py etc.). REVERT to main when
+          # plan/a-bar-2026-07-18 merges into porting-sdk main.
+          ref: plan/a-bar-2026-07-18
           path: porting-sdk
           token: ${{ secrets.PORTING_SDK_TOKEN }}
 
