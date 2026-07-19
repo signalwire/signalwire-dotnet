@@ -227,6 +227,40 @@ public class AgentBaseTests : IDisposable
     }
 
     [Fact]
+    public void DefineTool_IsFluent_ReturnsTheAgent()
+    {
+        // 6.2-dotnet (api_reference.md Tool Methods table): DefineTool /
+        // RegisterSwaigFunction / DefineTools return the AGENT (covariant
+        // override of the Service-typed base), so agent-level fluent chaining
+        // compiles: agent.DefineTool(...).AddHint(...).
+        var agent = MakeAgent();
+
+        AgentBase returned = agent.DefineTool("lookup", "Look up a customer",
+            new Dictionary<string, object>(),
+            (args, raw) => new FunctionResult("found"));
+        Assert.Same(agent, returned);
+
+        AgentBase chained = agent
+            .DefineTool("greet", "Greet",
+                new Dictionary<string, object>(),
+                (args, raw) => new FunctionResult("hi"))
+            .AddHint("SignalWire");
+        Assert.Same(agent, chained);
+
+        AgentBase fromRegister = agent.RegisterSwaigFunction(new Dictionary<string, object>
+        {
+            ["function"] = "raw_tool",
+            ["purpose"] = "raw",
+        });
+        Assert.Same(agent, fromRegister);
+
+        AgentBase fromDefineTools = agent.DefineTools([
+            new Dictionary<string, object> { ["function"] = "tool_x", ["purpose"] = "X" },
+        ]);
+        Assert.Same(agent, fromDefineTools);
+    }
+
+    [Fact]
     public void OnFunctionCall()
     {
         var agent = MakeAgent();

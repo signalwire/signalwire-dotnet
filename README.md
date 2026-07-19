@@ -114,12 +114,12 @@ Real-time call control and messaging over WebSocket. The RELAY client connects t
 ```csharp
 using SignalWire.Relay;
 
-var client = new Client(new Dictionary<string, string>
+var client = new Client(new ClientOptions
 {
-    ["project"]  = "your-project-id",
-    ["token"]    = "your-token",
-    ["host"]     = "example.signalwire.com",
-    ["contexts"] = "default",
+    Project  = "your-project-id",
+    Token    = "your-token",
+    Host     = "example.signalwire.com",
+    Contexts = new[] { "default" },
 });
 
 client.OnCall(async (call, evt) =>

@@ -19,23 +19,24 @@ using System;
 using System.Collections.Generic;
 using SignalWire.Relay;
 
-var client = new Client(new Dictionary<string, string>
+var client = new Client(new ClientOptions
 {
-    ["project"]  = "your-project-id",
-    ["token"]    = "your-api-token",
-    ["host"]     = "relay.signalwire.com",
-    ["contexts"] = "default,support",
+    Project  = "your-project-id",
+    Token    = "your-api-token",
+    Host     = "relay.signalwire.com",
+    Contexts = new[] { "default", "support" },
 });
 ```
 
-### Options
+### Options (`ClientOptions`)
 
-| Key | Required | Default | Description |
-|-----|----------|---------|-------------|
-| `project` | Yes | - | SignalWire project ID |
-| `token` | Yes | - | API token |
-| `host` | No | `SIGNALWIRE_SPACE` env var | Space hostname |
-| `contexts` | No | - | Comma-separated context names |
+| Property | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `Project` | Yes | - | SignalWire project ID |
+| `Token` | Yes | - | API token |
+| `Host` | No | `SIGNALWIRE_SPACE` env var | Space hostname |
+| `Scheme` | No | `wss` (or `SIGNALWIRE_RELAY_SCHEME` env var) | WebSocket scheme |
+| `Contexts` | No | - | Context names to subscribe on connect |
 
 ## Properties
 
@@ -214,11 +215,13 @@ client.Send(new Dictionary<string, object?>
 
 ## Correlation Maps
 
-The client maintains four thread-safe correlation maps:
+The client maintains four thread-safe correlation maps. Two are public
+lookup surfaces; the RPC/dial correlation maps are internal (the client's
+own bookkeeping):
 
 | Map | Key | Value | Purpose |
 |-----|-----|-------|---------|
-| `Pending` | JSON-RPC `id` | `TaskCompletionSource` | Match RPC responses |
-| `Calls` | `call_id` | `Call` | Route call events |
-| `PendingDials` | `tag` | `TaskCompletionSource<Call>` | Resolve dial operations |
-| `Messages` | `message_id` | `Message` | Track message delivery |
+| `Calls` | `call_id` | `Call` | Route call events (public) |
+| `Messages` | `message_id` | `Message` | Track message delivery (public) |
+| RPC pending (internal) | JSON-RPC `id` | `TaskCompletionSource` | Match RPC responses |
+| dial pending (internal) | `tag` | `TaskCompletionSource<Call>` | Resolve dial operations |

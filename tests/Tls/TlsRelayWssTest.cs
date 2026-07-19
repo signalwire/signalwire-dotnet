@@ -45,13 +45,13 @@ public class TlsRelayWssTest
 
         var validator = TlsHarness.Validator();
 
-        var client = new SignalWire.Relay.Client(new Dictionary<string, string>
+        var client = new SignalWire.Relay.Client(new SignalWire.Relay.ClientOptions
         {
-            ["project"] = "test_proj",
-            ["token"] = "test_tok",
-            ["host"] = mock!.RelayHost,
-            ["scheme"] = "wss",
-            ["contexts"] = "default",
+            Project = "test_proj",
+            Token = "test_tok",
+            Host = mock!.RelayHost,
+            Scheme = "wss",
+            Contexts = new[] { "default" },
         })
         {
             // Trust the test CA for the WSS handshake (real chain validation).

@@ -56,6 +56,19 @@ signalwire.agent.agent_options.AgentOptions.record_format: .NET options data cla
 signalwire.agent.agent_options.AgentOptions.record_stereo: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
 signalwire.agent.agent_options.AgentOptions.route: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
 signalwire.agent.agent_options.AgentOptions.use_pom: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
+signalwire.relay.client_options.ClientOptions: .NET options data class with init-only properties (6.2: replaced the string-keyed Dictionary ctor); Python uses kwargs to RelayClient.__init__
+signalwire.relay.client_options.ClientOptions.__init__: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
+signalwire.relay.client_options.ClientOptions.project: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
+signalwire.relay.client_options.ClientOptions.token: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
+signalwire.relay.client_options.ClientOptions.host: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
+signalwire.relay.client_options.ClientOptions.scheme: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
+signalwire.relay.client_options.ClientOptions.contexts: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
+signalwire.signal_wire_options.SignalWireOptions: .NET DI options data class for the AddSignalWire() IServiceCollection registration (6.2); Python has no host-framework DI layer
+signalwire.signal_wire_options.SignalWireOptions.__init__: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
+signalwire.signal_wire_options.SignalWireOptions.project_id: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
+signalwire.signal_wire_options.SignalWireOptions.token: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
+signalwire.signal_wire_options.SignalWireOptions.space: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
+signalwire.signal_wire_options.SignalWireOptions.request_options: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
 signalwire.agent_server.AgentServer.get_sip_username_mapping: Public helper added in .NET; Python equivalents are register_global_routing_callback / serve_static_files
 signalwire.agent_server.AgentServer.handle_request: Public dispatch entry point on AgentServer; Python uses Flask/FastAPI request objects directly
 signalwire.agent_server.AgentServer.host: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
@@ -187,13 +200,10 @@ signalwire.relay.client.RelayClient.get_call: Public Client surface ported from 
 signalwire.relay.client.RelayClient.handle_event: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.handle_message: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.host: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
-signalwire.relay.client.RelayClient.inbound_queue: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.messages: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.on_call_handler: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.on_event_handler: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.on_message_handler: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
-signalwire.relay.client.RelayClient.pending_dials: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
-signalwire.relay.client.RelayClient.pending: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.project: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.protocol: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors
 signalwire.relay.client.RelayClient.read_loop: Public Client surface ported from Python's RelayClient; Python ships these as private methods or @property accessors

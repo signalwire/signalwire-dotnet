@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 225c05f64f7291205e5c4efc5889c1cd8007d319",
+  "generated_from": "signalwire-dotnet @ 5beff0bc6cedeef016a9734817d70763bfb0034d",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -1218,15 +1218,12 @@
           "handle_event",
           "handle_message",
           "host",
-          "inbound_queue",
           "messages",
           "on_call",
           "on_call_handler",
           "on_event_handler",
           "on_message",
           "on_message_handler",
-          "pending",
-          "pending_dials",
           "project",
           "read_loop",
           "read_once",
@@ -1244,6 +1241,18 @@
         "RelayError": [
           "__init__",
           "code"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.relay.client_options": {
+      "classes": {
+        "ClientOptions": [
+          "contexts",
+          "host",
+          "project",
+          "scheme",
+          "token"
         ]
       },
       "functions": []
@@ -2870,6 +2879,25 @@
           "handle_google_cloud_function",
           "handle_lambda",
           "serve"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.signal_wire_options": {
+      "classes": {
+        "SignalWireOptions": [
+          "project_id",
+          "request_options",
+          "space",
+          "token"
+        ]
+      },
+      "functions": []
+    },
+    "signalwire.signal_wire_service_collection_extensions": {
+      "classes": {
+        "SignalWireServiceCollectionExtensions": [
+          "add_signal_wire"
         ]
       },
       "functions": []

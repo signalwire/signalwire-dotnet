@@ -7,12 +7,12 @@ Real-time call control and messaging over WebSocket. The RELAY client connects t
 ```csharp
 using SignalWire.Relay;
 
-var client = new Client(new Dictionary<string, string>
+var client = new Client(new ClientOptions
 {
-    ["project"]  = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")!,
-    ["token"]    = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")!,
-    ["host"]     = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "relay.signalwire.com",
-    ["contexts"] = "default",
+    Project  = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")!,
+    Token    = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")!,
+    Host     = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "relay.signalwire.com",
+    Contexts = new[] { "default" },
 });
 
 client.OnCall(async (call, evt) =>

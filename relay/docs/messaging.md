@@ -108,11 +108,11 @@ using System.Collections.Generic;
 using SignalWire.Relay;
 
 string projectId = "your-project-id", apiToken = "your-api-token";
-var client = new Client(new Dictionary<string, string>
+var client = new Client(new ClientOptions
 {
-    ["project"]  = projectId,
-    ["token"]    = apiToken,
-    ["contexts"] = "default,support",  // Subscribe to multiple contexts
+    Project  = projectId,
+    Token    = apiToken,
+    Contexts = new[] { "default", "support" },  // Subscribe to multiple contexts
 });
 ```
 

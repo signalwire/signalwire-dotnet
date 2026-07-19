@@ -9,6 +9,36 @@ using SignalWire.Logging;
 namespace SignalWire.Relay;
 
 /// <summary>
+/// Typed construction options for the RELAY <see cref="Client"/> (6.2: the
+/// options-record idiom — named, compiler-checked properties instead of the
+/// old string-keyed <c>Dictionary&lt;string,string&gt;</c> where a typo like
+/// <c>"projcet"</c> silently produced an unauthenticated client). Mirrors the
+/// <see cref="SignalWire.Agent.AgentOptions"/> pattern and the Python
+/// reference's <c>RelayClient(project=..., token=..., host=...,
+/// contexts=[...])</c> keyword surface.
+/// </summary>
+public sealed class ClientOptions
+{
+    /// <summary>SignalWire project id.</summary>
+    public string? Project { get; init; }
+
+    /// <summary>SignalWire API token.</summary>
+    public string? Token { get; init; }
+
+    /// <summary>SignalWire space host (e.g. <c>example.signalwire.com</c>).
+    /// Falls back to the <c>SIGNALWIRE_SPACE</c> env var.</summary>
+    public string? Host { get; init; }
+
+    /// <summary>WebSocket scheme, <c>wss</c> (default) or <c>ws</c>. Falls
+    /// back to the <c>SIGNALWIRE_RELAY_SCHEME</c> env var.</summary>
+    public string? Scheme { get; init; }
+
+    /// <summary>Inbound contexts to subscribe on connect (the Python
+    /// reference's <c>contexts</c> list).</summary>
+    public IReadOnlyList<string>? Contexts { get; init; }
+}
+
+/// <summary>
 /// RELAY Client -- manages the WebSocket connection to SignalWire, sends
 /// JSON-RPC 2.0 requests, and dispatches inbound events to the correct
 /// Call or Message objects.
@@ -30,7 +60,11 @@ public class Client : IAsyncDisposable
     public string Scheme { get; set; }
     private readonly List<string> _contexts = [];
     public IReadOnlyList<string> Contexts => _contexts;
-    public bool Connected { get; set; }
+    /// <summary>Connection state — owned by the client's own lifecycle
+    /// (connect / disconnect / socket close), read-only to callers (6.2
+    /// immutability: a public setter let user code lie to the reconnect
+    /// loop). Internal set for the test fakes.</summary>
+    public bool Connected { get; internal set; }
 
     /// <summary>
     /// Server-assigned session id captured from the <c>signalwire.connect</c>
@@ -49,15 +83,19 @@ public class Client : IAsyncDisposable
     public string Agent { get; set; } = "signalwire-agents-dotnet/1.0";
 
     // -- 4 correlation maps --
+    // Pending / PendingDials are correlation INTERNALS (6.2 immutability:
+    // they were public mutable maps a caller could corrupt mid-dial); the
+    // test suite reaches them via InternalsVisibleTo. Calls / Messages stay
+    // public read-properties — they are the documented lookup surface.
 
     /// <summary>JSON-RPC id => pending request TCS.</summary>
-    public ConcurrentDictionary<string, TaskCompletionSource<Dictionary<string, object?>>> Pending { get; } = new();
+    internal ConcurrentDictionary<string, TaskCompletionSource<Dictionary<string, object?>>> Pending { get; } = new();
 
     /// <summary>callId => Call.</summary>
     public ConcurrentDictionary<string, Call> Calls { get; } = new();
 
     /// <summary>tag => pending dial TCS.</summary>
-    public ConcurrentDictionary<string, TaskCompletionSource<Call>> PendingDials { get; } = new();
+    internal ConcurrentDictionary<string, TaskCompletionSource<Call>> PendingDials { get; } = new();
 
     /// <summary>messageId => Message.</summary>
     public ConcurrentDictionary<string, Message> Messages { get; } = new();
@@ -96,31 +134,43 @@ public class Client : IAsyncDisposable
     /// </summary>
     internal Action<ClientWebSocketOptions>? ConfigureWebSocketOptions { get; set; }
 
-    /// <summary>Messages received from the transport layer. Test code can enqueue here.</summary>
-    public ConcurrentQueue<string> InboundQueue { get; } = new();
+    /// <summary>Messages received from the transport layer. Test code can
+    /// enqueue here (via InternalsVisibleTo — 6.2 immutability: not part of
+    /// the public call-control surface).</summary>
+    internal ConcurrentQueue<string> InboundQueue { get; } = new();
 
     // ==================================================================
     //  Construction
     // ==================================================================
 
-    public Client(Dictionary<string, string>? options = null)
+    /// <summary>
+    /// Construct a RELAY client from a typed <see cref="ClientOptions"/>
+    /// record (6.2: replaces the old <c>Dictionary&lt;string,string&gt;</c>
+    /// ctor — named, compiler-checked properties instead of string keys).
+    /// </summary>
+    public Client(ClientOptions? options = null)
     {
         options ??= new();
 
-        Project = options.GetValueOrDefault("project", "");
-        Token = options.GetValueOrDefault("token", "");
+        Project = options.Project ?? "";
+        Token = options.Token ?? "";
 
-        var ctxs = options.GetValueOrDefault("contexts", "");
-        if (!string.IsNullOrEmpty(ctxs))
+        if (options.Contexts is { Count: > 0 } ctxs)
         {
-            _contexts.AddRange(ctxs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+            foreach (var ctx in ctxs)
+            {
+                if (!string.IsNullOrWhiteSpace(ctx))
+                {
+                    _contexts.Add(ctx.Trim());
+                }
+            }
         }
 
-        Host = options.GetValueOrDefault("host", "")
+        Host = options.Host
             is { Length: > 0 } h ? h
             : Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "";
 
-        Scheme = options.GetValueOrDefault("scheme", "")
+        Scheme = options.Scheme
             is { Length: > 0 } s ? s
             : Environment.GetEnvironmentVariable("SIGNALWIRE_RELAY_SCHEME") ?? "wss";
 
