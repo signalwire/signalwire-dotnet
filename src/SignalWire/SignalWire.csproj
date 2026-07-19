@@ -15,6 +15,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
+    <!-- 6.3 doc-surface floor (dotnet): ship the compiler XML doc file in the
+         nupkg so IDE IntelliSense/tooltips work from the package (the .xml is
+         asserted present by the NUPKG-XMLDOC gate). CS1591 (missing XML
+         comment on a public member) + CS1573 (some-but-not-all params
+         documented — pervasive in the generated REST tree's id/cancellationToken
+         params) are suppressed: doc COVERAGE is a separate ratchet concern; the
+         floor here is that the documented surface SHIPS. Malformed-doc errors
+         (CS1570 bad XML, CS1574/CS0419 broken crefs) stay hard errors. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

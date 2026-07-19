@@ -57,14 +57,14 @@ namespace SignalWire.SWAIG;
 /// names as an ordered <c>List&lt;string&gt;</c>.
 /// </para>
 /// <para>
-/// <strong>Closed sets.</strong> <see cref="Enum(string, Type, string?)"/>
+/// <strong>Closed sets.</strong> <see cref="Enum(string, Type, string?, bool, object?)"/>
 /// integrates the Tier-1 typed enums (<see cref="RecordFormat"/>,
 /// <see cref="RecordDirection"/>, <see cref="TapDirection"/>,
 /// <see cref="Codec"/>, …) by reflecting over the enum's members and emitting
 /// each member's canonical wire string (its <c>ToWireName</c>) into the schema
 /// <c>enum: [...]</c> list — so the closed set is defined once, in the enum,
 /// rather than re-typed as a string list at every call site. An explicit
-/// <see cref="Enum(string, IEnumerable{string}, string?)"/> overload remains
+/// <see cref="Enum(string, IEnumerable{string}, string?, bool, object?)"/> overload remains
 /// for genuinely-open or ad-hoc value sets.
 /// </para>
 /// </remarks>

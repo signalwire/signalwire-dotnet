@@ -1,115 +1,95 @@
 // REST Client Demo
 //
-// Shows how to use the REST client to manage SignalWire resources.
+// Shows how to use the REST client to manage SignalWire resources. Every
+// REST verb is Task-based async (ListAsync / GetAsync / CreateAsync / ...).
 //
 // Set these env vars:
 //   SIGNALWIRE_PROJECT_ID
 //   SIGNALWIRE_API_TOKEN
 //   SIGNALWIRE_SPACE
+//
+// Run recipe: see examples/README.md ("Running Examples").
 
 using SignalWire.REST;
 
-var client = new RestClient(
+using var client = new RestClient(
     projectId: Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    token:     Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    token: Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    space:     Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
+    space: Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-T? Safe<T>(string label, Func<T> fn) where T : class
+async Task<Dictionary<string, object?>?> SafeAsync(
+    string label, Func<Task<Dictionary<string, object?>>> fn)
 {
     try
     {
-        var result = fn();
+        var result = await fn();
         Console.WriteLine($"  {label}: OK");
         return result;
     }
-    catch (Exception ex)
+    catch (SignalWireRestError ex)
     {
         Console.WriteLine($"  {label}: FAILED - {ex.Message}");
         return null;
     }
 }
 
-// 1. List phone numbers
-Console.WriteLine("Listing phone numbers...");
-var numbers = Safe("List numbers", () => client.PhoneNumbers.List());
-if (numbers != null)
+static IEnumerable<Dictionary<string, object?>> Rows(
+    Dictionary<string, object?>? page, int take = 5)
 {
-    var data = numbers["data"] as List<object> ?? new();
-    foreach (var item in data.Take(5))
+    if (page is not null
+        && page.TryGetValue("data", out var dataObj)
+        && dataObj is List<object?> data)
     {
-        if (item is Dictionary<string, object?> n)
+        foreach (var item in data.OfType<Dictionary<string, object?>>().Take(take))
         {
-            Console.WriteLine($"    - {n.GetValueOrDefault("number") ?? "unknown"}");
+            yield return item;
         }
     }
 }
 
-// 2. Search available numbers
-Console.WriteLine("\nSearching available numbers...");
-Safe("Search 512", () =>
+// 1. List phone numbers
+Console.WriteLine("Listing phone numbers...");
+var numbers = await SafeAsync("List numbers", () => client.PhoneNumbers.ListAsync());
+foreach (var n in Rows(numbers))
 {
-    var avail = client.PhoneNumbers.Search(areaCode: "512", maxResults: 3);
-    var data = avail["data"] as List<object> ?? new();
-    foreach (var item in data)
-    {
-        if (item is Dictionary<string, object?> n)
-        {
-            Console.WriteLine($"    - {n.GetValueOrDefault("e164") ?? n.GetValueOrDefault("number")}");
-        }
-    }
-    return avail;
-});
+    Console.WriteLine($"    - {n.GetValueOrDefault("number") ?? "unknown"}");
+}
+
+// 2. Search available numbers (spec wire param: `areacode`)
+Console.WriteLine("\nSearching available numbers...");
+var avail = await SafeAsync("Search 512", () => client.PhoneNumbers.SearchAsync(
+    new Dictionary<string, string> { ["areacode"] = "512", ["max_results"] = "3" }));
+foreach (var n in Rows(avail))
+{
+    Console.WriteLine($"    - {n.GetValueOrDefault("e164") ?? n.GetValueOrDefault("number")}");
+}
 
 // 3. List AI agents
 Console.WriteLine("\nListing AI agents...");
-Safe("List agents", () =>
+var agents = await SafeAsync("List agents", () => client.Fabric.AiAgents.ListAsync());
+foreach (var a in Rows(agents))
 {
-    var agents = client.Fabric.AiAgents.List();
-    var data = agents["data"] as List<object> ?? new();
-    foreach (var item in data)
-    {
-        if (item is Dictionary<string, object?> a)
-        {
-            Console.WriteLine($"    - {a.GetValueOrDefault("id")}: {a.GetValueOrDefault("name") ?? "unnamed"}");
-        }
-    }
-    return agents;
-});
+    Console.WriteLine($"    - {a.GetValueOrDefault("id")}: {a.GetValueOrDefault("name") ?? "unnamed"}");
+}
 
 // 4. Datasphere documents
 Console.WriteLine("\nListing Datasphere documents...");
-Safe("List documents", () =>
+var docs = await SafeAsync("List documents", () => client.Datasphere.Documents.ListAsync());
+foreach (var d in Rows(docs))
 {
-    var docs = client.Datasphere.Documents.List();
-    var data = docs["data"] as List<object> ?? new();
-    foreach (var item in data)
-    {
-        if (item is Dictionary<string, object?> d)
-        {
-            Console.WriteLine($"    - {d.GetValueOrDefault("id")}: {d.GetValueOrDefault("status")}");
-        }
-    }
-    return docs;
-});
+    Console.WriteLine($"    - {d.GetValueOrDefault("id")}: {d.GetValueOrDefault("status")}");
+}
 
-// 5. Video rooms
-Console.WriteLine("\nListing video rooms...");
-Safe("List rooms", () =>
+// 5. Video conferences
+Console.WriteLine("\nListing video conferences...");
+var rooms = await SafeAsync("List conferences", () => client.Video.Conferences.ListAsync());
+foreach (var r in Rows(rooms))
 {
-    var rooms = client.Video.List();
-    var data = rooms["data"] as List<object> ?? new();
-    foreach (var item in data)
-    {
-        if (item is Dictionary<string, object?> r)
-        {
-            Console.WriteLine($"    - {r.GetValueOrDefault("id")}: {r.GetValueOrDefault("name") ?? "unnamed"}");
-        }
-    }
-    return rooms;
-});
+    Console.WriteLine($"    - {r.GetValueOrDefault("id")}: {r.GetValueOrDefault("name") ?? "unnamed"}");
+}
 
 Console.WriteLine("\nREST Demo complete.");

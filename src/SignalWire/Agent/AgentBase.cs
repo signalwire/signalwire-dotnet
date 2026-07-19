@@ -935,7 +935,7 @@ public class AgentBase : Service
     /// fillers, matching the SWAIGInternalFiller schema definition. Any
     /// name outside this set is silently ignored by the runtime —
     /// <see cref="SetInternalFillers(Dictionary{string, Dictionary{string, List{string}}})"/>
-    /// and <see cref="AddInternalFiller(string, string, List{string})"/>
+    /// and <see cref="AddInternalFiller(string, string, IReadOnlyList{string})"/>
     /// warn if you pass an unknown name.
     ///
     /// Notable absences: <c>change_step</c>, <c>gather_submit</c>, or

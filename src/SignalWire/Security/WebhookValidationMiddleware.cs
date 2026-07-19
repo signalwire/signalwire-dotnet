@@ -92,7 +92,7 @@ public sealed class WebhookValidationMiddleware
     /// The raw body is the caller's <paramref name="body"/> string verbatim;
     /// the caller is expected to capture the body once (before any JSON /
     /// form parser consumes the stream) and pass it here. The
-    /// <see cref="HttpListenerContext"/> dispatcher in
+    /// <see cref="System.Net.HttpListenerContext"/> dispatcher in
     /// <c>SignalWire.SWML.Service.Run</c> already does this, so AgentBase
     /// and standalone HttpListener integrations can wire it in directly.
     /// </remarks>

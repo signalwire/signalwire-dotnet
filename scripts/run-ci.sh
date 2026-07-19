@@ -320,6 +320,12 @@ sched_gate PACKAGE-NIGHTLY tier=nightly defer=1 res=msbuild desc="package suite,
     -- python3 "$PORTING_SDK_DIR/scripts/suites/package.py" --port dotnet --repo "$PORT_ROOT" \
         --rules PACKAGE-SMOKE,META-CONSISTENT
 
+# NUPKG-XMLDOC (6.3 doc-surface floor): the packed nupkg must ship the compiler
+# XML doc file (lib/<tfm>/SignalWire.xml) for every TFM — the enforcement half of
+# csproj GenerateDocumentationFile. Self-test: check-nupkg-xmldoc.sh --selftest.
+sched_gate NUPKG-XMLDOC tier=nightly defer=1 res=msbuild desc="nupkg ships the XML doc file for every TFM (GenerateDocumentationFile floor)" \
+    -- bash "$PORT_ROOT/scripts/check-nupkg-xmldoc.sh"
+
 # ---- gates that stay standalone (native toolchains + singletons) -------------
 # These are NOT suite members — native-toolchain wrappers and singleton source/doc
 # checks that have no suite family.
