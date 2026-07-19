@@ -947,11 +947,17 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         # __init__ carries the 5 optional None-inherit fields. Force-replace the
         # placeholder with the reference-shaped __init__ so the record-vs-dataclass
         # construction surface compares equal (the fields ARE the ctor params).
+        # RequestOptions.__init__ is a SIGNATURE-only injection: its SURFACE stays
+        # ``merge`` only (SURFACE_METHOD_INJECTIONS deliberately carries NO entry
+        # for it), so drive the overwrite from a signature-local set unioned with
+        # the surface-injection names — never gated by the (empty) surface entry.
         _sig_inject_overwrite = {
             ("signalwire.rest._request_options", "RequestOptions"): {"__init__"},
         }
         _overwrite = _sig_inject_overwrite.get((target_module, target_class), set())
-        for inj in SURFACE_METHOD_INJECTIONS.get((target_module, target_class), []):
+        _inject_names = list(SURFACE_METHOD_INJECTIONS.get((target_module, target_class), []))
+        _inject_names += [n for n in _overwrite if n not in _inject_names]
+        for inj in _inject_names:
             if inj not in methods_out or inj in _overwrite:
                 ref_sig = _reference_sig(target_module, target_class, inj)
                 if ref_sig is not None:
