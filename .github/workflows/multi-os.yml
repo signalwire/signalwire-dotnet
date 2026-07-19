@@ -1,0 +1,143 @@
+name: Multi-OS (nightly)
+
+# Plan 6.4 — multi-OS CI lane. ubuntu-only CI cannot certify a cross-platform SDK;
+# this NIGHTLY job runs the two OS-sensitive suites — TEST (dotnet test, per-TFM
+# serialized via scripts/run-tests.sh) and PACKAGE-SMOKE (package_smoke.py: dotnet
+# pack + a consumer build from a local nupkg feed) — on macOS AND Windows. The full
+# run-ci.sh gate set stays Linux-only (its mock-lifecycle + audit scripts assume a
+# POSIX host with signalwire-python adjacency); this lane invokes only the two
+# portable pieces. Mock-bound tests self-skip cleanly where the python mock cannot
+# spawn — the unit/serialization surface still runs, which is where the OS-sensitive
+# breakage (paths, TLS, process spawn, line endings) lives.
+#
+# Skip-if-unchanged: a GREEN run saves a cache key fingerprinting the (port,
+# porting-sdk) HEAD SHA pair; the next run probes it (restore, lookup-only) and skips
+# when the exact pair already passed. workflow_dispatch(force) overrides.
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  schedule:
+    - cron: '33 7 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Run even if nothing changed since the last successful run'
+        type: boolean
+        default: false
+
+concurrency:
+  group: multi-os-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+      cache_key: ${{ steps.fp.outputs.cache_key }}
+    steps:
+      - name: Checkout signalwire-dotnet
+        uses: actions/checkout@v7
+        with:
+          path: signalwire-dotnet
+      - name: Checkout porting-sdk
+        uses: actions/checkout@v7
+        with:
+          repository: signalwire/porting-sdk
+          path: porting-sdk
+          token: ${{ secrets.PORTING_SDK_TOKEN }}
+      - name: Fingerprint input HEAD SHAs (port + porting-sdk)
+        id: fp
+        run: |
+          port_sha=$(git -C signalwire-dotnet rev-parse HEAD)
+          psdk_sha=$(git -C porting-sdk rev-parse HEAD)
+          echo "cache_key=multi-os-ok-${port_sha}-${psdk_sha}" >> "$GITHUB_OUTPUT"
+      - name: Probe last-green cache (lookup-only)
+        id: probe
+        uses: actions/cache/restore@v6
+        with:
+          path: .multi-os-ok
+          key: ${{ steps.fp.outputs.cache_key }}
+          lookup-only: true
+      - name: Decide whether to run
+        id: check
+        run: |
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif [ "${{ steps.probe.outputs.cache-hit }}" = "true" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Inputs unchanged since last green multi-OS run — skipping."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  multi-os:
+    needs: guard
+    if: needs.guard.outputs.changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout signalwire-dotnet
+        uses: actions/checkout@v7
+        with:
+          path: signalwire-dotnet
+      - name: Checkout porting-sdk (mock harnesses + package_smoke.py)
+        uses: actions/checkout@v7
+        with:
+          repository: signalwire/porting-sdk
+          path: porting-sdk
+          token: ${{ secrets.PORTING_SDK_TOKEN }}
+      - name: Set up .NET SDKs (net8.0 / net9.0 / net10.0)
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+      - name: Set up Python (mock harnesses + package_smoke.py)
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - name: Install Python test harnesses (mock_relay + mock_signalwire)
+        run: |
+          pip install -e porting-sdk/test_harness/mock_relay
+          pip install -e porting-sdk/test_harness/mock_signalwire
+
+      # TEST (OS-sensitive suite #1): the canonical per-TFM serialized runner.
+      # bash is available on both runners (macOS: system bash; Windows: Git Bash).
+      # D3 strict REST mode rides here exactly as in run-ci.sh.
+      - name: TEST (scripts/run-tests.sh, per-TFM serialized)
+        working-directory: signalwire-dotnet
+        shell: bash
+        env:
+          MOCK_SIGNALWIRE_STRICT: "1"
+        run: bash scripts/run-tests.sh
+
+      # PACKAGE-SMOKE (OS-sensitive suite #2): dotnet pack + consumer build from a
+      # local nupkg source feed — catches OS-gated packaging breakage.
+      - name: PACKAGE-SMOKE (package_smoke.py)
+        working-directory: signalwire-dotnet
+        shell: bash
+        run: python ../porting-sdk/scripts/package_smoke.py --port dotnet --repo .
+
+  save:
+    needs: [guard, multi-os]
+    if: needs.guard.outputs.changed == 'true' && needs.multi-os.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark this input pair green (save cache key)
+        run: |
+          mkdir -p .cache && date > .multi-os-ok
+      - name: Save last-green cache
+        uses: actions/cache/save@v6
+        with:
+          path: .multi-os-ok
+          key: ${{ needs.guard.outputs.cache_key }}
