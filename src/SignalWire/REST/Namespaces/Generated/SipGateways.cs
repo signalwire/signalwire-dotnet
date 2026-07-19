@@ -29,6 +29,6 @@ public class SipGateways : SignalWire.REST.CrudWithAddresses
         string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
     {
-        return Client.PatchAsync(Path(id), data, cancellationToken);
+        return Client.PatchAsync(Path(id), data, cancellationToken: cancellationToken);
     }
 }

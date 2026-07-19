@@ -44,7 +44,7 @@ public class RegistryBrands
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken);
+        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public class RegistryBrands
     /// <param name="body">JSON request body.</param>
     public Task<Dictionary<string, object?>> CreateAsync(Dictionary<string, object?> body, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync(BasePath, body, cancellationToken);
+        return Client.PostAsync(BasePath, body, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -62,7 +62,7 @@ public class RegistryBrands
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -71,7 +71,7 @@ public class RegistryBrands
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListCampaignsAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "campaigns"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id, "campaigns"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -80,6 +80,6 @@ public class RegistryBrands
     /// <param name="body">JSON request body.</param>
     public Task<Dictionary<string, object?>> CreateCampaignAsync(string id, Dictionary<string, object?> body, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync(Path(id, "campaigns"), body, cancellationToken);
+        return Client.PostAsync(Path(id, "campaigns"), body, cancellationToken: cancellationToken);
     }
 }

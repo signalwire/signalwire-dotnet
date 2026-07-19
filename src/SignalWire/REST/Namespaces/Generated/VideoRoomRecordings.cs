@@ -44,7 +44,7 @@ public class VideoRoomRecordings
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken);
+        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public class VideoRoomRecordings
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class VideoRoomRecordings
     /// </summary>
     public Task<Dictionary<string, object?>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(id), cancellationToken);
+        return Client.DeleteAsync(Path(id), cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -70,6 +70,6 @@ public class VideoRoomRecordings
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListEventsAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "events"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id, "events"), queryParams, cancellationToken: cancellationToken);
     }
 }

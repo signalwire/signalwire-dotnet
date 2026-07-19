@@ -43,6 +43,6 @@ public class RegistryNumbers
     /// </summary>
     public Task<Dictionary<string, object?>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(id), cancellationToken);
+        return Client.DeleteAsync(Path(id), cancellationToken: cancellationToken);
     }
 }

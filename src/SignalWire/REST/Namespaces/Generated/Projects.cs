@@ -29,7 +29,7 @@ public class Projects : SignalWire.REST.CrudResource
         string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
     {
-        return Client.PatchAsync(Path(id), data, cancellationToken);
+        return Client.PatchAsync(Path(id), data, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -37,6 +37,6 @@ public class Projects : SignalWire.REST.CrudResource
     /// </summary>
     public Task<Dictionary<string, object?>> RotateSigningKeyAsync(string id, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync(Path(id, "signing-key", "rotate"), null, cancellationToken);
+        return Client.PostAsync(Path(id, "signing-key", "rotate"), null, cancellationToken: cancellationToken);
     }
 }

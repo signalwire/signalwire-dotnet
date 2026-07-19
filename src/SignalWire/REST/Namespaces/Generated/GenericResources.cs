@@ -44,7 +44,7 @@ public class GenericResources
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken);
+        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public class GenericResources
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class GenericResources
     /// </summary>
     public Task<Dictionary<string, object?>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(id), cancellationToken);
+        return Client.DeleteAsync(Path(id), cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -70,7 +70,7 @@ public class GenericResources
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "addresses"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id, "addresses"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -91,7 +91,7 @@ public class GenericResources
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "phone_routes"), _reqBody, cancellationToken);
+        return Client.PostAsync(Path(id, "phone_routes"), _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -110,6 +110,6 @@ public class GenericResources
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "domain_applications"), _reqBody, cancellationToken);
+        return Client.PostAsync(Path(id, "domain_applications"), _reqBody, cancellationToken: cancellationToken);
     }
 }

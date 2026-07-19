@@ -30,7 +30,7 @@ public class CrudResource
         Dictionary<string, string>? queryParams = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken);
+        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public class CrudResource
         Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync(BasePath, data, cancellationToken);
+        return Client.PostAsync(BasePath, data, cancellationToken: cancellationToken);
     }
 
     /// <summary>Retrieve a single resource by ID (GET basePath/{id}).</summary>
@@ -75,13 +75,13 @@ public class CrudResource
         string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
     {
-        return Client.PutAsync(Path(id), data, cancellationToken);
+        return Client.PutAsync(Path(id), data, cancellationToken: cancellationToken);
     }
 
     /// <summary>Delete a resource by ID (DELETE basePath/{id}).</summary>
     public virtual Task<Dictionary<string, object?>> DeleteAsync(
         string id, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(id), cancellationToken);
+        return Client.DeleteAsync(Path(id), cancellationToken: cancellationToken);
     }
 }

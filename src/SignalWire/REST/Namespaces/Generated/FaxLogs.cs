@@ -43,7 +43,7 @@ public class FaxLogs
         Dictionary<string, string>? queryParams = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken);
+        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>Retrieve a single resource by id (GET BasePath/{id}).</summary>

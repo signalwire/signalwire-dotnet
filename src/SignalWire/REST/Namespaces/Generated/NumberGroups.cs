@@ -30,7 +30,7 @@ public class NumberGroups : SignalWire.REST.CrudResource
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListMembershipsAsync(string groupId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(groupId, "number_group_memberships"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(groupId, "number_group_memberships"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ public class NumberGroups : SignalWire.REST.CrudResource
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(groupId, "number_group_memberships"), _reqBody, cancellationToken);
+        return Client.PostAsync(Path(groupId, "number_group_memberships"), _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ public class NumberGroups : SignalWire.REST.CrudResource
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> GetMembershipAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/relay/rest/number_group_memberships/" + id, queryParams, cancellationToken);
+        return Client.GetAsync("/api/relay/rest/number_group_memberships/" + id, queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -66,6 +66,6 @@ public class NumberGroups : SignalWire.REST.CrudResource
     /// </summary>
     public Task<Dictionary<string, object?>> DeleteMembershipAsync(string id, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync("/api/relay/rest/number_group_memberships/" + id, cancellationToken);
+        return Client.DeleteAsync("/api/relay/rest/number_group_memberships/" + id, cancellationToken: cancellationToken);
     }
 }

@@ -17,6 +17,12 @@ namespace SignalWire.REST;
 /// reachable directly off the one authenticated transport (SESSION_CHANGESET
 /// item A/B). The hand-written per-resource classes were deleted; the generated
 /// tree is now the sole REST surface.
+///
+/// <para>An optional <see cref="RequestOptions"/> supplied here is the
+/// CLIENT-DEFAULT request-options envelope (plan 4.2) — timeout, opt-in
+/// idempotency-aware retries, and cooperative cancellation applied to every
+/// request. A per-request <c>requestOptions</c> on any verb shallow-overrides
+/// it.</para>
 /// </summary>
 public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
 {
@@ -30,14 +36,20 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
     /// <param name="projectId">Project ID (falls back to SIGNALWIRE_PROJECT_ID env var).</param>
     /// <param name="token">API token (falls back to SIGNALWIRE_API_TOKEN env var).</param>
     /// <param name="space">Space host (falls back to SIGNALWIRE_SPACE env var).</param>
-    public RestClient(string projectId = "", string token = "", string space = "")
+    /// <param name="requestOptions">Client-default request-options envelope
+    /// (timeout / retries / cancellation) applied to every request; a per-request
+    /// override shallow-merges over it. <c>null</c> = the built-in defaults
+    /// (30s timeout, no retries).</param>
+    public RestClient(string projectId = "", string token = "", string space = "",
+        RequestOptions? requestOptions = null)
         : base(BuildHttp(
             !string.IsNullOrEmpty(projectId) ? projectId
                 : Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID") ?? "",
             !string.IsNullOrEmpty(token) ? token
                 : Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN") ?? "",
             !string.IsNullOrEmpty(space) ? space
-                : Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? ""))
+                : Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "",
+            requestOptions))
     {
         _projectId = !string.IsNullOrEmpty(projectId) ? projectId
             : Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID") ?? "";
@@ -57,7 +69,8 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
     /// Runs before the base constructor (C# argument evaluation order), so it is
     /// the single point that enforces the required-credential contract.
     /// </summary>
-    private static HttpClient BuildHttp(string projectId, string token, string space)
+    private static HttpClient BuildHttp(string projectId, string token, string space,
+        RequestOptions? requestOptions)
     {
         if (string.IsNullOrEmpty(projectId))
             throw new ArgumentException("projectId is required (pass explicitly or set SIGNALWIRE_PROJECT_ID)");
@@ -66,7 +79,7 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
         if (string.IsNullOrEmpty(space))
             throw new ArgumentException("space is required (pass explicitly or set SIGNALWIRE_SPACE)");
 
-        return new HttpClient(projectId, token, $"https://{space}");
+        return new HttpClient(projectId, token, $"https://{space}", null, requestOptions);
     }
 
     // ------------------------------------------------------------------

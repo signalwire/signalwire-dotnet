@@ -109,7 +109,7 @@ public class FabricTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/subscribers/tokens", _reqBody, cancellationToken);
+        return Client.PostAsync("/api/fabric/subscribers/tokens", _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -128,7 +128,7 @@ public class FabricTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/subscribers/tokens/refresh", _reqBody, cancellationToken);
+        return Client.PostAsync("/api/fabric/subscribers/tokens/refresh", _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -152,7 +152,7 @@ public class FabricTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/subscriber/invites", _reqBody, cancellationToken);
+        return Client.PostAsync("/api/fabric/subscriber/invites", _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -176,7 +176,7 @@ public class FabricTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/guests/tokens", _reqBody, cancellationToken);
+        return Client.PostAsync("/api/fabric/guests/tokens", _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -195,6 +195,6 @@ public class FabricTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/embeds/tokens", _reqBody, cancellationToken);
+        return Client.PostAsync("/api/fabric/embeds/tokens", _reqBody, cancellationToken: cancellationToken);
     }
 }

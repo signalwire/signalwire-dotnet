@@ -84,7 +84,7 @@ public class Mfa
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path("sms"), _reqBody, cancellationToken);
+        return Client.PostAsync(Path("sms"), _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -133,7 +133,7 @@ public class Mfa
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path("call"), _reqBody, cancellationToken);
+        return Client.PostAsync(Path("call"), _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -152,6 +152,6 @@ public class Mfa
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(requestId, "verify"), _reqBody, cancellationToken);
+        return Client.PostAsync(Path(requestId, "verify"), _reqBody, cancellationToken: cancellationToken);
     }
 }

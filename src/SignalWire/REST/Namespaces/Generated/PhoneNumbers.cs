@@ -30,7 +30,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> SearchAsync(Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path("search"), queryParams, cancellationToken);
+        return Client.GetAsync(Path("search"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>

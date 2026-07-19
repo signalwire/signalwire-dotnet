@@ -30,6 +30,6 @@ public class ConferenceRooms : SignalWire.REST.CrudWithAddresses
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/fabric/resources/conference_room/" + id + "/addresses", queryParams, cancellationToken);
+        return Client.GetAsync("/api/fabric/resources/conference_room/" + id + "/addresses", queryParams, cancellationToken: cancellationToken);
     }
 }

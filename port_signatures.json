@@ -21935,6 +21935,11 @@
                   "name": "base_url",
                   "type": "string",
                   "required": true
+                },
+                {
+                  "name": "http_client",
+                  "type": "optional<any>",
+                  "required": true
                 }
               ],
               "returns": "void"
@@ -21949,6 +21954,12 @@
                   "name": "path",
                   "type": "string",
                   "required": true
+                },
+                {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": false,
+                  "default": null
                 },
                 {
                   "name": "cancellation_token",
@@ -21973,6 +21984,12 @@
                 {
                   "name": "query_params",
                   "type": "optional<dict<string,string>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
                   "required": false,
                   "default": null
                 },
@@ -22003,6 +22020,12 @@
                   "default": null
                 },
                 {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": false,
+                  "default": null
+                },
+                {
                   "name": "cancellation_token",
                   "type": "any",
                   "required": false,
@@ -22029,6 +22052,12 @@
                   "default": null
                 },
                 {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": false,
+                  "default": null
+                },
+                {
                   "name": "cancellation_token",
                   "type": "any",
                   "required": false,
@@ -22051,6 +22080,12 @@
                 {
                   "name": "data",
                   "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
                   "required": false,
                   "default": null
                 },
@@ -22295,6 +22330,113 @@
         }
       }
     },
+    "signalwire.rest._request_options": {
+      "classes": {
+        "RequestOptions": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "timeout",
+                  "type": "optional<float>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "retries",
+                  "type": "optional<int>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "retry_on_status",
+                  "type": "optional<list<int>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "retry_backoff",
+                  "type": "optional<float>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "abort_signal",
+                  "type": "optional<class:signalwire.rest._request_options._AbortSignal>",
+                  "required": false,
+                  "default": null
+                }
+              ],
+              "returns": "void"
+            },
+            "abort_signal": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "merge": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "over",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": true
+                }
+              ],
+              "returns": "class:signalwire.rest._request_options.RequestOptions"
+            }
+          }
+        }
+      },
+      "functions": {
+        "resolve": {
+          "params": [
+            {
+              "name": "client_default",
+              "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+              "required": true
+            },
+            {
+              "name": "per_request",
+              "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+              "required": true
+            }
+          ],
+          "returns": "class:signalwire.rest._request_options._EffectiveOptions"
+        },
+        "status_is_retryable": {
+          "params": [
+            {
+              "name": "method",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "status",
+              "type": "int",
+              "required": true
+            },
+            {
+              "name": "opts",
+              "type": "class:signalwire.rest._request_options._EffectiveOptions",
+              "required": true
+            }
+          ],
+          "returns": "bool"
+        }
+      }
+    },
     "signalwire.rest.client": {
       "classes": {
         "RestClient": {
@@ -22322,6 +22464,12 @@
                   "type": "string",
                   "required": false,
                   "default": ""
+                },
+                {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "void"

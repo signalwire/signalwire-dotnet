@@ -30,7 +30,7 @@ public class Queues : SignalWire.REST.CrudResource
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListMembersAsync(string queueId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(queueId, "members"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(queueId, "members"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ public class Queues : SignalWire.REST.CrudResource
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> GetNextMemberAsync(string queueId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(queueId, "members", "next"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(queueId, "members", "next"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -48,6 +48,6 @@ public class Queues : SignalWire.REST.CrudResource
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> GetMemberAsync(string queueId, string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(queueId, "members", id), queryParams, cancellationToken);
+        return Client.GetAsync(Path(queueId, "members", id), queryParams, cancellationToken: cancellationToken);
     }
 }

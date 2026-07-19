@@ -61,7 +61,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         // so the call aborts with OperationCanceledException — NOT a wrapped
         // SignalWireRestError.
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => http.GetAsync("/api/relay/rest/phone_numbers", null, cts.Token));
+            () => http.GetAsync("/api/relay/rest/phone_numbers", null, cancellationToken: cts.Token));
 
         // Behavioural proof it never hit the wire: the mock journal is empty.
         var entries = _fixture.Harness.Journal.All();
@@ -80,7 +80,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => http.PostAsync("/api/relay/rest/phone_numbers",
                 new Dictionary<string, object?> { ["number"] = "+15551230000" },
-                cts.Token));
+                cancellationToken: cts.Token));
 
         Assert.Empty(_fixture.Harness.Journal.All());
     }
@@ -177,7 +177,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
             using var cts = new CancellationTokenSource();
             var sw = System.Diagnostics.Stopwatch.StartNew();
 
-            var call = http.GetAsync("/never/responds", null, cts.Token);
+            var call = http.GetAsync("/never/responds", null, cancellationToken: cts.Token);
 
             // Cancel shortly after the request is in flight. The default client
             // timeout is 30s; a working token must abort FAR sooner.
