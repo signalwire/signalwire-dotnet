@@ -361,6 +361,27 @@ public static class MockTest
             }
         }
 
+        /// <summary>
+        /// Stage a RAW scenario override — the full payload dictionary (status,
+        /// response, optional <c>headers</c> / <c>delay_ms</c>) posted verbatim to
+        /// the mock's scenario store. Use this when a case needs a header
+        /// (Retry-After) or a server-side delay that the typed
+        /// <see cref="Set(string,int,Dictionary{string,object?})"/> overload
+        /// doesn't carry. Scoped to this harness's auth header.
+        /// </summary>
+        public void SetRaw(string endpointId, Dictionary<string, object?> payload)
+        {
+            var json = JsonSerializer.Serialize(payload);
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + endpointId + Q(), content)
+                .GetAwaiter().GetResult();
+            if (!resp.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException(
+                    $"MockTest: POST /__mock__/scenarios/{endpointId} returned {(int)resp.StatusCode}");
+            }
+        }
+
         /// <summary>Reset this client's armed scenarios (scoped by auth header)
         /// or all of them when unscoped.</summary>
         public void Reset()

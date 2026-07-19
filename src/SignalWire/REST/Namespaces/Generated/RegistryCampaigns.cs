@@ -44,7 +44,7 @@ public class RegistryCampaigns
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ public class RegistryCampaigns
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), _reqBody, cancellationToken);
+        return Client.PutAsync(Path(id), _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -75,7 +75,7 @@ public class RegistryCampaigns
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListNumbersAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "numbers"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id, "numbers"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -84,7 +84,7 @@ public class RegistryCampaigns
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListOrdersAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "orders"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id, "orders"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -111,6 +111,6 @@ public class RegistryCampaigns
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "orders"), _reqBody, cancellationToken);
+        return Client.PostAsync(Path(id, "orders"), _reqBody, cancellationToken: cancellationToken);
     }
 }

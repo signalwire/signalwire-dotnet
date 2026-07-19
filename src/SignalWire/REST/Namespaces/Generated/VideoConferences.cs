@@ -30,7 +30,7 @@ public class VideoConferences : SignalWire.REST.CrudResource
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListConferenceTokensAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "conference_tokens"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id, "conference_tokens"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ public class VideoConferences : SignalWire.REST.CrudResource
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListStreamsAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "streams"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(id, "streams"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -58,6 +58,6 @@ public class VideoConferences : SignalWire.REST.CrudResource
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "streams"), _reqBody, cancellationToken);
+        return Client.PostAsync(Path(id, "streams"), _reqBody, cancellationToken: cancellationToken);
     }
 }

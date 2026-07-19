@@ -1021,7 +1021,7 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
             doc = ["    /// <summary>",
                    f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path}).",
                    "    /// </summary>"] + field_doc
-            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, cancellationToken: cancellationToken);"
         else:
             # §5.2 union body → a single ``Dictionary<string,object?> body`` param.
             body_id = _dedupe_param("body", used)
@@ -1030,11 +1030,11 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
                 {"name": "body", "kind": "positional", "type": "dict<string,any>", "required": True},
             ])
             doc.append(f"    /// <param name=\"{body_id}\">JSON request body.</param>")
-            call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, cancellationToken: cancellationToken);"
     elif write_verb:
         params = id_params
         _register_sidecar(cls, name, list(id_records))
-        call_line = f"        return Client.{verb_fn}({path_expr}, null, cancellationToken);"
+        call_line = f"        return Client.{verb_fn}({path_expr}, null, cancellationToken: cancellationToken);"
     elif verb == "get":
         # §5.3 GET query door — a trailing query-params map.
         qp_id = _dedupe_param("queryParams", used)
@@ -1043,11 +1043,11 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
             {"name": "params", "kind": "var_keyword", "type": "any", "required": False, "default": {}},
         ])
         doc.append(f"    /// <param name=\"{qp_id}\">Query-string parameters.</param>")
-        call_line = f"        return Client.GetAsync({path_expr}, {qp_id}, cancellationToken);"
+        call_line = f"        return Client.GetAsync({path_expr}, {qp_id}, cancellationToken: cancellationToken);"
     else:  # delete
         params = id_params
         _register_sidecar(cls, name, list(id_records))
-        call_line = f"        return Client.DeleteAsync({path_expr}, cancellationToken);"
+        call_line = f"        return Client.DeleteAsync({path_expr}, cancellationToken: cancellationToken);"
 
     params = params + ["CancellationToken cancellationToken = default"]
     sig = ", ".join(params)
@@ -1260,7 +1260,7 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
     lines.append("        {")
     lines.append("            body[\"id\"] = callId;")
     lines.append("        }")
-    lines.append("        return _http.PostAsync(BasePathConst, body, cancellationToken);")
+    lines.append("        return _http.PostAsync(BasePathConst, body, cancellationToken: cancellationToken);")
     lines.append("    }")
     mapping = (spec.schemas.get(request).get("discriminator") or {}).get("mapping") or {}
     for cmd in commands:
@@ -1374,7 +1374,7 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
         lines.append("        Dictionary<string, string>? queryParams = null,")
         lines.append("        CancellationToken cancellationToken = default)")
         lines.append("    {")
-        lines.append("        return Client.GetAsync(BasePath, queryParams, cancellationToken);")
+        lines.append("        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);")
         lines.append("    }")
         lines.append("")
         lines.append("    /// <summary>Retrieve a single resource by id (GET BasePath/{id}).</summary>")
@@ -1467,7 +1467,7 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
         lines.append("        string id, Dictionary<string, object?> data,")
         lines.append("        CancellationToken cancellationToken = default)")
         lines.append("    {")
-        lines.append("        return Client.PatchAsync(Path(id), data, cancellationToken);")
+        lines.append("        return Client.PatchAsync(Path(id), data, cancellationToken: cancellationToken);")
         lines.append("    }")
 
     _emit_declared_and_sets(spec, anchor, markup, base, lines)

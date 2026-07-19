@@ -44,6 +44,6 @@ public class Lookup
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> PhoneNumberAsync(string e164, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path("phone_number", e164), queryParams, cancellationToken);
+        return Client.GetAsync(Path("phone_number", e164), queryParams, cancellationToken: cancellationToken);
     }
 }

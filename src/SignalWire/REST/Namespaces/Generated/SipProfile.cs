@@ -44,7 +44,7 @@ public class SipProfile
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> GetAsync(Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken);
+        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -86,6 +86,6 @@ public class SipProfile
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(BasePath, _reqBody, cancellationToken);
+        return Client.PutAsync(BasePath, _reqBody, cancellationToken: cancellationToken);
     }
 }

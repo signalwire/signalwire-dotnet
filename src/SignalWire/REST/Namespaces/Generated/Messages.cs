@@ -81,7 +81,7 @@ public class Messages
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, _reqBody, cancellationToken);
+        return Client.PostAsync(BasePath, _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -100,6 +100,6 @@ public class Messages
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PatchAsync(Path(messageId), _reqBody, cancellationToken);
+        return Client.PatchAsync(Path(messageId), _reqBody, cancellationToken: cancellationToken);
     }
 }

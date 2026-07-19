@@ -76,6 +76,10 @@ class TypeTranslationError(RuntimeError):
 # reference-only members (e.g. WebService.app / WebService.security) still surface
 # as missing-port and are documented in PORT_SIGNATURE_OMISSIONS.md.
 _SIG_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
+    # RequestOptions (plan 4.2): the SIGNATURE oracle records __init__ +
+    # abort_signal + merge only; drop the .NET record's per-field accessors.
+    ("signalwire.rest._request_options", "RequestOptions"):
+        {"__init__", "abort_signal", "merge"},
     # No __call__ (its signature reference is null) and no data-property accessors.
     ("signalwire.core.swaig_function", "SWAIGFunction"): {
         "__init__", "execute", "to_swaig", "validate_args",
@@ -694,6 +698,10 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         name = type_entry.get("name", "")
         if name.startswith("<") or "AnonymousType" in name:
             continue
+        # EffectiveRequestOptions -> the private _EffectiveOptions type ref
+        # only (plan 4.2); never emitted as a class (oracle has no public class).
+        if name == "EffectiveRequestOptions":
+            continue
         kind = type_entry.get("kind", "class")
         if kind == "enum":
             continue  # not part of the signature inventory in v1
@@ -934,8 +942,23 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         # signature so param-count compares equal. Mirrors enumerate_surface's
         # SURFACE_METHOD_INJECTIONS (which adds the NAME); on the signature side
         # the capability is real, only the concrete signature must be supplied.
-        for inj in SURFACE_METHOD_INJECTIONS.get((target_module, target_class), []):
-            if inj not in methods_out:
+        # RequestOptions.__init__ (plan 4.2): the .NET record's implicit ctor
+        # reflects as a bare (self) placeholder, but the reference dataclass
+        # __init__ carries the 5 optional None-inherit fields. Force-replace the
+        # placeholder with the reference-shaped __init__ so the record-vs-dataclass
+        # construction surface compares equal (the fields ARE the ctor params).
+        # RequestOptions.__init__ is a SIGNATURE-only injection: its SURFACE stays
+        # ``merge`` only (SURFACE_METHOD_INJECTIONS deliberately carries NO entry
+        # for it), so drive the overwrite from a signature-local set unioned with
+        # the surface-injection names — never gated by the (empty) surface entry.
+        _sig_inject_overwrite = {
+            ("signalwire.rest._request_options", "RequestOptions"): {"__init__"},
+        }
+        _overwrite = _sig_inject_overwrite.get((target_module, target_class), set())
+        _inject_names = list(SURFACE_METHOD_INJECTIONS.get((target_module, target_class), []))
+        _inject_names += [n for n in _overwrite if n not in _inject_names]
+        for inj in _inject_names:
+            if inj not in methods_out or inj in _overwrite:
                 ref_sig = _reference_sig(target_module, target_class, inj)
                 if ref_sig is not None:
                     methods_out[inj] = ref_sig

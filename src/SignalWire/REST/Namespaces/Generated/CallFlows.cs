@@ -30,7 +30,7 @@ public class CallFlows : SignalWire.REST.CrudWithAddresses
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/addresses", queryParams, cancellationToken);
+        return Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/addresses", queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ public class CallFlows : SignalWire.REST.CrudWithAddresses
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListVersionsAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/versions", queryParams, cancellationToken);
+        return Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/versions", queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -48,6 +48,6 @@ public class CallFlows : SignalWire.REST.CrudWithAddresses
     /// <param name="body">JSON request body.</param>
     public Task<Dictionary<string, object?>> DeployVersionAsync(string id, Dictionary<string, object?> body, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync("/api/fabric/resources/call_flow/" + id + "/versions", body, cancellationToken);
+        return Client.PostAsync("/api/fabric/resources/call_flow/" + id + "/versions", body, cancellationToken: cancellationToken);
     }
 }

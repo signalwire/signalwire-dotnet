@@ -29,7 +29,7 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
         string id, Dictionary<string, object?> data,
         CancellationToken cancellationToken = default)
     {
-        return Client.PatchAsync(Path(id), data, cancellationToken);
+        return Client.PatchAsync(Path(id), data, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path("search"), _reqBody, cancellationToken);
+        return Client.PostAsync(Path("search"), _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListChunksAsync(string documentId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(documentId, "chunks"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(documentId, "chunks"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -101,7 +101,7 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> GetChunkAsync(string documentId, string chunkId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(documentId, "chunks", chunkId), queryParams, cancellationToken);
+        return Client.GetAsync(Path(documentId, "chunks", chunkId), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -109,6 +109,6 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     /// </summary>
     public Task<Dictionary<string, object?>> DeleteChunkAsync(string documentId, string chunkId, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(documentId, "chunks", chunkId), cancellationToken);
+        return Client.DeleteAsync(Path(documentId, "chunks", chunkId), cancellationToken: cancellationToken);
     }
 }

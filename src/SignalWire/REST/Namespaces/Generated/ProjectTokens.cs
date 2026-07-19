@@ -61,7 +61,7 @@ public class ProjectTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, _reqBody, cancellationToken);
+        return Client.PostAsync(BasePath, _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -88,7 +88,7 @@ public class ProjectTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PatchAsync(Path(tokenId), _reqBody, cancellationToken);
+        return Client.PatchAsync(Path(tokenId), _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -96,6 +96,6 @@ public class ProjectTokens
     /// </summary>
     public Task<Dictionary<string, object?>> DeleteAsync(string tokenId, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(tokenId), cancellationToken);
+        return Client.DeleteAsync(Path(tokenId), cancellationToken: cancellationToken);
     }
 }

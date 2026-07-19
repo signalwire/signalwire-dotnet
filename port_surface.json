@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 4d65fa6b0a5b86a1405f7e5c3322349f2dc44906",
+  "generated_from": "signalwire-dotnet @ 225c05f64f7291205e5c4efc5889c1cd8007d319",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -1570,6 +1570,17 @@
         ]
       },
       "functions": []
+    },
+    "signalwire.rest._request_options": {
+      "classes": {
+        "RequestOptions": [
+          "merge"
+        ]
+      },
+      "functions": [
+        "resolve",
+        "status_is_retryable"
+      ]
     },
     "signalwire.rest.client": {
       "classes": {

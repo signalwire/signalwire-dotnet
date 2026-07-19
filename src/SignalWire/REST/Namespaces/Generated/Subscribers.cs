@@ -30,7 +30,7 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> ListSipEndpointsAsync(string subscriberId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(subscriberId, "sip_endpoints"), queryParams, cancellationToken);
+        return Client.GetAsync(Path(subscriberId, "sip_endpoints"), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -76,7 +76,7 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(subscriberId, "sip_endpoints"), _reqBody, cancellationToken);
+        return Client.PostAsync(Path(subscriberId, "sip_endpoints"), _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -85,7 +85,7 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
     /// <param name="queryParams">Query-string parameters.</param>
     public Task<Dictionary<string, object?>> GetSipEndpointAsync(string subscriberId, string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(subscriberId, "sip_endpoints", id), queryParams, cancellationToken);
+        return Client.GetAsync(Path(subscriberId, "sip_endpoints", id), queryParams, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -137,7 +137,7 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PatchAsync(Path(subscriberId, "sip_endpoints", id), _reqBody, cancellationToken);
+        return Client.PatchAsync(Path(subscriberId, "sip_endpoints", id), _reqBody, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -145,6 +145,6 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
     /// </summary>
     public Task<Dictionary<string, object?>> DeleteSipEndpointAsync(string subscriberId, string id, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(subscriberId, "sip_endpoints", id), cancellationToken);
+        return Client.DeleteAsync(Path(subscriberId, "sip_endpoints", id), cancellationToken: cancellationToken);
     }
 }

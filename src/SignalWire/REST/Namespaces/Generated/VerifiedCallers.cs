@@ -29,7 +29,7 @@ public class VerifiedCallers : SignalWire.REST.CrudResource
     /// </summary>
     public Task<Dictionary<string, object?>> RedialVerificationAsync(string id, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync(Path(id, "verification"), null, cancellationToken);
+        return Client.PostAsync(Path(id, "verification"), null, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -48,6 +48,6 @@ public class VerifiedCallers : SignalWire.REST.CrudResource
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id, "verification"), _reqBody, cancellationToken);
+        return Client.PutAsync(Path(id, "verification"), _reqBody, cancellationToken: cancellationToken);
     }
 }
