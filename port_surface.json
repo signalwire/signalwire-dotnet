@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ eacf29c4cc6111bd226b5eab54f9cb8173117ddc",
+  "generated_from": "signalwire-dotnet @ 225c05f64f7291205e5c4efc5889c1cd8007d319",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -1574,8 +1574,6 @@
     "signalwire.rest._request_options": {
       "classes": {
         "RequestOptions": [
-          "__init__",
-          "abort_signal",
           "merge"
         ]
       },

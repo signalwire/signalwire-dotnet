@@ -677,11 +677,12 @@ SURFACE_METHOD_INJECTIONS: dict[tuple[str, str], list[str]] = {
     ("signalwire.skills.play_background_file.skill", "PlayBackgroundFileSkill"): ["__init__"],
     ("signalwire.skills.spider.skill", "SpiderSkill"): ["__init__"],
     ("signalwire.skills.weather_api.skill", "WeatherApiSkill"): ["__init__"],
-    # RequestOptions (plan 4.2): the reference dataclass records __init__ (the
-    # 5 optional None-inherit fields) + the abort_signal accessor. .NET's
-    # immutable record exposes the same construction/read capability; inject the
-    # reference-shaped signatures so the record-vs-dataclass idiom compares equal.
-    ("signalwire.rest._request_options", "RequestOptions"): ["__init__", "abort_signal"],
+    # RequestOptions (plan 4.2): the reference's SURFACE lists ONLY merge() — the
+    # dataclass fields (timeout/retries/retry_on_status/retry_backoff/abort_signal)
+    # and __init__ are NOT surface symbols in Python (nor in go/ts/ruby/java). Do
+    # NOT inject __init__/abort_signal; .NET's record still HAS them, but the
+    # SURFACE projection matches the reference (fields reconcile in signatures, not
+    # surface). This keeps the fleet uniform.
 }
 
 # Static "helper" C# classes whose METHODS are the reference's module-level
@@ -1506,6 +1507,15 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     # (e.g. ``RestClient``) — the reference records these in functions[].
     if TOPLEVEL_FUNCTION_NAMES:
         merge_module_functions(modules, "signalwire", TOPLEVEL_FUNCTION_NAMES)
+
+    # RequestOptions (plan 4.2) surface == the reference's: ONLY merge(). .NET's
+    # record exposes abort_signal (and the other fields) as public properties, but
+    # Python's surface lists only merge() — the dataclass fields are not surface
+    # symbols (nor in go/ts/ruby/java). Reduce to the reference-canonical surface;
+    # the fields still reconcile at the signatures layer. Keeps the fleet uniform.
+    _ro = modules.get("signalwire.rest._request_options", {}).get("classes", {})
+    if "RequestOptions" in _ro:
+        _ro["RequestOptions"] = ["merge"]
 
     # Sort module dict deterministically
     sorted_modules = {k: modules[k] for k in sorted(modules.keys())}
