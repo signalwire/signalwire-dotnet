@@ -18,7 +18,7 @@ namespace SignalWire.REST;
 ///   default, then the built-in default.</item>
 /// </list>
 ///
-/// <para>The timeout + retry semantics are the oracle-pinned, wire-observable
+/// <para>The timeout + retry semantics are the reference-pinned, wire-observable
 /// contract (the mock sees N attempts and honours the backoff ordering). The
 /// <see cref="AbortSignal"/> fidelity is per-port idiom: .NET threads the native
 /// <see cref="System.Threading.CancellationToken"/> straight to the underlying
