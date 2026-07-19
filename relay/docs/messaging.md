@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 Client client = null!;
 var params_ = new Dictionary<string, object?>
 {
-    ["from"] = "+15559876543", ["to"] = "+15551234567", ["body"] = "hi",
+    ["from_number"] = "+15559876543", ["to_number"] = "+15551234567", ["body"] = "hi",
 };
 ```
 
@@ -24,9 +24,9 @@ var params_ = new Dictionary<string, object?>
 ```csharp
 var message = await client.SendMessageAsync(new Dictionary<string, object?>
 {
-    ["from"]    = "+15559876543",
-    ["to"]      = "+15551234567",
-    ["body"]    = "Hello from SignalWire!",
+    ["from_number"] = "+15559876543",
+    ["to_number"]   = "+15551234567",
+    ["body"]        = "Hello from SignalWire!",
     ["context"] = "default",
 });
 
@@ -38,11 +38,11 @@ Console.WriteLine($"Message sent: {message.MessageId}");
 ```csharp
 var message = await client.SendMessageAsync(new Dictionary<string, object?>
 {
-    ["from"]    = "+15559876543",
-    ["to"]      = "+15551234567",
-    ["body"]    = "Check out this photo!",
-    ["media"]   = new List<string> { "https://example.com/photo.jpg" },
-    ["context"] = "default",
+    ["from_number"] = "+15559876543",
+    ["to_number"]   = "+15551234567",
+    ["body"]        = "Check out this photo!",
+    ["media"]       = new List<string> { "https://example.com/photo.jpg" },
+    ["context"]     = "default",
 });
 ```
 
@@ -65,10 +65,10 @@ client.OnMessage(async (message, evt) =>
     // Auto-reply
     await client.SendMessageAsync(new Dictionary<string, object?>
     {
-        ["from"]    = to,
-        ["to"]      = from,
-        ["body"]    = "Thanks for your message! We'll get back to you soon.",
-        ["context"] = context,
+        ["from_number"] = to,
+        ["to_number"]   = from,
+        ["body"]        = "Thanks for your message! We'll get back to you soon.",
+        ["context"]     = context,
     });
 });
 ```

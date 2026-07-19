@@ -63,14 +63,22 @@ await action.WaitAsync();
 
 ## Record
 
+The wire payload nests the recording options in a `record.audio` envelope:
+
 ```csharp
 var action = call.Record(new Dictionary<string, object?>
 {
-    ["beep"]        = true,
-    ["format"]      = "wav",
-    ["stereo"]      = false,
-    ["direction"]   = "both",
-    ["end_silence"] = 5,
+    ["record"] = new Dictionary<string, object?>
+    {
+        ["audio"] = new Dictionary<string, object?>
+        {
+            ["beep"]               = true,
+            ["format"]             = "wav",
+            ["stereo"]             = false,
+            ["direction"]          = "both",
+            ["end_silence_timeout"] = 5,
+        },
+    },
 });
 
 await action.WaitAsync();
@@ -140,16 +148,21 @@ await call.ConnectAsync(new Dictionary<string, object?>
 
 ## Detect
 
-Run detection on the call (machine, fax, digit).
+Run detection on the call (machine, fax, digit). The wire payload nests the
+`{type, params}` object in a `detect` envelope (the typed conveniences
+`DetectDigit` / `DetectAnsweringMachine` / `DetectFax` build it for you):
 
 ```csharp
 var action = call.Detect(new Dictionary<string, object?>
 {
-    ["type"]   = "machine",
-    ["params"] = new Dictionary<string, object>
+    ["detect"] = new Dictionary<string, object?>
     {
-        ["initial_timeout"]    = 4.0,
-        ["end_silence_timeout"] = 2.0,
+        ["type"]   = "machine",
+        ["params"] = new Dictionary<string, object>
+        {
+            ["initial_timeout"]     = 4.0,
+            ["end_silence_timeout"] = 2.0,
+        },
     },
 });
 
@@ -158,20 +171,28 @@ var result = await action.WaitAsync();
 
 ## Tap
 
-Start a media tap (real-time audio stream).
+Start a media tap (real-time audio stream). The wire payload takes TWO
+envelopes: `tap` (what to tap) and `device` (where to send it):
 
 ```csharp
 var action = call.Tap(new Dictionary<string, object?>
 {
-    ["type"]   = "audio",
-    ["params"] = new Dictionary<string, object>
+    ["tap"] = new Dictionary<string, object?>
     {
-        ["direction"] = "both",
-        ["codec"]     = "PCMU",
-        ["rtp"]       = new Dictionary<string, object>
+        ["type"]   = "audio",
+        ["params"] = new Dictionary<string, object>
         {
-            ["addr"] = "192.168.1.100",
-            ["port"] = 9000,
+            ["direction"] = "both",
+        },
+    },
+    ["device"] = new Dictionary<string, object?>
+    {
+        ["type"]   = "rtp",
+        ["params"] = new Dictionary<string, object>
+        {
+            ["addr"]  = "192.168.1.100",
+            ["port"]  = 9000,
+            ["codec"] = "PCMU",
         },
     },
 });

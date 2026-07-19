@@ -148,10 +148,10 @@ Send an outbound SMS/MMS.
 ```csharp
 var message = await client.SendMessageAsync(new Dictionary<string, object?>
 {
-    ["from"]    = "+15559876543",
-    ["to"]      = "+15551234567",
-    ["body"]    = "Hello!",
-    ["context"] = "default",
+    ["from_number"] = "+15559876543",
+    ["to_number"]   = "+15551234567",
+    ["body"]        = "Hello!",
+    ["context"]     = "default",
 });
 ```
 
