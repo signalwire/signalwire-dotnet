@@ -69,6 +69,8 @@ signalwire.signal_wire_options.SignalWireOptions.project_id: .NET DI options dat
 signalwire.signal_wire_options.SignalWireOptions.token: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
 signalwire.signal_wire_options.SignalWireOptions.space: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
 signalwire.signal_wire_options.SignalWireOptions.request_options: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
+signalwire.signal_wire_service_collection_extensions.SignalWireServiceCollectionExtensions: .NET IServiceCollection extension host for AddSignalWire() (6.2 DI idiom, BCL-conventional Microsoft.Extensions.DependencyInjection namespace); Python has no host-framework DI layer
+signalwire.signal_wire_service_collection_extensions.SignalWireServiceCollectionExtensions.add_signal_wire: .NET AddSignalWire() DI registration (6.2) — RestClient singleton with IHttpClientFactory-sourced transport; Python has no host-framework DI layer
 signalwire.agent_server.AgentServer.get_sip_username_mapping: Public helper added in .NET; Python equivalents are register_global_routing_callback / serve_static_files
 signalwire.agent_server.AgentServer.handle_request: Public dispatch entry point on AgentServer; Python uses Flask/FastAPI request objects directly
 signalwire.agent_server.AgentServer.host: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path

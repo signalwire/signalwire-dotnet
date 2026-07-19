@@ -8,7 +8,7 @@
 //   SIGNALWIRE_API_TOKEN
 //   SIGNALWIRE_SPACE
 //
-// Run recipe: see examples/README.md ("Running Examples").
+// Run recipe: see the examples README, "Running Examples" section.
 
 using SignalWire.REST;
 

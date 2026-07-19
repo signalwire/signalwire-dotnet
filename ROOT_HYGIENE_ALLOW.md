@@ -26,3 +26,4 @@ audit pipeline (which this repo cannot edit). Verified reader per file below.
 - ARTIFACT_DENY_ALLOW.md — the artifact_deny allowlist, required at root by porting-sdk artifact_deny.py (orchestrator, 2026-07-06)
 - ROOT_HYGIENE_ALLOW.md — this allowlist itself, required at root by porting-sdk root_hygiene.py (orchestrator, 2026-07-06)
 - WIRE_VIOLATIONS_ALLOW.md — STRICT-MOCKS signed-exception ledger read by porting-sdk assert_no_wire_violations.py / examples_run.py / snippet_run.py at repo root (mike@signalwire.com, 2026-07-18)
+- WIRED_MODES.md — WIRED-MODES gate manifest declaring the load-bearing run-ci env/mode lines, read by porting-sdk check_wired_modes.py at repo root (plan 1.6/D7, 2026-07-19)
