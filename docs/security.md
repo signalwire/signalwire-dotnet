@@ -54,8 +54,8 @@ already validates under the OS trust store is accepted unchanged, and a chain
 whose only defect is an untrusted root is re-validated against the supplied CA.
 Any other TLS defect (hostname mismatch, expired/unavailable cert) still fails —
 setting these does **not** disable verification. Unset → the OS trust store alone
-is used. These are the .NET analogue of Python's `session.verify = <ca_file>`
-(REST) and `ssl.create_default_context(cafile=<ca_file>)` (RELAY).
+is used. These are the .NET analogue of pointing Python's REST session at a
+`verify` CA bundle and building the RELAY SSL context from a `cafile`.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
