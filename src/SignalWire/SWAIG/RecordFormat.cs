@@ -1,7 +1,7 @@
 namespace SignalWire.SWAIG;
 
 /// <summary>
-/// Recording container format for <see cref="FunctionResult.RecordCall"/>, as a
+/// Recording container format for <see cref="FunctionResult.RecordCall(string, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>, as a
 /// typed, compile-time-checked closed set.
 /// </summary>
 /// <remarks>
@@ -9,7 +9,7 @@ namespace SignalWire.SWAIG;
 /// The Python reference validates this argument explicitly
 /// (<c>record_call(... format ...)</c> raises <c>ValueError</c> unless the value
 /// is <c>"wav"</c>, <c>"mp3"</c>, or <c>"mp4"</c>), so it is a genuine closed set rather than a
-/// free-form string. <see cref="FunctionResult.RecordCall(RecordFormat, RecordDirection, string, bool)"/>
+/// free-form string. <see cref="FunctionResult.RecordCall(string, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>
 /// accepts this enum OR a string: the enum gives editor autocompletion and turns
 /// a typo into a compile error, while the string overload also accepts
 /// the plain wire string (which is all the Python API takes).

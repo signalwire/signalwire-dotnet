@@ -185,6 +185,59 @@ public class RestClientTests : IDisposable
     }
 
     // ==================================================================
+    //  §6.6 error observability: Headers + RequestId
+    // ==================================================================
+
+    [Fact]
+    public void SignalWireRestError_RequestId_PrecedenceOrder()
+    {
+        // x-request-id > x-signalwire-request-id > request-id > x-amzn-requestid
+        // (mirrors Python rest/_base.py _REQUEST_ID_HEADERS).
+        var all = new Dictionary<string, string>
+        {
+            ["x-amzn-requestid"] = "amzn",
+            ["request-id"] = "plain",
+            ["x-signalwire-request-id"] = "sw",
+            ["x-request-id"] = "canonical",
+        };
+        Assert.Equal("canonical",
+            new SignalWireRestError("m", 500, "b", "u", "GET", all).RequestId);
+
+        all.Remove("x-request-id");
+        Assert.Equal("sw",
+            new SignalWireRestError("m", 500, "b", "u", "GET", all).RequestId);
+
+        all.Remove("x-signalwire-request-id");
+        Assert.Equal("plain",
+            new SignalWireRestError("m", 500, "b", "u", "GET", all).RequestId);
+
+        all.Remove("request-id");
+        Assert.Equal("amzn",
+            new SignalWireRestError("m", 500, "b", "u", "GET", all).RequestId);
+    }
+
+    [Fact]
+    public void SignalWireRestError_RequestId_CaseInsensitive_AndAppendedToMessage()
+    {
+        var err = new SignalWireRestError(
+            "GET /x returned 500", 500, "b", "u", "GET",
+            new Dictionary<string, string> { ["X-Request-Id"] = "req-9" });
+
+        Assert.Equal("req-9", err.RequestId);
+        Assert.Equal("GET /x returned 500 (request-id: req-9)", err.Message);
+    }
+
+    [Fact]
+    public void SignalWireRestError_NoHeaders_RequestIdNull_MessageUntouched()
+    {
+        var err = new SignalWireRestError("GET /x returned 500", 500, "b", "u", "GET");
+
+        Assert.Null(err.Headers);
+        Assert.Null(err.RequestId);
+        Assert.Equal("GET /x returned 500", err.Message);
+    }
+
+    // ==================================================================
     //  Transport error (plan 1.3b): SignalWireRestTransportError
     // ==================================================================
 

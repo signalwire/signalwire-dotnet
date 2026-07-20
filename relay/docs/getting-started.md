@@ -34,12 +34,12 @@ using System;
 using System.Collections.Generic;
 using SignalWire.Relay;
 
-var client = new Client(new Dictionary<string, string>
+var client = new Client(new ClientOptions
 {
-    ["project"]  = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")!,
-    ["token"]    = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")!,
-    ["host"]     = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "relay.signalwire.com",
-    ["contexts"] = "default",
+    Project  = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")!,
+    Token    = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")!,
+    Host     = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "relay.signalwire.com",
+    Contexts = new[] { "default" },
 });
 
 client.OnCall(async (call, evt) =>
@@ -69,14 +69,14 @@ await client.RunAsync();
 4. **Reconnect** -- Automatic with exponential backoff (1s to 30s cap)
 5. **Disconnect** -- `client.Disconnect()` gracefully closes the connection
 
-## Client Options
+## Client Options (`ClientOptions`)
 
-| Key | Required | Default | Description |
-|-----|----------|---------|-------------|
-| `project` | Yes | - | SignalWire project ID |
-| `token` | Yes | - | API token |
-| `host` | No | env var | Space hostname |
-| `contexts` | No | - | Comma-separated context names |
+| Property | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `Project` | Yes | - | SignalWire project ID |
+| `Token` | Yes | - | API token |
+| `Host` | No | env var | Space hostname |
+| `Contexts` | No | - | Context names to subscribe on connect |
 
 ## Outbound Calls
 

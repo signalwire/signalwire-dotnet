@@ -156,12 +156,12 @@ var clientFromEnv = new RestClient(); // Uses SIGNALWIRE_PROJECT_ID, SIGNALWIRE_
 using System.Collections.Generic;
 using SignalWire.Relay;
 
-var client = new Client(new Dictionary<string, string>
+var client = new Client(new ClientOptions
 {
-    ["project"]  = "your-project-id",
-    ["token"]    = "your-api-token",
-    ["host"]     = "relay.signalwire.com",
-    ["contexts"] = "default,support",
+    Project  = "your-project-id",
+    Token    = "your-api-token",
+    Host     = "relay.signalwire.com",
+    Contexts = new[] { "default", "support" },
 });
 ```
 

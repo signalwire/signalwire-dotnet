@@ -11,12 +11,14 @@ Format (one bullet per suppression):
 - <relpath>:<line> — <reason> (<approver>, <YYYY-MM-DD>)
 ```
 
-There are exactly ten analyzer-severity disables, all in `.editorconfig`, all
-scoped to the generated REST tree EXCEPT the two global VB-interop ones. Each is
-justified by the WIRE shape (a value/type System.Text.Json must round-trip
-verbatim) or by CROSS-PORT SURFACE PARITY (a name the python-reference oracle
-records, that SURFACE-DIFF + StructuralParity compare dotnet against). None
-disables a rule to hide undone cleanup.
+There are exactly eleven analyzer-severity disables: ten in `.editorconfig`
+(scoped to the generated REST tree EXCEPT the two global VB-interop ones) and
+one `<NoWarn>` in the csproj (the doc-coverage pair behind the 6.3
+GenerateDocumentationFile floor). Each is justified by the WIRE shape (a
+value/type System.Text.Json must round-trip verbatim), by CROSS-PORT SURFACE
+PARITY (a name the python-reference oracle records, that SURFACE-DIFF +
+StructuralParity compare dotnet against), or by an owner-approved plan
+decision cited in the entry. None disables a rule to hide undone cleanup.
 
 ## Global (VB-interop / concept-name) suppressions
 
@@ -36,3 +38,7 @@ per-rule exemptions, each proven against the wire schema or the python oracle.
 - .editorconfig:95 — CA1711 (reserved type-name suffix): the generated type + verb names (`EnterQueue`, `Stream`, `Queue`) are the SWML verb / schema names taken verbatim from the wire schema and recorded on the cross-port surface (mike@signalwire.com, 2026-07-15)
 - .editorconfig:96 — CA1720 (type name in identifier): same wire-schema-verbatim reason as CA1711 — the identifiers are the schema field/verb names, not analyzer-chosen (mike@signalwire.com, 2026-07-15)
 - .editorconfig:103 — CA1822 (member can be static): every generated resource exposes `BasePath` as an INSTANCE property (`client.PhoneNumbers.BasePath`) as the cross-port surface + StructuralParity tests require; it returns a constant path, so the analyzer suggests static, but static would break the required instance access (mike@signalwire.com, 2026-07-15)
+
+## Doc-generation suppressions (`src/SignalWire/SignalWire.csproj`)
+
+- src/SignalWire/SignalWire.csproj:27 — CS1591 + CS1573 (missing/partial XML doc comments): GenerateDocumentationFile is ON (plan 6.3 dotnet doc-surface floor — the nupkg must SHIP the compiler XML doc file, asserted by the NUPKG-XMLDOC gate). Under TreatWarningsAsErrors, every undocumented public member (CS1591) and every partially-documented generated REST method (CS1573 on id/cancellationToken params) would otherwise fail the build — doc COVERAGE is a separate ratchet concern, not this floor. Malformed-doc errors (CS1570 bad XML, CS1574/CS0419 broken crefs) remain hard errors and were burned to zero when the file flag landed (mike@signalwire.com via GATE_ENFORCEMENT_PLAN_2026-07-18 §6.3/Part-3-dotnet-d, 2026-07-19)

@@ -47,11 +47,11 @@ var contexts = contextsEnv
 
 var client = new Client(new()
 {
-    ["project"]  = project,
-    ["token"]    = token,
-    ["host"]     = host,
-    ["scheme"]   = scheme,
-    ["contexts"] = string.Join(',', contexts),
+    Project  = project,
+    Token    = token,
+    Host     = host,
+    Scheme   = scheme,
+    Contexts = contexts,
 });
 
 // Track whether a real inbound signalwire.event was dispatched. The

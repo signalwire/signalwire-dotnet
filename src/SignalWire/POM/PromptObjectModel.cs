@@ -175,7 +175,8 @@ public class Section
 
     /// <summary>Render this section as an XML fragment. Mirrors
     /// Python's ``Section.render_xml`` exactly (no HTML escaping; uses
-    /// `<bullets>` / `<subsections>` wrapping containers).</summary>
+    /// <c>&lt;bullets&gt;</c> / <c>&lt;subsections&gt;</c> wrapping
+    /// containers).</summary>
     public string RenderXml(int indent = 0, IReadOnlyList<int>? sectionNumber = null)
     {
         sectionNumber ??= new List<int>();
@@ -354,7 +355,7 @@ public class PromptObjectModel
 
     /// <summary>Render the model as XML. Mirrors Python's
     /// ``PromptObjectModel.render_xml`` exactly (XML preamble +
-    /// ``<prompt>`` wrapper + indent of 2 spaces per level).</summary>
+    /// <c>&lt;prompt&gt;</c> wrapper + indent of 2 spaces per level).</summary>
     public string RenderXml()
     {
         var xml = new List<string>

@@ -4,18 +4,31 @@ Agent examples demonstrating the AI Agent framework, SWAIG tools, DataMap, Conte
 
 ## Running Examples
 
+Each example is a single-file, top-level-statements program. There is no
+shared examples project (multiple entry points cannot co-compile), so run one
+by scaffolding a console app that references the SDK and using the example as
+its `Program.cs`:
+
 ```bash
-# Install dependencies
-dotnet restore
+# From the repo root: scaffold a runner (once)
+mkdir -p .sw-tmp/run-example && cd .sw-tmp/run-example
+dotnet new console --force
+dotnet add reference ../../src/SignalWire/SignalWire.csproj
 
 # Set environment variables
 export SIGNALWIRE_PROJECT_ID=your-project-id
 export SIGNALWIRE_API_TOKEN=your-api-token
 export SIGNALWIRE_SPACE=example.signalwire.com
 
-# Run an example
-dotnet run -- examples/SimpleAgent.cs
+# Pick an example and run it
+cp ../../examples/RestDemo.cs Program.cs
+dotnet run
 ```
+
+Agent/SWML-service examples start an HTTP server (default
+`http://localhost:3000`); RELAY/REST examples talk to your SignalWire space
+using the env vars above. The audit harnesses (`*AuditHarness.cs`) ship their
+own `.csproj` and run directly with `dotnet run --project`.
 
 ## Agent Examples
 

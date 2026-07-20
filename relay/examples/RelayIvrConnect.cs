@@ -15,14 +15,14 @@ using SignalWire.Relay;
 
 const string AgentNumber = "+19184238080";
 
-var client = new Client(new Dictionary<string, string>
+var client = new Client(new ClientOptions
 {
-    ["project"]  = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
-                   ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    ["token"]    = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
-                   ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    ["host"]     = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "relay.signalwire.com",
-    ["contexts"] = "default",
+    Project  = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
+               ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
+    Token    = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+               ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
+    Host     = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "relay.signalwire.com",
+    Contexts = new[] { "default" },
 });
 
 // Helper to build a TTS media element

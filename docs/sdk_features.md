@@ -84,11 +84,11 @@ using System.Collections.Generic;
 using SignalWire.Relay;
 
 string projectId = "project", apiToken = "token";
-var client = new Client(new Dictionary<string, string>
+var client = new Client(new ClientOptions
 {
-    ["project"]  = projectId,
-    ["token"]    = apiToken,
-    ["contexts"] = "default",
+    Project  = projectId,
+    Token    = apiToken,
+    Contexts = new[] { "default" },
 });
 
 client.OnCall(async (call, evt) =>

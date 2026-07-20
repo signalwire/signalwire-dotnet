@@ -114,12 +114,12 @@ Real-time call control and messaging over WebSocket. The RELAY client connects t
 ```csharp
 using SignalWire.Relay;
 
-var client = new Client(new Dictionary<string, string>
+var client = new Client(new ClientOptions
 {
-    ["project"]  = "your-project-id",
-    ["token"]    = "your-token",
-    ["host"]     = "example.signalwire.com",
-    ["contexts"] = "default",
+    Project  = "your-project-id",
+    Token    = "your-token",
+    Host     = "example.signalwire.com",
+    Contexts = new[] { "default" },
 });
 
 client.OnCall(async (call, evt) =>
@@ -145,7 +145,7 @@ See the **[RELAY documentation](relay/README.md)** for the full guide, API refer
 
 ## REST Client
 
-Synchronous REST client for managing SignalWire resources and controlling calls over HTTP.
+Async REST client (`Task`-based) for managing SignalWire resources and controlling calls over HTTP.
 
 <!-- include: examples/QuickstartRest.cs#rest -->
 ```csharp
@@ -162,7 +162,7 @@ await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacod
 await client.Datasphere.Documents.SearchAsync("billing policy");
 ```
 
-- 20 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Phone Numbers, SIP, Queues, Recordings, and more
+- 22 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Phone Numbers, SIP, Queues, Recordings, and more
 - `Task`-based async API throughout
 - `HttpClient` with connection pooling
 - Dictionary returns -- raw data, no wrapper objects

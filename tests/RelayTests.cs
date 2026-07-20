@@ -402,7 +402,7 @@ public class RelayTests : IDisposable
     [Fact]
     public void Call_Construction()
     {
-        var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
+        var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new()
         {
             ["call_id"] = "c-1",
@@ -423,7 +423,7 @@ public class RelayTests : IDisposable
     [Fact]
     public void Call_DefaultState()
     {
-        var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
+        var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new(), client);
         Assert.Equal("created", call.State);
     }
@@ -431,7 +431,7 @@ public class RelayTests : IDisposable
     [Fact]
     public void Call_DispatchEvent_StateChange()
     {
-        var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
+        var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         // Real RELAY wire key is call_state (relay.c + mock_relay).
@@ -449,7 +449,7 @@ public class RelayTests : IDisposable
         // A stray top-level "state" on a call.state event is NOT the call-state
         // field (that belongs to control_id-routed component events) and must
         // not move the call's state off its default.
-        var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
+        var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         call.DispatchEvent(new Event("calling.call.state", new()
@@ -463,7 +463,7 @@ public class RelayTests : IDisposable
     [Fact]
     public void Call_DispatchEvent_EndResolves()
     {
-        var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
+        var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new()
         {
             ["call_id"] = "c-1",
@@ -488,7 +488,7 @@ public class RelayTests : IDisposable
     [Fact]
     public void Call_DispatchEvent_ActionTerminalState()
     {
-        var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
+        var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new()
         {
             ["call_id"] = "c-1",
@@ -511,7 +511,7 @@ public class RelayTests : IDisposable
     [Fact]
     public void Call_DispatchEvent_ConnectSetsPeer()
     {
-        var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
+        var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         var peerDict = new Dictionary<string, object?> { ["call_id"] = "c-peer" };
@@ -526,7 +526,7 @@ public class RelayTests : IDisposable
     [Fact]
     public void Call_OnEventCallback()
     {
-        var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
+        var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         Event? received = null;
@@ -544,7 +544,7 @@ public class RelayTests : IDisposable
     [Fact]
     public void Call_ResolveAllActions()
     {
-        var client = new Client(new() { ["project"] = "p1", ["token"] = "t1" });
+        var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1", ["node_id"] = "n-1" }, client);
 
         var a1 = new PlayAction("ctrl-1", "c-1", "n-1", client);
@@ -568,9 +568,9 @@ public class RelayTests : IDisposable
     {
         var client = new Client(new()
         {
-            ["project"] = "proj-1",
-            ["token"] = "tok-1",
-            ["host"] = "test.signalwire.com",
+            Project = "proj-1",
+            Token = "tok-1",
+            Host = "test.signalwire.com",
         });
 
         Assert.Equal("proj-1", client.Project);
@@ -588,8 +588,8 @@ public class RelayTests : IDisposable
         {
             var client = new Client(new()
             {
-                ["project"] = "p1",
-                ["token"] = "t1",
+                Project = "p1",
+                Token = "t1",
             });
             Assert.Equal("env.signalwire.com", client.Host);
         }
@@ -1074,7 +1074,7 @@ public class RelayTests : IDisposable
     {
         public List<Dictionary<string, object?>> SentMessages { get; } = [];
 
-        public TestableClient() : base(new() { ["project"] = "test", ["token"] = "tok" }) { }
+        public TestableClient() : base(new() { Project = "test", Token = "tok" }) { }
 
         public override void Send(Dictionary<string, object?> msg)
         {

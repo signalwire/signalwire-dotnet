@@ -77,17 +77,14 @@ public static class RelayMockTest
         IEnumerable<string>? contexts = null)
     {
         var shared = EnsureServer();
-        var opts = new Dictionary<string, string>
+        var opts = new SignalWire.Relay.ClientOptions
         {
-            ["project"] = project,
-            ["token"] = token,
-            ["host"] = shared.RelayHost,
-            ["scheme"] = "ws",
+            Project = project,
+            Token = token,
+            Host = shared.RelayHost,
+            Scheme = "ws",
+            Contexts = contexts?.ToList(),
         };
-        if (contexts is not null)
-        {
-            opts["contexts"] = string.Join(",", contexts);
-        }
         var client = new SignalWire.Relay.Client(opts);
         // The caller connects the client (some tests cover the connect path
         // itself). The returned Bound exposes a per-client Harness view that

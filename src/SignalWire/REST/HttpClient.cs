@@ -299,9 +299,11 @@ public class HttpClient : IDisposable
                         .ConfigureAwait(false);
                     continue;
                 }
+                // D1: error.url is the FULL URL with query (copy-pasteable),
+                // never the bare path — for transport errors too.
                 var reason = ex is HttpRequestException ? ex.Message : $"timed out after {opts.Timeout}s";
                 throw new SignalWireRestTransportError(
-                    $"{method} {path} failed: {reason}", path, method, ex);
+                    $"{method} {url} failed: {reason}", url, method, ex);
             }
 
             var statusCode = (int)response.StatusCode;
@@ -319,11 +321,16 @@ public class HttpClient : IDisposable
                 }
 
                 var errBody = await response.Content.ReadAsStringAsync(linkedCts.Token).ConfigureAwait(false);
+                var errHeaders = CollectHeaders(response);
                 response.Dispose();
-                // Full failure envelope: status, body, url (the request path), method
-                // — so a caller can distinguish 400/404/422 and read the server body.
+                // Full failure envelope: status, body, url (D1: the FULL URL with
+                // query, copy-pasteable — never the bare path), method, plus the
+                // §6.6 observability pair (response headers + platform request id)
+                // — so a caller can distinguish 400/404/422, read the server body,
+                // and correlate the failure with SignalWire support.
                 throw new SignalWireRestError(
-                    $"{method} {path} returned {statusCode}", statusCode, errBody, path, method);
+                    $"{method} {url} returned {statusCode}", statusCode, errBody, url, method,
+                    errHeaders);
             }
 
             var responseBody = await response.Content.ReadAsStringAsync(linkedCts.Token).ConfigureAwait(false);
@@ -373,6 +380,25 @@ public class HttpClient : IDisposable
         if (seconds <= 0) return;
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(abortToken, cancellationToken);
         await Task.Delay(TimeSpan.FromSeconds(seconds), linked.Token).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Flatten the response + content headers into one case-insensitive map for
+    /// the §6.6 error envelope (multi-value headers joined with ", ", the HTTP
+    /// wire convention — mirrors Python's <c>dict(resp.headers)</c>).
+    /// </summary>
+    private static Dictionary<string, string> CollectHeaders(HttpResponseMessage resp)
+    {
+        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in resp.Headers)
+        {
+            headers[kvp.Key] = string.Join(", ", kvp.Value);
+        }
+        foreach (var kvp in resp.Content.Headers)
+        {
+            headers[kvp.Key] = string.Join(", ", kvp.Value);
+        }
+        return headers;
     }
 
     /// <summary>Parse a <c>Retry-After</c> header (delta-seconds form) if present.</summary>

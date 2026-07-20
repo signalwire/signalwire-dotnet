@@ -42,6 +42,21 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
     /// (30s timeout, no retries).</param>
     public RestClient(string projectId = "", string token = "", string space = "",
         RequestOptions? requestOptions = null)
+        : this(projectId, token, space, httpClient: null, requestOptions)
+    {
+    }
+
+    /// <summary>
+    /// Transport-injection ctor (6.2): supply the inner
+    /// <see cref="System.Net.Http.HttpClient"/> yourself — typically an
+    /// <c>IHttpClientFactory</c>-created named client (see the
+    /// <c>AddSignalWire()</c> DI extension) — so delegating handlers, Polly
+    /// policies, and proxy configuration ride under the SDK. The injected
+    /// client's lifetime stays with the caller; disposing the
+    /// <see cref="RestClient"/> never disposes it.
+    /// </summary>
+    public RestClient(string projectId, string token, string space,
+        System.Net.Http.HttpClient? httpClient, RequestOptions? requestOptions = null)
         : base(BuildHttp(
             !string.IsNullOrEmpty(projectId) ? projectId
                 : Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID") ?? "",
@@ -49,6 +64,7 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
                 : Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN") ?? "",
             !string.IsNullOrEmpty(space) ? space
                 : Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "",
+            httpClient,
             requestOptions))
     {
         _projectId = !string.IsNullOrEmpty(projectId) ? projectId
@@ -70,7 +86,7 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
     /// the single point that enforces the required-credential contract.
     /// </summary>
     private static HttpClient BuildHttp(string projectId, string token, string space,
-        RequestOptions? requestOptions)
+        System.Net.Http.HttpClient? httpClient, RequestOptions? requestOptions)
     {
         if (string.IsNullOrEmpty(projectId))
             throw new ArgumentException("projectId is required (pass explicitly or set SIGNALWIRE_PROJECT_ID)");
@@ -79,7 +95,7 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
         if (string.IsNullOrEmpty(space))
             throw new ArgumentException("space is required (pass explicitly or set SIGNALWIRE_SPACE)");
 
-        return new HttpClient(projectId, token, $"https://{space}", null, requestOptions);
+        return new HttpClient(projectId, token, $"https://{space}", httpClient, requestOptions);
     }
 
     // ------------------------------------------------------------------
@@ -98,10 +114,10 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Dispose the owned REST <see cref="HttpClient"/> (which, in turn, only
-    /// disposes its inner <see cref="System.Net.Http.HttpClient"/> because it
-    /// created it). <c>RestClient</c> always constructs its own transport, so
-    /// it always owns it. Idempotent.
+    /// Dispose the REST <see cref="HttpClient"/> wrapper — which, in turn,
+    /// disposes its inner <see cref="System.Net.Http.HttpClient"/> ONLY when
+    /// it created it. A caller-injected transport (the DI/IHttpClientFactory
+    /// ctor) is left untouched: its lifetime belongs to the caller. Idempotent.
     /// </summary>
     public void Dispose()
     {

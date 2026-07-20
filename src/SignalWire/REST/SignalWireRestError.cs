@@ -23,14 +23,61 @@ public class SignalWireRestError : Exception
     /// </summary>
     public string Body => ResponseBody;
 
-    /// <summary>The request path/URL that produced this error (the ``url``
-    /// envelope field). Empty when unknown.</summary>
-    [SuppressMessage("Usage", "CA1056", Justification = "Url is a wire string carried verbatim from the request path for caller inspection.")]
+    /// <summary>The FULL absolute request URL — scheme + host + path + query —
+    /// that produced this error (the ``url`` envelope field; D1, owner-approved
+    /// 2026-07-18: copy-pasteable, never the bare path). Empty when unknown.</summary>
+    [SuppressMessage("Usage", "CA1056", Justification = "Url is a wire string carried verbatim from the request URL for caller inspection.")]
     public string Url { get; }
 
     /// <summary>The HTTP method of the failed request (the ``method`` envelope
     /// field, e.g. GET/POST). Empty when unknown.</summary>
     public string Method { get; }
+
+    /// <summary>
+    /// §6.6 error observability: the response header map, or <c>null</c> for a
+    /// transport error that produced no response. Mirrors Python's
+    /// <c>SignalWireRestError.headers</c>.
+    /// </summary>
+    public IReadOnlyDictionary<string, string>? Headers { get; }
+
+    /// <summary>
+    /// The platform request id pulled from <see cref="Headers"/> (precedence:
+    /// <c>x-request-id</c>, <c>x-signalwire-request-id</c>, <c>request-id</c>,
+    /// <c>x-amzn-requestid</c>; case-insensitive), or <c>null</c> when absent —
+    /// client-side observability with no wire-contract change. Also appended to
+    /// <see cref="Exception.Message"/> so it reaches logs verbatim. Mirrors
+    /// Python's <c>SignalWireRestError.request_id</c>.
+    /// </summary>
+    public string? RequestId { get; }
+
+    // Precedence order mirrors the Python reference (rest/_base.py
+    // _REQUEST_ID_HEADERS).
+    private static readonly string[] _requestIdHeaders =
+    {
+        "x-request-id", "x-signalwire-request-id", "request-id", "x-amzn-requestid",
+    };
+
+    private static string? ExtractRequestId(IReadOnlyDictionary<string, string>? headers)
+    {
+        if (headers is null) return null;
+        foreach (var name in _requestIdHeaders)
+        {
+            foreach (var kvp in headers)
+            {
+                if (string.Equals(kvp.Key, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return kvp.Value;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static string AppendRequestId(string message, IReadOnlyDictionary<string, string>? headers)
+    {
+        var requestId = ExtractRequestId(headers);
+        return requestId is null ? message : $"{message} (request-id: {requestId})";
+    }
 
     /// <summary>Initializes a new instance with default values.</summary>
     public SignalWireRestError()
@@ -72,12 +119,27 @@ public class SignalWireRestError : Exception
     /// </summary>
     [SuppressMessage("Usage", "CA1054", Justification = "url is a wire string carried verbatim from the request path.")]
     public SignalWireRestError(string message, int statusCode, string responseBody, string url, string method)
-        : base(message)
+        : this(message, statusCode, responseBody, url, method, headers: null)
+    {
+    }
+
+    /// <summary>
+    /// The §6.6 full-envelope constructor: everything the 5-arg form carries
+    /// plus the response <paramref name="headers"/> (null for a transport error
+    /// that produced no response). The platform request id is extracted from the
+    /// headers into <see cref="RequestId"/> and appended to the message.
+    /// </summary>
+    [SuppressMessage("Usage", "CA1054", Justification = "url is a wire string carried verbatim from the request path.")]
+    public SignalWireRestError(string message, int statusCode, string responseBody, string url, string method,
+        IReadOnlyDictionary<string, string>? headers)
+        : base(AppendRequestId(message, headers))
     {
         StatusCode = statusCode;
         ResponseBody = responseBody;
         Url = url ?? string.Empty;
         Method = method ?? string.Empty;
+        Headers = headers;
+        RequestId = ExtractRequestId(headers);
     }
 
     public SignalWireRestError(string message, int statusCode, string responseBody, Exception innerException)

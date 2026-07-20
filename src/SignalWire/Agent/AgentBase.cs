@@ -522,7 +522,37 @@ public class AgentBase : Service
     }
 
     // Tool methods (DefineTool, RegisterSwaigFunction, DefineTools,
-    // OnFunctionCall) are now provided by SignalWire.SWML.Service - inherited.
+    // OnFunctionCall) are provided by SignalWire.SWML.Service. The three
+    // registration methods are COVARIANT overrides (C# 9) returning AgentBase
+    // — matching the Python reference (`tool_mixin.define_tool -> "AgentBase"`)
+    // and the api_reference Tool Methods table — so agent-level fluent
+    // chaining compiles: agent.DefineTool(...).AddHint(...).
+
+    /// <inheritdoc cref="Service.DefineTool"/>
+    public override AgentBase DefineTool(
+        string name,
+        string description,
+        Dictionary<string, object> parameters,
+        Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> handler,
+        bool secure = false)
+    {
+        base.DefineTool(name, description, parameters, handler, secure);
+        return this;
+    }
+
+    /// <inheritdoc cref="Service.RegisterSwaigFunction"/>
+    public override AgentBase RegisterSwaigFunction(Dictionary<string, object> funcDef)
+    {
+        base.RegisterSwaigFunction(funcDef);
+        return this;
+    }
+
+    /// <inheritdoc cref="Service.DefineTools"/>
+    public override AgentBase DefineTools(IReadOnlyList<Dictionary<string, object>> toolDefs)
+    {
+        base.DefineTools(toolDefs);
+        return this;
+    }
 
     // ======================================================================
     //  AI Config Methods
@@ -905,7 +935,7 @@ public class AgentBase : Service
     /// fillers, matching the SWAIGInternalFiller schema definition. Any
     /// name outside this set is silently ignored by the runtime —
     /// <see cref="SetInternalFillers(Dictionary{string, Dictionary{string, List{string}}})"/>
-    /// and <see cref="AddInternalFiller(string, string, List{string})"/>
+    /// and <see cref="AddInternalFiller(string, string, IReadOnlyList{string})"/>
     /// warn if you pass an unknown name.
     ///
     /// Notable absences: <c>change_step</c>, <c>gather_submit</c>, or

@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
-namespace SignalWire.Skills.Builtin;
+namespace SignalWire.Skills;
 
 /// <summary>
 /// Tiny HTTP helper for skill upstream calls.

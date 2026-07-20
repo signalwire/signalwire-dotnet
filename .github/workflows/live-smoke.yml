@@ -1,0 +1,67 @@
+name: Live smoke (nightly, opt-in)
+
+# Plan 6.5 — real-server smoke lane. A creds-gated NIGHTLY job that runs the
+# SWSDK_LIVE_TESTS smoke suite against the REAL SignalWire platform: auth + one REST
+# list + one SWML render + one RELAY connect (tests/LiveSmokeTests.cs,
+# Category=LiveSmoke). This is the only check that catches mock↔production drift.
+#
+# It SKIPS cleanly when the credential secret is absent (forks / secretless runs):
+# the job is guarded on secrets.SIGNALWIRE_TEST_TOKEN being non-empty, and the tests
+# themselves self-skip (no-op pass) when SWSDK_LIVE_TESTS != 1 or the env vars are
+# unset — so a missing secret is a clean skip, never a red.
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  schedule:
+    - cron: '53 7 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: live-smoke-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      have_creds: ${{ steps.check.outputs.have_creds }}
+    steps:
+      - name: Check for live-test credentials
+        id: check
+        env:
+          TEST_TOKEN: ${{ secrets.SIGNALWIRE_TEST_TOKEN }}
+        run: |
+          if [ -n "$TEST_TOKEN" ]; then
+            echo "have_creds=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "have_creds=false" >> "$GITHUB_OUTPUT"
+            echo "SIGNALWIRE_TEST_TOKEN secret absent — live smoke will be skipped."
+          fi
+
+  live-smoke:
+    needs: gate
+    if: needs.gate.outputs.have_creds == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout signalwire-dotnet
+        uses: actions/checkout@v7
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      # Run the LiveSmoke category against the real platform. The env vars are
+      # the SDK's standard auth inputs; SWSDK_LIVE_TESTS=1 arms the suite (it
+      # self-skips otherwise). A missing var → the tests no-op cleanly, not red.
+      - name: Live smoke (auth + REST list + SWML render + RELAY connect)
+        env:
+          SWSDK_LIVE_TESTS: "1"
+          SIGNALWIRE_PROJECT_ID: ${{ secrets.SIGNALWIRE_TEST_PROJECT_ID }}
+          SIGNALWIRE_API_TOKEN: ${{ secrets.SIGNALWIRE_TEST_TOKEN }}
+          SIGNALWIRE_SPACE: ${{ secrets.SIGNALWIRE_TEST_SPACE }}
+        run: dotnet test tests/SignalWire.Tests.csproj --framework net8.0 --filter "Category=LiveSmoke"

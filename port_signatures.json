@@ -1096,7 +1096,7 @@
                   "default": false
                 }
               ],
-              "returns": "class:signalwire.core.swml_service.SWMLService"
+              "returns": "class:signalwire.core.agent_base.AgentBase"
             },
             "get_all_functions": {
               "params": [
@@ -1147,7 +1147,7 @@
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.core.swml_service.SWMLService"
+              "returns": "class:signalwire.core.agent_base.AgentBase"
             },
             "remove_function": {
               "params": [
@@ -5254,7 +5254,7 @@
                   "default": false
                 }
               ],
-              "returns": "class:signalwire.core.swml_service.SWMLService"
+              "returns": "class:signalwire.core.agent_base.AgentBase"
             },
             "define_tools": {
               "params": [
@@ -5268,7 +5268,7 @@
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.core.swml_service.SWMLService"
+              "returns": "class:signalwire.core.agent_base.AgentBase"
             },
             "on_function_call": {
               "params": [
@@ -5306,7 +5306,7 @@
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.core.swml_service.SWMLService"
+              "returns": "class:signalwire.core.agent_base.AgentBase"
             }
           }
         }
@@ -19831,7 +19831,7 @@
                 },
                 {
                   "name": "options",
-                  "type": "optional<dict<string,string>>",
+                  "type": "optional<class:signalwire.relay.client_options.ClientOptions>",
                   "required": false,
                   "default": null
                 }
@@ -20028,15 +20028,6 @@
               ],
               "returns": "string"
             },
-            "inbound_queue": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "list<string>"
-            },
             "messages": {
               "params": [
                 {
@@ -20100,24 +20091,6 @@
                 }
               ],
               "returns": "callable<list<class:signalwire.relay.message.Message,class:signalwire.relay.event.Event>,void>"
-            },
-            "pending": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "dict<string,dict<string,any>>"
-            },
-            "pending_dials": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                }
-              ],
-              "returns": "dict<string,class:signalwire.relay.call.Call>"
             },
             "project": {
               "params": [
@@ -20327,6 +20300,68 @@
                 }
               ],
               "returns": "int"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.relay.client_options": {
+      "classes": {
+        "ClientOptions": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "contexts": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "list<string>"
+            },
+            "host": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "project": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "scheme": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "token": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
             }
           }
         }
@@ -22160,8 +22195,13 @@
                   "required": true
                 },
                 {
-                  "name": "inner_exception",
-                  "type": "any",
+                  "name": "url",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "method",
+                  "type": "string",
                   "required": true
                 }
               ],
@@ -31246,6 +31286,59 @@
                 }
               ],
               "returns": "void"
+            }
+          }
+        }
+      }
+    },
+    "signalwire.signal_wire_options": {
+      "classes": {
+        "SignalWireOptions": {
+          "methods": {
+            "__init__": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "void"
+            },
+            "project_id": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "request_options": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "class:signalwire.rest._request_options.RequestOptions"
+            },
+            "space": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "token": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
             }
           }
         }
