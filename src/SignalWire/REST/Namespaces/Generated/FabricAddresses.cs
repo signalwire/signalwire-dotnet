@@ -56,9 +56,12 @@ public class FabricAddresses
     /// <summary>Iterate every item across all pages of this resource's
     /// list endpoint, following ``links.next`` cursors (lazy — no request
     /// fires until iteration). Mirrors Python ``ReadResource.paginate``.</summary>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
     public SignalWire.REST.PaginatedIterator Paginate(
-        Dictionary<string, string>? queryParams = null)
+        Dictionary<string, string>? queryParams = null,
+        RequestOptions? requestOptions = null)
     {
-        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data");
+        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data", requestOptions: requestOptions);
     }
 }

@@ -28,9 +28,10 @@ public class VideoRooms : SignalWire.REST.CrudResource
     /// Generated from operation <c>list_room_streams</c> (GET /rooms/{id}/streams).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListStreamsAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListStreamsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "streams"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id, "streams"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -38,7 +39,8 @@ public class VideoRooms : SignalWire.REST.CrudResource
     /// </summary>
     /// <param name="url">Wire field <c>url</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> CreateStreamAsync(string id, string url, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> CreateStreamAsync(string id, string url, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["url"] = url;
@@ -49,6 +51,6 @@ public class VideoRooms : SignalWire.REST.CrudResource
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "streams"), _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync(Path(id, "streams"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

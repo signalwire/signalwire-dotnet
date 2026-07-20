@@ -21,6 +21,7 @@ public class PaginatedIterator : IAsyncEnumerable<Dictionary<string, object?>>
     private readonly string _path;
     private readonly Dictionary<string, string>? _params;
     private readonly string _dataKey;
+    private readonly RequestOptions? _requestOptions;
 
     // Fields exposed through internal accessors so the cross-language audit
     // can detect parity with Python's _http / _path / _params / _data_key /
@@ -38,12 +39,14 @@ public class PaginatedIterator : IAsyncEnumerable<Dictionary<string, object?>>
     private readonly HashSet<string> _seenNext = new(StringComparer.Ordinal);
 
     public PaginatedIterator(HttpClient http, string path,
-        Dictionary<string, string>? @params = null, string dataKey = "data")
+        Dictionary<string, string>? @params = null, string dataKey = "data",
+        RequestOptions? requestOptions = null)
     {
         _http = http;
         _path = path;
         _params = @params;
         _dataKey = dataKey;
+        _requestOptions = requestOptions;
         _nextPath = path;
         _nextParams = @params;
     }
@@ -89,7 +92,7 @@ public class PaginatedIterator : IAsyncEnumerable<Dictionary<string, object?>>
             _done = true;
             return;
         }
-        var resp = await _http.GetAsync(_nextPath, _nextParams).ConfigureAwait(false);
+        var resp = await _http.GetAsync(_nextPath, _nextParams, requestOptions: _requestOptions).ConfigureAwait(false);
 
         if (resp.TryGetValue(_dataKey, out var dataObj) && dataObj is List<object?> dataList)
         {

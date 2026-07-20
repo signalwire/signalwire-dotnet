@@ -42,8 +42,9 @@ public class RegistryOrders
     /// Generated from operation <c>retrieve_order</c> (GET /registry/beta/orders/{id}).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

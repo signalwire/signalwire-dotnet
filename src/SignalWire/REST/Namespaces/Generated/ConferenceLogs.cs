@@ -42,8 +42,9 @@ public class ConferenceLogs
     /// Generated from operation <c>list_conferences</c> (GET /conferences).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

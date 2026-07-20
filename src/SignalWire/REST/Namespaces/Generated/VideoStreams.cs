@@ -42,9 +42,10 @@ public class VideoStreams
     /// Generated from operation <c>get_stream</c> (GET /streams/{id}).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -52,7 +53,8 @@ public class VideoStreams
     /// </summary>
     /// <param name="url">Wire field <c>url</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> UpdateAsync(string id, string url, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> UpdateAsync(string id, string url, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["url"] = url;
@@ -63,14 +65,15 @@ public class VideoStreams
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), _reqBody, cancellationToken: cancellationToken);
+        return Client.PutAsync(Path(id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>delete_stream</c> (DELETE /streams/{id}).
     /// </summary>
-    public Task<Dictionary<string, object?>> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DeleteAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(id), cancellationToken: cancellationToken);
+        return Client.DeleteAsync(Path(id), requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

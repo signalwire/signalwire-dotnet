@@ -46,7 +46,8 @@ public class Chat
     /// <param name="memberId">Wire field <c>member_id</c>.</param>
     /// <param name="state">Wire field <c>state</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> CreateTokenAsync(int ttl, Dictionary<string, object?> channels, string? memberId = null, Dictionary<string, object?>? state = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> CreateTokenAsync(int ttl, Dictionary<string, object?> channels, string? memberId = null, Dictionary<string, object?>? state = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["ttl"] = ttl;
@@ -66,6 +67,6 @@ public class Chat
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync(BasePath, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

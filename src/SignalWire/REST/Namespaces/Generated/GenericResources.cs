@@ -42,35 +42,39 @@ public class GenericResources
     /// Generated from operation <c>list_resources</c> (GET /resources).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>get_resource</c> (GET /resources/{id}).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>delete_resource</c> (DELETE /resources/{id}).
     /// </summary>
-    public Task<Dictionary<string, object?>> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DeleteAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(id), cancellationToken: cancellationToken);
+        return Client.DeleteAsync(Path(id), requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>list_resource_addresses</c> (GET /resources/{id}/addresses).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "addresses"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id, "addresses"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -79,7 +83,8 @@ public class GenericResources
     /// <param name="phoneRouteId">Wire field <c>phone_route_id</c>.</param>
     /// <param name="handler">Wire field <c>handler</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> AssignPhoneRouteAsync(string id, string phoneRouteId, string handler, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AssignPhoneRouteAsync(string id, string phoneRouteId, string handler, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["phone_route_id"] = phoneRouteId;
@@ -91,7 +96,7 @@ public class GenericResources
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "phone_routes"), _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync(Path(id, "phone_routes"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -99,7 +104,8 @@ public class GenericResources
     /// </summary>
     /// <param name="domainApplicationId">Wire field <c>domain_application_id</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> AssignDomainApplicationAsync(string id, string domainApplicationId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AssignDomainApplicationAsync(string id, string domainApplicationId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["domain_application_id"] = domainApplicationId;
@@ -110,6 +116,6 @@ public class GenericResources
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "domain_applications"), _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync(Path(id, "domain_applications"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

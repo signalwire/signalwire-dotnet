@@ -27,8 +27,9 @@ public class SwmlWebhooks : SignalWire.REST.CrudWithAddresses
     /// <summary>Update this resource via an HTTP PATCH request.</summary>
     public override Task<Dictionary<string, object?>> UpdateAsync(
         string id, Dictionary<string, object?> data,
+        RequestOptions? requestOptions = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.PatchAsync(Path(id), data, cancellationToken: cancellationToken);
+        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

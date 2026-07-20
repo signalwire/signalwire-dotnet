@@ -42,9 +42,10 @@ public class RegistryCampaigns
     /// Generated from operation <c>retrieve_campaign</c> (GET /registry/beta/campaigns/{id}).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -52,7 +53,8 @@ public class RegistryCampaigns
     /// </summary>
     /// <param name="name">Wire field <c>name</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> UpdateAsync(string id, string? name = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> UpdateAsync(string id, string? name = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         if (name is not null)
@@ -66,25 +68,27 @@ public class RegistryCampaigns
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), _reqBody, cancellationToken: cancellationToken);
+        return Client.PutAsync(Path(id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>list_number_assignments</c> (GET /registry/beta/campaigns/{id}/numbers).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListNumbersAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListNumbersAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "numbers"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id, "numbers"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>list_orders</c> (GET /registry/beta/campaigns/{id}/orders).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListOrdersAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListOrdersAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "orders"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id, "orders"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -93,7 +97,8 @@ public class RegistryCampaigns
     /// <param name="phoneNumbers">Wire field <c>phone_numbers</c>.</param>
     /// <param name="statusCallbackUrl">Wire field <c>status_callback_url</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> CreateOrderAsync(string id, List<object?>? phoneNumbers = null, string? statusCallbackUrl = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> CreateOrderAsync(string id, List<object?>? phoneNumbers = null, string? statusCallbackUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         if (phoneNumbers is not null)
@@ -111,6 +116,6 @@ public class RegistryCampaigns
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(id, "orders"), _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync(Path(id, "orders"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

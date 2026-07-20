@@ -28,26 +28,29 @@ public class Queues : SignalWire.REST.CrudResource
     /// Generated from operation <c>list_queue_members</c> (GET /queues/{queue_id}/members).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListMembersAsync(string queueId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListMembersAsync(string queueId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(queueId, "members"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(queueId, "members"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>retrieve_next_queue_member</c> (GET /queues/{queue_id}/members/next).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetNextMemberAsync(string queueId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> GetNextMemberAsync(string queueId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(queueId, "members", "next"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(queueId, "members", "next"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>retrieve_queue_member</c> (GET /queues/{queue_id}/members/{id}).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetMemberAsync(string queueId, string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> GetMemberAsync(string queueId, string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(queueId, "members", id), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(queueId, "members", id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

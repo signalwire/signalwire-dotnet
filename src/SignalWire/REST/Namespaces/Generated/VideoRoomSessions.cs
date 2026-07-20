@@ -56,36 +56,42 @@ public class VideoRoomSessions
     /// <summary>Iterate every item across all pages of this resource's
     /// list endpoint, following ``links.next`` cursors (lazy — no request
     /// fires until iteration). Mirrors Python ``ReadResource.paginate``.</summary>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
     public SignalWire.REST.PaginatedIterator Paginate(
-        Dictionary<string, string>? queryParams = null)
+        Dictionary<string, string>? queryParams = null,
+        RequestOptions? requestOptions = null)
     {
-        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data");
+        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data", requestOptions: requestOptions);
     }
 
     /// <summary>
     /// Generated from operation <c>list_room_session_events</c> (GET /room_sessions/{id}/events).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListEventsAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListEventsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "events"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id, "events"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>list_room_session_members</c> (GET /room_sessions/{id}/members).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListMembersAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListMembersAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "members"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id, "members"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>list_room_session_recordings</c> (GET /room_sessions/{id}/recordings).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListRecordingsAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListRecordingsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "recordings"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id, "recordings"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

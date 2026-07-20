@@ -42,8 +42,9 @@ public class Lookup
     /// Generated from operation <c>lookup_phone_number</c> (GET /lookup/phone_number/{e164_number}).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> PhoneNumberAsync(string e164, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> PhoneNumberAsync(string e164, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path("phone_number", e164), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path("phone_number", e164), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

@@ -54,7 +54,8 @@ public class FabricTokens
     /// <param name="region">Wire field <c>region</c>.</param>
     /// <param name="companyName">Wire field <c>company_name</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> CreateSubscriberTokenAsync(string reference, int? expireAt = null, string? applicationId = null, string? password = null, string? firstName = null, string? lastName = null, string? displayName = null, string? jobTitle = null, string? timeZone = null, string? country = null, string? region = null, string? companyName = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> CreateSubscriberTokenAsync(string reference, int? expireAt = null, string? applicationId = null, string? password = null, string? firstName = null, string? lastName = null, string? displayName = null, string? jobTitle = null, string? timeZone = null, string? country = null, string? region = null, string? companyName = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["reference"] = reference;
@@ -109,7 +110,7 @@ public class FabricTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/subscribers/tokens", _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync("/api/fabric/subscribers/tokens", _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -117,7 +118,8 @@ public class FabricTokens
     /// </summary>
     /// <param name="refreshToken">Wire field <c>refresh_token</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> RefreshSubscriberTokenAsync(string refreshToken, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> RefreshSubscriberTokenAsync(string refreshToken, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["refresh_token"] = refreshToken;
@@ -128,7 +130,7 @@ public class FabricTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/subscribers/tokens/refresh", _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync("/api/fabric/subscribers/tokens/refresh", _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -137,7 +139,8 @@ public class FabricTokens
     /// <param name="addressId">Wire field <c>address_id</c>.</param>
     /// <param name="expiresAt">Wire field <c>expires_at</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> CreateInviteTokenAsync(string addressId, int? expiresAt = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> CreateInviteTokenAsync(string addressId, int? expiresAt = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["address_id"] = addressId;
@@ -152,7 +155,7 @@ public class FabricTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/subscriber/invites", _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync("/api/fabric/subscriber/invites", _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -161,7 +164,8 @@ public class FabricTokens
     /// <param name="allowedAddresses">Wire field <c>allowed_addresses</c>.</param>
     /// <param name="expireAt">Wire field <c>expire_at</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> CreateGuestTokenAsync(List<object?> allowedAddresses, int? expireAt = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> CreateGuestTokenAsync(List<object?> allowedAddresses, int? expireAt = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["allowed_addresses"] = allowedAddresses;
@@ -176,7 +180,7 @@ public class FabricTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/guests/tokens", _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync("/api/fabric/guests/tokens", _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -184,7 +188,8 @@ public class FabricTokens
     /// </summary>
     /// <param name="token">Wire field <c>token</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> CreateEmbedTokenAsync(string token, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> CreateEmbedTokenAsync(string token, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["token"] = token;
@@ -195,6 +200,6 @@ public class FabricTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync("/api/fabric/embeds/tokens", _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync("/api/fabric/embeds/tokens", _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

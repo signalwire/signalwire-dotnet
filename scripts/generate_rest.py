@@ -659,6 +659,14 @@ def body_params(spec: Spec, cls: str, cs_method: str,
     build.append("                _reqBody[kv.Key] = kv.Value;")
     build.append("            }")
     build.append("        }")
+    # request_options (plan 4.2): the keyword-only per-call envelope, recorded
+    # AFTER extras to match the oracle param order (…fields, extras,
+    # request_options). The C# param + threading are appended in emit_method.
+    records.append({
+        "name": "request_options", "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": False, "default": None,
+    })
     _register_sidecar(cls, cs_method, records)
     return cs_params, build, doc
 
@@ -1010,6 +1018,21 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
     write_verb = verb in ("post", "put", "patch")
     verb_fn = {"post": "PostAsync", "put": "PutAsync", "patch": "PatchAsync"}.get(verb)
 
+    # request_options (plan 4.2 / DOTNET-1): every generated verb carries an
+    # optional per-call RequestOptions envelope — a keyword-only optional in the
+    # python reference. It threads into the Client verb (which already accepts
+    # ``RequestOptions? requestOptions``). The C# param + its sidecar record are
+    # appended uniformly below so the surface + the signature oracle both see it.
+    ro_param = "RequestOptions? requestOptions = null"
+    ro_doc = "    /// <param name=\"requestOptions\">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>"
+    ro_record = {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": False,
+        "default": None,
+    }
+
     if write_verb and has_body:
         body_schema = spec.op_body.get(op_id) or {}
         if is_object_body(spec, body_schema):
@@ -1021,35 +1044,41 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
             doc = ["    /// <summary>",
                    f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path}).",
                    "    /// </summary>"] + field_doc
-            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, cancellationToken: cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);"
         else:
             # §5.2 union body → a single ``Dictionary<string,object?> body`` param.
             body_id = _dedupe_param("body", used)
             params = id_params + [f"Dictionary<string, object?> {body_id}"]
             _register_sidecar(cls, name, id_records + [
                 {"name": "body", "kind": "positional", "type": "dict<string,any>", "required": True},
+                dict(ro_record),
             ])
             doc.append(f"    /// <param name=\"{body_id}\">JSON request body.</param>")
-            call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, cancellationToken: cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
     elif write_verb:
         params = id_params
-        _register_sidecar(cls, name, list(id_records))
-        call_line = f"        return Client.{verb_fn}({path_expr}, null, cancellationToken: cancellationToken);"
+        _register_sidecar(cls, name, id_records + [dict(ro_record)])
+        call_line = f"        return Client.{verb_fn}({path_expr}, null, requestOptions: requestOptions, cancellationToken: cancellationToken);"
     elif verb == "get":
-        # §5.3 GET query door — a trailing query-params map.
+        # §5.3 GET query door — a trailing query-params map. The C# convenience
+        # ``queryParams`` param is a port idiom; the python reference expresses it
+        # as ``**params`` (a var_keyword), which the griffe signature oracle DROPS
+        # (it records zero var_keyword params). So the sidecar records only
+        # ``request_options`` after the id args — recording the ``params`` door as
+        # var_keyword would be a phantom param the oracle never carries, driving
+        # drift. (The convenience param stays on the C# surface for callers.)
         qp_id = _dedupe_param("queryParams", used)
         params = id_params + [f"Dictionary<string, string>? {qp_id} = null"]
-        _register_sidecar(cls, name, id_records + [
-            {"name": "params", "kind": "var_keyword", "type": "any", "required": False, "default": {}},
-        ])
+        _register_sidecar(cls, name, id_records + [dict(ro_record)])
         doc.append(f"    /// <param name=\"{qp_id}\">Query-string parameters.</param>")
-        call_line = f"        return Client.GetAsync({path_expr}, {qp_id}, cancellationToken: cancellationToken);"
+        call_line = f"        return Client.GetAsync({path_expr}, {qp_id}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
     else:  # delete
         params = id_params
-        _register_sidecar(cls, name, list(id_records))
-        call_line = f"        return Client.DeleteAsync({path_expr}, cancellationToken: cancellationToken);"
+        _register_sidecar(cls, name, id_records + [dict(ro_record)])
+        call_line = f"        return Client.DeleteAsync({path_expr}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
 
-    params = params + ["CancellationToken cancellationToken = default"]
+    doc.append(ro_doc)
+    params = params + [ro_param, "CancellationToken cancellationToken = default"]
     sig = ", ".join(params)
     lines = "\n".join(doc) + "\n"
     lines += f"    public Task<Dictionary<string, object?>> {name}({sig})\n    {{\n"
@@ -1103,8 +1132,18 @@ def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
     extra_id = _dedupe_param("extra", used)
     params.append(f"Dictionary<string, object?>? {extra_id} = null")
     arg_doc.append(f"    /// <param name=\"{extra_id}\">Forward-compat update fields.</param>")
-    records.append({"name": "extra", "kind": "var_keyword", "type": "any",
-                    "required": False, "default": {}})
+    # ``extra`` is a var_keyword the griffe oracle drops (it records zero
+    # var_keyword params) — do NOT record it in the sidecar. request_options is the
+    # keyword-only per-call envelope the oracle DOES record (after the bound args),
+    # threaded into UpdateAsync.
+    ro_arg = "RequestOptions? requestOptions = null"
+    params.append(ro_arg)
+    arg_doc.append("    /// <param name=\"requestOptions\">Per-call request options overriding the client defaults.</param>")
+    records.append({
+        "name": "request_options", "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": False, "default": None,
+    })
     _register_sidecar(cls, name, records)
     sig = ", ".join(params)
 
@@ -1249,6 +1288,7 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
     lines.append("")
     lines.append("    private Task<Dictionary<string, object?>> ExecuteAsync(")
     lines.append("        string command, string? callId, Dictionary<string, object?> parms,")
+    lines.append("        RequestOptions? requestOptions = null,")
     lines.append("        CancellationToken cancellationToken = default)")
     lines.append("    {")
     lines.append("        var body = new Dictionary<string, object?>")
@@ -1260,7 +1300,7 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
     lines.append("        {")
     lines.append("            body[\"id\"] = callId;")
     lines.append("        }")
-    lines.append("        return _http.PostAsync(BasePathConst, body, cancellationToken: cancellationToken);")
+    lines.append("        return _http.PostAsync(BasePathConst, body, requestOptions: requestOptions, cancellationToken: cancellationToken);")
     lines.append("    }")
     mapping = (spec.schemas.get(request).get("discriminator") or {}).get("mapping") or {}
     for cmd in commands:
@@ -1311,6 +1351,15 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         build.append("                parms[kv.Key] = kv.Value;")
         build.append("            }")
         build.append("        }")
+        # request_options (plan 4.2): the keyword-only per-call envelope, recorded
+        # AFTER extras to match the oracle order (…fields, extras, request_options).
+        field_cs.append("RequestOptions? requestOptions = null")
+        field_doc.append("    /// <param name=\"requestOptions\">Per-call request options overriding the client defaults.</param>")
+        records.append({
+            "name": "request_options", "kind": "keyword",
+            "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+            "required": False, "default": None,
+        })
         _register_sidecar(name, mname, records)
 
         # CancellationToken is a C#-async idiom param (not a wire param): it is
@@ -1327,7 +1376,7 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         lines.append(f"    public Task<Dictionary<string, object?>> {mname}({sig})")
         lines.append("    {")
         lines.extend(build)
-        lines.append(f"        return ExecuteAsync({cs_str(cmd)}, {call_arg}, parms, cancellationToken);")
+        lines.append(f"        return ExecuteAsync({cs_str(cmd)}, {call_arg}, parms, requestOptions, cancellationToken);")
         lines.append("    }")
     lines.append("}")
     return GEN_HEADER.format(desc=f"Generated command-dispatch resource for the {spec.name!r} namespace.") + "\n" + "\n".join(lines) + "\n"
@@ -1387,11 +1436,24 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
         lines.append("    /// <summary>Iterate every item across all pages of this resource's")
         lines.append("    /// list endpoint, following ``links.next`` cursors (lazy — no request")
         lines.append("    /// fires until iteration). Mirrors Python ``ReadResource.paginate``.</summary>")
+        lines.append("    /// <param name=\"queryParams\">Query-string parameters.</param>")
+        lines.append("    /// <param name=\"requestOptions\">Per-call request options overriding the client defaults.</param>")
         lines.append("    public SignalWire.REST.PaginatedIterator Paginate(")
-        lines.append("        Dictionary<string, string>? queryParams = null)")
+        lines.append("        Dictionary<string, string>? queryParams = null,")
+        lines.append("        RequestOptions? requestOptions = null)")
         lines.append("    {")
-        lines.append("        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: \"data\");")
+        lines.append("        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: \"data\", requestOptions: requestOptions);")
         lines.append("    }")
+        # paginate's oracle signature is (self, request_options); python's
+        # ``**params`` var_keyword is dropped by griffe, and queryParams is the
+        # port-idiom convenience. Record just request_options so the enumerator
+        # matches the oracle (else reflection records the queryParams door as a
+        # phantom positional param the oracle never carries).
+        _register_sidecar(name, "Paginate", [{
+            "name": "request_options", "kind": "keyword",
+            "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+            "required": False, "default": None,
+        }])
 
     _emit_declared_and_sets(spec, anchor, markup, base, lines)
     lines.append("}")
@@ -1465,9 +1527,10 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
         lines.append("    /// <summary>Update this resource via an HTTP PATCH request.</summary>")
         lines.append("    public override Task<Dictionary<string, object?>> UpdateAsync(")
         lines.append("        string id, Dictionary<string, object?> data,")
+        lines.append("        RequestOptions? requestOptions = null,")
         lines.append("        CancellationToken cancellationToken = default)")
         lines.append("    {")
-        lines.append("        return Client.PatchAsync(Path(id), data, cancellationToken: cancellationToken);")
+        lines.append("        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);")
         lines.append("    }")
 
     _emit_declared_and_sets(spec, anchor, markup, base, lines)

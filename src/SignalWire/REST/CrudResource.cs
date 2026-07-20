@@ -50,9 +50,11 @@ public class CrudResource
     /// Mirrors Python ``ReadResource.paginate(**params) -> PaginatedIterator``.
     /// Construction is lazy: no request fires until iteration begins.
     /// </summary>
-    public virtual PaginatedIterator Paginate(Dictionary<string, string>? queryParams = null)
+    public virtual PaginatedIterator Paginate(
+        Dictionary<string, string>? queryParams = null,
+        RequestOptions? requestOptions = null)
     {
-        return new PaginatedIterator(Client, BasePath, queryParams, dataKey: "data");
+        return new PaginatedIterator(Client, BasePath, queryParams, dataKey: "data", requestOptions: requestOptions);
     }
 
     /// <summary>Create a new resource (POST basePath).</summary>
@@ -71,11 +73,14 @@ public class CrudResource
     }
 
     /// <summary>Update a resource by ID (PUT basePath/{id}).</summary>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort)
+    /// overriding the client defaults (plan 4.2). Threaded through to the transport.</param>
     public virtual Task<Dictionary<string, object?>> UpdateAsync(
         string id, Dictionary<string, object?> data,
+        RequestOptions? requestOptions = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.PutAsync(Path(id), data, cancellationToken: cancellationToken);
+        return Client.PutAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>Delete a resource by ID (DELETE basePath/{id}).</summary>

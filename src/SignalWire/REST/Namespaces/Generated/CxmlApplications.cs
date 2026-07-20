@@ -42,18 +42,20 @@ public class CxmlApplications
     /// Generated from operation <c>list_cxml_applications</c> (GET /resources/cxml_applications).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>get_cxml_application</c> (GET /resources/cxml_applications/{id}).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -74,7 +76,8 @@ public class CxmlApplications
     /// <param name="smsStatusCallback">Wire field <c>sms_status_callback</c>.</param>
     /// <param name="smsStatusCallbackMethod">Wire field <c>sms_status_callback_method</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> UpdateAsync(string id, string? displayName = null, string? accountSid = null, string? voiceUrl = null, Dictionary<string, object?>? voiceMethod = null, string? voiceFallbackUrl = null, Dictionary<string, object?>? voiceFallbackMethod = null, string? statusCallback = null, Dictionary<string, object?>? statusCallbackMethod = null, string? smsUrl = null, Dictionary<string, object?>? smsMethod = null, string? smsFallbackUrl = null, Dictionary<string, object?>? smsFallbackMethod = null, string? smsStatusCallback = null, Dictionary<string, object?>? smsStatusCallbackMethod = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> UpdateAsync(string id, string? displayName = null, string? accountSid = null, string? voiceUrl = null, Dictionary<string, object?>? voiceMethod = null, string? voiceFallbackUrl = null, Dictionary<string, object?>? voiceFallbackMethod = null, string? statusCallback = null, Dictionary<string, object?>? statusCallbackMethod = null, string? smsUrl = null, Dictionary<string, object?>? smsMethod = null, string? smsFallbackUrl = null, Dictionary<string, object?>? smsFallbackMethod = null, string? smsStatusCallback = null, Dictionary<string, object?>? smsStatusCallbackMethod = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         if (displayName is not null)
@@ -140,23 +143,25 @@ public class CxmlApplications
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), _reqBody, cancellationToken: cancellationToken);
+        return Client.PutAsync(Path(id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>delete_cxml_application</c> (DELETE /resources/cxml_applications/{id}).
     /// </summary>
-    public Task<Dictionary<string, object?>> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DeleteAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(id), cancellationToken: cancellationToken);
+        return Client.DeleteAsync(Path(id), requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>list_cxml_application_addresses</c> (GET /resources/cxml_applications/{id}/addresses).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "addresses"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(id, "addresses"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

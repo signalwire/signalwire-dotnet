@@ -638,10 +638,30 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
         sidecar_key = f"{name}::{_cs_method_for(canon, reflected)}"
         if sidecar_key in rest_sidecar:
             records = [dict(r) for r in rest_sidecar[sidecar_key]]
-            methods_out[canon] = {
-                "params": [{"name": "self", "kind": "self"}] + records,
-                "returns": "dict<string,any>",
-            }
+            # The generated REST verbs return the loose ``dict<string,any>`` HTTP
+            # response (the transition scaffold the return-diff excuses). EXCEPT
+            # ``paginate``, which the reference types as a PaginatedIterator and the
+            # .NET Paginate() genuinely returns as one — take its reflected return
+            # so the sidecar (used for the request_options param shape) doesn't
+            # clobber the concrete iterator return into a phantom dict.
+            if canon == "paginate":
+                m = reflected.get(canon)
+                ret = "dict<string,any>"
+                if m is not None:
+                    ctx = f"{target_module}.{name}.{canon}[paginate->]"
+                    try:
+                        ret = translate_dotnet_type(m.get("return_type", ""), aliases, ctx)
+                    except TypeTranslationError as e:
+                        failures.append(str(e))
+                methods_out[canon] = {
+                    "params": [{"name": "self", "kind": "self"}] + records,
+                    "returns": ret,
+                }
+            else:
+                methods_out[canon] = {
+                    "params": [{"name": "self", "kind": "self"}] + records,
+                    "returns": "dict<string,any>",
+                }
             continue
         # No sidecar entry: type from reflection if available, else bare self.
         m = reflected.get(canon)

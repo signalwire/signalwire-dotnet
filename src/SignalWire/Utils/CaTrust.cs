@@ -19,7 +19,7 @@ namespace SignalWire.Utils;
 /// (<c>SIGNALWIRE_REST_CA_FILE</c>) and the RELAY WebSocket client
 /// (<c>SIGNALWIRE_RELAY_CA_FILE</c>).
 /// </summary>
-public static class CaTrust
+internal static class CaTrust
 {
     /// <summary>
     /// Load a certificate (a CA trust bundle) from a PEM/DER file, using the
@@ -29,7 +29,7 @@ public static class CaTrust
     /// net8 that loader does not exist, so the ctor is used. One helper keeps the
     /// two transports' CA-file loading identical across all target frameworks.
     /// </summary>
-    public static X509Certificate2 LoadTrustBundle(string caFile)
+    internal static X509Certificate2 LoadTrustBundle(string caFile)
     {
 #if NET9_0_OR_GREATER
         return X509CertificateLoader.LoadCertificateFromFile(caFile);
@@ -47,7 +47,7 @@ public static class CaTrust
     /// its issuing CA is named by the env var. Any other TLS error (name
     /// mismatch, not-available) still rejects.
     /// </summary>
-    public static bool Validate(
+    internal static bool Validate(
         X509Certificate2? cert,
         X509Chain? chain,
         SslPolicyErrors errors,

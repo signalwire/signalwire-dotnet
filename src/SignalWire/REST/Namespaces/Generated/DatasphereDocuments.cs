@@ -27,9 +27,10 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     /// <summary>Update this resource via an HTTP PATCH request.</summary>
     public override Task<Dictionary<string, object?>> UpdateAsync(
         string id, Dictionary<string, object?> data,
+        RequestOptions? requestOptions = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.PatchAsync(Path(id), data, cancellationToken: cancellationToken);
+        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -44,7 +45,8 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     /// <param name="posToExpand">Wire field <c>pos_to_expand</c>.</param>
     /// <param name="maxSynonyms">Wire field <c>max_synonyms</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> SearchAsync(string queryString, List<object?>? tags = null, string? documentId = null, double? distance = null, int? count = null, string? language = null, List<object?>? posToExpand = null, int? maxSynonyms = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> SearchAsync(string queryString, List<object?>? tags = null, string? documentId = null, double? distance = null, int? count = null, string? language = null, List<object?>? posToExpand = null, int? maxSynonyms = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["query_string"] = queryString;
@@ -83,32 +85,35 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path("search"), _reqBody, cancellationToken: cancellationToken);
+        return Client.PostAsync(Path("search"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>list_document_chunks</c> (GET /documents/{documentId}/chunks).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListChunksAsync(string documentId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ListChunksAsync(string documentId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(documentId, "chunks"), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(documentId, "chunks"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>get_document_chunk</c> (GET /documents/{documentId}/chunks/{chunkId}).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetChunkAsync(string documentId, string chunkId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> GetChunkAsync(string documentId, string chunkId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(documentId, "chunks", chunkId), queryParams, cancellationToken: cancellationToken);
+        return Client.GetAsync(Path(documentId, "chunks", chunkId), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Generated from operation <c>delete_document_chunk</c> (DELETE /documents/{documentId}/chunks/{chunkId}).
     /// </summary>
-    public Task<Dictionary<string, object?>> DeleteChunkAsync(string documentId, string chunkId, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DeleteChunkAsync(string documentId, string chunkId, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(documentId, "chunks", chunkId), cancellationToken: cancellationToken);
+        return Client.DeleteAsync(Path(documentId, "chunks", chunkId), requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }
