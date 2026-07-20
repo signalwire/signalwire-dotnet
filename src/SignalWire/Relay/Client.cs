@@ -2,9 +2,12 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net.WebSockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using SignalWire.Logging;
+using SignalWire.Utils;
 
 namespace SignalWire.Relay;
 
@@ -52,6 +55,30 @@ public class Client : IAsyncDisposable
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
     };
+
+    // Credential-bearing JSON keys whose VALUES must never appear in debug logs
+    // (SECRET-SCRUB, A6/enterprise): the raw RELAY frames carry the connect
+    // authentication (project/token/jwt_token) and the server's encrypted
+    // `authorization_state` re-auth blob. Logging a raw frame verbatim leaks
+    // these. Mirrors the Python reference `_SCRUB_RE` (relay/client.py:109-128):
+    // match a `"<key>": "<string value>"` pair and replace the value with "***".
+    // The value alternation `(?:\\.|[^"\\])*` matches an escaped-char run so a
+    // token containing an escaped quote is still fully masked.
+    private static readonly Regex ScrubRe = new(
+        "(\"(?:token|project|jwt_token|authorization_state)\"\\s*:\\s*)\"(?:\\\\.|[^\"\\\\])*\"",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// Return a log-safe repr of a raw RELAY frame with credential VALUES masked
+    /// (SECRET-SCRUB). Masks the string values of
+    /// <c>token</c>/<c>project</c>/<c>jwt_token</c>/<c>authorization_state</c>
+    /// keys wherever they appear in the (JSON) frame, so a
+    /// <c>SIGNALWIRE_LOG_LEVEL=debug</c> session never emits live credentials or
+    /// the re-auth blob. Non-string / structural content is preserved so the
+    /// frame stays diagnostic. Mirrors Python's <c>_scrub_frame</c>.
+    /// </summary>
+    internal static string ScrubFrame(string raw)
+        => ScrubRe.Replace(raw ?? "", "$1\"***\"");
 
     // -- identity / auth --
     public string Project { get; }
@@ -152,8 +179,16 @@ public class Client : IAsyncDisposable
     {
         options ??= new();
 
-        Project = options.Project ?? "";
-        Token = options.Token ?? "";
+        // Credentials fall back to the fleet env vars (parity with python
+        // relay/client.py:171-172: project ← SIGNALWIRE_PROJECT_ID, token ←
+        // SIGNALWIRE_API_TOKEN). Empty stays empty here; the A6 fail-fast
+        // validation runs pre-connect in ConnectAsync.
+        Project = options.Project
+            is { Length: > 0 } p ? p
+            : Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID") ?? "";
+        Token = options.Token
+            is { Length: > 0 } t ? t
+            : Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN") ?? "";
 
         if (options.Contexts is { Count: > 0 } ctxs)
         {
@@ -195,6 +230,24 @@ public class Client : IAsyncDisposable
     }
 
     /// <summary>
+    /// Wire the A5 fleet CA-var <c>SIGNALWIRE_RELAY_CA_FILE</c> into the WSS
+    /// handshake: when the env var names a PEM CA bundle, install a
+    /// <see cref="System.Net.Security.RemoteCertificateValidationCallback"/> that
+    /// trusts that bundle as an additional root (mirrors python
+    /// <c>_build_relay_ssl_context</c>). Unset → no-op (OS trust store applies).
+    /// </summary>
+    [SuppressMessage("Reliability", "CA2000", Justification = "Lifetime capture: the trust bundle is captured by the RemoteCertificateValidationCallback and must remain alive for the WSS connection's lifetime; disposing it here would break TLS validation on every handshake.")]
+    private static void ApplyRelayCaTrust(ClientWebSocketOptions options)
+    {
+        var caFile = Environment.GetEnvironmentVariable("SIGNALWIRE_RELAY_CA_FILE");
+        if (string.IsNullOrEmpty(caFile)) return;
+
+        var trustBundle = CaTrust.LoadTrustBundle(caFile);
+        options.RemoteCertificateValidationCallback =
+            (_, cert, chain, errors) => CaTrust.Validate(cert as X509Certificate2, chain, errors, trustBundle);
+    }
+
+    /// <summary>
     /// Establish the WebSocket connection and authenticate. Opens a real
     /// WSS connection to the configured host, runs the JSON-RPC
     /// <c>signalwire.connect</c> handshake, and starts the reader loop
@@ -208,14 +261,51 @@ public class Client : IAsyncDisposable
                 "Host is required (set via constructor option, SIGNALWIRE_SPACE, or RelayClient.Host).");
         }
 
+        // A6 credential contract: fail FAST pre-connect with a PER-VARIABLE
+        // actionable error — name exactly which credential is missing and the env
+        // var that supplies it (a combined "project and token" message misleads
+        // when only one is absent). Mirrors python relay/client.py:187-198. This
+        // runs BEFORE any socket is opened, so an empty-credential client never
+        // silently connects unauthenticated.
+        if (string.IsNullOrEmpty(Project))
+        {
+            throw new InvalidOperationException(
+                "project is required. Pass Project=... (ClientOptions) or set the "
+                + "SIGNALWIRE_PROJECT_ID env var.");
+        }
+        if (string.IsNullOrEmpty(Token))
+        {
+            throw new InvalidOperationException(
+                "token is required. Pass Token=... (ClientOptions) or set the "
+                + "SIGNALWIRE_API_TOKEN env var.");
+        }
+
         var uri = BuildWebSocketUri();
         _logger.Info($"Connecting to {uri}");
+
+        // DOUBLE-READER GUARD (reconnect race): a reconnect calls ConnectAsync
+        // again, which replaces _cts and _ws below and starts a FRESH reader task.
+        // Without first cancelling + draining the PREVIOUS reader, the old loop —
+        // bound to the now-orphaned old _cts and reading the old _ws — keeps
+        // running concurrently with the new one: two readers race the same logical
+        // connection (duplicate dispatch, and the old loop faults on the closed
+        // socket). Tear the prior reader down BEFORE re-arming so exactly one
+        // reader is ever live.
+        await StopReaderAsync().ConfigureAwait(false);
 
         _ws = new ClientWebSocket();
         _cts = new CancellationTokenSource();
 
+        // A5 fleet CA-var contract: when SIGNALWIRE_RELAY_CA_FILE names a CA
+        // bundle, trust it as the TLS root for the WSS handshake (the .NET
+        // analogue of python relay/client.py `_build_relay_ssl_context` →
+        // `ssl.create_default_context(cafile=SIGNALWIRE_RELAY_CA_FILE)`). Unset →
+        // the OS trust store applies.
+        ApplyRelayCaTrust(_ws.Options);
+
         // Apply any test-only transport configuration (e.g. trusting the
-        // porting-sdk test CA for a WSS handshake) before connecting.
+        // porting-sdk test CA for a WSS handshake) before connecting. Applied
+        // AFTER the CA-var wiring so a test seam can still override it.
         ConfigureWebSocketOptions?.Invoke(_ws.Options);
 
         // Honour caller cancellation for the connect handshake while keeping
@@ -415,6 +505,46 @@ public class Client : IAsyncDisposable
         _cts = null;
 
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Cancel and dispose the PREVIOUS reader loop + its socket/token before a
+    /// reconnect re-arms fresh ones — the double-reader guard. Cancelling the old
+    /// <see cref="_cts"/> and disposing the old <see cref="_ws"/> makes the old
+    /// <see cref="ReadLoopAsync"/> observe cancellation / a closed socket and exit,
+    /// so exactly one reader is ever live per logical connection.
+    ///
+    /// <para>Self-safe: a server-driven reconnect runs on the reader loop itself
+    /// (HandleDisconnect → fire-and-forget ReconnectAsync). Draining our OWN task
+    /// would just burn the bounded wait, so we skip the drain when the caller IS
+    /// the reader; cancelling the token + disposing the socket still stops it
+    /// promptly as it unwinds back up the stack.</para>
+    /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Best-effort teardown: cancelling the old token, draining the old reader, and disposing the old socket must not throw out of the reconnect path; each error is logged and swallowed so the fresh connection still arms.")]
+    private async Task StopReaderAsync()
+    {
+        var oldCts = _cts;
+        var oldWs = _ws;
+        var oldReader = _readerTask;
+
+        if (oldCts is not null)
+        {
+            try { await oldCts.CancelAsync().ConfigureAwait(false); }
+            catch (Exception ex) { _logger.Debug($"StopReader cts cancel: {ex.Message}"); }
+        }
+
+        // Only drain when we are NOT the reader task ourselves (a server-driven
+        // reconnect is invoked from inside the reader loop; awaiting our own
+        // completion here would deadlock/time-out uselessly).
+        if (oldReader is not null && oldReader.Id != Task.CurrentId)
+        {
+            try { await oldReader.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false); }
+            catch (Exception ex) { _logger.Debug($"StopReader drain: {ex.Message}"); }
+        }
+
+        oldWs?.Dispose();
+        oldCts?.Dispose();
+        _readerTask = null;
     }
 
     /// <summary>Reconnect with exponential back-off (1s to 30s cap).</summary>
@@ -619,7 +749,7 @@ public class Client : IAsyncDisposable
     public virtual void Send(Dictionary<string, object?> msg)
     {
         var json = JsonSerializer.Serialize(msg, JsonOptions);
-        _logger.Debug($">> {json}");
+        _logger.Debug($">> {ScrubFrame(json)}");
 
         var ws = _ws;
         if (ws is null || ws.State != WebSocketState.Open)
@@ -673,7 +803,7 @@ public class Client : IAsyncDisposable
     [SuppressMessage("Design", "CA1031", Justification = "Tolerant parse boundary: an unparseable inbound frame is logged and dropped rather than crashing the dispatcher.")]
     public void HandleMessage(string raw)
     {
-        _logger.Debug($"<< {raw}");
+        _logger.Debug($"<< {ScrubFrame(raw)}");
 
         Dictionary<string, object?>? data;
         try

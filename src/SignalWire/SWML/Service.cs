@@ -568,7 +568,7 @@ public class Service
         string description,
         Dictionary<string, object> parameters,
         Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> handler,
-        bool secure = false)
+        bool secure = true)
     {
         ArgumentNullException.ThrowIfNull(parameters);
 
