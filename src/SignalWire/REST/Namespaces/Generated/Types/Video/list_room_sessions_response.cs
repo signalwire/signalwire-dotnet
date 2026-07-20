@@ -22,9 +22,9 @@ public class ListRoomSessionsResponse
 {
     /// <summary>Wire field <c>links</c>.</summary>
     [JsonPropertyName("links")]
-    public Dictionary<string, object?>? links { get; set; }
+    public Dictionary<string, object?>? Links { get; set; }
 
     /// <summary>Wire field <c>data</c>.</summary>
     [JsonPropertyName("data")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Video.RoomSession>? data { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Video.RoomSession>? Data { get; set; }
 }

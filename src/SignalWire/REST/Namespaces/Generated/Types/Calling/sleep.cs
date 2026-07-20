@@ -22,5 +22,5 @@ public class Sleep
 {
     /// <summary>Wire field <c>sleep</c>.</summary>
     [JsonPropertyName("sleep")]
-    public Dictionary<string, object?>? sleep { get; set; }
+    public Dictionary<string, object?>? Sleep_ { get; set; }
 }

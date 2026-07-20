@@ -22,25 +22,25 @@ public class Order
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>state</c>.</summary>
     [JsonPropertyName("state")]
-    public string? state { get; set; }
+    public string? State { get; set; }
 
     /// <summary>Wire field <c>processed_at</c>.</summary>
     [JsonPropertyName("processed_at")]
-    public string? processed_at { get; set; }
+    public string? ProcessedAt { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public string? status_callback_url { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 }

@@ -22,57 +22,57 @@ public class CreateRoomRequest
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public string? display_name { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public string? description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>max_members</c>.</summary>
     [JsonPropertyName("max_members")]
-    public long? max_members { get; set; }
+    public long? MaxMembers { get; set; }
 
     /// <summary>Wire field <c>quality</c>.</summary>
     [JsonPropertyName("quality")]
-    public Dictionary<string, object?>? quality { get; set; }
+    public Dictionary<string, object?>? Quality { get; set; }
 
     /// <summary>Wire field <c>join_from</c>.</summary>
     [JsonPropertyName("join_from")]
-    public string? join_from { get; set; }
+    public string? JoinFrom { get; set; }
 
     /// <summary>Wire field <c>join_until</c>.</summary>
     [JsonPropertyName("join_until")]
-    public string? join_until { get; set; }
+    public string? JoinUntil { get; set; }
 
     /// <summary>Wire field <c>remove_at</c>.</summary>
     [JsonPropertyName("remove_at")]
-    public string? remove_at { get; set; }
+    public string? RemoveAt { get; set; }
 
     /// <summary>Wire field <c>remove_after_seconds_elapsed</c>.</summary>
     [JsonPropertyName("remove_after_seconds_elapsed")]
-    public long? remove_after_seconds_elapsed { get; set; }
+    public long? RemoveAfterSecondsElapsed { get; set; }
 
     /// <summary>Wire field <c>layout</c>.</summary>
     [JsonPropertyName("layout")]
-    public Dictionary<string, object?>? layout { get; set; }
+    public Dictionary<string, object?>? Layout { get; set; }
 
     /// <summary>Wire field <c>record_on_start</c>.</summary>
     [JsonPropertyName("record_on_start")]
-    public bool? record_on_start { get; set; }
+    public bool? RecordOnStart { get; set; }
 
     /// <summary>Wire field <c>enable_room_previews</c>.</summary>
     [JsonPropertyName("enable_room_previews")]
-    public bool? enable_room_previews { get; set; }
+    public bool? EnableRoomPreviews { get; set; }
 
     /// <summary>Wire field <c>meta</c>.</summary>
     [JsonPropertyName("meta")]
-    public Dictionary<string, object?>? meta { get; set; }
+    public Dictionary<string, object?>? Meta { get; set; }
 
     /// <summary>Wire field <c>sync_audio_video</c>.</summary>
     [JsonPropertyName("sync_audio_video")]
-    public bool? sync_audio_video { get; set; }
+    public bool? SyncAudioVideo { get; set; }
 }

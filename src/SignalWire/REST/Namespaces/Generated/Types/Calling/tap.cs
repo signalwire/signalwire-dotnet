@@ -22,5 +22,5 @@ public class Tap
 {
     /// <summary>Wire field <c>tap</c>.</summary>
     [JsonPropertyName("tap")]
-    public Dictionary<string, object?>? tap { get; set; }
+    public Dictionary<string, object?>? Tap_ { get; set; }
 }

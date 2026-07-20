@@ -22,5 +22,5 @@ public class SendDigits
 {
     /// <summary>Wire field <c>send_digits</c>.</summary>
     [JsonPropertyName("send_digits")]
-    public Dictionary<string, object?>? send_digits { get; set; }
+    public Dictionary<string, object?>? SendDigits_ { get; set; }
 }

@@ -22,45 +22,45 @@ public class CallingCollectParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>continue</c>.</summary>
     [JsonPropertyName("continue")]
-    public bool? @continue { get; set; }
+    public bool? Continue { get; set; }
 
     /// <summary>Wire field <c>continuous</c>.</summary>
     [JsonPropertyName("continuous")]
-    public bool? continuous { get; set; }
+    public bool? Continuous { get; set; }
 
     /// <summary>Wire field <c>control_id</c>.</summary>
     [JsonPropertyName("control_id")]
-    public string? control_id { get; set; }
+    public string? ControlId { get; set; }
 
     /// <summary>Wire field <c>digits</c>.</summary>
     [JsonPropertyName("digits")]
-    public Dictionary<string, object?>? digits { get; set; }
+    public Dictionary<string, object?>? Digits { get; set; }
 
     /// <summary>Wire field <c>initial_timeout</c>.</summary>
     [JsonPropertyName("initial_timeout")]
-    public double? initial_timeout { get; set; }
+    public double? InitialTimeout { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>partial_results</c>.</summary>
     [JsonPropertyName("partial_results")]
-    public bool? partial_results { get; set; }
+    public bool? PartialResults { get; set; }
 
     /// <summary>Wire field <c>send_start_of_input</c>.</summary>
     [JsonPropertyName("send_start_of_input")]
-    public bool? send_start_of_input { get; set; }
+    public bool? SendStartOfInput { get; set; }
 
     /// <summary>Wire field <c>speech</c>.</summary>
     [JsonPropertyName("speech")]
-    public Dictionary<string, object?>? speech { get; set; }
+    public Dictionary<string, object?>? Speech { get; set; }
 
     /// <summary>Wire field <c>start_input_timers</c>.</summary>
     [JsonPropertyName("start_input_timers")]
-    public bool? start_input_timers { get; set; }
+    public bool? StartInputTimers { get; set; }
 }

@@ -22,9 +22,9 @@ public class SignalwirePingParams
 {
     /// <summary>Wire field <c>payload</c>.</summary>
     [JsonPropertyName("payload")]
-    public string? payload { get; set; }
+    public string? Payload { get; set; }
 
     /// <summary>Wire field <c>timestamp</c>.</summary>
     [JsonPropertyName("timestamp")]
-    public double? timestamp { get; set; }
+    public double? Timestamp { get; set; }
 }

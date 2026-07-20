@@ -22,37 +22,37 @@ public class CallCreateParamsSWML
 {
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public string? from { get; set; }
+    public string? From { get; set; }
 
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public string? to { get; set; }
+    public string? To { get; set; }
 
     /// <summary>Wire field <c>caller_id</c>.</summary>
     [JsonPropertyName("caller_id")]
-    public string? caller_id { get; set; }
+    public string? CallerId { get; set; }
 
     /// <summary>Wire field <c>fallback_url</c>.</summary>
     [JsonPropertyName("fallback_url")]
-    public string? fallback_url { get; set; }
+    public string? FallbackUrl { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? status_url { get; set; }
+    public string? StatusUrl { get; set; }
 
     /// <summary>Wire field <c>status_events</c>.</summary>
     [JsonPropertyName("status_events")]
-    public List<object?>? status_events { get; set; }
+    public List<object?>? StatusEvents { get; set; }
 
     /// <summary>Wire field <c>url_method</c>.</summary>
     [JsonPropertyName("url_method")]
-    public string? url_method { get; set; }
+    public string? UrlMethod { get; set; }
 
     /// <summary>Wire field <c>codecs</c>.</summary>
     [JsonPropertyName("codecs")]
-    public Dictionary<string, object?>? codecs { get; set; }
+    public Dictionary<string, object?>? Codecs { get; set; }
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public Dictionary<string, object?>? swml { get; set; }
+    public Dictionary<string, object?>? Swml { get; set; }
 }

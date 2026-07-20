@@ -22,13 +22,13 @@ public class CreateVerifiedCallerIDRequest
 {
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
-    public string? number { get; set; }
+    public string? Number { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>extension</c>.</summary>
     [JsonPropertyName("extension")]
-    public string? extension { get; set; }
+    public string? Extension { get; set; }
 }

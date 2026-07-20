@@ -22,5 +22,5 @@ public class LogEventsListResponse
 {
     /// <summary>Wire field <c>data</c>.</summary>
     [JsonPropertyName("data")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Voice.LogEvent>? data { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Voice.LogEvent>? Data { get; set; }
 }

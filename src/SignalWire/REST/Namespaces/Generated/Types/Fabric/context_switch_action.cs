@@ -22,5 +22,5 @@ public class ContextSwitchAction
 {
     /// <summary>Wire field <c>context_switch</c>.</summary>
     [JsonPropertyName("context_switch")]
-    public Dictionary<string, object?>? context_switch { get; set; }
+    public Dictionary<string, object?>? ContextSwitch { get; set; }
 }

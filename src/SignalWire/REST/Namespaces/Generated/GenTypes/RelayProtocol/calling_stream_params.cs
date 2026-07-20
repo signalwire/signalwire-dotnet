@@ -22,53 +22,53 @@ public class CallingStreamParams
 {
     /// <summary>Wire field <c>async</c>.</summary>
     [JsonPropertyName("async")]
-    public bool? async { get; set; }
+    public bool? Async { get; set; }
 
     /// <summary>Wire field <c>authorization_bearer_token</c>.</summary>
     [JsonPropertyName("authorization_bearer_token")]
-    public string? authorization_bearer_token { get; set; }
+    public string? AuthorizationBearerToken { get; set; }
 
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>codec</c>.</summary>
     [JsonPropertyName("codec")]
-    public string? codec { get; set; }
+    public string? Codec { get; set; }
 
     /// <summary>Wire field <c>control_id</c>.</summary>
     [JsonPropertyName("control_id")]
-    public string? control_id { get; set; }
+    public string? ControlId { get; set; }
 
     /// <summary>Wire field <c>custom_parameters</c>.</summary>
     [JsonPropertyName("custom_parameters")]
-    public object? custom_parameters { get; set; }
+    public object? CustomParameters { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? status_url { get; set; }
+    public string? StatusUrl { get; set; }
 
     /// <summary>Wire field <c>status_url_method</c>.</summary>
     [JsonPropertyName("status_url_method")]
-    public string? status_url_method { get; set; }
+    public string? StatusUrlMethod { get; set; }
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public bool? swml { get; set; }
+    public bool? Swml { get; set; }
 
     /// <summary>Wire field <c>track</c>.</summary>
     [JsonPropertyName("track")]
-    public string? track { get; set; }
+    public string? Track { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public string? url { get; set; }
+    public string? Url { get; set; }
 }

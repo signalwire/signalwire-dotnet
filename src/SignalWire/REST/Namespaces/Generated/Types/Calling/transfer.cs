@@ -22,5 +22,5 @@ public class Transfer
 {
     /// <summary>Wire field <c>transfer</c>.</summary>
     [JsonPropertyName("transfer")]
-    public Dictionary<string, object?>? transfer { get; set; }
+    public Dictionary<string, object?>? Transfer_ { get; set; }
 }

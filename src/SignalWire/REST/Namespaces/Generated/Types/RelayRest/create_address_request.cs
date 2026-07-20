@@ -22,45 +22,45 @@ public class CreateAddressRequest
 {
     /// <summary>Wire field <c>label</c>.</summary>
     [JsonPropertyName("label")]
-    public string? label { get; set; }
+    public string? Label { get; set; }
 
     /// <summary>Wire field <c>country</c>.</summary>
     [JsonPropertyName("country")]
-    public string? country { get; set; }
+    public string? Country { get; set; }
 
     /// <summary>Wire field <c>first_name</c>.</summary>
     [JsonPropertyName("first_name")]
-    public string? first_name { get; set; }
+    public string? FirstName { get; set; }
 
     /// <summary>Wire field <c>last_name</c>.</summary>
     [JsonPropertyName("last_name")]
-    public string? last_name { get; set; }
+    public string? LastName { get; set; }
 
     /// <summary>Wire field <c>street_number</c>.</summary>
     [JsonPropertyName("street_number")]
-    public string? street_number { get; set; }
+    public string? StreetNumber { get; set; }
 
     /// <summary>Wire field <c>street_name</c>.</summary>
     [JsonPropertyName("street_name")]
-    public string? street_name { get; set; }
+    public string? StreetName { get; set; }
 
     /// <summary>Wire field <c>address_type</c>.</summary>
     [JsonPropertyName("address_type")]
-    public Dictionary<string, object?>? address_type { get; set; }
+    public Dictionary<string, object?>? AddressType { get; set; }
 
     /// <summary>Wire field <c>address_number</c>.</summary>
     [JsonPropertyName("address_number")]
-    public string? address_number { get; set; }
+    public string? AddressNumber { get; set; }
 
     /// <summary>Wire field <c>city</c>.</summary>
     [JsonPropertyName("city")]
-    public string? city { get; set; }
+    public string? City { get; set; }
 
     /// <summary>Wire field <c>state</c>.</summary>
     [JsonPropertyName("state")]
-    public string? state { get; set; }
+    public string? State { get; set; }
 
     /// <summary>Wire field <c>postal_code</c>.</summary>
     [JsonPropertyName("postal_code")]
-    public string? postal_code { get; set; }
+    public string? PostalCode { get; set; }
 }

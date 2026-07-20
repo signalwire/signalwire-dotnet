@@ -22,41 +22,41 @@ public class Webhook
 {
     /// <summary>Wire field <c>expressions</c>.</summary>
     [JsonPropertyName("expressions")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.Expression>? expressions { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.Expression>? Expressions { get; set; }
 
     /// <summary>Wire field <c>error_keys</c>.</summary>
     [JsonPropertyName("error_keys")]
-    public Dictionary<string, object?>? error_keys { get; set; }
+    public Dictionary<string, object?>? ErrorKeys { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public string? url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>foreach</c>.</summary>
     [JsonPropertyName("foreach")]
-    public Dictionary<string, object?>? @foreach { get; set; }
+    public Dictionary<string, object?>? Foreach { get; set; }
 
     /// <summary>Wire field <c>headers</c>.</summary>
     [JsonPropertyName("headers")]
-    public Dictionary<string, object?>? headers { get; set; }
+    public Dictionary<string, object?>? Headers { get; set; }
 
     /// <summary>Wire field <c>method</c>.</summary>
     [JsonPropertyName("method")]
-    public string? method { get; set; }
+    public string? Method { get; set; }
 
     /// <summary>Wire field <c>input_args_as_params</c>.</summary>
     [JsonPropertyName("input_args_as_params")]
-    public Dictionary<string, object?>? input_args_as_params { get; set; }
+    public Dictionary<string, object?>? InputArgsAsParams { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? @params { get; set; }
+    public Dictionary<string, object?>? Params { get; set; }
 
     /// <summary>Wire field <c>require_args</c>.</summary>
     [JsonPropertyName("require_args")]
-    public Dictionary<string, object?>? require_args { get; set; }
+    public Dictionary<string, object?>? RequireArgs { get; set; }
 
     /// <summary>Wire field <c>output</c>.</summary>
     [JsonPropertyName("output")]
-    public Dictionary<string, object?>? output { get; set; }
+    public Dictionary<string, object?>? Output { get; set; }
 }

@@ -22,5 +22,5 @@ public class ResourceSipEndpointAssignRequest
 {
     /// <summary>Wire field <c>sip_endpoint_id</c>.</summary>
     [JsonPropertyName("sip_endpoint_id")]
-    public Dictionary<string, object?>? sip_endpoint_id { get; set; }
+    public Dictionary<string, object?>? SipEndpointId { get; set; }
 }

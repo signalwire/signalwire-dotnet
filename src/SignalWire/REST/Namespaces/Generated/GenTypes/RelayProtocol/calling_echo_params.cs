@@ -22,21 +22,21 @@ public class CallingEchoParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? status_url { get; set; }
+    public string? StatusUrl { get; set; }
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public bool? swml { get; set; }
+    public bool? Swml { get; set; }
 
     /// <summary>Wire field <c>timeout</c>.</summary>
     [JsonPropertyName("timeout")]
-    public double? timeout { get; set; }
+    public double? Timeout { get; set; }
 }

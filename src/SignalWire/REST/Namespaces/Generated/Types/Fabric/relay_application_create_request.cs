@@ -22,13 +22,13 @@ public class RelayApplicationCreateRequest
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>topic</c>.</summary>
     [JsonPropertyName("topic")]
-    public string? topic { get; set; }
+    public string? Topic { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_url</c>.</summary>
     [JsonPropertyName("call_status_callback_url")]
-    public string? call_status_callback_url { get; set; }
+    public string? CallStatusCallbackUrl { get; set; }
 }

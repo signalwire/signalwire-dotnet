@@ -86,9 +86,15 @@ def _load_yaml(path: Path) -> dict:
     return yaml.safe_load(path.read_text())
 
 
-def _emit(cs_ns, subdir, cs_name, props, desc, ref_names):
+def _emit(cs_ns, subdir, cs_name, props, desc, ref_names, pascal_props=False):
+    # pascal_props: only the swaig-ACTIONS module (SA_NS) is method-less-on-surface
+    # and ABSENT from the sig-accessor set, so its DTO properties may be PascalCased
+    # (DOTNET-2). The swaig-REQUEST + post-PROMPT modules ARE accessor-bearing
+    # (their property names the oracle records wire-key-verbatim), so they stay
+    # verbatim (pascal_props=False).
     fn = "/".join(subdir) + f"/{GR.snake(cs_name)}.cs"
-    src = GR.emit_methodless_class(cs_ns, cs_name, props, desc, ref_names=ref_names)
+    src = GR.emit_methodless_class(cs_ns, cs_name, props, desc, ref_names=ref_names,
+                                   pascal_props=pascal_props)
     return fn, src
 
 
@@ -171,9 +177,11 @@ def _build_swaig_actions(psdk: Path) -> dict:
             if cs_name in emitted:
                 continue
             emitted.add(cs_name)
-            # swaig-actions are NOT in the sig oracle -> method-less both sides.
+            # swaig-actions are NOT in the sig oracle -> method-less both sides;
+            # PascalCase props (DOTNET-2) — wire preserved by [JsonPropertyName].
             fn, src = _emit(SA_NS, SA_SUBDIR, cs_name, b.get("properties") or {},
-                            f"swaig-response action {verb!r} value object", {})
+                            f"swaig-response action {verb!r} value object", {},
+                            pascal_props=True)
             outs[fn] = src
     return outs
 

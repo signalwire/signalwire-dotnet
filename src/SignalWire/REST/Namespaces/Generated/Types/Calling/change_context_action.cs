@@ -22,5 +22,5 @@ public class ChangeContextAction
 {
     /// <summary>Wire field <c>change_context</c>.</summary>
     [JsonPropertyName("change_context")]
-    public string? change_context { get; set; }
+    public string? ChangeContext { get; set; }
 }

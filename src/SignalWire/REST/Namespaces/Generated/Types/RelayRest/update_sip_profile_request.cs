@@ -22,21 +22,21 @@ public class UpdateSipProfileRequest
 {
     /// <summary>Wire field <c>domain_identifier</c>.</summary>
     [JsonPropertyName("domain_identifier")]
-    public string? domain_identifier { get; set; }
+    public string? DomainIdentifier { get; set; }
 
     /// <summary>Wire field <c>default_codecs</c>.</summary>
     [JsonPropertyName("default_codecs")]
-    public List<object?>? default_codecs { get; set; }
+    public List<object?>? DefaultCodecs { get; set; }
 
     /// <summary>Wire field <c>default_ciphers</c>.</summary>
     [JsonPropertyName("default_ciphers")]
-    public List<object?>? default_ciphers { get; set; }
+    public List<object?>? DefaultCiphers { get; set; }
 
     /// <summary>Wire field <c>default_encryption</c>.</summary>
     [JsonPropertyName("default_encryption")]
-    public string? default_encryption { get; set; }
+    public string? DefaultEncryption { get; set; }
 
     /// <summary>Wire field <c>default_send_as</c>.</summary>
     [JsonPropertyName("default_send_as")]
-    public string? default_send_as { get; set; }
+    public string? DefaultSendAs { get; set; }
 }

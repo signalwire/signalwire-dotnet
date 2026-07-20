@@ -22,49 +22,49 @@ public class Log
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>source</c>.</summary>
     [JsonPropertyName("source")]
-    public Dictionary<string, object?>? source { get; set; }
+    public Dictionary<string, object?>? Source { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public Dictionary<string, object?>? type { get; set; }
+    public Dictionary<string, object?>? Type { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public string? url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>room_name</c>.</summary>
     [JsonPropertyName("room_name")]
-    public Dictionary<string, object?>? room_name { get; set; }
+    public Dictionary<string, object?>? RoomName { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? status { get; set; }
+    public Dictionary<string, object?>? Status { get; set; }
 
     /// <summary>Wire field <c>locked</c>.</summary>
     [JsonPropertyName("locked")]
-    public bool? locked { get; set; }
+    public bool? Locked { get; set; }
 
     /// <summary>Wire field <c>started_at</c>.</summary>
     [JsonPropertyName("started_at")]
-    public Dictionary<string, object?>? started_at { get; set; }
+    public Dictionary<string, object?>? StartedAt { get; set; }
 
     /// <summary>Wire field <c>ended_at</c>.</summary>
     [JsonPropertyName("ended_at")]
-    public Dictionary<string, object?>? ended_at { get; set; }
+    public Dictionary<string, object?>? EndedAt { get; set; }
 
     /// <summary>Wire field <c>charge</c>.</summary>
     [JsonPropertyName("charge")]
-    public double? charge { get; set; }
+    public double? Charge { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>charge_details</c>.</summary>
     [JsonPropertyName("charge_details")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Video.ChargeDetail>? charge_details { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Video.ChargeDetail>? ChargeDetails { get; set; }
 }

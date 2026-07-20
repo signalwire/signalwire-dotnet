@@ -22,5 +22,5 @@ public class SignalwireDisconnectParams
 {
     /// <summary>Wire field <c>restart</c>.</summary>
     [JsonPropertyName("restart")]
-    public bool? restart { get; set; }
+    public bool? Restart { get; set; }
 }

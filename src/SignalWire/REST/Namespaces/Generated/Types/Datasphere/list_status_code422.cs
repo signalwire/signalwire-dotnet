@@ -22,5 +22,5 @@ public class ListStatusCode422
 {
     /// <summary>Wire field <c>errors</c>.</summary>
     [JsonPropertyName("errors")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Datasphere.Types_StatusCodes_RestApiErrorItem>? errors { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Datasphere.Types_StatusCodes_RestApiErrorItem>? Errors { get; set; }
 }

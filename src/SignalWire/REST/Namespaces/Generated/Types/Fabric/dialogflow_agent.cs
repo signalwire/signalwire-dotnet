@@ -22,29 +22,29 @@ public class DialogflowAgent
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>say_enabled</c>.</summary>
     [JsonPropertyName("say_enabled")]
-    public bool? say_enabled { get; set; }
+    public bool? SayEnabled { get; set; }
 
     /// <summary>Wire field <c>say</c>.</summary>
     [JsonPropertyName("say")]
-    public string? say { get; set; }
+    public string? Say { get; set; }
 
     /// <summary>Wire field <c>voice</c>.</summary>
     [JsonPropertyName("voice")]
-    public string? voice { get; set; }
+    public string? Voice { get; set; }
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public string? display_name { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>dialogflow_reference_id</c>.</summary>
     [JsonPropertyName("dialogflow_reference_id")]
-    public Dictionary<string, object?>? dialogflow_reference_id { get; set; }
+    public Dictionary<string, object?>? DialogflowReferenceId { get; set; }
 
     /// <summary>Wire field <c>dialogflow_reference_name</c>.</summary>
     [JsonPropertyName("dialogflow_reference_name")]
-    public string? dialogflow_reference_name { get; set; }
+    public string? DialogflowReferenceName { get; set; }
 }

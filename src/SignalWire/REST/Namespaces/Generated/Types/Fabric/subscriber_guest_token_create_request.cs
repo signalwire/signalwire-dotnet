@@ -22,9 +22,9 @@ public class SubscriberGuestTokenCreateRequest
 {
     /// <summary>Wire field <c>allowed_addresses</c>.</summary>
     [JsonPropertyName("allowed_addresses")]
-    public List<object?>? allowed_addresses { get; set; }
+    public List<object?>? AllowedAddresses { get; set; }
 
     /// <summary>Wire field <c>expire_at</c>.</summary>
     [JsonPropertyName("expire_at")]
-    public long? expire_at { get; set; }
+    public long? ExpireAt { get; set; }
 }

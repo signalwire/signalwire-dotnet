@@ -22,5 +22,5 @@ public class StopAction
 {
     /// <summary>Wire field <c>stop</c>.</summary>
     [JsonPropertyName("stop")]
-    public Dictionary<string, object?>? stop { get; set; }
+    public Dictionary<string, object?>? Stop { get; set; }
 }

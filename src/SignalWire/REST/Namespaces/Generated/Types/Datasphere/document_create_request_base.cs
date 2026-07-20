@@ -22,9 +22,9 @@ public class DocumentCreateRequestBase
 {
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public string? url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>tags</c>.</summary>
     [JsonPropertyName("tags")]
-    public List<object?>? tags { get; set; }
+    public List<object?>? Tags { get; set; }
 }

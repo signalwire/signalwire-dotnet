@@ -22,13 +22,13 @@ public class Expression
 {
     /// <summary>Wire field <c>string</c>.</summary>
     [JsonPropertyName("string")]
-    public string? @string { get; set; }
+    public string? String { get; set; }
 
     /// <summary>Wire field <c>pattern</c>.</summary>
     [JsonPropertyName("pattern")]
-    public string? pattern { get; set; }
+    public string? Pattern { get; set; }
 
     /// <summary>Wire field <c>output</c>.</summary>
     [JsonPropertyName("output")]
-    public Dictionary<string, object?>? output { get; set; }
+    public Dictionary<string, object?>? Output { get; set; }
 }

@@ -22,21 +22,21 @@ public class EnterQueueObject
 {
     /// <summary>Wire field <c>queue_name</c>.</summary>
     [JsonPropertyName("queue_name")]
-    public string? queue_name { get; set; }
+    public string? QueueName { get; set; }
 
     /// <summary>Wire field <c>transfer_after_bridge</c>.</summary>
     [JsonPropertyName("transfer_after_bridge")]
-    public Dictionary<string, object?>? transfer_after_bridge { get; set; }
+    public Dictionary<string, object?>? TransferAfterBridge { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? status_url { get; set; }
+    public string? StatusUrl { get; set; }
 
     /// <summary>Wire field <c>wait_url</c>.</summary>
     [JsonPropertyName("wait_url")]
-    public Dictionary<string, object?>? wait_url { get; set; }
+    public Dictionary<string, object?>? WaitUrl { get; set; }
 
     /// <summary>Wire field <c>wait_time</c>.</summary>
     [JsonPropertyName("wait_time")]
-    public Dictionary<string, object?>? wait_time { get; set; }
+    public Dictionary<string, object?>? WaitTime { get; set; }
 }

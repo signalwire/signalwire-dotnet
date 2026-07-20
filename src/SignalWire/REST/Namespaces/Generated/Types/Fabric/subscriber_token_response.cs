@@ -22,13 +22,13 @@ public class SubscriberTokenResponse
 {
     /// <summary>Wire field <c>subscriber_id</c>.</summary>
     [JsonPropertyName("subscriber_id")]
-    public Dictionary<string, object?>? subscriber_id { get; set; }
+    public Dictionary<string, object?>? SubscriberId { get; set; }
 
     /// <summary>Wire field <c>token</c>.</summary>
     [JsonPropertyName("token")]
-    public Dictionary<string, object?>? token { get; set; }
+    public Dictionary<string, object?>? Token { get; set; }
 
     /// <summary>Wire field <c>refresh_token</c>.</summary>
     [JsonPropertyName("refresh_token")]
-    public Dictionary<string, object?>? refresh_token { get; set; }
+    public Dictionary<string, object?>? RefreshToken { get; set; }
 }

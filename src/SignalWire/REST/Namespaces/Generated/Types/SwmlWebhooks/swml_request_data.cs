@@ -22,17 +22,17 @@ public class SwmlRequestData
 {
     /// <summary>Wire field <c>call</c>.</summary>
     [JsonPropertyName("call")]
-    public SignalWire.REST.Namespaces.Generated.Types.SwmlWebhooks.SwmlRequestCall? call { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.SwmlWebhooks.SwmlRequestCall? Call { get; set; }
 
     /// <summary>Wire field <c>vars</c>.</summary>
     [JsonPropertyName("vars")]
-    public Dictionary<string, object?>? vars { get; set; }
+    public Dictionary<string, object?>? Vars { get; set; }
 
     /// <summary>Wire field <c>envs</c>.</summary>
     [JsonPropertyName("envs")]
-    public Dictionary<string, object?>? envs { get; set; }
+    public Dictionary<string, object?>? Envs { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? @params { get; set; }
+    public Dictionary<string, object?>? Params { get; set; }
 }

@@ -22,23 +22,23 @@ public class AmazonBedrockObject
 {
     /// <summary>Wire field <c>global_data</c>.</summary>
     [JsonPropertyName("global_data")]
-    public Dictionary<string, object?>? global_data { get; set; }
+    public Dictionary<string, object?>? GlobalData { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? @params { get; set; }
+    public Dictionary<string, object?>? Params { get; set; }
 
     /// <summary>Wire field <c>post_prompt</c>.</summary>
     [JsonPropertyName("post_prompt")]
-    public Dictionary<string, object?>? post_prompt { get; set; }
+    public Dictionary<string, object?>? PostPrompt { get; set; }
 
     /// <summary>Wire field <c>post_prompt_url</c>.</summary>
     [JsonPropertyName("post_prompt_url")]
-    public string? post_prompt_url { get; set; }
+    public string? PostPromptUrl { get; set; }
 
     /// <summary>Wire field <c>prompt</c>.</summary>
     [JsonPropertyName("prompt")]
-    public Dictionary<string, object?>? prompt { get; set; }
+    public Dictionary<string, object?>? Prompt { get; set; }
 
     /// <summary>Wire field <c>SWAIG</c>.</summary>
     [JsonPropertyName("SWAIG")]

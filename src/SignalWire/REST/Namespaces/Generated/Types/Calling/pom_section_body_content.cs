@@ -22,25 +22,25 @@ public class PomSectionBodyContent
 {
     /// <summary>Wire field <c>title</c>.</summary>
     [JsonPropertyName("title")]
-    public string? title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>Wire field <c>subsections</c>.</summary>
     [JsonPropertyName("subsections")]
-    public List<object?>? subsections { get; set; }
+    public List<object?>? Subsections { get; set; }
 
     /// <summary>Wire field <c>numbered</c>.</summary>
     [JsonPropertyName("numbered")]
-    public Dictionary<string, object?>? numbered { get; set; }
+    public Dictionary<string, object?>? Numbered { get; set; }
 
     /// <summary>Wire field <c>numberedBullets</c>.</summary>
     [JsonPropertyName("numberedBullets")]
-    public Dictionary<string, object?>? numberedBullets { get; set; }
+    public Dictionary<string, object?>? NumberedBullets { get; set; }
 
     /// <summary>Wire field <c>body</c>.</summary>
     [JsonPropertyName("body")]
-    public string? body { get; set; }
+    public string? Body { get; set; }
 
     /// <summary>Wire field <c>bullets</c>.</summary>
     [JsonPropertyName("bullets")]
-    public List<object?>? bullets { get; set; }
+    public List<object?>? Bullets { get; set; }
 }

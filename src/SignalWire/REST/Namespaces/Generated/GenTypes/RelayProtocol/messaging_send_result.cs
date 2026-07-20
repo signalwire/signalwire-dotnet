@@ -22,13 +22,13 @@ public class MessagingSendResult
 {
     /// <summary>Wire field <c>code</c>.</summary>
     [JsonPropertyName("code")]
-    public string? code { get; set; }
+    public string? Code { get; set; }
 
     /// <summary>Wire field <c>message</c>.</summary>
     [JsonPropertyName("message")]
-    public string? message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>Wire field <c>message_id</c>.</summary>
     [JsonPropertyName("message_id")]
-    public string? message_id { get; set; }
+    public string? MessageId { get; set; }
 }

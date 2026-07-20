@@ -22,17 +22,17 @@ public class CXMLScriptUpdateRequest
 {
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public string? display_name { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>contents</c>.</summary>
     [JsonPropertyName("contents")]
-    public string? contents { get; set; }
+    public string? Contents { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public string? status_callback_url { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
-    public Dictionary<string, object?>? status_callback_method { get; set; }
+    public Dictionary<string, object?>? StatusCallbackMethod { get; set; }
 }

@@ -22,21 +22,21 @@ public class ProjectCreate
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>protect_recordings</c>.</summary>
     [JsonPropertyName("protect_recordings")]
-    public bool? protect_recordings { get; set; }
+    public bool? ProtectRecordings { get; set; }
 
     /// <summary>Wire field <c>protect_message_media</c>.</summary>
     [JsonPropertyName("protect_message_media")]
-    public bool? protect_message_media { get; set; }
+    public bool? ProtectMessageMedia { get; set; }
 
     /// <summary>Wire field <c>protect_fax_media</c>.</summary>
     [JsonPropertyName("protect_fax_media")]
-    public bool? protect_fax_media { get; set; }
+    public bool? ProtectFaxMedia { get; set; }
 
     /// <summary>Wire field <c>force_https_requests</c>.</summary>
     [JsonPropertyName("force_https_requests")]
-    public bool? force_https_requests { get; set; }
+    public bool? ForceHttpsRequests { get; set; }
 }

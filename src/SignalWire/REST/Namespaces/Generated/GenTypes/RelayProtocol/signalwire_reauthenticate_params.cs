@@ -22,9 +22,9 @@ public class SignalwireReauthenticateParams
 {
     /// <summary>Wire field <c>authentication</c>.</summary>
     [JsonPropertyName("authentication")]
-    public Dictionary<string, object?>? authentication { get; set; }
+    public Dictionary<string, object?>? Authentication { get; set; }
 
     /// <summary>Wire field <c>dpop_token</c>.</summary>
     [JsonPropertyName("dpop_token")]
-    public string? dpop_token { get; set; }
+    public string? DpopToken { get; set; }
 }

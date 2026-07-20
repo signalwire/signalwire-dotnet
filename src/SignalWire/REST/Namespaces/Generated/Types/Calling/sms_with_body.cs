@@ -22,21 +22,21 @@ public class SMSWithBody
 {
     /// <summary>Wire field <c>to_number</c>.</summary>
     [JsonPropertyName("to_number")]
-    public string? to_number { get; set; }
+    public string? ToNumber { get; set; }
 
     /// <summary>Wire field <c>from_number</c>.</summary>
     [JsonPropertyName("from_number")]
-    public string? from_number { get; set; }
+    public string? FromNumber { get; set; }
 
     /// <summary>Wire field <c>region</c>.</summary>
     [JsonPropertyName("region")]
-    public string? region { get; set; }
+    public string? Region { get; set; }
 
     /// <summary>Wire field <c>tags</c>.</summary>
     [JsonPropertyName("tags")]
-    public List<object?>? tags { get; set; }
+    public List<object?>? Tags { get; set; }
 
     /// <summary>Wire field <c>body</c>.</summary>
     [JsonPropertyName("body")]
-    public string? body { get; set; }
+    public string? Body { get; set; }
 }

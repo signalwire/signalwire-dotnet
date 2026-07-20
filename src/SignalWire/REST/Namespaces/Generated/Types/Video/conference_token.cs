@@ -22,17 +22,17 @@ public class ConferenceToken
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? name { get; set; }
+    public Dictionary<string, object?>? Name { get; set; }
 
     /// <summary>Wire field <c>token</c>.</summary>
     [JsonPropertyName("token")]
-    public string? token { get; set; }
+    public string? Token { get; set; }
 
     /// <summary>Wire field <c>scopes</c>.</summary>
     [JsonPropertyName("scopes")]
-    public List<object?>? scopes { get; set; }
+    public List<object?>? Scopes { get; set; }
 }

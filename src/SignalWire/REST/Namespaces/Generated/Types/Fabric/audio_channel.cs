@@ -22,5 +22,5 @@ public class AudioChannel
 {
     /// <summary>Wire field <c>audio</c>.</summary>
     [JsonPropertyName("audio")]
-    public string? audio { get; set; }
+    public string? Audio { get; set; }
 }

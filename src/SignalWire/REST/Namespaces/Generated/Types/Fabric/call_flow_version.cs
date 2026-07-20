@@ -22,25 +22,25 @@ public class CallFlowVersion
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>version</c>.</summary>
     [JsonPropertyName("version")]
-    public string? version { get; set; }
+    public string? Version { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 
     /// <summary>Wire field <c>flow_data</c>.</summary>
     [JsonPropertyName("flow_data")]
-    public string? flow_data { get; set; }
+    public string? FlowData { get; set; }
 
     /// <summary>Wire field <c>relayml</c>.</summary>
     [JsonPropertyName("relayml")]
-    public string? relayml { get; set; }
+    public string? Relayml { get; set; }
 }

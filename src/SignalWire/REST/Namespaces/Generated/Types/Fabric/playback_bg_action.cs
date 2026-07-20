@@ -22,5 +22,5 @@ public class PlaybackBGAction
 {
     /// <summary>Wire field <c>playback_bg</c>.</summary>
     [JsonPropertyName("playback_bg")]
-    public Dictionary<string, object?>? playback_bg { get; set; }
+    public Dictionary<string, object?>? PlaybackBg { get; set; }
 }

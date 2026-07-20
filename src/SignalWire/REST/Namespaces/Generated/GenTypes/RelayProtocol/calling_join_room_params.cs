@@ -22,29 +22,29 @@ public class CallingJoinRoomParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>hagrid_json_api_url</c>.</summary>
     [JsonPropertyName("hagrid_json_api_url")]
-    public string? hagrid_json_api_url { get; set; }
+    public string? HagridJsonApiUrl { get; set; }
 
     /// <summary>Wire field <c>hagrid_node_id</c>.</summary>
     [JsonPropertyName("hagrid_node_id")]
-    public string? hagrid_node_id { get; set; }
+    public string? HagridNodeId { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? status_url { get; set; }
+    public string? StatusUrl { get; set; }
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public bool? swml { get; set; }
+    public bool? Swml { get; set; }
 }

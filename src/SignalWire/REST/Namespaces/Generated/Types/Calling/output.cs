@@ -22,9 +22,9 @@ public class Output
 {
     /// <summary>Wire field <c>response</c>.</summary>
     [JsonPropertyName("response")]
-    public string? response { get; set; }
+    public string? Response { get; set; }
 
     /// <summary>Wire field <c>action</c>.</summary>
     [JsonPropertyName("action")]
-    public List<object?>? action { get; set; }
+    public List<object?>? Action { get; set; }
 }

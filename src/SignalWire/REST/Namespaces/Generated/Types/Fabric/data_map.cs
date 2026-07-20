@@ -22,13 +22,13 @@ public class DataMap
 {
     /// <summary>Wire field <c>output</c>.</summary>
     [JsonPropertyName("output")]
-    public Dictionary<string, object?>? output { get; set; }
+    public Dictionary<string, object?>? Output { get; set; }
 
     /// <summary>Wire field <c>expressions</c>.</summary>
     [JsonPropertyName("expressions")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.Expression>? expressions { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.Expression>? Expressions { get; set; }
 
     /// <summary>Wire field <c>webhooks</c>.</summary>
     [JsonPropertyName("webhooks")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.Webhook>? webhooks { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.Webhook>? Webhooks { get; set; }
 }

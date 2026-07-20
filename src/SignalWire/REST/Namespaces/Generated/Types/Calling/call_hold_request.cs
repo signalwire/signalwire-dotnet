@@ -22,13 +22,13 @@ public class CallHoldRequest
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>command</c>.</summary>
     [JsonPropertyName("command")]
-    public string? command { get; set; }
+    public string? Command { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? @params { get; set; }
+    public Dictionary<string, object?>? Params { get; set; }
 }

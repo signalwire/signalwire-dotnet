@@ -22,17 +22,17 @@ public class NumberGroupResponse
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>sticky_sender</c>.</summary>
     [JsonPropertyName("sticky_sender")]
-    public bool? sticky_sender { get; set; }
+    public bool? StickySender { get; set; }
 
     /// <summary>Wire field <c>phone_number_count</c>.</summary>
     [JsonPropertyName("phone_number_count")]
-    public long? phone_number_count { get; set; }
+    public long? PhoneNumberCount { get; set; }
 }

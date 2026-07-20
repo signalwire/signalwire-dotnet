@@ -22,33 +22,33 @@ public class ContextTextSteps
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>step_criteria</c>.</summary>
     [JsonPropertyName("step_criteria")]
-    public string? step_criteria { get; set; }
+    public string? StepCriteria { get; set; }
 
     /// <summary>Wire field <c>functions</c>.</summary>
     [JsonPropertyName("functions")]
-    public List<object?>? functions { get; set; }
+    public List<object?>? Functions { get; set; }
 
     /// <summary>Wire field <c>valid_contexts</c>.</summary>
     [JsonPropertyName("valid_contexts")]
-    public List<object?>? valid_contexts { get; set; }
+    public List<object?>? ValidContexts { get; set; }
 
     /// <summary>Wire field <c>skip_user_turn</c>.</summary>
     [JsonPropertyName("skip_user_turn")]
-    public Dictionary<string, object?>? skip_user_turn { get; set; }
+    public Dictionary<string, object?>? SkipUserTurn { get; set; }
 
     /// <summary>Wire field <c>end</c>.</summary>
     [JsonPropertyName("end")]
-    public bool? end { get; set; }
+    public bool? End { get; set; }
 
     /// <summary>Wire field <c>valid_steps</c>.</summary>
     [JsonPropertyName("valid_steps")]
-    public List<object?>? valid_steps { get; set; }
+    public List<object?>? ValidSteps { get; set; }
 
     /// <summary>Wire field <c>text</c>.</summary>
     [JsonPropertyName("text")]
-    public string? text { get; set; }
+    public string? Text { get; set; }
 }

@@ -22,53 +22,53 @@ public class VideoRoomVoiceLog
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public string? from { get; set; }
+    public string? From { get; set; }
 
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public string? to { get; set; }
+    public string? To { get; set; }
 
     /// <summary>Wire field <c>source</c>.</summary>
     [JsonPropertyName("source")]
-    public Dictionary<string, object?>? source { get; set; }
+    public Dictionary<string, object?>? Source { get; set; }
 
     /// <summary>Wire field <c>charge</c>.</summary>
     [JsonPropertyName("charge")]
-    public double? charge { get; set; }
+    public double? Charge { get; set; }
 
     /// <summary>Wire field <c>charge_details</c>.</summary>
     [JsonPropertyName("charge_details")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Voice.ChargeDetail>? charge_details { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Voice.ChargeDetail>? ChargeDetails { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public Dictionary<string, object?>? type { get; set; }
+    public Dictionary<string, object?>? Type { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public object? url { get; set; }
+    public object? Url { get; set; }
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public Dictionary<string, object?>? direction { get; set; }
+    public Dictionary<string, object?>? Direction { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? status { get; set; }
+    public Dictionary<string, object?>? Status { get; set; }
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
-    public Dictionary<string, object?>? duration { get; set; }
+    public Dictionary<string, object?>? Duration { get; set; }
 
     /// <summary>Wire field <c>duration_ms</c>.</summary>
     [JsonPropertyName("duration_ms")]
-    public Dictionary<string, object?>? duration_ms { get; set; }
+    public Dictionary<string, object?>? DurationMs { get; set; }
 }

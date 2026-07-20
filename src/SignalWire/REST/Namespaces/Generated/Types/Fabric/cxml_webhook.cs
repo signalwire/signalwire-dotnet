@@ -22,37 +22,37 @@ public class CXMLWebhook
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>used_for</c>.</summary>
     [JsonPropertyName("used_for")]
-    public Dictionary<string, object?>? used_for { get; set; }
+    public Dictionary<string, object?>? UsedFor { get; set; }
 
     /// <summary>Wire field <c>primary_request_url</c>.</summary>
     [JsonPropertyName("primary_request_url")]
-    public string? primary_request_url { get; set; }
+    public string? PrimaryRequestUrl { get; set; }
 
     /// <summary>Wire field <c>primary_request_method</c>.</summary>
     [JsonPropertyName("primary_request_method")]
-    public Dictionary<string, object?>? primary_request_method { get; set; }
+    public Dictionary<string, object?>? PrimaryRequestMethod { get; set; }
 
     /// <summary>Wire field <c>fallback_request_url</c>.</summary>
     [JsonPropertyName("fallback_request_url")]
-    public Dictionary<string, object?>? fallback_request_url { get; set; }
+    public Dictionary<string, object?>? FallbackRequestUrl { get; set; }
 
     /// <summary>Wire field <c>fallback_request_method</c>.</summary>
     [JsonPropertyName("fallback_request_method")]
-    public Dictionary<string, object?>? fallback_request_method { get; set; }
+    public Dictionary<string, object?>? FallbackRequestMethod { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public Dictionary<string, object?>? status_callback_url { get; set; }
+    public Dictionary<string, object?>? StatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
-    public Dictionary<string, object?>? status_callback_method { get; set; }
+    public Dictionary<string, object?>? StatusCallbackMethod { get; set; }
 }

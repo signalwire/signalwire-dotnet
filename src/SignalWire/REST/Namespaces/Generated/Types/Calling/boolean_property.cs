@@ -22,17 +22,17 @@ public class BooleanProperty
 {
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public string? description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>nullable</c>.</summary>
     [JsonPropertyName("nullable")]
-    public Dictionary<string, object?>? nullable { get; set; }
+    public Dictionary<string, object?>? Nullable { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>default</c>.</summary>
     [JsonPropertyName("default")]
-    public Dictionary<string, object?>? @default { get; set; }
+    public Dictionary<string, object?>? Default { get; set; }
 }

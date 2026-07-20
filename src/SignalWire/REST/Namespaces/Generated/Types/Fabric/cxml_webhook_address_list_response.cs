@@ -22,9 +22,9 @@ public class CXMLWebhookAddressListResponse
 {
     /// <summary>Wire field <c>data</c>.</summary>
     [JsonPropertyName("data")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddressApp>? data { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddressApp>? Data { get; set; }
 
     /// <summary>Wire field <c>links</c>.</summary>
     [JsonPropertyName("links")]
-    public SignalWire.REST.Namespaces.Generated.Types.Fabric.CXMLWebhookAddressPaginationResponse? links { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.CXMLWebhookAddressPaginationResponse? Links { get; set; }
 }

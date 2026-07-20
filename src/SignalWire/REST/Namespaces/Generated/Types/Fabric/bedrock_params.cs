@@ -22,29 +22,29 @@ public class BedrockParams
 {
     /// <summary>Wire field <c>attention_timeout</c>.</summary>
     [JsonPropertyName("attention_timeout")]
-    public Dictionary<string, object?>? attention_timeout { get; set; }
+    public Dictionary<string, object?>? AttentionTimeout { get; set; }
 
     /// <summary>Wire field <c>hard_stop_time</c>.</summary>
     [JsonPropertyName("hard_stop_time")]
-    public Dictionary<string, object?>? hard_stop_time { get; set; }
+    public Dictionary<string, object?>? HardStopTime { get; set; }
 
     /// <summary>Wire field <c>inactivity_timeout</c>.</summary>
     [JsonPropertyName("inactivity_timeout")]
-    public Dictionary<string, object?>? inactivity_timeout { get; set; }
+    public Dictionary<string, object?>? InactivityTimeout { get; set; }
 
     /// <summary>Wire field <c>video_listening_file</c>.</summary>
     [JsonPropertyName("video_listening_file")]
-    public string? video_listening_file { get; set; }
+    public string? VideoListeningFile { get; set; }
 
     /// <summary>Wire field <c>video_idle_file</c>.</summary>
     [JsonPropertyName("video_idle_file")]
-    public string? video_idle_file { get; set; }
+    public string? VideoIdleFile { get; set; }
 
     /// <summary>Wire field <c>video_talking_file</c>.</summary>
     [JsonPropertyName("video_talking_file")]
-    public string? video_talking_file { get; set; }
+    public string? VideoTalkingFile { get; set; }
 
     /// <summary>Wire field <c>hard_stop_prompt</c>.</summary>
     [JsonPropertyName("hard_stop_prompt")]
-    public string? hard_stop_prompt { get; set; }
+    public string? HardStopPrompt { get; set; }
 }

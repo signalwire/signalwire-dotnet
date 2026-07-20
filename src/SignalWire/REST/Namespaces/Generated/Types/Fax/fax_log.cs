@@ -22,65 +22,65 @@ public class FaxLog
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public Dictionary<string, object?>? from { get; set; }
+    public Dictionary<string, object?>? From { get; set; }
 
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public Dictionary<string, object?>? to { get; set; }
+    public Dictionary<string, object?>? To { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public string? status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public Dictionary<string, object?>? direction { get; set; }
+    public Dictionary<string, object?>? Direction { get; set; }
 
     /// <summary>Wire field <c>source</c>.</summary>
     [JsonPropertyName("source")]
-    public string? source { get; set; }
+    public string? Source { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public string? url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>remote_station</c>.</summary>
     [JsonPropertyName("remote_station")]
-    public Dictionary<string, object?>? remote_station { get; set; }
+    public Dictionary<string, object?>? RemoteStation { get; set; }
 
     /// <summary>Wire field <c>charge</c>.</summary>
     [JsonPropertyName("charge")]
-    public double? charge { get; set; }
+    public double? Charge { get; set; }
 
     /// <summary>Wire field <c>number_of_pages</c>.</summary>
     [JsonPropertyName("number_of_pages")]
-    public Dictionary<string, object?>? number_of_pages { get; set; }
+    public Dictionary<string, object?>? NumberOfPages { get; set; }
 
     /// <summary>Wire field <c>quality</c>.</summary>
     [JsonPropertyName("quality")]
-    public Dictionary<string, object?>? quality { get; set; }
+    public Dictionary<string, object?>? Quality { get; set; }
 
     /// <summary>Wire field <c>charge_details</c>.</summary>
     [JsonPropertyName("charge_details")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fax.ChargeDetail>? charge_details { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fax.ChargeDetail>? ChargeDetails { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>error_code</c>.</summary>
     [JsonPropertyName("error_code")]
-    public Dictionary<string, object?>? error_code { get; set; }
+    public Dictionary<string, object?>? ErrorCode { get; set; }
 
     /// <summary>Wire field <c>error_message</c>.</summary>
     [JsonPropertyName("error_message")]
-    public Dictionary<string, object?>? error_message { get; set; }
+    public Dictionary<string, object?>? ErrorMessage { get; set; }
 }

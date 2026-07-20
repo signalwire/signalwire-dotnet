@@ -22,93 +22,93 @@ public class UpdateConferenceRequest
 {
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public string? display_name { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public string? description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>join_from</c>.</summary>
     [JsonPropertyName("join_from")]
-    public string? join_from { get; set; }
+    public string? JoinFrom { get; set; }
 
     /// <summary>Wire field <c>join_until</c>.</summary>
     [JsonPropertyName("join_until")]
-    public string? join_until { get; set; }
+    public string? JoinUntil { get; set; }
 
     /// <summary>Wire field <c>quality</c>.</summary>
     [JsonPropertyName("quality")]
-    public Dictionary<string, object?>? quality { get; set; }
+    public Dictionary<string, object?>? Quality { get; set; }
 
     /// <summary>Wire field <c>layout</c>.</summary>
     [JsonPropertyName("layout")]
-    public Dictionary<string, object?>? layout { get; set; }
+    public Dictionary<string, object?>? Layout { get; set; }
 
     /// <summary>Wire field <c>size</c>.</summary>
     [JsonPropertyName("size")]
-    public Dictionary<string, object?>? size { get; set; }
+    public Dictionary<string, object?>? Size { get; set; }
 
     /// <summary>Wire field <c>record_on_start</c>.</summary>
     [JsonPropertyName("record_on_start")]
-    public bool? record_on_start { get; set; }
+    public bool? RecordOnStart { get; set; }
 
     /// <summary>Wire field <c>tone_on_entry_and_exit</c>.</summary>
     [JsonPropertyName("tone_on_entry_and_exit")]
-    public bool? tone_on_entry_and_exit { get; set; }
+    public bool? ToneOnEntryAndExit { get; set; }
 
     /// <summary>Wire field <c>room_join_video_off</c>.</summary>
     [JsonPropertyName("room_join_video_off")]
-    public bool? room_join_video_off { get; set; }
+    public bool? RoomJoinVideoOff { get; set; }
 
     /// <summary>Wire field <c>user_join_video_off</c>.</summary>
     [JsonPropertyName("user_join_video_off")]
-    public bool? user_join_video_off { get; set; }
+    public bool? UserJoinVideoOff { get; set; }
 
     /// <summary>Wire field <c>enable_room_previews</c>.</summary>
     [JsonPropertyName("enable_room_previews")]
-    public bool? enable_room_previews { get; set; }
+    public bool? EnableRoomPreviews { get; set; }
 
     /// <summary>Wire field <c>enable_chat</c>.</summary>
     [JsonPropertyName("enable_chat")]
-    public bool? enable_chat { get; set; }
+    public bool? EnableChat { get; set; }
 
     /// <summary>Wire field <c>dark_primary</c>.</summary>
     [JsonPropertyName("dark_primary")]
-    public string? dark_primary { get; set; }
+    public string? DarkPrimary { get; set; }
 
     /// <summary>Wire field <c>dark_background</c>.</summary>
     [JsonPropertyName("dark_background")]
-    public string? dark_background { get; set; }
+    public string? DarkBackground { get; set; }
 
     /// <summary>Wire field <c>dark_foreground</c>.</summary>
     [JsonPropertyName("dark_foreground")]
-    public string? dark_foreground { get; set; }
+    public string? DarkForeground { get; set; }
 
     /// <summary>Wire field <c>dark_success</c>.</summary>
     [JsonPropertyName("dark_success")]
-    public string? dark_success { get; set; }
+    public string? DarkSuccess { get; set; }
 
     /// <summary>Wire field <c>dark_negative</c>.</summary>
     [JsonPropertyName("dark_negative")]
-    public string? dark_negative { get; set; }
+    public string? DarkNegative { get; set; }
 
     /// <summary>Wire field <c>light_primary</c>.</summary>
     [JsonPropertyName("light_primary")]
-    public string? light_primary { get; set; }
+    public string? LightPrimary { get; set; }
 
     /// <summary>Wire field <c>light_background</c>.</summary>
     [JsonPropertyName("light_background")]
-    public string? light_background { get; set; }
+    public string? LightBackground { get; set; }
 
     /// <summary>Wire field <c>light_foreground</c>.</summary>
     [JsonPropertyName("light_foreground")]
-    public string? light_foreground { get; set; }
+    public string? LightForeground { get; set; }
 
     /// <summary>Wire field <c>light_success</c>.</summary>
     [JsonPropertyName("light_success")]
-    public string? light_success { get; set; }
+    public string? LightSuccess { get; set; }
 
     /// <summary>Wire field <c>light_negative</c>.</summary>
     [JsonPropertyName("light_negative")]
-    public string? light_negative { get; set; }
+    public string? LightNegative { get; set; }
 }

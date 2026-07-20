@@ -22,5 +22,5 @@ public class AI
 {
     /// <summary>Wire field <c>ai</c>.</summary>
     [JsonPropertyName("ai")]
-    public Dictionary<string, object?>? ai { get; set; }
+    public Dictionary<string, object?>? Ai { get; set; }
 }

@@ -22,5 +22,5 @@ public class TranscribeStartAction
 {
     /// <summary>Wire field <c>start</c>.</summary>
     [JsonPropertyName("start")]
-    public Dictionary<string, object?>? start { get; set; }
+    public Dictionary<string, object?>? Start { get; set; }
 }

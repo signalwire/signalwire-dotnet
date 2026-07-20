@@ -22,25 +22,25 @@ public class ObjectProperty
 {
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public string? description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>nullable</c>.</summary>
     [JsonPropertyName("nullable")]
-    public Dictionary<string, object?>? nullable { get; set; }
+    public Dictionary<string, object?>? Nullable { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>default</c>.</summary>
     [JsonPropertyName("default")]
-    public Dictionary<string, object?>? @default { get; set; }
+    public Dictionary<string, object?>? Default { get; set; }
 
     /// <summary>Wire field <c>properties</c>.</summary>
     [JsonPropertyName("properties")]
-    public Dictionary<string, object?>? properties { get; set; }
+    public Dictionary<string, object?>? Properties { get; set; }
 
     /// <summary>Wire field <c>required</c>.</summary>
     [JsonPropertyName("required")]
-    public List<object?>? required { get; set; }
+    public List<object?>? Required { get; set; }
 }

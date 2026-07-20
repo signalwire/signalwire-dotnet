@@ -22,13 +22,13 @@ public class SignalwireExecuteResult
 {
     /// <summary>Wire field <c>requester_nodeid</c>.</summary>
     [JsonPropertyName("requester_nodeid")]
-    public string? requester_nodeid { get; set; }
+    public string? RequesterNodeid { get; set; }
 
     /// <summary>Wire field <c>responder_nodeid</c>.</summary>
     [JsonPropertyName("responder_nodeid")]
-    public string? responder_nodeid { get; set; }
+    public string? ResponderNodeid { get; set; }
 
     /// <summary>Wire field <c>result</c>.</summary>
     [JsonPropertyName("result")]
-    public object? result { get; set; }
+    public object? Result { get; set; }
 }

@@ -22,101 +22,101 @@ public class SipEndpointResponse
 {
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>username</c>.</summary>
     [JsonPropertyName("username")]
-    public string? username { get; set; }
+    public string? Username { get; set; }
 
     /// <summary>Wire field <c>caller_id</c>.</summary>
     [JsonPropertyName("caller_id")]
-    public Dictionary<string, object?>? caller_id { get; set; }
+    public Dictionary<string, object?>? CallerId { get; set; }
 
     /// <summary>Wire field <c>send_as</c>.</summary>
     [JsonPropertyName("send_as")]
-    public string? send_as { get; set; }
+    public string? SendAs { get; set; }
 
     /// <summary>Wire field <c>ciphers</c>.</summary>
     [JsonPropertyName("ciphers")]
-    public List<object?>? ciphers { get; set; }
+    public List<object?>? Ciphers { get; set; }
 
     /// <summary>Wire field <c>codecs</c>.</summary>
     [JsonPropertyName("codecs")]
-    public List<object?>? codecs { get; set; }
+    public List<object?>? Codecs { get; set; }
 
     /// <summary>Wire field <c>encryption</c>.</summary>
     [JsonPropertyName("encryption")]
-    public string? encryption { get; set; }
+    public string? Encryption { get; set; }
 
     /// <summary>Wire field <c>call_handler</c>.</summary>
     [JsonPropertyName("call_handler")]
-    public Dictionary<string, object?>? call_handler { get; set; }
+    public Dictionary<string, object?>? CallHandler { get; set; }
 
     /// <summary>Wire field <c>calling_handler_resource_id</c>.</summary>
     [JsonPropertyName("calling_handler_resource_id")]
-    public Dictionary<string, object?>? calling_handler_resource_id { get; set; }
+    public Dictionary<string, object?>? CallingHandlerResourceId { get; set; }
 
     /// <summary>Wire field <c>call_request_url</c>.</summary>
     [JsonPropertyName("call_request_url")]
-    public Dictionary<string, object?>? call_request_url { get; set; }
+    public Dictionary<string, object?>? CallRequestUrl { get; set; }
 
     /// <summary>Wire field <c>call_request_method</c>.</summary>
     [JsonPropertyName("call_request_method")]
-    public Dictionary<string, object?>? call_request_method { get; set; }
+    public Dictionary<string, object?>? CallRequestMethod { get; set; }
 
     /// <summary>Wire field <c>call_fallback_url</c>.</summary>
     [JsonPropertyName("call_fallback_url")]
-    public Dictionary<string, object?>? call_fallback_url { get; set; }
+    public Dictionary<string, object?>? CallFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_fallback_method</c>.</summary>
     [JsonPropertyName("call_fallback_method")]
-    public Dictionary<string, object?>? call_fallback_method { get; set; }
+    public Dictionary<string, object?>? CallFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_url</c>.</summary>
     [JsonPropertyName("call_status_callback_url")]
-    public Dictionary<string, object?>? call_status_callback_url { get; set; }
+    public Dictionary<string, object?>? CallStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_method</c>.</summary>
     [JsonPropertyName("call_status_callback_method")]
-    public Dictionary<string, object?>? call_status_callback_method { get; set; }
+    public Dictionary<string, object?>? CallStatusCallbackMethod { get; set; }
 
     /// <summary>Wire field <c>call_laml_application_id</c>.</summary>
     [JsonPropertyName("call_laml_application_id")]
-    public Dictionary<string, object?>? call_laml_application_id { get; set; }
+    public Dictionary<string, object?>? CallLamlApplicationId { get; set; }
 
     /// <summary>Wire field <c>call_dialogflow_agent_id</c>.</summary>
     [JsonPropertyName("call_dialogflow_agent_id")]
-    public Dictionary<string, object?>? call_dialogflow_agent_id { get; set; }
+    public Dictionary<string, object?>? CallDialogflowAgentId { get; set; }
 
     /// <summary>Wire field <c>call_relay_topic</c>.</summary>
     [JsonPropertyName("call_relay_topic")]
-    public Dictionary<string, object?>? call_relay_topic { get; set; }
+    public Dictionary<string, object?>? CallRelayTopic { get; set; }
 
     /// <summary>Wire field <c>call_relay_topic_status_callback_url</c>.</summary>
     [JsonPropertyName("call_relay_topic_status_callback_url")]
-    public Dictionary<string, object?>? call_relay_topic_status_callback_url { get; set; }
+    public Dictionary<string, object?>? CallRelayTopicStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_relay_context</c>.</summary>
     [JsonPropertyName("call_relay_context")]
-    public Dictionary<string, object?>? call_relay_context { get; set; }
+    public Dictionary<string, object?>? CallRelayContext { get; set; }
 
     /// <summary>Wire field <c>call_relay_context_status_callback_url</c>.</summary>
     [JsonPropertyName("call_relay_context_status_callback_url")]
-    public Dictionary<string, object?>? call_relay_context_status_callback_url { get; set; }
+    public Dictionary<string, object?>? CallRelayContextStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_relay_application</c>.</summary>
     [JsonPropertyName("call_relay_application")]
-    public Dictionary<string, object?>? call_relay_application { get; set; }
+    public Dictionary<string, object?>? CallRelayApplication { get; set; }
 
     /// <summary>Wire field <c>call_video_room_id</c>.</summary>
     [JsonPropertyName("call_video_room_id")]
-    public Dictionary<string, object?>? call_video_room_id { get; set; }
+    public Dictionary<string, object?>? CallVideoRoomId { get; set; }
 
     /// <summary>Wire field <c>call_relay_script_url</c>.</summary>
     [JsonPropertyName("call_relay_script_url")]
-    public Dictionary<string, object?>? call_relay_script_url { get; set; }
+    public Dictionary<string, object?>? CallRelayScriptUrl { get; set; }
 }

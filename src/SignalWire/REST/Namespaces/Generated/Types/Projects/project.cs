@@ -22,45 +22,45 @@ public class Project
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>parent_project_id</c>.</summary>
     [JsonPropertyName("parent_project_id")]
-    public Dictionary<string, object?>? parent_project_id { get; set; }
+    public Dictionary<string, object?>? ParentProjectId { get; set; }
 
     /// <summary>Wire field <c>subproject</c>.</summary>
     [JsonPropertyName("subproject")]
-    public bool? subproject { get; set; }
+    public bool? Subproject { get; set; }
 
     /// <summary>Wire field <c>region_preference</c>.</summary>
     [JsonPropertyName("region_preference")]
-    public string? region_preference { get; set; }
+    public string? RegionPreference { get; set; }
 
     /// <summary>Wire field <c>protect_recordings</c>.</summary>
     [JsonPropertyName("protect_recordings")]
-    public bool? protect_recordings { get; set; }
+    public bool? ProtectRecordings { get; set; }
 
     /// <summary>Wire field <c>protect_message_media</c>.</summary>
     [JsonPropertyName("protect_message_media")]
-    public bool? protect_message_media { get; set; }
+    public bool? ProtectMessageMedia { get; set; }
 
     /// <summary>Wire field <c>protect_fax_media</c>.</summary>
     [JsonPropertyName("protect_fax_media")]
-    public bool? protect_fax_media { get; set; }
+    public bool? ProtectFaxMedia { get; set; }
 
     /// <summary>Wire field <c>force_https_requests</c>.</summary>
     [JsonPropertyName("force_https_requests")]
-    public bool? force_https_requests { get; set; }
+    public bool? ForceHttpsRequests { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 }

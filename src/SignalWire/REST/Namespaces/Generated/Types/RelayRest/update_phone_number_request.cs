@@ -22,133 +22,133 @@ public class UpdatePhoneNumberRequest
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>call_handler</c>.</summary>
     [JsonPropertyName("call_handler")]
-    public Dictionary<string, object?>? call_handler { get; set; }
+    public Dictionary<string, object?>? CallHandler { get; set; }
 
     /// <summary>Wire field <c>call_receive_mode</c>.</summary>
     [JsonPropertyName("call_receive_mode")]
-    public string? call_receive_mode { get; set; }
+    public string? CallReceiveMode { get; set; }
 
     /// <summary>Wire field <c>call_request_url</c>.</summary>
     [JsonPropertyName("call_request_url")]
-    public string? call_request_url { get; set; }
+    public string? CallRequestUrl { get; set; }
 
     /// <summary>Wire field <c>call_request_method</c>.</summary>
     [JsonPropertyName("call_request_method")]
-    public string? call_request_method { get; set; }
+    public string? CallRequestMethod { get; set; }
 
     /// <summary>Wire field <c>call_fallback_url</c>.</summary>
     [JsonPropertyName("call_fallback_url")]
-    public string? call_fallback_url { get; set; }
+    public string? CallFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_fallback_method</c>.</summary>
     [JsonPropertyName("call_fallback_method")]
-    public string? call_fallback_method { get; set; }
+    public string? CallFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_url</c>.</summary>
     [JsonPropertyName("call_status_callback_url")]
-    public string? call_status_callback_url { get; set; }
+    public string? CallStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_method</c>.</summary>
     [JsonPropertyName("call_status_callback_method")]
-    public string? call_status_callback_method { get; set; }
+    public string? CallStatusCallbackMethod { get; set; }
 
     /// <summary>Wire field <c>call_laml_application_id</c>.</summary>
     [JsonPropertyName("call_laml_application_id")]
-    public string? call_laml_application_id { get; set; }
+    public string? CallLamlApplicationId { get; set; }
 
     /// <summary>Wire field <c>call_dialogflow_agent_id</c>.</summary>
     [JsonPropertyName("call_dialogflow_agent_id")]
-    public string? call_dialogflow_agent_id { get; set; }
+    public string? CallDialogflowAgentId { get; set; }
 
     /// <summary>Wire field <c>call_relay_topic</c>.</summary>
     [JsonPropertyName("call_relay_topic")]
-    public string? call_relay_topic { get; set; }
+    public string? CallRelayTopic { get; set; }
 
     /// <summary>Wire field <c>call_relay_topic_status_callback_url</c>.</summary>
     [JsonPropertyName("call_relay_topic_status_callback_url")]
-    public string? call_relay_topic_status_callback_url { get; set; }
+    public string? CallRelayTopicStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_relay_script_url</c>.</summary>
     [JsonPropertyName("call_relay_script_url")]
-    public string? call_relay_script_url { get; set; }
+    public string? CallRelayScriptUrl { get; set; }
 
     /// <summary>Wire field <c>call_relay_context</c>.</summary>
     [JsonPropertyName("call_relay_context")]
-    public string? call_relay_context { get; set; }
+    public string? CallRelayContext { get; set; }
 
     /// <summary>Wire field <c>call_relay_context_status_callback_url</c>.</summary>
     [JsonPropertyName("call_relay_context_status_callback_url")]
-    public string? call_relay_context_status_callback_url { get; set; }
+    public string? CallRelayContextStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_relay_application</c>.</summary>
     [JsonPropertyName("call_relay_application")]
-    public string? call_relay_application { get; set; }
+    public string? CallRelayApplication { get; set; }
 
     /// <summary>Wire field <c>call_relay_connector_id</c>.</summary>
     [JsonPropertyName("call_relay_connector_id")]
-    public string? call_relay_connector_id { get; set; }
+    public string? CallRelayConnectorId { get; set; }
 
     /// <summary>Wire field <c>call_sip_endpoint_id</c>.</summary>
     [JsonPropertyName("call_sip_endpoint_id")]
-    public string? call_sip_endpoint_id { get; set; }
+    public string? CallSipEndpointId { get; set; }
 
     /// <summary>Wire field <c>call_verto_resource</c>.</summary>
     [JsonPropertyName("call_verto_resource")]
-    public string? call_verto_resource { get; set; }
+    public string? CallVertoResource { get; set; }
 
     /// <summary>Wire field <c>call_video_room_id</c>.</summary>
     [JsonPropertyName("call_video_room_id")]
-    public Dictionary<string, object?>? call_video_room_id { get; set; }
+    public Dictionary<string, object?>? CallVideoRoomId { get; set; }
 
     /// <summary>Wire field <c>call_ai_agent_id</c>.</summary>
     [JsonPropertyName("call_ai_agent_id")]
-    public Dictionary<string, object?>? call_ai_agent_id { get; set; }
+    public Dictionary<string, object?>? CallAiAgentId { get; set; }
 
     /// <summary>Wire field <c>call_flow_id</c>.</summary>
     [JsonPropertyName("call_flow_id")]
-    public Dictionary<string, object?>? call_flow_id { get; set; }
+    public Dictionary<string, object?>? CallFlowId { get; set; }
 
     /// <summary>Wire field <c>call_flow_version</c>.</summary>
     [JsonPropertyName("call_flow_version")]
-    public string? call_flow_version { get; set; }
+    public string? CallFlowVersion { get; set; }
 
     /// <summary>Wire field <c>message_handler</c>.</summary>
     [JsonPropertyName("message_handler")]
-    public Dictionary<string, object?>? message_handler { get; set; }
+    public Dictionary<string, object?>? MessageHandler { get; set; }
 
     /// <summary>Wire field <c>message_request_url</c>.</summary>
     [JsonPropertyName("message_request_url")]
-    public string? message_request_url { get; set; }
+    public string? MessageRequestUrl { get; set; }
 
     /// <summary>Wire field <c>message_request_method</c>.</summary>
     [JsonPropertyName("message_request_method")]
-    public string? message_request_method { get; set; }
+    public string? MessageRequestMethod { get; set; }
 
     /// <summary>Wire field <c>message_fallback_url</c>.</summary>
     [JsonPropertyName("message_fallback_url")]
-    public string? message_fallback_url { get; set; }
+    public string? MessageFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>message_fallback_method</c>.</summary>
     [JsonPropertyName("message_fallback_method")]
-    public string? message_fallback_method { get; set; }
+    public string? MessageFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>message_laml_application_id</c>.</summary>
     [JsonPropertyName("message_laml_application_id")]
-    public string? message_laml_application_id { get; set; }
+    public string? MessageLamlApplicationId { get; set; }
 
     /// <summary>Wire field <c>message_relay_topic</c>.</summary>
     [JsonPropertyName("message_relay_topic")]
-    public string? message_relay_topic { get; set; }
+    public string? MessageRelayTopic { get; set; }
 
     /// <summary>Wire field <c>message_relay_context</c>.</summary>
     [JsonPropertyName("message_relay_context")]
-    public string? message_relay_context { get; set; }
+    public string? MessageRelayContext { get; set; }
 
     /// <summary>Wire field <c>message_relay_application</c>.</summary>
     [JsonPropertyName("message_relay_application")]
-    public string? message_relay_application { get; set; }
+    public string? MessageRelayApplication { get; set; }
 }

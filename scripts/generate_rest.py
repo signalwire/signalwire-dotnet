@@ -828,14 +828,45 @@ def _wire_field_cs_type(psc: dict, ref_names: dict) -> str:
     return "object?"
 
 
-def _cs_property_name(wire_key: str) -> str:
-    """A legal PascalCase C# property identifier for a wire key, kept close to the
-    wire key so the reference-recorded accessor name matches. The .NET signature
-    enumerator records the property name VERBATIM for these generated type files
-    (like PHP's ``$SWAIG``); to match the reference's recorded field name (which
-    is the WIRE KEY verbatim — ``SWAIG`` stays ``SWAIG``, ``allOf`` stays
-    ``allOf``) we preserve the wire key exactly where it is already a valid C#
-    identifier, only folding illegal runes and @-escaping a reserved word."""
+def _cs_property_name(wire_key: str, pascal: bool = False) -> str:
+    """A legal C# property identifier for a wire key.
+
+    Two modes, keyed by ``pascal``:
+
+    * ``pascal=False`` (the ACCESSOR-module default) — preserve the wire key
+      VERBATIM where it is already a valid C# identifier, only folding illegal
+      runes and @-escaping a reserved word. The .NET signature enumerator records
+      the property name VERBATIM for the accessor-bearing payload modules
+      (swml_verbs / post_prompt / swaig_request), and the reference's griffe
+      oracle records the WIRE-KEY-verbatim field name (``SWAIG`` stays ``SWAIG``,
+      ``allOf`` stays ``allOf``). Renaming would DRIFT SURFACE-DIFF for those
+      three modules, so their properties stay wire-key-verbatim.
+
+    * ``pascal=True`` (DOTNET-2, the idiomatic default for METHOD-LESS DTO modules
+      — REST wire-types, RELAY-proto, swaig-actions) — emit an idiomatic
+      PascalCase C# property name. The exact wire bytes are preserved by the
+      ``[JsonPropertyName("<wire key>")]`` attribute the emitter always writes, so
+      EMISSION stays byte-identical. These modules are ABSENT from the accessor
+      set: the signature oracle records them method-less and the surface enumerator
+      records an empty member list, so the C# property NAME is never compared —
+      PascalCasing it is parity-safe (verified against port_surface.json:
+      ``ConferenceToken`` members == ``[]``)."""
+    if pascal:
+        # PascalCase from the wire key: split on non-identifier runes + underscores,
+        # capitalize each segment. Preserve an ALL-CAPS acronym segment (SWAIG) so
+        # the human name reads naturally; @-escape only if it collides with a keyword
+        # (can't happen post-PascalCase, but kept for safety) or starts with a digit.
+        parts = [p for p in re.split(r"[^A-Za-z0-9]+", wire_key) if p]
+        if not parts:
+            return "Field"
+        segs = []
+        for p in parts:
+            # keep an all-caps token as-is (SWAIG, URL); otherwise upper-first.
+            segs.append(p if p.isupper() else (p[0].upper() + p[1:]))
+        s = "".join(segs)
+        if s[0].isdigit():
+            s = "Field" + s
+        return "@" + s if s in CSHARP_KEYWORDS else s
     s = re.sub(r"[^A-Za-z0-9_]", "_", wire_key)
     if not s:
         s = "field"
@@ -845,7 +876,8 @@ def _cs_property_name(wire_key: str) -> str:
 
 
 def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: str,
-                          ref_names: dict | None = None, schema_name: str | None = None) -> str:
+                          ref_names: dict | None = None, schema_name: str | None = None,
+                          pascal_props: bool = False) -> str:
     """Emit one method-less C# data class in namespace ``ns``: a public property
     per wire field (``[JsonPropertyName("<wire key>")]``), typed per
     ``_wire_field_cs_type``. No methods, no constructor. Shared by the REST
@@ -860,7 +892,15 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
     components.schemas key AS IT APPEARS IN THE SPEC — NOT ``cs_name``). It is the
     scope the SDK-surface overlay (rest-apis/x-sdk-overlay.yaml) matches against:
     an overlay-hidden field is DROPPED entirely (still on the wire); an
-    overlay-deprecated field is emitted with an ``[Obsolete]`` attribute."""
+    overlay-deprecated field is emitted with an ``[Obsolete]`` attribute.
+
+    ``pascal_props`` (DOTNET-2): when True, emit idiomatic PascalCase C# property
+    NAMES (the wire bytes are preserved by ``[JsonPropertyName]``). Only pass True
+    for METHOD-LESS modules ABSENT from the signature-accessor set (REST
+    wire-types, RELAY-proto, swaig-actions) — never for the accessor-bearing
+    payload modules (swml_verbs / post_prompt / swaig_request), whose property
+    names the oracle records wire-key-verbatim (renaming would drift SURFACE-DIFF).
+    Default False keeps every existing caller wire-key-verbatim."""
     ref_names = ref_names or {}
     lines: list[str] = []
     lines.append("/// <summary>")
@@ -873,7 +913,15 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
     lines.append("/// </summary>")
     lines.append(f"public class {cs_name}")
     lines.append("{")
-    used: set[str] = set()
+    # Seed the taken-name set with the enclosing class name ONLY under pascal_props:
+    # C# forbids a member whose name equals its type (CS0542). With pascal_props a
+    # wire field can PascalCase to the class name (class Answer + field "answer" ->
+    # property "Answer"); the dedup loop below then appends "_" (Answer_). The wire
+    # key is still preserved verbatim by [JsonPropertyName], so the rename is
+    # surface/wire-neutral. In verbatim mode the property keeps the (usually
+    # lowercase) wire key, which C# allows alongside the PascalCase type, so we do
+    # NOT seed there — keeping the accessor modules' output byte-identical.
+    used: set[str] = {cs_name} if pascal_props else set()
     first = True
     for wire_key, psc in properties.items():
         # SDK-surface policy comes from the single overlay (rest-apis/x-sdk-overlay.yaml),
@@ -882,7 +930,7 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
         if _overlay_hidden(wire_key, schema_name):
             # hidden: drop from the SDK surface entirely (still on the wire).
             continue
-        prop = _cs_property_name(wire_key)
+        prop = _cs_property_name(wire_key, pascal=pascal_props)
         while prop.lstrip("@") in used:
             prop = prop + "_"
         used.add(prop.lstrip("@"))
@@ -1813,7 +1861,8 @@ def emit_types(psdk: Path, outs: dict) -> None:
                     outs[fn] = emit_methodless_class(
                         cs_ns, cs_name, node.get("properties") or {},
                         f"{ns_key!r} spec components/schemas {raw_name!r}",
-                        ref_names=ref_names, schema_name=raw_name)
+                        ref_names=ref_names, schema_name=raw_name,
+                        pascal_props=True)  # DOTNET-2: REST DTOs are method-less (surface [] / no sig accessors)
 
 
 # ---------------------------------------------------------------------------

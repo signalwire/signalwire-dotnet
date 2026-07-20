@@ -22,13 +22,13 @@ public class FreeswitchConnectorUpdateRequest
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>caller_id</c>.</summary>
     [JsonPropertyName("caller_id")]
-    public string? caller_id { get; set; }
+    public string? CallerId { get; set; }
 
     /// <summary>Wire field <c>send_as</c>.</summary>
     [JsonPropertyName("send_as")]
-    public string? send_as { get; set; }
+    public string? SendAs { get; set; }
 }

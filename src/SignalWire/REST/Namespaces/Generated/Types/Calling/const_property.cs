@@ -22,5 +22,5 @@ public class ConstProperty
 {
     /// <summary>Wire field <c>const</c>.</summary>
     [JsonPropertyName("const")]
-    public object? @const { get; set; }
+    public object? Const { get; set; }
 }

@@ -22,9 +22,9 @@ public class PhoneRouteAssignRequest
 {
     /// <summary>Wire field <c>phone_route_id</c>.</summary>
     [JsonPropertyName("phone_route_id")]
-    public Dictionary<string, object?>? phone_route_id { get; set; }
+    public Dictionary<string, object?>? PhoneRouteId { get; set; }
 
     /// <summary>Wire field <c>handler</c>.</summary>
     [JsonPropertyName("handler")]
-    public Dictionary<string, object?>? handler { get; set; }
+    public Dictionary<string, object?>? Handler { get; set; }
 }

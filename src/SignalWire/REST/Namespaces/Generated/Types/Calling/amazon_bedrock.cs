@@ -22,5 +22,5 @@ public class AmazonBedrock
 {
     /// <summary>Wire field <c>amazon_bedrock</c>.</summary>
     [JsonPropertyName("amazon_bedrock")]
-    public Dictionary<string, object?>? amazon_bedrock { get; set; }
+    public Dictionary<string, object?>? AmazonBedrock_ { get; set; }
 }

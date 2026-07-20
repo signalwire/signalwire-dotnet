@@ -22,5 +22,5 @@ public class VerifyCallerIDRequest
 {
     /// <summary>Wire field <c>verification_code</c>.</summary>
     [JsonPropertyName("verification_code")]
-    public string? verification_code { get; set; }
+    public string? VerificationCode { get; set; }
 }

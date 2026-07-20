@@ -22,53 +22,53 @@ public class PhoneNumberLookupResponse
 {
     /// <summary>Wire field <c>country_code_number</c>.</summary>
     [JsonPropertyName("country_code_number")]
-    public long? country_code_number { get; set; }
+    public long? CountryCodeNumber { get; set; }
 
     /// <summary>Wire field <c>national_number</c>.</summary>
     [JsonPropertyName("national_number")]
-    public string? national_number { get; set; }
+    public string? NationalNumber { get; set; }
 
     /// <summary>Wire field <c>possible_number</c>.</summary>
     [JsonPropertyName("possible_number")]
-    public bool? possible_number { get; set; }
+    public bool? PossibleNumber { get; set; }
 
     /// <summary>Wire field <c>valid_number</c>.</summary>
     [JsonPropertyName("valid_number")]
-    public bool? valid_number { get; set; }
+    public bool? ValidNumber { get; set; }
 
     /// <summary>Wire field <c>national_number_formatted</c>.</summary>
     [JsonPropertyName("national_number_formatted")]
-    public string? national_number_formatted { get; set; }
+    public string? NationalNumberFormatted { get; set; }
 
     /// <summary>Wire field <c>international_number_formatted</c>.</summary>
     [JsonPropertyName("international_number_formatted")]
-    public string? international_number_formatted { get; set; }
+    public string? InternationalNumberFormatted { get; set; }
 
     /// <summary>Wire field <c>e164</c>.</summary>
     [JsonPropertyName("e164")]
-    public string? e164 { get; set; }
+    public string? E164 { get; set; }
 
     /// <summary>Wire field <c>location</c>.</summary>
     [JsonPropertyName("location")]
-    public string? location { get; set; }
+    public string? Location { get; set; }
 
     /// <summary>Wire field <c>country_code</c>.</summary>
     [JsonPropertyName("country_code")]
-    public string? country_code { get; set; }
+    public string? CountryCode { get; set; }
 
     /// <summary>Wire field <c>timezones</c>.</summary>
     [JsonPropertyName("timezones")]
-    public List<object?>? timezones { get; set; }
+    public List<object?>? Timezones { get; set; }
 
     /// <summary>Wire field <c>number_type</c>.</summary>
     [JsonPropertyName("number_type")]
-    public string? number_type { get; set; }
+    public string? NumberType { get; set; }
 
     /// <summary>Wire field <c>carrier</c>.</summary>
     [JsonPropertyName("carrier")]
-    public Dictionary<string, object?>? carrier { get; set; }
+    public Dictionary<string, object?>? Carrier { get; set; }
 
     /// <summary>Wire field <c>cnam</c>.</summary>
     [JsonPropertyName("cnam")]
-    public Dictionary<string, object?>? cnam { get; set; }
+    public Dictionary<string, object?>? Cnam { get; set; }
 }

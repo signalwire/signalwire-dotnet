@@ -26,37 +26,37 @@ public class CallingAmazonBedrockParams
 
     /// <summary>Wire field <c>async</c>.</summary>
     [JsonPropertyName("async")]
-    public bool? async { get; set; }
+    public bool? Async { get; set; }
 
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>global_data</c>.</summary>
     [JsonPropertyName("global_data")]
-    public object? global_data { get; set; }
+    public object? GlobalData { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public object? @params { get; set; }
+    public object? Params { get; set; }
 
     /// <summary>Wire field <c>post_prompt</c>.</summary>
     [JsonPropertyName("post_prompt")]
-    public object? post_prompt { get; set; }
+    public object? PostPrompt { get; set; }
 
     /// <summary>Wire field <c>post_prompt_url</c>.</summary>
     [JsonPropertyName("post_prompt_url")]
-    public string? post_prompt_url { get; set; }
+    public string? PostPromptUrl { get; set; }
 
     /// <summary>Wire field <c>prompt</c>.</summary>
     [JsonPropertyName("prompt")]
-    public object? prompt { get; set; }
+    public object? Prompt { get; set; }
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public bool? swml { get; set; }
+    public bool? Swml { get; set; }
 }

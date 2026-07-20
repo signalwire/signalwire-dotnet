@@ -22,53 +22,53 @@ public class SwmlRequestCall
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>segment_id</c>.</summary>
     [JsonPropertyName("segment_id")]
-    public string? segment_id { get; set; }
+    public string? SegmentId { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public string? project_id { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>space_id</c>.</summary>
     [JsonPropertyName("space_id")]
-    public string? space_id { get; set; }
+    public string? SpaceId { get; set; }
 
     /// <summary>Wire field <c>call_state</c>.</summary>
     [JsonPropertyName("call_state")]
-    public string? call_state { get; set; }
+    public string? CallState { get; set; }
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public string? direction { get; set; }
+    public string? Direction { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public string? from { get; set; }
+    public string? From { get; set; }
 
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public string? to { get; set; }
+    public string? To { get; set; }
 
     /// <summary>Wire field <c>from_number</c>.</summary>
     [JsonPropertyName("from_number")]
-    public string? from_number { get; set; }
+    public string? FromNumber { get; set; }
 
     /// <summary>Wire field <c>to_number</c>.</summary>
     [JsonPropertyName("to_number")]
-    public string? to_number { get; set; }
+    public string? ToNumber { get; set; }
 
     /// <summary>Wire field <c>headers</c>.</summary>
     [JsonPropertyName("headers")]
-    public List<object?>? headers { get; set; }
+    public List<object?>? Headers { get; set; }
 }

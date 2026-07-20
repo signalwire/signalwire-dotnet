@@ -22,9 +22,9 @@ public class ChatPermissionWithWrite
 {
     /// <summary>Wire field <c>read</c>.</summary>
     [JsonPropertyName("read")]
-    public bool? read { get; set; }
+    public bool? Read { get; set; }
 
     /// <summary>Wire field <c>write</c>.</summary>
     [JsonPropertyName("write")]
-    public bool? write { get; set; }
+    public bool? Write { get; set; }
 }

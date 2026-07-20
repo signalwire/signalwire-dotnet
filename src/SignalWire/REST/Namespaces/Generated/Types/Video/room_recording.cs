@@ -22,49 +22,49 @@ public class RoomRecording
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>room_session_id</c>.</summary>
     [JsonPropertyName("room_session_id")]
-    public string? room_session_id { get; set; }
+    public string? RoomSessionId { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? status { get; set; }
+    public Dictionary<string, object?>? Status { get; set; }
 
     /// <summary>Wire field <c>started_at</c>.</summary>
     [JsonPropertyName("started_at")]
-    public Dictionary<string, object?>? started_at { get; set; }
+    public Dictionary<string, object?>? StartedAt { get; set; }
 
     /// <summary>Wire field <c>finished_at</c>.</summary>
     [JsonPropertyName("finished_at")]
-    public Dictionary<string, object?>? finished_at { get; set; }
+    public Dictionary<string, object?>? FinishedAt { get; set; }
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
-    public Dictionary<string, object?>? duration { get; set; }
+    public Dictionary<string, object?>? Duration { get; set; }
 
     /// <summary>Wire field <c>size_in_bytes</c>.</summary>
     [JsonPropertyName("size_in_bytes")]
-    public Dictionary<string, object?>? size_in_bytes { get; set; }
+    public Dictionary<string, object?>? SizeInBytes { get; set; }
 
     /// <summary>Wire field <c>format</c>.</summary>
     [JsonPropertyName("format")]
-    public Dictionary<string, object?>? format { get; set; }
+    public Dictionary<string, object?>? Format { get; set; }
 
     /// <summary>Wire field <c>cost_in_dollars</c>.</summary>
     [JsonPropertyName("cost_in_dollars")]
-    public double? cost_in_dollars { get; set; }
+    public double? CostInDollars { get; set; }
 
     /// <summary>Wire field <c>uri</c>.</summary>
     [JsonPropertyName("uri")]
-    public Dictionary<string, object?>? uri { get; set; }
+    public Dictionary<string, object?>? Uri { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 }

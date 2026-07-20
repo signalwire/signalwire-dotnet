@@ -22,9 +22,9 @@ public class SubscriberSipEndpointListResponse
 {
     /// <summary>Wire field <c>data</c>.</summary>
     [JsonPropertyName("data")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSIPEndpoint>? data { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSIPEndpoint>? Data { get; set; }
 
     /// <summary>Wire field <c>links</c>.</summary>
     [JsonPropertyName("links")]
-    public SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSipEndpointPaginationResponse? links { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSipEndpointPaginationResponse? Links { get; set; }
 }

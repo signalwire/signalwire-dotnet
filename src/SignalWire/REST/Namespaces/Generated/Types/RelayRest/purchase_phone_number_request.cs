@@ -22,5 +22,5 @@ public class PurchasePhoneNumberRequest
 {
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
-    public string? number { get; set; }
+    public string? Number { get; set; }
 }

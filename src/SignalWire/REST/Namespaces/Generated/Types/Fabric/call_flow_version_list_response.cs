@@ -22,9 +22,9 @@ public class CallFlowVersionListResponse
 {
     /// <summary>Wire field <c>data</c>.</summary>
     [JsonPropertyName("data")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersion>? data { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersion>? Data { get; set; }
 
     /// <summary>Wire field <c>links</c>.</summary>
     [JsonPropertyName("links")]
-    public SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersionsPaginationResponse? links { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersionsPaginationResponse? Links { get; set; }
 }

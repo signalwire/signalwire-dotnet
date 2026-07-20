@@ -22,125 +22,125 @@ public class CampaignResponse
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>state</c>.</summary>
     [JsonPropertyName("state")]
-    public string? state { get; set; }
+    public string? State { get; set; }
 
     /// <summary>Wire field <c>sms_use_case</c>.</summary>
     [JsonPropertyName("sms_use_case")]
-    public string? sms_use_case { get; set; }
+    public string? SmsUseCase { get; set; }
 
     /// <summary>Wire field <c>sub_use_cases</c>.</summary>
     [JsonPropertyName("sub_use_cases")]
-    public List<object?>? sub_use_cases { get; set; }
+    public List<object?>? SubUseCases { get; set; }
 
     /// <summary>Wire field <c>campaign_verify_token</c>.</summary>
     [JsonPropertyName("campaign_verify_token")]
-    public string? campaign_verify_token { get; set; }
+    public string? CampaignVerifyToken { get; set; }
 
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public string? description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>sample1</c>.</summary>
     [JsonPropertyName("sample1")]
-    public string? sample1 { get; set; }
+    public string? Sample1 { get; set; }
 
     /// <summary>Wire field <c>sample2</c>.</summary>
     [JsonPropertyName("sample2")]
-    public string? sample2 { get; set; }
+    public string? Sample2 { get; set; }
 
     /// <summary>Wire field <c>sample3</c>.</summary>
     [JsonPropertyName("sample3")]
-    public string? sample3 { get; set; }
+    public string? Sample3 { get; set; }
 
     /// <summary>Wire field <c>sample4</c>.</summary>
     [JsonPropertyName("sample4")]
-    public string? sample4 { get; set; }
+    public string? Sample4 { get; set; }
 
     /// <summary>Wire field <c>sample5</c>.</summary>
     [JsonPropertyName("sample5")]
-    public string? sample5 { get; set; }
+    public string? Sample5 { get; set; }
 
     /// <summary>Wire field <c>dynamic_templates</c>.</summary>
     [JsonPropertyName("dynamic_templates")]
-    public string? dynamic_templates { get; set; }
+    public string? DynamicTemplates { get; set; }
 
     /// <summary>Wire field <c>message_flow</c>.</summary>
     [JsonPropertyName("message_flow")]
-    public string? message_flow { get; set; }
+    public string? MessageFlow { get; set; }
 
     /// <summary>Wire field <c>opt_in_message</c>.</summary>
     [JsonPropertyName("opt_in_message")]
-    public string? opt_in_message { get; set; }
+    public string? OptInMessage { get; set; }
 
     /// <summary>Wire field <c>opt_out_message</c>.</summary>
     [JsonPropertyName("opt_out_message")]
-    public string? opt_out_message { get; set; }
+    public string? OptOutMessage { get; set; }
 
     /// <summary>Wire field <c>help_message</c>.</summary>
     [JsonPropertyName("help_message")]
-    public string? help_message { get; set; }
+    public string? HelpMessage { get; set; }
 
     /// <summary>Wire field <c>opt_in_keywords</c>.</summary>
     [JsonPropertyName("opt_in_keywords")]
-    public string? opt_in_keywords { get; set; }
+    public string? OptInKeywords { get; set; }
 
     /// <summary>Wire field <c>opt_out_keywords</c>.</summary>
     [JsonPropertyName("opt_out_keywords")]
-    public string? opt_out_keywords { get; set; }
+    public string? OptOutKeywords { get; set; }
 
     /// <summary>Wire field <c>help_keywords</c>.</summary>
     [JsonPropertyName("help_keywords")]
-    public string? help_keywords { get; set; }
+    public string? HelpKeywords { get; set; }
 
     /// <summary>Wire field <c>number_pooling_required</c>.</summary>
     [JsonPropertyName("number_pooling_required")]
-    public bool? number_pooling_required { get; set; }
+    public bool? NumberPoolingRequired { get; set; }
 
     /// <summary>Wire field <c>number_pooling_per_campaign</c>.</summary>
     [JsonPropertyName("number_pooling_per_campaign")]
-    public string? number_pooling_per_campaign { get; set; }
+    public string? NumberPoolingPerCampaign { get; set; }
 
     /// <summary>Wire field <c>direct_lending</c>.</summary>
     [JsonPropertyName("direct_lending")]
-    public bool? direct_lending { get; set; }
+    public bool? DirectLending { get; set; }
 
     /// <summary>Wire field <c>embedded_link</c>.</summary>
     [JsonPropertyName("embedded_link")]
-    public bool? embedded_link { get; set; }
+    public bool? EmbeddedLink { get; set; }
 
     /// <summary>Wire field <c>embedded_phone</c>.</summary>
     [JsonPropertyName("embedded_phone")]
-    public bool? embedded_phone { get; set; }
+    public bool? EmbeddedPhone { get; set; }
 
     /// <summary>Wire field <c>age_gated_content</c>.</summary>
     [JsonPropertyName("age_gated_content")]
-    public bool? age_gated_content { get; set; }
+    public bool? AgeGatedContent { get; set; }
 
     /// <summary>Wire field <c>lead_generation</c>.</summary>
     [JsonPropertyName("lead_generation")]
-    public bool? lead_generation { get; set; }
+    public bool? LeadGeneration { get; set; }
 
     /// <summary>Wire field <c>csp_campaign_reference</c>.</summary>
     [JsonPropertyName("csp_campaign_reference")]
-    public string? csp_campaign_reference { get; set; }
+    public string? CspCampaignReference { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public string? status_callback_url { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 }

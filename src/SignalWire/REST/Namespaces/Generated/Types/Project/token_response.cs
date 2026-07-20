@@ -22,17 +22,17 @@ public class TokenResponse
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>permissions</c>.</summary>
     [JsonPropertyName("permissions")]
-    public List<object?>? permissions { get; set; }
+    public List<object?>? Permissions { get; set; }
 
     /// <summary>Wire field <c>token</c>.</summary>
     [JsonPropertyName("token")]
-    public string? token { get; set; }
+    public string? Token { get; set; }
 }

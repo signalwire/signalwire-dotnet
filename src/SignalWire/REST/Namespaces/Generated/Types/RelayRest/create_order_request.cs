@@ -22,9 +22,9 @@ public class CreateOrderRequest
 {
     /// <summary>Wire field <c>phone_numbers</c>.</summary>
     [JsonPropertyName("phone_numbers")]
-    public List<object?>? phone_numbers { get; set; }
+    public List<object?>? PhoneNumbers { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public string? status_callback_url { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 }

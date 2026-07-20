@@ -22,13 +22,13 @@ public class SWAIGIncludes
 {
     /// <summary>Wire field <c>functions</c>.</summary>
     [JsonPropertyName("functions")]
-    public List<object?>? functions { get; set; }
+    public List<object?>? Functions { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public string? url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>meta_data</c>.</summary>
     [JsonPropertyName("meta_data")]
-    public Dictionary<string, object?>? meta_data { get; set; }
+    public Dictionary<string, object?>? MetaData { get; set; }
 }

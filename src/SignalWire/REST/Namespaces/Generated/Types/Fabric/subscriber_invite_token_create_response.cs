@@ -22,5 +22,5 @@ public class SubscriberInviteTokenCreateResponse
 {
     /// <summary>Wire field <c>token</c>.</summary>
     [JsonPropertyName("token")]
-    public Dictionary<string, object?>? token { get; set; }
+    public Dictionary<string, object?>? Token { get; set; }
 }

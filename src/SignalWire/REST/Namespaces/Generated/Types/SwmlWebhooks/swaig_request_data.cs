@@ -22,49 +22,49 @@ public class SwaigRequestData
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>ai_session_id</c>.</summary>
     [JsonPropertyName("ai_session_id")]
-    public string? ai_session_id { get; set; }
+    public string? AiSessionId { get; set; }
 
     /// <summary>Wire field <c>app_name</c>.</summary>
     [JsonPropertyName("app_name")]
-    public string? app_name { get; set; }
+    public string? AppName { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public string? project_id { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>space_id</c>.</summary>
     [JsonPropertyName("space_id")]
-    public string? space_id { get; set; }
+    public string? SpaceId { get; set; }
 
     /// <summary>Wire field <c>action</c>.</summary>
     [JsonPropertyName("action")]
-    public string? action { get; set; }
+    public string? Action { get; set; }
 
     /// <summary>Wire field <c>function</c>.</summary>
     [JsonPropertyName("function")]
-    public string? function { get; set; }
+    public string? Function { get; set; }
 
     /// <summary>Wire field <c>argument</c>.</summary>
     [JsonPropertyName("argument")]
-    public SignalWire.REST.Namespaces.Generated.Types.SwmlWebhooks.SwaigArgument? argument { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.SwmlWebhooks.SwaigArgument? Argument { get; set; }
 
     /// <summary>Wire field <c>meta_data</c>.</summary>
     [JsonPropertyName("meta_data")]
-    public Dictionary<string, object?>? meta_data { get; set; }
+    public Dictionary<string, object?>? MetaData { get; set; }
 
     /// <summary>Wire field <c>conversation_id</c>.</summary>
     [JsonPropertyName("conversation_id")]
-    public string? conversation_id { get; set; }
+    public string? ConversationId { get; set; }
 
     /// <summary>Wire field <c>content_type</c>.</summary>
     [JsonPropertyName("content_type")]
-    public string? content_type { get; set; }
+    public string? ContentType { get; set; }
 
     /// <summary>Wire field <c>version</c>.</summary>
     [JsonPropertyName("version")]
-    public string? version { get; set; }
+    public string? Version { get; set; }
 }

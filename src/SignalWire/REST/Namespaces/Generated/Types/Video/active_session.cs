@@ -22,81 +22,81 @@ public class ActiveSession
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>room_id</c>.</summary>
     [JsonPropertyName("room_id")]
-    public string? room_id { get; set; }
+    public string? RoomId { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public string? display_name { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>join_from</c>.</summary>
     [JsonPropertyName("join_from")]
-    public string? join_from { get; set; }
+    public string? JoinFrom { get; set; }
 
     /// <summary>Wire field <c>join_until</c>.</summary>
     [JsonPropertyName("join_until")]
-    public string? join_until { get; set; }
+    public string? JoinUntil { get; set; }
 
     /// <summary>Wire field <c>remove_at</c>.</summary>
     [JsonPropertyName("remove_at")]
-    public string? remove_at { get; set; }
+    public string? RemoveAt { get; set; }
 
     /// <summary>Wire field <c>remove_after_seconds_elapsed</c>.</summary>
     [JsonPropertyName("remove_after_seconds_elapsed")]
-    public long? remove_after_seconds_elapsed { get; set; }
+    public long? RemoveAfterSecondsElapsed { get; set; }
 
     /// <summary>Wire field <c>layout</c>.</summary>
     [JsonPropertyName("layout")]
-    public string? layout { get; set; }
+    public string? Layout { get; set; }
 
     /// <summary>Wire field <c>max_members</c>.</summary>
     [JsonPropertyName("max_members")]
-    public long? max_members { get; set; }
+    public long? MaxMembers { get; set; }
 
     /// <summary>Wire field <c>fps</c>.</summary>
     [JsonPropertyName("fps")]
-    public Dictionary<string, object?>? fps { get; set; }
+    public Dictionary<string, object?>? Fps { get; set; }
 
     /// <summary>Wire field <c>quality</c>.</summary>
     [JsonPropertyName("quality")]
-    public Dictionary<string, object?>? quality { get; set; }
+    public Dictionary<string, object?>? Quality { get; set; }
 
     /// <summary>Wire field <c>start_time</c>.</summary>
     [JsonPropertyName("start_time")]
-    public string? start_time { get; set; }
+    public string? StartTime { get; set; }
 
     /// <summary>Wire field <c>end_time</c>.</summary>
     [JsonPropertyName("end_time")]
-    public string? end_time { get; set; }
+    public string? EndTime { get; set; }
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
-    public long? duration { get; set; }
+    public long? Duration { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? status { get; set; }
+    public Dictionary<string, object?>? Status { get; set; }
 
     /// <summary>Wire field <c>record_on_start</c>.</summary>
     [JsonPropertyName("record_on_start")]
-    public bool? record_on_start { get; set; }
+    public bool? RecordOnStart { get; set; }
 
     /// <summary>Wire field <c>enable_room_previews</c>.</summary>
     [JsonPropertyName("enable_room_previews")]
-    public bool? enable_room_previews { get; set; }
+    public bool? EnableRoomPreviews { get; set; }
 
     /// <summary>Wire field <c>preview_url</c>.</summary>
     [JsonPropertyName("preview_url")]
-    public string? preview_url { get; set; }
+    public string? PreviewUrl { get; set; }
 
     /// <summary>Wire field <c>audio_video_sync</c>.</summary>
     [JsonPropertyName("audio_video_sync")]
-    public bool? audio_video_sync { get; set; }
+    public bool? AudioVideoSync { get; set; }
 }

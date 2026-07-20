@@ -22,29 +22,29 @@ public class SubscriberSipEndpointRequestUpdate
 {
     /// <summary>Wire field <c>username</c>.</summary>
     [JsonPropertyName("username")]
-    public string? username { get; set; }
+    public string? Username { get; set; }
 
     /// <summary>Wire field <c>password</c>.</summary>
     [JsonPropertyName("password")]
-    public string? password { get; set; }
+    public string? Password { get; set; }
 
     /// <summary>Wire field <c>caller_id</c>.</summary>
     [JsonPropertyName("caller_id")]
-    public string? caller_id { get; set; }
+    public string? CallerId { get; set; }
 
     /// <summary>Wire field <c>send_as</c>.</summary>
     [JsonPropertyName("send_as")]
-    public string? send_as { get; set; }
+    public string? SendAs { get; set; }
 
     /// <summary>Wire field <c>ciphers</c>.</summary>
     [JsonPropertyName("ciphers")]
-    public List<object?>? ciphers { get; set; }
+    public List<object?>? Ciphers { get; set; }
 
     /// <summary>Wire field <c>codecs</c>.</summary>
     [JsonPropertyName("codecs")]
-    public List<object?>? codecs { get; set; }
+    public List<object?>? Codecs { get; set; }
 
     /// <summary>Wire field <c>encryption</c>.</summary>
     [JsonPropertyName("encryption")]
-    public Dictionary<string, object?>? encryption { get; set; }
+    public Dictionary<string, object?>? Encryption { get; set; }
 }

@@ -22,5 +22,5 @@ public class FaxLogsListStatusCode422
 {
     /// <summary>Wire field <c>errors</c>.</summary>
     [JsonPropertyName("errors")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fax.Types_StatusCodes_RestApiErrorItem>? errors { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fax.Types_StatusCodes_RestApiErrorItem>? Errors { get; set; }
 }

@@ -22,81 +22,81 @@ public class ConnectDeviceParallel
 {
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public string? from { get; set; }
+    public string? From { get; set; }
 
     /// <summary>Wire field <c>headers</c>.</summary>
     [JsonPropertyName("headers")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.ConnectHeaders>? headers { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.ConnectHeaders>? Headers { get; set; }
 
     /// <summary>Wire field <c>codecs</c>.</summary>
     [JsonPropertyName("codecs")]
-    public string? codecs { get; set; }
+    public string? Codecs { get; set; }
 
     /// <summary>Wire field <c>webrtc_media</c>.</summary>
     [JsonPropertyName("webrtc_media")]
-    public Dictionary<string, object?>? webrtc_media { get; set; }
+    public Dictionary<string, object?>? WebrtcMedia { get; set; }
 
     /// <summary>Wire field <c>session_timeout</c>.</summary>
     [JsonPropertyName("session_timeout")]
-    public Dictionary<string, object?>? session_timeout { get; set; }
+    public Dictionary<string, object?>? SessionTimeout { get; set; }
 
     /// <summary>Wire field <c>ringback</c>.</summary>
     [JsonPropertyName("ringback")]
-    public List<object?>? ringback { get; set; }
+    public List<object?>? Ringback { get; set; }
 
     /// <summary>Wire field <c>result</c>.</summary>
     [JsonPropertyName("result")]
-    public Dictionary<string, object?>? result { get; set; }
+    public Dictionary<string, object?>? Result { get; set; }
 
     /// <summary>Wire field <c>timeout</c>.</summary>
     [JsonPropertyName("timeout")]
-    public Dictionary<string, object?>? timeout { get; set; }
+    public Dictionary<string, object?>? Timeout { get; set; }
 
     /// <summary>Wire field <c>max_duration</c>.</summary>
     [JsonPropertyName("max_duration")]
-    public Dictionary<string, object?>? max_duration { get; set; }
+    public Dictionary<string, object?>? MaxDuration { get; set; }
 
     /// <summary>Wire field <c>answer_on_bridge</c>.</summary>
     [JsonPropertyName("answer_on_bridge")]
-    public Dictionary<string, object?>? answer_on_bridge { get; set; }
+    public Dictionary<string, object?>? AnswerOnBridge { get; set; }
 
     /// <summary>Wire field <c>confirm</c>.</summary>
     [JsonPropertyName("confirm")]
-    public Dictionary<string, object?>? confirm { get; set; }
+    public Dictionary<string, object?>? Confirm { get; set; }
 
     /// <summary>Wire field <c>confirm_timeout</c>.</summary>
     [JsonPropertyName("confirm_timeout")]
-    public Dictionary<string, object?>? confirm_timeout { get; set; }
+    public Dictionary<string, object?>? ConfirmTimeout { get; set; }
 
     /// <summary>Wire field <c>username</c>.</summary>
     [JsonPropertyName("username")]
-    public string? username { get; set; }
+    public string? Username { get; set; }
 
     /// <summary>Wire field <c>password</c>.</summary>
     [JsonPropertyName("password")]
-    public string? password { get; set; }
+    public string? Password { get; set; }
 
     /// <summary>Wire field <c>encryption</c>.</summary>
     [JsonPropertyName("encryption")]
-    public string? encryption { get; set; }
+    public string? Encryption { get; set; }
 
     /// <summary>Wire field <c>call_state_url</c>.</summary>
     [JsonPropertyName("call_state_url")]
-    public string? call_state_url { get; set; }
+    public string? CallStateUrl { get; set; }
 
     /// <summary>Wire field <c>transfer_after_bridge</c>.</summary>
     [JsonPropertyName("transfer_after_bridge")]
-    public Dictionary<string, object?>? transfer_after_bridge { get; set; }
+    public Dictionary<string, object?>? TransferAfterBridge { get; set; }
 
     /// <summary>Wire field <c>call_state_events</c>.</summary>
     [JsonPropertyName("call_state_events")]
-    public List<object?>? call_state_events { get; set; }
+    public List<object?>? CallStateEvents { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? status_url { get; set; }
+    public string? StatusUrl { get; set; }
 
     /// <summary>Wire field <c>parallel</c>.</summary>
     [JsonPropertyName("parallel")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.ConnectDeviceSingle>? parallel { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.ConnectDeviceSingle>? Parallel { get; set; }
 }

@@ -22,17 +22,17 @@ public class MfaResponse
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>success</c>.</summary>
     [JsonPropertyName("success")]
-    public bool? success { get; set; }
+    public bool? Success { get; set; }
 
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public string? to { get; set; }
+    public string? To { get; set; }
 
     /// <summary>Wire field <c>channel</c>.</summary>
     [JsonPropertyName("channel")]
-    public string? channel { get; set; }
+    public string? Channel { get; set; }
 }

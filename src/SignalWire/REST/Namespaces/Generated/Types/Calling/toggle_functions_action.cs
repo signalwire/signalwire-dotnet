@@ -22,5 +22,5 @@ public class ToggleFunctionsAction
 {
     /// <summary>Wire field <c>toggle_functions</c>.</summary>
     [JsonPropertyName("toggle_functions")]
-    public List<object?>? toggle_functions { get; set; }
+    public List<object?>? ToggleFunctions { get; set; }
 }

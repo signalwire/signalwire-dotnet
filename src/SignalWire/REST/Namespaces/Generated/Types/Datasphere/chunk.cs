@@ -22,9 +22,9 @@ public class Chunk
 {
     /// <summary>Wire field <c>text</c>.</summary>
     [JsonPropertyName("text")]
-    public string? text { get; set; }
+    public string? Text { get; set; }
 
     /// <summary>Wire field <c>document_id</c>.</summary>
     [JsonPropertyName("document_id")]
-    public Dictionary<string, object?>? document_id { get; set; }
+    public Dictionary<string, object?>? DocumentId { get; set; }
 }

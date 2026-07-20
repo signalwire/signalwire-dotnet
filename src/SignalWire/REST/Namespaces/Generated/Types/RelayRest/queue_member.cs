@@ -22,29 +22,29 @@ public class QueueMember
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public Dictionary<string, object?>? call_id { get; set; }
+    public Dictionary<string, object?>? CallId { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public string? project_id { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>queue_id</c>.</summary>
     [JsonPropertyName("queue_id")]
-    public string? queue_id { get; set; }
+    public string? QueueId { get; set; }
 
     /// <summary>Wire field <c>position</c>.</summary>
     [JsonPropertyName("position")]
-    public long? position { get; set; }
+    public long? Position { get; set; }
 
     /// <summary>Wire field <c>uri</c>.</summary>
     [JsonPropertyName("uri")]
-    public string? uri { get; set; }
+    public string? Uri { get; set; }
 
     /// <summary>Wire field <c>wait_time</c>.</summary>
     [JsonPropertyName("wait_time")]
-    public long? wait_time { get; set; }
+    public long? WaitTime { get; set; }
 
     /// <summary>Wire field <c>date_enqueued</c>.</summary>
     [JsonPropertyName("date_enqueued")]
-    public string? date_enqueued { get; set; }
+    public string? DateEnqueued { get; set; }
 }

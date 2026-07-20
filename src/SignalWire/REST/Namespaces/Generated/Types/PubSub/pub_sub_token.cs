@@ -22,5 +22,5 @@ public class PubSubToken
 {
     /// <summary>Wire field <c>token</c>.</summary>
     [JsonPropertyName("token")]
-    public string? token { get; set; }
+    public string? Token { get; set; }
 }

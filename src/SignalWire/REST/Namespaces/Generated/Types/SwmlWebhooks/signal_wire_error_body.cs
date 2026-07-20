@@ -22,17 +22,17 @@ public class SignalWireErrorBody
 {
     /// <summary>Wire field <c>code</c>.</summary>
     [JsonPropertyName("code")]
-    public long? code { get; set; }
+    public long? Code { get; set; }
 
     /// <summary>Wire field <c>message</c>.</summary>
     [JsonPropertyName("message")]
-    public string? message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>Wire field <c>more_info</c>.</summary>
     [JsonPropertyName("more_info")]
-    public string? more_info { get; set; }
+    public string? MoreInfo { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public long? status { get; set; }
+    public long? Status { get; set; }
 }

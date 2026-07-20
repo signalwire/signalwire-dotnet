@@ -22,161 +22,161 @@ public class PhoneNumber
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
-    public string? number { get; set; }
+    public string? Number { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? name { get; set; }
+    public Dictionary<string, object?>? Name { get; set; }
 
     /// <summary>Wire field <c>capabilities</c>.</summary>
     [JsonPropertyName("capabilities")]
-    public List<object?>? capabilities { get; set; }
+    public List<object?>? Capabilities { get; set; }
 
     /// <summary>Wire field <c>number_type</c>.</summary>
     [JsonPropertyName("number_type")]
-    public Dictionary<string, object?>? number_type { get; set; }
+    public Dictionary<string, object?>? NumberType { get; set; }
 
     /// <summary>Wire field <c>e911_address_id</c>.</summary>
     [JsonPropertyName("e911_address_id")]
-    public Dictionary<string, object?>? e911_address_id { get; set; }
+    public Dictionary<string, object?>? E911AddressId { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 
     /// <summary>Wire field <c>next_billed_at</c>.</summary>
     [JsonPropertyName("next_billed_at")]
-    public Dictionary<string, object?>? next_billed_at { get; set; }
+    public Dictionary<string, object?>? NextBilledAt { get; set; }
 
     /// <summary>Wire field <c>call_handler</c>.</summary>
     [JsonPropertyName("call_handler")]
-    public Dictionary<string, object?>? call_handler { get; set; }
+    public Dictionary<string, object?>? CallHandler { get; set; }
 
     /// <summary>Wire field <c>calling_handler_resource_id</c>.</summary>
     [JsonPropertyName("calling_handler_resource_id")]
-    public Dictionary<string, object?>? calling_handler_resource_id { get; set; }
+    public Dictionary<string, object?>? CallingHandlerResourceId { get; set; }
 
     /// <summary>Wire field <c>call_receive_mode</c>.</summary>
     [JsonPropertyName("call_receive_mode")]
-    public Dictionary<string, object?>? call_receive_mode { get; set; }
+    public Dictionary<string, object?>? CallReceiveMode { get; set; }
 
     /// <summary>Wire field <c>call_request_url</c>.</summary>
     [JsonPropertyName("call_request_url")]
-    public Dictionary<string, object?>? call_request_url { get; set; }
+    public Dictionary<string, object?>? CallRequestUrl { get; set; }
 
     /// <summary>Wire field <c>call_request_method</c>.</summary>
     [JsonPropertyName("call_request_method")]
-    public Dictionary<string, object?>? call_request_method { get; set; }
+    public Dictionary<string, object?>? CallRequestMethod { get; set; }
 
     /// <summary>Wire field <c>call_fallback_url</c>.</summary>
     [JsonPropertyName("call_fallback_url")]
-    public Dictionary<string, object?>? call_fallback_url { get; set; }
+    public Dictionary<string, object?>? CallFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_fallback_method</c>.</summary>
     [JsonPropertyName("call_fallback_method")]
-    public Dictionary<string, object?>? call_fallback_method { get; set; }
+    public Dictionary<string, object?>? CallFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_url</c>.</summary>
     [JsonPropertyName("call_status_callback_url")]
-    public Dictionary<string, object?>? call_status_callback_url { get; set; }
+    public Dictionary<string, object?>? CallStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_method</c>.</summary>
     [JsonPropertyName("call_status_callback_method")]
-    public Dictionary<string, object?>? call_status_callback_method { get; set; }
+    public Dictionary<string, object?>? CallStatusCallbackMethod { get; set; }
 
     /// <summary>Wire field <c>call_laml_application_id</c>.</summary>
     [JsonPropertyName("call_laml_application_id")]
-    public Dictionary<string, object?>? call_laml_application_id { get; set; }
+    public Dictionary<string, object?>? CallLamlApplicationId { get; set; }
 
     /// <summary>Wire field <c>call_dialogflow_agent_id</c>.</summary>
     [JsonPropertyName("call_dialogflow_agent_id")]
-    public Dictionary<string, object?>? call_dialogflow_agent_id { get; set; }
+    public Dictionary<string, object?>? CallDialogflowAgentId { get; set; }
 
     /// <summary>Wire field <c>call_relay_topic</c>.</summary>
     [JsonPropertyName("call_relay_topic")]
-    public Dictionary<string, object?>? call_relay_topic { get; set; }
+    public Dictionary<string, object?>? CallRelayTopic { get; set; }
 
     /// <summary>Wire field <c>call_relay_topic_status_callback_url</c>.</summary>
     [JsonPropertyName("call_relay_topic_status_callback_url")]
-    public Dictionary<string, object?>? call_relay_topic_status_callback_url { get; set; }
+    public Dictionary<string, object?>? CallRelayTopicStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_relay_script_url</c>.</summary>
     [JsonPropertyName("call_relay_script_url")]
-    public Dictionary<string, object?>? call_relay_script_url { get; set; }
+    public Dictionary<string, object?>? CallRelayScriptUrl { get; set; }
 
     /// <summary>Wire field <c>call_relay_context</c>.</summary>
     [JsonPropertyName("call_relay_context")]
-    public Dictionary<string, object?>? call_relay_context { get; set; }
+    public Dictionary<string, object?>? CallRelayContext { get; set; }
 
     /// <summary>Wire field <c>call_relay_context_status_callback_url</c>.</summary>
     [JsonPropertyName("call_relay_context_status_callback_url")]
-    public Dictionary<string, object?>? call_relay_context_status_callback_url { get; set; }
+    public Dictionary<string, object?>? CallRelayContextStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_relay_application</c>.</summary>
     [JsonPropertyName("call_relay_application")]
-    public Dictionary<string, object?>? call_relay_application { get; set; }
+    public Dictionary<string, object?>? CallRelayApplication { get; set; }
 
     /// <summary>Wire field <c>call_relay_connector_id</c>.</summary>
     [JsonPropertyName("call_relay_connector_id")]
-    public Dictionary<string, object?>? call_relay_connector_id { get; set; }
+    public Dictionary<string, object?>? CallRelayConnectorId { get; set; }
 
     /// <summary>Wire field <c>call_sip_endpoint_id</c>.</summary>
     [JsonPropertyName("call_sip_endpoint_id")]
-    public Dictionary<string, object?>? call_sip_endpoint_id { get; set; }
+    public Dictionary<string, object?>? CallSipEndpointId { get; set; }
 
     /// <summary>Wire field <c>call_verto_resource</c>.</summary>
     [JsonPropertyName("call_verto_resource")]
-    public Dictionary<string, object?>? call_verto_resource { get; set; }
+    public Dictionary<string, object?>? CallVertoResource { get; set; }
 
     /// <summary>Wire field <c>call_video_room_id</c>.</summary>
     [JsonPropertyName("call_video_room_id")]
-    public Dictionary<string, object?>? call_video_room_id { get; set; }
+    public Dictionary<string, object?>? CallVideoRoomId { get; set; }
 
     /// <summary>Wire field <c>message_handler</c>.</summary>
     [JsonPropertyName("message_handler")]
-    public Dictionary<string, object?>? message_handler { get; set; }
+    public Dictionary<string, object?>? MessageHandler { get; set; }
 
     /// <summary>Wire field <c>messaging_handler_resource_id</c>.</summary>
     [JsonPropertyName("messaging_handler_resource_id")]
-    public Dictionary<string, object?>? messaging_handler_resource_id { get; set; }
+    public Dictionary<string, object?>? MessagingHandlerResourceId { get; set; }
 
     /// <summary>Wire field <c>message_request_url</c>.</summary>
     [JsonPropertyName("message_request_url")]
-    public Dictionary<string, object?>? message_request_url { get; set; }
+    public Dictionary<string, object?>? MessageRequestUrl { get; set; }
 
     /// <summary>Wire field <c>message_request_method</c>.</summary>
     [JsonPropertyName("message_request_method")]
-    public Dictionary<string, object?>? message_request_method { get; set; }
+    public Dictionary<string, object?>? MessageRequestMethod { get; set; }
 
     /// <summary>Wire field <c>message_fallback_url</c>.</summary>
     [JsonPropertyName("message_fallback_url")]
-    public Dictionary<string, object?>? message_fallback_url { get; set; }
+    public Dictionary<string, object?>? MessageFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>message_fallback_method</c>.</summary>
     [JsonPropertyName("message_fallback_method")]
-    public Dictionary<string, object?>? message_fallback_method { get; set; }
+    public Dictionary<string, object?>? MessageFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>message_laml_application_id</c>.</summary>
     [JsonPropertyName("message_laml_application_id")]
-    public Dictionary<string, object?>? message_laml_application_id { get; set; }
+    public Dictionary<string, object?>? MessageLamlApplicationId { get; set; }
 
     /// <summary>Wire field <c>message_relay_topic</c>.</summary>
     [JsonPropertyName("message_relay_topic")]
-    public Dictionary<string, object?>? message_relay_topic { get; set; }
+    public Dictionary<string, object?>? MessageRelayTopic { get; set; }
 
     /// <summary>Wire field <c>message_relay_context</c>.</summary>
     [JsonPropertyName("message_relay_context")]
-    public Dictionary<string, object?>? message_relay_context { get; set; }
+    public Dictionary<string, object?>? MessageRelayContext { get; set; }
 
     /// <summary>Wire field <c>country_code</c>.</summary>
     [JsonPropertyName("country_code")]
-    public Dictionary<string, object?>? country_code { get; set; }
+    public Dictionary<string, object?>? CountryCode { get; set; }
 }

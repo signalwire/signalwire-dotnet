@@ -22,53 +22,53 @@ public class RelayConference
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? project_id { get; set; }
+    public Dictionary<string, object?>? ProjectId { get; set; }
 
     /// <summary>Wire field <c>region</c>.</summary>
     [JsonPropertyName("region")]
-    public string? region { get; set; }
+    public string? Region { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? name { get; set; }
+    public Dictionary<string, object?>? Name { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? status { get; set; }
+    public Dictionary<string, object?>? Status { get; set; }
 
     /// <summary>Wire field <c>max_size</c>.</summary>
     [JsonPropertyName("max_size")]
-    public Dictionary<string, object?>? max_size { get; set; }
+    public Dictionary<string, object?>? MaxSize { get; set; }
 
     /// <summary>Wire field <c>current_participants</c>.</summary>
     [JsonPropertyName("current_participants")]
-    public long? current_participants { get; set; }
+    public long? CurrentParticipants { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>recording_url</c>.</summary>
     [JsonPropertyName("recording_url")]
-    public Dictionary<string, object?>? recording_url { get; set; }
+    public Dictionary<string, object?>? RecordingUrl { get; set; }
 
     /// <summary>Wire field <c>recording_duration</c>.</summary>
     [JsonPropertyName("recording_duration")]
-    public Dictionary<string, object?>? recording_duration { get; set; }
+    public Dictionary<string, object?>? RecordingDuration { get; set; }
 
     /// <summary>Wire field <c>recording_file_size</c>.</summary>
     [JsonPropertyName("recording_file_size")]
-    public Dictionary<string, object?>? recording_file_size { get; set; }
+    public Dictionary<string, object?>? RecordingFileSize { get; set; }
 }

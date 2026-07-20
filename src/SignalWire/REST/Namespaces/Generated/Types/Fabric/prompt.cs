@@ -22,5 +22,5 @@ public class Prompt
 {
     /// <summary>Wire field <c>prompt</c>.</summary>
     [JsonPropertyName("prompt")]
-    public Dictionary<string, object?>? prompt { get; set; }
+    public Dictionary<string, object?>? Prompt_ { get; set; }
 }

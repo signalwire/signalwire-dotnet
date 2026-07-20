@@ -22,5 +22,5 @@ public class Return
 {
     /// <summary>Wire field <c>return</c>.</summary>
     [JsonPropertyName("return")]
-    public object? @return { get; set; }
+    public object? Return_ { get; set; }
 }

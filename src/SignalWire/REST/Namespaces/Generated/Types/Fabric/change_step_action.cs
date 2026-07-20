@@ -22,5 +22,5 @@ public class ChangeStepAction
 {
     /// <summary>Wire field <c>change_step</c>.</summary>
     [JsonPropertyName("change_step")]
-    public string? change_step { get; set; }
+    public string? ChangeStep { get; set; }
 }

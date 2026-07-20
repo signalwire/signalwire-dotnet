@@ -22,21 +22,21 @@ public class CallingTapParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>control_id</c>.</summary>
     [JsonPropertyName("control_id")]
-    public string? control_id { get; set; }
+    public string? ControlId { get; set; }
 
     /// <summary>Wire field <c>device</c>.</summary>
     [JsonPropertyName("device")]
-    public Dictionary<string, object?>? device { get; set; }
+    public Dictionary<string, object?>? Device { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>tap</c>.</summary>
     [JsonPropertyName("tap")]
-    public Dictionary<string, object?>? tap { get; set; }
+    public Dictionary<string, object?>? Tap { get; set; }
 }

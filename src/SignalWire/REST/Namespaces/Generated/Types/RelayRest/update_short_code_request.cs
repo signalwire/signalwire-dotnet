@@ -22,33 +22,33 @@ public class UpdateShortCodeRequest
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>message_handler</c>.</summary>
     [JsonPropertyName("message_handler")]
-    public Dictionary<string, object?>? message_handler { get; set; }
+    public Dictionary<string, object?>? MessageHandler { get; set; }
 
     /// <summary>Wire field <c>message_request_url</c>.</summary>
     [JsonPropertyName("message_request_url")]
-    public string? message_request_url { get; set; }
+    public string? MessageRequestUrl { get; set; }
 
     /// <summary>Wire field <c>message_request_method</c>.</summary>
     [JsonPropertyName("message_request_method")]
-    public Dictionary<string, object?>? message_request_method { get; set; }
+    public Dictionary<string, object?>? MessageRequestMethod { get; set; }
 
     /// <summary>Wire field <c>message_fallback_url</c>.</summary>
     [JsonPropertyName("message_fallback_url")]
-    public string? message_fallback_url { get; set; }
+    public string? MessageFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>message_fallback_method</c>.</summary>
     [JsonPropertyName("message_fallback_method")]
-    public Dictionary<string, object?>? message_fallback_method { get; set; }
+    public Dictionary<string, object?>? MessageFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>message_laml_application_id</c>.</summary>
     [JsonPropertyName("message_laml_application_id")]
-    public Dictionary<string, object?>? message_laml_application_id { get; set; }
+    public Dictionary<string, object?>? MessageLamlApplicationId { get; set; }
 
     /// <summary>Wire field <c>message_relay_context</c>.</summary>
     [JsonPropertyName("message_relay_context")]
-    public string? message_relay_context { get; set; }
+    public string? MessageRelayContext { get; set; }
 }

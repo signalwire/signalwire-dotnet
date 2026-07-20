@@ -22,13 +22,13 @@ public class Pronounce
 {
     /// <summary>Wire field <c>replace</c>.</summary>
     [JsonPropertyName("replace")]
-    public string? replace { get; set; }
+    public string? Replace { get; set; }
 
     /// <summary>Wire field <c>with</c>.</summary>
     [JsonPropertyName("with")]
-    public string? with { get; set; }
+    public string? With { get; set; }
 
     /// <summary>Wire field <c>ignore_case</c>.</summary>
     [JsonPropertyName("ignore_case")]
-    public Dictionary<string, object?>? ignore_case { get; set; }
+    public Dictionary<string, object?>? IgnoreCase { get; set; }
 }

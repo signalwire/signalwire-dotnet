@@ -22,5 +22,5 @@ public class VideoChannel
 {
     /// <summary>Wire field <c>video</c>.</summary>
     [JsonPropertyName("video")]
-    public string? video { get; set; }
+    public string? Video { get; set; }
 }

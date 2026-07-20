@@ -22,13 +22,13 @@ public class CondReg
 {
     /// <summary>Wire field <c>when</c>.</summary>
     [JsonPropertyName("when")]
-    public string? when { get; set; }
+    public string? When { get; set; }
 
     /// <summary>Wire field <c>then</c>.</summary>
     [JsonPropertyName("then")]
-    public List<object?>? then { get; set; }
+    public List<object?>? Then { get; set; }
 
     /// <summary>Wire field <c>else</c>.</summary>
     [JsonPropertyName("else")]
-    public List<object?>? @else { get; set; }
+    public List<object?>? Else { get; set; }
 }

@@ -22,5 +22,5 @@ public class SetMetaDataAction
 {
     /// <summary>Wire field <c>set_meta_data</c>.</summary>
     [JsonPropertyName("set_meta_data")]
-    public Dictionary<string, object?>? set_meta_data { get; set; }
+    public Dictionary<string, object?>? SetMetaData { get; set; }
 }

@@ -22,5 +22,5 @@ public class Record
 {
     /// <summary>Wire field <c>record</c>.</summary>
     [JsonPropertyName("record")]
-    public Dictionary<string, object?>? record { get; set; }
+    public Dictionary<string, object?>? Record_ { get; set; }
 }

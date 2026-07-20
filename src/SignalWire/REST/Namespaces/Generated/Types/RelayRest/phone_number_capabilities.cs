@@ -22,17 +22,17 @@ public class PhoneNumberCapabilities
 {
     /// <summary>Wire field <c>voice</c>.</summary>
     [JsonPropertyName("voice")]
-    public bool? voice { get; set; }
+    public bool? Voice { get; set; }
 
     /// <summary>Wire field <c>sms</c>.</summary>
     [JsonPropertyName("sms")]
-    public bool? sms { get; set; }
+    public bool? Sms { get; set; }
 
     /// <summary>Wire field <c>mms</c>.</summary>
     [JsonPropertyName("mms")]
-    public bool? mms { get; set; }
+    public bool? Mms { get; set; }
 
     /// <summary>Wire field <c>fax</c>.</summary>
     [JsonPropertyName("fax")]
-    public bool? fax { get; set; }
+    public bool? Fax { get; set; }
 }

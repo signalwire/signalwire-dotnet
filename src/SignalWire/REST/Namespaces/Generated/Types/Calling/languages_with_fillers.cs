@@ -22,41 +22,41 @@ public class LanguagesWithFillers
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>code</c>.</summary>
     [JsonPropertyName("code")]
-    public string? code { get; set; }
+    public string? Code { get; set; }
 
     /// <summary>Wire field <c>voice</c>.</summary>
     [JsonPropertyName("voice")]
-    public string? voice { get; set; }
+    public string? Voice { get; set; }
 
     /// <summary>Wire field <c>model</c>.</summary>
     [JsonPropertyName("model")]
-    public string? model { get; set; }
+    public string? Model { get; set; }
 
     /// <summary>Wire field <c>emotion</c>.</summary>
     [JsonPropertyName("emotion")]
-    public string? emotion { get; set; }
+    public string? Emotion { get; set; }
 
     /// <summary>Wire field <c>speed</c>.</summary>
     [JsonPropertyName("speed")]
-    public string? speed { get; set; }
+    public string? Speed { get; set; }
 
     /// <summary>Wire field <c>engine</c>.</summary>
     [JsonPropertyName("engine")]
-    public string? engine { get; set; }
+    public string? Engine { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? @params { get; set; }
+    public Dictionary<string, object?>? Params { get; set; }
 
     /// <summary>Wire field <c>function_fillers</c>.</summary>
     [JsonPropertyName("function_fillers")]
-    public List<object?>? function_fillers { get; set; }
+    public List<object?>? FunctionFillers { get; set; }
 
     /// <summary>Wire field <c>speech_fillers</c>.</summary>
     [JsonPropertyName("speech_fillers")]
-    public List<object?>? speech_fillers { get; set; }
+    public List<object?>? SpeechFillers { get; set; }
 }

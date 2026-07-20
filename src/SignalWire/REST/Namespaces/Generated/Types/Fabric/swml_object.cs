@@ -22,9 +22,9 @@ public class SWMLObject
 {
     /// <summary>Wire field <c>version</c>.</summary>
     [JsonPropertyName("version")]
-    public string? version { get; set; }
+    public string? Version { get; set; }
 
     /// <summary>Wire field <c>sections</c>.</summary>
     [JsonPropertyName("sections")]
-    public SignalWire.REST.Namespaces.Generated.Types.Fabric.Section? sections { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.Section? Sections { get; set; }
 }

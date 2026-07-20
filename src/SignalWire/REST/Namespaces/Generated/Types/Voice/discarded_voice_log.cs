@@ -22,13 +22,13 @@ public class DiscardedVoiceLog
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>discarded_at</c>.</summary>
     [JsonPropertyName("discarded_at")]
-    public string? discarded_at { get; set; }
+    public string? DiscardedAt { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 }

@@ -22,61 +22,61 @@ public class Message
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public Dictionary<string, object?>? Id { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public string? from { get; set; }
+    public string? From { get; set; }
 
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public string? to { get; set; }
+    public string? To { get; set; }
 
     /// <summary>Wire field <c>body</c>.</summary>
     [JsonPropertyName("body")]
-    public string? body { get; set; }
+    public string? Body { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? status { get; set; }
+    public Dictionary<string, object?>? Status { get; set; }
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public Dictionary<string, object?>? direction { get; set; }
+    public Dictionary<string, object?>? Direction { get; set; }
 
     /// <summary>Wire field <c>kind</c>.</summary>
     [JsonPropertyName("kind")]
-    public Dictionary<string, object?>? kind { get; set; }
+    public Dictionary<string, object?>? Kind { get; set; }
 
     /// <summary>Wire field <c>media</c>.</summary>
     [JsonPropertyName("media")]
-    public List<object?>? media { get; set; }
+    public List<object?>? Media { get; set; }
 
     /// <summary>Wire field <c>number_of_segments</c>.</summary>
     [JsonPropertyName("number_of_segments")]
-    public long? number_of_segments { get; set; }
+    public long? NumberOfSegments { get; set; }
 
     /// <summary>Wire field <c>error_code</c>.</summary>
     [JsonPropertyName("error_code")]
-    public Dictionary<string, object?>? error_code { get; set; }
+    public Dictionary<string, object?>? ErrorCode { get; set; }
 
     /// <summary>Wire field <c>error_message</c>.</summary>
     [JsonPropertyName("error_message")]
-    public Dictionary<string, object?>? error_message { get; set; }
+    public Dictionary<string, object?>? ErrorMessage { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? project_id { get; set; }
+    public Dictionary<string, object?>? ProjectId { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public Dictionary<string, object?>? status_callback_url { get; set; }
+    public Dictionary<string, object?>? StatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>message_uri</c>.</summary>
     [JsonPropertyName("message_uri")]
-    public string? message_uri { get; set; }
+    public string? MessageUri { get; set; }
 }
