@@ -44,6 +44,24 @@ export SWML_BASIC_AUTH_PASSWORD=mysecurepassword
 | `SWML_SSL_VERIFY_MODE` | `CERT_REQUIRED` | Peer-certificate verification mode |
 | `SWML_DOMAIN` | - | Domain name for URL generation |
 
+### Custom CA Trust Bundles
+
+When your SignalWire endpoint presents a certificate issued by a private or
+self-signed CA (a dedicated space, an on-prem deployment, or a TLS-terminating
+proxy), point the client at the issuing CA bundle with these env vars. Each names
+a PEM/DER file whose CA is added as an **additional** trust anchor: a chain that
+already validates under the OS trust store is accepted unchanged, and a chain
+whose only defect is an untrusted root is re-validated against the supplied CA.
+Any other TLS defect (hostname mismatch, expired/unavailable cert) still fails —
+setting these does **not** disable verification. Unset → the OS trust store alone
+is used. These are the .NET analogue of Python's `session.verify = <ca_file>`
+(REST) and `ssl.create_default_context(cafile=<ca_file>)` (RELAY).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SIGNALWIRE_REST_CA_FILE` | - | Path to a CA trust bundle (PEM/DER) added as an extra trust anchor for the REST HTTP client |
+| `SIGNALWIRE_RELAY_CA_FILE` | - | Path to a CA trust bundle (PEM/DER) added as an extra trust anchor for the RELAY WebSocket client |
+
 ### Authentication
 
 | Variable | Default | Description |
