@@ -22,7 +22,7 @@ public class Subscriber
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>email</c>.</summary>
     [JsonPropertyName("email")]

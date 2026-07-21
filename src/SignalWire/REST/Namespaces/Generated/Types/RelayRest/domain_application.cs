@@ -22,7 +22,7 @@ public class DomainApplication
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
@@ -54,11 +54,11 @@ public class DomainApplication
 
     /// <summary>Wire field <c>call_handler</c>.</summary>
     [JsonPropertyName("call_handler")]
-    public Dictionary<string, object?>? CallHandler { get; set; }
+    public string? CallHandler { get; set; }
 
     /// <summary>Wire field <c>calling_handler_resource_id</c>.</summary>
     [JsonPropertyName("calling_handler_resource_id")]
-    public Dictionary<string, object?>? CallingHandlerResourceId { get; set; }
+    public string? CallingHandlerResourceId { get; set; }
 
     /// <summary>Wire field <c>call_relay_topic</c>.</summary>
     [JsonPropertyName("call_relay_topic")]
@@ -106,7 +106,7 @@ public class DomainApplication
 
     /// <summary>Wire field <c>call_video_room_id</c>.</summary>
     [JsonPropertyName("call_video_room_id")]
-    public Dictionary<string, object?>? CallVideoRoomId { get; set; }
+    public string? CallVideoRoomId { get; set; }
 
     /// <summary>Wire field <c>call_relay_script_url</c>.</summary>
     [JsonPropertyName("call_relay_script_url")]

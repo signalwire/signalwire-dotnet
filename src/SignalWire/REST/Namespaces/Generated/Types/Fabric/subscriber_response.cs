@@ -46,5 +46,5 @@ public class SubscriberResponse
 
     /// <summary>Wire field <c>subscriber</c>.</summary>
     [JsonPropertyName("subscriber")]
-    public Dictionary<string, object?>? Subscriber { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.Subscriber? Subscriber { get; set; }
 }

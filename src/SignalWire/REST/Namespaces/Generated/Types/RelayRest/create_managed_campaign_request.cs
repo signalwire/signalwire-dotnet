@@ -26,7 +26,7 @@ public class CreateManagedCampaignRequest
 
     /// <summary>Wire field <c>brand_id</c>.</summary>
     [JsonPropertyName("brand_id")]
-    public Dictionary<string, object?>? BrandId { get; set; }
+    public string? BrandId { get; set; }
 
     /// <summary>Wire field <c>sms_use_case</c>.</summary>
     [JsonPropertyName("sms_use_case")]

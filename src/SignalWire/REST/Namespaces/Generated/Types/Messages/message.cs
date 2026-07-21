@@ -22,7 +22,7 @@ public class Message
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
@@ -38,15 +38,15 @@ public class Message
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public Dictionary<string, object?>? Direction { get; set; }
+    public string? Direction { get; set; }
 
     /// <summary>Wire field <c>kind</c>.</summary>
     [JsonPropertyName("kind")]
-    public Dictionary<string, object?>? Kind { get; set; }
+    public string? Kind { get; set; }
 
     /// <summary>Wire field <c>media</c>.</summary>
     [JsonPropertyName("media")]
@@ -70,7 +70,7 @@ public class Message
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? ProjectId { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]

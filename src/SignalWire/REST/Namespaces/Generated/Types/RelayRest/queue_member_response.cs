@@ -22,7 +22,7 @@ public class QueueMemberResponse
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public Dictionary<string, object?>? CallId { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]

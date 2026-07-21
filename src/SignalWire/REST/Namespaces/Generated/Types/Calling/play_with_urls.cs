@@ -22,11 +22,11 @@ public class PlayWithURLS
 {
     /// <summary>Wire field <c>auto_answer</c>.</summary>
     [JsonPropertyName("auto_answer")]
-    public Dictionary<string, object?>? AutoAnswer { get; set; }
+    public object? AutoAnswer { get; set; }
 
     /// <summary>Wire field <c>volume</c>.</summary>
     [JsonPropertyName("volume")]
-    public Dictionary<string, object?>? Volume { get; set; }
+    public object? Volume { get; set; }
 
     /// <summary>Wire field <c>say_voice</c>.</summary>
     [JsonPropertyName("say_voice")]
@@ -46,5 +46,5 @@ public class PlayWithURLS
 
     /// <summary>Wire field <c>urls</c>.</summary>
     [JsonPropertyName("urls")]
-    public Dictionary<string, object?>? Urls { get; set; }
+    public object? Urls { get; set; }
 }

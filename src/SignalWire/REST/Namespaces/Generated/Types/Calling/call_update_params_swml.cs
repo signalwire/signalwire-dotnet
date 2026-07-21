@@ -22,7 +22,7 @@ public class CallUpdateParamsSWML
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>fallback_url</c>.</summary>
     [JsonPropertyName("fallback_url")]
@@ -38,5 +38,5 @@ public class CallUpdateParamsSWML
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public Dictionary<string, object?>? Swml { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.SWMLObject? Swml { get; set; }
 }

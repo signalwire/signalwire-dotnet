@@ -22,7 +22,7 @@ public class CallLeg
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
@@ -34,7 +34,7 @@ public class CallLeg
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public Dictionary<string, object?>? Direction { get; set; }
+    public string? Direction { get; set; }
 
     /// <summary>Wire field <c>source</c>.</summary>
     [JsonPropertyName("source")]
@@ -58,7 +58,7 @@ public class CallLeg
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
@@ -74,9 +74,9 @@ public class CallLeg
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public Dictionary<string, object?>? Type { get; set; }
+    public object? Type { get; set; }
 
     /// <summary>Wire field <c>parent_id</c>.</summary>
     [JsonPropertyName("parent_id")]
-    public Dictionary<string, object?>? ParentId { get; set; }
+    public string? ParentId { get; set; }
 }

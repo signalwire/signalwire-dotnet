@@ -50,9 +50,9 @@ public class CallCreateParamsSWML
 
     /// <summary>Wire field <c>codecs</c>.</summary>
     [JsonPropertyName("codecs")]
-    public Dictionary<string, object?>? Codecs { get; set; }
+    public object? Codecs { get; set; }
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public Dictionary<string, object?>? Swml { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.SWMLObject? Swml { get; set; }
 }

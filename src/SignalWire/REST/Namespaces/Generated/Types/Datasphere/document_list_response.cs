@@ -26,5 +26,5 @@ public class DocumentListResponse
 
     /// <summary>Wire field <c>links</c>.</summary>
     [JsonPropertyName("links")]
-    public Dictionary<string, object?>? Links { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Datasphere.PaginationResponse? Links { get; set; }
 }

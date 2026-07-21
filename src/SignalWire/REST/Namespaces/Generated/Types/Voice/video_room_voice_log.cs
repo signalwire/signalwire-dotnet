@@ -22,7 +22,7 @@ public class VideoRoomVoiceLog
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
@@ -34,7 +34,7 @@ public class VideoRoomVoiceLog
 
     /// <summary>Wire field <c>source</c>.</summary>
     [JsonPropertyName("source")]
-    public Dictionary<string, object?>? Source { get; set; }
+    public string? Source { get; set; }
 
     /// <summary>Wire field <c>charge</c>.</summary>
     [JsonPropertyName("charge")]
@@ -50,7 +50,7 @@ public class VideoRoomVoiceLog
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public Dictionary<string, object?>? Type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
@@ -58,11 +58,11 @@ public class VideoRoomVoiceLog
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public Dictionary<string, object?>? Direction { get; set; }
+    public string? Direction { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]

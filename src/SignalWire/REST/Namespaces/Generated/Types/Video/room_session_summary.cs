@@ -42,11 +42,11 @@ public class RoomSessionSummary
 
     /// <summary>Wire field <c>quality</c>.</summary>
     [JsonPropertyName("quality")]
-    public Dictionary<string, object?>? Quality { get; set; }
+    public string? Quality { get; set; }
 
     /// <summary>Wire field <c>fps</c>.</summary>
     [JsonPropertyName("fps")]
-    public Dictionary<string, object?>? Fps { get; set; }
+    public double? Fps { get; set; }
 
     /// <summary>Wire field <c>join_from</c>.</summary>
     [JsonPropertyName("join_from")]
@@ -102,7 +102,7 @@ public class RoomSessionSummary
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]

@@ -22,7 +22,7 @@ public class FabricAddress
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
@@ -54,5 +54,5 @@ public class FabricAddress
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public Dictionary<string, object?>? Type { get; set; }
+    public string? Type { get; set; }
 }

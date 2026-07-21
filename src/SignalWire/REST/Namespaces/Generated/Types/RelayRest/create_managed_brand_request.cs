@@ -42,7 +42,7 @@ public class CreateManagedBrandRequest
 
     /// <summary>Wire field <c>legal_entity_type</c>.</summary>
     [JsonPropertyName("legal_entity_type")]
-    public Dictionary<string, object?>? LegalEntityType { get; set; }
+    public string? LegalEntityType { get; set; }
 
     /// <summary>Wire field <c>ein</c>.</summary>
     [JsonPropertyName("ein")]
@@ -54,7 +54,7 @@ public class CreateManagedBrandRequest
 
     /// <summary>Wire field <c>company_vertical</c>.</summary>
     [JsonPropertyName("company_vertical")]
-    public Dictionary<string, object?>? CompanyVertical { get; set; }
+    public string? CompanyVertical { get; set; }
 
     /// <summary>Wire field <c>company_website</c>.</summary>
     [JsonPropertyName("company_website")]

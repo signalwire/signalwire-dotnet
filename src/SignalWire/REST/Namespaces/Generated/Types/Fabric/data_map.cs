@@ -22,7 +22,7 @@ public class DataMap
 {
     /// <summary>Wire field <c>output</c>.</summary>
     [JsonPropertyName("output")]
-    public Dictionary<string, object?>? Output { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.Output? Output { get; set; }
 
     /// <summary>Wire field <c>expressions</c>.</summary>
     [JsonPropertyName("expressions")]

@@ -30,7 +30,7 @@ public class SummarizeConversationSWAIGFunction
 
     /// <summary>Wire field <c>parameters</c>.</summary>
     [JsonPropertyName("parameters")]
-    public Dictionary<string, object?>? Parameters { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.FunctionParameters? Parameters { get; set; }
 
     /// <summary>Wire field <c>fillers</c>.</summary>
     [JsonPropertyName("fillers")]
@@ -38,11 +38,11 @@ public class SummarizeConversationSWAIGFunction
 
     /// <summary>Wire field <c>argument</c>.</summary>
     [JsonPropertyName("argument")]
-    public Dictionary<string, object?>? Argument { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.FunctionParameters? Argument { get; set; }
 
     /// <summary>Wire field <c>active</c>.</summary>
     [JsonPropertyName("active")]
-    public Dictionary<string, object?>? Active { get; set; }
+    public object? Active { get; set; }
 
     /// <summary>Wire field <c>meta_data</c>.</summary>
     [JsonPropertyName("meta_data")]
@@ -54,11 +54,11 @@ public class SummarizeConversationSWAIGFunction
 
     /// <summary>Wire field <c>data_map</c>.</summary>
     [JsonPropertyName("data_map")]
-    public Dictionary<string, object?>? DataMap { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.DataMap? DataMap { get; set; }
 
     /// <summary>Wire field <c>skip_fillers</c>.</summary>
     [JsonPropertyName("skip_fillers")]
-    public Dictionary<string, object?>? SkipFillers { get; set; }
+    public object? SkipFillers { get; set; }
 
     /// <summary>Wire field <c>web_hook_url</c>.</summary>
     [JsonPropertyName("web_hook_url")]
@@ -70,11 +70,11 @@ public class SummarizeConversationSWAIGFunction
 
     /// <summary>Wire field <c>wait_file_loops</c>.</summary>
     [JsonPropertyName("wait_file_loops")]
-    public Dictionary<string, object?>? WaitFileLoops { get; set; }
+    public object? WaitFileLoops { get; set; }
 
     /// <summary>Wire field <c>wait_for_fillers</c>.</summary>
     [JsonPropertyName("wait_for_fillers")]
-    public Dictionary<string, object?>? WaitForFillers { get; set; }
+    public object? WaitForFillers { get; set; }
 
     /// <summary>Wire field <c>function</c>.</summary>
     [JsonPropertyName("function")]

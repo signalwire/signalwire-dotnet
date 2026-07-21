@@ -46,5 +46,5 @@ public class SipGatewayResponse
 
     /// <summary>Wire field <c>sip_gateway</c>.</summary>
     [JsonPropertyName("sip_gateway")]
-    public Dictionary<string, object?>? SipGateway { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.SipGateway? SipGateway { get; set; }
 }

@@ -42,13 +42,13 @@ public class SipEndpointUpdateRequest
 
     /// <summary>Wire field <c>encryption</c>.</summary>
     [JsonPropertyName("encryption")]
-    public Dictionary<string, object?>? Encryption { get; set; }
+    public string? Encryption { get; set; }
 
     /// <summary>Wire field <c>call_handler</c>.</summary>
     [JsonPropertyName("call_handler")]
-    public Dictionary<string, object?>? CallHandler { get; set; }
+    public string? CallHandler { get; set; }
 
     /// <summary>Wire field <c>calling_handler_resource_id</c>.</summary>
     [JsonPropertyName("calling_handler_resource_id")]
-    public Dictionary<string, object?>? CallingHandlerResourceId { get; set; }
+    public string? CallingHandlerResourceId { get; set; }
 }

@@ -22,7 +22,7 @@ public class SubscriberInviteTokenCreateRequest
 {
     /// <summary>Wire field <c>address_id</c>.</summary>
     [JsonPropertyName("address_id")]
-    public Dictionary<string, object?>? AddressId { get; set; }
+    public string? AddressId { get; set; }
 
     /// <summary>Wire field <c>expires_at</c>.</summary>
     [JsonPropertyName("expires_at")]

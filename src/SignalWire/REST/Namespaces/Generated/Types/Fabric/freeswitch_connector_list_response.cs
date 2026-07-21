@@ -22,7 +22,7 @@ public class FreeswitchConnectorListResponse
 {
     /// <summary>Wire field <c>links</c>.</summary>
     [JsonPropertyName("links")]
-    public Dictionary<string, object?>? Links { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.FreeswitchConectorPaginationResponse? Links { get; set; }
 
     /// <summary>Wire field <c>data</c>.</summary>
     [JsonPropertyName("data")]

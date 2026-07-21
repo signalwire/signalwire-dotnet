@@ -38,7 +38,7 @@ public class ContextPOMSteps
 
     /// <summary>Wire field <c>skip_user_turn</c>.</summary>
     [JsonPropertyName("skip_user_turn")]
-    public Dictionary<string, object?>? SkipUserTurn { get; set; }
+    public object? SkipUserTurn { get; set; }
 
     /// <summary>Wire field <c>end</c>.</summary>
     [JsonPropertyName("end")]

@@ -30,7 +30,7 @@ public class SipGatewayRequestUpdate
 
     /// <summary>Wire field <c>encryption</c>.</summary>
     [JsonPropertyName("encryption")]
-    public Dictionary<string, object?>? Encryption { get; set; }
+    public string? Encryption { get; set; }
 
     /// <summary>Wire field <c>ciphers</c>.</summary>
     [JsonPropertyName("ciphers")]

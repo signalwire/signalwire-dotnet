@@ -26,7 +26,7 @@ public class IntegerProperty
 
     /// <summary>Wire field <c>nullable</c>.</summary>
     [JsonPropertyName("nullable")]
-    public Dictionary<string, object?>? Nullable { get; set; }
+    public object? Nullable { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
@@ -38,5 +38,5 @@ public class IntegerProperty
 
     /// <summary>Wire field <c>default</c>.</summary>
     [JsonPropertyName("default")]
-    public Dictionary<string, object?>? Default { get; set; }
+    public object? Default { get; set; }
 }

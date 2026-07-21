@@ -22,7 +22,7 @@ public class ConversationMessage
 {
     /// <summary>Wire field <c>role</c>.</summary>
     [JsonPropertyName("role")]
-    public Dictionary<string, object?>? Role { get; set; }
+    public string? Role { get; set; }
 
     /// <summary>Wire field <c>content</c>.</summary>
     [JsonPropertyName("content")]

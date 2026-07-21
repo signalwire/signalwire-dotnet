@@ -22,7 +22,7 @@ public class SWAIGUpdate
 {
     /// <summary>Wire field <c>defaults</c>.</summary>
     [JsonPropertyName("defaults")]
-    public Dictionary<string, object?>? Defaults { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.SWAIGDefaults? Defaults { get; set; }
 
     /// <summary>Wire field <c>native_functions</c>.</summary>
     [JsonPropertyName("native_functions")]
@@ -38,5 +38,5 @@ public class SWAIGUpdate
 
     /// <summary>Wire field <c>internal_fillers</c>.</summary>
     [JsonPropertyName("internal_fillers")]
-    public Dictionary<string, object?>? InternalFillers { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.SWAIGInternalFillerUpdate? InternalFillers { get; set; }
 }

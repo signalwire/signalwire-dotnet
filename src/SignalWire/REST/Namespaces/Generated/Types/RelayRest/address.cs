@@ -22,7 +22,7 @@ public class Address
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>label</c>.</summary>
     [JsonPropertyName("label")]
@@ -50,7 +50,7 @@ public class Address
 
     /// <summary>Wire field <c>address_type</c>.</summary>
     [JsonPropertyName("address_type")]
-    public Dictionary<string, object?>? AddressType { get; set; }
+    public string? AddressType { get; set; }
 
     /// <summary>Wire field <c>address_number</c>.</summary>
     [JsonPropertyName("address_number")]

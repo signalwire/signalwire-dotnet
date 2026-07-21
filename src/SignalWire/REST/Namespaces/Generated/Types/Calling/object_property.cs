@@ -26,7 +26,7 @@ public class ObjectProperty
 
     /// <summary>Wire field <c>nullable</c>.</summary>
     [JsonPropertyName("nullable")]
-    public Dictionary<string, object?>? Nullable { get; set; }
+    public object? Nullable { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]

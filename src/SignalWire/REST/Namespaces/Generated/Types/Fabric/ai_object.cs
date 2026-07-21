@@ -34,7 +34,7 @@ public class AIObject
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? Params { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.AIParams? Params { get; set; }
 
     /// <summary>Wire field <c>post_prompt</c>.</summary>
     [JsonPropertyName("post_prompt")]
@@ -54,5 +54,5 @@ public class AIObject
 
     /// <summary>Wire field <c>SWAIG</c>.</summary>
     [JsonPropertyName("SWAIG")]
-    public Dictionary<string, object?>? SWAIG { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.SWAIG? SWAIG { get; set; }
 }

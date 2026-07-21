@@ -26,5 +26,5 @@ public class CallCreateRequest
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? Params { get; set; }
+    public object? Params { get; set; }
 }

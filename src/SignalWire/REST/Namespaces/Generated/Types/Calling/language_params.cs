@@ -22,9 +22,9 @@ public class LanguageParams
 {
     /// <summary>Wire field <c>stability</c>.</summary>
     [JsonPropertyName("stability")]
-    public Dictionary<string, object?>? Stability { get; set; }
+    public object? Stability { get; set; }
 
     /// <summary>Wire field <c>similarity</c>.</summary>
     [JsonPropertyName("similarity")]
-    public Dictionary<string, object?>? Similarity { get; set; }
+    public object? Similarity { get; set; }
 }

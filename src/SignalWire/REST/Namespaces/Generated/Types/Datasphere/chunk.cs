@@ -26,5 +26,5 @@ public class Chunk
 
     /// <summary>Wire field <c>document_id</c>.</summary>
     [JsonPropertyName("document_id")]
-    public Dictionary<string, object?>? DocumentId { get; set; }
+    public string? DocumentId { get; set; }
 }

@@ -58,7 +58,7 @@ public class ConferenceRoomUpdateRequest
 
     /// <summary>Wire field <c>layout</c>.</summary>
     [JsonPropertyName("layout")]
-    public Dictionary<string, object?>? Layout { get; set; }
+    public string? Layout { get; set; }
 
     /// <summary>Wire field <c>record_on_start</c>.</summary>
     [JsonPropertyName("record_on_start")]

@@ -50,7 +50,7 @@ public class LanguagesWithFillers
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? Params { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.LanguageParams? Params { get; set; }
 
     /// <summary>Wire field <c>function_fillers</c>.</summary>
     [JsonPropertyName("function_fillers")]

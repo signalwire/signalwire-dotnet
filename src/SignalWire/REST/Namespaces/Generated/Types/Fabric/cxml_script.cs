@@ -22,7 +22,7 @@ public class CXMLScript
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>contents</c>.</summary>
     [JsonPropertyName("contents")]
@@ -54,5 +54,5 @@ public class CXMLScript
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
-    public Dictionary<string, object?>? StatusCallbackMethod { get; set; }
+    public object? StatusCallbackMethod { get; set; }
 }

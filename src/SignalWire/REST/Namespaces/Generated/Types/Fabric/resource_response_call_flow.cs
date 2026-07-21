@@ -22,11 +22,11 @@ public class ResourceResponseCallFlow
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? ProjectId { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
@@ -46,5 +46,5 @@ public class ResourceResponseCallFlow
 
     /// <summary>Wire field <c>call_flow</c>.</summary>
     [JsonPropertyName("call_flow")]
-    public Dictionary<string, object?>? CallFlow { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlow? CallFlow { get; set; }
 }

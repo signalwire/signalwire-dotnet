@@ -26,7 +26,7 @@ public class EnterQueueObject
 
     /// <summary>Wire field <c>transfer_after_bridge</c>.</summary>
     [JsonPropertyName("transfer_after_bridge")]
-    public Dictionary<string, object?>? TransferAfterBridge { get; set; }
+    public object? TransferAfterBridge { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
@@ -34,9 +34,9 @@ public class EnterQueueObject
 
     /// <summary>Wire field <c>wait_url</c>.</summary>
     [JsonPropertyName("wait_url")]
-    public Dictionary<string, object?>? WaitUrl { get; set; }
+    public object? WaitUrl { get; set; }
 
     /// <summary>Wire field <c>wait_time</c>.</summary>
     [JsonPropertyName("wait_time")]
-    public Dictionary<string, object?>? WaitTime { get; set; }
+    public object? WaitTime { get; set; }
 }

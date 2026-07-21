@@ -22,15 +22,15 @@ public class BedrockParams
 {
     /// <summary>Wire field <c>attention_timeout</c>.</summary>
     [JsonPropertyName("attention_timeout")]
-    public Dictionary<string, object?>? AttentionTimeout { get; set; }
+    public object? AttentionTimeout { get; set; }
 
     /// <summary>Wire field <c>hard_stop_time</c>.</summary>
     [JsonPropertyName("hard_stop_time")]
-    public Dictionary<string, object?>? HardStopTime { get; set; }
+    public object? HardStopTime { get; set; }
 
     /// <summary>Wire field <c>inactivity_timeout</c>.</summary>
     [JsonPropertyName("inactivity_timeout")]
-    public Dictionary<string, object?>? InactivityTimeout { get; set; }
+    public object? InactivityTimeout { get; set; }
 
     /// <summary>Wire field <c>video_listening_file</c>.</summary>
     [JsonPropertyName("video_listening_file")]

@@ -22,5 +22,5 @@ public class Unset
 {
     /// <summary>Wire field <c>unset</c>.</summary>
     [JsonPropertyName("unset")]
-    public Dictionary<string, object?>? Unset_ { get; set; }
+    public object? Unset_ { get; set; }
 }

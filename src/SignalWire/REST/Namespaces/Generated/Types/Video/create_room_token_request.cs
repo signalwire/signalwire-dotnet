@@ -74,11 +74,11 @@ public class CreateRoomTokenRequest
 
     /// <summary>Wire field <c>join_as</c>.</summary>
     [JsonPropertyName("join_as")]
-    public Dictionary<string, object?>? JoinAs { get; set; }
+    public string? JoinAs { get; set; }
 
     /// <summary>Wire field <c>media_allowed</c>.</summary>
     [JsonPropertyName("media_allowed")]
-    public Dictionary<string, object?>? MediaAllowed { get; set; }
+    public string? MediaAllowed { get; set; }
 
     /// <summary>Wire field <c>room_meta</c>.</summary>
     [JsonPropertyName("room_meta")]

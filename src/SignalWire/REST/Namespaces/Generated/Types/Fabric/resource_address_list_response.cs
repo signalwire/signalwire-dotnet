@@ -26,5 +26,5 @@ public class ResourceAddressListResponse
 
     /// <summary>Wire field <c>links</c>.</summary>
     [JsonPropertyName("links")]
-    public Dictionary<string, object?>? Links { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.ResourceAddressPaginationResponse? Links { get; set; }
 }

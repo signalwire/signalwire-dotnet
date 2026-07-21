@@ -22,5 +22,5 @@ public class AI
 {
     /// <summary>Wire field <c>ai</c>.</summary>
     [JsonPropertyName("ai")]
-    public Dictionary<string, object?>? Ai { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.AIObject? Ai { get; set; }
 }

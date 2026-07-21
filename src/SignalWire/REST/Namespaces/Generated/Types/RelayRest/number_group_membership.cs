@@ -22,15 +22,15 @@ public class NumberGroupMembership
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>number_group_id</c>.</summary>
     [JsonPropertyName("number_group_id")]
-    public Dictionary<string, object?>? NumberGroupId { get; set; }
+    public string? NumberGroupId { get; set; }
 
     /// <summary>Wire field <c>phone_number</c>.</summary>
     [JsonPropertyName("phone_number")]
-    public Dictionary<string, object?>? PhoneNumber { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.RelayRest.MembershipPhoneNumber? PhoneNumber { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]

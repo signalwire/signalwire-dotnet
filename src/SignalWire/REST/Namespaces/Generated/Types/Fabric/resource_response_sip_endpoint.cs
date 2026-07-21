@@ -22,11 +22,11 @@ public class ResourceResponseSipEndpoint
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? ProjectId { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
@@ -46,5 +46,5 @@ public class ResourceResponseSipEndpoint
 
     /// <summary>Wire field <c>sip_endpoint</c>.</summary>
     [JsonPropertyName("sip_endpoint")]
-    public Dictionary<string, object?>? SipEndpoint { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.SipEndpoint? SipEndpoint { get; set; }
 }

@@ -26,11 +26,11 @@ public class Log
 
     /// <summary>Wire field <c>source</c>.</summary>
     [JsonPropertyName("source")]
-    public Dictionary<string, object?>? Source { get; set; }
+    public string? Source { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public Dictionary<string, object?>? Type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
@@ -42,7 +42,7 @@ public class Log
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>locked</c>.</summary>
     [JsonPropertyName("locked")]

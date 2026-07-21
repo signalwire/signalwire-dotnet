@@ -22,5 +22,5 @@ public class SWMLAction
 {
     /// <summary>Wire field <c>SWML</c>.</summary>
     [JsonPropertyName("SWML")]
-    public Dictionary<string, object?>? SWML { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.SWMLObject? SWML { get; set; }
 }

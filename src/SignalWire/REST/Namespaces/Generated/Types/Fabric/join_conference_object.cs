@@ -26,7 +26,7 @@ public class JoinConferenceObject
 
     /// <summary>Wire field <c>muted</c>.</summary>
     [JsonPropertyName("muted")]
-    public Dictionary<string, object?>? Muted { get; set; }
+    public object? Muted { get; set; }
 
     /// <summary>Wire field <c>beep</c>.</summary>
     [JsonPropertyName("beep")]
@@ -34,19 +34,19 @@ public class JoinConferenceObject
 
     /// <summary>Wire field <c>start_on_enter</c>.</summary>
     [JsonPropertyName("start_on_enter")]
-    public Dictionary<string, object?>? StartOnEnter { get; set; }
+    public object? StartOnEnter { get; set; }
 
     /// <summary>Wire field <c>end_on_exit</c>.</summary>
     [JsonPropertyName("end_on_exit")]
-    public Dictionary<string, object?>? EndOnExit { get; set; }
+    public object? EndOnExit { get; set; }
 
     /// <summary>Wire field <c>wait_url</c>.</summary>
     [JsonPropertyName("wait_url")]
-    public Dictionary<string, object?>? WaitUrl { get; set; }
+    public object? WaitUrl { get; set; }
 
     /// <summary>Wire field <c>max_participants</c>.</summary>
     [JsonPropertyName("max_participants")]
-    public Dictionary<string, object?>? MaxParticipants { get; set; }
+    public object? MaxParticipants { get; set; }
 
     /// <summary>Wire field <c>record</c>.</summary>
     [JsonPropertyName("record")]
@@ -90,5 +90,5 @@ public class JoinConferenceObject
 
     /// <summary>Wire field <c>result</c>.</summary>
     [JsonPropertyName("result")]
-    public Dictionary<string, object?>? Result { get; set; }
+    public object? Result { get; set; }
 }

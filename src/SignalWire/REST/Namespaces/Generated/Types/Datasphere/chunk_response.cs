@@ -22,19 +22,19 @@ public class ChunkResponse
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>datasphere_document_id</c>.</summary>
     [JsonPropertyName("datasphere_document_id")]
-    public Dictionary<string, object?>? DatasphereDocumentId { get; set; }
+    public string? DatasphereDocumentId { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? ProjectId { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>tags</c>.</summary>
     [JsonPropertyName("tags")]

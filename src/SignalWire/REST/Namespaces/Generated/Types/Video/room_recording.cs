@@ -30,7 +30,7 @@ public class RoomRecording
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>started_at</c>.</summary>
     [JsonPropertyName("started_at")]

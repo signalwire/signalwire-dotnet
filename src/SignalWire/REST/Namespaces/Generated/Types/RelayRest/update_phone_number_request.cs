@@ -26,7 +26,7 @@ public class UpdatePhoneNumberRequest
 
     /// <summary>Wire field <c>call_handler</c>.</summary>
     [JsonPropertyName("call_handler")]
-    public Dictionary<string, object?>? CallHandler { get; set; }
+    public string? CallHandler { get; set; }
 
     /// <summary>Wire field <c>call_receive_mode</c>.</summary>
     [JsonPropertyName("call_receive_mode")]
@@ -102,15 +102,15 @@ public class UpdatePhoneNumberRequest
 
     /// <summary>Wire field <c>call_video_room_id</c>.</summary>
     [JsonPropertyName("call_video_room_id")]
-    public Dictionary<string, object?>? CallVideoRoomId { get; set; }
+    public string? CallVideoRoomId { get; set; }
 
     /// <summary>Wire field <c>call_ai_agent_id</c>.</summary>
     [JsonPropertyName("call_ai_agent_id")]
-    public Dictionary<string, object?>? CallAiAgentId { get; set; }
+    public string? CallAiAgentId { get; set; }
 
     /// <summary>Wire field <c>call_flow_id</c>.</summary>
     [JsonPropertyName("call_flow_id")]
-    public Dictionary<string, object?>? CallFlowId { get; set; }
+    public string? CallFlowId { get; set; }
 
     /// <summary>Wire field <c>call_flow_version</c>.</summary>
     [JsonPropertyName("call_flow_version")]
@@ -118,7 +118,7 @@ public class UpdatePhoneNumberRequest
 
     /// <summary>Wire field <c>message_handler</c>.</summary>
     [JsonPropertyName("message_handler")]
-    public Dictionary<string, object?>? MessageHandler { get; set; }
+    public string? MessageHandler { get; set; }
 
     /// <summary>Wire field <c>message_request_url</c>.</summary>
     [JsonPropertyName("message_request_url")]

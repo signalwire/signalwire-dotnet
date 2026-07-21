@@ -22,7 +22,7 @@ public class CallPlayPauseRequest
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>command</c>.</summary>
     [JsonPropertyName("command")]

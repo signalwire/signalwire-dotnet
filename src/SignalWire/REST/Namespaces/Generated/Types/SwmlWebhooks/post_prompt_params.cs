@@ -34,7 +34,7 @@ public class PostPromptParams
 
     /// <summary>Wire field <c>post_prompt_result</c>.</summary>
     [JsonPropertyName("post_prompt_result")]
-    public Dictionary<string, object?>? PostPromptResult { get; set; }
+    public object? PostPromptResult { get; set; }
 
     /// <summary>Wire field <c>end_reason</c>.</summary>
     [JsonPropertyName("end_reason")]

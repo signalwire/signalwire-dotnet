@@ -46,7 +46,7 @@ public class CreateAddressRequest
 
     /// <summary>Wire field <c>address_type</c>.</summary>
     [JsonPropertyName("address_type")]
-    public Dictionary<string, object?>? AddressType { get; set; }
+    public string? AddressType { get; set; }
 
     /// <summary>Wire field <c>address_number</c>.</summary>
     [JsonPropertyName("address_number")]

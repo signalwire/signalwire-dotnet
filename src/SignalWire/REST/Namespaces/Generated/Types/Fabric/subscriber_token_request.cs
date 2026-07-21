@@ -30,7 +30,7 @@ public class SubscriberTokenRequest
 
     /// <summary>Wire field <c>application_id</c>.</summary>
     [JsonPropertyName("application_id")]
-    public Dictionary<string, object?>? ApplicationId { get; set; }
+    public string? ApplicationId { get; set; }
 
     /// <summary>Wire field <c>password</c>.</summary>
     [JsonPropertyName("password")]

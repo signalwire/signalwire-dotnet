@@ -54,7 +54,7 @@ public class UpdateDomainApplicationRequest
 
     /// <summary>Wire field <c>call_handler</c>.</summary>
     [JsonPropertyName("call_handler")]
-    public Dictionary<string, object?>? CallHandler { get; set; }
+    public string? CallHandler { get; set; }
 
     /// <summary>Wire field <c>call_relay_topic</c>.</summary>
     [JsonPropertyName("call_relay_topic")]
@@ -98,7 +98,7 @@ public class UpdateDomainApplicationRequest
 
     /// <summary>Wire field <c>call_video_room_id</c>.</summary>
     [JsonPropertyName("call_video_room_id")]
-    public Dictionary<string, object?>? CallVideoRoomId { get; set; }
+    public string? CallVideoRoomId { get; set; }
 
     /// <summary>Wire field <c>call_relay_script_url</c>.</summary>
     [JsonPropertyName("call_relay_script_url")]
@@ -106,15 +106,15 @@ public class UpdateDomainApplicationRequest
 
     /// <summary>Wire field <c>call_dialogflow_agent_id</c>.</summary>
     [JsonPropertyName("call_dialogflow_agent_id")]
-    public Dictionary<string, object?>? CallDialogflowAgentId { get; set; }
+    public string? CallDialogflowAgentId { get; set; }
 
     /// <summary>Wire field <c>call_ai_agent_id</c>.</summary>
     [JsonPropertyName("call_ai_agent_id")]
-    public Dictionary<string, object?>? CallAiAgentId { get; set; }
+    public string? CallAiAgentId { get; set; }
 
     /// <summary>Wire field <c>call_flow_id</c>.</summary>
     [JsonPropertyName("call_flow_id")]
-    public Dictionary<string, object?>? CallFlowId { get; set; }
+    public string? CallFlowId { get; set; }
 
     /// <summary>Wire field <c>call_flow_version</c>.</summary>
     [JsonPropertyName("call_flow_version")]

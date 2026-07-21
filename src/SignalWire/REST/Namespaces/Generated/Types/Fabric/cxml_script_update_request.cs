@@ -34,5 +34,5 @@ public class CXMLScriptUpdateRequest
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
-    public Dictionary<string, object?>? StatusCallbackMethod { get; set; }
+    public object? StatusCallbackMethod { get; set; }
 }

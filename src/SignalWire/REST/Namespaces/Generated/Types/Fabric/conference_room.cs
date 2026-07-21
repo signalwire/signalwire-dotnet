@@ -22,7 +22,7 @@ public class ConferenceRoom
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
@@ -66,7 +66,7 @@ public class ConferenceRoom
 
     /// <summary>Wire field <c>layout</c>.</summary>
     [JsonPropertyName("layout")]
-    public Dictionary<string, object?>? Layout { get; set; }
+    public string? Layout { get; set; }
 
     /// <summary>Wire field <c>record_on_start</c>.</summary>
     [JsonPropertyName("record_on_start")]

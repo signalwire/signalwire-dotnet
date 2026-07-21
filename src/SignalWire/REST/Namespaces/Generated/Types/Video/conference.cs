@@ -46,15 +46,15 @@ public class Conference
 
     /// <summary>Wire field <c>quality</c>.</summary>
     [JsonPropertyName("quality")]
-    public Dictionary<string, object?>? Quality { get; set; }
+    public string? Quality { get; set; }
 
     /// <summary>Wire field <c>layout</c>.</summary>
     [JsonPropertyName("layout")]
-    public Dictionary<string, object?>? Layout { get; set; }
+    public string? Layout { get; set; }
 
     /// <summary>Wire field <c>size</c>.</summary>
     [JsonPropertyName("size")]
-    public Dictionary<string, object?>? Size { get; set; }
+    public string? Size { get; set; }
 
     /// <summary>Wire field <c>record_on_start</c>.</summary>
     [JsonPropertyName("record_on_start")]
@@ -134,5 +134,5 @@ public class Conference
 
     /// <summary>Wire field <c>active_session</c>.</summary>
     [JsonPropertyName("active_session")]
-    public Dictionary<string, object?>? ActiveSession { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Video.ActiveSession? ActiveSession { get; set; }
 }

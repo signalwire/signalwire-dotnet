@@ -22,5 +22,5 @@ public class UnsetMetaDataAction
 {
     /// <summary>Wire field <c>unset_meta_data</c>.</summary>
     [JsonPropertyName("unset_meta_data")]
-    public Dictionary<string, object?>? UnsetMetaData { get; set; }
+    public object? UnsetMetaData { get; set; }
 }

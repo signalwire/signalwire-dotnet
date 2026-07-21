@@ -38,9 +38,9 @@ public class LogEvent
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? ProjectId { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>log_id</c>.</summary>
     [JsonPropertyName("log_id")]
-    public Dictionary<string, object?>? LogId { get; set; }
+    public string? LogId { get; set; }
 }

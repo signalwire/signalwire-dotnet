@@ -22,7 +22,7 @@ public class CallFlow
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>title</c>.</summary>
     [JsonPropertyName("title")]

@@ -22,7 +22,7 @@ public class PhoneNumber
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
@@ -38,11 +38,11 @@ public class PhoneNumber
 
     /// <summary>Wire field <c>number_type</c>.</summary>
     [JsonPropertyName("number_type")]
-    public Dictionary<string, object?>? NumberType { get; set; }
+    public string? NumberType { get; set; }
 
     /// <summary>Wire field <c>e911_address_id</c>.</summary>
     [JsonPropertyName("e911_address_id")]
-    public Dictionary<string, object?>? E911AddressId { get; set; }
+    public string? E911AddressId { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
@@ -58,15 +58,15 @@ public class PhoneNumber
 
     /// <summary>Wire field <c>call_handler</c>.</summary>
     [JsonPropertyName("call_handler")]
-    public Dictionary<string, object?>? CallHandler { get; set; }
+    public string? CallHandler { get; set; }
 
     /// <summary>Wire field <c>calling_handler_resource_id</c>.</summary>
     [JsonPropertyName("calling_handler_resource_id")]
-    public Dictionary<string, object?>? CallingHandlerResourceId { get; set; }
+    public string? CallingHandlerResourceId { get; set; }
 
     /// <summary>Wire field <c>call_receive_mode</c>.</summary>
     [JsonPropertyName("call_receive_mode")]
-    public Dictionary<string, object?>? CallReceiveMode { get; set; }
+    public string? CallReceiveMode { get; set; }
 
     /// <summary>Wire field <c>call_request_url</c>.</summary>
     [JsonPropertyName("call_request_url")]
@@ -74,7 +74,7 @@ public class PhoneNumber
 
     /// <summary>Wire field <c>call_request_method</c>.</summary>
     [JsonPropertyName("call_request_method")]
-    public Dictionary<string, object?>? CallRequestMethod { get; set; }
+    public string? CallRequestMethod { get; set; }
 
     /// <summary>Wire field <c>call_fallback_url</c>.</summary>
     [JsonPropertyName("call_fallback_url")]
@@ -82,7 +82,7 @@ public class PhoneNumber
 
     /// <summary>Wire field <c>call_fallback_method</c>.</summary>
     [JsonPropertyName("call_fallback_method")]
-    public Dictionary<string, object?>? CallFallbackMethod { get; set; }
+    public string? CallFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_url</c>.</summary>
     [JsonPropertyName("call_status_callback_url")]
@@ -90,7 +90,7 @@ public class PhoneNumber
 
     /// <summary>Wire field <c>call_status_callback_method</c>.</summary>
     [JsonPropertyName("call_status_callback_method")]
-    public Dictionary<string, object?>? CallStatusCallbackMethod { get; set; }
+    public string? CallStatusCallbackMethod { get; set; }
 
     /// <summary>Wire field <c>call_laml_application_id</c>.</summary>
     [JsonPropertyName("call_laml_application_id")]
@@ -130,7 +130,7 @@ public class PhoneNumber
 
     /// <summary>Wire field <c>call_sip_endpoint_id</c>.</summary>
     [JsonPropertyName("call_sip_endpoint_id")]
-    public Dictionary<string, object?>? CallSipEndpointId { get; set; }
+    public string? CallSipEndpointId { get; set; }
 
     /// <summary>Wire field <c>call_verto_resource</c>.</summary>
     [JsonPropertyName("call_verto_resource")]
@@ -138,15 +138,15 @@ public class PhoneNumber
 
     /// <summary>Wire field <c>call_video_room_id</c>.</summary>
     [JsonPropertyName("call_video_room_id")]
-    public Dictionary<string, object?>? CallVideoRoomId { get; set; }
+    public string? CallVideoRoomId { get; set; }
 
     /// <summary>Wire field <c>message_handler</c>.</summary>
     [JsonPropertyName("message_handler")]
-    public Dictionary<string, object?>? MessageHandler { get; set; }
+    public string? MessageHandler { get; set; }
 
     /// <summary>Wire field <c>messaging_handler_resource_id</c>.</summary>
     [JsonPropertyName("messaging_handler_resource_id")]
-    public Dictionary<string, object?>? MessagingHandlerResourceId { get; set; }
+    public string? MessagingHandlerResourceId { get; set; }
 
     /// <summary>Wire field <c>message_request_url</c>.</summary>
     [JsonPropertyName("message_request_url")]
@@ -154,7 +154,7 @@ public class PhoneNumber
 
     /// <summary>Wire field <c>message_request_method</c>.</summary>
     [JsonPropertyName("message_request_method")]
-    public Dictionary<string, object?>? MessageRequestMethod { get; set; }
+    public string? MessageRequestMethod { get; set; }
 
     /// <summary>Wire field <c>message_fallback_url</c>.</summary>
     [JsonPropertyName("message_fallback_url")]
@@ -162,7 +162,7 @@ public class PhoneNumber
 
     /// <summary>Wire field <c>message_fallback_method</c>.</summary>
     [JsonPropertyName("message_fallback_method")]
-    public Dictionary<string, object?>? MessageFallbackMethod { get; set; }
+    public string? MessageFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>message_laml_application_id</c>.</summary>
     [JsonPropertyName("message_laml_application_id")]

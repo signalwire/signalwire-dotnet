@@ -22,7 +22,7 @@ public class ShortCodeResponse
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
@@ -42,7 +42,7 @@ public class ShortCodeResponse
 
     /// <summary>Wire field <c>code_type</c>.</summary>
     [JsonPropertyName("code_type")]
-    public Dictionary<string, object?>? CodeType { get; set; }
+    public string? CodeType { get; set; }
 
     /// <summary>Wire field <c>country_code</c>.</summary>
     [JsonPropertyName("country_code")]
@@ -66,7 +66,7 @@ public class ShortCodeResponse
 
     /// <summary>Wire field <c>message_handler</c>.</summary>
     [JsonPropertyName("message_handler")]
-    public Dictionary<string, object?>? MessageHandler { get; set; }
+    public string? MessageHandler { get; set; }
 
     /// <summary>Wire field <c>message_request_url</c>.</summary>
     [JsonPropertyName("message_request_url")]
@@ -74,7 +74,7 @@ public class ShortCodeResponse
 
     /// <summary>Wire field <c>message_request_method</c>.</summary>
     [JsonPropertyName("message_request_method")]
-    public Dictionary<string, object?>? MessageRequestMethod { get; set; }
+    public string? MessageRequestMethod { get; set; }
 
     /// <summary>Wire field <c>message_fallback_url</c>.</summary>
     [JsonPropertyName("message_fallback_url")]
@@ -82,11 +82,11 @@ public class ShortCodeResponse
 
     /// <summary>Wire field <c>message_fallback_method</c>.</summary>
     [JsonPropertyName("message_fallback_method")]
-    public Dictionary<string, object?>? MessageFallbackMethod { get; set; }
+    public string? MessageFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>message_laml_application_id</c>.</summary>
     [JsonPropertyName("message_laml_application_id")]
-    public Dictionary<string, object?>? MessageLamlApplicationId { get; set; }
+    public string? MessageLamlApplicationId { get; set; }
 
     /// <summary>Wire field <c>message_relay_context</c>.</summary>
     [JsonPropertyName("message_relay_context")]

@@ -26,7 +26,7 @@ public class Webhook
 
     /// <summary>Wire field <c>error_keys</c>.</summary>
     [JsonPropertyName("error_keys")]
-    public Dictionary<string, object?>? ErrorKeys { get; set; }
+    public object? ErrorKeys { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
@@ -46,7 +46,7 @@ public class Webhook
 
     /// <summary>Wire field <c>input_args_as_params</c>.</summary>
     [JsonPropertyName("input_args_as_params")]
-    public Dictionary<string, object?>? InputArgsAsParams { get; set; }
+    public object? InputArgsAsParams { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
@@ -54,9 +54,9 @@ public class Webhook
 
     /// <summary>Wire field <c>require_args</c>.</summary>
     [JsonPropertyName("require_args")]
-    public Dictionary<string, object?>? RequireArgs { get; set; }
+    public object? RequireArgs { get; set; }
 
     /// <summary>Wire field <c>output</c>.</summary>
     [JsonPropertyName("output")]
-    public Dictionary<string, object?>? Output { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.Output? Output { get; set; }
 }

@@ -22,7 +22,7 @@ public class Document
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>filename</c>.</summary>
     [JsonPropertyName("filename")]
@@ -30,7 +30,7 @@ public class Document
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>tags</c>.</summary>
     [JsonPropertyName("tags")]
@@ -38,7 +38,7 @@ public class Document
 
     /// <summary>Wire field <c>chunking_strategy</c>.</summary>
     [JsonPropertyName("chunking_strategy")]
-    public Dictionary<string, object?>? ChunkingStrategy { get; set; }
+    public string? ChunkingStrategy { get; set; }
 
     /// <summary>Wire field <c>max_sentences_per_chunk</c>.</summary>
     [JsonPropertyName("max_sentences_per_chunk")]

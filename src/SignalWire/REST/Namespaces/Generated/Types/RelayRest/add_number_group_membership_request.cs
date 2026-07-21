@@ -22,5 +22,5 @@ public class AddNumberGroupMembershipRequest
 {
     /// <summary>Wire field <c>phone_number_id</c>.</summary>
     [JsonPropertyName("phone_number_id")]
-    public Dictionary<string, object?>? PhoneNumberId { get; set; }
+    public string? PhoneNumberId { get; set; }
 }

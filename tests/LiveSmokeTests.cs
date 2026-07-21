@@ -53,7 +53,7 @@ public class LiveSmokeTests
             new Dictionary<string, string> { ["page_size"] = "1" });
 
         Assert.NotNull(page);
-        Assert.True(page.ContainsKey("data"),
+        Assert.True(page!.Data is not null,
             $"live fabric addresses list returned no data envelope: {JsonSerializer.Serialize(page)}");
     }
 

@@ -66,9 +66,9 @@ public class PhoneNumberLookupResponse
 
     /// <summary>Wire field <c>carrier</c>.</summary>
     [JsonPropertyName("carrier")]
-    public Dictionary<string, object?>? Carrier { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.RelayRest.CarrierLookupInfo? Carrier { get; set; }
 
     /// <summary>Wire field <c>cnam</c>.</summary>
     [JsonPropertyName("cnam")]
-    public Dictionary<string, object?>? Cnam { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.RelayRest.CnamInfo? Cnam { get; set; }
 }

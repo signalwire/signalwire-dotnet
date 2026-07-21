@@ -22,11 +22,11 @@ public class PstnRecording
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? ProjectId { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
@@ -74,5 +74,5 @@ public class PstnRecording
 
     /// <summary>Wire field <c>relay_pstn_leg_id</c>.</summary>
     [JsonPropertyName("relay_pstn_leg_id")]
-    public Dictionary<string, object?>? RelayPstnLegId { get; set; }
+    public string? RelayPstnLegId { get; set; }
 }

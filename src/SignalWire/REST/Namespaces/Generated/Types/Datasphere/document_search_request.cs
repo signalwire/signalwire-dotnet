@@ -26,7 +26,7 @@ public class DocumentSearchRequest
 
     /// <summary>Wire field <c>document_id</c>.</summary>
     [JsonPropertyName("document_id")]
-    public Dictionary<string, object?>? DocumentId { get; set; }
+    public string? DocumentId { get; set; }
 
     /// <summary>Wire field <c>query_string</c>.</summary>
     [JsonPropertyName("query_string")]

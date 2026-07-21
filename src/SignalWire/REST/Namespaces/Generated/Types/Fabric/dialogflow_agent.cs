@@ -22,7 +22,7 @@ public class DialogflowAgent
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>say_enabled</c>.</summary>
     [JsonPropertyName("say_enabled")]
@@ -42,7 +42,7 @@ public class DialogflowAgent
 
     /// <summary>Wire field <c>dialogflow_reference_id</c>.</summary>
     [JsonPropertyName("dialogflow_reference_id")]
-    public Dictionary<string, object?>? DialogflowReferenceId { get; set; }
+    public string? DialogflowReferenceId { get; set; }
 
     /// <summary>Wire field <c>dialogflow_reference_name</c>.</summary>
     [JsonPropertyName("dialogflow_reference_name")]

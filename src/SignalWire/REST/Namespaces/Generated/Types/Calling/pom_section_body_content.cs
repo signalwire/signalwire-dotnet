@@ -30,11 +30,11 @@ public class PomSectionBodyContent
 
     /// <summary>Wire field <c>numbered</c>.</summary>
     [JsonPropertyName("numbered")]
-    public Dictionary<string, object?>? Numbered { get; set; }
+    public object? Numbered { get; set; }
 
     /// <summary>Wire field <c>numberedBullets</c>.</summary>
     [JsonPropertyName("numberedBullets")]
-    public Dictionary<string, object?>? NumberedBullets { get; set; }
+    public object? NumberedBullets { get; set; }
 
     /// <summary>Wire field <c>body</c>.</summary>
     [JsonPropertyName("body")]

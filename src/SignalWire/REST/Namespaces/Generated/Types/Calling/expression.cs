@@ -30,5 +30,5 @@ public class Expression
 
     /// <summary>Wire field <c>output</c>.</summary>
     [JsonPropertyName("output")]
-    public Dictionary<string, object?>? Output { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.Output? Output { get; set; }
 }

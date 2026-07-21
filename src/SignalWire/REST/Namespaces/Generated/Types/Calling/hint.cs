@@ -34,5 +34,5 @@ public class Hint
 
     /// <summary>Wire field <c>ignore_case</c>.</summary>
     [JsonPropertyName("ignore_case")]
-    public Dictionary<string, object?>? IgnoreCase { get; set; }
+    public object? IgnoreCase { get; set; }
 }

@@ -42,5 +42,5 @@ public class AvailablePhoneNumber
 
     /// <summary>Wire field <c>capabilities</c>.</summary>
     [JsonPropertyName("capabilities")]
-    public Dictionary<string, object?>? Capabilities { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberCapabilities? Capabilities { get; set; }
 }

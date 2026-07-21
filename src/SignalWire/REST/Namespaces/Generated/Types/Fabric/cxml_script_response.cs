@@ -22,11 +22,11 @@ public class CXMLScriptResponse
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? ProjectId { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
@@ -46,5 +46,5 @@ public class CXMLScriptResponse
 
     /// <summary>Wire field <c>cxml_script</c>.</summary>
     [JsonPropertyName("cxml_script")]
-    public Dictionary<string, object?>? CxmlScript { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.CXMLScript? CxmlScript { get; set; }
 }

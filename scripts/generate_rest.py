@@ -1043,7 +1043,20 @@ def _ref_leaf_cs(ref: str, ref_names: dict) -> str | None:
     return ref_names.get(leaf)
 
 
-def _wire_field_cs_type(psc: dict, ref_names: dict) -> str:
+def _resolve_ref_schema(psc: dict, schemas: dict | None) -> dict:
+    """Resolve a bare ``$ref`` to its target schema (one hop) when ``schemas`` is
+    available; else return the node unchanged. Used to peer through a scalar-alias
+    ref (``uuid`` = ``{type: string}``) so a field typed via that ref keeps its
+    scalar C# type rather than falling back to the open Dictionary."""
+    if not schemas or not isinstance(psc, dict):
+        return psc
+    ref = psc.get("$ref")
+    if not ref:
+        return psc
+    return schemas.get(ref.rsplit("/", 1)[-1], {}) or {}
+
+
+def _wire_field_cs_type(psc: dict, ref_names: dict, schemas: dict | None = None) -> str:
     """The C# property type for a wire field, mirroring the reference's ``py_type``
     field-typing rule (generate_python_rest_types.py) so the .NET signature
     enumerator records the SAME class-typed accessors the oracle does:
@@ -1059,13 +1072,27 @@ def _wire_field_cs_type(psc: dict, ref_names: dict) -> str:
 
     ``ref_names`` maps a surfaced-object LEAF name -> its fully-qualified C# type
     name (so a cross-namespace ref like PostPromptSwaigLogEntry.post_data ->
-    SignalWire.Core.SwaigRequestGenerated.SwaigRequest resolves)."""
+    SignalWire.Core.SwaigRequestGenerated.SwaigRequest resolves). ``schemas`` (when
+    supplied) lets a scalar-alias ``$ref`` / single-member ``allOf: [$ref]`` resolve
+    to the aliased SCALAR C# type — DOTNET-1 made these fields deserialized, and a
+    scalar wire value (``id`` = a uuid string) deserialized into a
+    ``Dictionary<string,object?>?`` throws ``JsonException``. Multi-member / genuine
+    object combinators stay the open Dictionary (their wire IS an object)."""
     if not isinstance(psc, dict):
         return "object?"
     ref = psc.get("$ref")
     if ref:
         sib = _ref_leaf_cs(ref, ref_names)
-        return f"{sib}?" if sib else "Dictionary<string, object?>?"
+        if sib:
+            return f"{sib}?"
+        # Resolve the ref: a scalar-alias (uuid: {type:string}) keeps its scalar
+        # C# type so it deserializes; an object we couldn't surface stays open.
+        target = _resolve_ref_schema(psc, schemas)
+        if target is not psc:
+            rt = _type_schema_type(target)
+            if rt in _TYPE_SCALAR_CS:
+                return _TYPE_SCALAR_CS[rt]
+        return "Dictionary<string, object?>?"
     # Nullable idiom: OpenAPI-3.1 spells ``X | null`` as ``anyOf/oneOf: [<X>,
     # {type: null}]`` (mirroring python's ``X | None``). Unwrap the single non-null
     # variant so a nullable ``string``/``integer``/… field keeps its SCALAR C# type
@@ -1079,9 +1106,22 @@ def _wire_field_cs_type(psc: dict, ref_names: dict) -> str:
             non_null = [v for v in variants
                         if isinstance(v, dict) and v.get("type") != "null"]
             if len(non_null) == 1:
-                return _wire_field_cs_type(non_null[0], ref_names)
+                return _wire_field_cs_type(non_null[0], ref_names, schemas)
+    # Single-member ``allOf: [<X>]`` — the OpenAPI idiom for "X plus annotations"
+    # (``id: {allOf: [$ref uuid], format: uuid}``). Unwrap to X so a scalar-alias
+    # keeps its scalar C# type (deserialize-safe) and an object ref becomes the
+    # sibling class. Only for the DESERIALIZED REST DTOs (schemas supplied) — the
+    # accessor-bearing payload modules keep their historical typing untouched.
+    all_of = psc.get("allOf")
+    if schemas is not None and all_of and len([v for v in all_of if isinstance(v, dict)]) == 1:
+        return _wire_field_cs_type(all_of[0], ref_names, schemas)
     if any(k in psc for k in ("allOf", "oneOf", "anyOf")):
-        return "Dictionary<string, object?>?"
+        # A genuine multi-member combinator. For a DESERIALIZED REST response DTO
+        # (schemas supplied) an ``object?`` (JsonElement view) tolerates ANY wire
+        # shape without throwing, unlike a Dictionary that throws on a scalar. The
+        # accessor-bearing payload modules (no schemas) keep the historical
+        # ``Dictionary`` so their recorded field accessors do not drift.
+        return "object?" if schemas is not None else "Dictionary<string, object?>?"
     t = _type_schema_type(psc)
     if t in _TYPE_SCALAR_CS:
         return _TYPE_SCALAR_CS[t]
@@ -1146,7 +1186,7 @@ def _cs_property_name(wire_key: str, pascal: bool = False) -> str:
 
 def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: str,
                           ref_names: dict | None = None, schema_name: str | None = None,
-                          pascal_props: bool = False) -> str:
+                          pascal_props: bool = False, schemas: dict | None = None) -> str:
     """Emit one method-less C# data class in namespace ``ns``: a public property
     per wire field (``[JsonPropertyName("<wire key>")]``), typed per
     ``_wire_field_cs_type``. No methods, no constructor. Shared by the REST
@@ -1203,7 +1243,7 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
         while prop.lstrip("@") in used:
             prop = prop + "_"
         used.add(prop.lstrip("@"))
-        cs_type = _wire_field_cs_type(psc if isinstance(psc, dict) else {}, ref_names)
+        cs_type = _wire_field_cs_type(psc if isinstance(psc, dict) else {}, ref_names, schemas)
         if not first:
             lines.append("")
         first = False
@@ -2193,7 +2233,8 @@ def emit_types(psdk: Path, outs: dict) -> None:
                         cs_ns, cs_name, node.get("properties") or {},
                         f"{ns_key!r} spec components/schemas {raw_name!r}",
                         ref_names=ref_names, schema_name=raw_name,
-                        pascal_props=True)  # DOTNET-2: REST DTOs are method-less (surface [] / no sig accessors)
+                        pascal_props=True,  # DOTNET-2: REST DTOs are method-less (surface [] / no sig accessors)
+                        schemas=schemas)  # DOTNET-1: resolve scalar-alias refs so deserialized fields don't throw
 
 
 # ---------------------------------------------------------------------------

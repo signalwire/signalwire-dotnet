@@ -22,11 +22,11 @@ public class ResourceResponseAI
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? ProjectId { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
@@ -46,5 +46,5 @@ public class ResourceResponseAI
 
     /// <summary>Wire field <c>ai_agent</c>.</summary>
     [JsonPropertyName("ai_agent")]
-    public Dictionary<string, object?>? AiAgent { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgent? AiAgent { get; set; }
 }

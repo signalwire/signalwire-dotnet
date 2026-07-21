@@ -22,5 +22,5 @@ public class CallFlowVersionDeployByVersionId
 {
     /// <summary>Wire field <c>call_flow_version_id</c>.</summary>
     [JsonPropertyName("call_flow_version_id")]
-    public Dictionary<string, object?>? CallFlowVersionId { get; set; }
+    public string? CallFlowVersionId { get; set; }
 }

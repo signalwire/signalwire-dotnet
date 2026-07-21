@@ -22,5 +22,5 @@ public class HoldAction
 {
     /// <summary>Wire field <c>hold</c>.</summary>
     [JsonPropertyName("hold")]
-    public Dictionary<string, object?>? Hold { get; set; }
+    public object? Hold { get; set; }
 }

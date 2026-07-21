@@ -22,7 +22,7 @@ public class SubscriberSIPEndpoint
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>username</c>.</summary>
     [JsonPropertyName("username")]
@@ -46,5 +46,5 @@ public class SubscriberSIPEndpoint
 
     /// <summary>Wire field <c>encryption</c>.</summary>
     [JsonPropertyName("encryption")]
-    public Dictionary<string, object?>? Encryption { get; set; }
+    public string? Encryption { get; set; }
 }

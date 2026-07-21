@@ -26,5 +26,5 @@ public class FreeswitchConnectorCreateRequest
 
     /// <summary>Wire field <c>token</c>.</summary>
     [JsonPropertyName("token")]
-    public Dictionary<string, object?>? Token { get; set; }
+    public string? Token { get; set; }
 }

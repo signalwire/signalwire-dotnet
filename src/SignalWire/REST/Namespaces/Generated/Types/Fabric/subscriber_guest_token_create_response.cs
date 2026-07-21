@@ -22,9 +22,9 @@ public class SubscriberGuestTokenCreateResponse
 {
     /// <summary>Wire field <c>token</c>.</summary>
     [JsonPropertyName("token")]
-    public Dictionary<string, object?>? Token { get; set; }
+    public string? Token { get; set; }
 
     /// <summary>Wire field <c>refresh_token</c>.</summary>
     [JsonPropertyName("refresh_token")]
-    public Dictionary<string, object?>? RefreshToken { get; set; }
+    public string? RefreshToken { get; set; }
 }

@@ -52,9 +52,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
         var video = NewVideo();
         var body = await video.Rooms.ListStreamsAsync("room-1");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"),
-            $"missing 'data' in body keys {string.Join(",", body.Keys)}");
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -85,8 +83,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
         var video = NewVideo();
         var body = await video.RoomSessions.ListAsync();
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -114,8 +111,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
         var video = NewVideo();
         var body = await video.RoomSessions.ListEventsAsync("sess-1");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -129,7 +125,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
         var video = NewVideo();
         var body = await video.RoomSessions.ListRecordingsAsync("sess-2");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -145,8 +141,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
         var video = NewVideo();
         var body = await video.RoomRecordings.ListAsync();
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -187,7 +182,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
         var video = NewVideo();
         var body = await video.RoomRecordings.ListEventsAsync("rec-1");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -203,8 +198,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
         var video = NewVideo();
         var body = await video.Conferences.ListConferenceTokensAsync("conf-1");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -218,8 +212,7 @@ public class VideoMockTest : IClassFixture<MockServerFixture>
         var video = NewVideo();
         var body = await video.Conferences.ListStreamsAsync("conf-2");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);

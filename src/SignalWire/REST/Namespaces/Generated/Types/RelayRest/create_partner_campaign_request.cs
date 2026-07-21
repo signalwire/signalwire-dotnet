@@ -26,7 +26,7 @@ public class CreatePartnerCampaignRequest
 
     /// <summary>Wire field <c>brand_id</c>.</summary>
     [JsonPropertyName("brand_id")]
-    public Dictionary<string, object?>? BrandId { get; set; }
+    public string? BrandId { get; set; }
 
     /// <summary>Wire field <c>csp_campaign_reference</c>.</summary>
     [JsonPropertyName("csp_campaign_reference")]

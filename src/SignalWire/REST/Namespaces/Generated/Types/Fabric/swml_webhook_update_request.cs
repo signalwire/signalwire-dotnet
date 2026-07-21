@@ -34,7 +34,7 @@ public class SWMLWebhookUpdateRequest
 
     /// <summary>Wire field <c>primary_request_method</c>.</summary>
     [JsonPropertyName("primary_request_method")]
-    public Dictionary<string, object?>? PrimaryRequestMethod { get; set; }
+    public object? PrimaryRequestMethod { get; set; }
 
     /// <summary>Wire field <c>fallback_request_url</c>.</summary>
     [JsonPropertyName("fallback_request_url")]
@@ -42,7 +42,7 @@ public class SWMLWebhookUpdateRequest
 
     /// <summary>Wire field <c>fallback_request_method</c>.</summary>
     [JsonPropertyName("fallback_request_method")]
-    public Dictionary<string, object?>? FallbackRequestMethod { get; set; }
+    public object? FallbackRequestMethod { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
@@ -50,5 +50,5 @@ public class SWMLWebhookUpdateRequest
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
-    public Dictionary<string, object?>? StatusCallbackMethod { get; set; }
+    public object? StatusCallbackMethod { get; set; }
 }

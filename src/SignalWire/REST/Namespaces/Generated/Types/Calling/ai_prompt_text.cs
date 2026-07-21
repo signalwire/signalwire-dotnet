@@ -26,23 +26,23 @@ public class AIPromptText
 
     /// <summary>Wire field <c>temperature</c>.</summary>
     [JsonPropertyName("temperature")]
-    public Dictionary<string, object?>? Temperature { get; set; }
+    public object? Temperature { get; set; }
 
     /// <summary>Wire field <c>top_p</c>.</summary>
     [JsonPropertyName("top_p")]
-    public Dictionary<string, object?>? TopP { get; set; }
+    public object? TopP { get; set; }
 
     /// <summary>Wire field <c>confidence</c>.</summary>
     [JsonPropertyName("confidence")]
-    public Dictionary<string, object?>? Confidence { get; set; }
+    public object? Confidence { get; set; }
 
     /// <summary>Wire field <c>presence_penalty</c>.</summary>
     [JsonPropertyName("presence_penalty")]
-    public Dictionary<string, object?>? PresencePenalty { get; set; }
+    public object? PresencePenalty { get; set; }
 
     /// <summary>Wire field <c>frequency_penalty</c>.</summary>
     [JsonPropertyName("frequency_penalty")]
-    public Dictionary<string, object?>? FrequencyPenalty { get; set; }
+    public object? FrequencyPenalty { get; set; }
 
     /// <summary>Wire field <c>text</c>.</summary>
     [JsonPropertyName("text")]
@@ -50,5 +50,5 @@ public class AIPromptText
 
     /// <summary>Wire field <c>contexts</c>.</summary>
     [JsonPropertyName("contexts")]
-    public Dictionary<string, object?>? Contexts { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.Contexts? Contexts { get; set; }
 }
