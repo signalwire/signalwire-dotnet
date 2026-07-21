@@ -43,9 +43,9 @@ public class VideoStreams
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Video.Stream?> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Video.Stream>(Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public class VideoStreams
     /// <param name="url">Wire field <c>url</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> UpdateAsync(string id, string url, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Video.Stream?> UpdateAsync(string id, string url, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["url"] = url;
@@ -65,7 +65,7 @@ public class VideoStreams
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Video.Stream>(Client.PutAsync(Path(id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>

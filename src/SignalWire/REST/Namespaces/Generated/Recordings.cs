@@ -43,9 +43,9 @@ public class Recordings
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.RecordingListResponse?> ListAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.RecordingListResponse>(Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>

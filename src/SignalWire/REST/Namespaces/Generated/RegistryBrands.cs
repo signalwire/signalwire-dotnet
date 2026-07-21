@@ -43,9 +43,9 @@ public class RegistryBrands
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.BrandListResponse?> ListAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.BrandListResponse>(Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -53,9 +53,9 @@ public class RegistryBrands
     /// </summary>
     /// <param name="body">JSON request body.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> CreateAsync(Dictionary<string, object?> body, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.BrandResponse?> CreateAsync(Dictionary<string, object?> body, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync(BasePath, body, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.BrandResponse>(Client.PostAsync(BasePath, body, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -63,9 +63,9 @@ public class RegistryBrands
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.BrandResponse?> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.BrandResponse>(Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -73,9 +73,9 @@ public class RegistryBrands
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListCampaignsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.CampaignListResponse?> ListCampaignsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "campaigns"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.CampaignListResponse>(Client.GetAsync(Path(id, "campaigns"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -83,8 +83,8 @@ public class RegistryBrands
     /// </summary>
     /// <param name="body">JSON request body.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> CreateCampaignAsync(string id, Dictionary<string, object?> body, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.CampaignResponse?> CreateCampaignAsync(string id, Dictionary<string, object?> body, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync(Path(id, "campaigns"), body, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.CampaignResponse>(Client.PostAsync(Path(id, "campaigns"), body, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

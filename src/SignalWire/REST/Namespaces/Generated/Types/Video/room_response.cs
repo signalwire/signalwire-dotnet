@@ -30,11 +30,11 @@ public class RoomResponse
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public Dictionary<string, object?>? DisplayName { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public Dictionary<string, object?>? Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>max_members</c>.</summary>
     [JsonPropertyName("max_members")]
@@ -50,19 +50,19 @@ public class RoomResponse
 
     /// <summary>Wire field <c>join_from</c>.</summary>
     [JsonPropertyName("join_from")]
-    public Dictionary<string, object?>? JoinFrom { get; set; }
+    public string? JoinFrom { get; set; }
 
     /// <summary>Wire field <c>join_until</c>.</summary>
     [JsonPropertyName("join_until")]
-    public Dictionary<string, object?>? JoinUntil { get; set; }
+    public string? JoinUntil { get; set; }
 
     /// <summary>Wire field <c>remove_at</c>.</summary>
     [JsonPropertyName("remove_at")]
-    public Dictionary<string, object?>? RemoveAt { get; set; }
+    public string? RemoveAt { get; set; }
 
     /// <summary>Wire field <c>remove_after_seconds_elapsed</c>.</summary>
     [JsonPropertyName("remove_after_seconds_elapsed")]
-    public Dictionary<string, object?>? RemoveAfterSecondsElapsed { get; set; }
+    public long? RemoveAfterSecondsElapsed { get; set; }
 
     /// <summary>Wire field <c>layout</c>.</summary>
     [JsonPropertyName("layout")]
@@ -86,11 +86,11 @@ public class RoomResponse
 
     /// <summary>Wire field <c>enable_room_previews</c>.</summary>
     [JsonPropertyName("enable_room_previews")]
-    public Dictionary<string, object?>? EnableRoomPreviews { get; set; }
+    public bool? EnableRoomPreviews { get; set; }
 
     /// <summary>Wire field <c>sync_audio_video</c>.</summary>
     [JsonPropertyName("sync_audio_video")]
-    public Dictionary<string, object?>? SyncAudioVideo { get; set; }
+    public bool? SyncAudioVideo { get; set; }
 
     /// <summary>Wire field <c>meta</c>.</summary>
     [JsonPropertyName("meta")]

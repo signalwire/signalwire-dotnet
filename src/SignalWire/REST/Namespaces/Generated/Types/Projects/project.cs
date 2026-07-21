@@ -30,7 +30,7 @@ public class Project
 
     /// <summary>Wire field <c>parent_project_id</c>.</summary>
     [JsonPropertyName("parent_project_id")]
-    public Dictionary<string, object?>? ParentProjectId { get; set; }
+    public string? ParentProjectId { get; set; }
 
     /// <summary>Wire field <c>subproject</c>.</summary>
     [JsonPropertyName("subproject")]

@@ -26,11 +26,11 @@ public class FaxLog
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public Dictionary<string, object?>? From { get; set; }
+    public string? From { get; set; }
 
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public Dictionary<string, object?>? To { get; set; }
+    public string? To { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
@@ -38,7 +38,7 @@ public class FaxLog
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public Dictionary<string, object?>? Direction { get; set; }
+    public string? Direction { get; set; }
 
     /// <summary>Wire field <c>source</c>.</summary>
     [JsonPropertyName("source")]
@@ -54,7 +54,7 @@ public class FaxLog
 
     /// <summary>Wire field <c>remote_station</c>.</summary>
     [JsonPropertyName("remote_station")]
-    public Dictionary<string, object?>? RemoteStation { get; set; }
+    public string? RemoteStation { get; set; }
 
     /// <summary>Wire field <c>charge</c>.</summary>
     [JsonPropertyName("charge")]
@@ -62,11 +62,11 @@ public class FaxLog
 
     /// <summary>Wire field <c>number_of_pages</c>.</summary>
     [JsonPropertyName("number_of_pages")]
-    public Dictionary<string, object?>? NumberOfPages { get; set; }
+    public long? NumberOfPages { get; set; }
 
     /// <summary>Wire field <c>quality</c>.</summary>
     [JsonPropertyName("quality")]
-    public Dictionary<string, object?>? Quality { get; set; }
+    public string? Quality { get; set; }
 
     /// <summary>Wire field <c>charge_details</c>.</summary>
     [JsonPropertyName("charge_details")]
@@ -78,9 +78,9 @@ public class FaxLog
 
     /// <summary>Wire field <c>error_code</c>.</summary>
     [JsonPropertyName("error_code")]
-    public Dictionary<string, object?>? ErrorCode { get; set; }
+    public string? ErrorCode { get; set; }
 
     /// <summary>Wire field <c>error_message</c>.</summary>
     [JsonPropertyName("error_message")]
-    public Dictionary<string, object?>? ErrorMessage { get; set; }
+    public string? ErrorMessage { get; set; }
 }

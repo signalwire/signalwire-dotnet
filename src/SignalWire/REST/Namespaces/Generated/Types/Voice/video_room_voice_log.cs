@@ -66,9 +66,9 @@ public class VideoRoomVoiceLog
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
-    public Dictionary<string, object?>? Duration { get; set; }
+    public long? Duration { get; set; }
 
     /// <summary>Wire field <c>duration_ms</c>.</summary>
     [JsonPropertyName("duration_ms")]
-    public Dictionary<string, object?>? DurationMs { get; set; }
+    public long? DurationMs { get; set; }
 }

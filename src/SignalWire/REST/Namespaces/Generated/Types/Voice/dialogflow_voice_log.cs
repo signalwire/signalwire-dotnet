@@ -62,5 +62,5 @@ public class DialogflowVoiceLog
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
-    public Dictionary<string, object?>? Duration { get; set; }
+    public long? Duration { get; set; }
 }

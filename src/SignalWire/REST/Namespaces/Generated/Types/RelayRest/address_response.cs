@@ -54,7 +54,7 @@ public class AddressResponse
 
     /// <summary>Wire field <c>address_number</c>.</summary>
     [JsonPropertyName("address_number")]
-    public Dictionary<string, object?>? AddressNumber { get; set; }
+    public string? AddressNumber { get; set; }
 
     /// <summary>Wire field <c>city</c>.</summary>
     [JsonPropertyName("city")]

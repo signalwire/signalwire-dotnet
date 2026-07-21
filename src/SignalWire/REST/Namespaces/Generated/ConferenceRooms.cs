@@ -29,8 +29,8 @@ public class ConferenceRooms : SignalWire.REST.CrudWithAddresses
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomAddressListResponse?> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/fabric/resources/conference_room/" + id + "/addresses", queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomAddressListResponse>(Client.GetAsync("/api/fabric/resources/conference_room/" + id + "/addresses", queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

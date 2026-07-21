@@ -61,7 +61,7 @@ public class VideoRoomTokens
     /// <param name="syncAudioVideo">Wire field <c>sync_audio_video</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> CreateAsync(string roomName, string? userName = null, List<object?>? permissions = null, string? joinFrom = null, string? joinUntil = null, string? removeAt = null, int? removeAfterSecondsElapsed = null, bool? joinAudioMuted = null, bool? joinVideoMuted = null, bool? autoCreateRoom = null, bool? enableRoomPreviews = null, string? roomDisplayName = null, bool? endRoomSessionOnLeave = null, string? joinAs = null, string? mediaAllowed = null, Dictionary<string, object?>? roomMeta = null, Dictionary<string, object?>? meta = null, bool? syncAudioVideo = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Video.RoomTokenResponse?> CreateAsync(string roomName, string? userName = null, List<object?>? permissions = null, string? joinFrom = null, string? joinUntil = null, string? removeAt = null, int? removeAfterSecondsElapsed = null, bool? joinAudioMuted = null, bool? joinVideoMuted = null, bool? autoCreateRoom = null, bool? enableRoomPreviews = null, string? roomDisplayName = null, bool? endRoomSessionOnLeave = null, string? joinAs = null, string? mediaAllowed = null, Dictionary<string, object?>? roomMeta = null, Dictionary<string, object?>? meta = null, bool? syncAudioVideo = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["room_name"] = roomName;
@@ -140,6 +140,6 @@ public class VideoRoomTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Video.RoomTokenResponse>(Client.PostAsync(BasePath, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

@@ -29,9 +29,9 @@ public class Queues : SignalWire.REST.CrudResource
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListMembersAsync(string queueId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.QueueMemberListResponse?> ListMembersAsync(string queueId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(queueId, "members"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.QueueMemberListResponse>(Client.GetAsync(Path(queueId, "members"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -39,9 +39,9 @@ public class Queues : SignalWire.REST.CrudResource
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> GetNextMemberAsync(string queueId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.QueueMemberResponse?> GetNextMemberAsync(string queueId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(queueId, "members", "next"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.QueueMemberResponse>(Client.GetAsync(Path(queueId, "members", "next"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -49,8 +49,8 @@ public class Queues : SignalWire.REST.CrudResource
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> GetMemberAsync(string queueId, string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.QueueMemberResponse?> GetMemberAsync(string queueId, string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(queueId, "members", id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.QueueMemberResponse>(Client.GetAsync(Path(queueId, "members", id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

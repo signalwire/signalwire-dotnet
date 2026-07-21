@@ -38,15 +38,15 @@ public class CxmlConference
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>max_size</c>.</summary>
     [JsonPropertyName("max_size")]
-    public Dictionary<string, object?>? MaxSize { get; set; }
+    public long? MaxSize { get; set; }
 
     /// <summary>Wire field <c>current_participants</c>.</summary>
     [JsonPropertyName("current_participants")]

@@ -29,9 +29,9 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListSipEndpointsAsync(string subscriberId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSipEndpointListResponse?> ListSipEndpointsAsync(string subscriberId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(subscriberId, "sip_endpoints"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSipEndpointListResponse>(Client.GetAsync(Path(subscriberId, "sip_endpoints"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
     /// <param name="encryption">Wire field <c>encryption</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> CreateSipEndpointAsync(string subscriberId, string username, string password, string? callerId = null, string? sendAs = null, List<object?>? ciphers = null, List<object?>? codecs = null, string? encryption = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSIPEndpoint?> CreateSipEndpointAsync(string subscriberId, string username, string password, string? callerId = null, string? sendAs = null, List<object?>? ciphers = null, List<object?>? codecs = null, string? encryption = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["username"] = username;
@@ -78,7 +78,7 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(subscriberId, "sip_endpoints"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSIPEndpoint>(Client.PostAsync(Path(subscriberId, "sip_endpoints"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -86,9 +86,9 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> GetSipEndpointAsync(string subscriberId, string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSIPEndpoint?> GetSipEndpointAsync(string subscriberId, string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(subscriberId, "sip_endpoints", id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSIPEndpoint>(Client.GetAsync(Path(subscriberId, "sip_endpoints", id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
     /// <param name="encryption">Wire field <c>encryption</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> UpdateSipEndpointAsync(string subscriberId, string id, string? username = null, string? password = null, string? callerId = null, string? sendAs = null, List<object?>? ciphers = null, List<object?>? codecs = null, string? encryption = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSIPEndpoint?> UpdateSipEndpointAsync(string subscriberId, string id, string? username = null, string? password = null, string? callerId = null, string? sendAs = null, List<object?>? ciphers = null, List<object?>? codecs = null, string? encryption = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         if (username is not null)
@@ -141,7 +141,7 @@ public class Subscribers : SignalWire.REST.CrudWithAddresses
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PatchAsync(Path(subscriberId, "sip_endpoints", id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberSIPEndpoint>(Client.PatchAsync(Path(subscriberId, "sip_endpoints", id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>

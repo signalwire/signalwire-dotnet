@@ -30,9 +30,9 @@ public class FreeswitchConnector
 
     /// <summary>Wire field <c>caller_id</c>.</summary>
     [JsonPropertyName("caller_id")]
-    public Dictionary<string, object?>? CallerId { get; set; }
+    public string? CallerId { get; set; }
 
     /// <summary>Wire field <c>send_as</c>.</summary>
     [JsonPropertyName("send_as")]
-    public Dictionary<string, object?>? SendAs { get; set; }
+    public string? SendAs { get; set; }
 }

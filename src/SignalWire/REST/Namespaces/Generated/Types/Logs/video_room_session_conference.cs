@@ -42,11 +42,11 @@ public class VideoRoomSessionConference
 
     /// <summary>Wire field <c>room_name</c>.</summary>
     [JsonPropertyName("room_name")]
-    public Dictionary<string, object?>? RoomName { get; set; }
+    public string? RoomName { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>locked</c>.</summary>
     [JsonPropertyName("locked")]
@@ -54,11 +54,11 @@ public class VideoRoomSessionConference
 
     /// <summary>Wire field <c>started_at</c>.</summary>
     [JsonPropertyName("started_at")]
-    public Dictionary<string, object?>? StartedAt { get; set; }
+    public string? StartedAt { get; set; }
 
     /// <summary>Wire field <c>ended_at</c>.</summary>
     [JsonPropertyName("ended_at")]
-    public Dictionary<string, object?>? EndedAt { get; set; }
+    public string? EndedAt { get; set; }
 
     /// <summary>Wire field <c>charge</c>.</summary>
     [JsonPropertyName("charge")]

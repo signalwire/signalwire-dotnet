@@ -54,7 +54,7 @@ public class RelayVoiceLog
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public Dictionary<string, object?>? Url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
@@ -66,17 +66,17 @@ public class RelayVoiceLog
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
-    public Dictionary<string, object?>? Duration { get; set; }
+    public long? Duration { get; set; }
 
     /// <summary>Wire field <c>duration_ms</c>.</summary>
     [JsonPropertyName("duration_ms")]
-    public Dictionary<string, object?>? DurationMs { get; set; }
+    public long? DurationMs { get; set; }
 
     /// <summary>Wire field <c>billing_ms</c>.</summary>
     [JsonPropertyName("billing_ms")]
-    public Dictionary<string, object?>? BillingMs { get; set; }
+    public long? BillingMs { get; set; }
 
     /// <summary>Wire field <c>parent_id</c>.</summary>
     [JsonPropertyName("parent_id")]
-    public Dictionary<string, object?>? ParentId { get; set; }
+    public string? ParentId { get; set; }
 }

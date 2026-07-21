@@ -43,8 +43,8 @@ public class Lookup
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> PhoneNumberAsync(string e164, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberLookupResponse?> PhoneNumberAsync(string e164, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path("phone_number", e164), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberLookupResponse>(Client.GetAsync(Path("phone_number", e164), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

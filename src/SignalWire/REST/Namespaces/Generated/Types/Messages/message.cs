@@ -58,11 +58,11 @@ public class Message
 
     /// <summary>Wire field <c>error_code</c>.</summary>
     [JsonPropertyName("error_code")]
-    public Dictionary<string, object?>? ErrorCode { get; set; }
+    public string? ErrorCode { get; set; }
 
     /// <summary>Wire field <c>error_message</c>.</summary>
     [JsonPropertyName("error_message")]
-    public Dictionary<string, object?>? ErrorMessage { get; set; }
+    public string? ErrorMessage { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
@@ -74,7 +74,7 @@ public class Message
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public Dictionary<string, object?>? StatusCallbackUrl { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>message_uri</c>.</summary>
     [JsonPropertyName("message_uri")]

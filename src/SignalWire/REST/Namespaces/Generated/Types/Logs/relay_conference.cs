@@ -38,15 +38,15 @@ public class RelayConference
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>max_size</c>.</summary>
     [JsonPropertyName("max_size")]
-    public Dictionary<string, object?>? MaxSize { get; set; }
+    public long? MaxSize { get; set; }
 
     /// <summary>Wire field <c>current_participants</c>.</summary>
     [JsonPropertyName("current_participants")]
@@ -62,13 +62,13 @@ public class RelayConference
 
     /// <summary>Wire field <c>recording_url</c>.</summary>
     [JsonPropertyName("recording_url")]
-    public Dictionary<string, object?>? RecordingUrl { get; set; }
+    public string? RecordingUrl { get; set; }
 
     /// <summary>Wire field <c>recording_duration</c>.</summary>
     [JsonPropertyName("recording_duration")]
-    public Dictionary<string, object?>? RecordingDuration { get; set; }
+    public long? RecordingDuration { get; set; }
 
     /// <summary>Wire field <c>recording_file_size</c>.</summary>
     [JsonPropertyName("recording_file_size")]
-    public Dictionary<string, object?>? RecordingFileSize { get; set; }
+    public long? RecordingFileSize { get; set; }
 }

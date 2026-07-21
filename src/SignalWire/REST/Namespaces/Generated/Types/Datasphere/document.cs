@@ -42,19 +42,19 @@ public class Document
 
     /// <summary>Wire field <c>max_sentences_per_chunk</c>.</summary>
     [JsonPropertyName("max_sentences_per_chunk")]
-    public Dictionary<string, object?>? MaxSentencesPerChunk { get; set; }
+    public long? MaxSentencesPerChunk { get; set; }
 
     /// <summary>Wire field <c>split_newlines</c>.</summary>
     [JsonPropertyName("split_newlines")]
-    public Dictionary<string, object?>? SplitNewlines { get; set; }
+    public bool? SplitNewlines { get; set; }
 
     /// <summary>Wire field <c>overlap_size</c>.</summary>
     [JsonPropertyName("overlap_size")]
-    public Dictionary<string, object?>? OverlapSize { get; set; }
+    public long? OverlapSize { get; set; }
 
     /// <summary>Wire field <c>chunk_size</c>.</summary>
     [JsonPropertyName("chunk_size")]
-    public Dictionary<string, object?>? ChunkSize { get; set; }
+    public long? ChunkSize { get; set; }
 
     /// <summary>Wire field <c>number_of_chunks</c>.</summary>
     [JsonPropertyName("number_of_chunks")]

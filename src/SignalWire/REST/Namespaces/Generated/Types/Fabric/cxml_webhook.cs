@@ -42,7 +42,7 @@ public class CXMLWebhook
 
     /// <summary>Wire field <c>fallback_request_url</c>.</summary>
     [JsonPropertyName("fallback_request_url")]
-    public Dictionary<string, object?>? FallbackRequestUrl { get; set; }
+    public string? FallbackRequestUrl { get; set; }
 
     /// <summary>Wire field <c>fallback_request_method</c>.</summary>
     [JsonPropertyName("fallback_request_method")]
@@ -50,7 +50,7 @@ public class CXMLWebhook
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public Dictionary<string, object?>? StatusCallbackUrl { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]

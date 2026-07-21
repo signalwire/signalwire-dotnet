@@ -54,7 +54,7 @@ public class LogRetrieveResponse
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public Dictionary<string, object?>? Url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>number_of_segments</c>.</summary>
     [JsonPropertyName("number_of_segments")]

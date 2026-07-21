@@ -26,7 +26,7 @@ public class ShortCodeResponse
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
@@ -58,11 +58,11 @@ public class ShortCodeResponse
 
     /// <summary>Wire field <c>next_billed_at</c>.</summary>
     [JsonPropertyName("next_billed_at")]
-    public Dictionary<string, object?>? NextBilledAt { get; set; }
+    public string? NextBilledAt { get; set; }
 
     /// <summary>Wire field <c>lease_duration</c>.</summary>
     [JsonPropertyName("lease_duration")]
-    public Dictionary<string, object?>? LeaseDuration { get; set; }
+    public string? LeaseDuration { get; set; }
 
     /// <summary>Wire field <c>message_handler</c>.</summary>
     [JsonPropertyName("message_handler")]
@@ -70,7 +70,7 @@ public class ShortCodeResponse
 
     /// <summary>Wire field <c>message_request_url</c>.</summary>
     [JsonPropertyName("message_request_url")]
-    public Dictionary<string, object?>? MessageRequestUrl { get; set; }
+    public string? MessageRequestUrl { get; set; }
 
     /// <summary>Wire field <c>message_request_method</c>.</summary>
     [JsonPropertyName("message_request_method")]
@@ -78,7 +78,7 @@ public class ShortCodeResponse
 
     /// <summary>Wire field <c>message_fallback_url</c>.</summary>
     [JsonPropertyName("message_fallback_url")]
-    public Dictionary<string, object?>? MessageFallbackUrl { get; set; }
+    public string? MessageFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>message_fallback_method</c>.</summary>
     [JsonPropertyName("message_fallback_method")]
@@ -90,5 +90,5 @@ public class ShortCodeResponse
 
     /// <summary>Wire field <c>message_relay_context</c>.</summary>
     [JsonPropertyName("message_relay_context")]
-    public Dictionary<string, object?>? MessageRelayContext { get; set; }
+    public string? MessageRelayContext { get; set; }
 }

@@ -46,7 +46,7 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     /// <param name="maxSynonyms">Wire field <c>max_synonyms</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> SearchAsync(string queryString, List<object?>? tags = null, string? documentId = null, double? distance = null, int? count = null, string? language = null, List<object?>? posToExpand = null, int? maxSynonyms = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Datasphere.SearchResponse?> SearchAsync(string queryString, List<object?>? tags = null, string? documentId = null, double? distance = null, int? count = null, string? language = null, List<object?>? posToExpand = null, int? maxSynonyms = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["query_string"] = queryString;
@@ -85,7 +85,7 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path("search"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Datasphere.SearchResponse>(Client.PostAsync(Path("search"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -93,9 +93,9 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListChunksAsync(string documentId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Datasphere.ChunkListResponse?> ListChunksAsync(string documentId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(documentId, "chunks"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Datasphere.ChunkListResponse>(Client.GetAsync(Path(documentId, "chunks"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -103,9 +103,9 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> GetChunkAsync(string documentId, string chunkId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Datasphere.ChunkResponse?> GetChunkAsync(string documentId, string chunkId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(documentId, "chunks", chunkId), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Datasphere.ChunkResponse>(Client.GetAsync(Path(documentId, "chunks", chunkId), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>

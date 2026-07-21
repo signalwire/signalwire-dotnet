@@ -47,7 +47,7 @@ public class PubSub
     /// <param name="state">Wire field <c>state</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> CreateTokenAsync(int ttl, Dictionary<string, object?> channels, string? memberId = null, Dictionary<string, object?>? state = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.PubSub.PubSubToken?> CreateTokenAsync(int ttl, Dictionary<string, object?> channels, string? memberId = null, Dictionary<string, object?>? state = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["ttl"] = ttl;
@@ -67,6 +67,6 @@ public class PubSub
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.PubSub.PubSubToken>(Client.PostAsync(BasePath, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

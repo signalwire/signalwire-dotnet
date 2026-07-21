@@ -34,5 +34,5 @@ public class RelayApplication
 
     /// <summary>Wire field <c>call_status_callback_url</c>.</summary>
     [JsonPropertyName("call_status_callback_url")]
-    public Dictionary<string, object?>? CallStatusCallbackUrl { get; set; }
+    public string? CallStatusCallbackUrl { get; set; }
 }

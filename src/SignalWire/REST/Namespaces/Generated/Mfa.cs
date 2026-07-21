@@ -50,7 +50,7 @@ public class Mfa
     /// <param name="allowAlphas">Wire field <c>allow_alphas</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> SmsAsync(string to, string? from = null, string? message = null, int? tokenLength = null, int? validFor = null, int? maxAttempts = null, bool? allowAlphas = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.MfaResponse?> SmsAsync(string to, string? from = null, string? message = null, int? tokenLength = null, int? validFor = null, int? maxAttempts = null, bool? allowAlphas = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["to"] = to;
@@ -85,7 +85,7 @@ public class Mfa
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path("sms"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.MfaResponse>(Client.PostAsync(Path("sms"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -100,7 +100,7 @@ public class Mfa
     /// <param name="allowAlphas">Wire field <c>allow_alphas</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> CallAsync(string to, string? from = null, string? message = null, int? tokenLength = null, int? validFor = null, int? maxAttempts = null, bool? allowAlphas = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.MfaResponse?> CallAsync(string to, string? from = null, string? message = null, int? tokenLength = null, int? validFor = null, int? maxAttempts = null, bool? allowAlphas = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["to"] = to;
@@ -135,7 +135,7 @@ public class Mfa
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path("call"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.MfaResponse>(Client.PostAsync(Path("call"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -144,7 +144,7 @@ public class Mfa
     /// <param name="token">Wire field <c>token</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> VerifyAsync(string requestId, string token, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.MfaVerifyResponse?> VerifyAsync(string requestId, string token, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["token"] = token;
@@ -155,6 +155,6 @@ public class Mfa
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(requestId, "verify"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.MfaVerifyResponse>(Client.PostAsync(Path(requestId, "verify"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

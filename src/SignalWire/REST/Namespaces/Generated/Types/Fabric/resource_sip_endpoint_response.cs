@@ -34,11 +34,11 @@ public class ResourceSipEndpointResponse
 
     /// <summary>Wire field <c>cover_url</c>.</summary>
     [JsonPropertyName("cover_url")]
-    public Dictionary<string, object?>? CoverUrl { get; set; }
+    public string? CoverUrl { get; set; }
 
     /// <summary>Wire field <c>preview_url</c>.</summary>
     [JsonPropertyName("preview_url")]
-    public Dictionary<string, object?>? PreviewUrl { get; set; }
+    public string? PreviewUrl { get; set; }
 
     /// <summary>Wire field <c>channels</c>.</summary>
     [JsonPropertyName("channels")]

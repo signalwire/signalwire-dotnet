@@ -39,18 +39,18 @@ public class FabricAddresses
     }
 
     /// <summary>List resources (GET BasePath).</summary>
-    public Task<Dictionary<string, object?>> ListAsync(
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddressesResponse?> ListAsync(
         Dictionary<string, string>? queryParams = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddressesResponse>(Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken));
     }
 
     /// <summary>Retrieve a single resource by id (GET BasePath/{id}).</summary>
-    public Task<Dictionary<string, object?>> GetAsync(
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddress?> GetAsync(
         string id, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddress>(Client.GetAsync(Path(id), cancellationToken: cancellationToken));
     }
 
     /// <summary>Iterate every item across all pages of this resource's

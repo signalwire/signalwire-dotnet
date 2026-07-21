@@ -26,7 +26,7 @@ public class ConferenceToken
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>token</c>.</summary>
     [JsonPropertyName("token")]

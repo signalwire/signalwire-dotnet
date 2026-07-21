@@ -39,11 +39,11 @@ public class VoiceLogs
     }
 
     /// <summary>List resources (GET BasePath).</summary>
-    public Task<Dictionary<string, object?>> ListAsync(
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Voice.LogListResponse?> ListAsync(
         Dictionary<string, string>? queryParams = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Voice.LogListResponse>(Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken));
     }
 
     /// <summary>Retrieve a single resource by id (GET BasePath/{id}).</summary>
@@ -70,8 +70,8 @@ public class VoiceLogs
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListEventsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Voice.LogEventsListResponse?> ListEventsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "events"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Voice.LogEventsListResponse>(Client.GetAsync(Path(id, "events"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

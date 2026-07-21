@@ -34,7 +34,7 @@ public class CXMLScript
 
     /// <summary>Wire field <c>last_accessed_at</c>.</summary>
     [JsonPropertyName("last_accessed_at")]
-    public Dictionary<string, object?>? LastAccessedAt { get; set; }
+    public string? LastAccessedAt { get; set; }
 
     /// <summary>Wire field <c>request_url</c>.</summary>
     [JsonPropertyName("request_url")]
@@ -50,7 +50,7 @@ public class CXMLScript
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public Dictionary<string, object?>? StatusCallbackUrl { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]

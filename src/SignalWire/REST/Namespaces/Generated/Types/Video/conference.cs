@@ -30,19 +30,19 @@ public class Conference
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public Dictionary<string, object?>? DisplayName { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public Dictionary<string, object?>? Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>join_from</c>.</summary>
     [JsonPropertyName("join_from")]
-    public Dictionary<string, object?>? JoinFrom { get; set; }
+    public string? JoinFrom { get; set; }
 
     /// <summary>Wire field <c>join_until</c>.</summary>
     [JsonPropertyName("join_until")]
-    public Dictionary<string, object?>? JoinUntil { get; set; }
+    public string? JoinUntil { get; set; }
 
     /// <summary>Wire field <c>quality</c>.</summary>
     [JsonPropertyName("quality")]
@@ -78,47 +78,47 @@ public class Conference
 
     /// <summary>Wire field <c>enable_room_previews</c>.</summary>
     [JsonPropertyName("enable_room_previews")]
-    public Dictionary<string, object?>? EnableRoomPreviews { get; set; }
+    public bool? EnableRoomPreviews { get; set; }
 
     /// <summary>Wire field <c>dark_primary</c>.</summary>
     [JsonPropertyName("dark_primary")]
-    public Dictionary<string, object?>? DarkPrimary { get; set; }
+    public string? DarkPrimary { get; set; }
 
     /// <summary>Wire field <c>dark_background</c>.</summary>
     [JsonPropertyName("dark_background")]
-    public Dictionary<string, object?>? DarkBackground { get; set; }
+    public string? DarkBackground { get; set; }
 
     /// <summary>Wire field <c>dark_foreground</c>.</summary>
     [JsonPropertyName("dark_foreground")]
-    public Dictionary<string, object?>? DarkForeground { get; set; }
+    public string? DarkForeground { get; set; }
 
     /// <summary>Wire field <c>dark_success</c>.</summary>
     [JsonPropertyName("dark_success")]
-    public Dictionary<string, object?>? DarkSuccess { get; set; }
+    public string? DarkSuccess { get; set; }
 
     /// <summary>Wire field <c>dark_negative</c>.</summary>
     [JsonPropertyName("dark_negative")]
-    public Dictionary<string, object?>? DarkNegative { get; set; }
+    public string? DarkNegative { get; set; }
 
     /// <summary>Wire field <c>light_primary</c>.</summary>
     [JsonPropertyName("light_primary")]
-    public Dictionary<string, object?>? LightPrimary { get; set; }
+    public string? LightPrimary { get; set; }
 
     /// <summary>Wire field <c>light_background</c>.</summary>
     [JsonPropertyName("light_background")]
-    public Dictionary<string, object?>? LightBackground { get; set; }
+    public string? LightBackground { get; set; }
 
     /// <summary>Wire field <c>light_foreground</c>.</summary>
     [JsonPropertyName("light_foreground")]
-    public Dictionary<string, object?>? LightForeground { get; set; }
+    public string? LightForeground { get; set; }
 
     /// <summary>Wire field <c>light_success</c>.</summary>
     [JsonPropertyName("light_success")]
-    public Dictionary<string, object?>? LightSuccess { get; set; }
+    public string? LightSuccess { get; set; }
 
     /// <summary>Wire field <c>light_negative</c>.</summary>
     [JsonPropertyName("light_negative")]
-    public Dictionary<string, object?>? LightNegative { get; set; }
+    public string? LightNegative { get; set; }
 
     /// <summary>Wire field <c>meta</c>.</summary>
     [JsonPropertyName("meta")]

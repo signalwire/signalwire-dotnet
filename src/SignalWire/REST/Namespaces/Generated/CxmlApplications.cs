@@ -43,9 +43,9 @@ public class CxmlApplications
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CxmlApplicationListResponse?> ListAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CxmlApplicationListResponse>(Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -53,9 +53,9 @@ public class CxmlApplications
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CxmlApplicationResponse?> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CxmlApplicationResponse>(Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public class CxmlApplications
     /// <param name="smsStatusCallbackMethod">Wire field <c>sms_status_callback_method</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> UpdateAsync(string id, string? displayName = null, string? accountSid = null, string? voiceUrl = null, Dictionary<string, object?>? voiceMethod = null, string? voiceFallbackUrl = null, Dictionary<string, object?>? voiceFallbackMethod = null, string? statusCallback = null, Dictionary<string, object?>? statusCallbackMethod = null, string? smsUrl = null, Dictionary<string, object?>? smsMethod = null, string? smsFallbackUrl = null, Dictionary<string, object?>? smsFallbackMethod = null, string? smsStatusCallback = null, Dictionary<string, object?>? smsStatusCallbackMethod = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CxmlApplicationResponse?> UpdateAsync(string id, string? displayName = null, string? accountSid = null, string? voiceUrl = null, Dictionary<string, object?>? voiceMethod = null, string? voiceFallbackUrl = null, Dictionary<string, object?>? voiceFallbackMethod = null, string? statusCallback = null, Dictionary<string, object?>? statusCallbackMethod = null, string? smsUrl = null, Dictionary<string, object?>? smsMethod = null, string? smsFallbackUrl = null, Dictionary<string, object?>? smsFallbackMethod = null, string? smsStatusCallback = null, Dictionary<string, object?>? smsStatusCallbackMethod = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         if (displayName is not null)
@@ -143,7 +143,7 @@ public class CxmlApplications
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CxmlApplicationResponse>(Client.PutAsync(Path(id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -160,8 +160,8 @@ public class CxmlApplications
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CxmlApplicationAddressListResponse?> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "addresses"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CxmlApplicationAddressListResponse>(Client.GetAsync(Path(id, "addresses"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

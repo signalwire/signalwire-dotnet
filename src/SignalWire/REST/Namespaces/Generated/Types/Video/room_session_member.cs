@@ -30,19 +30,19 @@ public class RoomSessionMember
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>join_time</c>.</summary>
     [JsonPropertyName("join_time")]
-    public Dictionary<string, object?>? JoinTime { get; set; }
+    public string? JoinTime { get; set; }
 
     /// <summary>Wire field <c>leave_time</c>.</summary>
     [JsonPropertyName("leave_time")]
-    public Dictionary<string, object?>? LeaveTime { get; set; }
+    public string? LeaveTime { get; set; }
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
-    public Dictionary<string, object?>? Duration { get; set; }
+    public long? Duration { get; set; }
 
     /// <summary>Wire field <c>cost_in_dollars</c>.</summary>
     [JsonPropertyName("cost_in_dollars")]

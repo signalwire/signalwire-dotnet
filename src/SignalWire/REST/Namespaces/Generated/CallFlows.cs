@@ -29,9 +29,9 @@ public class CallFlows : SignalWire.REST.CrudWithAddresses
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowAddressListResponse?> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/addresses", queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowAddressListResponse>(Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/addresses", queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -39,9 +39,9 @@ public class CallFlows : SignalWire.REST.CrudWithAddresses
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> ListVersionsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersionListResponse?> ListVersionsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/versions", queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersionListResponse>(Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/versions", queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -49,8 +49,8 @@ public class CallFlows : SignalWire.REST.CrudWithAddresses
     /// </summary>
     /// <param name="body">JSON request body.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> DeployVersionAsync(string id, Dictionary<string, object?> body, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersionDeployResponse?> DeployVersionAsync(string id, Dictionary<string, object?> body, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync("/api/fabric/resources/call_flow/" + id + "/versions", body, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersionDeployResponse>(Client.PostAsync("/api/fabric/resources/call_flow/" + id + "/versions", body, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

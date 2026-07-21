@@ -34,7 +34,7 @@ public class CxmlApplication
 
     /// <summary>Wire field <c>voice_url</c>.</summary>
     [JsonPropertyName("voice_url")]
-    public Dictionary<string, object?>? VoiceUrl { get; set; }
+    public string? VoiceUrl { get; set; }
 
     /// <summary>Wire field <c>voice_method</c>.</summary>
     [JsonPropertyName("voice_method")]
@@ -42,7 +42,7 @@ public class CxmlApplication
 
     /// <summary>Wire field <c>voice_fallback_url</c>.</summary>
     [JsonPropertyName("voice_fallback_url")]
-    public Dictionary<string, object?>? VoiceFallbackUrl { get; set; }
+    public string? VoiceFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>voice_fallback_method</c>.</summary>
     [JsonPropertyName("voice_fallback_method")]
@@ -50,7 +50,7 @@ public class CxmlApplication
 
     /// <summary>Wire field <c>status_callback</c>.</summary>
     [JsonPropertyName("status_callback")]
-    public Dictionary<string, object?>? StatusCallback { get; set; }
+    public string? StatusCallback { get; set; }
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
@@ -58,7 +58,7 @@ public class CxmlApplication
 
     /// <summary>Wire field <c>sms_url</c>.</summary>
     [JsonPropertyName("sms_url")]
-    public Dictionary<string, object?>? SmsUrl { get; set; }
+    public string? SmsUrl { get; set; }
 
     /// <summary>Wire field <c>sms_method</c>.</summary>
     [JsonPropertyName("sms_method")]
@@ -66,7 +66,7 @@ public class CxmlApplication
 
     /// <summary>Wire field <c>sms_fallback_url</c>.</summary>
     [JsonPropertyName("sms_fallback_url")]
-    public Dictionary<string, object?>? SmsFallbackUrl { get; set; }
+    public string? SmsFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>sms_fallback_method</c>.</summary>
     [JsonPropertyName("sms_fallback_method")]
@@ -74,7 +74,7 @@ public class CxmlApplication
 
     /// <summary>Wire field <c>sms_status_callback</c>.</summary>
     [JsonPropertyName("sms_status_callback")]
-    public Dictionary<string, object?>? SmsStatusCallback { get; set; }
+    public string? SmsStatusCallback { get; set; }
 
     /// <summary>Wire field <c>sms_status_callback_method</c>.</summary>
     [JsonPropertyName("sms_status_callback_method")]

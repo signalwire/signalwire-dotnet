@@ -576,7 +576,8 @@ def _collect_generated_type(type_entry, name, target_module, aliases, out_module
 
 
 def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
-                            rest_class_module, rest_containers, rest_surface, rest_sidecar):
+                            rest_class_module, rest_containers, rest_surface, rest_sidecar,
+                            rest_returns=None):
     """Emit signatures for a generated-REST class onto the oracle's
     ``<ns>_resources_generated`` / ``_client_tree_generated`` module.
 
@@ -634,16 +635,21 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
             params_out = [] if p.get("is_static", False) else [{"name": "self", "kind": "self"}]
             methods_out[pcanon] = {"params": params_out, "returns": ret}
 
+    rest_returns = rest_returns or {}
+
     for canon in sorted(surface_names):
+        # DOTNET-1: the generator records each flipped method's typed return
+        # (class:<mod>.<Leaf>) in the manifest ``returns`` map; a method absent from
+        # it keeps the loose ``dict<string,any>`` HTTP-response scaffold (delete /
+        # union / inherited-CRUD). Keyed "<Class>::<canonical>".
+        typed_ret = rest_returns.get(f"{name}::{canon}")
         sidecar_key = f"{name}::{_cs_method_for(canon, reflected)}"
         if sidecar_key in rest_sidecar:
             records = [dict(r) for r in rest_sidecar[sidecar_key]]
-            # The generated REST verbs return the loose ``dict<string,any>`` HTTP
-            # response (the transition scaffold the return-diff excuses). EXCEPT
-            # ``paginate``, which the reference types as a PaginatedIterator and the
-            # .NET Paginate() genuinely returns as one — take its reflected return
-            # so the sidecar (used for the request_options param shape) doesn't
-            # clobber the concrete iterator return into a phantom dict.
+            # ``paginate`` is typed as a PaginatedIterator and the .NET Paginate()
+            # genuinely returns one — take its reflected return so the sidecar (used
+            # for the request_options param shape) doesn't clobber the concrete
+            # iterator return into a phantom dict.
             if canon == "paginate":
                 m = reflected.get(canon)
                 ret = "dict<string,any>"
@@ -660,8 +666,17 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
             else:
                 methods_out[canon] = {
                     "params": [{"name": "self", "kind": "self"}] + records,
-                    "returns": "dict<string,any>",
+                    "returns": typed_ret or "dict<string,any>",
                 }
+            continue
+        # No sidecar entry: a surface method without recorded params (e.g. the
+        # ReadResource inline list/get, whose door params the oracle drops). Still
+        # honour the manifest typed return when present.
+        if typed_ret is not None:
+            methods_out[canon] = {
+                "params": [{"name": "self", "kind": "self"}],
+                "returns": typed_ret,
+            }
             continue
         # No sidecar entry: type from reflection if available, else bare self.
         m = reflected.get(canon)
@@ -712,6 +727,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     rest_containers = rest_manifest["containers"]
     rest_surface = rest_manifest["surface"]
     rest_sidecar = rest_manifest["methods"]
+    rest_returns = rest_manifest.get("returns", {})
 
     for type_entry in raw.get("types", []):
         ns = type_entry.get("namespace", "")
@@ -734,6 +750,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             _collect_generated_rest(
                 type_entry, name, aliases, out_modules, failures,
                 rest_class_module, rest_containers, rest_surface, rest_sidecar,
+                rest_returns,
             )
             continue
 

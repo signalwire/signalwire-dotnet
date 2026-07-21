@@ -29,9 +29,9 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> SearchAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.AvailablePhoneNumbersResponse?> SearchAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path("search"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.AvailablePhoneNumbersResponse>(Client.GetAsync(Path("search"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -40,7 +40,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
     /// <param name="url">Bound update field <c>call_relay_script_url</c>.</param>
     /// <param name="extra">Forward-compat update fields.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> SetSwmlWebhookAsync(string resourceId, string url, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse?> SetSwmlWebhookAsync(string resourceId, string url, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
     {
         var body = new Dictionary<string, object?>
         {
@@ -54,7 +54,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return UpdateAsync(resourceId, body);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
     /// <param name="statusCallbackUrl">Bound update field <c>call_status_callback_url</c>.</param>
     /// <param name="extra">Forward-compat update fields.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> SetCxmlWebhookAsync(string resourceId, string url, string? fallbackUrl = null, string? statusCallbackUrl = null, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse?> SetCxmlWebhookAsync(string resourceId, string url, string? fallbackUrl = null, string? statusCallbackUrl = null, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
     {
         var body = new Dictionary<string, object?>
         {
@@ -87,7 +87,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return UpdateAsync(resourceId, body);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
     }
 
     /// <summary>
@@ -96,7 +96,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
     /// <param name="applicationId">Bound update field <c>call_laml_application_id</c>.</param>
     /// <param name="extra">Forward-compat update fields.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> SetCxmlApplicationAsync(string resourceId, string applicationId, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse?> SetCxmlApplicationAsync(string resourceId, string applicationId, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
     {
         var body = new Dictionary<string, object?>
         {
@@ -110,7 +110,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return UpdateAsync(resourceId, body);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
     }
 
     /// <summary>
@@ -119,7 +119,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
     /// <param name="agentId">Bound update field <c>call_ai_agent_id</c>.</param>
     /// <param name="extra">Forward-compat update fields.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> SetAiAgentAsync(string resourceId, string agentId, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse?> SetAiAgentAsync(string resourceId, string agentId, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
     {
         var body = new Dictionary<string, object?>
         {
@@ -133,7 +133,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return UpdateAsync(resourceId, body);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
     }
 
     /// <summary>
@@ -143,7 +143,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
     /// <param name="version">Bound update field <c>call_flow_version</c>.</param>
     /// <param name="extra">Forward-compat update fields.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> SetCallFlowAsync(string resourceId, string flowId, string? version = null, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse?> SetCallFlowAsync(string resourceId, string flowId, string? version = null, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
     {
         var body = new Dictionary<string, object?>
         {
@@ -161,7 +161,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return UpdateAsync(resourceId, body);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
     }
 
     /// <summary>
@@ -170,7 +170,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
     /// <param name="name">Bound update field <c>call_relay_application</c>.</param>
     /// <param name="extra">Forward-compat update fields.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> SetRelayApplicationAsync(string resourceId, string name, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse?> SetRelayApplicationAsync(string resourceId, string name, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
     {
         var body = new Dictionary<string, object?>
         {
@@ -184,7 +184,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return UpdateAsync(resourceId, body);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
     }
 
     /// <summary>
@@ -194,7 +194,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
     /// <param name="statusCallbackUrl">Bound update field <c>call_relay_topic_status_callback_url</c>.</param>
     /// <param name="extra">Forward-compat update fields.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> SetRelayTopicAsync(string resourceId, string topic, string? statusCallbackUrl = null, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse?> SetRelayTopicAsync(string resourceId, string topic, string? statusCallbackUrl = null, Dictionary<string, object?>? extra = null, RequestOptions? requestOptions = null)
     {
         var body = new Dictionary<string, object?>
         {
@@ -212,6 +212,6 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return UpdateAsync(resourceId, body);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
     }
 }

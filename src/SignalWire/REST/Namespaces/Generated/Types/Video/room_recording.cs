@@ -34,23 +34,23 @@ public class RoomRecording
 
     /// <summary>Wire field <c>started_at</c>.</summary>
     [JsonPropertyName("started_at")]
-    public Dictionary<string, object?>? StartedAt { get; set; }
+    public string? StartedAt { get; set; }
 
     /// <summary>Wire field <c>finished_at</c>.</summary>
     [JsonPropertyName("finished_at")]
-    public Dictionary<string, object?>? FinishedAt { get; set; }
+    public string? FinishedAt { get; set; }
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
-    public Dictionary<string, object?>? Duration { get; set; }
+    public long? Duration { get; set; }
 
     /// <summary>Wire field <c>size_in_bytes</c>.</summary>
     [JsonPropertyName("size_in_bytes")]
-    public Dictionary<string, object?>? SizeInBytes { get; set; }
+    public long? SizeInBytes { get; set; }
 
     /// <summary>Wire field <c>format</c>.</summary>
     [JsonPropertyName("format")]
-    public Dictionary<string, object?>? Format { get; set; }
+    public string? Format { get; set; }
 
     /// <summary>Wire field <c>cost_in_dollars</c>.</summary>
     [JsonPropertyName("cost_in_dollars")]
@@ -58,7 +58,7 @@ public class RoomRecording
 
     /// <summary>Wire field <c>uri</c>.</summary>
     [JsonPropertyName("uri")]
-    public Dictionary<string, object?>? Uri { get; set; }
+    public string? Uri { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]

@@ -34,7 +34,7 @@ public class Types_StatusCodes_RestApiErrorItem
 
     /// <summary>Wire field <c>attribute</c>.</summary>
     [JsonPropertyName("attribute")]
-    public Dictionary<string, object?>? Attribute { get; set; }
+    public string? Attribute { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]

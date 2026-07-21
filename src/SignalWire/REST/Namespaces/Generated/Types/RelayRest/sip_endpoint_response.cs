@@ -34,7 +34,7 @@ public class SipEndpointResponse
 
     /// <summary>Wire field <c>caller_id</c>.</summary>
     [JsonPropertyName("caller_id")]
-    public Dictionary<string, object?>? CallerId { get; set; }
+    public string? CallerId { get; set; }
 
     /// <summary>Wire field <c>send_as</c>.</summary>
     [JsonPropertyName("send_as")]
@@ -62,55 +62,55 @@ public class SipEndpointResponse
 
     /// <summary>Wire field <c>call_request_url</c>.</summary>
     [JsonPropertyName("call_request_url")]
-    public Dictionary<string, object?>? CallRequestUrl { get; set; }
+    public string? CallRequestUrl { get; set; }
 
     /// <summary>Wire field <c>call_request_method</c>.</summary>
     [JsonPropertyName("call_request_method")]
-    public Dictionary<string, object?>? CallRequestMethod { get; set; }
+    public string? CallRequestMethod { get; set; }
 
     /// <summary>Wire field <c>call_fallback_url</c>.</summary>
     [JsonPropertyName("call_fallback_url")]
-    public Dictionary<string, object?>? CallFallbackUrl { get; set; }
+    public string? CallFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_fallback_method</c>.</summary>
     [JsonPropertyName("call_fallback_method")]
-    public Dictionary<string, object?>? CallFallbackMethod { get; set; }
+    public string? CallFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_url</c>.</summary>
     [JsonPropertyName("call_status_callback_url")]
-    public Dictionary<string, object?>? CallStatusCallbackUrl { get; set; }
+    public string? CallStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_method</c>.</summary>
     [JsonPropertyName("call_status_callback_method")]
-    public Dictionary<string, object?>? CallStatusCallbackMethod { get; set; }
+    public string? CallStatusCallbackMethod { get; set; }
 
     /// <summary>Wire field <c>call_laml_application_id</c>.</summary>
     [JsonPropertyName("call_laml_application_id")]
-    public Dictionary<string, object?>? CallLamlApplicationId { get; set; }
+    public string? CallLamlApplicationId { get; set; }
 
     /// <summary>Wire field <c>call_dialogflow_agent_id</c>.</summary>
     [JsonPropertyName("call_dialogflow_agent_id")]
-    public Dictionary<string, object?>? CallDialogflowAgentId { get; set; }
+    public string? CallDialogflowAgentId { get; set; }
 
     /// <summary>Wire field <c>call_relay_topic</c>.</summary>
     [JsonPropertyName("call_relay_topic")]
-    public Dictionary<string, object?>? CallRelayTopic { get; set; }
+    public string? CallRelayTopic { get; set; }
 
     /// <summary>Wire field <c>call_relay_topic_status_callback_url</c>.</summary>
     [JsonPropertyName("call_relay_topic_status_callback_url")]
-    public Dictionary<string, object?>? CallRelayTopicStatusCallbackUrl { get; set; }
+    public string? CallRelayTopicStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_relay_context</c>.</summary>
     [JsonPropertyName("call_relay_context")]
-    public Dictionary<string, object?>? CallRelayContext { get; set; }
+    public string? CallRelayContext { get; set; }
 
     /// <summary>Wire field <c>call_relay_context_status_callback_url</c>.</summary>
     [JsonPropertyName("call_relay_context_status_callback_url")]
-    public Dictionary<string, object?>? CallRelayContextStatusCallbackUrl { get; set; }
+    public string? CallRelayContextStatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>call_relay_application</c>.</summary>
     [JsonPropertyName("call_relay_application")]
-    public Dictionary<string, object?>? CallRelayApplication { get; set; }
+    public string? CallRelayApplication { get; set; }
 
     /// <summary>Wire field <c>call_video_room_id</c>.</summary>
     [JsonPropertyName("call_video_room_id")]
@@ -118,5 +118,5 @@ public class SipEndpointResponse
 
     /// <summary>Wire field <c>call_relay_script_url</c>.</summary>
     [JsonPropertyName("call_relay_script_url")]
-    public Dictionary<string, object?>? CallRelayScriptUrl { get; set; }
+    public string? CallRelayScriptUrl { get; set; }
 }
