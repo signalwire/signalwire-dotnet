@@ -981,6 +981,8 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
     scope_stack: list[tuple[str, str, int]] = []
     brace_depth = 0
     file_namespace_seen = False
+    # A no-``{`` class header (multi-line generic + constraints) awaiting its ``{``.
+    pending_class: str | None = None
 
     # class -> ordered list of member names
     members: dict[str, list[str]] = {}
@@ -1021,12 +1023,22 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
             brace_depth += line.count("{") - line.count("}")
             continue
         if cls_m and "{" not in line:
-            # Class header on a line without `{` — happens with constraints
-            # like `public class Foo<T> where T : new()`. Look ahead to next `{`.
-            class_name = cls_m.group(1)
-            opened_classes.append(class_name)
-            scope_stack.append(("class", class_name, brace_depth))
-            # Don't change brace_depth yet; the next `{` line will handle it.
+            # Class header on a line without `{` — happens with a multi-line generic
+            # header + constraints (``public class Foo<T>\n    where T : class\n{``).
+            # DEFER the scope push to the opening ``{`` line below: pushing it now at
+            # the current brace_depth means the very next non-``{`` line (a ``where``
+            # constraint) trips the ``brace_depth <= scope[-1].depth`` pop guard and
+            # discards the scope, so every method in the body is lost. Recording a
+            # pending class name that the next ``{`` consumes keeps the scope alive.
+            pending_class = cls_m.group(1)
+            opened_classes.append(pending_class)
+            continue
+        # The opening ``{`` of a deferred (no-brace) class header: push the scope now,
+        # at the pre-``{`` depth, then let the brace-tracking below increment.
+        if pending_class is not None and line.strip().startswith("{"):
+            scope_stack.append(("class", pending_class, brace_depth))
+            pending_class = None
+            brace_depth += line.count("{") - line.count("}")
             continue
 
         # Inside a class scope?
