@@ -1183,13 +1183,16 @@ def load_rest_manifest() -> dict:
     Returns empty dicts when absent so the enumerator degrades gracefully
     pre-generation."""
     if not _REST_SIDECAR_PATH.is_file():
-        return {"class_module": {}, "containers": {}, "surface": {}, "methods": {}}
+        return {"class_module": {}, "containers": {}, "surface": {}, "methods": {},
+                "returns": {}, "crud_bases": {}}
     data = json.loads(_REST_SIDECAR_PATH.read_text(encoding="utf-8"))
     return {
         "class_module": data.get("class_module", {}),
         "containers": data.get("containers", {}),
         "surface": data.get("surface", {}),
         "methods": data.get("methods", {}),
+        "returns": data.get("returns", {}),
+        "crud_bases": data.get("crud_bases", {}),
     }
 
 

@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// VideoRooms — REST resource for the video API.
 /// </summary>
-public class VideoRooms : SignalWire.REST.CrudResource
+public class VideoRooms : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.Video.ListRoomsResponse, SignalWire.REST.Namespaces.Generated.Types.Video.RoomResponse>
 {
     public VideoRooms(SignalWire.REST.HttpClient client)
         : base(client, "/api/video/rooms")

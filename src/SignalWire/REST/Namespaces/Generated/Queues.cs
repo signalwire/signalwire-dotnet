@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// Queues — REST resource for the relay-rest API.
 /// </summary>
-public class Queues : SignalWire.REST.CrudResource
+public class Queues : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.RelayRest.QueueListResponse, SignalWire.REST.Namespaces.Generated.Types.RelayRest.QueueResponse>
 {
     public Queues(SignalWire.REST.HttpClient client)
         : base(client, "/api/relay/rest/queues")

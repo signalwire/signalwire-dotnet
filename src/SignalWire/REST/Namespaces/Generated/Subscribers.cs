@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// Subscribers — REST resource for the fabric API.
 /// </summary>
-public class Subscribers : SignalWire.REST.CrudWithAddresses
+public class Subscribers : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberResponse>
 {
     public Subscribers(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/subscribers")

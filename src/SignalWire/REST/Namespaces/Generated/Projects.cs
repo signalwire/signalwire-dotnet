@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// Projects — REST resource for the projects API.
 /// </summary>
-public class Projects : SignalWire.REST.CrudResource
+public class Projects : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.Projects.ProjectList, SignalWire.REST.Namespaces.Generated.Types.Projects.Project>
 {
     public Projects(SignalWire.REST.HttpClient client)
         : base(client, "/api/projects")
@@ -25,12 +25,12 @@ public class Projects : SignalWire.REST.CrudResource
     }
 
     /// <summary>Update this resource via an HTTP PATCH request.</summary>
-    public override Task<Dictionary<string, object?>> UpdateAsync(
+    public override Task<SignalWire.REST.Namespaces.Generated.Types.Projects.Project?> UpdateAsync(
         string id, Dictionary<string, object?> data,
         RequestOptions? requestOptions = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Projects.Project>(Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>

@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// SipEndpoints — REST resource for the fabric API.
 /// </summary>
-public class SipEndpoints : SignalWire.REST.CrudWithAddresses
+public class SipEndpoints : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.SipEndpointListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.SipEndpointResponse>
 {
     public SipEndpoints(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/sip_endpoints")

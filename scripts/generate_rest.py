@@ -874,6 +874,92 @@ def item_cs_type(spec: "Spec", anchor: str, markup: dict) -> str:
     return "Dictionary<string, object?>"
 
 
+# DOTNET-1 crud_base: ClassName -> {"base": <baseName>, "bind": [<class:Leaf>...]}.
+# A generated resource extending a method-contract base (CrudResource /
+# CrudWithAddresses / ReadResource) publishes its typed CRUD contract STRUCTURALLY,
+# exactly as the Python reference does via the generic ``CrudResource[TList, TItem,
+# TCreate, TUpdate]`` bind. The .NET CRUD methods are inherited from the (now
+# generic) base, so the bind — not a per-method return — is the cross-port contract
+# the signature enumerator emits as ``crud_base`` and the drift/lock gates compare.
+# Bind order mirrors the reference:
+#   CrudResource/CrudWithAddresses: [listResponse, itemResponse, createReq, updateReq]
+#   ReadResource:                   [listResponse, itemResponse]
+_CRUD_BASES: dict[str, dict] = {}
+
+
+def _crud_response_bind_leaf(spec: "Spec", op_id: str) -> str:
+    """The RAW schema leaf for a crud_base RESPONSE bind (array-unwrapped),
+    matching the reference's ``leaf(res_ref)`` — NOT object-gated (a structural
+    type token compared by leaf, not an emitted return type)."""
+    raw = _response_raw_leaf(spec.op_response.get(op_id, {}) or {})
+    return type_name(raw) if raw else ""
+
+
+def _request_ref_leaf(schema: dict) -> str:
+    """The sanitised type leaf of a request-body schema's ``$ref``, or '' when the
+    body is a union / inline (no single named ref)."""
+    if not isinstance(schema, dict):
+        return ""
+    ref = schema.get("$ref", "")
+    if not ref:
+        return ""
+    return type_name(ref.rsplit("/", 1)[-1])
+
+
+def _collection_roles(spec: "Spec", anchor: str, markup: dict) -> dict[str, dict]:
+    """role -> {verb, op} for the resource's collection + item ops (list/create on
+    the collection, get/update/delete on the item), mirroring the reference roles."""
+    coll = collection_segment(anchor, markup)
+    roles: dict[str, dict] = {}
+    for path, item in (spec.doc.get("paths") or {}).items():
+        is_item = path.startswith(coll + "/{") and path.count("/{") == 1 and path.endswith("}")
+        is_coll = path == coll
+        if not (is_item or is_coll):
+            continue
+        for verb in ("get", "post", "put", "patch", "delete"):
+            o = item.get(verb)
+            if not (o and o.get("operationId")):
+                continue
+            if verb == "get":
+                role = "get" if is_item else "list"
+            elif verb == "post":
+                role = "create"
+            elif verb in ("put", "patch"):
+                role = "update"
+            else:
+                role = "delete"
+            roles.setdefault(role, {"verb": verb, "op": o["operationId"]})
+    return roles
+
+
+def _crud_bind(spec: "Spec", anchor: str, markup: dict, base: str) -> list[str]:
+    """The crud_base bind token list (``class:<Leaf>``) for a resource, in the
+    reference's order. Returns [] when the base takes no bind."""
+    roles = _collection_roles(spec, anchor, markup)
+    item_leaf = _crud_response_bind_leaf(spec, (roles.get("get") or {}).get("op", ""))
+    list_leaf = _crud_response_bind_leaf(spec, (roles.get("list") or {}).get("op", ""))
+    binds: list[str] = []
+    if base == "ReadResource":
+        binds = [list_leaf or item_leaf, item_leaf]
+    elif base in ("CrudResource", "FabricResource"):
+        create_leaf = _request_ref_leaf(spec.op_body.get((roles.get("create") or {}).get("op", ""), {}) or {})
+        update_leaf = _request_ref_leaf(spec.op_body.get((roles.get("update") or {}).get("op", ""), {}) or {})
+        binds = [list_leaf or item_leaf, item_leaf, create_leaf, update_leaf]
+    return [f"class:{b}" if b else "any" for b in binds]
+
+
+def _crud_generic_args(spec: "Spec", anchor: str, markup: dict) -> tuple[str, str]:
+    """The C# (TList, TItem) generic type-argument DTOs for a CRUD/Fabric resource's
+    generic base binding — the list-response and item-response DTO C# types, each
+    falling back to ``Dictionary<string, object?>`` when absent/non-object."""
+    roles = _collection_roles(spec, anchor, markup)
+    list_cs = response_cs_type(spec, (roles.get("list") or {}).get("op", ""))
+    item_cs = response_cs_type(spec, (roles.get("get") or {}).get("op", ""))
+    if _is_dict_cs_type(list_cs):
+        list_cs = item_cs  # list falls back to the item DTO (reference does the same)
+    return list_cs, item_cs
+
+
 def _read_list_get_cs(spec: "Spec", anchor: str, markup: dict) -> tuple[str, str]:
     """The (list-response, item-response) C# DTO types for a ReadResource — the
     GET-on-collection 200 response and the GET-on-item (``<collection>/{id}``) 200
@@ -1386,9 +1472,14 @@ def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
 
     # DOTNET-1: set_* wraps update() and returns the resource ITEM DTO (the GET-by-id
     # 200 response), mirroring the reference whose set_* return the resource item type.
+    # set_methods only exist on CRUD/Fabric resources, whose UpdateAsync ALREADY
+    # returns the typed Task<TItem?> (the generic base / typed PATCH override) — so
+    # the delegate is returned directly, NOT re-projected (double-projection would be
+    # a type error). Falls back to the raw update return when the item is untyped.
     item_cs = item_cs_type(spec, anchor, markup) if anchor else "Dictionary<string, object?>"
     _register_sidecar_return(cls, name, item_cs)
-    ret_task, ret_stmt = _typed_return(item_cs, "        return UpdateAsync(resourceId, body);")
+    ret_task = "Task<Dictionary<string, object?>>" if _is_dict_cs_type(item_cs) else f"Task<{item_cs}?>"
+    ret_stmt = "        return UpdateAsync(resourceId, body);"
 
     body = []
     body.append("    /// <summary>")
@@ -1639,6 +1730,14 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
     like VideoRoomSessions / RegistryBrands)."""
     name = markup["name"]
     bp = base_path(spec, anchor, markup)
+    # DOTNET-1: a ReadResource publishes its structural [listResponse, itemResponse]
+    # crud_base (the reference does — FaxLogs/MessageLogs/VoiceLogs/VideoRoomSessions).
+    # The inline List/Get below carry the typed returns; the crud_base locks the
+    # structural contract the same way as for CrudResource.
+    if base == "ReadResource":
+        binds = _crud_bind(spec, anchor, markup, base)
+        if binds:
+            _CRUD_BASES[name] = {"base": base, "bind": binds}
     lines = []
     lines.append(f"/// <summary>")
     lines.append(f"/// {name} — REST resource for the {spec.name} API.")
@@ -1768,27 +1867,49 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
     parent = "CrudResource" if base == "CrudResource" else "CrudWithAddresses"
     bp = base_path(spec, anchor, markup)
 
+    # DOTNET-1: bind the generic base on (TList, TItem) so the inherited CRUD
+    # methods return the typed DTOs, and register the structural crud_base bind the
+    # signature enumerator publishes (the lock gate compares it for equivalence).
+    list_cs, item_cs = _crud_generic_args(spec, anchor, markup)
+    generic = f"<{list_cs}, {item_cs}>"
+    binds = _crud_bind(spec, anchor, markup, base)
+    if binds:
+        _CRUD_BASES[name] = {"base": base, "bind": binds}
+    # The generated CRUD subclass records create/update on its OWN surface (the
+    # reference overrides them typed). Both genuinely return the bound item DTO
+    # (Task<TItem?> — via the generic base for create, the typed PATCH override or
+    # the generic PUT for update). Record their typed returns so the enumerator
+    # reports them matching the (typed) oracle.
+    if not _is_dict_cs_type(item_cs):
+        item_tok = _returns_canonical(item_cs)
+        _SIDECAR_RETURNS[(name, "create")] = item_tok
+        _SIDECAR_RETURNS[(name, "update")] = item_tok
+
     lines = []
     lines.append(f"/// <summary>")
     lines.append(f"/// {name} — REST resource for the {spec.name} API.")
     lines.append(f"/// </summary>")
-    lines.append(f"public class {name} : SignalWire.REST.{parent}")
+    lines.append(f"public class {name} : SignalWire.REST.{parent}{generic}")
     lines.append("{")
     lines.append(f"    public {name}(SignalWire.REST.HttpClient client)")
     lines.append(f"        : base(client, {cs_str(bp)})")
     lines.append("    {")
     lines.append("    }")
 
-    # CrudResource base updates via PUT. A PATCH resource overrides UpdateAsync.
+    # CrudResource base updates via PUT. A PATCH resource overrides UpdateAsync —
+    # returning the typed item DTO (covariant with the generic base's Task<TItem?>).
     if upd == "PATCH":
+        upd_task, upd_ret = _typed_return(
+            item_cs,
+            "        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);")
         lines.append("")
         lines.append("    /// <summary>Update this resource via an HTTP PATCH request.</summary>")
-        lines.append("    public override Task<Dictionary<string, object?>> UpdateAsync(")
+        lines.append(f"    public override {upd_task} UpdateAsync(")
         lines.append("        string id, Dictionary<string, object?> data,")
         lines.append("        RequestOptions? requestOptions = null,")
         lines.append("        CancellationToken cancellationToken = default)")
         lines.append("    {")
-        lines.append("        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);")
+        lines.append(upd_ret)
         lines.append("    }")
 
     _emit_declared_and_sets(spec, anchor, markup, base, lines)
@@ -2082,6 +2203,8 @@ def emit_types(psdk: Path, outs: dict) -> None:
 def build_outputs(psdk: Path) -> dict[str, str]:
     load_bases(psdk)  # validate x-sdk-bases (fail loud); not otherwise needed
     _SIDECAR.clear()
+    _SIDECAR_RETURNS.clear()
+    _CRUD_BASES.clear()
     specs = [load_spec(psdk, ns) for ns in discover_spec_dirs(psdk)]
     _SURFACE.clear()
     outs: dict[str, str] = {}
@@ -2129,6 +2252,10 @@ def build_outputs(psdk: Path) -> dict[str, str]:
         tok = _SIDECAR_RETURNS[(cls, canon)]
         if tok != "dict<string,any>":
             returns_map[f"{cls}::{canon}"] = tok
+    # DOTNET-1 crud_base: ClassName -> {"base","bind"}. The signature enumerator
+    # attaches this to the generated resource class so the drift/lock gates compare
+    # the port's structural CRUD contract for equivalence with the reference.
+    crud_bases = {name: _CRUD_BASES[name] for name in sorted(_CRUD_BASES.keys())}
     # Container manifest: C# container class -> "_client_tree_generated" (the
     # oracle module all six namespace containers live in). The container's C#
     # property accessors are the .NET instance-attribute idiom (python sets them
@@ -2149,6 +2276,7 @@ def build_outputs(psdk: Path) -> dict[str, str]:
             "surface": dict(sorted(_SURFACE.items())),
             "methods": sidecar,
             "returns": returns_map,
+            "crud_bases": crud_bases,
         },
         indent=2, sort_keys=False,
     ) + "\n"

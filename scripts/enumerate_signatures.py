@@ -577,7 +577,7 @@ def _collect_generated_type(type_entry, name, target_module, aliases, out_module
 
 def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
                             rest_class_module, rest_containers, rest_surface, rest_sidecar,
-                            rest_returns=None):
+                            rest_returns=None, rest_crud_bases=None):
     """Emit signatures for a generated-REST class onto the oracle's
     ``<ns>_resources_generated`` / ``_client_tree_generated`` module.
 
@@ -694,9 +694,13 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
 
     if methods_out:
         out_modules.setdefault(target_module, {"classes": {}})
-        out_modules[target_module]["classes"][name] = {
-            "methods": dict(sorted(methods_out.items())),
-        }
+        cls_entry: dict = {"methods": dict(sorted(methods_out.items()))}
+        # DOTNET-1: attach the structural crud_base bind the generator published for
+        # this class (the drift/lock gates compare it against the reference).
+        cb = (rest_crud_bases or {}).get(name)
+        if cb:
+            cls_entry["crud_base"] = cb
+        out_modules[target_module]["classes"][name] = cls_entry
 
 
 def _cs_method_for(canon: str, reflected: dict) -> str:
@@ -728,6 +732,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     rest_surface = rest_manifest["surface"]
     rest_sidecar = rest_manifest["methods"]
     rest_returns = rest_manifest.get("returns", {})
+    rest_crud_bases = rest_manifest.get("crud_bases", {})
 
     for type_entry in raw.get("types", []):
         ns = type_entry.get("namespace", "")
@@ -750,7 +755,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             _collect_generated_rest(
                 type_entry, name, aliases, out_modules, failures,
                 rest_class_module, rest_containers, rest_surface, rest_sidecar,
-                rest_returns,
+                rest_returns, rest_crud_bases,
             )
             continue
 
@@ -1338,10 +1343,15 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         entry = out_modules[mod]
         sorted_modules[mod] = {}
         if entry.get("classes"):
-            sorted_modules[mod]["classes"] = {
-                cls: {"methods": dict(sorted(entry["classes"][cls]["methods"].items()))}
-                for cls in sorted(entry["classes"])
-            }
+            sorted_cls: dict = {}
+            for cls in sorted(entry["classes"]):
+                ce = entry["classes"][cls]
+                out_ce: dict = {"methods": dict(sorted(ce["methods"].items()))}
+                # Preserve the structural crud_base bind (DOTNET-1) through the sort.
+                if ce.get("crud_base"):
+                    out_ce["crud_base"] = ce["crud_base"]
+                sorted_cls[cls] = out_ce
+            sorted_modules[mod]["classes"] = sorted_cls
         if entry.get("functions"):
             sorted_modules[mod]["functions"] = dict(sorted(entry["functions"].items()))
 

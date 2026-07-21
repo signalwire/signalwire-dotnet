@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// VideoConferences — REST resource for the video API.
 /// </summary>
-public class VideoConferences : SignalWire.REST.CrudResource
+public class VideoConferences : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.Video.ListConferencesResponse, SignalWire.REST.Namespaces.Generated.Types.Video.Conference>
 {
     public VideoConferences(SignalWire.REST.HttpClient client)
         : base(client, "/api/video/conferences")

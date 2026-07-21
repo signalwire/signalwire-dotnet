@@ -4466,19 +4466,31 @@
     "Addresses::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.AddressResponse",
     "Addresses::get": "class:signalwire.rest.namespaces.relay_rest_types_generated.AddressResponse",
     "Addresses::list": "class:signalwire.rest.namespaces.relay_rest_types_generated.AddressListResponse",
+    "AiAgents::create": "class:signalwire.rest.namespaces.fabric_types_generated.AIAgentResponse",
+    "AiAgents::update": "class:signalwire.rest.namespaces.fabric_types_generated.AIAgentResponse",
+    "CallFlows::create": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowResponse",
     "CallFlows::deploy_version": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowVersionDeployResponse",
     "CallFlows::list_addresses": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowAddressListResponse",
     "CallFlows::list_versions": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowVersionListResponse",
+    "CallFlows::update": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowResponse",
     "Chat::create_token": "class:signalwire.rest.namespaces.chat_types_generated.ChatToken",
     "ConferenceLogs::list": "class:signalwire.rest.namespaces.logs_types_generated.ConferencesResponse",
+    "ConferenceRooms::create": "class:signalwire.rest.namespaces.fabric_types_generated.ConferenceRoomResponse",
     "ConferenceRooms::list_addresses": "class:signalwire.rest.namespaces.fabric_types_generated.ConferenceRoomAddressListResponse",
+    "ConferenceRooms::update": "class:signalwire.rest.namespaces.fabric_types_generated.ConferenceRoomResponse",
     "CxmlApplications::get": "class:signalwire.rest.namespaces.fabric_types_generated.CxmlApplicationResponse",
     "CxmlApplications::list": "class:signalwire.rest.namespaces.fabric_types_generated.CxmlApplicationListResponse",
     "CxmlApplications::list_addresses": "class:signalwire.rest.namespaces.fabric_types_generated.CxmlApplicationAddressListResponse",
     "CxmlApplications::update": "class:signalwire.rest.namespaces.fabric_types_generated.CxmlApplicationResponse",
+    "CxmlScripts::create": "class:signalwire.rest.namespaces.fabric_types_generated.CXMLScriptResponse",
+    "CxmlScripts::update": "class:signalwire.rest.namespaces.fabric_types_generated.CXMLScriptResponse",
+    "CxmlWebhooks::create": "class:signalwire.rest.namespaces.fabric_types_generated.CXMLWebhookResponse",
+    "CxmlWebhooks::update": "class:signalwire.rest.namespaces.fabric_types_generated.CXMLWebhookResponse",
+    "DatasphereDocuments::create": "class:signalwire.rest.namespaces.datasphere_types_generated.Document",
     "DatasphereDocuments::get_chunk": "class:signalwire.rest.namespaces.datasphere_types_generated.ChunkResponse",
     "DatasphereDocuments::list_chunks": "class:signalwire.rest.namespaces.datasphere_types_generated.ChunkListResponse",
     "DatasphereDocuments::search": "class:signalwire.rest.namespaces.datasphere_types_generated.SearchResponse",
+    "DatasphereDocuments::update": "class:signalwire.rest.namespaces.datasphere_types_generated.Document",
     "FabricAddresses::get": "class:signalwire.rest.namespaces.fabric_types_generated.FabricAddress",
     "FabricAddresses::list": "class:signalwire.rest.namespaces.fabric_types_generated.FabricAddressesResponse",
     "FabricTokens::create_embed_token": "class:signalwire.rest.namespaces.fabric_types_generated.EmbedsTokensResponse",
@@ -4488,6 +4500,8 @@
     "FabricTokens::refresh_subscriber_token": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberRefreshTokenResponse",
     "FaxLogs::get": "class:signalwire.rest.namespaces.fax_types_generated.LogResponse",
     "FaxLogs::list": "class:signalwire.rest.namespaces.fax_types_generated.LogListResponse",
+    "FreeswitchConnectors::create": "class:signalwire.rest.namespaces.fabric_types_generated.FreeswitchConnectorResponse",
+    "FreeswitchConnectors::update": "class:signalwire.rest.namespaces.fabric_types_generated.FreeswitchConnectorResponse",
     "GenericResources::assign_domain_application": "class:signalwire.rest.namespaces.fabric_types_generated.DomainApplicationResponse",
     "GenericResources::assign_phone_route": "class:signalwire.rest.namespaces.fabric_types_generated.PhoneRouteResponse",
     "GenericResources::list": "class:signalwire.rest.namespaces.fabric_types_generated.ResourceListResponse",
@@ -4502,8 +4516,11 @@
     "Mfa::sms": "class:signalwire.rest.namespaces.relay_rest_types_generated.MfaResponse",
     "Mfa::verify": "class:signalwire.rest.namespaces.relay_rest_types_generated.MfaVerifyResponse",
     "NumberGroups::add_membership": "class:signalwire.rest.namespaces.relay_rest_types_generated.NumberGroupMembershipResponse",
+    "NumberGroups::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.NumberGroupResponse",
     "NumberGroups::get_membership": "class:signalwire.rest.namespaces.relay_rest_types_generated.NumberGroupMembershipResponse",
     "NumberGroups::list_memberships": "class:signalwire.rest.namespaces.relay_rest_types_generated.NumberGroupMembershipListResponse",
+    "NumberGroups::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.NumberGroupResponse",
+    "PhoneNumbers::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
     "PhoneNumbers::search": "class:signalwire.rest.namespaces.relay_rest_types_generated.AvailablePhoneNumbersResponse",
     "PhoneNumbers::set_ai_agent": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
     "PhoneNumbers::set_call_flow": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
@@ -4512,12 +4529,17 @@
     "PhoneNumbers::set_relay_application": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
     "PhoneNumbers::set_relay_topic": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
     "PhoneNumbers::set_swml_webhook": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "PhoneNumbers::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
     "ProjectTokens::create": "class:signalwire.rest.namespaces.project_types_generated.TokenResponse",
     "ProjectTokens::update": "class:signalwire.rest.namespaces.project_types_generated.TokenResponse",
+    "Projects::create": "class:signalwire.rest.namespaces.projects_types_generated.Project",
+    "Projects::update": "class:signalwire.rest.namespaces.projects_types_generated.Project",
     "PubSub::create_token": "class:signalwire.rest.namespaces.pubsub_types_generated.PubSubToken",
+    "Queues::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.QueueResponse",
     "Queues::get_member": "class:signalwire.rest.namespaces.relay_rest_types_generated.QueueMemberResponse",
     "Queues::get_next_member": "class:signalwire.rest.namespaces.relay_rest_types_generated.QueueMemberResponse",
     "Queues::list_members": "class:signalwire.rest.namespaces.relay_rest_types_generated.QueueMemberListResponse",
+    "Queues::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.QueueResponse",
     "Recordings::list": "class:signalwire.rest.namespaces.relay_rest_types_generated.RecordingListResponse",
     "RegistryBrands::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.BrandResponse",
     "RegistryBrands::create_campaign": "class:signalwire.rest.namespaces.relay_rest_types_generated.CampaignResponse",
@@ -4530,22 +4552,38 @@
     "RegistryCampaigns::list_orders": "class:signalwire.rest.namespaces.relay_rest_types_generated.OrderListResponse",
     "RegistryCampaigns::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.CampaignResponse",
     "RegistryOrders::get": "class:signalwire.rest.namespaces.relay_rest_types_generated.OrderResponse",
+    "RelayApplications::create": "class:signalwire.rest.namespaces.fabric_types_generated.RelayApplicationResponse",
+    "RelayApplications::update": "class:signalwire.rest.namespaces.fabric_types_generated.RelayApplicationResponse",
     "ShortCodes::get": "class:signalwire.rest.namespaces.relay_rest_types_generated.ShortCodeResponse",
     "ShortCodes::list": "class:signalwire.rest.namespaces.relay_rest_types_generated.ShortCodeListResponse",
     "ShortCodes::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.ShortCodeResponse",
+    "SipEndpoints::create": "class:signalwire.rest.namespaces.fabric_types_generated.SipEndpointResponse",
+    "SipEndpoints::update": "class:signalwire.rest.namespaces.fabric_types_generated.SipEndpointResponse",
+    "SipGateways::create": "class:signalwire.rest.namespaces.fabric_types_generated.SipGatewayResponse",
+    "SipGateways::update": "class:signalwire.rest.namespaces.fabric_types_generated.SipGatewayResponse",
     "SipProfile::get": "class:signalwire.rest.namespaces.relay_rest_types_generated.SipProfileResponse",
     "SipProfile::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.SipProfileResponse",
+    "Subscribers::create": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberResponse",
     "Subscribers::create_sip_endpoint": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberSIPEndpoint",
     "Subscribers::get_sip_endpoint": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberSIPEndpoint",
     "Subscribers::list_sip_endpoints": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberSipEndpointListResponse",
+    "Subscribers::update": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberResponse",
     "Subscribers::update_sip_endpoint": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberSIPEndpoint",
+    "SwmlScripts::create": "class:signalwire.rest.namespaces.fabric_types_generated.SwmlScriptResponse",
+    "SwmlScripts::update": "class:signalwire.rest.namespaces.fabric_types_generated.SwmlScriptResponse",
+    "SwmlWebhooks::create": "class:signalwire.rest.namespaces.fabric_types_generated.SWMLWebhookResponse",
+    "SwmlWebhooks::update": "class:signalwire.rest.namespaces.fabric_types_generated.SWMLWebhookResponse",
+    "VerifiedCallers::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.VerifiedCallerIDResponse",
     "VerifiedCallers::redial_verification": "class:signalwire.rest.namespaces.relay_rest_types_generated.VerifiedCallerIDResponse",
     "VerifiedCallers::submit_verification": "class:signalwire.rest.namespaces.relay_rest_types_generated.VerifiedCallerIDResponse",
+    "VerifiedCallers::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.VerifiedCallerIDResponse",
     "VideoConferenceTokens::get": "class:signalwire.rest.namespaces.video_types_generated.ConferenceToken",
     "VideoConferenceTokens::reset": "class:signalwire.rest.namespaces.video_types_generated.ConferenceToken",
+    "VideoConferences::create": "class:signalwire.rest.namespaces.video_types_generated.Conference",
     "VideoConferences::create_stream": "class:signalwire.rest.namespaces.video_types_generated.Stream",
     "VideoConferences::list_conference_tokens": "class:signalwire.rest.namespaces.video_types_generated.ListConferenceTokensResponse",
     "VideoConferences::list_streams": "class:signalwire.rest.namespaces.video_types_generated.ListStreamsResponse",
+    "VideoConferences::update": "class:signalwire.rest.namespaces.video_types_generated.Conference",
     "VideoRoomRecordings::get": "class:signalwire.rest.namespaces.video_types_generated.RoomRecording",
     "VideoRoomRecordings::list": "class:signalwire.rest.namespaces.video_types_generated.ListRoomRecordingsResponse",
     "VideoRoomRecordings::list_events": "class:signalwire.rest.namespaces.video_types_generated.ListRoomRecordingEventsResponse",
@@ -4555,11 +4593,230 @@
     "VideoRoomSessions::list_members": "class:signalwire.rest.namespaces.video_types_generated.ListRoomSessionMembersResponse",
     "VideoRoomSessions::list_recordings": "class:signalwire.rest.namespaces.video_types_generated.ListRoomSessionRecordingsResponse",
     "VideoRoomTokens::create": "class:signalwire.rest.namespaces.video_types_generated.RoomTokenResponse",
+    "VideoRooms::create": "class:signalwire.rest.namespaces.video_types_generated.RoomResponse",
     "VideoRooms::create_stream": "class:signalwire.rest.namespaces.video_types_generated.Stream",
     "VideoRooms::list_streams": "class:signalwire.rest.namespaces.video_types_generated.ListStreamsResponse",
+    "VideoRooms::update": "class:signalwire.rest.namespaces.video_types_generated.RoomResponse",
     "VideoStreams::get": "class:signalwire.rest.namespaces.video_types_generated.Stream",
     "VideoStreams::update": "class:signalwire.rest.namespaces.video_types_generated.Stream",
     "VoiceLogs::list": "class:signalwire.rest.namespaces.voice_types_generated.LogListResponse",
     "VoiceLogs::list_events": "class:signalwire.rest.namespaces.voice_types_generated.LogEventsListResponse"
+  },
+  "crud_bases": {
+    "AiAgents": {
+      "base": "FabricResource",
+      "bind": [
+        "class:AIAgentListResponse",
+        "class:AIAgentResponse",
+        "class:AIAgentCreateRequest",
+        "class:AIAgentUpdateRequest"
+      ]
+    },
+    "CallFlows": {
+      "base": "FabricResource",
+      "bind": [
+        "class:CallFlowListResponse",
+        "class:CallFlowResponse",
+        "class:CallFlowCreateRequest",
+        "class:CallFlowUpdateRequest"
+      ]
+    },
+    "ConferenceRooms": {
+      "base": "FabricResource",
+      "bind": [
+        "class:ConferenceRoomListResponse",
+        "class:ConferenceRoomResponse",
+        "class:ConferenceRoomCreateRequest",
+        "class:ConferenceRoomUpdateRequest"
+      ]
+    },
+    "CxmlScripts": {
+      "base": "FabricResource",
+      "bind": [
+        "class:CXMLScriptListResponse",
+        "class:CXMLScriptResponse",
+        "class:CXMLScriptCreateRequest",
+        "class:CXMLScriptUpdateRequest"
+      ]
+    },
+    "CxmlWebhooks": {
+      "base": "FabricResource",
+      "bind": [
+        "class:CXMLWebhookListResponse",
+        "class:CXMLWebhookResponse",
+        "class:CXMLWebhookCreateRequest",
+        "class:CXMLWebhookUpdateRequest"
+      ]
+    },
+    "DatasphereDocuments": {
+      "base": "CrudResource",
+      "bind": [
+        "class:DocumentListResponse",
+        "class:Document",
+        "class:DocumentCreateRequest",
+        "class:DocumentUpdateRequest"
+      ]
+    },
+    "FabricAddresses": {
+      "base": "ReadResource",
+      "bind": [
+        "class:FabricAddressesResponse",
+        "class:FabricAddress"
+      ]
+    },
+    "FaxLogs": {
+      "base": "ReadResource",
+      "bind": [
+        "class:LogListResponse",
+        "class:LogResponse"
+      ]
+    },
+    "FreeswitchConnectors": {
+      "base": "FabricResource",
+      "bind": [
+        "class:FreeswitchConnectorListResponse",
+        "class:FreeswitchConnectorResponse",
+        "class:FreeswitchConnectorCreateRequest",
+        "class:FreeswitchConnectorUpdateRequest"
+      ]
+    },
+    "MessageLogs": {
+      "base": "ReadResource",
+      "bind": [
+        "class:LogListResponse",
+        "class:LogRetrieveResponse"
+      ]
+    },
+    "NumberGroups": {
+      "base": "CrudResource",
+      "bind": [
+        "class:NumberGroupListResponse",
+        "class:NumberGroupResponse",
+        "class:CreateNumberGroupRequest",
+        "class:UpdateNumberGroupRequest"
+      ]
+    },
+    "PhoneNumbers": {
+      "base": "CrudResource",
+      "bind": [
+        "class:PhoneNumberListResponse",
+        "class:PhoneNumberResponse",
+        "class:PurchasePhoneNumberRequest",
+        "class:UpdatePhoneNumberRequest"
+      ]
+    },
+    "Projects": {
+      "base": "CrudResource",
+      "bind": [
+        "class:ProjectList",
+        "class:Project",
+        "class:ProjectCreate",
+        "class:ProjectUpdate"
+      ]
+    },
+    "Queues": {
+      "base": "CrudResource",
+      "bind": [
+        "class:QueueListResponse",
+        "class:QueueResponse",
+        "class:CreateQueueRequest",
+        "class:UpdateQueueRequest"
+      ]
+    },
+    "RelayApplications": {
+      "base": "FabricResource",
+      "bind": [
+        "class:RelayApplicationListResponse",
+        "class:RelayApplicationResponse",
+        "class:RelayApplicationCreateRequest",
+        "class:RelayApplicationUpdateRequest"
+      ]
+    },
+    "SipEndpoints": {
+      "base": "FabricResource",
+      "bind": [
+        "class:SipEndpointListResponse",
+        "class:SipEndpointResponse",
+        "class:SipEndpointCreateRequest",
+        "class:SipEndpointUpdateRequest"
+      ]
+    },
+    "SipGateways": {
+      "base": "FabricResource",
+      "bind": [
+        "class:SipGatewayListResponse",
+        "class:SipGatewayResponse",
+        "class:SipGatewayRequest",
+        "class:SipGatewayRequestUpdate"
+      ]
+    },
+    "Subscribers": {
+      "base": "FabricResource",
+      "bind": [
+        "class:SubscriberListResponse",
+        "class:SubscriberResponse",
+        "class:SubscriberRequest",
+        "class:SubscriberRequest"
+      ]
+    },
+    "SwmlScripts": {
+      "base": "FabricResource",
+      "bind": [
+        "class:SwmlScriptListResponse",
+        "class:SwmlScriptResponse",
+        "class:SwmlScriptCreateRequest",
+        "class:SwmlScriptUpdateRequest"
+      ]
+    },
+    "SwmlWebhooks": {
+      "base": "FabricResource",
+      "bind": [
+        "class:SWMLWebhookListResponse",
+        "class:SWMLWebhookResponse",
+        "class:SWMLWebhookCreateRequest",
+        "class:SWMLWebhookUpdateRequest"
+      ]
+    },
+    "VerifiedCallers": {
+      "base": "CrudResource",
+      "bind": [
+        "class:VerifiedCallerIDListResponse",
+        "class:VerifiedCallerIDResponse",
+        "class:CreateVerifiedCallerIDRequest",
+        "class:UpdateVerifiedCallerIDRequest"
+      ]
+    },
+    "VideoConferences": {
+      "base": "CrudResource",
+      "bind": [
+        "class:ListConferencesResponse",
+        "class:Conference",
+        "class:CreateConferenceRequest",
+        "class:UpdateConferenceRequest"
+      ]
+    },
+    "VideoRoomSessions": {
+      "base": "ReadResource",
+      "bind": [
+        "class:ListRoomSessionsResponse",
+        "class:RoomSessionSummary"
+      ]
+    },
+    "VideoRooms": {
+      "base": "CrudResource",
+      "bind": [
+        "class:ListRoomsResponse",
+        "class:RoomResponse",
+        "class:CreateRoomRequest",
+        "class:UpdateRoomRequest"
+      ]
+    },
+    "VoiceLogs": {
+      "base": "ReadResource",
+      "bind": [
+        "class:LogListResponse",
+        "class:VoiceLog"
+      ]
+    }
   }
 }

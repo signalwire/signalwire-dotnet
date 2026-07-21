@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// DatasphereDocuments — REST resource for the datasphere API.
 /// </summary>
-public class DatasphereDocuments : SignalWire.REST.CrudResource
+public class DatasphereDocuments : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.Datasphere.DocumentListResponse, SignalWire.REST.Namespaces.Generated.Types.Datasphere.Document>
 {
     public DatasphereDocuments(SignalWire.REST.HttpClient client)
         : base(client, "/api/datasphere/documents")
@@ -25,12 +25,12 @@ public class DatasphereDocuments : SignalWire.REST.CrudResource
     }
 
     /// <summary>Update this resource via an HTTP PATCH request.</summary>
-    public override Task<Dictionary<string, object?>> UpdateAsync(
+    public override Task<SignalWire.REST.Namespaces.Generated.Types.Datasphere.Document?> UpdateAsync(
         string id, Dictionary<string, object?> data,
         RequestOptions? requestOptions = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Datasphere.Document>(Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>

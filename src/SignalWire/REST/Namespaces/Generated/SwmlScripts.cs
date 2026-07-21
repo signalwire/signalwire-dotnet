@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// SwmlScripts — REST resource for the fabric API.
 /// </summary>
-public class SwmlScripts : SignalWire.REST.CrudWithAddresses
+public class SwmlScripts : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.SwmlScriptListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.SwmlScriptResponse>
 {
     public SwmlScripts(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/swml_scripts")

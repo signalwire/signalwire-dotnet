@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// SipGateways — REST resource for the fabric API.
 /// </summary>
-public class SipGateways : SignalWire.REST.CrudWithAddresses
+public class SipGateways : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.SipGatewayListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.SipGatewayResponse>
 {
     public SipGateways(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/sip_gateways")
@@ -25,11 +25,11 @@ public class SipGateways : SignalWire.REST.CrudWithAddresses
     }
 
     /// <summary>Update this resource via an HTTP PATCH request.</summary>
-    public override Task<Dictionary<string, object?>> UpdateAsync(
+    public override Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SipGatewayResponse?> UpdateAsync(
         string id, Dictionary<string, object?> data,
         RequestOptions? requestOptions = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.SipGatewayResponse>(Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

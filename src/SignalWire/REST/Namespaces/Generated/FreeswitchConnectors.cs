@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// FreeswitchConnectors — REST resource for the fabric API.
 /// </summary>
-public class FreeswitchConnectors : SignalWire.REST.CrudWithAddresses
+public class FreeswitchConnectors : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.FreeswitchConnectorListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.FreeswitchConnectorResponse>
 {
     public FreeswitchConnectors(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/freeswitch_connectors")

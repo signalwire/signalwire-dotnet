@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// VerifiedCallers — REST resource for the relay-rest API.
 /// </summary>
-public class VerifiedCallers : SignalWire.REST.CrudResource
+public class VerifiedCallers : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.RelayRest.VerifiedCallerIDListResponse, SignalWire.REST.Namespaces.Generated.Types.RelayRest.VerifiedCallerIDResponse>
 {
     public VerifiedCallers(SignalWire.REST.HttpClient client)
         : base(client, "/api/relay/rest/verified_caller_ids")

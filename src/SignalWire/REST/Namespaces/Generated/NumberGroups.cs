@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// NumberGroups — REST resource for the relay-rest API.
 /// </summary>
-public class NumberGroups : SignalWire.REST.CrudResource
+public class NumberGroups : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupListResponse, SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupResponse>
 {
     public NumberGroups(SignalWire.REST.HttpClient client)
         : base(client, "/api/relay/rest/number_groups")

@@ -5,11 +5,18 @@
 // ``signalwire.rest._base.CrudWithAddresses``.
 
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SignalWire.REST;
 
-public class CrudWithAddresses : CrudResource
+/// <summary>
+/// Generic <see cref="CrudResource{TList,TItem}"/> that also exposes the
+/// addresses sub-collection for a given resource (the DOTNET-1 typed variant).
+/// </summary>
+public class CrudWithAddresses<TList, TItem> : CrudResource<TList, TItem>
+    where TList : class
+    where TItem : class
 {
     public CrudWithAddresses(HttpClient client, string basePath)
         : base(client, basePath) { }
@@ -23,4 +30,14 @@ public class CrudWithAddresses : CrudResource
     {
         return Client.GetAsync(Path(resourceId, "addresses"), queryParams);
     }
+}
+
+/// <summary>
+/// Non-generic <see cref="CrudWithAddresses{TList,TItem}"/> — both list and item
+/// responses are the raw wire <c>Dictionary&lt;string, object?&gt;</c>.
+/// </summary>
+public class CrudWithAddresses : CrudWithAddresses<Dictionary<string, object?>, Dictionary<string, object?>>
+{
+    public CrudWithAddresses(HttpClient client, string basePath)
+        : base(client, basePath) { }
 }

@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// CxmlScripts — REST resource for the fabric API.
 /// </summary>
-public class CxmlScripts : SignalWire.REST.CrudWithAddresses
+public class CxmlScripts : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.CXMLScriptListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.CXMLScriptResponse>
 {
     public CxmlScripts(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/cxml_scripts")

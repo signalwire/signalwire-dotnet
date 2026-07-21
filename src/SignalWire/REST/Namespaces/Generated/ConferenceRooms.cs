@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// ConferenceRooms — REST resource for the fabric API.
 /// </summary>
-public class ConferenceRooms : SignalWire.REST.CrudWithAddresses
+public class ConferenceRooms : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomResponse>
 {
     public ConferenceRooms(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/conference_rooms")

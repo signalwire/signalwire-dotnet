@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// PhoneNumbers — REST resource for the relay-rest API.
 /// </summary>
-public class PhoneNumbers : SignalWire.REST.CrudResource
+public class PhoneNumbers : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberListResponse, SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>
 {
     public PhoneNumbers(SignalWire.REST.HttpClient client)
         : base(client, "/api/relay/rest/phone_numbers")
@@ -54,7 +54,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
+        return UpdateAsync(resourceId, body);
     }
 
     /// <summary>
@@ -87,7 +87,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
+        return UpdateAsync(resourceId, body);
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
+        return UpdateAsync(resourceId, body);
     }
 
     /// <summary>
@@ -133,7 +133,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
+        return UpdateAsync(resourceId, body);
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
+        return UpdateAsync(resourceId, body);
     }
 
     /// <summary>
@@ -184,7 +184,7 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
+        return UpdateAsync(resourceId, body);
     }
 
     /// <summary>
@@ -212,6 +212,6 @@ public class PhoneNumbers : SignalWire.REST.CrudResource
                 body[kv.Key] = kv.Value;
             }
         }
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(UpdateAsync(resourceId, body));
+        return UpdateAsync(resourceId, body);
     }
 }
