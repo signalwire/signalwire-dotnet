@@ -45,7 +45,13 @@ public sealed class WebServiceTests : IDisposable
     private HttpResponseMessage Get(string path, bool auth = true)
     {
         using var handler = new HttpClientHandler { AllowAutoRedirect = false };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        // CI-safe timeout. These are in-process localhost calls that complete in
+        // ~ms when healthy, so a generous 30s budget only ever trips on a genuine
+        // hang — never on the slower, contended CI runner where many HttpListener
+        // servers + blocking-sync clients run concurrently under the assembly's
+        // unbounded xUnit parallelism (MaxParallelThreads=-1). A tight 5s deadline
+        // here was an intermittent TaskCanceledException on net8 under that load.
+        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
         using var req = new HttpRequestMessage(HttpMethod.Get, $"http://127.0.0.1:{_port}{path}");
         if (auth)
         {
@@ -119,7 +125,8 @@ public sealed class WebServiceTests : IDisposable
     public void WrongAuthRejected()
     {
         using var handler = new HttpClientHandler { AllowAutoRedirect = false };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        // 30s CI-safe timeout (see Get()); tight deadlines flake under parallelism.
+        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
         using var req = new HttpRequestMessage(
             HttpMethod.Get, $"http://127.0.0.1:{_port}/static/hello.txt");
         var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{User}:wrongpass"));

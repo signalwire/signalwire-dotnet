@@ -685,6 +685,14 @@ public class RelayTests : IDisposable
         }));
 
         Assert.True(tcs.Task.IsFaulted);
+        // OBSERVE the fault. `TrySetException` completes the Task faulted; a
+        // test that only checks IsFaulted (never touching .Exception / awaiting)
+        // leaves the exception UNOBSERVED, so when the Task is finalized the
+        // runtime rethrows it on the finalizer thread — which aborts the net8
+        // xUnit host ("Test Run Aborted", no summary). Asserting on the actual
+        // RelayError both strengthens the test and marks the fault observed.
+        var relayError = Assert.IsType<RelayError>(tcs.Task.Exception!.InnerException);
+        Assert.Equal(-32600, relayError.Code);
     }
 
     [Fact]
