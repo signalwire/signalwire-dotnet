@@ -23,7 +23,7 @@ var agent = await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, obje
     ["name"]   = "Support Bot",
     ["prompt"] = new Dictionary<string, object> { ["text"] = "You are a helpful support agent." },
 });
-var agentId = agent["id"].ToString();
+var agentId = agent!.Id!;
 
 // List
 var agents = await client.Fabric.AiAgents.ListAsync();
