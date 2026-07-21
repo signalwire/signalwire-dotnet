@@ -147,6 +147,14 @@ public class Client : IAsyncDisposable
     private ClientWebSocket? _ws;
     private CancellationTokenSource? _cts;
     private Task? _readerTask;
+    // The server-initiated reconnect (HandleDisconnect fires it fire-and-
+    // forget). Tracked so DisposeAsync can DRAIN it before disposing the
+    // owned handles — otherwise the orphaned reconnect wakes after its
+    // back-off delay, calls ConnectAsync on the disposed client, and its
+    // ObjectDisposedException (on the disposed _sendLock/_cts) escapes as an
+    // UNOBSERVED task exception that the finalizer rethrows — aborting the
+    // xUnit test host on net8 ("Test Run Aborted", no summary).
+    private Task? _reconnectTask;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private bool _disposed;
 
@@ -496,6 +504,28 @@ public class Client : IAsyncDisposable
                 _logger.Debug($"DisposeAsync reader drain: {ex.Message}");
             }
         }
+
+        // Drain any in-flight server-initiated reconnect BEFORE disposing the
+        // owned handles. A reconnect spawned by HandleDisconnect is NOT the
+        // reader task (it is a separate fire-and-forget task); without this
+        // drain it survives disposal, wakes after its back-off delay, and
+        // touches the now-disposed _sendLock/_cts — its ObjectDisposedException
+        // would then escape unobserved and abort the net8 test host. The
+        // reconnect already observes its OWN faults (see HandleDisconnect), so
+        // this wait only serialises teardown; it cannot itself throw.
+        var reconnect = _reconnectTask;
+        if (reconnect is not null)
+        {
+            try
+            {
+                await reconnect.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"DisposeAsync reconnect drain: {ex.Message}");
+            }
+        }
+        _reconnectTask = null;
 
         ws?.Dispose();
         _cts?.Dispose();
@@ -1239,14 +1269,36 @@ public class Client : IAsyncDisposable
         }
     }
 
+    [SuppressMessage("Design", "CA1031", Justification = "The fire-and-forget "
+        + "reconnect MUST observe its own faults here: a discarded faulted Task "
+        + "(e.g. ConnectAsync throwing ObjectDisposedException when a dispose "
+        + "races the back-off) would otherwise be rethrown by the finalizer and "
+        + "abort the test host. We swallow-and-log so nothing escapes unobserved.")]
     private void HandleDisconnect(Dictionary<string, object?> parms)
     {
         _logger.Warn("Server sent disconnect");
         Connected = false;
 
-        if (_running)
+        // Don't re-arm a reconnect once teardown has begun — and NEVER leave the
+        // reconnect as a discarded (`_ = ...`) task. Track it in _reconnectTask so
+        // DisposeAsync drains it before freeing the owned handles, and wrap it so
+        // its faults are ALWAYS observed (a race between the reconnect's back-off
+        // and a concurrent Dispose can make ConnectAsync throw on the disposed
+        // _sendLock/_cts; an unobserved fault there is exactly what aborts the
+        // net8 xUnit host).
+        if (_running && !_disposed)
         {
-            _ = ReconnectAsync();
+            _reconnectTask = Task.Run(async () =>
+            {
+                try
+                {
+                    await ReconnectAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Debug($"Reconnect failed: {ex.Message}");
+                }
+            });
         }
     }
 
