@@ -37,13 +37,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: signalwire/porting-sdk
-          # PINNED to the A+ campaign branch wave/1-aplus: the BEHAVIORAL suite's
-          # new security rules (CA-VAR / TLS-VERIFY / SECURE-DEFAULT / SECRET-SCRUB /
-          # PAGINATION-CORPUS) and the suites/_behavioral_commands.py that registers
-          # them live on porting-sdk wave/1-aplus, not yet on main. run-ci.sh passes
-          # them via --rules, which fails LOUD on an unknown id, so a main checkout
-          # exits nonzero. REVERT this ref to main when porting-sdk wave/1-aplus merges.
-          ref: wave/1-aplus
+          ref: main
           path: porting-sdk
           token: ${{ secrets.PORTING_SDK_TOKEN }}
 
