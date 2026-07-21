@@ -44,12 +44,13 @@ public class SkillsTests : IDisposable
     // ==================================================================
 
     [Fact]
-    public void Registry_Lists17BuiltinSkills()
+    public void Registry_Lists18BuiltinSkills()
     {
-        // 17 built-ins: mcp_gateway was dropped (Python-only per §I.1 user ruling).
+        // 18 built-ins: the mcp_gateway CLIENT skill is now ported (server half
+        // stays Python-only — see PORT_PHILOSOPHY_DOTNET.md).
         var registry = SkillRegistry.Instance;
         var skills = registry.ListSkills();
-        Assert.Equal(17, skills.Count);
+        Assert.Equal(18, skills.Count);
     }
 
     [Fact]
@@ -59,7 +60,7 @@ public class SkillsTests : IDisposable
         {
             "api_ninjas_trivia", "claude_skills", "custom_skills", "datasphere",
             "datasphere_serverless", "datetime", "google_maps", "info_gatherer",
-            "joke", "math", "native_vector_search",
+            "joke", "math", "mcp_gateway", "native_vector_search",
             "play_background_file", "spider", "swml_transfer", "weather_api",
             "web_search", "wikipedia_search",
         };
@@ -1102,5 +1103,233 @@ public class SkillsTests : IDisposable
             ["token"] = "tok",
             ["document_id"] = "doc",
         }));
+    }
+
+    // ==================================================================
+    //  McpGateway CLIENT skill
+    //  (porting-sdk oracle: MCPGatewaySkill; verify_ssl fleet-parity gate)
+    // ==================================================================
+
+    /// <summary>
+    /// Routing HTTP fixture emulating a running MCP gateway: answers /health,
+    /// /services, /services/{name}/tools, and captures the /services/{name}/call
+    /// body. Binds an ephemeral loopback port so parallel tests don't collide.
+    /// </summary>
+    private sealed class McpGatewayFixture : IDisposable
+    {
+        private readonly HttpListener _listener;
+        private readonly System.Threading.CancellationTokenSource _cts = new();
+        public string BaseUrl { get; }
+        public string? LastCallPath { get; private set; }
+        public string? LastCallBody { get; private set; }
+        public string? LastAuthHeader { get; private set; }
+
+        public McpGatewayFixture()
+        {
+            var port = GetFreePort();
+            BaseUrl = $"http://127.0.0.1:{port}";
+            _listener = new HttpListener();
+            _listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+            _listener.Start();
+            Task.Run(async () =>
+            {
+                while (!_cts.IsCancellationRequested)
+                {
+                    HttpListenerContext ctx;
+                    try { ctx = await _listener.GetContextAsync().ConfigureAwait(false); }
+                    catch (HttpListenerException) { break; }
+                    catch (ObjectDisposedException) { break; }
+
+                    var path = ctx.Request.Url?.AbsolutePath ?? "";
+                    string body;
+                    if (path == "/health")
+                    {
+                        body = "{\"status\":\"ok\"}";
+                    }
+                    else if (path == "/services")
+                    {
+                        body = "[\"calc\"]";
+                    }
+                    else if (path == "/services/calc/tools")
+                    {
+                        body = "{\"tools\":[{\"name\":\"add\",\"description\":\"Add two numbers\","
+                             + "\"inputSchema\":{\"type\":\"object\",\"properties\":"
+                             + "{\"a\":{\"type\":\"integer\",\"description\":\"first\"},"
+                             + "\"b\":{\"type\":\"integer\",\"description\":\"second\"}},"
+                             + "\"required\":[\"a\",\"b\"]}}]}";
+                    }
+                    else if (path == "/services/calc/call")
+                    {
+                        LastCallPath = path;
+                        LastAuthHeader = ctx.Request.Headers["Authorization"];
+                        using (var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
+                        {
+                            LastCallBody = await reader.ReadToEndAsync().ConfigureAwait(false);
+                        }
+                        body = "{\"result\":\"the answer is 5\"}";
+                    }
+                    else
+                    {
+                        body = "{}";
+                    }
+
+                    var bytes = Encoding.UTF8.GetBytes(body);
+                    ctx.Response.StatusCode = 200;
+                    ctx.Response.ContentType = "application/json";
+                    ctx.Response.ContentLength64 = bytes.Length;
+                    await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                    ctx.Response.Close();
+                }
+            });
+        }
+
+        public void Dispose()
+        {
+            _cts.Cancel();
+            try { _listener.Stop(); } catch { }
+            try { _listener.Close(); } catch { }
+        }
+    }
+
+    [Fact]
+    public void McpGateway_RegistersGatewayToolsAsSwaigFunctions_AndProxiesCall()
+    {
+        using var fixture = new McpGatewayFixture();
+        var agent = MakeAgent();
+        var skill = new McpGatewaySkill();
+        var parameters = new Dictionary<string, object>
+        {
+            ["gateway_url"] = fixture.BaseUrl,
+            ["auth_token"] = "bearer-xyz",
+        };
+        skill.Wire(agent, parameters);
+        Assert.True(skill.Setup(agent, parameters));
+        skill.RegisterTools(agent);
+
+        // The gateway's tool was registered as a SWAIG function under the
+        // prefixed name mcp_<service>_<tool>.
+        Assert.True(agent.HasFunction("mcp_calc_add"));
+
+        // The MCP inputSchema's required list is threaded onto the registered
+        // SWAIG function (per-property required → top-level required[] via Service).
+        var fn = agent.GetFunction("mcp_calc_add");
+        Assert.NotNull(fn);
+
+        // Invoking the function proxies through the gateway and returns its result.
+        var result = agent.OnFunctionCall(
+            "mcp_calc_add",
+            new Dictionary<string, object> { ["a"] = 2, ["b"] = 3 },
+            new Dictionary<string, object?> { ["call_id"] = "call-123" });
+        Assert.NotNull(result);
+        var response = (string)result!.ToDict()["response"];
+        Assert.Contains("the answer is 5", response);
+
+        // The proxied POST carried the tool name, args, session id, and the
+        // bearer Authorization header.
+        Assert.Equal("/services/calc/call", fixture.LastCallPath);
+        Assert.Equal("Bearer bearer-xyz", fixture.LastAuthHeader);
+        Assert.NotNull(fixture.LastCallBody);
+        using var doc = System.Text.Json.JsonDocument.Parse(fixture.LastCallBody!);
+        Assert.Equal("add", doc.RootElement.GetProperty("tool").GetString());
+        Assert.Equal("call-123", doc.RootElement.GetProperty("session_id").GetString());
+        Assert.Equal(2, doc.RootElement.GetProperty("arguments").GetProperty("a").GetInt32());
+    }
+
+    [Fact]
+    public void McpGateway_BasicAuth_WhenNoToken()
+    {
+        using var fixture = new McpGatewayFixture();
+        var agent = MakeAgent();
+        var skill = new McpGatewaySkill();
+        // No auth_token → HTTP-basic (auth_user:auth_password) is used.
+        var parameters = new Dictionary<string, object>
+        {
+            ["gateway_url"] = fixture.BaseUrl,
+            ["auth_user"] = "u",
+            ["auth_password"] = "p",
+        };
+        skill.Wire(agent, parameters);
+        Assert.True(skill.Setup(agent, parameters));
+        skill.RegisterTools(agent);
+        agent.OnFunctionCall(
+            "mcp_calc_add",
+            new Dictionary<string, object> { ["a"] = 1, ["b"] = 1 },
+            new Dictionary<string, object?>());
+
+        var expected = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes("u:p"));
+        Assert.Equal(expected, fixture.LastAuthHeader);
+    }
+
+    [Fact]
+    public void McpGateway_SetupFails_WithoutTokenOrBasicAuth()
+    {
+        var agent = MakeAgent();
+        var skill = new McpGatewaySkill();
+        // Neither auth_token nor the basic-auth trio → setup fails (no network).
+        Assert.False(skill.Setup(agent, new Dictionary<string, object>
+        {
+            ["gateway_url"] = "http://127.0.0.1:1/",
+        }));
+    }
+
+    [Fact]
+    public void McpGateway_VerifySsl_DefaultsSecureTrue()
+    {
+        var skill = new McpGatewaySkill();
+        var schema = skill.GetParameterSchema();
+        var props = Assert.IsType<Dictionary<string, object>>(schema["properties"]);
+        var verifySsl = Assert.IsType<Dictionary<string, object>>(props["verify_ssl"]);
+        // Secure by default: verification ON unless explicitly opted out.
+        Assert.Equal(true, verifySsl["default"]);
+    }
+
+    [Fact]
+    public void McpGateway_VerifySsl_FalseStillConnectsOverPlainHttp()
+    {
+        // Setting verify_ssl=false flips the cert-validation branch (the
+        // DangerousAcceptAnyServerCertificateValidator path). Against the plain
+        // HTTP fixture the call still round-trips — exercising the guarded branch
+        // without needing a self-signed HTTPS listener.
+        using var fixture = new McpGatewayFixture();
+        var agent = MakeAgent();
+        var skill = new McpGatewaySkill();
+        var parameters = new Dictionary<string, object>
+        {
+            ["gateway_url"] = fixture.BaseUrl,
+            ["auth_token"] = "t",
+            ["verify_ssl"] = false,
+        };
+        skill.Wire(agent, parameters);
+        Assert.True(skill.Setup(agent, parameters));
+        skill.RegisterTools(agent);
+        var result = agent.OnFunctionCall(
+            "mcp_calc_add",
+            new Dictionary<string, object> { ["a"] = 4, ["b"] = 1 },
+            new Dictionary<string, object?>());
+        Assert.NotNull(result);
+        Assert.Contains("the answer is 5", (string)result!.ToDict()["response"]);
+    }
+
+    [Fact]
+    public void McpGateway_Hints_IncludeMcpAndServiceNames()
+    {
+        using var fixture = new McpGatewayFixture();
+        var agent = MakeAgent();
+        var skill = new McpGatewaySkill();
+        var parameters = new Dictionary<string, object>
+        {
+            ["gateway_url"] = fixture.BaseUrl,
+            ["auth_token"] = "t",
+            ["services"] = new List<Dictionary<string, object>>
+            {
+                new() { ["name"] = "calc" },
+            },
+        };
+        skill.Wire(agent, parameters);
+        skill.Setup(agent, parameters);
+        var hints = skill.GetHints();
+        Assert.Contains("MCP", hints);
+        Assert.Contains("gateway", hints);
+        Assert.Contains("calc", hints);
     }
 }

@@ -212,6 +212,7 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "InfoGathererSkill": "signalwire.skills.info_gatherer.skill",
     "JokeSkill": "signalwire.skills.joke.skill",
     "MathSkill": "signalwire.skills.math.skill",
+    "McpGatewaySkill": "signalwire.skills.mcp_gateway.skill",
     "NativeVectorSearchSkill": "signalwire.skills.native_vector_search.skill",
     "PlayBackgroundFileSkill": "signalwire.skills.play_background_file.skill",
     "SpiderSkill": "signalwire.skills.spider.skill",
@@ -443,6 +444,9 @@ SKILL_RENAMES: dict[str, str] = {
     # DateTime: the reference class is ``DateTimeSkill`` (C# PascalCases to
     # ``DatetimeSkill``).
     "DatetimeSkill": "DateTimeSkill",
+    # MCP acronym: the reference class is ``MCPGatewaySkill`` (the C# idiom
+    # PascalCases the acronym to ``McpGatewaySkill``).
+    "McpGatewaySkill": "MCPGatewaySkill",
 }
 
 

@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 797dbb7b1fcd033cca7672a58e4498a4b08d7607",
+  "generated_from": "signalwire-dotnet @ 89f173c9ed2d5410af48d766ec44cdedc6df1ff4",
   "native_names": [
     "AI",
     "AIAction",
@@ -1218,6 +1218,7 @@
     "MaxSynonyms",
     "MaxTokens",
     "MaxTriggers",
+    "McpGatewaySkill",
     "Media",
     "MediaAllowed",
     "MemberId",
