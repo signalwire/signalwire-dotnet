@@ -22,5 +22,5 @@ public class LiveTranscribeSummarizeAction
 {
     /// <summary>Wire field <c>summarize</c>.</summary>
     [JsonPropertyName("summarize")]
-    public Dictionary<string, object?>? summarize { get; set; }
+    public Dictionary<string, object?>? Summarize { get; set; }
 }

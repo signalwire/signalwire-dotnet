@@ -22,33 +22,33 @@ public class Stream
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public Dictionary<string, object?>? url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>stream_type</c>.</summary>
     [JsonPropertyName("stream_type")]
-    public Dictionary<string, object?>? stream_type { get; set; }
+    public string? StreamType { get; set; }
 
     /// <summary>Wire field <c>width</c>.</summary>
     [JsonPropertyName("width")]
-    public Dictionary<string, object?>? width { get; set; }
+    public long? Width { get; set; }
 
     /// <summary>Wire field <c>height</c>.</summary>
     [JsonPropertyName("height")]
-    public Dictionary<string, object?>? height { get; set; }
+    public long? Height { get; set; }
 
     /// <summary>Wire field <c>fps</c>.</summary>
     [JsonPropertyName("fps")]
-    public Dictionary<string, object?>? fps { get; set; }
+    public long? Fps { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 }

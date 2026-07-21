@@ -22,5 +22,5 @@ public class CnamInfo
 {
     /// <summary>Wire field <c>caller_id</c>.</summary>
     [JsonPropertyName("caller_id")]
-    public string? caller_id { get; set; }
+    public string? CallerId { get; set; }
 }

@@ -22,5 +22,5 @@ public class UpdateMessageRequest
 {
     /// <summary>Wire field <c>body</c>.</summary>
     [JsonPropertyName("body")]
-    public string? body { get; set; }
+    public string? Body { get; set; }
 }

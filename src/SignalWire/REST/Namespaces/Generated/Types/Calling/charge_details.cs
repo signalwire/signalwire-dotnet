@@ -22,9 +22,9 @@ public class ChargeDetails
 {
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public string? description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>charge</c>.</summary>
     [JsonPropertyName("charge")]
-    public double? charge { get; set; }
+    public double? Charge { get; set; }
 }

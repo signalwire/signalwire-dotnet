@@ -22,5 +22,5 @@ public class Goto
 {
     /// <summary>Wire field <c>goto</c>.</summary>
     [JsonPropertyName("goto")]
-    public Dictionary<string, object?>? @goto { get; set; }
+    public Dictionary<string, object?>? Goto_ { get; set; }
 }

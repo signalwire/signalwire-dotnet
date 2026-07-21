@@ -22,17 +22,17 @@ public class CreateCspBrandRequest
 {
     /// <summary>Wire field <c>csp_self_registered</c>.</summary>
     [JsonPropertyName("csp_self_registered")]
-    public bool? csp_self_registered { get; set; }
+    public bool? CspSelfRegistered { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>csp_brand_reference</c>.</summary>
     [JsonPropertyName("csp_brand_reference")]
-    public string? csp_brand_reference { get; set; }
+    public string? CspBrandReference { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public string? status_callback_url { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 }

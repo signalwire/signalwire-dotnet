@@ -22,5 +22,5 @@ public class LiveTranslateInjectAction
 {
     /// <summary>Wire field <c>inject</c>.</summary>
     [JsonPropertyName("inject")]
-    public Dictionary<string, object?>? inject { get; set; }
+    public Dictionary<string, object?>? Inject { get; set; }
 }

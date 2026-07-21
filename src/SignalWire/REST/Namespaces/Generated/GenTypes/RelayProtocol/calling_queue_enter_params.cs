@@ -22,25 +22,25 @@ public class CallingQueueEnterParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>control_id</c>.</summary>
     [JsonPropertyName("control_id")]
-    public string? control_id { get; set; }
+    public string? ControlId { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>queue_name</c>.</summary>
     [JsonPropertyName("queue_name")]
-    public string? queue_name { get; set; }
+    public string? QueueName { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? status_url { get; set; }
+    public string? StatusUrl { get; set; }
 
     /// <summary>Wire field <c>wait_url</c>.</summary>
     [JsonPropertyName("wait_url")]
-    public string? wait_url { get; set; }
+    public string? WaitUrl { get; set; }
 }

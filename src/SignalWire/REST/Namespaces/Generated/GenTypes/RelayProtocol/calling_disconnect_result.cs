@@ -22,13 +22,13 @@ public class CallingDisconnectResult
 {
     /// <summary>Wire field <c>code</c>.</summary>
     [JsonPropertyName("code")]
-    public string? code { get; set; }
+    public string? Code { get; set; }
 
     /// <summary>Wire field <c>data</c>.</summary>
     [JsonPropertyName("data")]
-    public object? data { get; set; }
+    public object? Data { get; set; }
 
     /// <summary>Wire field <c>message</c>.</summary>
     [JsonPropertyName("message")]
-    public string? message { get; set; }
+    public string? Message { get; set; }
 }

@@ -22,5 +22,5 @@ public class DocumentUpdateRequest
 {
     /// <summary>Wire field <c>tags</c>.</summary>
     [JsonPropertyName("tags")]
-    public List<object?>? tags { get; set; }
+    public List<object?>? Tags { get; set; }
 }

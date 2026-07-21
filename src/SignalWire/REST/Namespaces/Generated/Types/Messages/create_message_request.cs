@@ -22,29 +22,29 @@ public class CreateMessageRequest
 {
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public string? to { get; set; }
+    public string? To { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public string? from { get; set; }
+    public string? From { get; set; }
 
     /// <summary>Wire field <c>body</c>.</summary>
     [JsonPropertyName("body")]
-    public string? body { get; set; }
+    public string? Body { get; set; }
 
     /// <summary>Wire field <c>media</c>.</summary>
     [JsonPropertyName("media")]
-    public List<object?>? media { get; set; }
+    public List<object?>? Media { get; set; }
 
     /// <summary>Wire field <c>send_as_mms</c>.</summary>
     [JsonPropertyName("send_as_mms")]
-    public bool? send_as_mms { get; set; }
+    public bool? SendAsMms { get; set; }
 
     /// <summary>Wire field <c>status_callback</c>.</summary>
     [JsonPropertyName("status_callback")]
-    public string? status_callback { get; set; }
+    public string? StatusCallback { get; set; }
 
     /// <summary>Wire field <c>custom_variables</c>.</summary>
     [JsonPropertyName("custom_variables")]
-    public Dictionary<string, object?>? custom_variables { get; set; }
+    public Dictionary<string, object?>? CustomVariables { get; set; }
 }

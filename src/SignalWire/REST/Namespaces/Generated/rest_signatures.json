@@ -469,6 +469,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Addresses::DeleteAsync": [
@@ -477,6 +484,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Addresses::GetAsync": [
@@ -487,20 +501,20 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "Addresses::ListAsync": [
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "CallFlows::DeployVersionAsync": [
@@ -515,6 +529,13 @@
         "kind": "positional",
         "type": "dict<string,any>",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "CallFlows::ListAddressesAsync": [
@@ -525,11 +546,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "CallFlows::ListVersionsAsync": [
@@ -540,11 +561,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "Calling::AiHoldAsync": [
@@ -572,6 +593,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -617,6 +645,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::AiStopAsync": [
@@ -636,6 +671,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -658,6 +700,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -717,6 +766,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::CollectStartInputTimersAsync": [
@@ -736,6 +792,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -759,6 +822,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::DenoiseAsync": [
@@ -774,6 +844,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::DenoiseStopAsync": [
@@ -787,6 +864,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -824,6 +908,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::DetectStopAsync": [
@@ -843,6 +934,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -922,6 +1020,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::DisconnectAsync": [
@@ -935,6 +1040,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -959,6 +1071,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::LiveTranscribeAsync": [
@@ -978,6 +1097,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1006,6 +1132,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1064,6 +1197,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::PlayPauseAsync": [
@@ -1083,6 +1223,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1106,6 +1253,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::PlayStopAsync": [
@@ -1125,6 +1279,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1154,6 +1315,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::ReceiveFaxStopAsync": [
@@ -1173,6 +1341,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1211,6 +1386,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::RecordPauseAsync": [
@@ -1230,6 +1412,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1253,6 +1442,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::RecordStopAsync": [
@@ -1272,6 +1468,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1302,6 +1505,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::SendFaxStopAsync": [
@@ -1321,6 +1531,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1379,6 +1596,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::StreamStopAsync": [
@@ -1398,6 +1622,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1434,6 +1665,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::TapStopAsync": [
@@ -1453,6 +1691,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1484,6 +1729,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::TranscribeStopAsync": [
@@ -1505,6 +1757,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::TransferAsync": [
@@ -1524,6 +1783,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1576,6 +1842,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Calling::UserEventAsync": [
@@ -1595,6 +1868,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1632,15 +1912,22 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "ConferenceLogs::ListAsync": [
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "ConferenceRooms::ListAddressesAsync": [
@@ -1651,11 +1938,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "CxmlApplications::DeleteAsync": [
@@ -1664,6 +1951,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "CxmlApplications::GetAsync": [
@@ -1674,11 +1968,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "CxmlApplications::ListAddressesAsync": [
@@ -1689,20 +1983,20 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "CxmlApplications::ListAsync": [
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "CxmlApplications::UpdateAsync": [
@@ -1816,6 +2110,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "DatasphereDocuments::DeleteChunkAsync": [
@@ -1830,6 +2131,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "DatasphereDocuments::GetChunkAsync": [
@@ -1846,11 +2154,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "DatasphereDocuments::ListChunksAsync": [
@@ -1861,11 +2169,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "DatasphereDocuments::SearchAsync": [
@@ -1930,6 +2238,22 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
+      }
+    ],
+    "FabricAddresses::Paginate": [
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "FabricTokens::CreateEmbedTokenAsync": [
@@ -1943,6 +2267,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -1967,6 +2298,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "FabricTokens::CreateInviteTokenAsync": [
@@ -1987,6 +2325,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -2081,6 +2426,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "FabricTokens::RefreshSubscriberTokenAsync": [
@@ -2094,6 +2446,22 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
+      }
+    ],
+    "FaxLogs::Paginate": [
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -2115,6 +2483,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -2144,6 +2519,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "GenericResources::DeleteAsync": [
@@ -2152,6 +2534,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "GenericResources::GetAsync": [
@@ -2162,11 +2551,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "GenericResources::ListAddressesAsync": [
@@ -2177,20 +2566,20 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "GenericResources::ListAsync": [
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "ImportedNumbers::CreateAsync": [
@@ -2219,6 +2608,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Lookup::PhoneNumberAsync": [
@@ -2229,11 +2625,20 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
+      }
+    ],
+    "MessageLogs::Paginate": [
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Messages::CreateAsync": [
@@ -2290,6 +2695,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Messages::UpdateAsync": [
@@ -2309,6 +2721,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -2368,6 +2787,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Mfa::SmsAsync": [
@@ -2425,6 +2851,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Mfa::VerifyAsync": [
@@ -2444,6 +2877,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -2467,6 +2907,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "NumberGroups::DeleteMembershipAsync": [
@@ -2475,6 +2922,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "NumberGroups::GetMembershipAsync": [
@@ -2485,11 +2939,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "NumberGroups::ListMembershipsAsync": [
@@ -2500,20 +2954,20 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "PhoneNumbers::SearchAsync": [
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "PhoneNumbers::SetAiAgentAsync": [
@@ -2530,11 +2984,11 @@
         "required": true
       },
       {
-        "name": "extra",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "PhoneNumbers::SetCallFlowAsync": [
@@ -2558,11 +3012,11 @@
         "default": null
       },
       {
-        "name": "extra",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "PhoneNumbers::SetCxmlApplicationAsync": [
@@ -2579,11 +3033,11 @@
         "required": true
       },
       {
-        "name": "extra",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "PhoneNumbers::SetCxmlWebhookAsync": [
@@ -2614,11 +3068,11 @@
         "default": null
       },
       {
-        "name": "extra",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "PhoneNumbers::SetRelayApplicationAsync": [
@@ -2635,11 +3089,11 @@
         "required": true
       },
       {
-        "name": "extra",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "PhoneNumbers::SetRelayTopicAsync": [
@@ -2663,11 +3117,11 @@
         "default": null
       },
       {
-        "name": "extra",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "PhoneNumbers::SetSwmlWebhookAsync": [
@@ -2684,11 +3138,11 @@
         "required": true
       },
       {
-        "name": "extra",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "ProjectTokens::CreateAsync": [
@@ -2717,6 +3171,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "ProjectTokens::DeleteAsync": [
@@ -2725,6 +3186,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "ProjectTokens::UpdateAsync": [
@@ -2754,6 +3222,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Projects::RotateSigningKeyAsync": [
@@ -2762,6 +3237,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "PubSub::CreateTokenAsync": [
@@ -2797,6 +3279,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Queues::GetMemberAsync": [
@@ -2813,11 +3302,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "Queues::GetNextMemberAsync": [
@@ -2828,11 +3317,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "Queues::ListMembersAsync": [
@@ -2843,11 +3332,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "Recordings::DeleteAsync": [
@@ -2856,6 +3345,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Recordings::GetAsync": [
@@ -2866,20 +3362,20 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "Recordings::ListAsync": [
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "RegistryBrands::CreateAsync": [
@@ -2888,6 +3384,13 @@
         "kind": "positional",
         "type": "dict<string,any>",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "RegistryBrands::CreateCampaignAsync": [
@@ -2902,6 +3405,13 @@
         "kind": "positional",
         "type": "dict<string,any>",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "RegistryBrands::GetAsync": [
@@ -2912,20 +3422,20 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "RegistryBrands::ListAsync": [
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "RegistryBrands::ListCampaignsAsync": [
@@ -2936,11 +3446,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "RegistryCampaigns::CreateOrderAsync": [
@@ -2970,6 +3480,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "RegistryCampaigns::GetAsync": [
@@ -2980,11 +3497,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "RegistryCampaigns::ListNumbersAsync": [
@@ -2995,11 +3512,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "RegistryCampaigns::ListOrdersAsync": [
@@ -3010,11 +3527,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "RegistryCampaigns::UpdateAsync": [
@@ -3037,6 +3554,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "RegistryNumbers::DeleteAsync": [
@@ -3045,6 +3569,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "RegistryOrders::GetAsync": [
@@ -3055,11 +3586,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "ShortCodes::GetAsync": [
@@ -3070,20 +3601,20 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "ShortCodes::ListAsync": [
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "ShortCodes::UpdateAsync": [
@@ -3153,15 +3684,22 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "SipProfile::GetAsync": [
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "SipProfile::UpdateAsync": [
@@ -3204,6 +3742,13 @@
         "name": "extras",
         "kind": "keyword",
         "type": "optional<dict<string,any>>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
         "default": null
       }
@@ -3268,6 +3813,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Subscribers::DeleteSipEndpointAsync": [
@@ -3282,6 +3834,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "Subscribers::GetSipEndpointAsync": [
@@ -3298,11 +3857,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "Subscribers::ListSipEndpointsAsync": [
@@ -3313,11 +3872,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "Subscribers::UpdateSipEndpointAsync": [
@@ -3388,6 +3947,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VerifiedCallers::RedialVerificationAsync": [
@@ -3396,6 +3962,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VerifiedCallers::SubmitVerificationAsync": [
@@ -3417,6 +3990,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VideoConferenceTokens::GetAsync": [
@@ -3427,11 +4007,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "VideoConferenceTokens::ResetAsync": [
@@ -3440,6 +4020,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VideoConferences::CreateStreamAsync": [
@@ -3461,6 +4048,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VideoConferences::ListConferenceTokensAsync": [
@@ -3471,11 +4065,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "VideoConferences::ListStreamsAsync": [
@@ -3486,11 +4080,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "VideoRoomRecordings::DeleteAsync": [
@@ -3499,6 +4093,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VideoRoomRecordings::GetAsync": [
@@ -3509,20 +4110,20 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "VideoRoomRecordings::ListAsync": [
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "VideoRoomRecordings::ListEventsAsync": [
@@ -3533,11 +4134,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "VideoRoomSessions::ListEventsAsync": [
@@ -3548,11 +4149,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "VideoRoomSessions::ListMembersAsync": [
@@ -3563,11 +4164,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "VideoRoomSessions::ListRecordingsAsync": [
@@ -3578,11 +4179,20 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
+      }
+    ],
+    "VideoRoomSessions::Paginate": [
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VideoRoomTokens::CreateAsync": [
@@ -3717,6 +4327,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VideoRooms::CreateStreamAsync": [
@@ -3738,6 +4355,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VideoRooms::ListStreamsAsync": [
@@ -3748,11 +4372,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "VideoStreams::DeleteAsync": [
@@ -3761,6 +4385,13 @@
         "kind": "positional",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VideoStreams::GetAsync": [
@@ -3771,11 +4402,11 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
       }
     ],
     "VideoStreams::UpdateAsync": [
@@ -3797,6 +4428,13 @@
         "type": "optional<dict<string,any>>",
         "required": false,
         "default": null
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ],
     "VoiceLogs::ListEventsAsync": [
@@ -3807,12 +4445,378 @@
         "required": true
       },
       {
-        "name": "params",
-        "kind": "var_keyword",
-        "type": "any",
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
         "required": false,
-        "default": {}
+        "default": null
+      }
+    ],
+    "VoiceLogs::Paginate": [
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
       }
     ]
+  },
+  "returns": {
+    "Addresses::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.AddressResponse",
+    "Addresses::get": "class:signalwire.rest.namespaces.relay_rest_types_generated.AddressResponse",
+    "Addresses::list": "class:signalwire.rest.namespaces.relay_rest_types_generated.AddressListResponse",
+    "AiAgents::create": "class:signalwire.rest.namespaces.fabric_types_generated.AIAgentResponse",
+    "AiAgents::update": "class:signalwire.rest.namespaces.fabric_types_generated.AIAgentResponse",
+    "CallFlows::create": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowResponse",
+    "CallFlows::deploy_version": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowVersionDeployResponse",
+    "CallFlows::list_addresses": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowAddressListResponse",
+    "CallFlows::list_versions": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowVersionListResponse",
+    "CallFlows::update": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowResponse",
+    "Chat::create_token": "class:signalwire.rest.namespaces.chat_types_generated.ChatToken",
+    "ConferenceLogs::list": "class:signalwire.rest.namespaces.logs_types_generated.ConferencesResponse",
+    "ConferenceRooms::create": "class:signalwire.rest.namespaces.fabric_types_generated.ConferenceRoomResponse",
+    "ConferenceRooms::list_addresses": "class:signalwire.rest.namespaces.fabric_types_generated.ConferenceRoomAddressListResponse",
+    "ConferenceRooms::update": "class:signalwire.rest.namespaces.fabric_types_generated.ConferenceRoomResponse",
+    "CxmlApplications::get": "class:signalwire.rest.namespaces.fabric_types_generated.CxmlApplicationResponse",
+    "CxmlApplications::list": "class:signalwire.rest.namespaces.fabric_types_generated.CxmlApplicationListResponse",
+    "CxmlApplications::list_addresses": "class:signalwire.rest.namespaces.fabric_types_generated.CxmlApplicationAddressListResponse",
+    "CxmlApplications::update": "class:signalwire.rest.namespaces.fabric_types_generated.CxmlApplicationResponse",
+    "CxmlScripts::create": "class:signalwire.rest.namespaces.fabric_types_generated.CXMLScriptResponse",
+    "CxmlScripts::update": "class:signalwire.rest.namespaces.fabric_types_generated.CXMLScriptResponse",
+    "CxmlWebhooks::create": "class:signalwire.rest.namespaces.fabric_types_generated.CXMLWebhookResponse",
+    "CxmlWebhooks::update": "class:signalwire.rest.namespaces.fabric_types_generated.CXMLWebhookResponse",
+    "DatasphereDocuments::create": "class:signalwire.rest.namespaces.datasphere_types_generated.Document",
+    "DatasphereDocuments::get_chunk": "class:signalwire.rest.namespaces.datasphere_types_generated.ChunkResponse",
+    "DatasphereDocuments::list_chunks": "class:signalwire.rest.namespaces.datasphere_types_generated.ChunkListResponse",
+    "DatasphereDocuments::search": "class:signalwire.rest.namespaces.datasphere_types_generated.SearchResponse",
+    "DatasphereDocuments::update": "class:signalwire.rest.namespaces.datasphere_types_generated.Document",
+    "FabricAddresses::get": "class:signalwire.rest.namespaces.fabric_types_generated.FabricAddress",
+    "FabricAddresses::list": "class:signalwire.rest.namespaces.fabric_types_generated.FabricAddressesResponse",
+    "FabricTokens::create_embed_token": "class:signalwire.rest.namespaces.fabric_types_generated.EmbedsTokensResponse",
+    "FabricTokens::create_guest_token": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberGuestTokenCreateResponse",
+    "FabricTokens::create_invite_token": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberInviteTokenCreateResponse",
+    "FabricTokens::create_subscriber_token": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberTokenResponse",
+    "FabricTokens::refresh_subscriber_token": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberRefreshTokenResponse",
+    "FaxLogs::get": "class:signalwire.rest.namespaces.fax_types_generated.LogResponse",
+    "FaxLogs::list": "class:signalwire.rest.namespaces.fax_types_generated.LogListResponse",
+    "FreeswitchConnectors::create": "class:signalwire.rest.namespaces.fabric_types_generated.FreeswitchConnectorResponse",
+    "FreeswitchConnectors::update": "class:signalwire.rest.namespaces.fabric_types_generated.FreeswitchConnectorResponse",
+    "GenericResources::assign_domain_application": "class:signalwire.rest.namespaces.fabric_types_generated.DomainApplicationResponse",
+    "GenericResources::assign_phone_route": "class:signalwire.rest.namespaces.fabric_types_generated.PhoneRouteResponse",
+    "GenericResources::list": "class:signalwire.rest.namespaces.fabric_types_generated.ResourceListResponse",
+    "GenericResources::list_addresses": "class:signalwire.rest.namespaces.fabric_types_generated.ResourceAddressListResponse",
+    "ImportedNumbers::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "Lookup::phone_number": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberLookupResponse",
+    "MessageLogs::get": "class:signalwire.rest.namespaces.message_types_generated.LogRetrieveResponse",
+    "MessageLogs::list": "class:signalwire.rest.namespaces.message_types_generated.LogListResponse",
+    "Messages::create": "class:signalwire.rest.namespaces.messages_types_generated.Message",
+    "Messages::update": "class:signalwire.rest.namespaces.messages_types_generated.Message",
+    "Mfa::call": "class:signalwire.rest.namespaces.relay_rest_types_generated.MfaResponse",
+    "Mfa::sms": "class:signalwire.rest.namespaces.relay_rest_types_generated.MfaResponse",
+    "Mfa::verify": "class:signalwire.rest.namespaces.relay_rest_types_generated.MfaVerifyResponse",
+    "NumberGroups::add_membership": "class:signalwire.rest.namespaces.relay_rest_types_generated.NumberGroupMembershipResponse",
+    "NumberGroups::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.NumberGroupResponse",
+    "NumberGroups::get_membership": "class:signalwire.rest.namespaces.relay_rest_types_generated.NumberGroupMembershipResponse",
+    "NumberGroups::list_memberships": "class:signalwire.rest.namespaces.relay_rest_types_generated.NumberGroupMembershipListResponse",
+    "NumberGroups::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.NumberGroupResponse",
+    "PhoneNumbers::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "PhoneNumbers::search": "class:signalwire.rest.namespaces.relay_rest_types_generated.AvailablePhoneNumbersResponse",
+    "PhoneNumbers::set_ai_agent": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "PhoneNumbers::set_call_flow": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "PhoneNumbers::set_cxml_application": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "PhoneNumbers::set_cxml_webhook": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "PhoneNumbers::set_relay_application": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "PhoneNumbers::set_relay_topic": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "PhoneNumbers::set_swml_webhook": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "PhoneNumbers::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.PhoneNumberResponse",
+    "ProjectTokens::create": "class:signalwire.rest.namespaces.project_types_generated.TokenResponse",
+    "ProjectTokens::update": "class:signalwire.rest.namespaces.project_types_generated.TokenResponse",
+    "Projects::create": "class:signalwire.rest.namespaces.projects_types_generated.Project",
+    "Projects::update": "class:signalwire.rest.namespaces.projects_types_generated.Project",
+    "PubSub::create_token": "class:signalwire.rest.namespaces.pubsub_types_generated.PubSubToken",
+    "Queues::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.QueueResponse",
+    "Queues::get_member": "class:signalwire.rest.namespaces.relay_rest_types_generated.QueueMemberResponse",
+    "Queues::get_next_member": "class:signalwire.rest.namespaces.relay_rest_types_generated.QueueMemberResponse",
+    "Queues::list_members": "class:signalwire.rest.namespaces.relay_rest_types_generated.QueueMemberListResponse",
+    "Queues::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.QueueResponse",
+    "Recordings::list": "class:signalwire.rest.namespaces.relay_rest_types_generated.RecordingListResponse",
+    "RegistryBrands::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.BrandResponse",
+    "RegistryBrands::create_campaign": "class:signalwire.rest.namespaces.relay_rest_types_generated.CampaignResponse",
+    "RegistryBrands::get": "class:signalwire.rest.namespaces.relay_rest_types_generated.BrandResponse",
+    "RegistryBrands::list": "class:signalwire.rest.namespaces.relay_rest_types_generated.BrandListResponse",
+    "RegistryBrands::list_campaigns": "class:signalwire.rest.namespaces.relay_rest_types_generated.CampaignListResponse",
+    "RegistryCampaigns::create_order": "class:signalwire.rest.namespaces.relay_rest_types_generated.OrderResponse",
+    "RegistryCampaigns::get": "class:signalwire.rest.namespaces.relay_rest_types_generated.CampaignResponse",
+    "RegistryCampaigns::list_numbers": "class:signalwire.rest.namespaces.relay_rest_types_generated.AssignedNumberListResponse",
+    "RegistryCampaigns::list_orders": "class:signalwire.rest.namespaces.relay_rest_types_generated.OrderListResponse",
+    "RegistryCampaigns::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.CampaignResponse",
+    "RegistryOrders::get": "class:signalwire.rest.namespaces.relay_rest_types_generated.OrderResponse",
+    "RelayApplications::create": "class:signalwire.rest.namespaces.fabric_types_generated.RelayApplicationResponse",
+    "RelayApplications::update": "class:signalwire.rest.namespaces.fabric_types_generated.RelayApplicationResponse",
+    "ShortCodes::get": "class:signalwire.rest.namespaces.relay_rest_types_generated.ShortCodeResponse",
+    "ShortCodes::list": "class:signalwire.rest.namespaces.relay_rest_types_generated.ShortCodeListResponse",
+    "ShortCodes::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.ShortCodeResponse",
+    "SipEndpoints::create": "class:signalwire.rest.namespaces.fabric_types_generated.SipEndpointResponse",
+    "SipEndpoints::update": "class:signalwire.rest.namespaces.fabric_types_generated.SipEndpointResponse",
+    "SipGateways::create": "class:signalwire.rest.namespaces.fabric_types_generated.SipGatewayResponse",
+    "SipGateways::update": "class:signalwire.rest.namespaces.fabric_types_generated.SipGatewayResponse",
+    "SipProfile::get": "class:signalwire.rest.namespaces.relay_rest_types_generated.SipProfileResponse",
+    "SipProfile::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.SipProfileResponse",
+    "Subscribers::create": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberResponse",
+    "Subscribers::create_sip_endpoint": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberSIPEndpoint",
+    "Subscribers::get_sip_endpoint": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberSIPEndpoint",
+    "Subscribers::list_sip_endpoints": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberSipEndpointListResponse",
+    "Subscribers::update": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberResponse",
+    "Subscribers::update_sip_endpoint": "class:signalwire.rest.namespaces.fabric_types_generated.SubscriberSIPEndpoint",
+    "SwmlScripts::create": "class:signalwire.rest.namespaces.fabric_types_generated.SwmlScriptResponse",
+    "SwmlScripts::update": "class:signalwire.rest.namespaces.fabric_types_generated.SwmlScriptResponse",
+    "SwmlWebhooks::create": "class:signalwire.rest.namespaces.fabric_types_generated.SWMLWebhookResponse",
+    "SwmlWebhooks::update": "class:signalwire.rest.namespaces.fabric_types_generated.SWMLWebhookResponse",
+    "VerifiedCallers::create": "class:signalwire.rest.namespaces.relay_rest_types_generated.VerifiedCallerIDResponse",
+    "VerifiedCallers::redial_verification": "class:signalwire.rest.namespaces.relay_rest_types_generated.VerifiedCallerIDResponse",
+    "VerifiedCallers::submit_verification": "class:signalwire.rest.namespaces.relay_rest_types_generated.VerifiedCallerIDResponse",
+    "VerifiedCallers::update": "class:signalwire.rest.namespaces.relay_rest_types_generated.VerifiedCallerIDResponse",
+    "VideoConferenceTokens::get": "class:signalwire.rest.namespaces.video_types_generated.ConferenceToken",
+    "VideoConferenceTokens::reset": "class:signalwire.rest.namespaces.video_types_generated.ConferenceToken",
+    "VideoConferences::create": "class:signalwire.rest.namespaces.video_types_generated.Conference",
+    "VideoConferences::create_stream": "class:signalwire.rest.namespaces.video_types_generated.Stream",
+    "VideoConferences::list_conference_tokens": "class:signalwire.rest.namespaces.video_types_generated.ListConferenceTokensResponse",
+    "VideoConferences::list_streams": "class:signalwire.rest.namespaces.video_types_generated.ListStreamsResponse",
+    "VideoConferences::update": "class:signalwire.rest.namespaces.video_types_generated.Conference",
+    "VideoRoomRecordings::get": "class:signalwire.rest.namespaces.video_types_generated.RoomRecording",
+    "VideoRoomRecordings::list": "class:signalwire.rest.namespaces.video_types_generated.ListRoomRecordingsResponse",
+    "VideoRoomRecordings::list_events": "class:signalwire.rest.namespaces.video_types_generated.ListRoomRecordingEventsResponse",
+    "VideoRoomSessions::get": "class:signalwire.rest.namespaces.video_types_generated.RoomSessionSummary",
+    "VideoRoomSessions::list": "class:signalwire.rest.namespaces.video_types_generated.ListRoomSessionsResponse",
+    "VideoRoomSessions::list_events": "class:signalwire.rest.namespaces.video_types_generated.ListRoomSessionEventsResponse",
+    "VideoRoomSessions::list_members": "class:signalwire.rest.namespaces.video_types_generated.ListRoomSessionMembersResponse",
+    "VideoRoomSessions::list_recordings": "class:signalwire.rest.namespaces.video_types_generated.ListRoomSessionRecordingsResponse",
+    "VideoRoomTokens::create": "class:signalwire.rest.namespaces.video_types_generated.RoomTokenResponse",
+    "VideoRooms::create": "class:signalwire.rest.namespaces.video_types_generated.RoomResponse",
+    "VideoRooms::create_stream": "class:signalwire.rest.namespaces.video_types_generated.Stream",
+    "VideoRooms::list_streams": "class:signalwire.rest.namespaces.video_types_generated.ListStreamsResponse",
+    "VideoRooms::update": "class:signalwire.rest.namespaces.video_types_generated.RoomResponse",
+    "VideoStreams::get": "class:signalwire.rest.namespaces.video_types_generated.Stream",
+    "VideoStreams::update": "class:signalwire.rest.namespaces.video_types_generated.Stream",
+    "VoiceLogs::list": "class:signalwire.rest.namespaces.voice_types_generated.LogListResponse",
+    "VoiceLogs::list_events": "class:signalwire.rest.namespaces.voice_types_generated.LogEventsListResponse"
+  },
+  "crud_bases": {
+    "AiAgents": {
+      "base": "FabricResource",
+      "bind": [
+        "class:AIAgentListResponse",
+        "class:AIAgentResponse",
+        "class:AIAgentCreateRequest",
+        "class:AIAgentUpdateRequest"
+      ]
+    },
+    "CallFlows": {
+      "base": "FabricResource",
+      "bind": [
+        "class:CallFlowListResponse",
+        "class:CallFlowResponse",
+        "class:CallFlowCreateRequest",
+        "class:CallFlowUpdateRequest"
+      ]
+    },
+    "ConferenceRooms": {
+      "base": "FabricResource",
+      "bind": [
+        "class:ConferenceRoomListResponse",
+        "class:ConferenceRoomResponse",
+        "class:ConferenceRoomCreateRequest",
+        "class:ConferenceRoomUpdateRequest"
+      ]
+    },
+    "CxmlScripts": {
+      "base": "FabricResource",
+      "bind": [
+        "class:CXMLScriptListResponse",
+        "class:CXMLScriptResponse",
+        "class:CXMLScriptCreateRequest",
+        "class:CXMLScriptUpdateRequest"
+      ]
+    },
+    "CxmlWebhooks": {
+      "base": "FabricResource",
+      "bind": [
+        "class:CXMLWebhookListResponse",
+        "class:CXMLWebhookResponse",
+        "class:CXMLWebhookCreateRequest",
+        "class:CXMLWebhookUpdateRequest"
+      ]
+    },
+    "DatasphereDocuments": {
+      "base": "CrudResource",
+      "bind": [
+        "class:DocumentListResponse",
+        "class:Document",
+        "class:DocumentCreateRequest",
+        "class:DocumentUpdateRequest"
+      ]
+    },
+    "FabricAddresses": {
+      "base": "ReadResource",
+      "bind": [
+        "class:FabricAddressesResponse",
+        "class:FabricAddress"
+      ]
+    },
+    "FaxLogs": {
+      "base": "ReadResource",
+      "bind": [
+        "class:LogListResponse",
+        "class:LogResponse"
+      ]
+    },
+    "FreeswitchConnectors": {
+      "base": "FabricResource",
+      "bind": [
+        "class:FreeswitchConnectorListResponse",
+        "class:FreeswitchConnectorResponse",
+        "class:FreeswitchConnectorCreateRequest",
+        "class:FreeswitchConnectorUpdateRequest"
+      ]
+    },
+    "MessageLogs": {
+      "base": "ReadResource",
+      "bind": [
+        "class:LogListResponse",
+        "class:LogRetrieveResponse"
+      ]
+    },
+    "NumberGroups": {
+      "base": "CrudResource",
+      "bind": [
+        "class:NumberGroupListResponse",
+        "class:NumberGroupResponse",
+        "class:CreateNumberGroupRequest",
+        "class:UpdateNumberGroupRequest"
+      ]
+    },
+    "PhoneNumbers": {
+      "base": "CrudResource",
+      "bind": [
+        "class:PhoneNumberListResponse",
+        "class:PhoneNumberResponse",
+        "class:PurchasePhoneNumberRequest",
+        "class:UpdatePhoneNumberRequest"
+      ]
+    },
+    "Projects": {
+      "base": "CrudResource",
+      "bind": [
+        "class:ProjectList",
+        "class:Project",
+        "class:ProjectCreate",
+        "class:ProjectUpdate"
+      ]
+    },
+    "Queues": {
+      "base": "CrudResource",
+      "bind": [
+        "class:QueueListResponse",
+        "class:QueueResponse",
+        "class:CreateQueueRequest",
+        "class:UpdateQueueRequest"
+      ]
+    },
+    "RelayApplications": {
+      "base": "FabricResource",
+      "bind": [
+        "class:RelayApplicationListResponse",
+        "class:RelayApplicationResponse",
+        "class:RelayApplicationCreateRequest",
+        "class:RelayApplicationUpdateRequest"
+      ]
+    },
+    "SipEndpoints": {
+      "base": "FabricResource",
+      "bind": [
+        "class:SipEndpointListResponse",
+        "class:SipEndpointResponse",
+        "class:SipEndpointCreateRequest",
+        "class:SipEndpointUpdateRequest"
+      ]
+    },
+    "SipGateways": {
+      "base": "FabricResource",
+      "bind": [
+        "class:SipGatewayListResponse",
+        "class:SipGatewayResponse",
+        "class:SipGatewayRequest",
+        "class:SipGatewayRequestUpdate"
+      ]
+    },
+    "Subscribers": {
+      "base": "FabricResource",
+      "bind": [
+        "class:SubscriberListResponse",
+        "class:SubscriberResponse",
+        "class:SubscriberRequest",
+        "class:SubscriberRequest"
+      ]
+    },
+    "SwmlScripts": {
+      "base": "FabricResource",
+      "bind": [
+        "class:SwmlScriptListResponse",
+        "class:SwmlScriptResponse",
+        "class:SwmlScriptCreateRequest",
+        "class:SwmlScriptUpdateRequest"
+      ]
+    },
+    "SwmlWebhooks": {
+      "base": "FabricResource",
+      "bind": [
+        "class:SWMLWebhookListResponse",
+        "class:SWMLWebhookResponse",
+        "class:SWMLWebhookCreateRequest",
+        "class:SWMLWebhookUpdateRequest"
+      ]
+    },
+    "VerifiedCallers": {
+      "base": "CrudResource",
+      "bind": [
+        "class:VerifiedCallerIDListResponse",
+        "class:VerifiedCallerIDResponse",
+        "class:CreateVerifiedCallerIDRequest",
+        "class:UpdateVerifiedCallerIDRequest"
+      ]
+    },
+    "VideoConferences": {
+      "base": "CrudResource",
+      "bind": [
+        "class:ListConferencesResponse",
+        "class:Conference",
+        "class:CreateConferenceRequest",
+        "class:UpdateConferenceRequest"
+      ]
+    },
+    "VideoRoomSessions": {
+      "base": "ReadResource",
+      "bind": [
+        "class:ListRoomSessionsResponse",
+        "class:RoomSessionSummary"
+      ]
+    },
+    "VideoRooms": {
+      "base": "CrudResource",
+      "bind": [
+        "class:ListRoomsResponse",
+        "class:RoomResponse",
+        "class:CreateRoomRequest",
+        "class:UpdateRoomRequest"
+      ]
+    },
+    "VoiceLogs": {
+      "base": "ReadResource",
+      "bind": [
+        "class:LogListResponse",
+        "class:VoiceLog"
+      ]
+    }
   }
 }

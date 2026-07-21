@@ -22,57 +22,57 @@ public class PstnRecording
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? project_id { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 
     /// <summary>Wire field <c>duration_in_seconds</c>.</summary>
     [JsonPropertyName("duration_in_seconds")]
-    public long? duration_in_seconds { get; set; }
+    public long? DurationInSeconds { get; set; }
 
     /// <summary>Wire field <c>error_code</c>.</summary>
     [JsonPropertyName("error_code")]
-    public string? error_code { get; set; }
+    public string? ErrorCode { get; set; }
 
     /// <summary>Wire field <c>price</c>.</summary>
     [JsonPropertyName("price")]
-    public double? price { get; set; }
+    public double? Price { get; set; }
 
     /// <summary>Wire field <c>price_unit</c>.</summary>
     [JsonPropertyName("price_unit")]
-    public string? price_unit { get; set; }
+    public string? PriceUnit { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public string? status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public string? url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>stereo</c>.</summary>
     [JsonPropertyName("stereo")]
-    public bool? stereo { get; set; }
+    public bool? Stereo { get; set; }
 
     /// <summary>Wire field <c>byte_size</c>.</summary>
     [JsonPropertyName("byte_size")]
-    public long? byte_size { get; set; }
+    public long? ByteSize { get; set; }
 
     /// <summary>Wire field <c>track</c>.</summary>
     [JsonPropertyName("track")]
-    public string? track { get; set; }
+    public string? Track { get; set; }
 
     /// <summary>Wire field <c>relay_pstn_leg_id</c>.</summary>
     [JsonPropertyName("relay_pstn_leg_id")]
-    public Dictionary<string, object?>? relay_pstn_leg_id { get; set; }
+    public string? RelayPstnLegId { get; set; }
 }

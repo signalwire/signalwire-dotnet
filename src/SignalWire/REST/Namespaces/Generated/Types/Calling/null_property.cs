@@ -22,9 +22,9 @@ public class NullProperty
 {
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public string? description { get; set; }
+    public string? Description { get; set; }
 }

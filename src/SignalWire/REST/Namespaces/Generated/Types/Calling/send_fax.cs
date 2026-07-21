@@ -22,5 +22,5 @@ public class SendFax
 {
     /// <summary>Wire field <c>send_fax</c>.</summary>
     [JsonPropertyName("send_fax")]
-    public Dictionary<string, object?>? send_fax { get; set; }
+    public Dictionary<string, object?>? SendFax_ { get; set; }
 }

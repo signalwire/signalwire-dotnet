@@ -22,5 +22,5 @@ public class Section
 {
     /// <summary>Wire field <c>main</c>.</summary>
     [JsonPropertyName("main")]
-    public List<object?>? main { get; set; }
+    public List<object?>? Main { get; set; }
 }

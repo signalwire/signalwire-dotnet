@@ -22,21 +22,21 @@ public class CallingDialParams
 {
     /// <summary>Wire field <c>devices</c>.</summary>
     [JsonPropertyName("devices")]
-    public List<object?>? devices { get; set; }
+    public List<object?>? Devices { get; set; }
 
     /// <summary>Wire field <c>max_price_per_minute</c>.</summary>
     [JsonPropertyName("max_price_per_minute")]
-    public double? max_price_per_minute { get; set; }
+    public double? MaxPricePerMinute { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>region</c>.</summary>
     [JsonPropertyName("region")]
-    public string? region { get; set; }
+    public string? Region { get; set; }
 
     /// <summary>Wire field <c>tag</c>.</summary>
     [JsonPropertyName("tag")]
-    public string? tag { get; set; }
+    public string? Tag { get; set; }
 }

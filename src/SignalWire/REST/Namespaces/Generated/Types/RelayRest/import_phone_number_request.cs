@@ -22,13 +22,13 @@ public class ImportPhoneNumberRequest
 {
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
-    public string? number { get; set; }
+    public string? Number { get; set; }
 
     /// <summary>Wire field <c>number_type</c>.</summary>
     [JsonPropertyName("number_type")]
-    public string? number_type { get; set; }
+    public string? NumberType { get; set; }
 
     /// <summary>Wire field <c>capabilities</c>.</summary>
     [JsonPropertyName("capabilities")]
-    public List<object?>? capabilities { get; set; }
+    public List<object?>? Capabilities { get; set; }
 }

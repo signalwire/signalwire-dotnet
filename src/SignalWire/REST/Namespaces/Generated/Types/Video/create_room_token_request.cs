@@ -22,73 +22,73 @@ public class CreateRoomTokenRequest
 {
     /// <summary>Wire field <c>room_name</c>.</summary>
     [JsonPropertyName("room_name")]
-    public string? room_name { get; set; }
+    public string? RoomName { get; set; }
 
     /// <summary>Wire field <c>user_name</c>.</summary>
     [JsonPropertyName("user_name")]
-    public string? user_name { get; set; }
+    public string? UserName { get; set; }
 
     /// <summary>Wire field <c>permissions</c>.</summary>
     [JsonPropertyName("permissions")]
-    public List<object?>? permissions { get; set; }
+    public List<object?>? Permissions { get; set; }
 
     /// <summary>Wire field <c>join_from</c>.</summary>
     [JsonPropertyName("join_from")]
-    public string? join_from { get; set; }
+    public string? JoinFrom { get; set; }
 
     /// <summary>Wire field <c>join_until</c>.</summary>
     [JsonPropertyName("join_until")]
-    public string? join_until { get; set; }
+    public string? JoinUntil { get; set; }
 
     /// <summary>Wire field <c>remove_at</c>.</summary>
     [JsonPropertyName("remove_at")]
-    public string? remove_at { get; set; }
+    public string? RemoveAt { get; set; }
 
     /// <summary>Wire field <c>remove_after_seconds_elapsed</c>.</summary>
     [JsonPropertyName("remove_after_seconds_elapsed")]
-    public long? remove_after_seconds_elapsed { get; set; }
+    public long? RemoveAfterSecondsElapsed { get; set; }
 
     /// <summary>Wire field <c>join_audio_muted</c>.</summary>
     [JsonPropertyName("join_audio_muted")]
-    public bool? join_audio_muted { get; set; }
+    public bool? JoinAudioMuted { get; set; }
 
     /// <summary>Wire field <c>join_video_muted</c>.</summary>
     [JsonPropertyName("join_video_muted")]
-    public bool? join_video_muted { get; set; }
+    public bool? JoinVideoMuted { get; set; }
 
     /// <summary>Wire field <c>auto_create_room</c>.</summary>
     [JsonPropertyName("auto_create_room")]
-    public bool? auto_create_room { get; set; }
+    public bool? AutoCreateRoom { get; set; }
 
     /// <summary>Wire field <c>enable_room_previews</c>.</summary>
     [JsonPropertyName("enable_room_previews")]
-    public bool? enable_room_previews { get; set; }
+    public bool? EnableRoomPreviews { get; set; }
 
     /// <summary>Wire field <c>room_display_name</c>.</summary>
     [JsonPropertyName("room_display_name")]
-    public string? room_display_name { get; set; }
+    public string? RoomDisplayName { get; set; }
 
     /// <summary>Wire field <c>end_room_session_on_leave</c>.</summary>
     [JsonPropertyName("end_room_session_on_leave")]
-    public bool? end_room_session_on_leave { get; set; }
+    public bool? EndRoomSessionOnLeave { get; set; }
 
     /// <summary>Wire field <c>join_as</c>.</summary>
     [JsonPropertyName("join_as")]
-    public Dictionary<string, object?>? join_as { get; set; }
+    public string? JoinAs { get; set; }
 
     /// <summary>Wire field <c>media_allowed</c>.</summary>
     [JsonPropertyName("media_allowed")]
-    public Dictionary<string, object?>? media_allowed { get; set; }
+    public string? MediaAllowed { get; set; }
 
     /// <summary>Wire field <c>room_meta</c>.</summary>
     [JsonPropertyName("room_meta")]
-    public Dictionary<string, object?>? room_meta { get; set; }
+    public Dictionary<string, object?>? RoomMeta { get; set; }
 
     /// <summary>Wire field <c>meta</c>.</summary>
     [JsonPropertyName("meta")]
-    public Dictionary<string, object?>? meta { get; set; }
+    public Dictionary<string, object?>? Meta { get; set; }
 
     /// <summary>Wire field <c>sync_audio_video</c>.</summary>
     [JsonPropertyName("sync_audio_video")]
-    public bool? sync_audio_video { get; set; }
+    public bool? SyncAudioVideo { get; set; }
 }

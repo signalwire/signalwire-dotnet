@@ -22,5 +22,5 @@ public class Contexts
 {
     /// <summary>Wire field <c>default</c>.</summary>
     [JsonPropertyName("default")]
-    public Dictionary<string, object?>? @default { get; set; }
+    public Dictionary<string, object?>? Default { get; set; }
 }

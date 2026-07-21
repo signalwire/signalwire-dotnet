@@ -22,5 +22,5 @@ public class CondElse
 {
     /// <summary>Wire field <c>else</c>.</summary>
     [JsonPropertyName("else")]
-    public List<object?>? @else { get; set; }
+    public List<object?>? Else { get; set; }
 }

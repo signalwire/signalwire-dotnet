@@ -27,7 +27,7 @@ using SignalWire.Tools.DumpCorpus;
 
 if (args.Length != 1)
 {
-    Console.Error.WriteLine("usage: DumpCorpus <wire|swml|state|http|wire-relay|envelope>");
+    Console.Error.WriteLine("usage: DumpCorpus <wire|swml|state|http|wire-relay|envelope|secure-default|pagination>");
     return 2;
 }
 
@@ -41,6 +41,8 @@ try
         "http" => HttpDump.Build(),
         "wire-relay" => await WireRelayDump.BuildAsync().ConfigureAwait(false),
         "envelope" => await EnvelopeDump.BuildAsync().ConfigureAwait(false),
+        "secure-default" => SecureDefaultDump.Build(),
+        "pagination" => await PaginationDump.BuildAsync().ConfigureAwait(false),
         _ => throw new ArgumentException($"unknown surface '{args[0]}'"),
     };
 

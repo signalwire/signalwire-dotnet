@@ -22,5 +22,5 @@ public class SubscriberRefreshTokenRequest
 {
     /// <summary>Wire field <c>refresh_token</c>.</summary>
     [JsonPropertyName("refresh_token")]
-    public Dictionary<string, object?>? refresh_token { get; set; }
+    public string? RefreshToken { get; set; }
 }

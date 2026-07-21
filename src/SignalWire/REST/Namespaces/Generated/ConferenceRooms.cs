@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// ConferenceRooms — REST resource for the fabric API.
 /// </summary>
-public class ConferenceRooms : SignalWire.REST.CrudWithAddresses
+public class ConferenceRooms : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomResponse>
 {
     public ConferenceRooms(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/conference_rooms")
@@ -28,8 +28,9 @@ public class ConferenceRooms : SignalWire.REST.CrudWithAddresses
     /// Generated from operation <c>list_conference_room_addresses</c> (GET /resources/conference_room/{id}/addresses).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomAddressListResponse?> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/fabric/resources/conference_room/" + id + "/addresses", queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomAddressListResponse>(Client.GetAsync("/api/fabric/resources/conference_room/" + id + "/addresses", queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

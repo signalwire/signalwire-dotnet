@@ -22,13 +22,13 @@ public class SwaigArgument
 {
     /// <summary>Wire field <c>parsed</c>.</summary>
     [JsonPropertyName("parsed")]
-    public List<object?>? parsed { get; set; }
+    public List<object?>? Parsed { get; set; }
 
     /// <summary>Wire field <c>raw</c>.</summary>
     [JsonPropertyName("raw")]
-    public string? raw { get; set; }
+    public string? Raw { get; set; }
 
     /// <summary>Wire field <c>substituted</c>.</summary>
     [JsonPropertyName("substituted")]
-    public string? substituted { get; set; }
+    public string? Substituted { get; set; }
 }

@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// CallFlows — REST resource for the fabric API.
 /// </summary>
-public class CallFlows : SignalWire.REST.CrudWithAddresses
+public class CallFlows : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowResponse>
 {
     public CallFlows(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/call_flows")
@@ -28,26 +28,29 @@ public class CallFlows : SignalWire.REST.CrudWithAddresses
     /// Generated from operation <c>list_call_flow_addresses</c> (GET /resources/call_flow/{id}/addresses).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowAddressListResponse?> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/addresses", queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowAddressListResponse>(Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/addresses", queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
     /// Generated from operation <c>list_call_flow_versions</c> (GET /resources/call_flow/{id}/versions).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListVersionsAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersionListResponse?> ListVersionsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/versions", queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersionListResponse>(Client.GetAsync("/api/fabric/resources/call_flow/" + id + "/versions", queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
     /// Generated from operation <c>deploy_call_flow_version</c> (POST /resources/call_flow/{id}/versions).
     /// </summary>
     /// <param name="body">JSON request body.</param>
-    public Task<Dictionary<string, object?>> DeployVersionAsync(string id, Dictionary<string, object?> body, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersionDeployResponse?> DeployVersionAsync(string id, Dictionary<string, object?> body, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync("/api/fabric/resources/call_flow/" + id + "/versions", body, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowVersionDeployResponse>(Client.PostAsync("/api/fabric/resources/call_flow/" + id + "/versions", body, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

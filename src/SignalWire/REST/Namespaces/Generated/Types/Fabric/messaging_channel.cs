@@ -22,5 +22,5 @@ public class MessagingChannel
 {
     /// <summary>Wire field <c>messaging</c>.</summary>
     [JsonPropertyName("messaging")]
-    public string? messaging { get; set; }
+    public string? Messaging { get; set; }
 }

@@ -22,25 +22,25 @@ public class PostPromptData
 {
     /// <summary>Wire field <c>event_type</c>.</summary>
     [JsonPropertyName("event_type")]
-    public string? event_type { get; set; }
+    public string? EventType { get; set; }
 
     /// <summary>Wire field <c>event_channel</c>.</summary>
     [JsonPropertyName("event_channel")]
-    public string? event_channel { get; set; }
+    public string? EventChannel { get; set; }
 
     /// <summary>Wire field <c>timestamp</c>.</summary>
     [JsonPropertyName("timestamp")]
-    public double? timestamp { get; set; }
+    public double? Timestamp { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public string? project_id { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>space_id</c>.</summary>
     [JsonPropertyName("space_id")]
-    public string? space_id { get; set; }
+    public string? SpaceId { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public SignalWire.REST.Namespaces.Generated.Types.SwmlWebhooks.PostPromptParams? @params { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.SwmlWebhooks.PostPromptParams? Params { get; set; }
 }

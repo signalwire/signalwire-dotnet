@@ -22,5 +22,5 @@ public class Types_StatusCodes_ValidationError
 {
     /// <summary>Wire field <c>errors</c>.</summary>
     [JsonPropertyName("errors")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.RelayRest.Types_StatusCodes_SpaceApiErrorItem>? errors { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.RelayRest.Types_StatusCodes_SpaceApiErrorItem>? Errors { get; set; }
 }

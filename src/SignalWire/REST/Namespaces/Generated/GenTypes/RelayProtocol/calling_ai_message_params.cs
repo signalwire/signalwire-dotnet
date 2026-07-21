@@ -22,33 +22,33 @@ public class CallingAiMessageParams
 {
     /// <summary>Wire field <c>async</c>.</summary>
     [JsonPropertyName("async")]
-    public bool? async { get; set; }
+    public bool? Async { get; set; }
 
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>global_data</c>.</summary>
     [JsonPropertyName("global_data")]
-    public object? global_data { get; set; }
+    public object? GlobalData { get; set; }
 
     /// <summary>Wire field <c>message_text</c>.</summary>
     [JsonPropertyName("message_text")]
-    public string? message_text { get; set; }
+    public string? MessageText { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>reset</c>.</summary>
     [JsonPropertyName("reset")]
-    public object? reset { get; set; }
+    public object? Reset { get; set; }
 
     /// <summary>Wire field <c>role</c>.</summary>
     [JsonPropertyName("role")]
-    public string? role { get; set; }
+    public string? Role { get; set; }
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public bool? swml { get; set; }
+    public bool? Swml { get; set; }
 }

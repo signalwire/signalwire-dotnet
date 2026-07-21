@@ -22,350 +22,350 @@ public class AIParams
 {
     /// <summary>Wire field <c>acknowledge_interruptions</c>.</summary>
     [JsonPropertyName("acknowledge_interruptions")]
-    public Dictionary<string, object?>? acknowledge_interruptions { get; set; }
+    public object? AcknowledgeInterruptions { get; set; }
 
     /// <summary>Wire field <c>ai_model</c>.</summary>
     [JsonPropertyName("ai_model")]
-    public Dictionary<string, object?>? ai_model { get; set; }
+    public object? AiModel { get; set; }
 
     /// <summary>Wire field <c>ai_name</c>.</summary>
     [JsonPropertyName("ai_name")]
-    public string? ai_name { get; set; }
+    public string? AiName { get; set; }
 
     /// <summary>Wire field <c>ai_volume</c>.</summary>
     [JsonPropertyName("ai_volume")]
-    public Dictionary<string, object?>? ai_volume { get; set; }
+    public object? AiVolume { get; set; }
 
     /// <summary>Wire field <c>app_name</c>.</summary>
     [JsonPropertyName("app_name")]
-    public string? app_name { get; set; }
+    public string? AppName { get; set; }
 
     /// <summary>Wire field <c>asr_smart_format</c>.</summary>
     [JsonPropertyName("asr_smart_format")]
-    public Dictionary<string, object?>? asr_smart_format { get; set; }
+    public object? AsrSmartFormat { get; set; }
 
     /// <summary>Wire field <c>attention_timeout</c>.</summary>
     [JsonPropertyName("attention_timeout")]
-    public Dictionary<string, object?>? attention_timeout { get; set; }
+    public object? AttentionTimeout { get; set; }
 
     /// <summary>Wire field <c>attention_timeout_prompt</c>.</summary>
     [JsonPropertyName("attention_timeout_prompt")]
-    public string? attention_timeout_prompt { get; set; }
+    public string? AttentionTimeoutPrompt { get; set; }
 
     /// <summary>Wire field <c>asr_diarize</c>.</summary>
     [JsonPropertyName("asr_diarize")]
-    public Dictionary<string, object?>? asr_diarize { get; set; }
+    public object? AsrDiarize { get; set; }
 
     /// <summary>Wire field <c>asr_speaker_affinity</c>.</summary>
     [JsonPropertyName("asr_speaker_affinity")]
-    public Dictionary<string, object?>? asr_speaker_affinity { get; set; }
+    public object? AsrSpeakerAffinity { get; set; }
 
     /// <summary>Wire field <c>background_file</c>.</summary>
     [JsonPropertyName("background_file")]
-    public string? background_file { get; set; }
+    public string? BackgroundFile { get; set; }
 
     /// <summary>Wire field <c>background_file_loops</c>.</summary>
     [JsonPropertyName("background_file_loops")]
-    public Dictionary<string, object?>? background_file_loops { get; set; }
+    public object? BackgroundFileLoops { get; set; }
 
     /// <summary>Wire field <c>background_file_volume</c>.</summary>
     [JsonPropertyName("background_file_volume")]
-    public Dictionary<string, object?>? background_file_volume { get; set; }
+    public object? BackgroundFileVolume { get; set; }
 
     /// <summary>Wire field <c>enable_barge</c>.</summary>
     [JsonPropertyName("enable_barge")]
-    public Dictionary<string, object?>? enable_barge { get; set; }
+    public object? EnableBarge { get; set; }
 
     /// <summary>Wire field <c>enable_inner_dialog</c>.</summary>
     [JsonPropertyName("enable_inner_dialog")]
-    public Dictionary<string, object?>? enable_inner_dialog { get; set; }
+    public object? EnableInnerDialog { get; set; }
 
     /// <summary>Wire field <c>enable_pause</c>.</summary>
     [JsonPropertyName("enable_pause")]
-    public Dictionary<string, object?>? enable_pause { get; set; }
+    public object? EnablePause { get; set; }
 
     /// <summary>Wire field <c>enable_turn_detection</c>.</summary>
     [JsonPropertyName("enable_turn_detection")]
-    public Dictionary<string, object?>? enable_turn_detection { get; set; }
+    public object? EnableTurnDetection { get; set; }
 
     /// <summary>Wire field <c>barge_match_string</c>.</summary>
     [JsonPropertyName("barge_match_string")]
-    public string? barge_match_string { get; set; }
+    public string? BargeMatchString { get; set; }
 
     /// <summary>Wire field <c>barge_min_words</c>.</summary>
     [JsonPropertyName("barge_min_words")]
-    public Dictionary<string, object?>? barge_min_words { get; set; }
+    public object? BargeMinWords { get; set; }
 
     /// <summary>Wire field <c>barge_functions</c>.</summary>
     [JsonPropertyName("barge_functions")]
-    public Dictionary<string, object?>? barge_functions { get; set; }
+    public object? BargeFunctions { get; set; }
 
     /// <summary>Wire field <c>conscience</c>.</summary>
     [JsonPropertyName("conscience")]
-    public string? conscience { get; set; }
+    public string? Conscience { get; set; }
 
     /// <summary>Wire field <c>convo</c>.</summary>
     [JsonPropertyName("convo")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.ConversationMessage>? convo { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.ConversationMessage>? Convo { get; set; }
 
     /// <summary>Wire field <c>conversation_id</c>.</summary>
     [JsonPropertyName("conversation_id")]
-    public string? conversation_id { get; set; }
+    public string? ConversationId { get; set; }
 
     /// <summary>Wire field <c>conversation_sliding_window</c>.</summary>
     [JsonPropertyName("conversation_sliding_window")]
-    public Dictionary<string, object?>? conversation_sliding_window { get; set; }
+    public object? ConversationSlidingWindow { get; set; }
 
     /// <summary>Wire field <c>debug_webhook_level</c>.</summary>
     [JsonPropertyName("debug_webhook_level")]
-    public Dictionary<string, object?>? debug_webhook_level { get; set; }
+    public object? DebugWebhookLevel { get; set; }
 
     /// <summary>Wire field <c>debug_webhook_url</c>.</summary>
     [JsonPropertyName("debug_webhook_url")]
-    public string? debug_webhook_url { get; set; }
+    public string? DebugWebhookUrl { get; set; }
 
     /// <summary>Wire field <c>debug</c>.</summary>
     [JsonPropertyName("debug")]
-    public Dictionary<string, object?>? debug { get; set; }
+    public object? Debug { get; set; }
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public Dictionary<string, object?>? direction { get; set; }
+    public object? Direction { get; set; }
 
     /// <summary>Wire field <c>digit_terminators</c>.</summary>
     [JsonPropertyName("digit_terminators")]
-    public string? digit_terminators { get; set; }
+    public string? DigitTerminators { get; set; }
 
     /// <summary>Wire field <c>digit_timeout</c>.</summary>
     [JsonPropertyName("digit_timeout")]
-    public Dictionary<string, object?>? digit_timeout { get; set; }
+    public object? DigitTimeout { get; set; }
 
     /// <summary>Wire field <c>end_of_speech_timeout</c>.</summary>
     [JsonPropertyName("end_of_speech_timeout")]
-    public Dictionary<string, object?>? end_of_speech_timeout { get; set; }
+    public object? EndOfSpeechTimeout { get; set; }
 
     /// <summary>Wire field <c>enable_thinking</c>.</summary>
     [JsonPropertyName("enable_thinking")]
-    public Dictionary<string, object?>? enable_thinking { get; set; }
+    public object? EnableThinking { get; set; }
 
     /// <summary>Wire field <c>enable_vision</c>.</summary>
     [JsonPropertyName("enable_vision")]
-    public Dictionary<string, object?>? enable_vision { get; set; }
+    public object? EnableVision { get; set; }
 
     /// <summary>Wire field <c>energy_level</c>.</summary>
     [JsonPropertyName("energy_level")]
-    public Dictionary<string, object?>? energy_level { get; set; }
+    public object? EnergyLevel { get; set; }
 
     /// <summary>Wire field <c>first_word_timeout</c>.</summary>
     [JsonPropertyName("first_word_timeout")]
-    public Dictionary<string, object?>? first_word_timeout { get; set; }
+    public object? FirstWordTimeout { get; set; }
 
     /// <summary>Wire field <c>function_wait_for_talking</c>.</summary>
     [JsonPropertyName("function_wait_for_talking")]
-    public Dictionary<string, object?>? function_wait_for_talking { get; set; }
+    public object? FunctionWaitForTalking { get; set; }
 
     /// <summary>Wire field <c>functions_on_no_response</c>.</summary>
     [JsonPropertyName("functions_on_no_response")]
-    public Dictionary<string, object?>? functions_on_no_response { get; set; }
+    public object? FunctionsOnNoResponse { get; set; }
 
     /// <summary>Wire field <c>hard_stop_prompt</c>.</summary>
     [JsonPropertyName("hard_stop_prompt")]
-    public string? hard_stop_prompt { get; set; }
+    public string? HardStopPrompt { get; set; }
 
     /// <summary>Wire field <c>hard_stop_time</c>.</summary>
     [JsonPropertyName("hard_stop_time")]
-    public Dictionary<string, object?>? hard_stop_time { get; set; }
+    public object? HardStopTime { get; set; }
 
     /// <summary>Wire field <c>hold_music</c>.</summary>
     [JsonPropertyName("hold_music")]
-    public string? hold_music { get; set; }
+    public string? HoldMusic { get; set; }
 
     /// <summary>Wire field <c>hold_on_process</c>.</summary>
     [JsonPropertyName("hold_on_process")]
-    public Dictionary<string, object?>? hold_on_process { get; set; }
+    public object? HoldOnProcess { get; set; }
 
     /// <summary>Wire field <c>inactivity_timeout</c>.</summary>
     [JsonPropertyName("inactivity_timeout")]
-    public Dictionary<string, object?>? inactivity_timeout { get; set; }
+    public object? InactivityTimeout { get; set; }
 
     /// <summary>Wire field <c>inner_dialog_model</c>.</summary>
     [JsonPropertyName("inner_dialog_model")]
-    public Dictionary<string, object?>? inner_dialog_model { get; set; }
+    public object? InnerDialogModel { get; set; }
 
     /// <summary>Wire field <c>inner_dialog_prompt</c>.</summary>
     [JsonPropertyName("inner_dialog_prompt")]
-    public string? inner_dialog_prompt { get; set; }
+    public string? InnerDialogPrompt { get; set; }
 
     /// <summary>Wire field <c>inner_dialog_synced</c>.</summary>
     [JsonPropertyName("inner_dialog_synced")]
-    public Dictionary<string, object?>? inner_dialog_synced { get; set; }
+    public object? InnerDialogSynced { get; set; }
 
     /// <summary>Wire field <c>initial_sleep_ms</c>.</summary>
     [JsonPropertyName("initial_sleep_ms")]
-    public Dictionary<string, object?>? initial_sleep_ms { get; set; }
+    public object? InitialSleepMs { get; set; }
 
     /// <summary>Wire field <c>input_poll_freq</c>.</summary>
     [JsonPropertyName("input_poll_freq")]
-    public Dictionary<string, object?>? input_poll_freq { get; set; }
+    public object? InputPollFreq { get; set; }
 
     /// <summary>Wire field <c>interrupt_on_noise</c>.</summary>
     [JsonPropertyName("interrupt_on_noise")]
-    public Dictionary<string, object?>? interrupt_on_noise { get; set; }
+    public object? InterruptOnNoise { get; set; }
 
     /// <summary>Wire field <c>interrupt_prompt</c>.</summary>
     [JsonPropertyName("interrupt_prompt")]
-    public string? interrupt_prompt { get; set; }
+    public string? InterruptPrompt { get; set; }
 
     /// <summary>Wire field <c>languages_enabled</c>.</summary>
     [System.Obsolete("Deprecated wire field 'languages_enabled'.")]
     [JsonPropertyName("languages_enabled")]
-    public Dictionary<string, object?>? languages_enabled { get; set; }
+    public object? LanguagesEnabled { get; set; }
 
     /// <summary>Wire field <c>local_tz</c>.</summary>
     [JsonPropertyName("local_tz")]
-    public string? local_tz { get; set; }
+    public string? LocalTz { get; set; }
 
     /// <summary>Wire field <c>llm_diarize_aware</c>.</summary>
     [JsonPropertyName("llm_diarize_aware")]
-    public Dictionary<string, object?>? llm_diarize_aware { get; set; }
+    public object? LlmDiarizeAware { get; set; }
 
     /// <summary>Wire field <c>max_emotion</c>.</summary>
     [JsonPropertyName("max_emotion")]
-    public Dictionary<string, object?>? max_emotion { get; set; }
+    public object? MaxEmotion { get; set; }
 
     /// <summary>Wire field <c>max_response_tokens</c>.</summary>
     [JsonPropertyName("max_response_tokens")]
-    public Dictionary<string, object?>? max_response_tokens { get; set; }
+    public object? MaxResponseTokens { get; set; }
 
     /// <summary>Wire field <c>openai_asr_engine</c>.</summary>
     [JsonPropertyName("openai_asr_engine")]
-    public string? openai_asr_engine { get; set; }
+    public string? OpenaiAsrEngine { get; set; }
 
     /// <summary>Wire field <c>outbound_attention_timeout</c>.</summary>
     [JsonPropertyName("outbound_attention_timeout")]
-    public Dictionary<string, object?>? outbound_attention_timeout { get; set; }
+    public object? OutboundAttentionTimeout { get; set; }
 
     /// <summary>Wire field <c>persist_global_data</c>.</summary>
     [JsonPropertyName("persist_global_data")]
-    public Dictionary<string, object?>? persist_global_data { get; set; }
+    public object? PersistGlobalData { get; set; }
 
     /// <summary>Wire field <c>pom_format</c>.</summary>
     [JsonPropertyName("pom_format")]
-    public string? pom_format { get; set; }
+    public string? PomFormat { get; set; }
 
     /// <summary>Wire field <c>save_conversation</c>.</summary>
     [JsonPropertyName("save_conversation")]
-    public Dictionary<string, object?>? save_conversation { get; set; }
+    public object? SaveConversation { get; set; }
 
     /// <summary>Wire field <c>speech_event_timeout</c>.</summary>
     [JsonPropertyName("speech_event_timeout")]
-    public Dictionary<string, object?>? speech_event_timeout { get; set; }
+    public object? SpeechEventTimeout { get; set; }
 
     /// <summary>Wire field <c>speech_gen_quick_stops</c>.</summary>
     [JsonPropertyName("speech_gen_quick_stops")]
-    public Dictionary<string, object?>? speech_gen_quick_stops { get; set; }
+    public object? SpeechGenQuickStops { get; set; }
 
     /// <summary>Wire field <c>speech_timeout</c>.</summary>
     [JsonPropertyName("speech_timeout")]
-    public Dictionary<string, object?>? speech_timeout { get; set; }
+    public object? SpeechTimeout { get; set; }
 
     /// <summary>Wire field <c>speak_when_spoken_to</c>.</summary>
     [JsonPropertyName("speak_when_spoken_to")]
-    public Dictionary<string, object?>? speak_when_spoken_to { get; set; }
+    public object? SpeakWhenSpokenTo { get; set; }
 
     /// <summary>Wire field <c>start_paused</c>.</summary>
     [JsonPropertyName("start_paused")]
-    public Dictionary<string, object?>? start_paused { get; set; }
+    public object? StartPaused { get; set; }
 
     /// <summary>Wire field <c>static_greeting</c>.</summary>
     [JsonPropertyName("static_greeting")]
-    public string? static_greeting { get; set; }
+    public string? StaticGreeting { get; set; }
 
     /// <summary>Wire field <c>static_greeting_no_barge</c>.</summary>
     [JsonPropertyName("static_greeting_no_barge")]
-    public Dictionary<string, object?>? static_greeting_no_barge { get; set; }
+    public object? StaticGreetingNoBarge { get; set; }
 
     /// <summary>Wire field <c>summary_mode</c>.</summary>
     [JsonPropertyName("summary_mode")]
-    public Dictionary<string, object?>? summary_mode { get; set; }
+    public object? SummaryMode { get; set; }
 
     /// <summary>Wire field <c>swaig_allow_settings</c>.</summary>
     [JsonPropertyName("swaig_allow_settings")]
-    public Dictionary<string, object?>? swaig_allow_settings { get; set; }
+    public object? SwaigAllowSettings { get; set; }
 
     /// <summary>Wire field <c>swaig_allow_swml</c>.</summary>
     [JsonPropertyName("swaig_allow_swml")]
-    public Dictionary<string, object?>? swaig_allow_swml { get; set; }
+    public object? SwaigAllowSwml { get; set; }
 
     /// <summary>Wire field <c>swaig_post_conversation</c>.</summary>
     [JsonPropertyName("swaig_post_conversation")]
-    public Dictionary<string, object?>? swaig_post_conversation { get; set; }
+    public object? SwaigPostConversation { get; set; }
 
     /// <summary>Wire field <c>swaig_set_global_data</c>.</summary>
     [JsonPropertyName("swaig_set_global_data")]
-    public Dictionary<string, object?>? swaig_set_global_data { get; set; }
+    public object? SwaigSetGlobalData { get; set; }
 
     /// <summary>Wire field <c>swaig_post_swml_vars</c>.</summary>
     [JsonPropertyName("swaig_post_swml_vars")]
-    public Dictionary<string, object?>? swaig_post_swml_vars { get; set; }
+    public object? SwaigPostSwmlVars { get; set; }
 
     /// <summary>Wire field <c>thinking_model</c>.</summary>
     [JsonPropertyName("thinking_model")]
-    public Dictionary<string, object?>? thinking_model { get; set; }
+    public object? ThinkingModel { get; set; }
 
     /// <summary>Wire field <c>transparent_barge</c>.</summary>
     [JsonPropertyName("transparent_barge")]
-    public Dictionary<string, object?>? transparent_barge { get; set; }
+    public object? TransparentBarge { get; set; }
 
     /// <summary>Wire field <c>transparent_barge_max_time</c>.</summary>
     [JsonPropertyName("transparent_barge_max_time")]
-    public Dictionary<string, object?>? transparent_barge_max_time { get; set; }
+    public object? TransparentBargeMaxTime { get; set; }
 
     /// <summary>Wire field <c>transfer_summary</c>.</summary>
     [JsonPropertyName("transfer_summary")]
-    public Dictionary<string, object?>? transfer_summary { get; set; }
+    public object? TransferSummary { get; set; }
 
     /// <summary>Wire field <c>turn_detection_timeout</c>.</summary>
     [JsonPropertyName("turn_detection_timeout")]
-    public Dictionary<string, object?>? turn_detection_timeout { get; set; }
+    public object? TurnDetectionTimeout { get; set; }
 
     /// <summary>Wire field <c>tts_number_format</c>.</summary>
     [JsonPropertyName("tts_number_format")]
-    public string? tts_number_format { get; set; }
+    public string? TtsNumberFormat { get; set; }
 
     /// <summary>Wire field <c>video_listening_file</c>.</summary>
     [JsonPropertyName("video_listening_file")]
-    public string? video_listening_file { get; set; }
+    public string? VideoListeningFile { get; set; }
 
     /// <summary>Wire field <c>video_idle_file</c>.</summary>
     [JsonPropertyName("video_idle_file")]
-    public string? video_idle_file { get; set; }
+    public string? VideoIdleFile { get; set; }
 
     /// <summary>Wire field <c>video_talking_file</c>.</summary>
     [JsonPropertyName("video_talking_file")]
-    public string? video_talking_file { get; set; }
+    public string? VideoTalkingFile { get; set; }
 
     /// <summary>Wire field <c>vision_model</c>.</summary>
     [JsonPropertyName("vision_model")]
-    public Dictionary<string, object?>? vision_model { get; set; }
+    public object? VisionModel { get; set; }
 
     /// <summary>Wire field <c>vad_config</c>.</summary>
     [JsonPropertyName("vad_config")]
-    public string? vad_config { get; set; }
+    public string? VadConfig { get; set; }
 
     /// <summary>Wire field <c>wait_for_user</c>.</summary>
     [JsonPropertyName("wait_for_user")]
-    public Dictionary<string, object?>? wait_for_user { get; set; }
+    public object? WaitForUser { get; set; }
 
     /// <summary>Wire field <c>wake_prefix</c>.</summary>
     [JsonPropertyName("wake_prefix")]
-    public string? wake_prefix { get; set; }
+    public string? WakePrefix { get; set; }
 
     /// <summary>Wire field <c>eleven_labs_stability</c>.</summary>
     [JsonPropertyName("eleven_labs_stability")]
-    public Dictionary<string, object?>? eleven_labs_stability { get; set; }
+    public object? ElevenLabsStability { get; set; }
 
     /// <summary>Wire field <c>eleven_labs_similarity</c>.</summary>
     [JsonPropertyName("eleven_labs_similarity")]
-    public Dictionary<string, object?>? eleven_labs_similarity { get; set; }
+    public object? ElevenLabsSimilarity { get; set; }
 }

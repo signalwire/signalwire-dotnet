@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// Projects — REST resource for the projects API.
 /// </summary>
-public class Projects : SignalWire.REST.CrudResource
+public class Projects : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.Projects.ProjectList, SignalWire.REST.Namespaces.Generated.Types.Projects.Project>
 {
     public Projects(SignalWire.REST.HttpClient client)
         : base(client, "/api/projects")
@@ -25,18 +25,20 @@ public class Projects : SignalWire.REST.CrudResource
     }
 
     /// <summary>Update this resource via an HTTP PATCH request.</summary>
-    public override Task<Dictionary<string, object?>> UpdateAsync(
+    public override Task<SignalWire.REST.Namespaces.Generated.Types.Projects.Project?> UpdateAsync(
         string id, Dictionary<string, object?> data,
+        RequestOptions? requestOptions = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.PatchAsync(Path(id), data, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Projects.Project>(Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
     /// Generated from operation <c>rotate_signing_key</c> (POST /projects/{id}/signing-key/rotate).
     /// </summary>
-    public Task<Dictionary<string, object?>> RotateSigningKeyAsync(string id, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> RotateSigningKeyAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync(Path(id, "signing-key", "rotate"), null, cancellationToken: cancellationToken);
+        return Client.PostAsync(Path(id, "signing-key", "rotate"), null, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

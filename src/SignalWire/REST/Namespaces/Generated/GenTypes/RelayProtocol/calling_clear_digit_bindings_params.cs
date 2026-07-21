@@ -22,17 +22,17 @@ public class CallingClearDigitBindingsParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>realm</c>.</summary>
     [JsonPropertyName("realm")]
-    public string? realm { get; set; }
+    public string? Realm { get; set; }
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public bool? swml { get; set; }
+    public bool? Swml { get; set; }
 }

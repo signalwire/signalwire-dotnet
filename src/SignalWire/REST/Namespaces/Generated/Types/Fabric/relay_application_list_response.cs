@@ -22,9 +22,9 @@ public class RelayApplicationListResponse
 {
     /// <summary>Wire field <c>data</c>.</summary>
     [JsonPropertyName("data")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.RelayApplicationResponse>? data { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.RelayApplicationResponse>? Data { get; set; }
 
     /// <summary>Wire field <c>links</c>.</summary>
     [JsonPropertyName("links")]
-    public Dictionary<string, object?>? links { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.RelayApplicationAddressPaginationResponse? Links { get; set; }
 }

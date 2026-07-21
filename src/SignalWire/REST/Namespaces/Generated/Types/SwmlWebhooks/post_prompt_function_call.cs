@@ -22,13 +22,13 @@ public class PostPromptFunctionCall
 {
     /// <summary>Wire field <c>function</c>.</summary>
     [JsonPropertyName("function")]
-    public string? function { get; set; }
+    public string? Function { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? @params { get; set; }
+    public Dictionary<string, object?>? Params { get; set; }
 
     /// <summary>Wire field <c>result</c>.</summary>
     [JsonPropertyName("result")]
-    public Dictionary<string, object?>? result { get; set; }
+    public Dictionary<string, object?>? Result { get; set; }
 }

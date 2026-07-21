@@ -22,33 +22,33 @@ public class SignalwireExecuteParams
 {
     /// <summary>Wire field <c>attempted</c>.</summary>
     [JsonPropertyName("attempted")]
-    public List<object?>? attempted { get; set; }
+    public List<object?>? Attempted { get; set; }
 
     /// <summary>Wire field <c>method</c>.</summary>
     [JsonPropertyName("method")]
-    public string? method { get; set; }
+    public string? Method { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public object? @params { get; set; }
+    public object? Params { get; set; }
 
     /// <summary>Wire field <c>protocol</c>.</summary>
     [JsonPropertyName("protocol")]
-    public string? protocol { get; set; }
+    public string? Protocol { get; set; }
 
     /// <summary>Wire field <c>requester_identity</c>.</summary>
     [JsonPropertyName("requester_identity")]
-    public string? requester_identity { get; set; }
+    public string? RequesterIdentity { get; set; }
 
     /// <summary>Wire field <c>requester_nodeid</c>.</summary>
     [JsonPropertyName("requester_nodeid")]
-    public string? requester_nodeid { get; set; }
+    public string? RequesterNodeid { get; set; }
 
     /// <summary>Wire field <c>responder_identity</c>.</summary>
     [JsonPropertyName("responder_identity")]
-    public string? responder_identity { get; set; }
+    public string? ResponderIdentity { get; set; }
 
     /// <summary>Wire field <c>responder_nodeid</c>.</summary>
     [JsonPropertyName("responder_nodeid")]
-    public string? responder_nodeid { get; set; }
+    public string? ResponderNodeid { get; set; }
 }

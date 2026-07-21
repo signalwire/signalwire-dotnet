@@ -22,13 +22,13 @@ public class FunctionParameters
 {
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>properties</c>.</summary>
     [JsonPropertyName("properties")]
-    public Dictionary<string, object?>? properties { get; set; }
+    public Dictionary<string, object?>? Properties { get; set; }
 
     /// <summary>Wire field <c>required</c>.</summary>
     [JsonPropertyName("required")]
-    public List<object?>? required { get; set; }
+    public List<object?>? Required { get; set; }
 }

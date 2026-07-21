@@ -22,5 +22,5 @@ public class HoldAction
 {
     /// <summary>Wire field <c>timeout</c>.</summary>
     [JsonPropertyName("timeout")]
-    public long? timeout { get; set; }
+    public long? Timeout { get; set; }
 }

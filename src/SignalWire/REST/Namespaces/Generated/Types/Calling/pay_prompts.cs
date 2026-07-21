@@ -22,21 +22,21 @@ public class PayPrompts
 {
     /// <summary>Wire field <c>actions</c>.</summary>
     [JsonPropertyName("actions")]
-    public List<object?>? actions { get; set; }
+    public List<object?>? Actions { get; set; }
 
     /// <summary>Wire field <c>for</c>.</summary>
     [JsonPropertyName("for")]
-    public string? @for { get; set; }
+    public string? For { get; set; }
 
     /// <summary>Wire field <c>attempts</c>.</summary>
     [JsonPropertyName("attempts")]
-    public string? attempts { get; set; }
+    public string? Attempts { get; set; }
 
     /// <summary>Wire field <c>card_type</c>.</summary>
     [JsonPropertyName("card_type")]
-    public string? card_type { get; set; }
+    public string? CardType { get; set; }
 
     /// <summary>Wire field <c>error_type</c>.</summary>
     [JsonPropertyName("error_type")]
-    public string? error_type { get; set; }
+    public string? ErrorType { get; set; }
 }

@@ -22,89 +22,89 @@ public class CallingPayParams
 {
     /// <summary>Wire field <c>bank_account_type</c>.</summary>
     [JsonPropertyName("bank_account_type")]
-    public object? bank_account_type { get; set; }
+    public object? BankAccountType { get; set; }
 
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>charge_amount</c>.</summary>
     [JsonPropertyName("charge_amount")]
-    public string? charge_amount { get; set; }
+    public string? ChargeAmount { get; set; }
 
     /// <summary>Wire field <c>control_id</c>.</summary>
     [JsonPropertyName("control_id")]
-    public string? control_id { get; set; }
+    public string? ControlId { get; set; }
 
     /// <summary>Wire field <c>currency</c>.</summary>
     [JsonPropertyName("currency")]
-    public string? currency { get; set; }
+    public string? Currency { get; set; }
 
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public string? description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>input</c>.</summary>
     [JsonPropertyName("input")]
-    public object? input { get; set; }
+    public object? Input { get; set; }
 
     /// <summary>Wire field <c>language</c>.</summary>
     [JsonPropertyName("language")]
-    public string? language { get; set; }
+    public string? Language { get; set; }
 
     /// <summary>Wire field <c>max_attempts</c>.</summary>
     [JsonPropertyName("max_attempts")]
-    public string? max_attempts { get; set; }
+    public string? MaxAttempts { get; set; }
 
     /// <summary>Wire field <c>min_postal_code_length</c>.</summary>
     [JsonPropertyName("min_postal_code_length")]
-    public string? min_postal_code_length { get; set; }
+    public string? MinPostalCodeLength { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>parameters</c>.</summary>
     [JsonPropertyName("parameters")]
-    public List<object?>? parameters { get; set; }
+    public List<object?>? Parameters { get; set; }
 
     /// <summary>Wire field <c>payment_connector_url</c>.</summary>
     [JsonPropertyName("payment_connector_url")]
-    public string? payment_connector_url { get; set; }
+    public string? PaymentConnectorUrl { get; set; }
 
     /// <summary>Wire field <c>payment_method</c>.</summary>
     [JsonPropertyName("payment_method")]
-    public object? payment_method { get; set; }
+    public object? PaymentMethod { get; set; }
 
     /// <summary>Wire field <c>postal_code</c>.</summary>
     [JsonPropertyName("postal_code")]
-    public string? postal_code { get; set; }
+    public string? PostalCode { get; set; }
 
     /// <summary>Wire field <c>prompts</c>.</summary>
     [JsonPropertyName("prompts")]
-    public List<object?>? prompts { get; set; }
+    public List<object?>? Prompts { get; set; }
 
     /// <summary>Wire field <c>security_code</c>.</summary>
     [JsonPropertyName("security_code")]
-    public string? security_code { get; set; }
+    public string? SecurityCode { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? status_url { get; set; }
+    public string? StatusUrl { get; set; }
 
     /// <summary>Wire field <c>timeout</c>.</summary>
     [JsonPropertyName("timeout")]
-    public string? timeout { get; set; }
+    public string? Timeout { get; set; }
 
     /// <summary>Wire field <c>token_type</c>.</summary>
     [JsonPropertyName("token_type")]
-    public object? token_type { get; set; }
+    public object? TokenType { get; set; }
 
     /// <summary>Wire field <c>valid_card_types</c>.</summary>
     [JsonPropertyName("valid_card_types")]
-    public string? valid_card_types { get; set; }
+    public string? ValidCardTypes { get; set; }
 
     /// <summary>Wire field <c>voice</c>.</summary>
     [JsonPropertyName("voice")]
-    public string? voice { get; set; }
+    public string? Voice { get; set; }
 }

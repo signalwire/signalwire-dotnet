@@ -22,17 +22,17 @@ public class CreatePartnerCampaignRequest
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>brand_id</c>.</summary>
     [JsonPropertyName("brand_id")]
-    public Dictionary<string, object?>? brand_id { get; set; }
+    public string? BrandId { get; set; }
 
     /// <summary>Wire field <c>csp_campaign_reference</c>.</summary>
     [JsonPropertyName("csp_campaign_reference")]
-    public string? csp_campaign_reference { get; set; }
+    public string? CspCampaignReference { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public string? status_callback_url { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 }

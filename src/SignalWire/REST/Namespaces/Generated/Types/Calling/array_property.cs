@@ -22,21 +22,21 @@ public class ArrayProperty
 {
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public string? description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>nullable</c>.</summary>
     [JsonPropertyName("nullable")]
-    public Dictionary<string, object?>? nullable { get; set; }
+    public object? Nullable { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>default</c>.</summary>
     [JsonPropertyName("default")]
-    public List<object?>? @default { get; set; }
+    public List<object?>? Default { get; set; }
 
     /// <summary>Wire field <c>items</c>.</summary>
     [JsonPropertyName("items")]
-    public Dictionary<string, object?>? items { get; set; }
+    public Dictionary<string, object?>? Items { get; set; }
 }

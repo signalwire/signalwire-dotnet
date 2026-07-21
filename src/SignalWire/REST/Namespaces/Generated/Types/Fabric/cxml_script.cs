@@ -22,37 +22,37 @@ public class CXMLScript
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>contents</c>.</summary>
     [JsonPropertyName("contents")]
-    public string? contents { get; set; }
+    public string? Contents { get; set; }
 
     /// <summary>Wire field <c>request_count</c>.</summary>
     [JsonPropertyName("request_count")]
-    public long? request_count { get; set; }
+    public long? RequestCount { get; set; }
 
     /// <summary>Wire field <c>last_accessed_at</c>.</summary>
     [JsonPropertyName("last_accessed_at")]
-    public Dictionary<string, object?>? last_accessed_at { get; set; }
+    public string? LastAccessedAt { get; set; }
 
     /// <summary>Wire field <c>request_url</c>.</summary>
     [JsonPropertyName("request_url")]
-    public string? request_url { get; set; }
+    public string? RequestUrl { get; set; }
 
     /// <summary>Wire field <c>script_type</c>.</summary>
     [JsonPropertyName("script_type")]
-    public string? script_type { get; set; }
+    public string? ScriptType { get; set; }
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public string? display_name { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public Dictionary<string, object?>? status_callback_url { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
-    public Dictionary<string, object?>? status_callback_method { get; set; }
+    public object? StatusCallbackMethod { get; set; }
 }

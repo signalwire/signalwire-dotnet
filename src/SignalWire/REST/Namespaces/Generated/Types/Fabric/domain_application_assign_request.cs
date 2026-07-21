@@ -22,5 +22,5 @@ public class DomainApplicationAssignRequest
 {
     /// <summary>Wire field <c>domain_application_id</c>.</summary>
     [JsonPropertyName("domain_application_id")]
-    public Dictionary<string, object?>? domain_application_id { get; set; }
+    public string? DomainApplicationId { get; set; }
 }

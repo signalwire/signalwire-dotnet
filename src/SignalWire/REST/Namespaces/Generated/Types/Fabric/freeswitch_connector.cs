@@ -22,17 +22,17 @@ public class FreeswitchConnector
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>caller_id</c>.</summary>
     [JsonPropertyName("caller_id")]
-    public Dictionary<string, object?>? caller_id { get; set; }
+    public string? CallerId { get; set; }
 
     /// <summary>Wire field <c>send_as</c>.</summary>
     [JsonPropertyName("send_as")]
-    public Dictionary<string, object?>? send_as { get; set; }
+    public string? SendAs { get; set; }
 }

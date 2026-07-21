@@ -22,29 +22,29 @@ public class RoomSessionMember
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>room_session_id</c>.</summary>
     [JsonPropertyName("room_session_id")]
-    public string? room_session_id { get; set; }
+    public string? RoomSessionId { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>join_time</c>.</summary>
     [JsonPropertyName("join_time")]
-    public Dictionary<string, object?>? join_time { get; set; }
+    public string? JoinTime { get; set; }
 
     /// <summary>Wire field <c>leave_time</c>.</summary>
     [JsonPropertyName("leave_time")]
-    public Dictionary<string, object?>? leave_time { get; set; }
+    public string? LeaveTime { get; set; }
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
-    public Dictionary<string, object?>? duration { get; set; }
+    public long? Duration { get; set; }
 
     /// <summary>Wire field <c>cost_in_dollars</c>.</summary>
     [JsonPropertyName("cost_in_dollars")]
-    public double? cost_in_dollars { get; set; }
+    public double? CostInDollars { get; set; }
 }

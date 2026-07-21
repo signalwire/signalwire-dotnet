@@ -22,13 +22,13 @@ public class ConnectSwitch
 {
     /// <summary>Wire field <c>variable</c>.</summary>
     [JsonPropertyName("variable")]
-    public string? variable { get; set; }
+    public string? Variable { get; set; }
 
     /// <summary>Wire field <c>case</c>.</summary>
     [JsonPropertyName("case")]
-    public Dictionary<string, object?>? @case { get; set; }
+    public Dictionary<string, object?>? Case { get; set; }
 
     /// <summary>Wire field <c>default</c>.</summary>
     [JsonPropertyName("default")]
-    public List<object?>? @default { get; set; }
+    public List<object?>? Default { get; set; }
 }

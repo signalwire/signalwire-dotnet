@@ -22,17 +22,17 @@ public class Hint
 {
     /// <summary>Wire field <c>hint</c>.</summary>
     [JsonPropertyName("hint")]
-    public string? hint { get; set; }
+    public string? Hint_ { get; set; }
 
     /// <summary>Wire field <c>pattern</c>.</summary>
     [JsonPropertyName("pattern")]
-    public string? pattern { get; set; }
+    public string? Pattern { get; set; }
 
     /// <summary>Wire field <c>replace</c>.</summary>
     [JsonPropertyName("replace")]
-    public string? replace { get; set; }
+    public string? Replace { get; set; }
 
     /// <summary>Wire field <c>ignore_case</c>.</summary>
     [JsonPropertyName("ignore_case")]
-    public Dictionary<string, object?>? ignore_case { get; set; }
+    public object? IgnoreCase { get; set; }
 }

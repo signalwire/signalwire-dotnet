@@ -22,5 +22,5 @@ public class Play
 {
     /// <summary>Wire field <c>play</c>.</summary>
     [JsonPropertyName("play")]
-    public Dictionary<string, object?>? play { get; set; }
+    public object? Play_ { get; set; }
 }

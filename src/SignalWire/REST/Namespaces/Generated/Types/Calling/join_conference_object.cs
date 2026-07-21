@@ -22,73 +22,73 @@ public class JoinConferenceObject
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>muted</c>.</summary>
     [JsonPropertyName("muted")]
-    public Dictionary<string, object?>? muted { get; set; }
+    public object? Muted { get; set; }
 
     /// <summary>Wire field <c>beep</c>.</summary>
     [JsonPropertyName("beep")]
-    public string? beep { get; set; }
+    public string? Beep { get; set; }
 
     /// <summary>Wire field <c>start_on_enter</c>.</summary>
     [JsonPropertyName("start_on_enter")]
-    public Dictionary<string, object?>? start_on_enter { get; set; }
+    public object? StartOnEnter { get; set; }
 
     /// <summary>Wire field <c>end_on_exit</c>.</summary>
     [JsonPropertyName("end_on_exit")]
-    public Dictionary<string, object?>? end_on_exit { get; set; }
+    public object? EndOnExit { get; set; }
 
     /// <summary>Wire field <c>wait_url</c>.</summary>
     [JsonPropertyName("wait_url")]
-    public Dictionary<string, object?>? wait_url { get; set; }
+    public object? WaitUrl { get; set; }
 
     /// <summary>Wire field <c>max_participants</c>.</summary>
     [JsonPropertyName("max_participants")]
-    public Dictionary<string, object?>? max_participants { get; set; }
+    public object? MaxParticipants { get; set; }
 
     /// <summary>Wire field <c>record</c>.</summary>
     [JsonPropertyName("record")]
-    public string? record { get; set; }
+    public string? Record { get; set; }
 
     /// <summary>Wire field <c>region</c>.</summary>
     [JsonPropertyName("region")]
-    public string? region { get; set; }
+    public string? Region { get; set; }
 
     /// <summary>Wire field <c>trim</c>.</summary>
     [JsonPropertyName("trim")]
-    public string? trim { get; set; }
+    public string? Trim { get; set; }
 
     /// <summary>Wire field <c>coach</c>.</summary>
     [JsonPropertyName("coach")]
-    public string? coach { get; set; }
+    public string? Coach { get; set; }
 
     /// <summary>Wire field <c>status_callback_event</c>.</summary>
     [JsonPropertyName("status_callback_event")]
-    public string? status_callback_event { get; set; }
+    public string? StatusCallbackEvent { get; set; }
 
     /// <summary>Wire field <c>status_callback</c>.</summary>
     [JsonPropertyName("status_callback")]
-    public string? status_callback { get; set; }
+    public string? StatusCallback { get; set; }
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
-    public string? status_callback_method { get; set; }
+    public string? StatusCallbackMethod { get; set; }
 
     /// <summary>Wire field <c>recording_status_callback</c>.</summary>
     [JsonPropertyName("recording_status_callback")]
-    public string? recording_status_callback { get; set; }
+    public string? RecordingStatusCallback { get; set; }
 
     /// <summary>Wire field <c>recording_status_callback_method</c>.</summary>
     [JsonPropertyName("recording_status_callback_method")]
-    public string? recording_status_callback_method { get; set; }
+    public string? RecordingStatusCallbackMethod { get; set; }
 
     /// <summary>Wire field <c>recording_status_callback_event</c>.</summary>
     [JsonPropertyName("recording_status_callback_event")]
-    public string? recording_status_callback_event { get; set; }
+    public string? RecordingStatusCallbackEvent { get; set; }
 
     /// <summary>Wire field <c>result</c>.</summary>
     [JsonPropertyName("result")]
-    public Dictionary<string, object?>? result { get; set; }
+    public object? Result { get; set; }
 }

@@ -22,17 +22,17 @@ public class RelayApplication
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>topic</c>.</summary>
     [JsonPropertyName("topic")]
-    public string? topic { get; set; }
+    public string? Topic { get; set; }
 
     /// <summary>Wire field <c>call_status_callback_url</c>.</summary>
     [JsonPropertyName("call_status_callback_url")]
-    public Dictionary<string, object?>? call_status_callback_url { get; set; }
+    public string? CallStatusCallbackUrl { get; set; }
 }

@@ -22,29 +22,29 @@ public class StringProperty
 {
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public string? description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>nullable</c>.</summary>
     [JsonPropertyName("nullable")]
-    public Dictionary<string, object?>? nullable { get; set; }
+    public object? Nullable { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>enum</c>.</summary>
     [JsonPropertyName("enum")]
-    public List<object?>? @enum { get; set; }
+    public List<object?>? Enum { get; set; }
 
     /// <summary>Wire field <c>default</c>.</summary>
     [JsonPropertyName("default")]
-    public string? @default { get; set; }
+    public string? Default { get; set; }
 
     /// <summary>Wire field <c>pattern</c>.</summary>
     [JsonPropertyName("pattern")]
-    public string? pattern { get; set; }
+    public string? Pattern { get; set; }
 
     /// <summary>Wire field <c>format</c>.</summary>
     [JsonPropertyName("format")]
-    public Dictionary<string, object?>? format { get; set; }
+    public string? Format { get; set; }
 }

@@ -22,17 +22,17 @@ public class DialogflowAgentUpdateRequest
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>say_enabled</c>.</summary>
     [JsonPropertyName("say_enabled")]
-    public bool? say_enabled { get; set; }
+    public bool? SayEnabled { get; set; }
 
     /// <summary>Wire field <c>say</c>.</summary>
     [JsonPropertyName("say")]
-    public string? say { get; set; }
+    public string? Say { get; set; }
 
     /// <summary>Wire field <c>voice</c>.</summary>
     [JsonPropertyName("voice")]
-    public string? voice { get; set; }
+    public string? Voice { get; set; }
 }

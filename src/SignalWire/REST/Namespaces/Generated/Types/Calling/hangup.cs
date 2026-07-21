@@ -22,5 +22,5 @@ public class Hangup
 {
     /// <summary>Wire field <c>hangup</c>.</summary>
     [JsonPropertyName("hangup")]
-    public Dictionary<string, object?>? hangup { get; set; }
+    public Dictionary<string, object?>? Hangup_ { get; set; }
 }

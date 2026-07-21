@@ -22,9 +22,9 @@ public class ConnectHeaders
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>value</c>.</summary>
     [JsonPropertyName("value")]
-    public string? value { get; set; }
+    public string? Value { get; set; }
 }

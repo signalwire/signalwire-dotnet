@@ -133,7 +133,7 @@ internal static class EnvelopeDump
 
     public static async Task<Dictionary<string, object?>> BuildAsync()
     {
-        var (host, port, ownProcess) = await EnsureMockAsync().ConfigureAwait(false);
+        var (host, port, ownProcess) = await MockLifecycle.EnsureMockAsync("EnvelopeDump").ConfigureAwait(false);
         var mockUrl = $"http://{host}:{port}";
 
         // A unique project => a unique Basic-Auth header, so the mock's
@@ -150,8 +150,8 @@ internal static class EnvelopeDump
         {
             foreach (var c in Corpus)
             {
-                await ResetJournalAsync(control, mockUrl).ConfigureAwait(false);
-                await ResetScenariosAsync(control, mockUrl, authHeader).ConfigureAwait(false);
+                await MockLifecycle.ResetJournalAsync(control, mockUrl).ConfigureAwait(false);
+                await MockLifecycle.ResetScenariosAsync(control, mockUrl, authHeader).ConfigureAwait(false);
 
                 string baseUrl;
                 if (c.Transport)
@@ -163,7 +163,7 @@ internal static class EnvelopeDump
                     baseUrl = mockUrl;
                     if (c.Status is not null)
                     {
-                        await ArmScenarioAsync(control, mockUrl, Endpoint, authHeader, c.Status.Value, c.Response)
+                        await MockLifecycle.ArmScenarioAsync(control, mockUrl, Endpoint, authHeader, c.Status.Value, c.Response)
                             .ConfigureAwait(false);
                     }
                 }
@@ -222,33 +222,8 @@ internal static class EnvelopeDump
     }
 
     // ------------------------------------------------------------------
-    // Mock control-plane helpers
+    // Envelope-specific journal counting
     // ------------------------------------------------------------------
-
-    private static async Task ResetJournalAsync(System.Net.Http.HttpClient http, string mockUrl)
-    {
-        using var content = new StringContent("");
-        (await http.PostAsync(mockUrl + "/__mock__/journal/reset", content).ConfigureAwait(false)).Dispose();
-    }
-
-    private static async Task ResetScenariosAsync(System.Net.Http.HttpClient http, string mockUrl, string authHeader)
-    {
-        using var content = new StringContent("");
-        var url = mockUrl + "/__mock__/scenarios/reset?session_id=" + Uri.EscapeDataString(authHeader);
-        (await http.PostAsync(url, content).ConfigureAwait(false)).Dispose();
-    }
-
-    private static async Task ArmScenarioAsync(
-        System.Net.Http.HttpClient http, string mockUrl, string endpointId, string authHeader,
-        int status, object? response)
-    {
-        var payload = new Dictionary<string, object?> { ["status"] = status, ["response"] = response };
-        var json = JsonSerializer.Serialize(payload, Canon.JsonOptions);
-        using var content = new StringContent(json, Encoding.UTF8, "application/json");
-        var url = mockUrl + "/__mock__/scenarios/" + Uri.EscapeDataString(endpointId)
-            + "?session_id=" + Uri.EscapeDataString(authHeader);
-        (await http.PostAsync(url, content).ConfigureAwait(false)).Dispose();
-    }
 
     private static async Task<long> CountJournalHitsAsync(
         System.Net.Http.HttpClient http, string mockUrl, string authHeader)
@@ -318,143 +293,5 @@ internal static class EnvelopeDump
         {
             listener.Stop();
         }
-    }
-
-    // ------------------------------------------------------------------
-    // Mock server lifecycle: reuse a shared instance (run-ci.sh pre-spawns
-    // one at MOCK_SIGNALWIRE_HOST/PORT for the other Layer-D gates), else spawn
-    // a private one on a free port (adjacency walk to porting-sdk, mirroring
-    // tests/MockTest.cs). Returns (host, port, ownedProcess-or-null).
-    // ------------------------------------------------------------------
-
-    private static async Task<(string Host, int Port, System.Diagnostics.Process? Process)> EnsureMockAsync()
-    {
-        var envHost = Environment.GetEnvironmentVariable("MOCK_SIGNALWIRE_HOST");
-        var envPortRaw = Environment.GetEnvironmentVariable("MOCK_SIGNALWIRE_PORT");
-        var host = string.IsNullOrWhiteSpace(envHost) ? "127.0.0.1" : envHost;
-
-        using var probe = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(2) };
-
-        if (!string.IsNullOrWhiteSpace(envPortRaw) && int.TryParse(envPortRaw.Trim(), out var envPort))
-        {
-            if (await ProbeHealthAsync(probe, $"http://{host}:{envPort}").ConfigureAwait(false))
-            {
-                return (host, envPort, null);
-            }
-            // Env var set but nothing answering: fall through to spawning our
-            // own on a fresh free port rather than fighting over the same one.
-        }
-
-        var freePort = PickFreePort();
-        if (await ProbeHealthAsync(probe, $"http://{host}:{freePort}").ConfigureAwait(false))
-        {
-            return (host, freePort, null);
-        }
-
-        var pkgDir = DiscoverPortingSdkPackage("mock_signalwire");
-        if (pkgDir is null)
-        {
-            throw new InvalidOperationException(
-                "EnvelopeDump: cannot locate an adjacent porting-sdk/test_harness/mock_signalwire "
-                + "(clone porting-sdk next to signalwire-dotnet), and no reachable mock at "
-                + $"MOCK_SIGNALWIRE_HOST/PORT ({host}:{envPortRaw ?? "<unset>"}).");
-        }
-
-        var psi = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "python3",
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true,
-        };
-        psi.ArgumentList.Add("-m");
-        psi.ArgumentList.Add("mock_signalwire");
-        psi.ArgumentList.Add("--host");
-        psi.ArgumentList.Add(host);
-        psi.ArgumentList.Add("--port");
-        psi.ArgumentList.Add(freePort.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        psi.ArgumentList.Add("--log-level");
-        psi.ArgumentList.Add("error");
-        var existingPyPath = psi.Environment.TryGetValue("PYTHONPATH", out var ep) ? ep : null;
-        psi.Environment["PYTHONPATH"] = string.IsNullOrEmpty(existingPyPath)
-            ? pkgDir
-            : pkgDir + Path.PathSeparator + existingPyPath;
-
-        var process = new System.Diagnostics.Process { StartInfo = psi };
-        process.Start();
-
-        var url = $"http://{host}:{freePort}";
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
-        while (DateTime.UtcNow < deadline)
-        {
-            if (await ProbeHealthAsync(probe, url).ConfigureAwait(false))
-            {
-                return (host, freePort, process);
-            }
-            if (process.HasExited)
-            {
-                throw new InvalidOperationException(
-                    $"EnvelopeDump: mock_signalwire process exited before becoming ready (exit {process.ExitCode}).");
-            }
-            await Task.Delay(150).ConfigureAwait(false);
-        }
-        try { process.Kill(true); } catch { /* best effort */ }
-        throw new InvalidOperationException($"EnvelopeDump: mock_signalwire did not become ready within 30s on {url}.");
-    }
-
-    private static async Task<bool> ProbeHealthAsync(System.Net.Http.HttpClient client, string baseUrl)
-    {
-        try
-        {
-            var resp = await client.GetAsync(baseUrl + "/__mock__/health").ConfigureAwait(false);
-            if (!resp.IsSuccessStatusCode) return false;
-            var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return body.Contains("\"specs_loaded\"", StringComparison.Ordinal);
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static int PickFreePort()
-    {
-        var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        try
-        {
-            return ((IPEndPoint)listener.LocalEndpoint).Port;
-        }
-        finally
-        {
-            listener.Stop();
-        }
-    }
-
-    /// <summary>Walk upward from this assembly's directory / CWD looking for an
-    /// adjacent porting-sdk/test_harness/&lt;name&gt;/&lt;name&gt;/__init__.py.
-    /// Mirrors tests/MockTest.cs's DiscoverPortingSdkPackage.</summary>
-    private static string? DiscoverPortingSdkPackage(string name)
-    {
-        var anchors = new List<string>();
-        try { anchors.Add(AppContext.BaseDirectory); } catch { /* best effort */ }
-        anchors.Add(Environment.CurrentDirectory);
-
-        foreach (var anchor in anchors)
-        {
-            if (string.IsNullOrEmpty(anchor)) continue;
-            var dir = new DirectoryInfo(Path.GetFullPath(anchor));
-            while (dir != null)
-            {
-                var parent = dir.Parent;
-                if (parent == null) break;
-                var candidate = Path.Combine(parent.FullName, "porting-sdk", "test_harness", name);
-                var init = Path.Combine(candidate, name, "__init__.py");
-                if (File.Exists(init)) return candidate;
-                dir = parent;
-            }
-        }
-        return null;
     }
 }

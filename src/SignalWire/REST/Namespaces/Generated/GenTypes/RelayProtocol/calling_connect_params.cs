@@ -22,29 +22,29 @@ public class CallingConnectParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>devices</c>.</summary>
     [JsonPropertyName("devices")]
-    public List<object?>? devices { get; set; }
+    public List<object?>? Devices { get; set; }
 
     /// <summary>Wire field <c>max_duration</c>.</summary>
     [JsonPropertyName("max_duration")]
-    public long? max_duration { get; set; }
+    public long? MaxDuration { get; set; }
 
     /// <summary>Wire field <c>max_price_per_minute</c>.</summary>
     [JsonPropertyName("max_price_per_minute")]
-    public double? max_price_per_minute { get; set; }
+    public double? MaxPricePerMinute { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>ringback</c>.</summary>
     [JsonPropertyName("ringback")]
-    public List<object?>? ringback { get; set; }
+    public List<object?>? Ringback { get; set; }
 
     /// <summary>Wire field <c>tag</c>.</summary>
     [JsonPropertyName("tag")]
-    public string? tag { get; set; }
+    public string? Tag { get; set; }
 }

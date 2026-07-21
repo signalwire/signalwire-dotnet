@@ -22,5 +22,5 @@ public class SWAIGDefaults
 {
     /// <summary>Wire field <c>web_hook_url</c>.</summary>
     [JsonPropertyName("web_hook_url")]
-    public string? web_hook_url { get; set; }
+    public string? WebHookUrl { get; set; }
 }

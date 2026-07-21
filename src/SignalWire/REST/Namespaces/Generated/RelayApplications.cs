@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// RelayApplications — REST resource for the fabric API.
 /// </summary>
-public class RelayApplications : SignalWire.REST.CrudWithAddresses
+public class RelayApplications : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.RelayApplicationListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.RelayApplicationResponse>
 {
     public RelayApplications(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/relay_applications")

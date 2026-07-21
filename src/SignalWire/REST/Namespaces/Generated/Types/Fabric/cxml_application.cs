@@ -22,61 +22,61 @@ public class CxmlApplication
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? project_id { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>friendly_name</c>.</summary>
     [JsonPropertyName("friendly_name")]
-    public string? friendly_name { get; set; }
+    public string? FriendlyName { get; set; }
 
     /// <summary>Wire field <c>voice_url</c>.</summary>
     [JsonPropertyName("voice_url")]
-    public Dictionary<string, object?>? voice_url { get; set; }
+    public string? VoiceUrl { get; set; }
 
     /// <summary>Wire field <c>voice_method</c>.</summary>
     [JsonPropertyName("voice_method")]
-    public Dictionary<string, object?>? voice_method { get; set; }
+    public object? VoiceMethod { get; set; }
 
     /// <summary>Wire field <c>voice_fallback_url</c>.</summary>
     [JsonPropertyName("voice_fallback_url")]
-    public Dictionary<string, object?>? voice_fallback_url { get; set; }
+    public string? VoiceFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>voice_fallback_method</c>.</summary>
     [JsonPropertyName("voice_fallback_method")]
-    public Dictionary<string, object?>? voice_fallback_method { get; set; }
+    public object? VoiceFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>status_callback</c>.</summary>
     [JsonPropertyName("status_callback")]
-    public Dictionary<string, object?>? status_callback { get; set; }
+    public string? StatusCallback { get; set; }
 
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
-    public Dictionary<string, object?>? status_callback_method { get; set; }
+    public object? StatusCallbackMethod { get; set; }
 
     /// <summary>Wire field <c>sms_url</c>.</summary>
     [JsonPropertyName("sms_url")]
-    public Dictionary<string, object?>? sms_url { get; set; }
+    public string? SmsUrl { get; set; }
 
     /// <summary>Wire field <c>sms_method</c>.</summary>
     [JsonPropertyName("sms_method")]
-    public Dictionary<string, object?>? sms_method { get; set; }
+    public object? SmsMethod { get; set; }
 
     /// <summary>Wire field <c>sms_fallback_url</c>.</summary>
     [JsonPropertyName("sms_fallback_url")]
-    public Dictionary<string, object?>? sms_fallback_url { get; set; }
+    public string? SmsFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>sms_fallback_method</c>.</summary>
     [JsonPropertyName("sms_fallback_method")]
-    public Dictionary<string, object?>? sms_fallback_method { get; set; }
+    public object? SmsFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>sms_status_callback</c>.</summary>
     [JsonPropertyName("sms_status_callback")]
-    public Dictionary<string, object?>? sms_status_callback { get; set; }
+    public string? SmsStatusCallback { get; set; }
 
     /// <summary>Wire field <c>sms_status_callback_method</c>.</summary>
     [JsonPropertyName("sms_status_callback_method")]
-    public Dictionary<string, object?>? sms_status_callback_method { get; set; }
+    public object? SmsStatusCallbackMethod { get; set; }
 }

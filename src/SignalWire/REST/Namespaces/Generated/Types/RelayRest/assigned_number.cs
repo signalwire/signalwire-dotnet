@@ -22,25 +22,25 @@ public class AssignedNumber
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>state</c>.</summary>
     [JsonPropertyName("state")]
-    public string? state { get; set; }
+    public string? State { get; set; }
 
     /// <summary>Wire field <c>campaign_id</c>.</summary>
     [JsonPropertyName("campaign_id")]
-    public Dictionary<string, object?>? campaign_id { get; set; }
+    public string? CampaignId { get; set; }
 
     /// <summary>Wire field <c>phone_number</c>.</summary>
     [JsonPropertyName("phone_number")]
-    public Dictionary<string, object?>? phone_number { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.RelayRest.AssignedPhoneNumber? PhoneNumber { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 }

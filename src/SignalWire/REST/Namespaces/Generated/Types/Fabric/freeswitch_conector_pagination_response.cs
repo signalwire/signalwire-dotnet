@@ -22,17 +22,17 @@ public class FreeswitchConectorPaginationResponse
 {
     /// <summary>Wire field <c>self</c>.</summary>
     [JsonPropertyName("self")]
-    public string? self { get; set; }
+    public string? Self { get; set; }
 
     /// <summary>Wire field <c>first</c>.</summary>
     [JsonPropertyName("first")]
-    public string? first { get; set; }
+    public string? First { get; set; }
 
     /// <summary>Wire field <c>next</c>.</summary>
     [JsonPropertyName("next")]
-    public string? next { get; set; }
+    public string? Next { get; set; }
 
     /// <summary>Wire field <c>prev</c>.</summary>
     [JsonPropertyName("prev")]
-    public string? prev { get; set; }
+    public string? Prev { get; set; }
 }

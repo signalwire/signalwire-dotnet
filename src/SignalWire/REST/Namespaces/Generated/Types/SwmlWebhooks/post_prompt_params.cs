@@ -22,29 +22,29 @@ public class PostPromptParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>ai_session_id</c>.</summary>
     [JsonPropertyName("ai_session_id")]
-    public string? ai_session_id { get; set; }
+    public string? AiSessionId { get; set; }
 
     /// <summary>Wire field <c>summary</c>.</summary>
     [JsonPropertyName("summary")]
-    public string? summary { get; set; }
+    public string? Summary { get; set; }
 
     /// <summary>Wire field <c>post_prompt_result</c>.</summary>
     [JsonPropertyName("post_prompt_result")]
-    public Dictionary<string, object?>? post_prompt_result { get; set; }
+    public object? PostPromptResult { get; set; }
 
     /// <summary>Wire field <c>end_reason</c>.</summary>
     [JsonPropertyName("end_reason")]
-    public string? end_reason { get; set; }
+    public string? EndReason { get; set; }
 
     /// <summary>Wire field <c>conversation</c>.</summary>
     [JsonPropertyName("conversation")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.SwmlWebhooks.PostPromptConversationTurn>? conversation { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.SwmlWebhooks.PostPromptConversationTurn>? Conversation { get; set; }
 
     /// <summary>Wire field <c>function_calls</c>.</summary>
     [JsonPropertyName("function_calls")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.SwmlWebhooks.PostPromptFunctionCall>? function_calls { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.SwmlWebhooks.PostPromptFunctionCall>? FunctionCalls { get; set; }
 }

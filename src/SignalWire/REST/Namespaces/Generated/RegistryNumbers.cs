@@ -41,8 +41,9 @@ public class RegistryNumbers
     /// <summary>
     /// Generated from operation <c>delete_number_assignment</c> (DELETE /registry/beta/numbers/{id}).
     /// </summary>
-    public Task<Dictionary<string, object?>> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DeleteAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync(Path(id), cancellationToken: cancellationToken);
+        return Client.DeleteAsync(Path(id), requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

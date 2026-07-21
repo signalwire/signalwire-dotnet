@@ -22,5 +22,5 @@ public class OneOfProperty
 {
     /// <summary>Wire field <c>oneOf</c>.</summary>
     [JsonPropertyName("oneOf")]
-    public List<object?>? oneOf { get; set; }
+    public List<object?>? OneOf { get; set; }
 }

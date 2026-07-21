@@ -22,61 +22,61 @@ public class CallLeg
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public string? from { get; set; }
+    public string? From { get; set; }
 
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public string? to { get; set; }
+    public string? To { get; set; }
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public Dictionary<string, object?>? direction { get; set; }
+    public string? Direction { get; set; }
 
     /// <summary>Wire field <c>source</c>.</summary>
     [JsonPropertyName("source")]
-    public string? source { get; set; }
+    public string? Source { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public Dictionary<string, object?>? url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>charge</c>.</summary>
     [JsonPropertyName("charge")]
-    public double? charge { get; set; }
+    public double? Charge { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>charge_details</c>.</summary>
     [JsonPropertyName("charge_details")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.ChargeDetails>? charge_details { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.ChargeDetails>? ChargeDetails { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>duration</c>.</summary>
     [JsonPropertyName("duration")]
-    public Dictionary<string, object?>? duration { get; set; }
+    public long? Duration { get; set; }
 
     /// <summary>Wire field <c>duration_ms</c>.</summary>
     [JsonPropertyName("duration_ms")]
-    public Dictionary<string, object?>? duration_ms { get; set; }
+    public long? DurationMs { get; set; }
 
     /// <summary>Wire field <c>billing_ms</c>.</summary>
     [JsonPropertyName("billing_ms")]
-    public Dictionary<string, object?>? billing_ms { get; set; }
+    public long? BillingMs { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public Dictionary<string, object?>? type { get; set; }
+    public object? Type { get; set; }
 
     /// <summary>Wire field <c>parent_id</c>.</summary>
     [JsonPropertyName("parent_id")]
-    public Dictionary<string, object?>? parent_id { get; set; }
+    public string? ParentId { get; set; }
 }

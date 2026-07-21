@@ -22,17 +22,17 @@ public class BedrockSWAIG
 {
     /// <summary>Wire field <c>functions</c>.</summary>
     [JsonPropertyName("functions")]
-    public List<object?>? functions { get; set; }
+    public List<object?>? Functions { get; set; }
 
     /// <summary>Wire field <c>defaults</c>.</summary>
     [JsonPropertyName("defaults")]
-    public Dictionary<string, object?>? defaults { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.SWAIGDefaults? Defaults { get; set; }
 
     /// <summary>Wire field <c>native_functions</c>.</summary>
     [JsonPropertyName("native_functions")]
-    public List<object?>? native_functions { get; set; }
+    public List<object?>? NativeFunctions { get; set; }
 
     /// <summary>Wire field <c>includes</c>.</summary>
     [JsonPropertyName("includes")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.SWAIGIncludes>? includes { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.SWAIGIncludes>? Includes { get; set; }
 }

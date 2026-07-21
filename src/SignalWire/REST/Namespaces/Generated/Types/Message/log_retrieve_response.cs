@@ -22,53 +22,53 @@ public class LogRetrieveResponse
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public string? from { get; set; }
+    public string? From { get; set; }
 
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public string? to { get; set; }
+    public string? To { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public string? status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>direction</c>.</summary>
     [JsonPropertyName("direction")]
-    public string? direction { get; set; }
+    public string? Direction { get; set; }
 
     /// <summary>Wire field <c>kind</c>.</summary>
     [JsonPropertyName("kind")]
-    public string? kind { get; set; }
+    public string? Kind { get; set; }
 
     /// <summary>Wire field <c>source</c>.</summary>
     [JsonPropertyName("source")]
-    public string? source { get; set; }
+    public string? Source { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public Dictionary<string, object?>? url { get; set; }
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>number_of_segments</c>.</summary>
     [JsonPropertyName("number_of_segments")]
-    public long? number_of_segments { get; set; }
+    public long? NumberOfSegments { get; set; }
 
     /// <summary>Wire field <c>charge</c>.</summary>
     [JsonPropertyName("charge")]
-    public double? charge { get; set; }
+    public double? Charge { get; set; }
 
     /// <summary>Wire field <c>charge_details</c>.</summary>
     [JsonPropertyName("charge_details")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Message.ChargeDetail>? charge_details { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Message.ChargeDetail>? ChargeDetails { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 }

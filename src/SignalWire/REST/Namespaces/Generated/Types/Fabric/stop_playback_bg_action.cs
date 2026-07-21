@@ -22,5 +22,5 @@ public class StopPlaybackBGAction
 {
     /// <summary>Wire field <c>stop_playback_bg</c>.</summary>
     [JsonPropertyName("stop_playback_bg")]
-    public Dictionary<string, object?>? stop_playback_bg { get; set; }
+    public object? StopPlaybackBg { get; set; }
 }

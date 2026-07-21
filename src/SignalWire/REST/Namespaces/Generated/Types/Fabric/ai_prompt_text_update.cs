@@ -22,33 +22,33 @@ public class AIPromptTextUpdate
 {
     /// <summary>Wire field <c>max_tokens</c>.</summary>
     [JsonPropertyName("max_tokens")]
-    public long? max_tokens { get; set; }
+    public long? MaxTokens { get; set; }
 
     /// <summary>Wire field <c>temperature</c>.</summary>
     [JsonPropertyName("temperature")]
-    public Dictionary<string, object?>? temperature { get; set; }
+    public object? Temperature { get; set; }
 
     /// <summary>Wire field <c>top_p</c>.</summary>
     [JsonPropertyName("top_p")]
-    public Dictionary<string, object?>? top_p { get; set; }
+    public object? TopP { get; set; }
 
     /// <summary>Wire field <c>confidence</c>.</summary>
     [JsonPropertyName("confidence")]
-    public Dictionary<string, object?>? confidence { get; set; }
+    public object? Confidence { get; set; }
 
     /// <summary>Wire field <c>presence_penalty</c>.</summary>
     [JsonPropertyName("presence_penalty")]
-    public Dictionary<string, object?>? presence_penalty { get; set; }
+    public object? PresencePenalty { get; set; }
 
     /// <summary>Wire field <c>frequency_penalty</c>.</summary>
     [JsonPropertyName("frequency_penalty")]
-    public Dictionary<string, object?>? frequency_penalty { get; set; }
+    public object? FrequencyPenalty { get; set; }
 
     /// <summary>Wire field <c>text</c>.</summary>
     [JsonPropertyName("text")]
-    public string? text { get; set; }
+    public string? Text { get; set; }
 
     /// <summary>Wire field <c>contexts</c>.</summary>
     [JsonPropertyName("contexts")]
-    public Dictionary<string, object?>? contexts { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.ContextsUpdate? Contexts { get; set; }
 }

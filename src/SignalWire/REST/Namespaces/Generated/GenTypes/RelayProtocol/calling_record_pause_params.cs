@@ -22,17 +22,17 @@ public class CallingRecordPauseParams
 {
     /// <summary>Wire field <c>behavior</c>.</summary>
     [JsonPropertyName("behavior")]
-    public string? behavior { get; set; }
+    public string? Behavior { get; set; }
 
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>control_id</c>.</summary>
     [JsonPropertyName("control_id")]
-    public string? control_id { get; set; }
+    public string? ControlId { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 }

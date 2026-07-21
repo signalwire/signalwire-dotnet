@@ -22,37 +22,37 @@ public class FabricAddressSubscriber
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public string? display_name { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>cover_url</c>.</summary>
     [JsonPropertyName("cover_url")]
-    public string? cover_url { get; set; }
+    public string? CoverUrl { get; set; }
 
     /// <summary>Wire field <c>preview_url</c>.</summary>
     [JsonPropertyName("preview_url")]
-    public string? preview_url { get; set; }
+    public string? PreviewUrl { get; set; }
 
     /// <summary>Wire field <c>locked</c>.</summary>
     [JsonPropertyName("locked")]
-    public bool? locked { get; set; }
+    public bool? Locked { get; set; }
 
     /// <summary>Wire field <c>channels</c>.</summary>
     [JsonPropertyName("channels")]
-    public Dictionary<string, object?>? channels { get; set; }
+    public Dictionary<string, object?>? Channels { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 }

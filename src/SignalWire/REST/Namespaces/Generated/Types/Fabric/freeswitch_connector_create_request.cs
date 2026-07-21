@@ -22,9 +22,9 @@ public class FreeswitchConnectorCreateRequest
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>token</c>.</summary>
     [JsonPropertyName("token")]
-    public Dictionary<string, object?>? token { get; set; }
+    public string? Token { get; set; }
 }

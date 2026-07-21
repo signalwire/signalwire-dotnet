@@ -22,21 +22,21 @@ public class Types_StatusCodes_RestApiErrorItem
 {
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>code</c>.</summary>
     [JsonPropertyName("code")]
-    public string? code { get; set; }
+    public string? Code { get; set; }
 
     /// <summary>Wire field <c>message</c>.</summary>
     [JsonPropertyName("message")]
-    public string? message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>Wire field <c>attribute</c>.</summary>
     [JsonPropertyName("attribute")]
-    public Dictionary<string, object?>? attribute { get; set; }
+    public string? Attribute { get; set; }
 
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public string? url { get; set; }
+    public string? Url { get; set; }
 }

@@ -22,9 +22,9 @@ public class CallingReceiveParams
 {
     /// <summary>Wire field <c>context</c>.</summary>
     [JsonPropertyName("context")]
-    public string? context { get; set; }
+    public string? Context { get; set; }
 
     /// <summary>Wire field <c>contexts</c>.</summary>
     [JsonPropertyName("contexts")]
-    public List<object?>? contexts { get; set; }
+    public List<object?>? Contexts { get; set; }
 }

@@ -22,5 +22,5 @@ public class SearchResponse
 {
     /// <summary>Wire field <c>chunks</c>.</summary>
     [JsonPropertyName("chunks")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Datasphere.Chunk>? chunks { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Datasphere.Chunk>? Chunks { get; set; }
 }

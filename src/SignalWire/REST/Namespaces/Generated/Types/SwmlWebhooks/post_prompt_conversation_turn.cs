@@ -22,9 +22,9 @@ public class PostPromptConversationTurn
 {
     /// <summary>Wire field <c>role</c>.</summary>
     [JsonPropertyName("role")]
-    public string? role { get; set; }
+    public string? Role { get; set; }
 
     /// <summary>Wire field <c>content</c>.</summary>
     [JsonPropertyName("content")]
-    public string? content { get; set; }
+    public string? Content { get; set; }
 }

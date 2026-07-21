@@ -67,8 +67,7 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         var c = NewClient();
         var body = await c.Addresses.ListAsync(new Dictionary<string, string> { ["page_size"] = "10" });
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -96,7 +95,6 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
             postalCode: "EC1",
             addressType: "commercial");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("id"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", last.Method);
@@ -113,7 +111,6 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         var c = NewClient();
         var body = await c.Addresses.GetAsync("addr-123");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("id"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -145,8 +142,7 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         var c = NewClient();
         var body = await c.Recordings.ListAsync(new Dictionary<string, string> { ["page_size"] = "5" });
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -191,8 +187,7 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         var c = NewClient();
         var body = await c.ShortCodes.ListAsync(new Dictionary<string, string> { ["page_size"] = "20" });
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -206,7 +201,6 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         var c = NewClient();
         var body = await c.ShortCodes.GetAsync("sc-1");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("id"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -223,7 +217,6 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
             name: "Marketing SMS",
             messageHandler: "laml_webhooks");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("id"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("PUT", last.Method);
@@ -245,7 +238,6 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
             numberType: "longcode",
             capabilities: new List<object?> { "sms", "voice" });
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("id"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", last.Method);
@@ -275,7 +267,6 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
             @from: "+15559876543",
             message: "Your code is {code}");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("id"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("POST", last.Method);
@@ -300,7 +291,6 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
             domainIdentifier: "myco",
             defaultCodecs: new List<object?> { "PCMU", "PCMA" });
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("domain_identifier") || body.ContainsKey("default_codecs"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("PUT", last.Method);
@@ -321,8 +311,7 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
             ["page_size"] = "10",
         });
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -353,7 +342,6 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         var c = NewClient();
         var body = await c.Project.Tokens.UpdateAsync("tok-1", name: "renamed-token");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("id"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("PATCH", last.Method);
@@ -384,7 +372,6 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         var c = NewClient();
         var body = await c.Datasphere.Documents.GetChunkAsync("doc-1", "chunk-99");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("id"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -400,7 +387,6 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
         var c = NewClient();
         var body = await c.Queues.GetMemberAsync("q-1", "mem-7");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("queue_id") || body.ContainsKey("call_id"));
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);

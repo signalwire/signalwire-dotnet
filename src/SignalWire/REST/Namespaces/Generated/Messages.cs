@@ -49,7 +49,8 @@ public class Messages
     /// <param name="statusCallback">Wire field <c>status_callback</c>.</param>
     /// <param name="customVariables">Wire field <c>custom_variables</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> CreateAsync(string to, string from, string? body = null, List<object?>? media = null, bool? sendAsMms = null, string? statusCallback = null, Dictionary<string, object?>? customVariables = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Messages.Message?> CreateAsync(string to, string from, string? body = null, List<object?>? media = null, bool? sendAsMms = null, string? statusCallback = null, Dictionary<string, object?>? customVariables = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["to"] = to;
@@ -81,7 +82,7 @@ public class Messages
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, _reqBody, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Messages.Message>(Client.PostAsync(BasePath, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -89,7 +90,8 @@ public class Messages
     /// </summary>
     /// <param name="body">Wire field <c>body</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> UpdateAsync(string messageId, string body, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Messages.Message?> UpdateAsync(string messageId, string body, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["body"] = body;
@@ -100,6 +102,6 @@ public class Messages
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PatchAsync(Path(messageId), _reqBody, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Messages.Message>(Client.PatchAsync(Path(messageId), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

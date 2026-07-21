@@ -22,69 +22,69 @@ public class Brand
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>state</c>.</summary>
     [JsonPropertyName("state")]
-    public string? state { get; set; }
+    public string? State { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>company_name</c>.</summary>
     [JsonPropertyName("company_name")]
-    public string? company_name { get; set; }
+    public string? CompanyName { get; set; }
 
     /// <summary>Wire field <c>contact_email</c>.</summary>
     [JsonPropertyName("contact_email")]
-    public string? contact_email { get; set; }
+    public string? ContactEmail { get; set; }
 
     /// <summary>Wire field <c>contact_phone</c>.</summary>
     [JsonPropertyName("contact_phone")]
-    public string? contact_phone { get; set; }
+    public string? ContactPhone { get; set; }
 
     /// <summary>Wire field <c>ein_issuing_country</c>.</summary>
     [JsonPropertyName("ein_issuing_country")]
-    public string? ein_issuing_country { get; set; }
+    public string? EinIssuingCountry { get; set; }
 
     /// <summary>Wire field <c>legal_entity_type</c>.</summary>
     [JsonPropertyName("legal_entity_type")]
-    public string? legal_entity_type { get; set; }
+    public string? LegalEntityType { get; set; }
 
     /// <summary>Wire field <c>ein</c>.</summary>
     [JsonPropertyName("ein")]
-    public string? ein { get; set; }
+    public string? Ein { get; set; }
 
     /// <summary>Wire field <c>company_address</c>.</summary>
     [JsonPropertyName("company_address")]
-    public string? company_address { get; set; }
+    public string? CompanyAddress { get; set; }
 
     /// <summary>Wire field <c>company_vertical</c>.</summary>
     [JsonPropertyName("company_vertical")]
-    public string? company_vertical { get; set; }
+    public string? CompanyVertical { get; set; }
 
     /// <summary>Wire field <c>company_website</c>.</summary>
     [JsonPropertyName("company_website")]
-    public string? company_website { get; set; }
+    public string? CompanyWebsite { get; set; }
 
     /// <summary>Wire field <c>csp_brand_reference</c>.</summary>
     [JsonPropertyName("csp_brand_reference")]
-    public string? csp_brand_reference { get; set; }
+    public string? CspBrandReference { get; set; }
 
     /// <summary>Wire field <c>csp_self_registered</c>.</summary>
     [JsonPropertyName("csp_self_registered")]
-    public bool? csp_self_registered { get; set; }
+    public bool? CspSelfRegistered { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public string? status_callback_url { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 }

@@ -22,5 +22,5 @@ public class SayAction
 {
     /// <summary>Wire field <c>say</c>.</summary>
     [JsonPropertyName("say")]
-    public string? say { get; set; }
+    public string? Say { get; set; }
 }

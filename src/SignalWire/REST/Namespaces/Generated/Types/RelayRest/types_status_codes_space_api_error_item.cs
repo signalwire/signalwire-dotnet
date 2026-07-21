@@ -22,17 +22,17 @@ public class Types_StatusCodes_SpaceApiErrorItem
 {
     /// <summary>Wire field <c>detail</c>.</summary>
     [JsonPropertyName("detail")]
-    public string? detail { get; set; }
+    public string? Detail { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public string? status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>title</c>.</summary>
     [JsonPropertyName("title")]
-    public string? title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>Wire field <c>code</c>.</summary>
     [JsonPropertyName("code")]
-    public string? code { get; set; }
+    public string? Code { get; set; }
 }

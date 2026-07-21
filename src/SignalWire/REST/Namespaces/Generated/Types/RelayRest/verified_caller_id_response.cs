@@ -22,33 +22,33 @@ public class VerifiedCallerIDResponse
 {
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
-    public string? number { get; set; }
+    public string? Number { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>extension</c>.</summary>
     [JsonPropertyName("extension")]
-    public string? extension { get; set; }
+    public string? Extension { get; set; }
 
     /// <summary>Wire field <c>verified</c>.</summary>
     [JsonPropertyName("verified")]
-    public bool? verified { get; set; }
+    public bool? Verified { get; set; }
 
     /// <summary>Wire field <c>verified_at</c>.</summary>
     [JsonPropertyName("verified_at")]
-    public string? verified_at { get; set; }
+    public string? VerifiedAt { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public string? status { get; set; }
+    public string? Status { get; set; }
 }

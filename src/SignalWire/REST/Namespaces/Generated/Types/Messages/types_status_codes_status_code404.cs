@@ -22,5 +22,5 @@ public class Types_StatusCodes_StatusCode404
 {
     /// <summary>Wire field <c>error</c>.</summary>
     [JsonPropertyName("error")]
-    public string? error { get; set; }
+    public string? Error { get; set; }
 }

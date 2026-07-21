@@ -22,13 +22,13 @@ public class SwmlScriptCreateRequest
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>contents</c>.</summary>
     [JsonPropertyName("contents")]
-    public string? contents { get; set; }
+    public string? Contents { get; set; }
 
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
-    public string? status_callback_url { get; set; }
+    public string? StatusCallbackUrl { get; set; }
 }

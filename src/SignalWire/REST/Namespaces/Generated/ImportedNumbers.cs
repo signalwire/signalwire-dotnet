@@ -45,7 +45,8 @@ public class ImportedNumbers
     /// <param name="numberType">Wire field <c>number_type</c>.</param>
     /// <param name="capabilities">Wire field <c>capabilities</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> CreateAsync(string number, string numberType, List<object?>? capabilities = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse?> CreateAsync(string number, string numberType, List<object?>? capabilities = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["number"] = number;
@@ -61,6 +62,6 @@ public class ImportedNumbers
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(BasePath, _reqBody, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(Client.PostAsync(BasePath, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

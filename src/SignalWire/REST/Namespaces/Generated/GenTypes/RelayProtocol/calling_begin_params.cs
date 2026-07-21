@@ -22,21 +22,21 @@ public class CallingBeginParams
 {
     /// <summary>Wire field <c>device</c>.</summary>
     [JsonPropertyName("device")]
-    public Dictionary<string, object?>? device { get; set; }
+    public Dictionary<string, object?>? Device { get; set; }
 
     /// <summary>Wire field <c>max_duration</c>.</summary>
     [JsonPropertyName("max_duration")]
-    public long? max_duration { get; set; }
+    public long? MaxDuration { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>region</c>.</summary>
     [JsonPropertyName("region")]
-    public string? region { get; set; }
+    public string? Region { get; set; }
 
     /// <summary>Wire field <c>tag</c>.</summary>
     [JsonPropertyName("tag")]
-    public string? tag { get; set; }
+    public string? Tag { get; set; }
 }

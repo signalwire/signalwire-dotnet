@@ -576,7 +576,8 @@ def _collect_generated_type(type_entry, name, target_module, aliases, out_module
 
 
 def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
-                            rest_class_module, rest_containers, rest_surface, rest_sidecar):
+                            rest_class_module, rest_containers, rest_surface, rest_sidecar,
+                            rest_returns=None, rest_crud_bases=None):
     """Emit signatures for a generated-REST class onto the oracle's
     ``<ns>_resources_generated`` / ``_client_tree_generated`` module.
 
@@ -634,34 +635,74 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
             params_out = [] if p.get("is_static", False) else [{"name": "self", "kind": "self"}]
             methods_out[pcanon] = {"params": params_out, "returns": ret}
 
+    rest_returns = rest_returns or {}
+
     for canon in sorted(surface_names):
+        # DOTNET-1: the generator records each flipped method's typed return
+        # (class:<mod>.<Leaf>) in the manifest ``returns`` map; a method absent from
+        # it keeps the loose ``dict<string,any>`` HTTP-response scaffold (delete /
+        # union / inherited-CRUD). Keyed "<Class>::<canonical>".
+        typed_ret = rest_returns.get(f"{name}::{canon}")
         sidecar_key = f"{name}::{_cs_method_for(canon, reflected)}"
         if sidecar_key in rest_sidecar:
             records = [dict(r) for r in rest_sidecar[sidecar_key]]
-            methods_out[canon] = {
-                "params": [{"name": "self", "kind": "self"}] + records,
-                "returns": "dict<string,any>",
-            }
+            # ``paginate`` is typed as a PaginatedIterator and the .NET Paginate()
+            # genuinely returns one — take its reflected return so the sidecar (used
+            # for the request_options param shape) doesn't clobber the concrete
+            # iterator return into a phantom dict.
+            if canon == "paginate":
+                m = reflected.get(canon)
+                ret = "dict<string,any>"
+                if m is not None:
+                    ctx = f"{target_module}.{name}.{canon}[paginate->]"
+                    try:
+                        ret = translate_dotnet_type(m.get("return_type", ""), aliases, ctx)
+                    except TypeTranslationError as e:
+                        failures.append(str(e))
+                methods_out[canon] = {
+                    "params": [{"name": "self", "kind": "self"}] + records,
+                    "returns": ret,
+                }
+            else:
+                methods_out[canon] = {
+                    "params": [{"name": "self", "kind": "self"}] + records,
+                    "returns": typed_ret or "dict<string,any>",
+                }
             continue
-        # No sidecar entry: type from reflection if available, else bare self.
+        # No sidecar entry: type from reflection when available (create/update on a
+        # CRUD subclass inherit the generic base's typed CRUD method — keep its
+        # reflected PARAMS, only override the RETURN with the manifest typed DTO so
+        # the enumerated shape carries both). A surface method with neither sidecar
+        # NOR reflection (e.g. the ReadResource inline list/get, whose door params
+        # the oracle drops) falls back to bare self + the manifest typed return.
         m = reflected.get(canon)
         if m is not None:
             ctx = f"{target_module}.{name}.{canon}"
             try:
-                methods_out[canon] = build_signature(
-                    m, aliases, ctx, is_static=m.get("is_static", False),
-                )
+                sig = build_signature(m, aliases, ctx, is_static=m.get("is_static", False))
             except TypeTranslationError as e:
                 failures.append(str(e))
-                methods_out[canon] = {"params": [{"name": "self", "kind": "self"}], "returns": "any"}
+                sig = {"params": [{"name": "self", "kind": "self"}], "returns": "any"}
+            if typed_ret is not None:
+                sig["returns"] = typed_ret
+            methods_out[canon] = sig
+        elif typed_ret is not None:
+            methods_out[canon] = {
+                "params": [{"name": "self", "kind": "self"}],
+                "returns": typed_ret,
+            }
         else:
             methods_out[canon] = {"params": [{"name": "self", "kind": "self"}], "returns": "any"}
 
     if methods_out:
         out_modules.setdefault(target_module, {"classes": {}})
-        out_modules[target_module]["classes"][name] = {
-            "methods": dict(sorted(methods_out.items())),
-        }
+        cls_entry: dict = {"methods": dict(sorted(methods_out.items()))}
+        # DOTNET-1: attach the structural crud_base bind the generator published for
+        # this class (the drift/lock gates compare it against the reference).
+        cb = (rest_crud_bases or {}).get(name)
+        if cb:
+            cls_entry["crud_base"] = cb
+        out_modules[target_module]["classes"][name] = cls_entry
 
 
 def _cs_method_for(canon: str, reflected: dict) -> str:
@@ -692,6 +733,8 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     rest_containers = rest_manifest["containers"]
     rest_surface = rest_manifest["surface"]
     rest_sidecar = rest_manifest["methods"]
+    rest_returns = rest_manifest.get("returns", {})
+    rest_crud_bases = rest_manifest.get("crud_bases", {})
 
     for type_entry in raw.get("types", []):
         ns = type_entry.get("namespace", "")
@@ -714,6 +757,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             _collect_generated_rest(
                 type_entry, name, aliases, out_modules, failures,
                 rest_class_module, rest_containers, rest_surface, rest_sidecar,
+                rest_returns, rest_crud_bases,
             )
             continue
 
@@ -1301,10 +1345,15 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         entry = out_modules[mod]
         sorted_modules[mod] = {}
         if entry.get("classes"):
-            sorted_modules[mod]["classes"] = {
-                cls: {"methods": dict(sorted(entry["classes"][cls]["methods"].items()))}
-                for cls in sorted(entry["classes"])
-            }
+            sorted_cls: dict = {}
+            for cls in sorted(entry["classes"]):
+                ce = entry["classes"][cls]
+                out_ce: dict = {"methods": dict(sorted(ce["methods"].items()))}
+                # Preserve the structural crud_base bind (DOTNET-1) through the sort.
+                if ce.get("crud_base"):
+                    out_ce["crud_base"] = ce["crud_base"]
+                sorted_cls[cls] = out_ce
+            sorted_modules[mod]["classes"] = sorted_cls
         if entry.get("functions"):
             sorted_modules[mod]["functions"] = dict(sorted(entry["functions"].items()))
 

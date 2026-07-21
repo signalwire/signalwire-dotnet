@@ -22,9 +22,9 @@ public class CallFlowUpdateRequest
 {
     /// <summary>Wire field <c>title</c>.</summary>
     [JsonPropertyName("title")]
-    public string? title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>Wire field <c>document_version</c>.</summary>
     [JsonPropertyName("document_version")]
-    public long? document_version { get; set; }
+    public long? DocumentVersion { get; set; }
 }

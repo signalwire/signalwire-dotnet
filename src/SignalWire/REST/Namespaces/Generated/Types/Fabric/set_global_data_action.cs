@@ -22,5 +22,5 @@ public class SetGlobalDataAction
 {
     /// <summary>Wire field <c>set_global_data</c>.</summary>
     [JsonPropertyName("set_global_data")]
-    public Dictionary<string, object?>? set_global_data { get; set; }
+    public Dictionary<string, object?>? SetGlobalData { get; set; }
 }

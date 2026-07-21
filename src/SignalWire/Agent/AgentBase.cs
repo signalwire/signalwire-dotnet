@@ -534,7 +534,7 @@ public class AgentBase : Service
         string description,
         Dictionary<string, object> parameters,
         Func<Dictionary<string, object>, Dictionary<string, object?>, FunctionResult> handler,
-        bool secure = false)
+        bool secure = true)
     {
         base.DefineTool(name, description, parameters, handler, secure);
         return this;
@@ -1481,7 +1481,8 @@ public class AgentBase : Service
     /// <summary>Render with request body and headers context.</summary>
     public Dictionary<string, object> RenderSwmlWithContext(
         Dictionary<string, object?>? requestBody,
-        Dictionary<string, string> headers)
+        Dictionary<string, string> headers,
+        string? callId = null)
     {
         var main = new List<Dictionary<string, object>>();
 
@@ -1522,7 +1523,7 @@ public class AgentBase : Service
         }
 
         // 5. AI verb
-        main.Add(new Dictionary<string, object> { ["ai"] = BuildAiVerb(headers) });
+        main.Add(new Dictionary<string, object> { ["ai"] = BuildAiVerb(headers, callId) });
 
         // 6. Post-AI verbs
         foreach (var (verb, config) in _postAiVerbs)
@@ -1560,7 +1561,7 @@ public class AgentBase : Service
     }
 
     /// <summary>Build the AI verb configuration block.</summary>
-    public Dictionary<string, object> BuildAiVerb(Dictionary<string, string>? headers = null)
+    public Dictionary<string, object> BuildAiVerb(Dictionary<string, string>? headers = null, string? callId = null)
     {
         headers ??= [];
         var ai = new Dictionary<string, object>();
@@ -1650,7 +1651,7 @@ public class AgentBase : Service
         }
 
         // -- SWAIG --
-        var swaig = BuildSwaigBlock(headers);
+        var swaig = BuildSwaigBlock(headers, callId);
         if (swaig.Count > 0)
         {
             ai["SWAIG"] = swaig;
@@ -1798,11 +1799,15 @@ public class AgentBase : Service
 
             _dynamicConfigCallback(queryParams, requestData, headers, clone);
 
-            var swml = clone.RenderSwmlWithContext(requestData, headers);
+            // Generate a per-render call_id so secure tools get their per-tool
+            // __token (mirrors python `_render_swml`: call_id ??= create_session()).
+            var cloneCallId = clone._sessionManager.CreateSession();
+            var swml = clone.RenderSwmlWithContext(requestData, headers, cloneCallId);
             return AgentJsonResponse(200, swml);
         }
 
-        var rendered = RenderSwmlWithContext(requestData, headers);
+        var callId = _sessionManager.CreateSession();
+        var rendered = RenderSwmlWithContext(requestData, headers, callId);
         return AgentJsonResponse(200, rendered);
     }
 
@@ -1899,7 +1904,7 @@ public class AgentBase : Service
     // ======================================================================
 
     /// <summary>Build the SWAIG block for the AI verb.</summary>
-    private Dictionary<string, object> BuildSwaigBlock(Dictionary<string, string> headers)
+    private Dictionary<string, object> BuildSwaigBlock(Dictionary<string, string> headers, string? callId = null)
     {
         var swaig = new Dictionary<string, object>();
 
@@ -1943,10 +1948,36 @@ public class AgentBase : Service
                 funcDef[wireKey] = value;
             }
 
-            // Add web_hook_url for callable tools (those with a handler)
+            // Add web_hook_url for callable tools (those with a handler).
+            //
+            // Per-tool token (A1 secure-default, mirrors python agent_base.py
+            // :1038-1099): a SECURE tool (the default) rendered WITH a call_id gets
+            // a per-tool `__token=<hmac>` appended to its webhook URL — the wire
+            // manifestation of `secure`. The platform validates that token on the
+            // callback. An insecure tool (`secure=False`) gets NO token. A
+            // caller-supplied `_webhookUrl` override wins verbatim (matches
+            // python's `func.webhook_url` external-URL branch).
             if (tool.ContainsKey("_handler"))
             {
-                funcDef["web_hook_url"] = _webhookUrl ?? BuildSwaigWebhookUrl(headers);
+                var isSecure = tool.TryGetValue("_secure", out var s) && s is bool b && b;
+                string? token = null;
+                if (isSecure && !string.IsNullOrEmpty(callId))
+                {
+                    token = CreateToolToken(name, callId!);
+                    if (token.Length == 0)
+                    {
+                        token = null;
+                    }
+                }
+
+                if (_webhookUrl is not null)
+                {
+                    funcDef["web_hook_url"] = _webhookUrl;
+                }
+                else
+                {
+                    funcDef["web_hook_url"] = BuildSwaigWebhookUrl(headers, token);
+                }
             }
 
             functions.Add(funcDef);
@@ -1978,7 +2009,13 @@ public class AgentBase : Service
     }
 
     /// <summary>Build the authenticated SWAIG webhook URL with query params.</summary>
-    private string BuildSwaigWebhookUrl(Dictionary<string, string> headers)
+    /// <param name="token">
+    /// Optional per-tool secure token (A1). When non-null it is appended as the
+    /// reserved <c>__token</c> query parameter (mirrors python
+    /// <c>url_params["__token"] = token</c>), alongside any configured SWAIG query
+    /// params. The <c>__token</c> spelling avoids collision with a user param.
+    /// </param>
+    private string BuildSwaigWebhookUrl(Dictionary<string, string> headers, string? token = null)
     {
         var proxyBase = ResolveProxyBase(headers);
         var routeSegment = Route == "/" ? "" : Route;
@@ -2008,10 +2045,21 @@ public class AgentBase : Service
 
         var authUrl = $"{scheme}://{user}:{password}@{host}{portStr}{path}{routeSegment}/swaig";
 
-        // Append query params
-        if (_swaigQueryParams.Count > 0)
+        // Append query params: the configured SWAIG query params PLUS the reserved
+        // per-tool `__token` (A1 secure-default) when supplied. Mirrors python,
+        // which starts from `_swaig_query_params.copy()` then sets `__token`.
+        var queryPairs = new List<KeyValuePair<string, string>>();
+        foreach (var kvp in _swaigQueryParams)
         {
-            var queryParts = _swaigQueryParams
+            queryPairs.Add(kvp);
+        }
+        if (!string.IsNullOrEmpty(token))
+        {
+            queryPairs.Add(new KeyValuePair<string, string>("__token", token!));
+        }
+        if (queryPairs.Count > 0)
+        {
+            var queryParts = queryPairs
                 .Select(kvp => $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}");
             authUrl += "?" + string.Join("&", queryParts);
         }

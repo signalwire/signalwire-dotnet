@@ -22,61 +22,61 @@ public class SignalwireConnectResult
 {
     /// <summary>Wire field <c>accesses</c>.</summary>
     [JsonPropertyName("accesses")]
-    public List<object?>? accesses { get; set; }
+    public List<object?>? Accesses { get; set; }
 
     /// <summary>Wire field <c>authorization</c>.</summary>
     [JsonPropertyName("authorization")]
-    public Dictionary<string, object?>? authorization { get; set; }
+    public Dictionary<string, object?>? Authorization { get; set; }
 
     /// <summary>Wire field <c>authorizations</c>.</summary>
     [JsonPropertyName("authorizations")]
-    public List<object?>? authorizations { get; set; }
+    public List<object?>? Authorizations { get; set; }
 
     /// <summary>Wire field <c>host</c>.</summary>
     [JsonPropertyName("host")]
-    public string? host { get; set; }
+    public string? Host { get; set; }
 
     /// <summary>Wire field <c>ice_servers</c>.</summary>
     [JsonPropertyName("ice_servers")]
-    public List<object?>? ice_servers { get; set; }
+    public List<object?>? IceServers { get; set; }
 
     /// <summary>Wire field <c>identity</c>.</summary>
     [JsonPropertyName("identity")]
-    public string? identity { get; set; }
+    public string? Identity { get; set; }
 
     /// <summary>Wire field <c>master_nodeid</c>.</summary>
     [JsonPropertyName("master_nodeid")]
-    public string? master_nodeid { get; set; }
+    public string? MasterNodeid { get; set; }
 
     /// <summary>Wire field <c>nodeid</c>.</summary>
     [JsonPropertyName("nodeid")]
-    public string? nodeid { get; set; }
+    public string? Nodeid { get; set; }
 
     /// <summary>Wire field <c>protocol</c>.</summary>
     [JsonPropertyName("protocol")]
-    public string? protocol { get; set; }
+    public string? Protocol { get; set; }
 
     /// <summary>Wire field <c>protocols</c>.</summary>
     [JsonPropertyName("protocols")]
-    public List<object?>? protocols { get; set; }
+    public List<object?>? Protocols { get; set; }
 
     /// <summary>Wire field <c>protocols_uncertified</c>.</summary>
     [JsonPropertyName("protocols_uncertified")]
-    public List<object?>? protocols_uncertified { get; set; }
+    public List<object?>? ProtocolsUncertified { get; set; }
 
     /// <summary>Wire field <c>result</c>.</summary>
     [JsonPropertyName("result")]
-    public object? result { get; set; }
+    public object? Result { get; set; }
 
     /// <summary>Wire field <c>session_restored</c>.</summary>
     [JsonPropertyName("session_restored")]
-    public bool? session_restored { get; set; }
+    public bool? SessionRestored { get; set; }
 
     /// <summary>Wire field <c>sessionid</c>.</summary>
     [JsonPropertyName("sessionid")]
-    public string? sessionid { get; set; }
+    public string? Sessionid { get; set; }
 
     /// <summary>Wire field <c>subscriptions</c>.</summary>
     [JsonPropertyName("subscriptions")]
-    public List<object?>? subscriptions { get; set; }
+    public List<object?>? Subscriptions { get; set; }
 }

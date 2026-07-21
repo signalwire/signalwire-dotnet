@@ -22,25 +22,25 @@ public class AvailablePhoneNumber
 {
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
-    public string? number { get; set; }
+    public string? Number { get; set; }
 
     /// <summary>Wire field <c>region</c>.</summary>
     [JsonPropertyName("region")]
-    public string? region { get; set; }
+    public string? Region { get; set; }
 
     /// <summary>Wire field <c>city</c>.</summary>
     [JsonPropertyName("city")]
-    public string? city { get; set; }
+    public string? City { get; set; }
 
     /// <summary>Wire field <c>rate_center</c>.</summary>
     [JsonPropertyName("rate_center")]
-    public string? rate_center { get; set; }
+    public string? RateCenter { get; set; }
 
     /// <summary>Wire field <c>lata</c>.</summary>
     [JsonPropertyName("lata")]
-    public string? lata { get; set; }
+    public string? Lata { get; set; }
 
     /// <summary>Wire field <c>capabilities</c>.</summary>
     [JsonPropertyName("capabilities")]
-    public Dictionary<string, object?>? capabilities { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberCapabilities? Capabilities { get; set; }
 }

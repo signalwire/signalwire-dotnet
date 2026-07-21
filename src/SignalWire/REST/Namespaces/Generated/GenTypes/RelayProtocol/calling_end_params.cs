@@ -22,13 +22,13 @@ public class CallingEndParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>reason</c>.</summary>
     [JsonPropertyName("reason")]
-    public string? reason { get; set; }
+    public string? Reason { get; set; }
 }

@@ -22,53 +22,53 @@ public class Document
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>filename</c>.</summary>
     [JsonPropertyName("filename")]
-    public string? filename { get; set; }
+    public string? Filename { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>tags</c>.</summary>
     [JsonPropertyName("tags")]
-    public List<object?>? tags { get; set; }
+    public List<object?>? Tags { get; set; }
 
     /// <summary>Wire field <c>chunking_strategy</c>.</summary>
     [JsonPropertyName("chunking_strategy")]
-    public Dictionary<string, object?>? chunking_strategy { get; set; }
+    public string? ChunkingStrategy { get; set; }
 
     /// <summary>Wire field <c>max_sentences_per_chunk</c>.</summary>
     [JsonPropertyName("max_sentences_per_chunk")]
-    public Dictionary<string, object?>? max_sentences_per_chunk { get; set; }
+    public long? MaxSentencesPerChunk { get; set; }
 
     /// <summary>Wire field <c>split_newlines</c>.</summary>
     [JsonPropertyName("split_newlines")]
-    public Dictionary<string, object?>? split_newlines { get; set; }
+    public bool? SplitNewlines { get; set; }
 
     /// <summary>Wire field <c>overlap_size</c>.</summary>
     [JsonPropertyName("overlap_size")]
-    public Dictionary<string, object?>? overlap_size { get; set; }
+    public long? OverlapSize { get; set; }
 
     /// <summary>Wire field <c>chunk_size</c>.</summary>
     [JsonPropertyName("chunk_size")]
-    public Dictionary<string, object?>? chunk_size { get; set; }
+    public long? ChunkSize { get; set; }
 
     /// <summary>Wire field <c>number_of_chunks</c>.</summary>
     [JsonPropertyName("number_of_chunks")]
-    public long? number_of_chunks { get; set; }
+    public long? NumberOfChunks { get; set; }
 
     /// <summary>Wire field <c>chunks_uri</c>.</summary>
     [JsonPropertyName("chunks_uri")]
-    public string? chunks_uri { get; set; }
+    public string? ChunksUri { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 }

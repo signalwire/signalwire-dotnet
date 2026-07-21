@@ -22,37 +22,37 @@ public class Queue
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? project_id { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>friendly_name</c>.</summary>
     [JsonPropertyName("friendly_name")]
-    public string? friendly_name { get; set; }
+    public string? FriendlyName { get; set; }
 
     /// <summary>Wire field <c>max_size</c>.</summary>
     [JsonPropertyName("max_size")]
-    public long? max_size { get; set; }
+    public long? MaxSize { get; set; }
 
     /// <summary>Wire field <c>current_size</c>.</summary>
     [JsonPropertyName("current_size")]
-    public long? current_size { get; set; }
+    public long? CurrentSize { get; set; }
 
     /// <summary>Wire field <c>average_wait_time</c>.</summary>
     [JsonPropertyName("average_wait_time")]
-    public long? average_wait_time { get; set; }
+    public long? AverageWaitTime { get; set; }
 
     /// <summary>Wire field <c>uri</c>.</summary>
     [JsonPropertyName("uri")]
-    public string? uri { get; set; }
+    public string? Uri { get; set; }
 
     /// <summary>Wire field <c>date_created</c>.</summary>
     [JsonPropertyName("date_created")]
-    public string? date_created { get; set; }
+    public string? DateCreated { get; set; }
 
     /// <summary>Wire field <c>date_updated</c>.</summary>
     [JsonPropertyName("date_updated")]
-    public string? date_updated { get; set; }
+    public string? DateUpdated { get; set; }
 }

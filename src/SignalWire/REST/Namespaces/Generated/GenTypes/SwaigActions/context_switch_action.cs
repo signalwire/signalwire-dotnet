@@ -22,25 +22,25 @@ public class ContextSwitchAction
 {
     /// <summary>Wire field <c>system_prompt</c>.</summary>
     [JsonPropertyName("system_prompt")]
-    public object? system_prompt { get; set; }
+    public object? SystemPrompt { get; set; }
 
     /// <summary>Wire field <c>user_prompt</c>.</summary>
     [JsonPropertyName("user_prompt")]
-    public object? user_prompt { get; set; }
+    public object? UserPrompt { get; set; }
 
     /// <summary>Wire field <c>system_pom</c>.</summary>
     [JsonPropertyName("system_pom")]
-    public object? system_pom { get; set; }
+    public object? SystemPom { get; set; }
 
     /// <summary>Wire field <c>user_pom</c>.</summary>
     [JsonPropertyName("user_pom")]
-    public object? user_pom { get; set; }
+    public object? UserPom { get; set; }
 
     /// <summary>Wire field <c>consolidate</c>.</summary>
     [JsonPropertyName("consolidate")]
-    public bool? consolidate { get; set; }
+    public bool? Consolidate { get; set; }
 
     /// <summary>Wire field <c>full_reset</c>.</summary>
     [JsonPropertyName("full_reset")]
-    public bool? full_reset { get; set; }
+    public bool? FullReset { get; set; }
 }

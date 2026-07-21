@@ -22,29 +22,29 @@ public class SignalwireConnectParams
 {
     /// <summary>Wire field <c>agent</c>.</summary>
     [JsonPropertyName("agent")]
-    public string? agent { get; set; }
+    public string? Agent { get; set; }
 
     /// <summary>Wire field <c>authentication</c>.</summary>
     [JsonPropertyName("authentication")]
-    public Dictionary<string, object?>? authentication { get; set; }
+    public Dictionary<string, object?>? Authentication { get; set; }
 
     /// <summary>Wire field <c>host</c>.</summary>
     [JsonPropertyName("host")]
-    public string? host { get; set; }
+    public string? Host { get; set; }
 
     /// <summary>Wire field <c>identity</c>.</summary>
     [JsonPropertyName("identity")]
-    public string? identity { get; set; }
+    public string? Identity { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? @params { get; set; }
+    public Dictionary<string, object?>? Params { get; set; }
 
     /// <summary>Wire field <c>protocols</c>.</summary>
     [JsonPropertyName("protocols")]
-    public List<object?>? protocols { get; set; }
+    public List<object?>? Protocols { get; set; }
 
     /// <summary>Wire field <c>version</c>.</summary>
     [JsonPropertyName("version")]
-    public Dictionary<string, object?>? version { get; set; }
+    public Dictionary<string, object?>? Version { get; set; }
 }

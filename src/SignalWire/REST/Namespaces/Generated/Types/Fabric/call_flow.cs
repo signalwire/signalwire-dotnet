@@ -22,21 +22,21 @@ public class CallFlow
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>title</c>.</summary>
     [JsonPropertyName("title")]
-    public string? title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>Wire field <c>flow_data</c>.</summary>
     [JsonPropertyName("flow_data")]
-    public string? flow_data { get; set; }
+    public string? FlowData { get; set; }
 
     /// <summary>Wire field <c>relayml</c>.</summary>
     [JsonPropertyName("relayml")]
-    public string? relayml { get; set; }
+    public string? Relayml { get; set; }
 
     /// <summary>Wire field <c>document_version</c>.</summary>
     [JsonPropertyName("document_version")]
-    public long? document_version { get; set; }
+    public long? DocumentVersion { get; set; }
 }

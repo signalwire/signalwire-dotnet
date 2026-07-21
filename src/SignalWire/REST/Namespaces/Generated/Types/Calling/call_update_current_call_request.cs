@@ -22,9 +22,9 @@ public class CallUpdateCurrentCallRequest
 {
     /// <summary>Wire field <c>command</c>.</summary>
     [JsonPropertyName("command")]
-    public string? command { get; set; }
+    public string? Command { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? @params { get; set; }
+    public object? Params { get; set; }
 }

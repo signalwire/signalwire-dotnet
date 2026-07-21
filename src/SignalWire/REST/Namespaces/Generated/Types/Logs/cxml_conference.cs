@@ -22,41 +22,41 @@ public class CxmlConference
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? project_id { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>region</c>.</summary>
     [JsonPropertyName("region")]
-    public string? region { get; set; }
+    public string? Region { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public Dictionary<string, object?>? status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>max_size</c>.</summary>
     [JsonPropertyName("max_size")]
-    public Dictionary<string, object?>? max_size { get; set; }
+    public long? MaxSize { get; set; }
 
     /// <summary>Wire field <c>current_participants</c>.</summary>
     [JsonPropertyName("current_participants")]
-    public long? current_participants { get; set; }
+    public long? CurrentParticipants { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 }

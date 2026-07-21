@@ -22,9 +22,9 @@ public class ListLogsResponse
 {
     /// <summary>Wire field <c>links</c>.</summary>
     [JsonPropertyName("links")]
-    public Dictionary<string, object?>? links { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Video.PaginationLinks? Links { get; set; }
 
     /// <summary>Wire field <c>data</c>.</summary>
     [JsonPropertyName("data")]
-    public List<object?>? data { get; set; }
+    public List<object?>? Data { get; set; }
 }

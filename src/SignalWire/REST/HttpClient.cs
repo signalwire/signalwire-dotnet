@@ -2,8 +2,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
+using SignalWire.Utils;
 
 namespace SignalWire.REST;
 
@@ -62,6 +64,7 @@ public class HttpClient : IDisposable
     /// <c>requestOptions</c> shallow-overrides it for a single call.
     /// </summary>
     [SuppressMessage("Usage", "CA1054", Justification = "baseUrl is a wire string sent verbatim to the SignalWire API.")]
+    [SuppressMessage("Reliability", "CA2000", Justification = "Ownership transfer: BuildRestTransportHandler()'s handler is passed to the HttpClient ctor with disposeHandler:true, so _http disposes it in Dispose() when _ownsHttp. Disposing it here would break the live client.")]
     public HttpClient(string projectId, string token, string baseUrl,
         System.Net.Http.HttpClient? httpClient, RequestOptions? requestOptions)
     {
@@ -81,7 +84,49 @@ public class HttpClient : IDisposable
         // enforce the per-attempt RequestOptions.Timeout ourselves via a linked
         // CTS (so timeout is per-attempt, resettable per retry, and separable from
         // caller cancellation). A caller-injected client keeps its own Timeout.
-        _http = httpClient ?? new System.Net.Http.HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
+        //
+        // A5 fleet CA-var contract: when SIGNALWIRE_REST_CA_FILE names a CA bundle,
+        // the transport WE create trusts that bundle as its TLS root (the .NET
+        // analogue of python rest/_base.py `session.verify = ca_file`). A
+        // caller-injected HttpClient keeps its own handler untouched — the caller
+        // owns its TLS config. Unset → the default OS trust store.
+        // disposeHandler:true — the SDK-owned handler's lifetime is bound to this
+        // HttpClient, which Dispose() tears down when _ownsHttp. This transfers
+        // ownership of the handler to _http (so the intermediate handler need not be
+        // separately disposed here).
+        _http = httpClient ?? new System.Net.Http.HttpClient(BuildRestTransportHandler(), disposeHandler: true)
+        {
+            Timeout = System.Threading.Timeout.InfiniteTimeSpan,
+        };
+    }
+
+    /// <summary>
+    /// Build the <see cref="HttpClientHandler"/> for a SDK-owned REST transport,
+    /// honouring the A5 fleet CA-var <c>SIGNALWIRE_REST_CA_FILE</c>. When the env
+    /// var names a PEM CA bundle, the returned handler validates the server chain
+    /// against that bundle as an additional trust root (mirrors python
+    /// <c>session.verify = SIGNALWIRE_REST_CA_FILE</c>). Unset → a plain
+    /// <see cref="HttpClientHandler"/> using the OS trust store. The returned
+    /// handler's lifetime transfers to the constructing <c>HttpClient</c>
+    /// (<c>disposeHandler:true</c>).
+    /// </summary>
+    [SuppressMessage("Reliability", "CA2000", Justification = "Ownership transfer: the handler is handed to the HttpClient ctor with disposeHandler:true, so _http disposes it in Dispose(); disposing it here would break the live client.")]
+    private static HttpClientHandler BuildRestTransportHandler()
+    {
+        var caFile = Environment.GetEnvironmentVariable("SIGNALWIRE_REST_CA_FILE");
+        var handler = new HttpClientHandler
+        {
+            // Keep revocation checking on for the SDK-owned transport (CA5400):
+            // honouring a custom CA root must not silently drop revocation.
+            CheckCertificateRevocationList = true,
+        };
+        if (!string.IsNullOrEmpty(caFile))
+        {
+            var trustBundle = CaTrust.LoadTrustBundle(caFile);
+            handler.ServerCertificateCustomValidationCallback =
+                (_, cert, chain, errors) => CaTrust.Validate(cert, chain, errors, trustBundle);
+        }
+        return handler;
     }
 
     // ------------------------------------------------------------------

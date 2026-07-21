@@ -22,29 +22,29 @@ public class MfaRequest
 {
     /// <summary>Wire field <c>to</c>.</summary>
     [JsonPropertyName("to")]
-    public string? to { get; set; }
+    public string? To { get; set; }
 
     /// <summary>Wire field <c>from</c>.</summary>
     [JsonPropertyName("from")]
-    public string? from { get; set; }
+    public string? From { get; set; }
 
     /// <summary>Wire field <c>message</c>.</summary>
     [JsonPropertyName("message")]
-    public string? message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>Wire field <c>token_length</c>.</summary>
     [JsonPropertyName("token_length")]
-    public long? token_length { get; set; }
+    public long? TokenLength { get; set; }
 
     /// <summary>Wire field <c>valid_for</c>.</summary>
     [JsonPropertyName("valid_for")]
-    public long? valid_for { get; set; }
+    public long? ValidFor { get; set; }
 
     /// <summary>Wire field <c>max_attempts</c>.</summary>
     [JsonPropertyName("max_attempts")]
-    public long? max_attempts { get; set; }
+    public long? MaxAttempts { get; set; }
 
     /// <summary>Wire field <c>allow_alphas</c>.</summary>
     [JsonPropertyName("allow_alphas")]
-    public bool? allow_alphas { get; set; }
+    public bool? AllowAlphas { get; set; }
 }

@@ -39,11 +39,11 @@ public class VoiceLogs
     }
 
     /// <summary>List resources (GET BasePath).</summary>
-    public Task<Dictionary<string, object?>> ListAsync(
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Voice.LogListResponse?> ListAsync(
         Dictionary<string, string>? queryParams = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Voice.LogListResponse>(Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken));
     }
 
     /// <summary>Retrieve a single resource by id (GET BasePath/{id}).</summary>
@@ -56,18 +56,22 @@ public class VoiceLogs
     /// <summary>Iterate every item across all pages of this resource's
     /// list endpoint, following ``links.next`` cursors (lazy — no request
     /// fires until iteration). Mirrors Python ``ReadResource.paginate``.</summary>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
     public SignalWire.REST.PaginatedIterator Paginate(
-        Dictionary<string, string>? queryParams = null)
+        Dictionary<string, string>? queryParams = null,
+        RequestOptions? requestOptions = null)
     {
-        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data");
+        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data", requestOptions: requestOptions);
     }
 
     /// <summary>
     /// Generated from operation <c>list_voice_log_events</c> (GET /logs/{id}/events).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListEventsAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Voice.LogEventsListResponse?> ListEventsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id, "events"), queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Voice.LogEventsListResponse>(Client.GetAsync(Path(id, "events"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

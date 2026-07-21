@@ -22,5 +22,5 @@ public class SendSMS
 {
     /// <summary>Wire field <c>send_sms</c>.</summary>
     [JsonPropertyName("send_sms")]
-    public Dictionary<string, object?>? send_sms { get; set; }
+    public object? SendSms { get; set; }
 }

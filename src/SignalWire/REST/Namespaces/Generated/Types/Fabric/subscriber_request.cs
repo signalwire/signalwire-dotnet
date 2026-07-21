@@ -22,41 +22,41 @@ public class SubscriberRequest
 {
     /// <summary>Wire field <c>password</c>.</summary>
     [JsonPropertyName("password")]
-    public string? password { get; set; }
+    public string? Password { get; set; }
 
     /// <summary>Wire field <c>email</c>.</summary>
     [JsonPropertyName("email")]
-    public string? email { get; set; }
+    public string? Email { get; set; }
 
     /// <summary>Wire field <c>first_name</c>.</summary>
     [JsonPropertyName("first_name")]
-    public string? first_name { get; set; }
+    public string? FirstName { get; set; }
 
     /// <summary>Wire field <c>last_name</c>.</summary>
     [JsonPropertyName("last_name")]
-    public string? last_name { get; set; }
+    public string? LastName { get; set; }
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public string? display_name { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>job_title</c>.</summary>
     [JsonPropertyName("job_title")]
-    public string? job_title { get; set; }
+    public string? JobTitle { get; set; }
 
     /// <summary>Wire field <c>timezone</c>.</summary>
     [JsonPropertyName("timezone")]
-    public string? timezone { get; set; }
+    public string? Timezone { get; set; }
 
     /// <summary>Wire field <c>country</c>.</summary>
     [JsonPropertyName("country")]
-    public string? country { get; set; }
+    public string? Country { get; set; }
 
     /// <summary>Wire field <c>region</c>.</summary>
     [JsonPropertyName("region")]
-    public string? region { get; set; }
+    public string? Region { get; set; }
 
     /// <summary>Wire field <c>company_name</c>.</summary>
     [JsonPropertyName("company_name")]
-    public string? company_name { get; set; }
+    public string? CompanyName { get; set; }
 }

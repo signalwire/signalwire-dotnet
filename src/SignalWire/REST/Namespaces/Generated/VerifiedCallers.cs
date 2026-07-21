@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// VerifiedCallers — REST resource for the relay-rest API.
 /// </summary>
-public class VerifiedCallers : SignalWire.REST.CrudResource
+public class VerifiedCallers : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.RelayRest.VerifiedCallerIDListResponse, SignalWire.REST.Namespaces.Generated.Types.RelayRest.VerifiedCallerIDResponse>
 {
     public VerifiedCallers(SignalWire.REST.HttpClient client)
         : base(client, "/api/relay/rest/verified_caller_ids")
@@ -27,9 +27,10 @@ public class VerifiedCallers : SignalWire.REST.CrudResource
     /// <summary>
     /// Generated from operation <c>redial_verification_call</c> (POST /verified_caller_ids/{id}/verification).
     /// </summary>
-    public Task<Dictionary<string, object?>> RedialVerificationAsync(string id, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.VerifiedCallerIDResponse?> RedialVerificationAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.PostAsync(Path(id, "verification"), null, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.VerifiedCallerIDResponse>(Client.PostAsync(Path(id, "verification"), null, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -37,7 +38,8 @@ public class VerifiedCallers : SignalWire.REST.CrudResource
     /// </summary>
     /// <param name="verificationCode">Wire field <c>verification_code</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> SubmitVerificationAsync(string id, string verificationCode, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.VerifiedCallerIDResponse?> SubmitVerificationAsync(string id, string verificationCode, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["verification_code"] = verificationCode;
@@ -48,6 +50,6 @@ public class VerifiedCallers : SignalWire.REST.CrudResource
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id, "verification"), _reqBody, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.VerifiedCallerIDResponse>(Client.PutAsync(Path(id, "verification"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

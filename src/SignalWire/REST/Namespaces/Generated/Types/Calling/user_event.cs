@@ -22,5 +22,5 @@ public class UserEvent
 {
     /// <summary>Wire field <c>user_event</c>.</summary>
     [JsonPropertyName("user_event")]
-    public Dictionary<string, object?>? user_event { get; set; }
+    public Dictionary<string, object?>? UserEvent_ { get; set; }
 }

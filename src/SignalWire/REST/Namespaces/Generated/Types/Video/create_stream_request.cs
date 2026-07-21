@@ -22,5 +22,5 @@ public class CreateStreamRequest
 {
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
-    public string? url { get; set; }
+    public string? Url { get; set; }
 }

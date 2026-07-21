@@ -39,26 +39,29 @@ public class MessageLogs
     }
 
     /// <summary>List resources (GET BasePath).</summary>
-    public Task<Dictionary<string, object?>> ListAsync(
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Message.LogListResponse?> ListAsync(
         Dictionary<string, string>? queryParams = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Message.LogListResponse>(Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken));
     }
 
     /// <summary>Retrieve a single resource by id (GET BasePath/{id}).</summary>
-    public Task<Dictionary<string, object?>> GetAsync(
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Message.LogRetrieveResponse?> GetAsync(
         string id, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Message.LogRetrieveResponse>(Client.GetAsync(Path(id), cancellationToken: cancellationToken));
     }
 
     /// <summary>Iterate every item across all pages of this resource's
     /// list endpoint, following ``links.next`` cursors (lazy — no request
     /// fires until iteration). Mirrors Python ``ReadResource.paginate``.</summary>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
     public SignalWire.REST.PaginatedIterator Paginate(
-        Dictionary<string, string>? queryParams = null)
+        Dictionary<string, string>? queryParams = null,
+        RequestOptions? requestOptions = null)
     {
-        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data");
+        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data", requestOptions: requestOptions);
     }
 }

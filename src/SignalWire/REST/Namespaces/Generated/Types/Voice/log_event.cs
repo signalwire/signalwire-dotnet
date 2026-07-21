@@ -22,25 +22,25 @@ public class LogEvent
 {
     /// <summary>Wire field <c>event_at</c>.</summary>
     [JsonPropertyName("event_at")]
-    public string? event_at { get; set; }
+    public string? EventAt { get; set; }
 
     /// <summary>Wire field <c>level</c>.</summary>
     [JsonPropertyName("level")]
-    public string? level { get; set; }
+    public string? Level { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>details</c>.</summary>
     [JsonPropertyName("details")]
-    public Dictionary<string, object?>? details { get; set; }
+    public Dictionary<string, object?>? Details { get; set; }
 
     /// <summary>Wire field <c>project_id</c>.</summary>
     [JsonPropertyName("project_id")]
-    public Dictionary<string, object?>? project_id { get; set; }
+    public string? ProjectId { get; set; }
 
     /// <summary>Wire field <c>log_id</c>.</summary>
     [JsonPropertyName("log_id")]
-    public Dictionary<string, object?>? log_id { get; set; }
+    public string? LogId { get; set; }
 }

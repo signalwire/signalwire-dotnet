@@ -22,117 +22,117 @@ public class Conference
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public string? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
-    public Dictionary<string, object?>? display_name { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>description</c>.</summary>
     [JsonPropertyName("description")]
-    public Dictionary<string, object?>? description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Wire field <c>join_from</c>.</summary>
     [JsonPropertyName("join_from")]
-    public Dictionary<string, object?>? join_from { get; set; }
+    public string? JoinFrom { get; set; }
 
     /// <summary>Wire field <c>join_until</c>.</summary>
     [JsonPropertyName("join_until")]
-    public Dictionary<string, object?>? join_until { get; set; }
+    public string? JoinUntil { get; set; }
 
     /// <summary>Wire field <c>quality</c>.</summary>
     [JsonPropertyName("quality")]
-    public Dictionary<string, object?>? quality { get; set; }
+    public string? Quality { get; set; }
 
     /// <summary>Wire field <c>layout</c>.</summary>
     [JsonPropertyName("layout")]
-    public Dictionary<string, object?>? layout { get; set; }
+    public string? Layout { get; set; }
 
     /// <summary>Wire field <c>size</c>.</summary>
     [JsonPropertyName("size")]
-    public Dictionary<string, object?>? size { get; set; }
+    public string? Size { get; set; }
 
     /// <summary>Wire field <c>record_on_start</c>.</summary>
     [JsonPropertyName("record_on_start")]
-    public bool? record_on_start { get; set; }
+    public bool? RecordOnStart { get; set; }
 
     /// <summary>Wire field <c>tone_on_entry_and_exit</c>.</summary>
     [JsonPropertyName("tone_on_entry_and_exit")]
-    public bool? tone_on_entry_and_exit { get; set; }
+    public bool? ToneOnEntryAndExit { get; set; }
 
     /// <summary>Wire field <c>user_join_video_off</c>.</summary>
     [JsonPropertyName("user_join_video_off")]
-    public bool? user_join_video_off { get; set; }
+    public bool? UserJoinVideoOff { get; set; }
 
     /// <summary>Wire field <c>room_join_video_off</c>.</summary>
     [JsonPropertyName("room_join_video_off")]
-    public bool? room_join_video_off { get; set; }
+    public bool? RoomJoinVideoOff { get; set; }
 
     /// <summary>Wire field <c>enable_chat</c>.</summary>
     [JsonPropertyName("enable_chat")]
-    public bool? enable_chat { get; set; }
+    public bool? EnableChat { get; set; }
 
     /// <summary>Wire field <c>enable_room_previews</c>.</summary>
     [JsonPropertyName("enable_room_previews")]
-    public Dictionary<string, object?>? enable_room_previews { get; set; }
+    public bool? EnableRoomPreviews { get; set; }
 
     /// <summary>Wire field <c>dark_primary</c>.</summary>
     [JsonPropertyName("dark_primary")]
-    public Dictionary<string, object?>? dark_primary { get; set; }
+    public string? DarkPrimary { get; set; }
 
     /// <summary>Wire field <c>dark_background</c>.</summary>
     [JsonPropertyName("dark_background")]
-    public Dictionary<string, object?>? dark_background { get; set; }
+    public string? DarkBackground { get; set; }
 
     /// <summary>Wire field <c>dark_foreground</c>.</summary>
     [JsonPropertyName("dark_foreground")]
-    public Dictionary<string, object?>? dark_foreground { get; set; }
+    public string? DarkForeground { get; set; }
 
     /// <summary>Wire field <c>dark_success</c>.</summary>
     [JsonPropertyName("dark_success")]
-    public Dictionary<string, object?>? dark_success { get; set; }
+    public string? DarkSuccess { get; set; }
 
     /// <summary>Wire field <c>dark_negative</c>.</summary>
     [JsonPropertyName("dark_negative")]
-    public Dictionary<string, object?>? dark_negative { get; set; }
+    public string? DarkNegative { get; set; }
 
     /// <summary>Wire field <c>light_primary</c>.</summary>
     [JsonPropertyName("light_primary")]
-    public Dictionary<string, object?>? light_primary { get; set; }
+    public string? LightPrimary { get; set; }
 
     /// <summary>Wire field <c>light_background</c>.</summary>
     [JsonPropertyName("light_background")]
-    public Dictionary<string, object?>? light_background { get; set; }
+    public string? LightBackground { get; set; }
 
     /// <summary>Wire field <c>light_foreground</c>.</summary>
     [JsonPropertyName("light_foreground")]
-    public Dictionary<string, object?>? light_foreground { get; set; }
+    public string? LightForeground { get; set; }
 
     /// <summary>Wire field <c>light_success</c>.</summary>
     [JsonPropertyName("light_success")]
-    public Dictionary<string, object?>? light_success { get; set; }
+    public string? LightSuccess { get; set; }
 
     /// <summary>Wire field <c>light_negative</c>.</summary>
     [JsonPropertyName("light_negative")]
-    public Dictionary<string, object?>? light_negative { get; set; }
+    public string? LightNegative { get; set; }
 
     /// <summary>Wire field <c>meta</c>.</summary>
     [JsonPropertyName("meta")]
-    public Dictionary<string, object?>? meta { get; set; }
+    public Dictionary<string, object?>? Meta { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 
     /// <summary>Wire field <c>active_session</c>.</summary>
     [JsonPropertyName("active_session")]
-    public Dictionary<string, object?>? active_session { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Video.ActiveSession? ActiveSession { get; set; }
 }

@@ -22,33 +22,33 @@ public class DocumentSearchRequest
 {
     /// <summary>Wire field <c>tags</c>.</summary>
     [JsonPropertyName("tags")]
-    public List<object?>? tags { get; set; }
+    public List<object?>? Tags { get; set; }
 
     /// <summary>Wire field <c>document_id</c>.</summary>
     [JsonPropertyName("document_id")]
-    public Dictionary<string, object?>? document_id { get; set; }
+    public string? DocumentId { get; set; }
 
     /// <summary>Wire field <c>query_string</c>.</summary>
     [JsonPropertyName("query_string")]
-    public string? query_string { get; set; }
+    public string? QueryString { get; set; }
 
     /// <summary>Wire field <c>distance</c>.</summary>
     [JsonPropertyName("distance")]
-    public double? distance { get; set; }
+    public double? Distance { get; set; }
 
     /// <summary>Wire field <c>count</c>.</summary>
     [JsonPropertyName("count")]
-    public long? count { get; set; }
+    public long? Count { get; set; }
 
     /// <summary>Wire field <c>language</c>.</summary>
     [JsonPropertyName("language")]
-    public string? language { get; set; }
+    public string? Language { get; set; }
 
     /// <summary>Wire field <c>pos_to_expand</c>.</summary>
     [JsonPropertyName("pos_to_expand")]
-    public List<object?>? pos_to_expand { get; set; }
+    public List<object?>? PosToExpand { get; set; }
 
     /// <summary>Wire field <c>max_synonyms</c>.</summary>
     [JsonPropertyName("max_synonyms")]
-    public long? max_synonyms { get; set; }
+    public long? MaxSynonyms { get; set; }
 }

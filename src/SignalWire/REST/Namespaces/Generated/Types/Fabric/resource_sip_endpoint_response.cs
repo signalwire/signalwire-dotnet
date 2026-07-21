@@ -22,25 +22,25 @@ public class ResourceSipEndpointResponse
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>Wire field <c>cover_url</c>.</summary>
     [JsonPropertyName("cover_url")]
-    public Dictionary<string, object?>? cover_url { get; set; }
+    public string? CoverUrl { get; set; }
 
     /// <summary>Wire field <c>preview_url</c>.</summary>
     [JsonPropertyName("preview_url")]
-    public Dictionary<string, object?>? preview_url { get; set; }
+    public string? PreviewUrl { get; set; }
 
     /// <summary>Wire field <c>channels</c>.</summary>
     [JsonPropertyName("channels")]
-    public Dictionary<string, object?>? channels { get; set; }
+    public Dictionary<string, object?>? Channels { get; set; }
 }

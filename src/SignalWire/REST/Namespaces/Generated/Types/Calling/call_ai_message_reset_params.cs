@@ -22,13 +22,13 @@ public class CallAIMessageResetParams
 {
     /// <summary>Wire field <c>full_reset</c>.</summary>
     [JsonPropertyName("full_reset")]
-    public bool? full_reset { get; set; }
+    public bool? FullReset { get; set; }
 
     /// <summary>Wire field <c>user_prompt</c>.</summary>
     [JsonPropertyName("user_prompt")]
-    public string? user_prompt { get; set; }
+    public string? UserPrompt { get; set; }
 
     /// <summary>Wire field <c>system_prompt</c>.</summary>
     [JsonPropertyName("system_prompt")]
-    public string? system_prompt { get; set; }
+    public string? SystemPrompt { get; set; }
 }

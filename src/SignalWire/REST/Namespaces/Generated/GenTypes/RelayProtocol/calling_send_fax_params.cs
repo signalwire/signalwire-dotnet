@@ -22,25 +22,25 @@ public class CallingSendFaxParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>control_id</c>.</summary>
     [JsonPropertyName("control_id")]
-    public string? control_id { get; set; }
+    public string? ControlId { get; set; }
 
     /// <summary>Wire field <c>document</c>.</summary>
     [JsonPropertyName("document")]
-    public string? document { get; set; }
+    public string? Document { get; set; }
 
     /// <summary>Wire field <c>header_info</c>.</summary>
     [JsonPropertyName("header_info")]
-    public string? header_info { get; set; }
+    public string? HeaderInfo { get; set; }
 
     /// <summary>Wire field <c>identity</c>.</summary>
     [JsonPropertyName("identity")]
-    public string? identity { get; set; }
+    public string? Identity { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 }

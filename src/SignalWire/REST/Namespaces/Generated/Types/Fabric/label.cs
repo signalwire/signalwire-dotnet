@@ -22,5 +22,5 @@ public class Label
 {
     /// <summary>Wire field <c>label</c>.</summary>
     [JsonPropertyName("label")]
-    public string? label { get; set; }
+    public string? Label_ { get; set; }
 }

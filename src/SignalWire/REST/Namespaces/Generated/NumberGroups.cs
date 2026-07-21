@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// NumberGroups — REST resource for the relay-rest API.
 /// </summary>
-public class NumberGroups : SignalWire.REST.CrudResource
+public class NumberGroups : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupListResponse, SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupResponse>
 {
     public NumberGroups(SignalWire.REST.HttpClient client)
         : base(client, "/api/relay/rest/number_groups")
@@ -28,9 +28,10 @@ public class NumberGroups : SignalWire.REST.CrudResource
     /// Generated from operation <c>list_number_group_memberships</c> (GET /number_groups/{NumberGroupId}/number_group_memberships).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListMembershipsAsync(string groupId, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupMembershipListResponse?> ListMembershipsAsync(string groupId, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(groupId, "number_group_memberships"), queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupMembershipListResponse>(Client.GetAsync(Path(groupId, "number_group_memberships"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -38,7 +39,8 @@ public class NumberGroups : SignalWire.REST.CrudResource
     /// </summary>
     /// <param name="phoneNumberId">Wire field <c>phone_number_id</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> AddMembershipAsync(string groupId, string phoneNumberId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupMembershipResponse?> AddMembershipAsync(string groupId, string phoneNumberId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["phone_number_id"] = phoneNumberId;
@@ -49,23 +51,25 @@ public class NumberGroups : SignalWire.REST.CrudResource
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PostAsync(Path(groupId, "number_group_memberships"), _reqBody, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupMembershipResponse>(Client.PostAsync(Path(groupId, "number_group_memberships"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
     /// Generated from operation <c>retrieve_number_group_membership</c> (GET /number_group_memberships/{id}).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetMembershipAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupMembershipResponse?> GetMembershipAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync("/api/relay/rest/number_group_memberships/" + id, queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupMembershipResponse>(Client.GetAsync("/api/relay/rest/number_group_memberships/" + id, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
     /// Generated from operation <c>delete_number_group_membership</c> (DELETE /number_group_memberships/{id}).
     /// </summary>
-    public Task<Dictionary<string, object?>> DeleteMembershipAsync(string id, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DeleteMembershipAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.DeleteAsync("/api/relay/rest/number_group_memberships/" + id, cancellationToken: cancellationToken);
+        return Client.DeleteAsync("/api/relay/rest/number_group_memberships/" + id, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

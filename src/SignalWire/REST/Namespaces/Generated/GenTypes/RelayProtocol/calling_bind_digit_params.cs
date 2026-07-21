@@ -22,33 +22,33 @@ public class CallingBindDigitParams
 {
     /// <summary>Wire field <c>bind_method</c>.</summary>
     [JsonPropertyName("bind_method")]
-    public string? bind_method { get; set; }
+    public string? BindMethod { get; set; }
 
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>digits</c>.</summary>
     [JsonPropertyName("digits")]
-    public string? digits { get; set; }
+    public string? Digits { get; set; }
 
     /// <summary>Wire field <c>max_triggers</c>.</summary>
     [JsonPropertyName("max_triggers")]
-    public long? max_triggers { get; set; }
+    public long? MaxTriggers { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public object? @params { get; set; }
+    public object? Params { get; set; }
 
     /// <summary>Wire field <c>realm</c>.</summary>
     [JsonPropertyName("realm")]
-    public string? realm { get; set; }
+    public string? Realm { get; set; }
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public bool? swml { get; set; }
+    public bool? Swml { get; set; }
 }

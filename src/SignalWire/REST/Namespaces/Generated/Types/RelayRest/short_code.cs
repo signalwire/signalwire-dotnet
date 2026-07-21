@@ -22,73 +22,73 @@ public class ShortCode
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public Dictionary<string, object?>? name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
-    public string? number { get; set; }
+    public string? Number { get; set; }
 
     /// <summary>Wire field <c>capabilities</c>.</summary>
     [JsonPropertyName("capabilities")]
-    public List<object?>? capabilities { get; set; }
+    public List<object?>? Capabilities { get; set; }
 
     /// <summary>Wire field <c>number_type</c>.</summary>
     [JsonPropertyName("number_type")]
-    public string? number_type { get; set; }
+    public string? NumberType { get; set; }
 
     /// <summary>Wire field <c>code_type</c>.</summary>
     [JsonPropertyName("code_type")]
-    public Dictionary<string, object?>? code_type { get; set; }
+    public string? CodeType { get; set; }
 
     /// <summary>Wire field <c>country_code</c>.</summary>
     [JsonPropertyName("country_code")]
-    public string? country_code { get; set; }
+    public string? CountryCode { get; set; }
 
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
-    public string? created_at { get; set; }
+    public string? CreatedAt { get; set; }
 
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
-    public string? updated_at { get; set; }
+    public string? UpdatedAt { get; set; }
 
     /// <summary>Wire field <c>next_billed_at</c>.</summary>
     [JsonPropertyName("next_billed_at")]
-    public Dictionary<string, object?>? next_billed_at { get; set; }
+    public string? NextBilledAt { get; set; }
 
     /// <summary>Wire field <c>lease_duration</c>.</summary>
     [JsonPropertyName("lease_duration")]
-    public Dictionary<string, object?>? lease_duration { get; set; }
+    public string? LeaseDuration { get; set; }
 
     /// <summary>Wire field <c>message_handler</c>.</summary>
     [JsonPropertyName("message_handler")]
-    public Dictionary<string, object?>? message_handler { get; set; }
+    public string? MessageHandler { get; set; }
 
     /// <summary>Wire field <c>message_request_url</c>.</summary>
     [JsonPropertyName("message_request_url")]
-    public Dictionary<string, object?>? message_request_url { get; set; }
+    public string? MessageRequestUrl { get; set; }
 
     /// <summary>Wire field <c>message_request_method</c>.</summary>
     [JsonPropertyName("message_request_method")]
-    public Dictionary<string, object?>? message_request_method { get; set; }
+    public string? MessageRequestMethod { get; set; }
 
     /// <summary>Wire field <c>message_fallback_url</c>.</summary>
     [JsonPropertyName("message_fallback_url")]
-    public Dictionary<string, object?>? message_fallback_url { get; set; }
+    public string? MessageFallbackUrl { get; set; }
 
     /// <summary>Wire field <c>message_fallback_method</c>.</summary>
     [JsonPropertyName("message_fallback_method")]
-    public Dictionary<string, object?>? message_fallback_method { get; set; }
+    public string? MessageFallbackMethod { get; set; }
 
     /// <summary>Wire field <c>message_laml_application_id</c>.</summary>
     [JsonPropertyName("message_laml_application_id")]
-    public Dictionary<string, object?>? message_laml_application_id { get; set; }
+    public string? MessageLamlApplicationId { get; set; }
 
     /// <summary>Wire field <c>message_relay_context</c>.</summary>
     [JsonPropertyName("message_relay_context")]
-    public Dictionary<string, object?>? message_relay_context { get; set; }
+    public string? MessageRelayContext { get; set; }
 }

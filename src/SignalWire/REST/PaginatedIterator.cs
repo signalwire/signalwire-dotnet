@@ -21,6 +21,7 @@ public class PaginatedIterator : IAsyncEnumerable<Dictionary<string, object?>>
     private readonly string _path;
     private readonly Dictionary<string, string>? _params;
     private readonly string _dataKey;
+    private readonly RequestOptions? _requestOptions;
 
     // Fields exposed through internal accessors so the cross-language audit
     // can detect parity with Python's _http / _path / _params / _data_key /
@@ -31,13 +32,21 @@ public class PaginatedIterator : IAsyncEnumerable<Dictionary<string, object?>>
     private string? _nextPath;
     private Dictionary<string, string>? _nextParams;
 
+    // Cycle guard (mirrors python rest/_pagination.py `_seen_next`): the set of
+    // `links.next` cursor URLs already fetched. A server that returns the SAME
+    // next cursor it was just handed would loop forever; when a repeated cursor is
+    // seen we terminate instead of re-fetching. Keyed by the full next-URL string.
+    private readonly HashSet<string> _seenNext = new(StringComparer.Ordinal);
+
     public PaginatedIterator(HttpClient http, string path,
-        Dictionary<string, string>? @params = null, string dataKey = "data")
+        Dictionary<string, string>? @params = null, string dataKey = "data",
+        RequestOptions? requestOptions = null)
     {
         _http = http;
         _path = path;
         _params = @params;
         _dataKey = dataKey;
+        _requestOptions = requestOptions;
         _nextPath = path;
         _nextParams = @params;
     }
@@ -55,13 +64,21 @@ public class PaginatedIterator : IAsyncEnumerable<Dictionary<string, object?>>
     /// when exhausted (mirroring Python's StopIteration).</summary>
     public async Task<Dictionary<string, object?>> NextAsync()
     {
-        if (_index >= _items.Count)
+        // Advance across pages until an item is available or we genuinely
+        // terminate. An EMPTY page that still carries a `links.next` cursor is NOT
+        // the end — more pages exist, this one just matched nothing — so we keep
+        // fetching past it (mirrors python: termination is driven ONLY by the
+        // absence of a next link, never by an empty page). A naive
+        // "stop when the page is empty" would silently drop every later page.
+        while (_index >= _items.Count)
         {
             if (_done) throw new InvalidOperationException("PaginatedIterator exhausted");
             await FetchNextPageAsync().ConfigureAwait(false);
-            if (_index >= _items.Count)
+            // FetchNextPageAsync sets _done when there is no further next link (or
+            // a repeated cursor was detected). If it set _done and the freshly
+            // fetched page is still empty, iteration is truly exhausted.
+            if (_index >= _items.Count && _done)
             {
-                _done = true;
                 throw new InvalidOperationException("PaginatedIterator exhausted");
             }
         }
@@ -75,7 +92,7 @@ public class PaginatedIterator : IAsyncEnumerable<Dictionary<string, object?>>
             _done = true;
             return;
         }
-        var resp = await _http.GetAsync(_nextPath, _nextParams).ConfigureAwait(false);
+        var resp = await _http.GetAsync(_nextPath, _nextParams, requestOptions: _requestOptions).ConfigureAwait(false);
 
         if (resp.TryGetValue(_dataKey, out var dataObj) && dataObj is List<object?> dataList)
         {
@@ -93,6 +110,17 @@ public class PaginatedIterator : IAsyncEnumerable<Dictionary<string, object?>>
             && links.TryGetValue("next", out var nextObj)
             && nextObj?.ToString() is { Length: > 0 } nextUrl)
         {
+            // Cycle guard: a `links.next` we have ALREADY fetched means the server
+            // is handing back the same cursor — following it would loop forever.
+            // Terminate instead (mirrors python `_seen_next`). The raw cursor
+            // string is the identity key (before URL/path splitting).
+            if (!_seenNext.Add(nextUrl))
+            {
+                _nextPath = null;
+                _done = true;
+                return;
+            }
+
             if (nextUrl.StartsWith("http", StringComparison.Ordinal))
             {
                 var uri = new Uri(nextUrl);
@@ -108,7 +136,10 @@ public class PaginatedIterator : IAsyncEnumerable<Dictionary<string, object?>>
         }
         else
         {
+            // No next link → this is the last page. Terminate after its items
+            // are yielded (an empty last page with no next → exhausted).
             _nextPath = null;
+            _done = true;
         }
     }
 

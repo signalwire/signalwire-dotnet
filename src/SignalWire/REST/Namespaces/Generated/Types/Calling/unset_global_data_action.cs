@@ -22,5 +22,5 @@ public class UnsetGlobalDataAction
 {
     /// <summary>Wire field <c>unset_global_data</c>.</summary>
     [JsonPropertyName("unset_global_data")]
-    public Dictionary<string, object?>? unset_global_data { get; set; }
+    public object? UnsetGlobalData { get; set; }
 }

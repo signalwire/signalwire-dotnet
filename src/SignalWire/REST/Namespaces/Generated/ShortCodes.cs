@@ -42,18 +42,20 @@ public class ShortCodes
     /// Generated from operation <c>list_short_codes</c> (GET /short_codes).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> ListAsync(Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.ShortCodeListResponse?> ListAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.ShortCodeListResponse>(Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
     /// Generated from operation <c>retrieve_short_code</c> (GET /short_codes/{id}).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetAsync(string id, Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.ShortCodeResponse?> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(Path(id), queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.ShortCodeResponse>(Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -68,7 +70,8 @@ public class ShortCodes
     /// <param name="messageLamlApplicationId">Wire field <c>message_laml_application_id</c>.</param>
     /// <param name="messageRelayContext">Wire field <c>message_relay_context</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> UpdateAsync(string id, string name, string messageHandler, string? messageRequestUrl = null, string? messageRequestMethod = null, string? messageFallbackUrl = null, string? messageFallbackMethod = null, string? messageLamlApplicationId = null, string? messageRelayContext = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.ShortCodeResponse?> UpdateAsync(string id, string name, string messageHandler, string? messageRequestUrl = null, string? messageRequestMethod = null, string? messageFallbackUrl = null, string? messageFallbackMethod = null, string? messageLamlApplicationId = null, string? messageRelayContext = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["name"] = name;
@@ -104,6 +107,6 @@ public class ShortCodes
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(Path(id), _reqBody, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.ShortCodeResponse>(Client.PutAsync(Path(id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

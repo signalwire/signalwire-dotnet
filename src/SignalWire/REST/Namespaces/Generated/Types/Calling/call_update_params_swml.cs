@@ -22,21 +22,21 @@ public class CallUpdateParamsSWML
 {
     /// <summary>Wire field <c>id</c>.</summary>
     [JsonPropertyName("id")]
-    public Dictionary<string, object?>? id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>Wire field <c>fallback_url</c>.</summary>
     [JsonPropertyName("fallback_url")]
-    public string? fallback_url { get; set; }
+    public string? FallbackUrl { get; set; }
 
     /// <summary>Wire field <c>status</c>.</summary>
     [JsonPropertyName("status")]
-    public string? status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? status_url { get; set; }
+    public string? StatusUrl { get; set; }
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public Dictionary<string, object?>? swml { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.SWMLObject? Swml { get; set; }
 }

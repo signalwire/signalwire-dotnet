@@ -22,37 +22,37 @@ public class CarrierLookupInfo
 {
     /// <summary>Wire field <c>lrn</c>.</summary>
     [JsonPropertyName("lrn")]
-    public string? lrn { get; set; }
+    public string? Lrn { get; set; }
 
     /// <summary>Wire field <c>spid</c>.</summary>
     [JsonPropertyName("spid")]
-    public string? spid { get; set; }
+    public string? Spid { get; set; }
 
     /// <summary>Wire field <c>ocn</c>.</summary>
     [JsonPropertyName("ocn")]
-    public string? ocn { get; set; }
+    public string? Ocn { get; set; }
 
     /// <summary>Wire field <c>lata</c>.</summary>
     [JsonPropertyName("lata")]
-    public string? lata { get; set; }
+    public string? Lata { get; set; }
 
     /// <summary>Wire field <c>city</c>.</summary>
     [JsonPropertyName("city")]
-    public string? city { get; set; }
+    public string? City { get; set; }
 
     /// <summary>Wire field <c>state</c>.</summary>
     [JsonPropertyName("state")]
-    public string? state { get; set; }
+    public string? State { get; set; }
 
     /// <summary>Wire field <c>jurisdiction</c>.</summary>
     [JsonPropertyName("jurisdiction")]
-    public string? jurisdiction { get; set; }
+    public string? Jurisdiction { get; set; }
 
     /// <summary>Wire field <c>lec</c>.</summary>
     [JsonPropertyName("lec")]
-    public string? lec { get; set; }
+    public string? Lec { get; set; }
 
     /// <summary>Wire field <c>linetype</c>.</summary>
     [JsonPropertyName("linetype")]
-    public string? linetype { get; set; }
+    public string? Linetype { get; set; }
 }

@@ -288,6 +288,8 @@ class Spec:
         self.namespace_attr = (doc.get("x-sdk-namespace") or {}).get("attr") or ""
         self.ops: dict[str, tuple[str, str, bool]] = {}
         self.op_body: dict[str, dict] = {}  # operationId -> requestBody JSON schema (or {})
+        # operationId -> 200/201/2XX JSON response schema (for the typed-return flip).
+        self.op_response: dict[str, dict] = {}
         for path, item in (doc.get("paths") or {}).items():
             for verb in ("get", "post", "put", "patch", "delete"):
                 o = item.get(verb)
@@ -297,6 +299,11 @@ class Spec:
                     content = body.get("content") or {}
                     media = content.get("application/json") or (next(iter(content.values())) if content else {})
                     self.op_body[o["operationId"]] = (media or {}).get("schema") or {}
+                    responses = o.get("responses") or {}
+                    ok = responses.get("200") or responses.get("201") or responses.get("2XX") or {}
+                    rc = (ok.get("content") or {})
+                    rmedia = rc.get("application/json") or (next(iter(rc.values())) if rc else {})
+                    self.op_response[o["operationId"]] = (rmedia or {}).get("schema") or {}
         self.schemas = ((doc.get("components") or {}).get("schemas")) or {}
 
     def resources(self) -> list[tuple[str, dict]]:
@@ -594,9 +601,46 @@ def ordered_fields(fields: list[tuple[str, dict, bool]]) -> list[tuple[str, dict
 # Each record: {"name", "kind", "type", "required", ["default"]}.
 _SIDECAR: dict[tuple[str, str], list[dict]] = {}
 
+# DOTNET-1: (ClassName, canonical method name) -> canonical return token
+# (``class:<oracle-module>.<Leaf>`` for a typed DTO, ``dict<string,any>`` for a
+# Dictionary return). The signature enumerator reads this to record the method's
+# actual typed return instead of the loose ``dict<string,any>`` scaffold, so a
+# flipped return MATCHES the (now-typed) python oracle. Keyed by CANONICAL name
+# (snake) so it joins the enumerator's surface-name loop directly.
+_SIDECAR_RETURNS: dict[tuple[str, str], str] = {}
+
 
 def _register_sidecar(cls: str, cs_method: str, records: list[dict]) -> None:
     _SIDECAR[(cls, cs_method)] = records
+
+
+def _register_sidecar_return(cls: str, cs_method: str, cs_type: str) -> None:
+    """Record the canonical return token for a generated method, keyed by its
+    CANONICAL (snake) name — the key the enumerator's surface loop uses."""
+    canon = _pascal_to_snake_name(ASYNC_RE.sub("", cs_method))
+    _SIDECAR_RETURNS[(cls, canon)] = _returns_canonical(cs_type)
+
+
+ASYNC_RE = re.compile(r"Async$")
+
+
+def _typed_return(ret_cs: str, call_line: str) -> tuple[str, str]:
+    """Given a C# return element type and a ``return <expr>;`` call line whose
+    <expr> is a ``Task<Dictionary<string, object?>>``, return
+    ``(task_return_type, call_line)``. For a Dictionary return the call line is
+    unchanged (``Task<Dictionary<string, object?>>``); for a typed DTO the inner
+    expression is wrapped in ``ResponseProjection.AsAsync<T>(...)`` (a nullable
+    ``Task<T?>`` — a bodyless/absent response projects to null, matching the
+    reference's cast() over an empty dict)."""
+    if _is_dict_cs_type(ret_cs):
+        return "Task<Dictionary<string, object?>>", call_line
+    # call_line looks like: "        return <expr>;" (leading whitespace kept).
+    m = re.match(r"^(\s*)return (.*);\s*$", call_line)
+    if not m:
+        raise SystemExit(f"typed-return: unrecognised call line {call_line!r}")
+    indent, expr = m.group(1), m.group(2)
+    wrapped = f"{indent}return SignalWire.REST.ResponseProjection.AsAsync<{ret_cs}>({expr});"
+    return f"Task<{ret_cs}?>", wrapped
 
 
 def _dedupe_param(ident: str, used: set[str]) -> str:
@@ -659,6 +703,14 @@ def body_params(spec: Spec, cls: str, cs_method: str,
     build.append("                _reqBody[kv.Key] = kv.Value;")
     build.append("            }")
     build.append("        }")
+    # request_options (plan 4.2): the keyword-only per-call envelope, recorded
+    # AFTER extras to match the oracle param order (…fields, extras,
+    # request_options). The C# param + threading are appended in emit_method.
+    records.append({
+        "name": "request_options", "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": False, "default": None,
+    })
     _register_sidecar(cls, cs_method, records)
     return cs_params, build, doc
 
@@ -749,6 +801,217 @@ def _type_schema_type(node: dict):
     return t
 
 
+# ---------------------------------------------------------------------------
+# Typed response returns (DOTNET-1 flip).
+#
+# Each generated resource method returns the closed spec-typed ``*Response`` DTO
+# (the emitted ``Types/<Sub>/<Name>`` class) instead of ``Dictionary<string,
+# object?>`` — mirroring the Python reference, whose typed methods annotate
+# ``-> <Name>Response`` and ``cast(...)`` the runtime dict to it. The DTO name is
+# the sanitised leaf of the operation's 200/201/2XX JSON response ``$ref`` (a list
+# response's ``{type:array, items:{$ref}}`` is unwrapped to the item's ref, so the
+# derived name matches the hand *ListResponse binding). An operation with NO
+# response ``$ref`` — or one whose ref resolves to a NON-object schema (scalar /
+# array / union alias) — keeps ``Dictionary<string, object?>`` (the reference's
+# ``dict[str, Any]``): a bodyless 204 delete, an inline/array-of-scalar response.
+# ---------------------------------------------------------------------------
+
+
+def _types_subpackage(spec_name: str) -> str:
+    """The C# Types sub-namespace for a spec dir — matches discover_type_ns's
+    PascalSub (override table for pubsub, else snake_to_pascal)."""
+    return _TYPE_SUB_OVERRIDE.get(spec_name) or snake_to_pascal(spec_name)
+
+
+def _response_raw_leaf(schema: dict) -> str:
+    """The RAW (unsanitised) schema-name leaf of a 200/201 response ``$ref``
+    (array-unwrapped), or '' when the response carries no named ref."""
+    if not isinstance(schema, dict):
+        return ""
+    ref = schema.get("$ref", "")
+    if not ref and schema.get("type") == "array":
+        ref = (schema.get("items") or {}).get("$ref", "")
+    if not ref:
+        return ""
+    return ref.rsplit("/", 1)[-1]
+
+
+def response_ref_leaf(spec: "Spec", schema: dict) -> str:
+    """The sanitised C# class leaf for a 200/201 response schema's ``$ref``
+    (array-unwrapped) — but ONLY when that schema is actually EMITTED as an object
+    DTO (``emit_types`` emits a class for ``is_object_schema`` object schemas). A
+    response whose ref resolves to a NON-object schema (a scalar/array/union alias
+    the reference — and this generator — do NOT surface as a class) yields '' → the
+    method keeps its ``Dictionary`` return (mirroring ``dict[str, Any]``)."""
+    raw = _response_raw_leaf(schema)
+    if not raw:
+        return ""
+    node = spec.schemas.get(raw)
+    if not (isinstance(node, dict) and is_object_schema(node)):
+        return ""
+    return type_name(raw)
+
+
+def response_cs_type(spec: "Spec", op_id: str) -> str:
+    """The fully-qualified C# response type for an operation: the generated response
+    DTO class (``Types.<Sub>.<Name>``) when the op has a named OBJECT response
+    schema, else ``Dictionary<string, object?>``."""
+    leaf = response_ref_leaf(spec, spec.op_response.get(op_id) or {})
+    if not leaf:
+        return "Dictionary<string, object?>"
+    return f"{TYPES_CS_NS_BASE}.{_types_subpackage(spec.name)}.{leaf}"
+
+
+def item_cs_type(spec: "Spec", anchor: str, markup: dict) -> str:
+    """The resource's item response DTO (the GET-by-id 200 response) — the return
+    type of create/update/get and the set_* helpers. Falls back to Dictionary."""
+    coll = collection_segment(anchor, markup)
+    for path, item in (spec.doc.get("paths") or {}).items():
+        if path.startswith(coll + "/{") and path.count("/{") == 1 and path.endswith("}"):
+            op = item.get("get")
+            if op and op.get("operationId"):
+                return response_cs_type(spec, op["operationId"])
+    return "Dictionary<string, object?>"
+
+
+# DOTNET-1 crud_base: ClassName -> {"base": <baseName>, "bind": [<class:Leaf>...]}.
+# A generated resource extending a method-contract base (CrudResource /
+# CrudWithAddresses / ReadResource) publishes its typed CRUD contract STRUCTURALLY,
+# exactly as the Python reference does via the generic ``CrudResource[TList, TItem,
+# TCreate, TUpdate]`` bind. The .NET CRUD methods are inherited from the (now
+# generic) base, so the bind — not a per-method return — is the cross-port contract
+# the signature enumerator emits as ``crud_base`` and the drift/lock gates compare.
+# Bind order mirrors the reference:
+#   CrudResource/CrudWithAddresses: [listResponse, itemResponse, createReq, updateReq]
+#   ReadResource:                   [listResponse, itemResponse]
+_CRUD_BASES: dict[str, dict] = {}
+
+
+def _crud_response_bind_leaf(spec: "Spec", op_id: str) -> str:
+    """The RAW schema leaf for a crud_base RESPONSE bind (array-unwrapped),
+    matching the reference's ``leaf(res_ref)`` — NOT object-gated (a structural
+    type token compared by leaf, not an emitted return type)."""
+    raw = _response_raw_leaf(spec.op_response.get(op_id, {}) or {})
+    return type_name(raw) if raw else ""
+
+
+def _request_ref_leaf(schema: dict) -> str:
+    """The sanitised type leaf of a request-body schema's ``$ref``, or '' when the
+    body is a union / inline (no single named ref)."""
+    if not isinstance(schema, dict):
+        return ""
+    ref = schema.get("$ref", "")
+    if not ref:
+        return ""
+    return type_name(ref.rsplit("/", 1)[-1])
+
+
+def _collection_roles(spec: "Spec", anchor: str, markup: dict) -> dict[str, dict]:
+    """role -> {verb, op} for the resource's collection + item ops (list/create on
+    the collection, get/update/delete on the item), mirroring the reference roles."""
+    coll = collection_segment(anchor, markup)
+    roles: dict[str, dict] = {}
+    for path, item in (spec.doc.get("paths") or {}).items():
+        is_item = path.startswith(coll + "/{") and path.count("/{") == 1 and path.endswith("}")
+        is_coll = path == coll
+        if not (is_item or is_coll):
+            continue
+        for verb in ("get", "post", "put", "patch", "delete"):
+            o = item.get(verb)
+            if not (o and o.get("operationId")):
+                continue
+            if verb == "get":
+                role = "get" if is_item else "list"
+            elif verb == "post":
+                role = "create"
+            elif verb in ("put", "patch"):
+                role = "update"
+            else:
+                role = "delete"
+            roles.setdefault(role, {"verb": verb, "op": o["operationId"]})
+    return roles
+
+
+def _crud_bind(spec: "Spec", anchor: str, markup: dict, base: str) -> list[str]:
+    """The crud_base bind token list (``class:<Leaf>``) for a resource, in the
+    reference's order. Returns [] when the base takes no bind."""
+    roles = _collection_roles(spec, anchor, markup)
+    item_leaf = _crud_response_bind_leaf(spec, (roles.get("get") or {}).get("op", ""))
+    list_leaf = _crud_response_bind_leaf(spec, (roles.get("list") or {}).get("op", ""))
+    binds: list[str] = []
+    if base == "ReadResource":
+        binds = [list_leaf or item_leaf, item_leaf]
+    elif base in ("CrudResource", "FabricResource"):
+        create_leaf = _request_ref_leaf(spec.op_body.get((roles.get("create") or {}).get("op", ""), {}) or {})
+        update_leaf = _request_ref_leaf(spec.op_body.get((roles.get("update") or {}).get("op", ""), {}) or {})
+        binds = [list_leaf or item_leaf, item_leaf, create_leaf, update_leaf]
+    return [f"class:{b}" if b else "any" for b in binds]
+
+
+def _crud_generic_args(spec: "Spec", anchor: str, markup: dict) -> tuple[str, str]:
+    """The C# (TList, TItem) generic type-argument DTOs for a CRUD/Fabric resource's
+    generic base binding — the list-response and item-response DTO C# types, each
+    falling back to ``Dictionary<string, object?>`` when absent/non-object."""
+    roles = _collection_roles(spec, anchor, markup)
+    list_cs = response_cs_type(spec, (roles.get("list") or {}).get("op", ""))
+    item_cs = response_cs_type(spec, (roles.get("get") or {}).get("op", ""))
+    if _is_dict_cs_type(list_cs):
+        list_cs = item_cs  # list falls back to the item DTO (reference does the same)
+    return list_cs, item_cs
+
+
+def _read_list_get_cs(spec: "Spec", anchor: str, markup: dict) -> tuple[str, str]:
+    """The (list-response, item-response) C# DTO types for a ReadResource — the
+    GET-on-collection 200 response and the GET-on-item (``<collection>/{id}``) 200
+    response. Each falls back to Dictionary when absent/non-object."""
+    coll = collection_segment(anchor, markup)
+    list_cs = "Dictionary<string, object?>"
+    get_cs = "Dictionary<string, object?>"
+    for path, item in (spec.doc.get("paths") or {}).items():
+        op = item.get("get")
+        if not (op and op.get("operationId")):
+            continue
+        if path == coll:
+            list_cs = response_cs_type(spec, op["operationId"])
+        elif path.startswith(coll + "/{") and path.count("/{") == 1 and path.endswith("}"):
+            get_cs = response_cs_type(spec, op["operationId"])
+    return list_cs, get_cs
+
+
+def _is_dict_cs_type(cs_type: str) -> bool:
+    return cs_type.startswith("Dictionary<")
+
+
+def _returns_canonical(cs_type: str) -> str:
+    """The canonical (oracle-shape) return token for a C# return type — mirrors
+    what the signature enumerator's translate_dotnet_type would emit for the
+    Task<T>-unwrapped T. A Dictionary keeps the loose ``dict<string,any>``; a
+    typed DTO becomes ``class:<oracle-module>.<Leaf>`` so it matches the oracle."""
+    if _is_dict_cs_type(cs_type):
+        return "dict<string,any>"
+    # Types.<Sub>.<Leaf> -> class:signalwire.rest.namespaces.<ns>_types_generated.<Leaf>
+    ns_prefix = TYPES_CS_NS_BASE + "."
+    if cs_type.startswith(ns_prefix):
+        rest = cs_type[len(ns_prefix):]
+        sub, _, leaf = rest.partition(".")
+        ns_leaf = _REST_TYPES_NS_LEAF.get(sub)
+        if ns_leaf:
+            return f"class:signalwire.rest.namespaces.{ns_leaf}_types_generated.{leaf}"
+    return "dict<string,any>"
+
+
+# C# Types sub-namespace segment -> oracle <ns>_types_generated leaf (mirrors the
+# enumerator's _REST_TYPES_NS_LEAF; kept here so the generator can emit the sidecar
+# ``returns`` canonical token without importing the enumerator).
+_REST_TYPES_NS_LEAF = {
+    "RelayRest": "relay_rest", "Fabric": "fabric", "Calling": "calling",
+    "Video": "video", "Datasphere": "datasphere", "Logs": "logs",
+    "Message": "message", "Messages": "messages", "Voice": "voice",
+    "Fax": "fax", "Project": "project", "Projects": "projects",
+    "Chat": "chat", "PubSub": "pubsub", "SwmlWebhooks": "swml_webhooks",
+}
+
+
 def is_object_schema(node: dict) -> bool:
     """Mirror the reference is_object test: type:object (or no type but non-empty
     properties) AND not a oneOf/anyOf/allOf combinator AND properties non-empty."""
@@ -780,7 +1043,20 @@ def _ref_leaf_cs(ref: str, ref_names: dict) -> str | None:
     return ref_names.get(leaf)
 
 
-def _wire_field_cs_type(psc: dict, ref_names: dict) -> str:
+def _resolve_ref_schema(psc: dict, schemas: dict | None) -> dict:
+    """Resolve a bare ``$ref`` to its target schema (one hop) when ``schemas`` is
+    available; else return the node unchanged. Used to peer through a scalar-alias
+    ref (``uuid`` = ``{type: string}``) so a field typed via that ref keeps its
+    scalar C# type rather than falling back to the open Dictionary."""
+    if not schemas or not isinstance(psc, dict):
+        return psc
+    ref = psc.get("$ref")
+    if not ref:
+        return psc
+    return schemas.get(ref.rsplit("/", 1)[-1], {}) or {}
+
+
+def _wire_field_cs_type(psc: dict, ref_names: dict, schemas: dict | None = None) -> str:
     """The C# property type for a wire field, mirroring the reference's ``py_type``
     field-typing rule (generate_python_rest_types.py) so the .NET signature
     enumerator records the SAME class-typed accessors the oracle does:
@@ -796,15 +1072,56 @@ def _wire_field_cs_type(psc: dict, ref_names: dict) -> str:
 
     ``ref_names`` maps a surfaced-object LEAF name -> its fully-qualified C# type
     name (so a cross-namespace ref like PostPromptSwaigLogEntry.post_data ->
-    SignalWire.Core.SwaigRequestGenerated.SwaigRequest resolves)."""
+    SignalWire.Core.SwaigRequestGenerated.SwaigRequest resolves). ``schemas`` (when
+    supplied) lets a scalar-alias ``$ref`` / single-member ``allOf: [$ref]`` resolve
+    to the aliased SCALAR C# type — DOTNET-1 made these fields deserialized, and a
+    scalar wire value (``id`` = a uuid string) deserialized into a
+    ``Dictionary<string,object?>?`` throws ``JsonException``. Multi-member / genuine
+    object combinators stay the open Dictionary (their wire IS an object)."""
     if not isinstance(psc, dict):
         return "object?"
     ref = psc.get("$ref")
     if ref:
         sib = _ref_leaf_cs(ref, ref_names)
-        return f"{sib}?" if sib else "Dictionary<string, object?>?"
-    if any(k in psc for k in ("allOf", "oneOf", "anyOf")):
+        if sib:
+            return f"{sib}?"
+        # Resolve the ref: a scalar-alias (uuid: {type:string}) keeps its scalar
+        # C# type so it deserializes; an object we couldn't surface stays open.
+        target = _resolve_ref_schema(psc, schemas)
+        if target is not psc:
+            rt = _type_schema_type(target)
+            if rt in _TYPE_SCALAR_CS:
+                return _TYPE_SCALAR_CS[rt]
         return "Dictionary<string, object?>?"
+    # Nullable idiom: OpenAPI-3.1 spells ``X | null`` as ``anyOf/oneOf: [<X>,
+    # {type: null}]`` (mirroring python's ``X | None``). Unwrap the single non-null
+    # variant so a nullable ``string``/``integer``/… field keeps its SCALAR C# type
+    # (string?/long?/…) or a $ref'd sibling class, NOT the union → Dictionary
+    # fallback. DOTNET-1 made these fields actually deserialized: without the unwrap
+    # a nullable-string field typed ``Dictionary<string,object?>?`` makes
+    # System.Text.Json throw ``JsonException`` when the wire sends the string.
+    for comb in ("anyOf", "oneOf"):
+        variants = psc.get(comb)
+        if variants:
+            non_null = [v for v in variants
+                        if isinstance(v, dict) and v.get("type") != "null"]
+            if len(non_null) == 1:
+                return _wire_field_cs_type(non_null[0], ref_names, schemas)
+    # Single-member ``allOf: [<X>]`` — the OpenAPI idiom for "X plus annotations"
+    # (``id: {allOf: [$ref uuid], format: uuid}``). Unwrap to X so a scalar-alias
+    # keeps its scalar C# type (deserialize-safe) and an object ref becomes the
+    # sibling class. Only for the DESERIALIZED REST DTOs (schemas supplied) — the
+    # accessor-bearing payload modules keep their historical typing untouched.
+    all_of = psc.get("allOf")
+    if schemas is not None and all_of and len([v for v in all_of if isinstance(v, dict)]) == 1:
+        return _wire_field_cs_type(all_of[0], ref_names, schemas)
+    if any(k in psc for k in ("allOf", "oneOf", "anyOf")):
+        # A genuine multi-member combinator. For a DESERIALIZED REST response DTO
+        # (schemas supplied) an ``object?`` (JsonElement view) tolerates ANY wire
+        # shape without throwing, unlike a Dictionary that throws on a scalar. The
+        # accessor-bearing payload modules (no schemas) keep the historical
+        # ``Dictionary`` so their recorded field accessors do not drift.
+        return "object?" if schemas is not None else "Dictionary<string, object?>?"
     t = _type_schema_type(psc)
     if t in _TYPE_SCALAR_CS:
         return _TYPE_SCALAR_CS[t]
@@ -820,14 +1137,45 @@ def _wire_field_cs_type(psc: dict, ref_names: dict) -> str:
     return "object?"
 
 
-def _cs_property_name(wire_key: str) -> str:
-    """A legal PascalCase C# property identifier for a wire key, kept close to the
-    wire key so the reference-recorded accessor name matches. The .NET signature
-    enumerator records the property name VERBATIM for these generated type files
-    (like PHP's ``$SWAIG``); to match the reference's recorded field name (which
-    is the WIRE KEY verbatim — ``SWAIG`` stays ``SWAIG``, ``allOf`` stays
-    ``allOf``) we preserve the wire key exactly where it is already a valid C#
-    identifier, only folding illegal runes and @-escaping a reserved word."""
+def _cs_property_name(wire_key: str, pascal: bool = False) -> str:
+    """A legal C# property identifier for a wire key.
+
+    Two modes, keyed by ``pascal``:
+
+    * ``pascal=False`` (the ACCESSOR-module default) — preserve the wire key
+      VERBATIM where it is already a valid C# identifier, only folding illegal
+      runes and @-escaping a reserved word. The .NET signature enumerator records
+      the property name VERBATIM for the accessor-bearing payload modules
+      (swml_verbs / post_prompt / swaig_request), and the reference's griffe
+      oracle records the WIRE-KEY-verbatim field name (``SWAIG`` stays ``SWAIG``,
+      ``allOf`` stays ``allOf``). Renaming would DRIFT SURFACE-DIFF for those
+      three modules, so their properties stay wire-key-verbatim.
+
+    * ``pascal=True`` (DOTNET-2, the idiomatic default for METHOD-LESS DTO modules
+      — REST wire-types, RELAY-proto, swaig-actions) — emit an idiomatic
+      PascalCase C# property name. The exact wire bytes are preserved by the
+      ``[JsonPropertyName("<wire key>")]`` attribute the emitter always writes, so
+      EMISSION stays byte-identical. These modules are ABSENT from the accessor
+      set: the signature oracle records them method-less and the surface enumerator
+      records an empty member list, so the C# property NAME is never compared —
+      PascalCasing it is parity-safe (verified against port_surface.json:
+      ``ConferenceToken`` members == ``[]``)."""
+    if pascal:
+        # PascalCase from the wire key: split on non-identifier runes + underscores,
+        # capitalize each segment. Preserve an ALL-CAPS acronym segment (SWAIG) so
+        # the human name reads naturally; @-escape only if it collides with a keyword
+        # (can't happen post-PascalCase, but kept for safety) or starts with a digit.
+        parts = [p for p in re.split(r"[^A-Za-z0-9]+", wire_key) if p]
+        if not parts:
+            return "Field"
+        segs = []
+        for p in parts:
+            # keep an all-caps token as-is (SWAIG, URL); otherwise upper-first.
+            segs.append(p if p.isupper() else (p[0].upper() + p[1:]))
+        s = "".join(segs)
+        if s[0].isdigit():
+            s = "Field" + s
+        return "@" + s if s in CSHARP_KEYWORDS else s
     s = re.sub(r"[^A-Za-z0-9_]", "_", wire_key)
     if not s:
         s = "field"
@@ -837,7 +1185,8 @@ def _cs_property_name(wire_key: str) -> str:
 
 
 def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: str,
-                          ref_names: dict | None = None, schema_name: str | None = None) -> str:
+                          ref_names: dict | None = None, schema_name: str | None = None,
+                          pascal_props: bool = False, schemas: dict | None = None) -> str:
     """Emit one method-less C# data class in namespace ``ns``: a public property
     per wire field (``[JsonPropertyName("<wire key>")]``), typed per
     ``_wire_field_cs_type``. No methods, no constructor. Shared by the REST
@@ -852,7 +1201,15 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
     components.schemas key AS IT APPEARS IN THE SPEC — NOT ``cs_name``). It is the
     scope the SDK-surface overlay (rest-apis/x-sdk-overlay.yaml) matches against:
     an overlay-hidden field is DROPPED entirely (still on the wire); an
-    overlay-deprecated field is emitted with an ``[Obsolete]`` attribute."""
+    overlay-deprecated field is emitted with an ``[Obsolete]`` attribute.
+
+    ``pascal_props`` (DOTNET-2): when True, emit idiomatic PascalCase C# property
+    NAMES (the wire bytes are preserved by ``[JsonPropertyName]``). Only pass True
+    for METHOD-LESS modules ABSENT from the signature-accessor set (REST
+    wire-types, RELAY-proto, swaig-actions) — never for the accessor-bearing
+    payload modules (swml_verbs / post_prompt / swaig_request), whose property
+    names the oracle records wire-key-verbatim (renaming would drift SURFACE-DIFF).
+    Default False keeps every existing caller wire-key-verbatim."""
     ref_names = ref_names or {}
     lines: list[str] = []
     lines.append("/// <summary>")
@@ -865,7 +1222,15 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
     lines.append("/// </summary>")
     lines.append(f"public class {cs_name}")
     lines.append("{")
-    used: set[str] = set()
+    # Seed the taken-name set with the enclosing class name ONLY under pascal_props:
+    # C# forbids a member whose name equals its type (CS0542). With pascal_props a
+    # wire field can PascalCase to the class name (class Answer + field "answer" ->
+    # property "Answer"); the dedup loop below then appends "_" (Answer_). The wire
+    # key is still preserved verbatim by [JsonPropertyName], so the rename is
+    # surface/wire-neutral. In verbatim mode the property keeps the (usually
+    # lowercase) wire key, which C# allows alongside the PascalCase type, so we do
+    # NOT seed there — keeping the accessor modules' output byte-identical.
+    used: set[str] = {cs_name} if pascal_props else set()
     first = True
     for wire_key, psc in properties.items():
         # SDK-surface policy comes from the single overlay (rest-apis/x-sdk-overlay.yaml),
@@ -874,11 +1239,11 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
         if _overlay_hidden(wire_key, schema_name):
             # hidden: drop from the SDK surface entirely (still on the wire).
             continue
-        prop = _cs_property_name(wire_key)
+        prop = _cs_property_name(wire_key, pascal=pascal_props)
         while prop.lstrip("@") in used:
             prop = prop + "_"
         used.add(prop.lstrip("@"))
-        cs_type = _wire_field_cs_type(psc if isinstance(psc, dict) else {}, ref_names)
+        cs_type = _wire_field_cs_type(psc if isinstance(psc, dict) else {}, ref_names, schemas)
         if not first:
             lines.append("")
         first = False
@@ -1010,6 +1375,21 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
     write_verb = verb in ("post", "put", "patch")
     verb_fn = {"post": "PostAsync", "put": "PutAsync", "patch": "PatchAsync"}.get(verb)
 
+    # request_options (plan 4.2 / DOTNET-1): every generated verb carries an
+    # optional per-call RequestOptions envelope — a keyword-only optional in the
+    # python reference. It threads into the Client verb (which already accepts
+    # ``RequestOptions? requestOptions``). The C# param + its sidecar record are
+    # appended uniformly below so the surface + the signature oracle both see it.
+    ro_param = "RequestOptions? requestOptions = null"
+    ro_doc = "    /// <param name=\"requestOptions\">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>"
+    ro_record = {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": False,
+        "default": None,
+    }
+
     if write_verb and has_body:
         body_schema = spec.op_body.get(op_id) or {}
         if is_object_body(spec, body_schema):
@@ -1021,38 +1401,49 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
             doc = ["    /// <summary>",
                    f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path}).",
                    "    /// </summary>"] + field_doc
-            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, cancellationToken: cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);"
         else:
             # §5.2 union body → a single ``Dictionary<string,object?> body`` param.
             body_id = _dedupe_param("body", used)
             params = id_params + [f"Dictionary<string, object?> {body_id}"]
             _register_sidecar(cls, name, id_records + [
                 {"name": "body", "kind": "positional", "type": "dict<string,any>", "required": True},
+                dict(ro_record),
             ])
             doc.append(f"    /// <param name=\"{body_id}\">JSON request body.</param>")
-            call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, cancellationToken: cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
     elif write_verb:
         params = id_params
-        _register_sidecar(cls, name, list(id_records))
-        call_line = f"        return Client.{verb_fn}({path_expr}, null, cancellationToken: cancellationToken);"
+        _register_sidecar(cls, name, id_records + [dict(ro_record)])
+        call_line = f"        return Client.{verb_fn}({path_expr}, null, requestOptions: requestOptions, cancellationToken: cancellationToken);"
     elif verb == "get":
-        # §5.3 GET query door — a trailing query-params map.
+        # §5.3 GET query door — a trailing query-params map. The C# convenience
+        # ``queryParams`` param is a port idiom; the python reference expresses it
+        # as ``**params`` (a var_keyword), which the griffe signature oracle DROPS
+        # (it records zero var_keyword params). So the sidecar records only
+        # ``request_options`` after the id args — recording the ``params`` door as
+        # var_keyword would be a phantom param the oracle never carries, driving
+        # drift. (The convenience param stays on the C# surface for callers.)
         qp_id = _dedupe_param("queryParams", used)
         params = id_params + [f"Dictionary<string, string>? {qp_id} = null"]
-        _register_sidecar(cls, name, id_records + [
-            {"name": "params", "kind": "var_keyword", "type": "any", "required": False, "default": {}},
-        ])
+        _register_sidecar(cls, name, id_records + [dict(ro_record)])
         doc.append(f"    /// <param name=\"{qp_id}\">Query-string parameters.</param>")
-        call_line = f"        return Client.GetAsync({path_expr}, {qp_id}, cancellationToken: cancellationToken);"
+        call_line = f"        return Client.GetAsync({path_expr}, {qp_id}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
     else:  # delete
         params = id_params
-        _register_sidecar(cls, name, list(id_records))
-        call_line = f"        return Client.DeleteAsync({path_expr}, cancellationToken: cancellationToken);"
+        _register_sidecar(cls, name, id_records + [dict(ro_record)])
+        call_line = f"        return Client.DeleteAsync({path_expr}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
 
-    params = params + ["CancellationToken cancellationToken = default"]
+    doc.append(ro_doc)
+    params = params + [ro_param, "CancellationToken cancellationToken = default"]
     sig = ", ".join(params)
+    # DOTNET-1 typed returns: the operation's 200/201 response DTO, or Dictionary
+    # when the response is a delete/union/non-object (mirroring dict[str, Any]).
+    ret_cs = response_cs_type(spec, op_id)
+    ret_task, call_line = _typed_return(ret_cs, call_line)
+    _register_sidecar_return(cls, name, ret_cs)
     lines = "\n".join(doc) + "\n"
-    lines += f"    public Task<Dictionary<string, object?>> {name}({sig})\n    {{\n"
+    lines += f"    public {ret_task} {name}({sig})\n    {{\n"
     for bl in body_ml:
         lines += bl + "\n"
     lines += call_line + "\n    }\n"
@@ -1060,7 +1451,8 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
 
 
 def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
-                    update_schema_fields: set[str], field_schemas: dict[str, dict]) -> str:
+                    update_schema_fields: set[str], field_schemas: dict[str, dict],
+                    anchor: str = "") -> str:
     handler = sm.get("handler")
     if not handler:
         raise SystemExit(f"{markup['name']}.{sm_name}: set_method missing handler")
@@ -1103,17 +1495,38 @@ def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
     extra_id = _dedupe_param("extra", used)
     params.append(f"Dictionary<string, object?>? {extra_id} = null")
     arg_doc.append(f"    /// <param name=\"{extra_id}\">Forward-compat update fields.</param>")
-    records.append({"name": "extra", "kind": "var_keyword", "type": "any",
-                    "required": False, "default": {}})
+    # ``extra`` is a var_keyword the griffe oracle drops (it records zero
+    # var_keyword params) — do NOT record it in the sidecar. request_options is the
+    # keyword-only per-call envelope the oracle DOES record (after the bound args),
+    # threaded into UpdateAsync.
+    ro_arg = "RequestOptions? requestOptions = null"
+    params.append(ro_arg)
+    arg_doc.append("    /// <param name=\"requestOptions\">Per-call request options overriding the client defaults.</param>")
+    records.append({
+        "name": "request_options", "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": False, "default": None,
+    })
     _register_sidecar(cls, name, records)
     sig = ", ".join(params)
+
+    # DOTNET-1: set_* wraps update() and returns the resource ITEM DTO (the GET-by-id
+    # 200 response), mirroring the reference whose set_* return the resource item type.
+    # set_methods only exist on CRUD/Fabric resources, whose UpdateAsync ALREADY
+    # returns the typed Task<TItem?> (the generic base / typed PATCH override) — so
+    # the delegate is returned directly, NOT re-projected (double-projection would be
+    # a type error). Falls back to the raw update return when the item is untyped.
+    item_cs = item_cs_type(spec, anchor, markup) if anchor else "Dictionary<string, object?>"
+    _register_sidecar_return(cls, name, item_cs)
+    ret_task = "Task<Dictionary<string, object?>>" if _is_dict_cs_type(item_cs) else f"Task<{item_cs}?>"
+    ret_stmt = "        return UpdateAsync(resourceId, body);"
 
     body = []
     body.append("    /// <summary>")
     body.append(f"    /// Declarative binding helper — sets <c>call_handler={handler}</c> via UpdateAsync.")
     body.append("    /// </summary>")
     body.extend(arg_doc)
-    body.append(f"    public Task<Dictionary<string, object?>> {name}({sig})")
+    body.append(f"    public {ret_task} {name}({sig})")
     body.append("    {")
     body.append("        var body = new Dictionary<string, object?>")
     body.append("        {")
@@ -1132,7 +1545,7 @@ def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
     body.append("                body[kv.Key] = kv.Value;")
     body.append("            }")
     body.append("        }")
-    body.append("        return UpdateAsync(resourceId, body);")
+    body.append(ret_stmt)
     body.append("    }")
     return "\n".join(body) + "\n"
 
@@ -1227,6 +1640,9 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         base = join_path(spec.server_path, op[1].lstrip("/"))
     else:
         base = join_path(spec.server_path, anchor.lstrip("/"))
+    # DOTNET-1: every command returns the command op's 200 response DTO (calling:
+    # CallResponse), resolved once from the command op — matching the reference.
+    cmd_ret_cs = response_cs_type(spec, "call-commands")
 
     lines = []
     lines.append(f"/// <summary>")
@@ -1249,6 +1665,7 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
     lines.append("")
     lines.append("    private Task<Dictionary<string, object?>> ExecuteAsync(")
     lines.append("        string command, string? callId, Dictionary<string, object?> parms,")
+    lines.append("        RequestOptions? requestOptions = null,")
     lines.append("        CancellationToken cancellationToken = default)")
     lines.append("    {")
     lines.append("        var body = new Dictionary<string, object?>")
@@ -1260,7 +1677,7 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
     lines.append("        {")
     lines.append("            body[\"id\"] = callId;")
     lines.append("        }")
-    lines.append("        return _http.PostAsync(BasePathConst, body, cancellationToken: cancellationToken);")
+    lines.append("        return _http.PostAsync(BasePathConst, body, requestOptions: requestOptions, cancellationToken: cancellationToken);")
     lines.append("    }")
     mapping = (spec.schemas.get(request).get("discriminator") or {}).get("mapping") or {}
     for cmd in commands:
@@ -1311,6 +1728,15 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         build.append("                parms[kv.Key] = kv.Value;")
         build.append("            }")
         build.append("        }")
+        # request_options (plan 4.2): the keyword-only per-call envelope, recorded
+        # AFTER extras to match the oracle order (…fields, extras, request_options).
+        field_cs.append("RequestOptions? requestOptions = null")
+        field_doc.append("    /// <param name=\"requestOptions\">Per-call request options overriding the client defaults.</param>")
+        records.append({
+            "name": "request_options", "kind": "keyword",
+            "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+            "required": False, "default": None,
+        })
         _register_sidecar(name, mname, records)
 
         # CancellationToken is a C#-async idiom param (not a wire param): it is
@@ -1319,15 +1745,18 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         field_cs.append("CancellationToken cancellationToken = default")
         sig = ", ".join(id_cs + field_cs)
         call_arg = "callId" if with_id else "null"
+        _register_sidecar_return(name, mname, cmd_ret_cs)
+        exec_call = f"        return ExecuteAsync({cs_str(cmd)}, {call_arg}, parms, requestOptions, cancellationToken);"
+        ret_task, ret_stmt = _typed_return(cmd_ret_cs, exec_call)
         lines.append("")
         lines.append("    /// <summary>")
         lines.append(f"    /// Command <c>{cmd}</c>.")
         lines.append("    /// </summary>")
         lines.extend(field_doc)
-        lines.append(f"    public Task<Dictionary<string, object?>> {mname}({sig})")
+        lines.append(f"    public {ret_task} {mname}({sig})")
         lines.append("    {")
         lines.extend(build)
-        lines.append(f"        return ExecuteAsync({cs_str(cmd)}, {call_arg}, parms, cancellationToken);")
+        lines.append(ret_stmt)
         lines.append("    }")
     lines.append("}")
     return GEN_HEADER.format(desc=f"Generated command-dispatch resource for the {spec.name!r} namespace.") + "\n" + "\n".join(lines) + "\n"
@@ -1341,6 +1770,14 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
     like VideoRoomSessions / RegistryBrands)."""
     name = markup["name"]
     bp = base_path(spec, anchor, markup)
+    # DOTNET-1: a ReadResource publishes its structural [listResponse, itemResponse]
+    # crud_base (the reference does — FaxLogs/MessageLogs/VoiceLogs/VideoRoomSessions).
+    # The inline List/Get below carry the typed returns; the crud_base locks the
+    # structural contract the same way as for CrudResource.
+    if base == "ReadResource":
+        binds = _crud_bind(spec, anchor, markup, base)
+        if binds:
+            _CRUD_BASES[name] = {"base": base, "bind": binds}
     lines = []
     lines.append(f"/// <summary>")
     lines.append(f"/// {name} — REST resource for the {spec.name} API.")
@@ -1368,30 +1805,52 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
 
     if base == "ReadResource":
         # inline list/get (the .NET hand read-only resources do exactly this).
+        # DOTNET-1: type each from its 200 response DTO — the reference records a
+        # ReadResource subclass's list/get as typed (FaxLogs.list -> LogListResponse).
+        list_cs, get_cs = _read_list_get_cs(spec, anchor, markup)
+        _register_sidecar_return(name, "ListAsync", list_cs)
+        _register_sidecar_return(name, "GetAsync", get_cs)
+        list_task, list_ret = _typed_return(
+            list_cs, "        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);")
+        get_task, get_ret = _typed_return(
+            get_cs, "        return Client.GetAsync(Path(id), cancellationToken: cancellationToken);")
         lines.append("")
         lines.append("    /// <summary>List resources (GET BasePath).</summary>")
-        lines.append("    public Task<Dictionary<string, object?>> ListAsync(")
+        lines.append(f"    public {list_task} ListAsync(")
         lines.append("        Dictionary<string, string>? queryParams = null,")
         lines.append("        CancellationToken cancellationToken = default)")
         lines.append("    {")
-        lines.append("        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);")
+        lines.append(list_ret)
         lines.append("    }")
         lines.append("")
         lines.append("    /// <summary>Retrieve a single resource by id (GET BasePath/{id}).</summary>")
-        lines.append("    public Task<Dictionary<string, object?>> GetAsync(")
+        lines.append(f"    public {get_task} GetAsync(")
         lines.append("        string id, CancellationToken cancellationToken = default)")
         lines.append("    {")
-        lines.append("        return Client.GetAsync(Path(id), cancellationToken: cancellationToken);")
+        lines.append(get_ret)
         lines.append("    }")
         lines.append("")
         lines.append("    /// <summary>Iterate every item across all pages of this resource's")
         lines.append("    /// list endpoint, following ``links.next`` cursors (lazy — no request")
         lines.append("    /// fires until iteration). Mirrors Python ``ReadResource.paginate``.</summary>")
+        lines.append("    /// <param name=\"queryParams\">Query-string parameters.</param>")
+        lines.append("    /// <param name=\"requestOptions\">Per-call request options overriding the client defaults.</param>")
         lines.append("    public SignalWire.REST.PaginatedIterator Paginate(")
-        lines.append("        Dictionary<string, string>? queryParams = null)")
+        lines.append("        Dictionary<string, string>? queryParams = null,")
+        lines.append("        RequestOptions? requestOptions = null)")
         lines.append("    {")
-        lines.append("        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: \"data\");")
+        lines.append("        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: \"data\", requestOptions: requestOptions);")
         lines.append("    }")
+        # paginate's oracle signature is (self, request_options); python's
+        # ``**params`` var_keyword is dropped by griffe, and queryParams is the
+        # port-idiom convenience. Record just request_options so the enumerator
+        # matches the oracle (else reflection records the queryParams door as a
+        # phantom positional param the oracle never carries).
+        _register_sidecar(name, "Paginate", [{
+            "name": "request_options", "kind": "keyword",
+            "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+            "required": False, "default": None,
+        }])
 
     _emit_declared_and_sets(spec, anchor, markup, base, lines)
     lines.append("}")
@@ -1424,7 +1883,7 @@ def _emit_declared_and_sets(spec: Spec, anchor: str, markup: dict, base: str, li
         upd_field_schemas = update_field_schemas(spec, anchor, markup)
         for sm_name, sm in set_methods.items():
             lines.append("")
-            lines.append(emit_set_method(spec, markup, sm_name, sm, upd_fields, upd_field_schemas).rstrip("\n"))
+            lines.append(emit_set_method(spec, markup, sm_name, sm, upd_fields, upd_field_schemas, anchor).rstrip("\n"))
 
 
 def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
@@ -1448,26 +1907,49 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
     parent = "CrudResource" if base == "CrudResource" else "CrudWithAddresses"
     bp = base_path(spec, anchor, markup)
 
+    # DOTNET-1: bind the generic base on (TList, TItem) so the inherited CRUD
+    # methods return the typed DTOs, and register the structural crud_base bind the
+    # signature enumerator publishes (the lock gate compares it for equivalence).
+    list_cs, item_cs = _crud_generic_args(spec, anchor, markup)
+    generic = f"<{list_cs}, {item_cs}>"
+    binds = _crud_bind(spec, anchor, markup, base)
+    if binds:
+        _CRUD_BASES[name] = {"base": base, "bind": binds}
+    # The generated CRUD subclass records create/update on its OWN surface (the
+    # reference overrides them typed). Both genuinely return the bound item DTO
+    # (Task<TItem?> — via the generic base for create, the typed PATCH override or
+    # the generic PUT for update). Record their typed returns so the enumerator
+    # reports them matching the (typed) oracle.
+    if not _is_dict_cs_type(item_cs):
+        item_tok = _returns_canonical(item_cs)
+        _SIDECAR_RETURNS[(name, "create")] = item_tok
+        _SIDECAR_RETURNS[(name, "update")] = item_tok
+
     lines = []
     lines.append(f"/// <summary>")
     lines.append(f"/// {name} — REST resource for the {spec.name} API.")
     lines.append(f"/// </summary>")
-    lines.append(f"public class {name} : SignalWire.REST.{parent}")
+    lines.append(f"public class {name} : SignalWire.REST.{parent}{generic}")
     lines.append("{")
     lines.append(f"    public {name}(SignalWire.REST.HttpClient client)")
     lines.append(f"        : base(client, {cs_str(bp)})")
     lines.append("    {")
     lines.append("    }")
 
-    # CrudResource base updates via PUT. A PATCH resource overrides UpdateAsync.
+    # CrudResource base updates via PUT. A PATCH resource overrides UpdateAsync —
+    # returning the typed item DTO (covariant with the generic base's Task<TItem?>).
     if upd == "PATCH":
+        upd_task, upd_ret = _typed_return(
+            item_cs,
+            "        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);")
         lines.append("")
         lines.append("    /// <summary>Update this resource via an HTTP PATCH request.</summary>")
-        lines.append("    public override Task<Dictionary<string, object?>> UpdateAsync(")
+        lines.append(f"    public override {upd_task} UpdateAsync(")
         lines.append("        string id, Dictionary<string, object?> data,")
+        lines.append("        RequestOptions? requestOptions = null,")
         lines.append("        CancellationToken cancellationToken = default)")
         lines.append("    {")
-        lines.append("        return Client.PatchAsync(Path(id), data, cancellationToken: cancellationToken);")
+        lines.append(upd_ret)
         lines.append("    }")
 
     _emit_declared_and_sets(spec, anchor, markup, base, lines)
@@ -1750,7 +2232,9 @@ def emit_types(psdk: Path, outs: dict) -> None:
                     outs[fn] = emit_methodless_class(
                         cs_ns, cs_name, node.get("properties") or {},
                         f"{ns_key!r} spec components/schemas {raw_name!r}",
-                        ref_names=ref_names, schema_name=raw_name)
+                        ref_names=ref_names, schema_name=raw_name,
+                        pascal_props=True,  # DOTNET-2: REST DTOs are method-less (surface [] / no sig accessors)
+                        schemas=schemas)  # DOTNET-1: resolve scalar-alias refs so deserialized fields don't throw
 
 
 # ---------------------------------------------------------------------------
@@ -1760,6 +2244,8 @@ def emit_types(psdk: Path, outs: dict) -> None:
 def build_outputs(psdk: Path) -> dict[str, str]:
     load_bases(psdk)  # validate x-sdk-bases (fail loud); not otherwise needed
     _SIDECAR.clear()
+    _SIDECAR_RETURNS.clear()
+    _CRUD_BASES.clear()
     specs = [load_spec(psdk, ns) for ns in discover_spec_dirs(psdk)]
     _SURFACE.clear()
     outs: dict[str, str] = {}
@@ -1796,6 +2282,21 @@ def build_outputs(psdk: Path) -> dict[str, str]:
     sidecar: dict[str, list[dict]] = {}
     for (cls, cs_method) in sorted(_SIDECAR.keys()):
         sidecar[f"{cls}::{cs_method}"] = _SIDECAR[(cls, cs_method)]
+    # DOTNET-1 typed returns: "<ClassName>::<canonical>" -> canonical return token.
+    # The signature enumerator reads this to record each generated method's ACTUAL
+    # typed return (class:<mod>.<Leaf>) instead of the loose dict scaffold, so a
+    # flipped return MATCHES the now-typed python oracle. Only typed (class:*)
+    # returns are recorded — a Dictionary return omits the entry (the enumerator's
+    # default is already dict<string,any>).
+    returns_map: dict[str, str] = {}
+    for (cls, canon) in sorted(_SIDECAR_RETURNS.keys()):
+        tok = _SIDECAR_RETURNS[(cls, canon)]
+        if tok != "dict<string,any>":
+            returns_map[f"{cls}::{canon}"] = tok
+    # DOTNET-1 crud_base: ClassName -> {"base","bind"}. The signature enumerator
+    # attaches this to the generated resource class so the drift/lock gates compare
+    # the port's structural CRUD contract for equivalence with the reference.
+    crud_bases = {name: _CRUD_BASES[name] for name in sorted(_CRUD_BASES.keys())}
     # Container manifest: C# container class -> "_client_tree_generated" (the
     # oracle module all six namespace containers live in). The container's C#
     # property accessors are the .NET instance-attribute idiom (python sets them
@@ -1815,6 +2316,8 @@ def build_outputs(psdk: Path) -> dict[str, str]:
             "containers": dict(sorted(containers.items())),
             "surface": dict(sorted(_SURFACE.items())),
             "methods": sidecar,
+            "returns": returns_map,
+            "crud_bases": crud_bases,
         },
         indent=2, sort_keys=False,
     ) + "\n"

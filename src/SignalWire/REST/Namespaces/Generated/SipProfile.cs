@@ -42,9 +42,10 @@ public class SipProfile
     /// Generated from operation <c>retrieve_sip_profile</c> (GET /sip_profile).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>
-    public Task<Dictionary<string, object?>> GetAsync(Dictionary<string, string>? queryParams = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.SipProfileResponse?> GetAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.SipProfileResponse>(Client.GetAsync(BasePath, queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -56,7 +57,8 @@ public class SipProfile
     /// <param name="defaultEncryption">Wire field <c>default_encryption</c>.</param>
     /// <param name="defaultSendAs">Wire field <c>default_send_as</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    public Task<Dictionary<string, object?>> UpdateAsync(string? domainIdentifier = null, List<object?>? defaultCodecs = null, List<object?>? defaultCiphers = null, string? defaultEncryption = null, string? defaultSendAs = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.SipProfileResponse?> UpdateAsync(string? domainIdentifier = null, List<object?>? defaultCodecs = null, List<object?>? defaultCiphers = null, string? defaultEncryption = null, string? defaultSendAs = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         if (domainIdentifier is not null)
@@ -86,6 +88,6 @@ public class SipProfile
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return Client.PutAsync(BasePath, _reqBody, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.SipProfileResponse>(Client.PutAsync(BasePath, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

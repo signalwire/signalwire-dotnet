@@ -22,21 +22,21 @@ public class CallingDetectParams
 {
     /// <summary>Wire field <c>call_id</c>.</summary>
     [JsonPropertyName("call_id")]
-    public string? call_id { get; set; }
+    public string? CallId { get; set; }
 
     /// <summary>Wire field <c>control_id</c>.</summary>
     [JsonPropertyName("control_id")]
-    public string? control_id { get; set; }
+    public string? ControlId { get; set; }
 
     /// <summary>Wire field <c>detect</c>.</summary>
     [JsonPropertyName("detect")]
-    public Dictionary<string, object?>? detect { get; set; }
+    public Dictionary<string, object?>? Detect { get; set; }
 
     /// <summary>Wire field <c>node_id</c>.</summary>
     [JsonPropertyName("node_id")]
-    public string? node_id { get; set; }
+    public string? NodeId { get; set; }
 
     /// <summary>Wire field <c>timeout</c>.</summary>
     [JsonPropertyName("timeout")]
-    public double? timeout { get; set; }
+    public double? Timeout { get; set; }
 }

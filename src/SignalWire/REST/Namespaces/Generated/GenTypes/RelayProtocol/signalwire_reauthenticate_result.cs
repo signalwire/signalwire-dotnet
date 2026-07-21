@@ -22,17 +22,17 @@ public class SignalwireReauthenticateResult
 {
     /// <summary>Wire field <c>authentication</c>.</summary>
     [JsonPropertyName("authentication")]
-    public string? authentication { get; set; }
+    public string? Authentication { get; set; }
 
     /// <summary>Wire field <c>authorization</c>.</summary>
     [JsonPropertyName("authorization")]
-    public Dictionary<string, object?>? authorization { get; set; }
+    public Dictionary<string, object?>? Authorization { get; set; }
 
     /// <summary>Wire field <c>ice_servers</c>.</summary>
     [JsonPropertyName("ice_servers")]
-    public List<object?>? ice_servers { get; set; }
+    public List<object?>? IceServers { get; set; }
 
     /// <summary>Wire field <c>result</c>.</summary>
     [JsonPropertyName("result")]
-    public object? result { get; set; }
+    public object? Result { get; set; }
 }

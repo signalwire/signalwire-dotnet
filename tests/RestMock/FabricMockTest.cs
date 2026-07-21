@@ -53,9 +53,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         var fabric = NewFabric();
         var body = await fabric.Addresses.ListAsync();
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"),
-            $"missing 'data' in body keys {string.Join(",", body.Keys)}");
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -91,8 +89,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         var fabric = NewFabric();
         var body = await fabric.CallFlows.ListAddressesAsync("cf-1");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -110,7 +107,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         var fabric = NewFabric();
         var body = await fabric.ConferenceRooms.ListAddressesAsync("cr-1");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -229,8 +226,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         var fabric = NewFabric();
         var body = await fabric.Resources.ListAsync();
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
@@ -272,8 +268,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         var fabric = NewFabric();
         var body = await fabric.Resources.ListAddressesAsync("res-3");
         Assert.NotNull(body);
-        Assert.True(body.ContainsKey("data"));
-        Assert.IsType<List<object?>>(body["data"]);
+        Assert.NotNull(body!.Data);
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);

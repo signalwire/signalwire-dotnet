@@ -99,7 +99,8 @@ def build_outputs(psdk: Path) -> dict:
             # are fine (they surface method-less). No sibling ref set needed.
             outs[fn] = GR.emit_methodless_class(
                 RELAY_CS_NS, cs_name, node.get("properties") or {},
-                f"RELAY method {method!r}, {phase}")
+                f"RELAY method {method!r}, {phase}",
+                pascal_props=True)  # DOTNET-2: RELAY-proto types are method-less (surface [] / no sig accessors)
 
     return outs
 

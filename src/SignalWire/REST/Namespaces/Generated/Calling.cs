@@ -34,6 +34,7 @@ public class Calling
 
     private Task<Dictionary<string, object?>> ExecuteAsync(
         string command, string? callId, Dictionary<string, object?> parms,
+        RequestOptions? requestOptions = null,
         CancellationToken cancellationToken = default)
     {
         var body = new Dictionary<string, object?>
@@ -45,7 +46,7 @@ public class Calling
         {
             body["id"] = callId;
         }
-        return _http.PostAsync(BasePathConst, body, cancellationToken: cancellationToken);
+        return _http.PostAsync(BasePathConst, body, requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -62,7 +63,8 @@ public class Calling
     /// <param name="codecs">Wire param <c>codecs</c>.</param>
     /// <param name="swml">Wire param <c>swml</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> DialAsync(string from, string to, string? callerId = null, string? fallbackUrl = null, string? statusUrl = null, List<object?>? statusEvents = null, string? urlMethod = null, string? url = null, Dictionary<string, object?>? codecs = null, Dictionary<string, object?>? swml = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DialAsync(string from, string to, string? callerId = null, string? fallbackUrl = null, string? statusUrl = null, List<object?>? statusEvents = null, string? urlMethod = null, string? url = null, Dictionary<string, object?>? codecs = null, Dictionary<string, object?>? swml = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["from"] = from;
@@ -106,7 +108,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("dial", null, parms, cancellationToken);
+        return ExecuteAsync("dial", null, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -119,7 +121,8 @@ public class Calling
     /// <param name="url">Wire param <c>url</c>.</param>
     /// <param name="swml">Wire param <c>swml</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> UpdateAsync(string id, string? fallbackUrl = null, string? status = null, string? statusUrl = null, string? url = null, Dictionary<string, object?>? swml = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> UpdateAsync(string id, string? fallbackUrl = null, string? status = null, string? statusUrl = null, string? url = null, Dictionary<string, object?>? swml = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["id"] = id;
@@ -150,7 +153,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("update", null, parms, cancellationToken);
+        return ExecuteAsync("update", null, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -158,7 +161,8 @@ public class Calling
     /// </summary>
     /// <param name="reason">Wire param <c>reason</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> EndAsync(string callId, string? reason = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> EndAsync(string callId, string? reason = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (reason is not null)
@@ -172,7 +176,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.end", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.end", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -181,7 +185,8 @@ public class Calling
     /// <param name="timeout">Wire param <c>timeout</c>.</param>
     /// <param name="prompt">Wire param <c>prompt</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> AiHoldAsync(string callId, int? timeout = null, string? prompt = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AiHoldAsync(string callId, int? timeout = null, string? prompt = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (timeout is not null)
@@ -199,7 +204,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.ai_hold", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.ai_hold", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -207,7 +212,8 @@ public class Calling
     /// </summary>
     /// <param name="prompt">Wire param <c>prompt</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> AiUnholdAsync(string callId, string? prompt = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AiUnholdAsync(string callId, string? prompt = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (prompt is not null)
@@ -221,7 +227,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.ai_unhold", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.ai_unhold", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -232,7 +238,8 @@ public class Calling
     /// <param name="reset">Wire param <c>reset</c>.</param>
     /// <param name="globalData">Wire param <c>global_data</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> AiMessageAsync(string callId, string? role = null, string? messageText = null, Dictionary<string, object?>? reset = null, Dictionary<string, object?>? globalData = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AiMessageAsync(string callId, string? role = null, string? messageText = null, Dictionary<string, object?>? reset = null, Dictionary<string, object?>? globalData = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (role is not null)
@@ -258,7 +265,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.ai_message", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.ai_message", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -266,7 +273,8 @@ public class Calling
     /// </summary>
     /// <param name="action">Wire param <c>action</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> LiveTranscribeAsync(string callId, Dictionary<string, object?> action, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> LiveTranscribeAsync(string callId, Dictionary<string, object?> action, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["action"] = action;
@@ -277,7 +285,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.live_transcribe", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.live_transcribe", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -286,7 +294,8 @@ public class Calling
     /// <param name="action">Wire param <c>action</c>.</param>
     /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> LiveTranslateAsync(string callId, Dictionary<string, object?> action, string? statusUrl = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> LiveTranslateAsync(string callId, Dictionary<string, object?> action, string? statusUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["action"] = action;
@@ -301,7 +310,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.live_translate", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.live_translate", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -309,7 +318,8 @@ public class Calling
     /// </summary>
     /// <param name="dest">Wire param <c>dest</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> TransferAsync(string callId, Dictionary<string, object?> dest, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> TransferAsync(string callId, Dictionary<string, object?> dest, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["dest"] = dest;
@@ -320,7 +330,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.transfer", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.transfer", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -328,7 +338,8 @@ public class Calling
     /// </summary>
     /// <param name="event">Wire param <c>event</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> UserEventAsync(string callId, Dictionary<string, object?> @event, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> UserEventAsync(string callId, Dictionary<string, object?> @event, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["event"] = @event;
@@ -339,14 +350,15 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.user_event", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.user_event", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
     /// Command <c>calling.disconnect</c>.
     /// </summary>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> DisconnectAsync(string callId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DisconnectAsync(string callId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (extras is not null)
@@ -356,7 +368,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.disconnect", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.disconnect", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -369,7 +381,8 @@ public class Calling
     /// <param name="loop">Wire param <c>loop</c>.</param>
     /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> PlayAsync(string callId, List<object?> play, string? controlId = null, double? volume = null, string? direction = null, int? loop = null, string? statusUrl = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> PlayAsync(string callId, List<object?> play, string? controlId = null, double? volume = null, string? direction = null, int? loop = null, string? statusUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["play"] = play;
@@ -400,7 +413,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.play", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.play", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -408,7 +421,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> PlayPauseAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> PlayPauseAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -419,7 +433,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.play.pause", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.play.pause", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -427,7 +441,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> PlayResumeAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> PlayResumeAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -438,7 +453,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.play.resume", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.play.resume", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -446,7 +461,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> PlayStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> PlayStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -457,7 +473,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.play.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.play.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -466,7 +482,8 @@ public class Calling
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="volume">Wire param <c>volume</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> PlayVolumeAsync(string callId, string controlId, double volume, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> PlayVolumeAsync(string callId, string controlId, double volume, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -478,7 +495,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.play.volume", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.play.volume", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -488,7 +505,8 @@ public class Calling
     /// <param name="audio">Wire param <c>audio</c>.</param>
     /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> RecordAsync(string callId, string? controlId = null, Dictionary<string, object?>? audio = null, string? statusUrl = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> RecordAsync(string callId, string? controlId = null, Dictionary<string, object?>? audio = null, string? statusUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (controlId is not null)
@@ -510,7 +528,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.record", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.record", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -518,7 +536,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> RecordPauseAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> RecordPauseAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -529,7 +548,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.record.pause", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.record.pause", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -537,7 +556,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> RecordResumeAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> RecordResumeAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -548,7 +568,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.record.resume", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.record.resume", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -556,7 +576,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> RecordStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> RecordStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -567,7 +588,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.record.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.record.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -580,7 +601,8 @@ public class Calling
     /// <param name="continuous">Wire param <c>continuous</c>.</param>
     /// <param name="partialResults">Wire param <c>partial_results</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> CollectAsync(string callId, string? controlId = null, double? initialTimeout = null, Dictionary<string, object?>? digits = null, Dictionary<string, object?>? speech = null, bool? continuous = null, bool? partialResults = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> CollectAsync(string callId, string? controlId = null, double? initialTimeout = null, Dictionary<string, object?>? digits = null, Dictionary<string, object?>? speech = null, bool? continuous = null, bool? partialResults = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (controlId is not null)
@@ -614,7 +636,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.collect", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.collect", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -622,7 +644,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> CollectStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> CollectStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -633,7 +656,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.collect.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.collect.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -641,7 +664,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> CollectStartInputTimersAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> CollectStartInputTimersAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -652,7 +676,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.collect.start_input_timers", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.collect.start_input_timers", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -662,7 +686,8 @@ public class Calling
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="timeout">Wire param <c>timeout</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> DetectAsync(string callId, Dictionary<string, object?> detect, string? controlId = null, double? timeout = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DetectAsync(string callId, Dictionary<string, object?> detect, string? controlId = null, double? timeout = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["detect"] = detect;
@@ -681,7 +706,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.detect", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.detect", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -689,7 +714,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> DetectStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DetectStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -700,7 +726,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.detect.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.detect.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -710,7 +736,8 @@ public class Calling
     /// <param name="device">Wire param <c>device</c>.</param>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> TapAsync(string callId, Dictionary<string, object?> tap, Dictionary<string, object?> device, string? controlId = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> TapAsync(string callId, Dictionary<string, object?> tap, Dictionary<string, object?> device, string? controlId = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["tap"] = tap;
@@ -726,7 +753,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.tap", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.tap", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -734,7 +761,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> TapStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> TapStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -745,7 +773,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.tap.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.tap.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -758,7 +786,8 @@ public class Calling
     /// <param name="authorizationBearerToken">Wire param <c>authorization_bearer_token</c>.</param>
     /// <param name="customParameters">Wire param <c>custom_parameters</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> StreamAsync(string callId, string url, string? controlId = null, string? codec = null, string? track = null, string? authorizationBearerToken = null, Dictionary<string, object?>? customParameters = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> StreamAsync(string callId, string url, string? controlId = null, string? codec = null, string? track = null, string? authorizationBearerToken = null, Dictionary<string, object?>? customParameters = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["url"] = url;
@@ -789,7 +818,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.stream", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.stream", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -797,7 +826,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> StreamStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> StreamStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -808,14 +838,15 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.stream.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.stream.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
     /// Command <c>calling.denoise</c>.
     /// </summary>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> DenoiseAsync(string callId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DenoiseAsync(string callId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (extras is not null)
@@ -825,14 +856,15 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.denoise", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.denoise", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
     /// Command <c>calling.denoise.stop</c>.
     /// </summary>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> DenoiseStopAsync(string callId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DenoiseStopAsync(string callId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (extras is not null)
@@ -842,7 +874,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.denoise.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.denoise.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -851,7 +883,8 @@ public class Calling
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> TranscribeAsync(string callId, string? controlId = null, string? statusUrl = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> TranscribeAsync(string callId, string? controlId = null, string? statusUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (controlId is not null)
@@ -869,7 +902,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.transcribe", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.transcribe", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -877,7 +910,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> TranscribeStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> TranscribeStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -888,7 +922,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.transcribe.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.transcribe.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -896,7 +930,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> AiStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AiStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -907,7 +942,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.ai.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.ai.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -915,7 +950,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> SendFaxStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> SendFaxStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -926,7 +962,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.send_fax.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.send_fax.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -934,7 +970,8 @@ public class Calling
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> ReceiveFaxStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ReceiveFaxStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
@@ -945,7 +982,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.receive_fax.stop", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.receive_fax.stop", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>
@@ -954,7 +991,8 @@ public class Calling
     /// <param name="device">Wire param <c>device</c>.</param>
     /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
-    public Task<Dictionary<string, object?>> ReferAsync(string callId, Dictionary<string, object?> device, string? statusUrl = null, Dictionary<string, object?>? extras = null, CancellationToken cancellationToken = default)
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ReferAsync(string callId, Dictionary<string, object?> device, string? statusUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["device"] = device;
@@ -969,6 +1007,6 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
-        return ExecuteAsync("calling.refer", callId, parms, cancellationToken);
+        return ExecuteAsync("calling.refer", callId, parms, requestOptions, cancellationToken);
     }
 }

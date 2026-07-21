@@ -22,5 +22,5 @@ public class LiveTranslate
 {
     /// <summary>Wire field <c>live_translate</c>.</summary>
     [JsonPropertyName("live_translate")]
-    public Dictionary<string, object?>? live_translate { get; set; }
+    public Dictionary<string, object?>? LiveTranslate_ { get; set; }
 }

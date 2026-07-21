@@ -20,7 +20,7 @@ Agents completing this checklist have historically left gaps by treating ambiguo
    - A command that exits 0 (compile, lint, grep-no-match, etc.).
    - A string that appears in a specific file at a specific location.
 2. **"See `OTHER.md`" is not permission to skim.** If the checklist references another document, read it in full before checking the item.
-3. **Counts in this checklist are exact, not floors.** "17 skills" means 17 skills, not "at least 17." If the Python reference changes the count, `audit_checklist.py` fails CI and this file gets updated.
+3. **Counts in this checklist are exact, not floors.** "18 skills" means 18 skills, not "at least 18." If the Python reference changes the count, `audit_checklist.py` fails CI and this file gets updated.
 4. **Doc↔code alignment is required.** Every method or class referenced in a `docs/`, `rest/docs/`, `relay/docs/`, or `examples/` file must exist in the port's source. Phase 13 audits this. A port that ships `assign_phone_route` in a doc without implementing it fails Phase 13.
 5. **"Commit to git" means a named feature branch, not `main`.** Every `- [ ] Commit to git` means committing on a descriptive `feat/<topic>` branch (e.g. `feat/swml-core`, `feat/lambda-support`, `feat/phone-binding-helpers`). Direct commits to `main` fail review.
 6. **"No tests skipped" means no tests skipped.** `pytest -m "not slow"`, `go test -short`, `rspec --tag ~integration`, etc. are not allowed when reporting a phase complete. Run the full suite, 0 failures, 0 skips.
@@ -125,7 +125,7 @@ Agents completing this checklist have historically left gaps by treating ambiguo
 - [ ] BaseSkill with default implementations
 - [ ] SkillManager: LoadSkill, UnloadSkill, ListLoadedSkills, HasSkill, GetSkill
 - [ ] SkillRegistry: RegisterSkill, GetSkillFactory, ListSkills
-- [ ] All 17 built-in skills (see SKILLS_MANIFEST.md for exact specifications):
+- [ ] All 18 built-in skills (see SKILLS_MANIFEST.md for exact specifications):
   - [ ] datetime (get_current_time, get_current_date)
   - [ ] math (calculate — safe evaluator, no eval)
   - [ ] joke (tell_joke)
@@ -143,7 +143,7 @@ Agents completing this checklist have historically left gaps by treating ambiguo
   - [ ] info_gatherer (start_questions + submit_answer — stateful)
   - [ ] claude_skills (SKILL.md file loading)
   - [ ] mcp_gateway (MCP server bridge)
-- [ ] Tests: registry lists 17, each instantiable, skills without env vars setup OK, datetime+math handlers execute, SkillManager load/unload
+- [ ] Tests: registry lists 18, each instantiable, skills without env vars setup OK, datetime+math handlers execute, SkillManager load/unload
 - [ ] **Skill upstream-call verification.** For each skill that names an upstream service (`weather_api`, `web_search`, `wikipedia_search`, `google_maps`, `spider`, `datasphere`, `api_ninjas_trivia`, `native_vector_search`, `claude_skills`, `mcp_gateway`), there is a test that drives the skill end-to-end against either (a) the live upstream gated by an env var (e.g. `SWSDK_LIVE_TESTS=1`) AND credentials, OR (b) a recorded HTTP cassette of a real upstream response. NO skill may pass its tests against a hardcoded fake response — the real transport must be exercised. `audit_skills_upstream.py` (Phase 13) validates this and fails any skill whose handler returns canned data without making a network call.
 - [ ] Commit to git
 
@@ -470,7 +470,7 @@ Tests are proof of implementation. The port must test **everything the Python SD
   - [ ] DataMap: data_map (all builder methods, serialization)
   - [ ] Contexts: contexts (steps, navigation, validation, gather_info)
   - [ ] Mixins/Config: prompt, tool, web, auth, serverless, state, ai_config, skill
-  - [ ] Skills: registry, manager, each of the 17 built-in skills individually
+  - [ ] Skills: registry, manager, each of the 18 built-in skills individually
   - [ ] Prefabs: each of the 5 prefab agents
   - [ ] AgentServer: registration, routing, SIP, static files
   - [ ] RELAY: client, call, action types, events, messages
@@ -486,7 +486,7 @@ Tests are proof of implementation. The port must test **everything the Python SD
 - [ ] All 38 SWML verb methods present and schema-validated
 - [ ] RELAY client: all 4 correlation mechanisms implemented (JSON-RPC id, call_id, control_id, tag)
 - [ ] REST client: all 20 namespaces initialized with correct paths (see Phase 8 for the enumerated list)
-- [ ] Skills registry: all 17 built-in skills registered (per Phase 4 enumerated list)
+- [ ] Skills registry: all 18 built-in skills registered (per Phase 4 enumerated list)
 - [ ] agent.AddSkill() one-liner integration works (not just manual SkillManager)
 - [ ] SIP username extraction utility exists
 - [ ] Static file serving in AgentServer with path traversal protection

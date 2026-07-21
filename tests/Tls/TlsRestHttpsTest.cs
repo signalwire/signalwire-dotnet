@@ -53,8 +53,9 @@ public class TlsRestHttpsTest
         // GET a spec-backed collection endpoint over HTTPS. A real JSON response
         // with a "data" array can only come back over a CA-verified TLS session.
         var resp = await addresses.ListAsync(new Dictionary<string, string> { ["page_size"] = "5" });
-        Assert.True(resp.ContainsKey("data"),
-            $"https response missing 'data' key; got keys [{string.Join(", ", resp.Keys)}]");
+        Assert.NotNull(resp);
+        Assert.True(resp!.Data is not null,
+            "https response missing 'data' envelope");
 
         // Wire proof: the mock journaled the GET on its (HTTPS) control plane.
         var last = await LastJournalAsync(mock.BaseUrl, trustingHttp);

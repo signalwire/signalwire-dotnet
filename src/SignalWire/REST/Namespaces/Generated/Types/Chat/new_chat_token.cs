@@ -22,17 +22,17 @@ public class NewChatToken
 {
     /// <summary>Wire field <c>ttl</c>.</summary>
     [JsonPropertyName("ttl")]
-    public long? ttl { get; set; }
+    public long? Ttl { get; set; }
 
     /// <summary>Wire field <c>channels</c>.</summary>
     [JsonPropertyName("channels")]
-    public Dictionary<string, object?>? channels { get; set; }
+    public Dictionary<string, object?>? Channels { get; set; }
 
     /// <summary>Wire field <c>member_id</c>.</summary>
     [JsonPropertyName("member_id")]
-    public string? member_id { get; set; }
+    public string? MemberId { get; set; }
 
     /// <summary>Wire field <c>state</c>.</summary>
     [JsonPropertyName("state")]
-    public Dictionary<string, object?>? state { get; set; }
+    public Dictionary<string, object?>? State { get; set; }
 }

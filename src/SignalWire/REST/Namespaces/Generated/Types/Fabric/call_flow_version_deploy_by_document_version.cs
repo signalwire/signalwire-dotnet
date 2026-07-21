@@ -22,5 +22,5 @@ public class CallFlowVersionDeployByDocumentVersion
 {
     /// <summary>Wire field <c>document_version</c>.</summary>
     [JsonPropertyName("document_version")]
-    public long? document_version { get; set; }
+    public long? DocumentVersion { get; set; }
 }

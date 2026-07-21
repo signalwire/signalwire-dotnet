@@ -22,5 +22,5 @@ public class UserInputAction
 {
     /// <summary>Wire field <c>user_input</c>.</summary>
     [JsonPropertyName("user_input")]
-    public string? user_input { get; set; }
+    public string? UserInput { get; set; }
 }

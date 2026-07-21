@@ -17,7 +17,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// <summary>
 /// SwmlWebhooks — REST resource for the fabric API.
 /// </summary>
-public class SwmlWebhooks : SignalWire.REST.CrudWithAddresses
+public class SwmlWebhooks : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.SWMLWebhookListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.SWMLWebhookResponse>
 {
     public SwmlWebhooks(SignalWire.REST.HttpClient client)
         : base(client, "/api/fabric/resources/swml_webhooks")
@@ -25,10 +25,11 @@ public class SwmlWebhooks : SignalWire.REST.CrudWithAddresses
     }
 
     /// <summary>Update this resource via an HTTP PATCH request.</summary>
-    public override Task<Dictionary<string, object?>> UpdateAsync(
+    public override Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SWMLWebhookResponse?> UpdateAsync(
         string id, Dictionary<string, object?> data,
+        RequestOptions? requestOptions = null,
         CancellationToken cancellationToken = default)
     {
-        return Client.PatchAsync(Path(id), data, cancellationToken: cancellationToken);
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.SWMLWebhookResponse>(Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 }

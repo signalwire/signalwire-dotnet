@@ -22,21 +22,21 @@ public class ContextsPOMObjectUpdate
 {
     /// <summary>Wire field <c>steps</c>.</summary>
     [JsonPropertyName("steps")]
-    public List<object?>? steps { get; set; }
+    public List<object?>? Steps { get; set; }
 
     /// <summary>Wire field <c>isolated</c>.</summary>
     [JsonPropertyName("isolated")]
-    public bool? isolated { get; set; }
+    public bool? Isolated { get; set; }
 
     /// <summary>Wire field <c>enter_fillers</c>.</summary>
     [JsonPropertyName("enter_fillers")]
-    public List<object?>? enter_fillers { get; set; }
+    public List<object?>? EnterFillers { get; set; }
 
     /// <summary>Wire field <c>exit_fillers</c>.</summary>
     [JsonPropertyName("exit_fillers")]
-    public List<object?>? exit_fillers { get; set; }
+    public List<object?>? ExitFillers { get; set; }
 
     /// <summary>Wire field <c>pom</c>.</summary>
     [JsonPropertyName("pom")]
-    public List<object?>? pom { get; set; }
+    public List<object?>? Pom { get; set; }
 }

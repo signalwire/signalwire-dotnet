@@ -22,5 +22,5 @@ public class MfaVerifyResponse
 {
     /// <summary>Wire field <c>success</c>.</summary>
     [JsonPropertyName("success")]
-    public bool? success { get; set; }
+    public bool? Success { get; set; }
 }

@@ -22,5 +22,5 @@ public class CallFlowCreateRequest
 {
     /// <summary>Wire field <c>title</c>.</summary>
     [JsonPropertyName("title")]
-    public string? title { get; set; }
+    public string? Title { get; set; }
 }
