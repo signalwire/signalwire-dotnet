@@ -40,11 +40,11 @@ var client = new RestClient(
 
 // List phone numbers
 var numbers = await client.PhoneNumbers.ListAsync();
-Console.WriteLine($"Found {((numbers["data"] as List<object>)?.Count ?? 0)} numbers");
+Console.WriteLine($"Found {numbers?.Data?.Count ?? 0} numbers");
 
 // List AI agents
 var agents = await client.Fabric.AiAgents.ListAsync();
-Console.WriteLine($"Found {((agents["data"] as List<object>)?.Count ?? 0)} agents");
+Console.WriteLine($"Found {agents?.Data?.Count ?? 0} agents");
 ```
 
 ## Constructor Options
