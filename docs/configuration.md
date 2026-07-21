@@ -75,6 +75,8 @@ Config values support `${VAR_NAME|default}` syntax:
 | `SIGNALWIRE_API_TOKEN` | - | API token for REST/RELAY clients |
 | `SIGNALWIRE_SPACE` | - | Space hostname (e.g. `example.signalwire.com`) |
 | `SIGNALWIRE_RELAY_SCHEME` | `wss` | WebSocket scheme for the RELAY client (`wss` or `ws`) |
+| `SIGNALWIRE_REST_CA_FILE` | - | Path to a PEM CA bundle the SDK-owned REST HTTP client trusts as an additional TLS root (for a private/self-signed SignalWire space certificate). Unset uses the OS trust store. |
+| `SIGNALWIRE_RELAY_CA_FILE` | - | Path to a PEM CA bundle the RELAY WebSocket client trusts as an additional TLS root for the WSS handshake. Unset uses the OS trust store. |
 | `SIGNALWIRE_LOG_LEVEL` | `info` | Log level (`debug`, `info`, `warn`, `error`) |
 
 ### Server Configuration
