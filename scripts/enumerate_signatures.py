@@ -669,26 +669,28 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
                     "returns": typed_ret or "dict<string,any>",
                 }
             continue
-        # No sidecar entry: a surface method without recorded params (e.g. the
-        # ReadResource inline list/get, whose door params the oracle drops). Still
-        # honour the manifest typed return when present.
-        if typed_ret is not None:
-            methods_out[canon] = {
-                "params": [{"name": "self", "kind": "self"}],
-                "returns": typed_ret,
-            }
-            continue
-        # No sidecar entry: type from reflection if available, else bare self.
+        # No sidecar entry: type from reflection when available (create/update on a
+        # CRUD subclass inherit the generic base's typed CRUD method — keep its
+        # reflected PARAMS, only override the RETURN with the manifest typed DTO so
+        # the enumerated shape carries both). A surface method with neither sidecar
+        # NOR reflection (e.g. the ReadResource inline list/get, whose door params
+        # the oracle drops) falls back to bare self + the manifest typed return.
         m = reflected.get(canon)
         if m is not None:
             ctx = f"{target_module}.{name}.{canon}"
             try:
-                methods_out[canon] = build_signature(
-                    m, aliases, ctx, is_static=m.get("is_static", False),
-                )
+                sig = build_signature(m, aliases, ctx, is_static=m.get("is_static", False))
             except TypeTranslationError as e:
                 failures.append(str(e))
-                methods_out[canon] = {"params": [{"name": "self", "kind": "self"}], "returns": "any"}
+                sig = {"params": [{"name": "self", "kind": "self"}], "returns": "any"}
+            if typed_ret is not None:
+                sig["returns"] = typed_ret
+            methods_out[canon] = sig
+        elif typed_ret is not None:
+            methods_out[canon] = {
+                "params": [{"name": "self", "kind": "self"}],
+                "returns": typed_ret,
+            }
         else:
             methods_out[canon] = {"params": [{"name": "self", "kind": "self"}], "returns": "any"}
 

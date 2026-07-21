@@ -25446,6 +25446,28 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "cancellation_token",
+                  "type": "any",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.rest.namespaces.datasphere_types_generated.Document"
@@ -25559,6 +25581,28 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "cancellation_token",
+                  "type": "any",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.rest.namespaces.fabric_types_generated.AIAgentResponse"
@@ -26060,6 +26104,28 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "cancellation_token",
+                  "type": "any",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.rest.namespaces.fabric_types_generated.CXMLWebhookResponse"
@@ -26711,6 +26777,28 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "cancellation_token",
+                  "type": "any",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.rest.namespaces.fabric_types_generated.SipGatewayResponse"
@@ -27084,6 +27172,28 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "cancellation_token",
+                  "type": "any",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.rest.namespaces.fabric_types_generated.SWMLWebhookResponse"
@@ -28727,6 +28837,28 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                },
+                {
+                  "name": "request_options",
+                  "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "cancellation_token",
+                  "type": "any",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.rest.namespaces.projects_types_generated.Project"
