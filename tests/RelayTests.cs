@@ -719,6 +719,65 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
+    public void Client_InboundCall_CapBounded_DropsWhenFull()
+    {
+        // The Calls map is bounded by max_active_calls: once full, further
+        // inbound calls are dropped rather than accumulating forever (r5 F5.4).
+        var client = new TestableClient(maxActiveCalls: 2);
+
+        for (var i = 0; i < 5; i++)
+        {
+            client.HandleEvent(new()
+            {
+                ["event_type"] = "calling.call.receive",
+                ["params"] = new Dictionary<string, object?>
+                {
+                    ["call_id"] = $"c-{i}",
+                    ["node_id"] = "n-1",
+                    ["context"] = "default",
+                },
+            });
+        }
+
+        // Only the first 2 were tracked; c-2..c-4 were dropped at the cap.
+        Assert.Equal(2, client.Calls.Count);
+        Assert.True(client.Calls.ContainsKey("c-0"));
+        Assert.True(client.Calls.ContainsKey("c-1"));
+        Assert.False(client.Calls.ContainsKey("c-2"));
+
+        // An event for an ALREADY-tracked call is an update, not a new entry,
+        // so it is never dropped by the cap.
+        client.HandleEvent(new()
+        {
+            ["event_type"] = "calling.call.receive",
+            ["params"] = new Dictionary<string, object?>
+            {
+                ["call_id"] = "c-0",
+                ["node_id"] = "n-1",
+                ["context"] = "default",
+            },
+        });
+        Assert.Equal(2, client.Calls.Count);
+    }
+
+    [Fact]
+    public void Client_Disconnect_SweepsCorrelationMaps()
+    {
+        // Disconnect frees every tracked entry — a suppressed terminal event
+        // cannot leak an entry past the session that owned it (r5 F5.4).
+        var client = new TestableClient();
+        client.Calls["c-1"] = new Call(new() { ["call_id"] = "c-1" }, client);
+        client.Messages["m-1"] = new Message(new() { ["message_id"] = "m-1" });
+        Assert.NotEmpty(client.Calls);
+        Assert.NotEmpty(client.Messages);
+
+        client.Disconnect();
+
+        Assert.Empty(client.Calls);
+        Assert.Empty(client.Messages);
+    }
+
+    [Fact]
     public void Client_HandleEvent_MessageState()
     {
         var client = new TestableClient();
@@ -1083,6 +1142,9 @@ public class RelayTests : IDisposable
         public List<Dictionary<string, object?>> SentMessages { get; } = [];
 
         public TestableClient() : base(new() { Project = "test", Token = "tok" }) { }
+
+        public TestableClient(int maxActiveCalls)
+            : base(new() { Project = "test", Token = "tok", MaxActiveCalls = maxActiveCalls }) { }
 
         public override void Send(Dictionary<string, object?> msg)
         {
