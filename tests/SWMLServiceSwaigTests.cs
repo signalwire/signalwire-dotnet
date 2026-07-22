@@ -127,6 +127,101 @@ public class SWMLServiceSwaigTests : IDisposable
     }
 
     [Fact]
+    public void Swaig_Post_NestedArgs_ReachHandlerAsStructures()
+    {
+        // The platform sends non-scalar function arguments inside the nested
+        // {"argument": {"parsed": [ {...} ]}} shape. The handler must receive
+        // a JSON array as a List and a JSON object as a Dictionary — NOT their
+        // raw JSON text. (Regression for r5 dotnet bug #3.4 / F1.)
+        var svc = Svc();
+        object? seenTags = null;
+        object? seenFilters = null;
+        object? seenCount = null;
+        svc.DefineTool(
+            "search",
+            "Search with structured args.",
+            new Dictionary<string, object>
+            {
+                ["tags"] = new Dictionary<string, object> { ["type"] = "array" },
+                ["filters"] = new Dictionary<string, object> { ["type"] = "object" },
+                ["count"] = new Dictionary<string, object> { ["type"] = "integer" },
+            },
+            (args, raw) =>
+            {
+                seenTags = args["tags"];
+                seenFilters = args["filters"];
+                seenCount = args["count"];
+                return new FunctionResult("ok");
+            });
+
+        // Build the payload from the PLATFORM-nested shape, not a hand-flattened
+        // args dict — this exercises the real dispatch path.
+        var payload = JsonSerializer.Serialize(new
+        {
+            function = "search",
+            argument = new
+            {
+                parsed = new[]
+                {
+                    new
+                    {
+                        tags = new[] { "a", "b" },
+                        filters = new { active = true, limit = 5 },
+                        count = 3,
+                    },
+                },
+            },
+            call_id = "c-2",
+        });
+        var (status, _, _) = svc.HandleRequest("POST", "/swaig", Auth(), payload);
+        Assert.Equal(200, status);
+
+        var tags = Assert.IsType<List<object>>(seenTags);
+        Assert.Equal(new object[] { "a", "b" }, tags);
+
+        var filters = Assert.IsType<Dictionary<string, object>>(seenFilters);
+        Assert.Equal(true, filters["active"]);
+        Assert.Equal(5L, filters["limit"]);
+
+        Assert.Equal(3L, seenCount);
+    }
+
+    [Fact]
+    public void Swaig_Post_RawJsonStringArgs_AreParsed()
+    {
+        // Some platform paths send only the raw JSON string in
+        // {"argument": {"raw": "..."}} with no `parsed` array. The handler
+        // must still receive parsed structured args (matching Python's
+        // json.loads(argument["raw"])).
+        var svc = Svc();
+        object? seenItems = null;
+        svc.DefineTool(
+            "ingest",
+            "Ingest raw args.",
+            new Dictionary<string, object>
+            {
+                ["items"] = new Dictionary<string, object> { ["type"] = "array" },
+            },
+            (args, raw) =>
+            {
+                seenItems = args["items"];
+                return new FunctionResult("ok");
+            });
+
+        var payload = JsonSerializer.Serialize(new
+        {
+            function = "ingest",
+            argument = new { raw = "{\"items\": [1, 2, 3]}" },
+            call_id = "c-3",
+        });
+        var (status, _, _) = svc.HandleRequest("POST", "/swaig", Auth(), payload);
+        Assert.Equal(200, status);
+
+        var items = Assert.IsType<List<object>>(seenItems);
+        Assert.Equal(new object[] { 1L, 2L, 3L }, items);
+    }
+
+    [Fact]
     public void Swaig_Post_MissingFunction_Returns400()
     {
         var (status, _, _) = Svc().HandleRequest("POST", "/swaig", Auth(), "{}");

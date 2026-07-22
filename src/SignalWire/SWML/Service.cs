@@ -829,27 +829,50 @@ public class Service
         // Argument extraction. Accept the nested
         // {"argument": {"parsed": [...], "raw": "..."}} shape AND a flat
         // {"arguments": {...}} shape used by some external integrations.
+        // Values are recursively converted to native structures (Dictionary /
+        // List / long / double / bool), matching Python's
+        // args = body["argument"]["parsed"][0]: a JSON object/array argument
+        // reaches the handler as a Dictionary/List, NOT as its raw JSON text.
         var args = new Dictionary<string, object>();
         if (requestData.TryGetValue("argument", out var argObj)
             && argObj is JsonElement argEl
-            && argEl.ValueKind == JsonValueKind.Object
-            && argEl.TryGetProperty("parsed", out var parsed)
-            && parsed.ValueKind == JsonValueKind.Array
-            && parsed.GetArrayLength() > 0)
+            && argEl.ValueKind == JsonValueKind.Object)
         {
-            var first = parsed[0];
-            if (first.ValueKind == JsonValueKind.Object)
+            if (argEl.TryGetProperty("parsed", out var parsed)
+                && parsed.ValueKind == JsonValueKind.Array
+                && parsed.GetArrayLength() > 0
+                && parsed[0].ValueKind == JsonValueKind.Object)
             {
-                foreach (var prop in first.EnumerateObject())
+                foreach (var prop in parsed[0].EnumerateObject())
                 {
-                    args[prop.Name] = prop.Value.ValueKind switch
+                    args[prop.Name] = SwaigArgValue(prop.Value);
+                }
+            }
+            else if (argEl.TryGetProperty("raw", out var raw)
+                && raw.ValueKind == JsonValueKind.String)
+            {
+                // Fallback: the platform may send only the raw JSON string.
+                // Parse it (matching Python's json.loads(argument["raw"])) so
+                // the handler still gets structured args.
+                var rawText = raw.GetString();
+                if (!string.IsNullOrEmpty(rawText))
+                {
+                    try
                     {
-                        JsonValueKind.String => prop.Value.GetString()!,
-                        JsonValueKind.Number => prop.Value.GetDouble(),
-                        JsonValueKind.True => true,
-                        JsonValueKind.False => false,
-                        _ => prop.Value.ToString(),
-                    };
+                        using var rawDoc = JsonDocument.Parse(rawText);
+                        if (rawDoc.RootElement.ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var prop in rawDoc.RootElement.EnumerateObject())
+                            {
+                                args[prop.Name] = SwaigArgValue(prop.Value);
+                            }
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                        // Malformed raw payload — leave args empty, matching
+                        // Python's swallow-and-log-empty behaviour.
+                    }
                 }
             }
         }
@@ -859,14 +882,7 @@ public class Service
         {
             foreach (var prop in argsEl.EnumerateObject())
             {
-                args[prop.Name] = prop.Value.ValueKind switch
-                {
-                    JsonValueKind.String => prop.Value.GetString()!,
-                    JsonValueKind.Number => prop.Value.GetDouble(),
-                    JsonValueKind.True => true,
-                    JsonValueKind.False => false,
-                    _ => prop.Value.ToString(),
-                };
+                args[prop.Name] = SwaigArgValue(prop.Value);
             }
         }
 
@@ -1083,6 +1099,43 @@ public class Service
             result["Content-Type"] = "application/json";
         }
         return result;
+    }
+
+    /// <summary>
+    /// Recursively convert a SWAIG argument JsonElement to a native object so
+    /// the handler receives structured values — a JSON object as a
+    /// Dictionary&lt;string, object&gt;, a JSON array as a List&lt;object&gt;,
+    /// numbers as long/double, bools as bool — matching Python, where
+    /// <c>args = body["argument"]["parsed"][0]</c> hands the handler the parsed
+    /// structure rather than its raw JSON text. (A JSON null/undefined maps to
+    /// the empty string, keeping the non-nullable args-dict value contract.)
+    /// </summary>
+    private static object SwaigArgValue(JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.Object => SwaigArgObject(element),
+            JsonValueKind.Array => element.EnumerateArray().Select(SwaigArgValue).ToList(),
+            JsonValueKind.String => element.GetString()!,
+            // An integral JSON number stays a long, a fractional one a double —
+            // matching Python's int/float distinction. Each branch is cast to
+            // object so the conditional's common-type rule does NOT silently
+            // promote the long to double.
+            JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => string.Empty,
+        };
+    }
+
+    private static Dictionary<string, object> SwaigArgObject(JsonElement element)
+    {
+        var dict = new Dictionary<string, object>();
+        foreach (var prop in element.EnumerateObject())
+        {
+            dict[prop.Name] = SwaigArgValue(prop.Value);
+        }
+        return dict;
     }
 
     /// <summary>Build a JSON response tuple.</summary>
