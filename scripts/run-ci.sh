@@ -343,6 +343,9 @@ sched_gate NUPKG-XMLDOC tier=nightly defer=1 res=msbuild desc="nupkg ships the X
 sched_gate NO-CHEAT desc="audit_no_cheat_tests" \
     -- python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"
 
+sched_gate COORDINATED-PASS desc="a non-main porting-sdk pin must be declared on the PR (Coordinated-With: line or coordinated-pass label)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/coordinated_pass.py" --porting-sdk "$PORTING_SDK_DIR"
+
 # WIRED-MODES (plan 1.6 / D7): the merge-coherence guard. WIRED_MODES.md lists the
 # load-bearing env/mode lines this run-ci MUST carry (MOCK_RELAY_STRICT=1 on the
 # nightly run lanes, the MOCK_SIGNALWIRE_STRICT export). If a future merge silently
