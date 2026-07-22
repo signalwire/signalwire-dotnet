@@ -383,6 +383,12 @@ sched_gate LINT defer=1 res=msbuild desc="dotnet build (analyzers, warnings-as-e
 sched_gate DEAD-PUBLIC-ERROR desc="exported error types are raised/caught/user-signalled (no dead error surface)" \
     -- python3 "$PORTING_SDK_DIR/scripts/dead_public_error.py" --port dotnet --repo "$PORT_ROOT"
 
+sched_gate ENV-VAR-CONSISTENCY desc="REST base-url override seam present (HttpClient baseUrl ctor param) + canonical CA env names (SIGNALWIRE_REST_CA_FILE/SIGNALWIRE_RELAY_CA_FILE)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/env_var_consistency.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate MAP-BOUNDS desc="RELAY calls map is capped + enforced (max-active-calls bound; no unbounded leak on a suppressed terminal event)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/map_bounds.py" --port dotnet --repo "$PORT_ROOT"
+
 # ---- §C1 doc/example/CLI execution gates -------------------------------------
 # SNIPPET-COMPILE: every documented C# snippet compiles against the built SDK
 # assembly (deleted/renamed SDK symbols fail). Heavy (per-snippet MSBuild) →
