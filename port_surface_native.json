@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 619059c67b5c791da9b276069b0ad291fbe97a2c",
+  "generated_from": "signalwire-dotnet @ 64e3c3ca3c3dc9a0188563a95572b277c758acdd",
   "native_names": [
     "AI",
     "AIAction",
@@ -1205,6 +1205,7 @@
     "ManualSetProxyUrl",
     "MasterNodeid",
     "MathSkill",
+    "MaxActiveCalls",
     "MaxAttempts",
     "MaxDuration",
     "MaxEmotion",
