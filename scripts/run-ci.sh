@@ -300,9 +300,9 @@ sched_gate GEN desc="generated-code freshness suite (GEN-FRESH/-TESTS/-RELAY/-SW
 # (the ONE nightly member) is the separate BEHAVIORAL-NIGHTLY line below. res=msbuild
 # + defer=1: contains REST-COVERAGE/SPEC-PARITY (dotnet test / RouteRegistry build)
 # and the BEHAVIORAL-* dumps (build tools/DumpCorpus) — serialize with TEST/FMT/LINT.
-sched_gate BEHAVIORAL defer=1 res=msbuild desc="behavioral suite (REST-COVERAGE/SPEC-PARITY/EMISSION/BEHAVIORAL-*/SKILL-CONTRACT/SWAIG-COVERAGE/SWAIG-CLI/ERROR-ENVELOPE/PAGINATION-WIRED/PAGINATION-CORPUS/DOC-WIRE/SECURE-DEFAULT/CA-VAR/SECRET-SCRUB/TLS-VERIFY)" \
+sched_gate BEHAVIORAL defer=1 res=msbuild desc="behavioral suite (REST-COVERAGE/SPEC-PARITY/EMISSION/BEHAVIORAL-*/BEHAVIORAL-STRICT-RENDER/SKILL-CONTRACT/SWAIG-COVERAGE/SWAIG-CLI/ERROR-ENVELOPE/PAGINATION-WIRED/PAGINATION-CORPUS/DOC-WIRE/SECURE-DEFAULT/CA-VAR/SECRET-SCRUB/TLS-VERIFY)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/behavioral.py" --port dotnet --repo "$PORT_ROOT" \
-        --rules REST-COVERAGE,SPEC-PARITY,EMISSION,BEHAVIORAL-WIRE,BEHAVIORAL-SWML,BEHAVIORAL-STATE,BEHAVIORAL-HTTP,BEHAVIORAL-WIRE-RELAY,SKILL-CONTRACT,SWAIG-COVERAGE,SWAIG-CLI,ERROR-ENVELOPE,PAGINATION-WIRED,PAGINATION-CORPUS,DOC-WIRE,SECURE-DEFAULT,CA-VAR,SECRET-SCRUB,TLS-VERIFY
+        --rules REST-COVERAGE,SPEC-PARITY,EMISSION,BEHAVIORAL-WIRE,BEHAVIORAL-SWML,BEHAVIORAL-STRICT-RENDER,BEHAVIORAL-STATE,BEHAVIORAL-HTTP,BEHAVIORAL-WIRE-RELAY,SKILL-CONTRACT,SWAIG-COVERAGE,SWAIG-CLI,ERROR-ENVELOPE,PAGINATION-WIRED,PAGINATION-CORPUS,DOC-WIRE,SECURE-DEFAULT,CA-VAR,SECRET-SCRUB,TLS-VERIFY
 
 sched_gate BEHAVIORAL-NIGHTLY tier=nightly defer=1 desc="behavioral suite, nightly rules (WAIT-LIVENESS)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/behavioral.py" --port dotnet --repo "$PORT_ROOT" \
@@ -343,6 +343,12 @@ sched_gate NUPKG-XMLDOC tier=nightly defer=1 res=msbuild desc="nupkg ships the X
 sched_gate NO-CHEAT desc="audit_no_cheat_tests" \
     -- python3 "$PORTING_SDK_DIR/scripts/audit_no_cheat_tests.py" --root "$PORT_ROOT"
 
+sched_gate COORDINATED-PASS desc="a non-main porting-sdk pin must be declared on the PR (Coordinated-With: line or coordinated-pass label)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/coordinated_pass.py" --porting-sdk "$PORTING_SDK_DIR"
+
+sched_gate COORDINATED-REFS desc="every coordinated-set checkout (porting-sdk + python oracle + matrix ports) uses PORTING_SDK_REF, not a literal ref" \
+    -- python3 "$PORTING_SDK_DIR/scripts/check_coordinated_refs.py" --repo "$PORT_ROOT"
+
 # WIRED-MODES (plan 1.6 / D7): the merge-coherence guard. WIRED_MODES.md lists the
 # load-bearing env/mode lines this run-ci MUST carry (MOCK_RELAY_STRICT=1 on the
 # nightly run lanes, the MOCK_SIGNALWIRE_STRICT export). If a future merge silently
@@ -379,6 +385,12 @@ sched_gate LINT defer=1 res=msbuild desc="dotnet build (analyzers, warnings-as-e
 # DOC-TRUTH.
 sched_gate DEAD-PUBLIC-ERROR desc="exported error types are raised/caught/user-signalled (no dead error surface)" \
     -- python3 "$PORTING_SDK_DIR/scripts/dead_public_error.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate ENV-VAR-CONSISTENCY desc="REST base-url override seam present (HttpClient baseUrl ctor param) + canonical CA env names (SIGNALWIRE_REST_CA_FILE/SIGNALWIRE_RELAY_CA_FILE)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/env_var_consistency.py" --port dotnet --repo "$PORT_ROOT"
+
+sched_gate MAP-BOUNDS desc="RELAY calls map is capped + enforced (max-active-calls bound; no unbounded leak on a suppressed terminal event)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/map_bounds.py" --port dotnet --repo "$PORT_ROOT"
 
 # ---- §C1 doc/example/CLI execution gates -------------------------------------
 # SNIPPET-COMPILE: every documented C# snippet compiles against the built SDK

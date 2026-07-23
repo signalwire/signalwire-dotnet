@@ -51,6 +51,16 @@
     <!-- YamlDotNet is the .NET-idiomatic YAML library; used by POM
          to mirror Python's ``PromptObjectModel.from_yaml/to_yaml``. -->
     <PackageReference Include="YamlDotNet" Version="18.1.0" />
+    <!-- JsonSchema.Net (json-everything) is the .NET-idiomatic Draft 2020-12
+         JSON Schema validator, the analogue of Python's jsonschema-rs
+         (Draft202012Validator), Go's santhosh-tekuri/jsonschema, Rust's
+         `jsonschema` crate, and Ruby's json_schemer. It backs the SWML
+         STRICT-RENDER contract: standard-verb configs are validated against the
+         bundled schema.json (unknown/misspelled keys + wrong types are rejected,
+         not silently dropped). .NET's regex engine supports the schema's
+         negative-lookahead step-name patterns natively (unlike Go's RE2), so no
+         custom regex engine is needed. It adds no SignalWire.* public surface. -->
+    <PackageReference Include="JsonSchema.Net" Version="7.3.4" />
   </ItemGroup>
 
   <ItemGroup>

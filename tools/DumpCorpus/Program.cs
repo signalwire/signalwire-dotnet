@@ -27,7 +27,7 @@ using SignalWire.Tools.DumpCorpus;
 
 if (args.Length != 1)
 {
-    Console.Error.WriteLine("usage: DumpCorpus <wire|swml|state|http|wire-relay|envelope|secure-default|pagination>");
+    Console.Error.WriteLine("usage: DumpCorpus <wire|swml|strict-render|state|http|wire-relay|envelope|secure-default|pagination>");
     return 2;
 }
 
@@ -37,6 +37,7 @@ try
     {
         "wire" => WireDump.Build(),
         "swml" => SwmlDump.Build(),
+        "strict-render" => StrictRenderDump.Build(),
         "state" => StateDump.Build(),
         "http" => HttpDump.Build(),
         "wire-relay" => await WireRelayDump.BuildAsync().ConfigureAwait(false),

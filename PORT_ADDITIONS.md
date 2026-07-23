@@ -63,6 +63,7 @@ signalwire.relay.client_options.ClientOptions.token: .NET options data class wit
 signalwire.relay.client_options.ClientOptions.host: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
 signalwire.relay.client_options.ClientOptions.scheme: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
 signalwire.relay.client_options.ClientOptions.contexts: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
+signalwire.relay.client_options.ClientOptions.max_active_calls: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__ (max_active_calls)
 signalwire.signal_wire_options.SignalWireOptions: .NET DI options data class for the AddSignalWire() IServiceCollection registration (6.2); Python has no host-framework DI layer
 signalwire.signal_wire_options.SignalWireOptions.__init__: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
 signalwire.signal_wire_options.SignalWireOptions.project_id: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer

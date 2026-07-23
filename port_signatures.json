@@ -20348,6 +20348,15 @@
               ],
               "returns": "string"
             },
+            "max_active_calls": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "int"
+            },
             "project": {
               "params": [
                 {

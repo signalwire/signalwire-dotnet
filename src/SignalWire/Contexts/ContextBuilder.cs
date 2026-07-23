@@ -348,6 +348,12 @@ public class Step
     public IReadOnlyList<string>? ValidContexts => _validContexts;
     public GatherInfo? GatherInfoData => _gatherInfo;
 
+    /// <summary>The raw SetFunctions value (a whitelist list, an empty list, or
+    /// the string "none"), or null if unset. Internal — read by
+    /// <see cref="ContextBuilder.Validate"/> for the dangling-reference check;
+    /// adds no public-surface drift.</summary>
+    internal object? Functions => _functions;
+
     private string RenderText()
     {
         if (_text is not null) return _text;
@@ -869,12 +875,20 @@ public class ContextBuilder
         // native tool names. The runtime auto-injects next_step /
         // change_context / gather_submit when contexts/steps are present,
         // so user tools sharing those names would never be called.
+        //
+        // The dangling-function check below shares the same guard: BOTH only run
+        // when a real tool-name supplier is attached (i.e. this builder belongs
+        // to an agent whose tool universe is knowable). A bare ContextBuilder
+        // with no agent cannot know the registered tools, so it must NOT red a
+        // valid document (parity with Python's `isinstance(registered, dict)`
+        // guard).
         if (_toolNameSupplier is not null)
         {
             var registered = _toolNameSupplier();
             if (registered is not null)
             {
-                var colliding = registered
+                var registeredList = registered.ToList();
+                var colliding = registeredList
                     .Where(name => ReservedToolNames.Reserved.Contains(name))
                     .Distinct()
                     .OrderBy(n => n)
@@ -891,10 +905,70 @@ public class ContextBuilder
                         "when contexts/steps are in use. Rename your tool(s) to avoid " +
                         "the collision.");
                 }
+
+                // Validate step SetFunctions([...]) whitelists against the known
+                // tool universe. A step that whitelists a function which is
+                // neither a registered SWAIG tool nor a reserved native tool is a
+                // DANGLING reference: the emitted step's active-function set
+                // silently points at nothing. "none"/[] (explicit disable-all)
+                // and any non-list functions value are not reference lists and
+                // are skipped. Mirrors Python's r5 F3 dangling-reference check.
+                var knownFunctions = new HashSet<string>(registeredList);
+                foreach (var native in ReservedToolNames.Reserved)
+                {
+                    knownFunctions.Add(native);
+                }
+                foreach (var (contextName, context) in _contexts)
+                {
+                    foreach (var (stepName, step) in context.GetSteps())
+                    {
+                        var funcs = StepFunctionList(step);
+                        if (funcs is null)
+                        {
+                            continue;
+                        }
+                        foreach (var fn in funcs)
+                        {
+                            if (!knownFunctions.Contains(fn))
+                            {
+                                var available = "[" + string.Join(", ",
+                                    knownFunctions.OrderBy(k => k, StringComparer.Ordinal)
+                                        .Select(k => $"'{k}'")) + "]";
+                                errors.Add(
+                                    $"Step '{stepName}' in context '{contextName}' whitelists " +
+                                    $"function '{fn}' via SetFunctions(), but no such SWAIG tool " +
+                                    "is registered on the agent and it is not a reserved native " +
+                                    "tool. This would emit a dangling function reference. " +
+                                    "Register the tool (DefineTool / a skill) or remove it from " +
+                                    $"the step. Available: {available}");
+                            }
+                        }
+                    }
+                }
             }
         }
 
         return errors;
+    }
+
+    /// <summary>
+    /// Extract a step's SetFunctions whitelist as a list of names, or null when
+    /// it is not a resolvable reference list. A step's functions value may be a
+    /// <c>List&lt;string&gt;</c> / <c>IReadOnlyList&lt;string&gt;</c> whitelist,
+    /// an empty list, or the string <c>"none"</c> — the empty list and "none"
+    /// are explicit disable-all (not references to resolve), and any other
+    /// non-list value is skipped, matching Python's <c>isinstance(funcs, list)</c>
+    /// guard.
+    /// </summary>
+    private static IReadOnlyList<string>? StepFunctionList(Step step)
+    {
+        var funcs = step.Functions;
+        return funcs switch
+        {
+            IReadOnlyList<string> list => list,
+            IEnumerable<string> seq => seq.ToList(),
+            _ => null,
+        };
     }
 
     public Dictionary<string, object> ToDict()

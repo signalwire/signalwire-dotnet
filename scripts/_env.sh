@@ -38,7 +38,17 @@ dotnet_cmd() {
     local bin
     bin="$(command -v dotnet || true)"
     if [ -n "$bin" ]; then
-        echo "$bin"
+        # Callers use the result UNQUOTED ($DN ...) so the multi-word docker
+        # fallback word-splits correctly. A host dotnet path containing a space
+        # (Windows git-bash resolves `C:\Program Files\dotnet` to
+        # `/c/Program Files/dotnet/dotnet`) would then split mid-path and fail
+        # with exit 127 (`/c/Program: No such file or directory`). Since the
+        # resolved bin is already on PATH, emit the bare command name in that
+        # case — it invokes the same executable with no embedded space.
+        case "$bin" in
+            *" "*) echo "dotnet" ;;
+            *) echo "$bin" ;;
+        esac
         return 0
     fi
     if command -v docker >/dev/null 2>&1; then

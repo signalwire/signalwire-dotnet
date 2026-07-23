@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 89f173c9ed2d5410af48d766ec44cdedc6df1ff4",
+  "generated_from": "signalwire-dotnet @ e379f95e38a3d944bb5037699b02bec2165e4580",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -1250,6 +1250,7 @@
         "ClientOptions": [
           "contexts",
           "host",
+          "max_active_calls",
           "project",
           "scheme",
           "token"

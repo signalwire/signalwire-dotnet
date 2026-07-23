@@ -277,18 +277,94 @@ public class Service
         return true;
     }
 
-    /// <summary>Add a verb to the main section of the current document.</summary>
+    /// <summary>Add a verb to the main section of the current document.
+    /// The verb config is validated against the SWML schema (the STRICT-RENDER
+    /// contract): an unknown verb, an unknown/misspelled config key, or a
+    /// wrong-typed value throws <see cref="SchemaValidationError"/> rather than
+    /// being silently dropped. Mirrors Python's <c>SWMLService.add_verb</c>.</summary>
     public bool AddVerb(string verbName, object config)
     {
+        ValidateVerbConfig(verbName, config);
         Document.AddVerb(verbName, config);
         return true;
     }
 
-    /// <summary>Add a verb to a named section of the current document.</summary>
+    /// <summary>Add a verb to a named section of the current document. Validated
+    /// the same way as <see cref="AddVerb"/> (STRICT-RENDER contract).</summary>
     public bool AddVerbToSection(string sectionName, string verbName, object config)
     {
+        ValidateVerbConfig(verbName, config);
         Document.AddVerbToSection(sectionName, verbName, config);
         return true;
+    }
+
+    /// <summary>
+    /// Validate a verb config against the schema before it is appended to the
+    /// document — the enforcement point of the SWML STRICT-RENDER contract.
+    ///
+    /// <para>Mirrors Python's <c>SWMLService.add_verb</c> dispatch:</para>
+    /// <list type="bullet">
+    /// <item><c>sleep</c> with a bare integer is a valid direct-value verb (no
+    /// object validation).</item>
+    /// <item>A HANDLER verb (the <c>ai</c> verb) runs its handler's
+    /// <see cref="SWMLVerbHandler.ValidateConfig"/> (prompt/SWAIG shape) plus a
+    /// SHALLOW top-level-key check — the deep ai shapes are legitimately emitted
+    /// in forms the JSON-schema's oneOf/pom rules don't all accept, so full-deep
+    /// validation would false-reject valid documents.</item>
+    /// <item>A STANDARD verb runs full schema validation (unknown/misspelled
+    /// keys + wrong types rejected).</item>
+    /// </list>
+    /// A non-dictionary config for a non-sleep verb throws (the config for a
+    /// standard verb must be an object).
+    /// </summary>
+    private void ValidateVerbConfig(string verbName, object? config)
+    {
+        // sleep takes a bare integer value — a valid direct-value verb.
+        if (verbName == "sleep" && config is int)
+        {
+            if (!Schema.Instance.IsValidVerb("sleep"))
+            {
+                throw new SchemaValidationError("sleep", new List<string> { "Unknown verb: sleep" });
+            }
+            return;
+        }
+
+        // Normalize the config to the string-keyed dictionary the validators
+        // want. At runtime IDictionary<string, object?> and
+        // IDictionary<string, object> are the same erased type, so this single
+        // case covers both Dictionary<string,object?> and Dictionary<string,object>.
+        if (config is not IDictionary<string, object?> idict)
+        {
+            throw new SchemaValidationError(
+                verbName,
+                new List<string> { $"Config for verb '{verbName}' must be an object" });
+        }
+        var configDict = new Dictionary<string, object?>(idict);
+
+        bool isValid;
+        List<string> errors;
+        if (_verbHandlers.HasHandler(verbName))
+        {
+            var handler = _verbHandlers.GetHandler(verbName)!;
+            (isValid, errors) = handler.ValidateConfig(configDict);
+            // A handler's ValidateConfig carries verb-specific diagnostics but
+            // does NOT reject unknown/misspelled TOP-LEVEL keys; add the shallow
+            // check so a typo'd key is caught like on every other verb. We do
+            // NOT run the full deep schema here (see ValidateVerbTopLevelKeys).
+            if (isValid)
+            {
+                (isValid, errors) = Schema.Instance.ValidateVerbTopLevelKeys(verbName, configDict);
+            }
+        }
+        else
+        {
+            (isValid, errors) = Schema.Instance.ValidateVerb(verbName, configDict);
+        }
+
+        if (!isValid)
+        {
+            throw new SchemaValidationError(verbName, errors);
+        }
     }
 
     /// <summary>Reset the current document to an empty state.</summary>
@@ -829,27 +905,50 @@ public class Service
         // Argument extraction. Accept the nested
         // {"argument": {"parsed": [...], "raw": "..."}} shape AND a flat
         // {"arguments": {...}} shape used by some external integrations.
+        // Values are recursively converted to native structures (Dictionary /
+        // List / long / double / bool), matching Python's
+        // args = body["argument"]["parsed"][0]: a JSON object/array argument
+        // reaches the handler as a Dictionary/List, NOT as its raw JSON text.
         var args = new Dictionary<string, object>();
         if (requestData.TryGetValue("argument", out var argObj)
             && argObj is JsonElement argEl
-            && argEl.ValueKind == JsonValueKind.Object
-            && argEl.TryGetProperty("parsed", out var parsed)
-            && parsed.ValueKind == JsonValueKind.Array
-            && parsed.GetArrayLength() > 0)
+            && argEl.ValueKind == JsonValueKind.Object)
         {
-            var first = parsed[0];
-            if (first.ValueKind == JsonValueKind.Object)
+            if (argEl.TryGetProperty("parsed", out var parsed)
+                && parsed.ValueKind == JsonValueKind.Array
+                && parsed.GetArrayLength() > 0
+                && parsed[0].ValueKind == JsonValueKind.Object)
             {
-                foreach (var prop in first.EnumerateObject())
+                foreach (var prop in parsed[0].EnumerateObject())
                 {
-                    args[prop.Name] = prop.Value.ValueKind switch
+                    args[prop.Name] = SwaigArgValue(prop.Value);
+                }
+            }
+            else if (argEl.TryGetProperty("raw", out var raw)
+                && raw.ValueKind == JsonValueKind.String)
+            {
+                // Fallback: the platform may send only the raw JSON string.
+                // Parse it (matching Python's json.loads(argument["raw"])) so
+                // the handler still gets structured args.
+                var rawText = raw.GetString();
+                if (!string.IsNullOrEmpty(rawText))
+                {
+                    try
                     {
-                        JsonValueKind.String => prop.Value.GetString()!,
-                        JsonValueKind.Number => prop.Value.GetDouble(),
-                        JsonValueKind.True => true,
-                        JsonValueKind.False => false,
-                        _ => prop.Value.ToString(),
-                    };
+                        using var rawDoc = JsonDocument.Parse(rawText);
+                        if (rawDoc.RootElement.ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var prop in rawDoc.RootElement.EnumerateObject())
+                            {
+                                args[prop.Name] = SwaigArgValue(prop.Value);
+                            }
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                        // Malformed raw payload — leave args empty, matching
+                        // Python's swallow-and-log-empty behaviour.
+                    }
                 }
             }
         }
@@ -859,14 +958,7 @@ public class Service
         {
             foreach (var prop in argsEl.EnumerateObject())
             {
-                args[prop.Name] = prop.Value.ValueKind switch
-                {
-                    JsonValueKind.String => prop.Value.GetString()!,
-                    JsonValueKind.Number => prop.Value.GetDouble(),
-                    JsonValueKind.True => true,
-                    JsonValueKind.False => false,
-                    _ => prop.Value.ToString(),
-                };
+                args[prop.Name] = SwaigArgValue(prop.Value);
             }
         }
 
@@ -1083,6 +1175,43 @@ public class Service
             result["Content-Type"] = "application/json";
         }
         return result;
+    }
+
+    /// <summary>
+    /// Recursively convert a SWAIG argument JsonElement to a native object so
+    /// the handler receives structured values — a JSON object as a
+    /// Dictionary&lt;string, object&gt;, a JSON array as a List&lt;object&gt;,
+    /// numbers as long/double, bools as bool — matching Python, where
+    /// <c>args = body["argument"]["parsed"][0]</c> hands the handler the parsed
+    /// structure rather than its raw JSON text. (A JSON null/undefined maps to
+    /// the empty string, keeping the non-nullable args-dict value contract.)
+    /// </summary>
+    private static object SwaigArgValue(JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.Object => SwaigArgObject(element),
+            JsonValueKind.Array => element.EnumerateArray().Select(SwaigArgValue).ToList(),
+            JsonValueKind.String => element.GetString()!,
+            // An integral JSON number stays a long, a fractional one a double —
+            // matching Python's int/float distinction. Each branch is cast to
+            // object so the conditional's common-type rule does NOT silently
+            // promote the long to double.
+            JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => string.Empty,
+        };
+    }
+
+    private static Dictionary<string, object> SwaigArgObject(JsonElement element)
+    {
+        var dict = new Dictionary<string, object>();
+        foreach (var prop in element.EnumerateObject())
+        {
+            dict[prop.Name] = SwaigArgValue(prop.Value);
+        }
+        return dict;
     }
 
     /// <summary>Build a JSON response tuple.</summary>

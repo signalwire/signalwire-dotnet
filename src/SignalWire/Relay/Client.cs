@@ -39,6 +39,16 @@ public sealed class ClientOptions
     /// <summary>Inbound contexts to subscribe on connect (the Python
     /// reference's <c>contexts</c> list).</summary>
     public IReadOnlyList<string>? Contexts { get; init; }
+
+    /// <summary>
+    /// Maximum number of simultaneously-active inbound calls to track. When the
+    /// <see cref="Client.Calls"/> map is full, further inbound calls are dropped
+    /// (logged) rather than accumulating unbounded — a suppressed terminal event
+    /// would otherwise leak the entry forever (r5 F5.4). Falls back to the
+    /// <c>RELAY_MAX_ACTIVE_CALLS</c> env var, then a default of 1000. Mirrors the
+    /// Python reference's <c>max_active_calls</c> keyword.
+    /// </summary>
+    public int? MaxActiveCalls { get; init; }
 }
 
 /// <summary>
@@ -126,6 +136,14 @@ public class Client : IAsyncDisposable
 
     /// <summary>messageId => Message.</summary>
     public ConcurrentDictionary<string, Message> Messages { get; } = new();
+
+    // Bound on the Calls map. Without it a suppressed terminal event
+    // (calling.call.state=ended never arrives) leaks the Call entry forever, so
+    // the map grows without limit over a long-lived agent (r5 F5.4). Mirrors the
+    // Python reference (relay/client.py: _DEFAULT_MAX_ACTIVE_CALLS=1000 +
+    // `if len(self._calls) >= self._max_active_calls: drop`).
+    private const int DefaultMaxActiveCalls = 1000;
+    private readonly int _maxActiveCalls;
 
     // -- event handlers --
     public Func<Call, Event, Task>? OnCallHandler { get; set; }
@@ -216,6 +234,26 @@ public class Client : IAsyncDisposable
         Scheme = options.Scheme
             is { Length: > 0 } s ? s
             : Environment.GetEnvironmentVariable("SIGNALWIRE_RELAY_SCHEME") ?? "wss";
+
+        // Active-calls cap: explicit option wins, else RELAY_MAX_ACTIVE_CALLS
+        // env, else the default. Clamped to >= 1. (Parity with python
+        // relay/client.py:207-216.)
+        if (options.MaxActiveCalls is int optCap)
+        {
+            _maxActiveCalls = Math.Max(1, optCap);
+        }
+        else if (int.TryParse(
+                     Environment.GetEnvironmentVariable("RELAY_MAX_ACTIVE_CALLS"),
+                     NumberStyles.Integer,
+                     CultureInfo.InvariantCulture,
+                     out var envCap))
+        {
+            _maxActiveCalls = Math.Max(1, envCap);
+        }
+        else
+        {
+            _maxActiveCalls = DefaultMaxActiveCalls;
+        }
 
         _logger = Logger.GetLogger("relay.client");
     }
@@ -438,6 +476,23 @@ public class Client : IAsyncDisposable
         {
             _logger.Debug($"Disconnect cts cancel error: {ex.Message}");
         }
+
+        SweepCorrelationMaps();
+    }
+
+    /// <summary>
+    /// Clear the per-connection correlation maps (Calls, Messages, Pending,
+    /// PendingDials). On disconnect every tracked entry is stale — the session
+    /// that owned them is gone — so this frees them rather than carrying them
+    /// into a reconnect (and bounds the maps' lifetime regardless of whether a
+    /// terminal event ever arrived; r5 F5.4).
+    /// </summary>
+    private void SweepCorrelationMaps()
+    {
+        Calls.Clear();
+        Messages.Clear();
+        Pending.Clear();
+        PendingDials.Clear();
     }
 
     /// <summary>
@@ -533,6 +588,8 @@ public class Client : IAsyncDisposable
 
         _ws = null;
         _cts = null;
+
+        SweepCorrelationMaps();
 
         GC.SuppressFinalize(this);
     }
@@ -1184,6 +1241,17 @@ public class Client : IAsyncDisposable
         if (callId is null)
         {
             _logger.Warn("Inbound call event missing call_id");
+            return;
+        }
+
+        // Bound the Calls map: if it is already at capacity, drop the inbound
+        // call rather than growing without limit (r5 F5.4; parity with python
+        // relay/client.py _handle_inbound_call). A call already tracked under
+        // this id is an update, not a new entry, so it is exempt from the cap.
+        if (!Calls.ContainsKey(callId) && Calls.Count >= _maxActiveCalls)
+        {
+            _logger.Error(
+                $"Max active calls ({_maxActiveCalls}) reached, dropping inbound call {callId}");
             return;
         }
 

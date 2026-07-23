@@ -32,6 +32,31 @@ All parameters fall back to environment variables if not provided:
 | `token` | `SIGNALWIRE_API_TOKEN` |
 | `space` | `SIGNALWIRE_SPACE` |
 
+Find your Project ID, API token, and Space URL under **API** in your
+[SignalWire dashboard](https://signalwire.com/signin).
+
+## Request options (timeout & retries)
+
+Every REST verb accepts an optional `requestOptions:` argument (a
+`RequestOptions` record) that overrides transport behavior for that one call —
+`Timeout` (seconds, per attempt), `Retries`, `RetryOnStatus`, and `RetryBackoff`.
+A `RequestOptions` passed to the `RestClient` constructor becomes the
+client-default envelope; a per-call `requestOptions:` shallow-overrides it.
+
+```csharp
+// Client-default: 5s per-attempt timeout, 2 retries on transient failures.
+var tunedClient = new RestClient(
+    projectId: "your-project-id",
+    token:     "your-api-token",
+    space:     "example.signalwire.com",
+    requestOptions: new RequestOptions { Timeout = 5.0, Retries = 2 });
+
+// Per-call override: give this one request a longer 30s budget.
+await tunedClient.Http.GetAsync(
+    "/api/relay/rest/phone_numbers",
+    requestOptions: new RequestOptions { Timeout = 30.0 });
+```
+
 ## Properties
 
 | Property | Type | Description |
@@ -114,3 +139,35 @@ var result = await client.Http.PostAsync("/api/custom/endpoint", new Dictionary<
     ["key"] = "value",
 });
 ```
+
+## Endpoint override
+
+`RestClient` composes the base URL as `https://{space}`. To point the REST
+transport at a different endpoint — a staging cluster, a proxy, or a local mock
+server — construct the low-level `HttpClient` directly with an explicit
+`baseUrl` (the `string baseUrl` constructor parameter is the override seam):
+
+```csharp
+// Full base URL, scheme included. Use http:// for a local mock/dev server and
+// https:// for a real endpoint — the value is used verbatim.
+var overrideHttp = new SignalWire.REST.HttpClient(
+    "your-project-id", "your-api-token", "http://127.0.0.1:8080");
+```
+
+The generated namespace resources build on any `HttpClient`, so this override
+carries through the whole REST surface.
+
+## Custom CA bundle (TLS)
+
+To trust a custom CA bundle for the REST transport's TLS verification (a private
+platform cert or a mock server's throwaway CA), set the fleet-canonical env var
+before constructing the client:
+
+| Env var | Applies to |
+|---------|------------|
+| `SIGNALWIRE_REST_CA_FILE` | REST transport (this client) |
+| `SIGNALWIRE_RELAY_CA_FILE` | RELAY WebSocket transport |
+
+When set, the SDK-owned transport trusts that bundle as its TLS root. Unset, the
+default OS trust store applies. A caller-injected `HttpClient` keeps its own TLS
+configuration untouched.
