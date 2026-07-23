@@ -277,18 +277,94 @@ public class Service
         return true;
     }
 
-    /// <summary>Add a verb to the main section of the current document.</summary>
+    /// <summary>Add a verb to the main section of the current document.
+    /// The verb config is validated against the SWML schema (the STRICT-RENDER
+    /// contract): an unknown verb, an unknown/misspelled config key, or a
+    /// wrong-typed value throws <see cref="SchemaValidationError"/> rather than
+    /// being silently dropped. Mirrors Python's <c>SWMLService.add_verb</c>.</summary>
     public bool AddVerb(string verbName, object config)
     {
+        ValidateVerbConfig(verbName, config);
         Document.AddVerb(verbName, config);
         return true;
     }
 
-    /// <summary>Add a verb to a named section of the current document.</summary>
+    /// <summary>Add a verb to a named section of the current document. Validated
+    /// the same way as <see cref="AddVerb"/> (STRICT-RENDER contract).</summary>
     public bool AddVerbToSection(string sectionName, string verbName, object config)
     {
+        ValidateVerbConfig(verbName, config);
         Document.AddVerbToSection(sectionName, verbName, config);
         return true;
+    }
+
+    /// <summary>
+    /// Validate a verb config against the schema before it is appended to the
+    /// document — the enforcement point of the SWML STRICT-RENDER contract.
+    ///
+    /// <para>Mirrors Python's <c>SWMLService.add_verb</c> dispatch:</para>
+    /// <list type="bullet">
+    /// <item><c>sleep</c> with a bare integer is a valid direct-value verb (no
+    /// object validation).</item>
+    /// <item>A HANDLER verb (the <c>ai</c> verb) runs its handler's
+    /// <see cref="SWMLVerbHandler.ValidateConfig"/> (prompt/SWAIG shape) plus a
+    /// SHALLOW top-level-key check — the deep ai shapes are legitimately emitted
+    /// in forms the JSON-schema's oneOf/pom rules don't all accept, so full-deep
+    /// validation would false-reject valid documents.</item>
+    /// <item>A STANDARD verb runs full schema validation (unknown/misspelled
+    /// keys + wrong types rejected).</item>
+    /// </list>
+    /// A non-dictionary config for a non-sleep verb throws (the config for a
+    /// standard verb must be an object).
+    /// </summary>
+    private void ValidateVerbConfig(string verbName, object? config)
+    {
+        // sleep takes a bare integer value — a valid direct-value verb.
+        if (verbName == "sleep" && config is int)
+        {
+            if (!Schema.Instance.IsValidVerb("sleep"))
+            {
+                throw new SchemaValidationError("sleep", new List<string> { "Unknown verb: sleep" });
+            }
+            return;
+        }
+
+        // Normalize the config to the string-keyed dictionary the validators
+        // want. At runtime IDictionary<string, object?> and
+        // IDictionary<string, object> are the same erased type, so this single
+        // case covers both Dictionary<string,object?> and Dictionary<string,object>.
+        if (config is not IDictionary<string, object?> idict)
+        {
+            throw new SchemaValidationError(
+                verbName,
+                new List<string> { $"Config for verb '{verbName}' must be an object" });
+        }
+        var configDict = new Dictionary<string, object?>(idict);
+
+        bool isValid;
+        List<string> errors;
+        if (_verbHandlers.HasHandler(verbName))
+        {
+            var handler = _verbHandlers.GetHandler(verbName)!;
+            (isValid, errors) = handler.ValidateConfig(configDict);
+            // A handler's ValidateConfig carries verb-specific diagnostics but
+            // does NOT reject unknown/misspelled TOP-LEVEL keys; add the shallow
+            // check so a typo'd key is caught like on every other verb. We do
+            // NOT run the full deep schema here (see ValidateVerbTopLevelKeys).
+            if (isValid)
+            {
+                (isValid, errors) = Schema.Instance.ValidateVerbTopLevelKeys(verbName, configDict);
+            }
+        }
+        else
+        {
+            (isValid, errors) = Schema.Instance.ValidateVerb(verbName, configDict);
+        }
+
+        if (!isValid)
+        {
+            throw new SchemaValidationError(verbName, errors);
+        }
     }
 
     /// <summary>Reset the current document to an empty state.</summary>

@@ -21,7 +21,7 @@ set -o pipefail
 
 SURFACE="${1:-}"
 if [ -z "$SURFACE" ]; then
-    echo "usage: dump-corpus.sh <wire|swml|state|http|wire-relay|envelope>" >&2
+    echo "usage: dump-corpus.sh <wire|swml|strict-render|state|http|wire-relay|envelope>" >&2
     exit 2
 fi
 

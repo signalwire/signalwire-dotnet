@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 64e3c3ca3c3dc9a0188563a95572b277c758acdd",
+  "generated_from": "signalwire-dotnet @ e379f95e38a3d944bb5037699b02bec2165e4580",
   "native_names": [
     "AI",
     "AIAction",
@@ -2224,6 +2224,7 @@
     "ValidateUrl",
     "ValidateUrlWithResolvedAddresses",
     "ValidateVerb",
+    "ValidateVerbTopLevelKeys",
     "ValidateWebhookSignature",
     "Value",
     "Variable",
