@@ -52,7 +52,7 @@ jobs:
         with:
           repository: signalwire/signalwire-python
           path: signalwire-python
-          ref: main
+          ref: ${{ vars.PORTING_SDK_REF || 'main' }}
 
       - name: Set up .NET SDKs (net8.0 / net9.0 / net10.0)
         # Host-side dotnet is consumed by scripts/enumerate_signatures.py
