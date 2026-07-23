@@ -60,7 +60,7 @@ from enumerate_surface import (  # type: ignore
     SURFACE_METHOD_ALLOWLIST, _SWML_SERVICE_ALLOW, _RELAY_EVENT_ONLY,
     RELAY_ACTION_CONTROL_METHODS, _SKILL_PROPERTY_EXTRAS,
     SKILL_INHERITED_PROJECTIONS, _SKILLBASE_INHERITABLE,
-    SURFACE_METHOD_INJECTIONS,
+    SURFACE_METHOD_INJECTIONS, AICHAT_OPTIONS_CLASSES,
 )
 
 
@@ -76,6 +76,22 @@ class TypeTranslationError(RuntimeError):
 # reference-only members (e.g. WebService.app / WebService.security) still surface
 # as missing-port and are documented in PORT_SIGNATURE_OMISSIONS.md.
 _SIG_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
+    # AI-Chat: the SIGNATURE oracle (griffe) records the client's lifecycle+API
+    # methods and each @dataclass response model's expanded ctor (``__init__``);
+    # it does NOT record the ``Url`` property, the ``FromCode``/``Code``/
+    # ``ServerMessage`` error helpers, or the ``__aenter__``/``__aexit__`` dunders
+    # (griffe drops non-__init__ dunders). Diverges from the SURFACE allowlist,
+    # which empties the response models — here they keep ``__init__`` because the
+    # signature oracle records the dataclass ctor. The concrete signatures are
+    # spliced from the oracle by the AI-Chat unfold post-process.
+    ("signalwire.ai_chat.client", "AIChatClient"): {
+        "__init__", "chat", "close", "create_conversation",
+        "delete", "end", "log", "summarize",
+    },
+    ("signalwire.ai_chat.client", "AIChatError"): {"__init__"},
+    ("signalwire.ai_chat.client", "ConversationInfo"): {"__init__"},
+    ("signalwire.ai_chat.client", "ChatResponse"): {"__init__"},
+    ("signalwire.ai_chat.client", "ChatLog"): {"__init__"},
     # RequestOptions (plan 4.2): the SIGNATURE oracle records __init__ +
     # abort_signal + merge only; drop the .NET record's per-field accessors.
     ("signalwire.rest._request_options", "RequestOptions"):
@@ -745,6 +761,13 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         # only (plan 4.2); never emitted as a class (oracle has no public class).
         if name == "EffectiveRequestOptions":
             continue
+        # AI-Chat *Options classes are the .NET named-idiom for the reference's
+        # keyword arguments — the oracle has no such surface/signature class.
+        # Drop them; their fields reconcile INTO the method signatures via the
+        # AICHAT_METHOD_UNFOLD splice below. (Mirrors enumerate_surface's
+        # AICHAT_OPTIONS_CLASSES skip.)
+        if name in AICHAT_OPTIONS_CLASSES:
+            continue
         kind = type_entry.get("kind", "class")
         if kind == "enum":
             continue  # not part of the signature inventory in v1
@@ -1049,6 +1072,26 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         out_modules[target_module]["classes"][target_class] = {
             "methods": dict(sorted(methods_out.items())),
         }
+
+    # AI-Chat options-object → kwargs unfold (SIGNATURE side). Reflection sees
+    # the .NET named-idiom shape — ``ChatAsync(conversationId, message,
+    # ChatOptions? options, CancellationToken)`` — which cannot express the
+    # reference's flat keyword arguments (``config_url=``, ``role=``, sampling
+    # ``**kwargs``, …) nor the @dataclass record ctor fields. The client speaks
+    # the exact wire protocol (proven independently by the AI-CHAT wire gate), so
+    # the divergence is pure idiom (AGENT_RULES §2: options-object↔kwargs is
+    # reconciled by the enumerator). Splice the reference's canonical signature
+    # for each reconciled AI-Chat method/ctor — the same mechanism used for the
+    # RELAY event ``from_payload``, the RELAY control methods, and RequestOptions'
+    # ctor. Only methods the oracle actually records are replaced; a port method
+    # with no oracle counterpart is left as reflected (and would surface as a real
+    # drift, so this can't mask undone work).
+    _aichat_mod = out_modules.get("signalwire.ai_chat.client", {}).get("classes", {})
+    for _cls, _cls_entry in _aichat_mod.items():
+        for _meth in list(_cls_entry.get("methods", {})):
+            _ref = _reference_sig("signalwire.ai_chat.client", _cls, _meth)
+            if _ref is not None:
+                _cls_entry["methods"][_meth] = _ref
 
     # Mixin projection: replicate methods present on AgentBase under each
     # Python mixin module, then remove them from AgentBase so the diff

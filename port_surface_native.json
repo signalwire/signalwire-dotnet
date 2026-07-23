@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ e860710e28fb49da40430ef5300c064bfc454495",
+  "generated_from": "signalwire-dotnet @ 460afe5672584c8bcebbc4d2366debfea8dfdcab",
   "native_names": [
     "AI",
     "AIAction",
@@ -446,9 +446,11 @@
     "Chat",
     "ChatAsync",
     "ChatInProgressError",
+    "ChatLog",
     "ChatOptions",
     "ChatPermissionWithRead",
     "ChatPermissionWithWrite",
+    "ChatResponse",
     "ChatToken",
     "ChatToken422Error",
     "CheckAvailability",
@@ -571,6 +573,7 @@
     "ControlId",
     "Conversation",
     "ConversationId",
+    "ConversationInfo",
     "ConversationMessage",
     "ConversationNotFoundError",
     "ConversationSlidingWindow",

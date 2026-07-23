@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ e860710e28fb49da40430ef5300c064bfc454495",
+  "generated_from": "signalwire-dotnet @ 460afe5672584c8bcebbc4d2366debfea8dfdcab",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -86,122 +86,31 @@
       },
       "functions": []
     },
-    "signalwire.aichat.ai_chat_client": {
+    "signalwire.ai_chat.client": {
       "classes": {
         "AIChatClient": [
+          "__aenter__",
+          "__aexit__",
           "__init__",
           "chat",
+          "close",
           "create_conversation",
           "delete",
           "end",
           "log",
-          "summarize",
-          "url"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.ai_chat_client_options": {
-      "classes": {
-        "AIChatClientOptions": [
-          "http_client",
-          "project",
-          "read_idle_timeout_seconds",
-          "space",
-          "token",
-          "url"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.ai_chat_exception": {
-      "classes": {
-        "AIChatException": [
-          "__init__",
-          "code",
-          "from_code",
-          "server_message"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.authentication_error": {
-      "classes": {
-        "AuthenticationError": [
+          "summarize"
+        ],
+        "AIChatError": [
           "__init__"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.chat_in_progress_error": {
-      "classes": {
-        "ChatInProgressError": [
-          "__init__"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.chat_options": {
-      "classes": {
-        "ChatOptions": [
-          "role"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.conversation_not_found_error": {
-      "classes": {
-        "ConversationNotFoundError": [
-          "__init__"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.conversation_turn_options": {
-      "classes": {
-        "ConversationTurnOptions": [
-          "config_url",
-          "reinit",
-          "timeout",
-          "user_metadata"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.create_conversation_options": {
-      "classes": {
-        "CreateConversationOptions": [
-          "user_message"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.rate_limit_error": {
-      "classes": {
-        "RateLimitError": [
-          "__init__"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.summarize_options": {
-      "classes": {
-        "SummarizeOptions": [
-          "frequency_penalty",
-          "max_tokens",
-          "presence_penalty",
-          "summary_prompt",
-          "temperature",
-          "top_p"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.aichat.summary_error": {
-      "classes": {
-        "SummaryError": [
-          "__init__"
-        ]
+        ],
+        "AuthenticationError": [],
+        "ChatInProgressError": [],
+        "ChatLog": [],
+        "ChatResponse": [],
+        "ConversationInfo": [],
+        "ConversationNotFoundError": [],
+        "RateLimitError": [],
+        "SummaryError": []
       },
       "functions": []
     },
