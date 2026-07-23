@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 460afe5672584c8bcebbc4d2366debfea8dfdcab",
+  "generated_from": "signalwire-dotnet @ 0542fbf0cd7c06af41e7016fb52f52e13bc9bc64",
   "modules": {
     "signalwire": {
       "classes": {},
