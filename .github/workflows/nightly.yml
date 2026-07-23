@@ -45,10 +45,13 @@ jobs:
         run: |
           set -euo pipefail
           port_sha='${{ github.sha }}'
-          # Fingerprint the PINNED porting-sdk branch (matches the checkout ref
-          # below). REVERT to main when plan/a-bar-2026-07-18 merges.
-          psdk_sha=$(GH_TOKEN="$PSDK_TOKEN" gh api 'repos/signalwire/porting-sdk/commits/plan%2Fa-bar-2026-07-18' --jq .sha)
-          py_sha=$(gh api repos/signalwire/signalwire-python/commits/main --jq .sha)
+          # Fingerprint the porting-sdk + python-oracle refs that the checkouts below
+          # actually use — the coordinated-pass PORTING_SDK_REF (main normally, a wave
+          # branch during a pass). Was hardcoded to the dead `plan/a-bar-2026-07-18`
+          # branch (404'd → guard failed). No revert commit — tracks the variable.
+          coord_ref='${{ vars.PORTING_SDK_REF || 'main' }}'
+          psdk_sha=$(GH_TOKEN="$PSDK_TOKEN" gh api "repos/signalwire/porting-sdk/commits/${coord_ref//\//%2F}" --jq .sha)
+          py_sha=$(gh api "repos/signalwire/signalwire-python/commits/${coord_ref//\//%2F}" --jq .sha)
           echo "cache_key=nightly-green-v1-${port_sha}-${psdk_sha}-${py_sha}" >> "$GITHUB_OUTPUT"
           echo "inputs -> port=$port_sha psdk=$psdk_sha python=$py_sha"
       - name: Probe last-green marker
