@@ -53,8 +53,8 @@ public sealed class AIChatClientOptions
 
     /// <summary>Inject the underlying <see cref="System.Net.Http.HttpMessageHandler"/>
     /// for an owned client (e.g. a test handler). Ignored when <see cref="HttpClient"/>
-    /// is set. Internal: a test-injection seam, not public API — the public parity seam
-    /// is <see cref="HttpClient"/> (mirroring the python reference's <c>session=</c>).</summary>
+    /// is set. Internal test-injection seam, not public API; to supply your own
+    /// transport, set <see cref="HttpClient"/> instead.</summary>
     internal HttpMessageHandler? HttpMessageHandler { get; set; }
 
     /// <summary>Idle read timeout in seconds (byte-silence, NOT total turn length).
