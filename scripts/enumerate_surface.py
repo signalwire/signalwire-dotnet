@@ -1410,6 +1410,243 @@ def merge_module_functions(modules: dict, target_mod: str, fns: list[str]) -> No
     entry["functions"] = sorted(set(entry["functions"]) | set(fns))
 
 
+# ---------------------------------------------------------------------------
+# Composition-attribute enrichment (porting-sdk class B1) + generated-model
+# field-accessor members (the B1 enrichment applied to schema-driven DTOs)
+# ---------------------------------------------------------------------------
+#
+# The fold-branch python surface oracle (enumerate_python._enrich_composition_
+# attributes) imports COMPOSITION ATTRIBUTES from the SIGNATURE oracle: any
+# self-only member that RETURNS an SDK class -- bare ``class:...``,
+# ``optional<...>`` or ``list<...class...>`` (but NOT a top-level ``union<...>``,
+# those are the auto-vivified SWML verb SETTERS, a different idiom class). These
+# are the namespace/composition accessors (``FabricNamespace.addresses``,
+# ``AgentBase.pom``) and the generated data-model FIELD accessors
+# (``AIObject.SWAIG``, ``PostPrompt.call_log``) every getter-idiom port exposes
+# explicitly. .NET ships them as public properties, so the SAME projection must
+# run on the .NET side or they read as ~200 phantom OMISSIONS.
+#
+# Two sources, mirroring how the reference derives them:
+#   1. From the .NET SIGNATURE oracle (port_signatures.json) -- the class-typed
+#      self-only members it already records (REST namespace accessors, AgentBase.
+#      pom, ...). Same gate as the reference (_is_composition_return).
+#   2. From the SCHEMAS the generators consume -- the generated DTO models
+#      (SwmlVerbs / PostPrompt / SwaigRequest) are emitted with lowercase,
+#      wire-verbatim property names the PascalCase parser cannot see; their
+#      composition members are exactly the schema fields that reference a local
+#      ``$ref`` model (bare or under array ``items``), excluding top-level
+#      unions and python-reserved-keyword field names -- reproducing the oracle's
+#      set for these modules EXACTLY.
+
+def _is_composition_return(ret: object) -> bool:
+    """Self-only member returning an SDK class -- bare/optional/list<...class...>,
+    but NOT a top-level ``union<...>``. Mirrors enumerate_python."""
+    if not isinstance(ret, str):
+        return False
+    if ret.startswith("union<"):
+        return False
+    return "class:signalwire." in ret
+
+
+def _enrich_composition_attributes(modules: "dict[str, dict]", signatures_path: Path) -> None:
+    """Import self-only class-returning members from the .NET signature oracle into
+    the surface (in-place). Idempotent; no-op if the signature oracle is absent."""
+    if not signatures_path.is_file():
+        return
+    try:
+        sig = json.loads(signatures_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    for mod, sinv in sig.get("modules", {}).items():
+        for cls, sce in sinv.get("classes", {}).items():
+            smethods = sce.get("methods", {})
+            if not isinstance(smethods, dict):
+                continue
+            comp = [
+                m for m, msig in smethods.items()
+                if isinstance(msig, dict)
+                and [p for p in msig.get("params", []) if p.get("kind") != "self"] == []
+                and _is_composition_return(msig.get("returns"))
+            ]
+            if not comp:
+                continue
+            surf_mod = modules.setdefault(mod, {"classes": {}, "functions": []})
+            existing = surf_mod.setdefault("classes", {}).get(cls)
+            if existing is None:
+                surf_mod["classes"][cls] = sorted(comp)
+            else:
+                surf_mod["classes"][cls] = sorted(set(existing) | set(comp))
+
+
+def _load_generate_rest():
+    import importlib.util
+    here = Path(__file__).resolve().parent
+    spec = importlib.util.spec_from_file_location("generate_rest", here / "generate_rest.py")
+    if spec is None or spec.loader is None:
+        return None
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+    except Exception:  # pragma: no cover
+        return None
+    return mod
+
+
+def _local_ref(node: object) -> bool:
+    ref = node.get("$ref") if isinstance(node, dict) else None
+    return isinstance(ref, str) and ref.startswith("#/")
+
+
+def _items_reference_local(node: object) -> bool:
+    if not isinstance(node, dict):
+        return False
+    if _local_ref(node):
+        return True
+    for k in ("anyOf", "oneOf", "allOf"):
+        for branch in node.get(k, []) or []:
+            if _items_reference_local(branch):
+                return True
+    inner = node.get("items")
+    return isinstance(inner, dict) and _items_reference_local(inner)
+
+
+def _schema_field_is_composition(psc: object) -> bool:
+    """A schema property is a composition member iff its type is a local class-ref:
+    a bare ``$ref`` to a local model, or an array whose ``items`` reference one
+    (directly or via a nested anyOf/oneOf/allOf). A TOP-LEVEL anyOf/oneOf/allOf is
+    a union<...> return and is EXCLUDED (verb-setter idiom)."""
+    if not isinstance(psc, dict):
+        return False
+    if _local_ref(psc):
+        return True
+    items = psc.get("items")
+    return isinstance(items, dict) and _items_reference_local(items)
+
+
+def _comp_members_from_props(props) -> "set[str]":
+    import keyword
+    return {
+        name for name, psc in (props or {}).items()
+        if _schema_field_is_composition(psc) and not keyword.iskeyword(name)
+    }
+
+
+def _generated_model_composition_members(psdk: Path, GR) -> "dict[str, dict]":
+    """Compute ``{oracle_module: {ClassName: [composition members]}}`` for the three
+    generated data-model modules whose C# properties are lowercase/wire-verbatim (so
+    the PascalCase parser cannot see them). Derived from the SAME schemas the
+    generators read -- schema.json ($defs) for SWML verbs, and the vendored
+    swaig-specs yaml for post-prompt / swaig-request -- so the set reproduces the
+    reference oracle EXACTLY. Returns empty on any missing input."""
+    out: "dict[str, dict]" = {}
+    if GR is None:
+        return out
+
+    def _add(mod: str, cls: str, members) -> None:
+        if members:
+            out.setdefault(mod, {}).setdefault(cls, sorted(members))
+
+    # --- 1. SWML verbs: porting-sdk/schema.json $defs ------------------------
+    schema_path = psdk / "schema.json"
+    if schema_path.is_file():
+        try:
+            defs = json.loads(schema_path.read_text(encoding="utf-8")).get("$defs", {})
+        except (OSError, json.JSONDecodeError):
+            defs = {}
+        SW_MOD = "signalwire.core.swml_verbs_generated"
+        for raw, node in defs.items():
+            if isinstance(node, dict) and GR.is_object_schema(node):
+                _add(SW_MOD, GR.type_name(raw),
+                     _comp_members_from_props(node.get("properties")))
+        hand = {"answer", "hangup", "ai", "play", "say"}
+        sm = defs.get("SWMLMethod")
+        if isinstance(sm, dict):
+            for ref in sm.get("anyOf") or []:
+                wrapper = (ref.get("$ref", "") or "").rsplit("/", 1)[-1]
+                wdef = defs.get(wrapper)
+                if not isinstance(wdef, dict) or not (wdef.get("properties") or {}):
+                    continue
+                verb = next(iter(wdef["properties"].keys()))
+                if verb in hand:
+                    continue
+                inner = wdef["properties"][verb]
+                if not isinstance(inner, dict):
+                    continue
+                if inner.get("type") == "string" or inner.get("$ref"):
+                    continue
+                has_inline = inner.get("type") == "object" and bool(inner.get("properties"))
+                if not inner.get("oneOf") and not has_inline:
+                    continue
+                props: dict = {}
+                if inner.get("oneOf"):
+                    for b in inner["oneOf"]:
+                        if isinstance(b, dict) and b.get("$ref"):
+                            d = defs.get(b["$ref"].rsplit("/", 1)[-1], {})
+                            props.update((d.get("properties") if isinstance(d, dict) else {}) or {})
+                        elif isinstance(b, dict):
+                            props.update(b.get("properties") or {})
+                else:
+                    props.update(inner.get("properties") or {})
+                if not props:
+                    continue
+                pascal = "".join(w[:1].upper() + w[1:] for w in re.split(r"[._\-\s]", verb) if w)
+                _add(SW_MOD, GR.type_name(pascal + "Config"), _comp_members_from_props(props))
+
+    # --- 2. post-prompt + swaig-request: vendored swaig-specs yaml -----------
+    try:
+        import yaml  # type: ignore
+    except ImportError:
+        yaml = None
+    specs = psdk / "swaig-specs"
+    if yaml is not None and specs.is_dir():
+        def _schemas(fn: str) -> dict:
+            p = specs / fn
+            if not p.is_file():
+                return {}
+            doc = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+            return (doc.get("components", {}) or {}).get("schemas", {}) or {}
+
+        for raw, node in _schemas("post-prompt.yaml").items():
+            if isinstance(node, dict) and GR.is_object_schema(node):
+                _add("signalwire.core.post_prompt_generated", GR.type_name(raw),
+                     _comp_members_from_props(node.get("properties")))
+        sr = _schemas("swaig-request.yaml").get("SwaigRequest")
+        if isinstance(sr, dict):
+            SR_MOD = "signalwire.core.swaig_request_generated"
+            props = dict(sr.get("properties") or {})
+            arg = props.get("argument")
+            if isinstance(arg, dict) and arg.get("properties"):
+                props["argument"] = {"$ref": "#/components/schemas/SwaigArgument"}
+                _add(SR_MOD, "SwaigArgument", _comp_members_from_props(arg.get("properties")))
+            _add(SR_MOD, "SwaigRequest", _comp_members_from_props(props))
+    return out
+
+
+def _emit_generated_model_members(modules: "dict[str, dict]", psdk: Path, GR) -> None:
+    """Merge the schema-driven composition members onto the (currently method-less)
+    generated-model surface classes, in-place."""
+    for mod, classes in _generated_model_composition_members(psdk, GR).items():
+        surf_mod = modules.setdefault(mod, {"classes": {}, "functions": []})
+        for cls, members in classes.items():
+            existing = surf_mod.setdefault("classes", {}).get(cls, [])
+            surf_mod["classes"][cls] = sorted(set(existing) | set(members))
+
+
+def _emit_crud_bases(manifest: dict) -> "dict[str, dict]":
+    """Top-level ``crud_bases`` map ({"module.Class": {base, bind:[...]}}) for the
+    spec-driven REST parity fold -- re-keyed from the generator manifest's bare
+    class names to the oracle's ``<module>.<Class>`` form via ``class_module``."""
+    cb = manifest.get("crud_bases") or {}
+    class_module = manifest.get("class_module") or {}
+    out: "dict[str, dict]" = {}
+    for cls, binding in cb.items():
+        mod = class_module.get(cls)
+        if not mod:
+            continue
+        out[f"{_REST_MODULE_PREFIX}.{mod}.{cls}"] = binding
+    return out
+
+
 def build_snapshot(repo: Path, src_dir: Path) -> dict:
     modules: dict[str, dict] = {}
     rest_manifest = load_rest_manifest()
@@ -1649,14 +1886,40 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     if TOPLEVEL_FUNCTION_NAMES:
         merge_module_functions(modules, "signalwire", TOPLEVEL_FUNCTION_NAMES)
 
-    # RequestOptions (plan 4.2) surface == the reference's: ONLY merge(). .NET's
-    # record exposes abort_signal (and the other fields) as public properties, but
-    # Python's surface lists only merge() — the dataclass fields are not surface
-    # symbols (nor in go/ts/ruby/java). Reduce to the reference-canonical surface;
-    # the fields still reconcile at the signatures layer. Keeps the fleet uniform.
+    # RequestOptions (plan 4.2) surface == the reference's. The fold-branch oracle's
+    # B1 composition-attribute enrichment now surfaces the class-typed ``abort_signal``
+    # field accessor (optional<_AbortSignal>) ALONGSIDE ``merge()``; .NET exposes both
+    # as public members, so the reference-canonical surface is ``[abort_signal, merge]``.
+    # The remaining dataclass scalar fields are NOT surface symbols (nor in go/ts/ruby/
+    # java) and still reconcile at the signatures layer. Keeps the fleet uniform.
     _ro = modules.get("signalwire.rest._request_options", {}).get("classes", {})
     if "RequestOptions" in _ro:
-        _ro["RequestOptions"] = ["merge"]
+        _ro["RequestOptions"] = ["abort_signal", "merge"]
+
+    # ------------------------------------------------------------------
+    # Composition-attribute + generated-model field-accessor enrichment
+    # (porting-sdk fold-branch class B1). Runs LAST so it augments the
+    # parsed surface with the class-typed self-only members every getter-
+    # idiom port exposes but the PascalCase parser cannot resolve. See the
+    # helper docstrings above.
+    # ------------------------------------------------------------------
+    # 1. Import class-typed self-only members from the .NET signature oracle
+    #    (REST namespace accessors, AgentBase.pom, ...).
+    _enrich_composition_attributes(modules, repo / "port_signatures.json")
+    # 2. Generated data-model FIELD accessors (SwmlVerbs / PostPrompt /
+    #    SwaigRequest), derived from the SAME schemas the generators read so
+    #    the set reproduces the reference oracle exactly.
+    _GR = _load_generate_rest()
+    _psdk = None
+    if _GR is not None:
+        try:
+            _psdk = _GR.resolve_porting_sdk()
+        except SystemExit:
+            _psdk = None
+    if _psdk is not None:
+        _emit_generated_model_members(modules, _psdk, _GR)
+    # 3. Top-level crud_bases map (spec-driven REST parity fold).
+    crud_bases = _emit_crud_bases(rest_manifest)
 
     # Sort module dict deterministically
     sorted_modules = {k: modules[k] for k in sorted(modules.keys())}
@@ -1667,11 +1930,14 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
         if v["classes"] or v["functions"]
     }
 
-    return {
+    snapshot = {
         "version": "1",
         "generated_from": f"signalwire-dotnet @ {git_sha(repo)}",
         "modules": sorted_modules,
     }
+    if crud_bases:
+        snapshot["crud_bases"] = crud_bases
+    return snapshot
 
 
 def build_native_names(repo: Path, src_dir: Path) -> dict:

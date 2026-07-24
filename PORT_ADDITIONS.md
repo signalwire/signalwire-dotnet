@@ -1,5 +1,52 @@
 # PORT_ADDITIONS.md (signalwire-dotnet)
 
+<!-- ══════════════════════════════════════════════════════════════════════════
+BEFORE YOU ADD AN ENTRY TO THIS FILE — READ THIS.
+
+Every entry here is a place the parity checker STOPS comparing. That is a real cost:
+a divergence you list is a divergence no gate will ever catch again. So entries must
+be RARE, and each one must earn its place. Default to skepticism: assume the entry is
+NOT needed and make the case that it is.
+
+The order of preference, always:
+  1. FIX THE PORT so it matches the reference (add the missing member; make the
+     signature match).
+  2. FIX THE EMISSION so idiom folds onto the reference shape — the enumerator/emitter
+     canonicalizes your language's spelling onto the oracle's (builder → __init__,
+     getters → attributes, Result<T,E> → the plain return, CamelCase → the reference
+     name, options-object/kwargs → the expanded param list, RAII/dispose → close).
+     MOST divergences are idiom and belong here, not in this file.
+  3. FIX THE REFERENCE if the oracle itself is wrong or stale (a Python-only symbol
+     that leaked into the contract, a param the reference added and the oracle never
+     re-enumerated). Fix Python / the oracle, then re-drift — do not paper over a
+     broken reference with a per-port entry.
+  4. Only when 1–3 genuinely cannot apply does an entry here become justified.
+
+An entry is JUSTIFIED ONLY IF it is irreducible after correct emission — i.e. the
+divergence survives because the two languages genuinely cannot express the same thing,
+not because the emitter hasn't folded the idiom yet. If emission COULD fold it, the
+entry is a bug in this file; go fix the emitter.
+
+Each entry MUST state WHY, concretely, in one of these forms:
+  • ADDITION — this symbol exists in the port but not the reference. Answer: is it
+    genuine port-only surface with NO reference twin (say what it is and why the
+    reference has no equivalent), or is it IDIOM the emitter should have folded (then
+    it does not belong here — fold it)? A convenience/alias/back-compat wrapper is NOT
+    a justification.
+  • OMISSION — this reference symbol has no port member. Answer: WHY can it not exist
+    here — what specific language feature is absent (e.g. no async-context-manager
+    protocol, no __init__ method protocol)? "impossible:" means the construct cannot
+    be expressed at all; if it merely LOOKS different, that's idiom → fold it, don't
+    omit it. Cite a precedent when one exists (e.g. RelayClient omits the same dunder).
+  • SIGNATURE — the symbol matches by name but its parameters differ. Answer: is the
+    difference a foldable idiom collapse (options-object, leading context/self,
+    builder) — then EXPAND it in the signature emitter so names+count match, don't list
+    it — or a genuine reference-only parameter with no cross-language analogue?
+
+If you cannot write a crisp, specific WHY that survives the "could emission fold this?"
+test, the entry is not ready. Prove it's needed before you add it.
+═══════════════════════════════════════════════════════════════════════════════ -->
+
 Symbols this .NET port exposes that have no Python-reference counterpart.
 Each line is a deliberate addition with one-sentence rationale.
 
@@ -703,3 +750,19 @@ signalwire.agents.bedrock_options.BedrockOptions.top_p: dotnet_options_object: L
 signalwire.agents.bedrock_options.BedrockOptions.max_tokens: dotnet_options_object: LLM max-tokens construction option (Python __init__ kwarg / inference params).
 signalwire.agents.bedrock_options.BedrockOptions.basic_auth_user: dotnet_options_object: basic-auth user construction option (Python __init__ kwarg / env).
 signalwire.agents.bedrock_options.BedrockOptions.basic_auth_password: dotnet_options_object: basic-auth password construction option (Python __init__ kwarg / env).
+
+<!-- agentbase-family folded additions (surface diff uses the agentbase-family
+     token; the per-class signalwire.core.agent_base.AgentBase.<m> keys above
+     remain for the UNFOLDED signature-drift gate — see ALLOWLIST_DISCIPLINE §3). -->
+agentbase-family.build_ai_verb: .NET-specific AgentBase helper used by the SWML rendering pipeline; no Python-reference twin (Python builds the ai verb inline in render_swml). Folds to the agentbase-family token on the surface.
+agentbase-family.clone_for_request: .NET-specific AgentBase per-request clone helper (dynamic-config multi-tenancy); Python clones inline. No reference twin.
+agentbase-family.create_tool_token: Public AgentBase helper minting scoped function-call tokens; Python ships the equivalent on SessionManager, not on AgentBase. Genuine port-only accessor on this class.
+agentbase-family.get_contexts: Public AgentBase accessor returning the ContextBuilder; Python's equivalent lives on PromptManager (composition delegate flattened onto AgentBase). No AgentBase-level twin in the reference.
+agentbase-family.get_prompt_sections: .NET AgentBase exposes a get_prompt_sections() accessor; Python's equivalent lives on PromptMixin/PromptManager (mixin-lifted). No AgentBase-level reference twin.
+agentbase-family.get_raw_prompt: .NET AgentBase get_raw_prompt() accessor; Python's equivalent lives on PromptManager (composition delegate). No AgentBase-level reference twin.
+agentbase-family.get_skill_manager: .NET-specific AgentBase accessor returning the SkillManager it composes; Python exposes skill state differently (no equivalent AgentBase accessor).
+agentbase-family.is_auto_map_sip_usernames: .NET AgentBase typed boolean predicate getter for the SIP-routing config; Python keeps the equivalent as an attribute-style flag, not an AgentBase method.
+agentbase-family.is_webhook_signature_validation_enabled: .NET AgentBase public read-only flag for whether a SigningKey is configured; Python users check bool(agent.signing_key) directly.
+agentbase-family.render_swml: .NET-specific AgentBase render entrypoint; Python routes rendering through the SwmlRenderer composition delegate. No AgentBase-level reference twin.
+agentbase-family.render_swml_with_context: .NET-specific AgentBase context-aware render entrypoint; Python has no AgentBase-level twin (rendering is on the SwmlRenderer delegate).
+agentbase-family.signing_key: Public read-only AgentBase property exposing the configured Signing Key; Python sets it as a plain attribute (porting-sdk/webhooks.md AgentBase integration), not a class-typed accessor recorded on the reference.

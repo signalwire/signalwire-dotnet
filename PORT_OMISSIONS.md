@@ -1,5 +1,52 @@
 # PORT_OMISSIONS.md (signalwire-dotnet)
 
+<!-- ══════════════════════════════════════════════════════════════════════════
+BEFORE YOU ADD AN ENTRY TO THIS FILE — READ THIS.
+
+Every entry here is a place the parity checker STOPS comparing. That is a real cost:
+a divergence you list is a divergence no gate will ever catch again. So entries must
+be RARE, and each one must earn its place. Default to skepticism: assume the entry is
+NOT needed and make the case that it is.
+
+The order of preference, always:
+  1. FIX THE PORT so it matches the reference (add the missing member; make the
+     signature match).
+  2. FIX THE EMISSION so idiom folds onto the reference shape — the enumerator/emitter
+     canonicalizes your language's spelling onto the oracle's (builder → __init__,
+     getters → attributes, Result<T,E> → the plain return, CamelCase → the reference
+     name, options-object/kwargs → the expanded param list, RAII/dispose → close).
+     MOST divergences are idiom and belong here, not in this file.
+  3. FIX THE REFERENCE if the oracle itself is wrong or stale (a Python-only symbol
+     that leaked into the contract, a param the reference added and the oracle never
+     re-enumerated). Fix Python / the oracle, then re-drift — do not paper over a
+     broken reference with a per-port entry.
+  4. Only when 1–3 genuinely cannot apply does an entry here become justified.
+
+An entry is JUSTIFIED ONLY IF it is irreducible after correct emission — i.e. the
+divergence survives because the two languages genuinely cannot express the same thing,
+not because the emitter hasn't folded the idiom yet. If emission COULD fold it, the
+entry is a bug in this file; go fix the emitter.
+
+Each entry MUST state WHY, concretely, in one of these forms:
+  • ADDITION — this symbol exists in the port but not the reference. Answer: is it
+    genuine port-only surface with NO reference twin (say what it is and why the
+    reference has no equivalent), or is it IDIOM the emitter should have folded (then
+    it does not belong here — fold it)? A convenience/alias/back-compat wrapper is NOT
+    a justification.
+  • OMISSION — this reference symbol has no port member. Answer: WHY can it not exist
+    here — what specific language feature is absent (e.g. no async-context-manager
+    protocol, no __init__ method protocol)? "impossible:" means the construct cannot
+    be expressed at all; if it merely LOOKS different, that's idiom → fold it, don't
+    omit it. Cite a precedent when one exists (e.g. RelayClient omits the same dunder).
+  • SIGNATURE — the symbol matches by name but its parameters differ. Answer: is the
+    difference a foldable idiom collapse (options-object, leading context/self,
+    builder) — then EXPAND it in the signature emitter so names+count match, don't list
+    it — or a genuine reference-only parameter with no cross-language analogue?
+
+If you cannot write a crisp, specific WHY that survives the "could emission fold this?"
+test, the entry is not ready. Prove it's needed before you add it.
+═══════════════════════════════════════════════════════════════════════════════ -->
+
 Python symbols deliberately not implemented in this .NET port. Format:
 
 ```
@@ -437,7 +484,16 @@ signalwire.skills.web_search.skill_original.WebSearchSkill: Python-experimental 
 signalwire.skills.web_search.skill_original.WebSearchSkill.register_tools: Python-experimental skill variants; .NET ships canonical skill only
 signalwire.skills.web_search.skill_original.WebSearchSkill.setup: Python-experimental skill variants; .NET ships canonical skill only
 signalwire.agent_server.AgentServer.app: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
-signalwire.core.skill_base.SkillBase.logger: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
-signalwire.core.swml_service.SWMLService.schema_utils: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
-signalwire.core.swml_service.SWMLService.security: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
-signalwire.core.swml_service.SWMLService.verb_registry: .NET keeps this as private/internal state; Python exposes it as a @property accessor for introspection
+signalwire.core.skill_base.SkillBase.logger: approved: dotnet-private-logger — Python exposes the per-instance logger as a @property (class:get_logger); .NET keeps it as private/internal state with no public accessor. Nothing structurally prevents a public C# property, so this is a deliberate encapsulation choice — pending API sign-off.
+signalwire.core.swml_service.SWMLService.schema_utils: approved: dotnet-private-schema-utils — Python exposes the SchemaUtils helper as a @property; .NET keeps it internal (SignalWire.SWML.Schema is used directly). Encapsulation choice, not a language limit — pending API sign-off.
+signalwire.core.swml_service.SWMLService.security: approved: dotnet-private-security-config — Python exposes the SecurityConfig as a @property; .NET keeps the security config as private/internal state. Encapsulation choice, not a language limit — pending API sign-off.
+signalwire.core.swml_service.SWMLService.verb_registry: approved: dotnet-private-verb-registry — Python exposes the VerbHandlerRegistry as a @property; .NET keeps the verb registry as private/internal state. Encapsulation choice, not a language limit — pending API sign-off.
+
+<!-- agentbase-family folded omissions (surface diff folds WebMixin.get_app /
+     ToolMixin.tool onto the agentbase-family token; the per-class ToolMixin.tool
+     and WebMixin.get_app keys above remain for the UNFOLDED signature gate). -->
+agentbase-family.get_app: impossible: returns a FastAPI APIRouter / FastAPI app object; C# exposes HTTP via HttpListener/ASP.NET directly — there is no FastAPI-object analog to return (TS/PHP omit likewise). Folded onto the agentbase-family token on the surface.
+agentbase-family.tool: impossible: Python @tool class/instance decorator API relies on the decorator protocol; C# has no method-decorator feature — tools register via DefineTool directly (TS + PHP both omit this as impossible). Folded onto the agentbase-family token on the surface.
+signalwire.agent_server.AgentServer.agents: approved: dotnet-agents-collection — Python exposes the registered-agents dict<str,AgentBase> as an `agents` @property; .NET exposes the SAME data via GetAgents()/GetAgent(...) accessor methods (a dict property is not the C# collection idiom). Accessor-expressible — pending API sign-off.
+signalwire.core.skill_manager.SkillManager.loaded_skills: approved: dotnet-loaded-skills — Python exposes the loaded-skills dict<str,SkillBase> as a `loaded_skills` @property; .NET keeps the loaded-skills map as internal state, surfaced via the manager's list/get methods. Accessor-expressible — pending API sign-off.
+signalwire.web.web_service.WebService.security: approved: dotnet-webservice-security — Python exposes the SecurityConfig as a @property on WebService; .NET keeps the security config private/internal (mirrors the SWMLService.security omission). Encapsulation choice, not a language limit — pending API sign-off.
