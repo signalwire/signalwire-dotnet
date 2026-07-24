@@ -918,10 +918,65 @@ _SWML_SERVICE_ALLOW = {
     "manual_set_proxy_url", "on_request", "register_routing_callback",
     "register_verb_handler", "render_document", "reset_document", "serve", "stop",
 }
-# Every reference class in signalwire.relay.event exposes exactly ``from_payload``
-# (the typed data fields are instance attributes, not surface). Restrict all
-# event classes to that single method.
+# Every reference class in signalwire.relay.event exposes ``from_payload`` PLUS —
+# since the porting-sdk fold-branch oracle (HEAD 7693802) now emits @dataclass
+# public fields — one member per typed data FIELD (``call_state``/``end_reason``/
+# …). dotnet is a FIELD-idiom port: its C# event classes carry the payload as
+# public properties, so the surface must EMIT those fields, gated on the oracle's
+# per-class member set (below) so exactly the reference fields surface and no
+# port-internal helper leaks. The bare ``from_payload`` floor is the fallback when
+# the oracle is unavailable.
 _RELAY_EVENT_ONLY = {"from_payload"}
+
+
+# The @dataclass field-carrying non-event classes (AI-Chat response DTOs +
+# RequestOptions) whose public FIELDS the fold-branch oracle now records as
+# surface. dotnet exposes them as positional-record params (AI-Chat DTOs) or
+# block-bodied properties (RequestOptions); emit the oracle field set for each.
+_DATACLASS_FIELD_CLASSES: frozenset[tuple[str, str]] = frozenset({
+    ("signalwire.ai_chat.client", "ConversationInfo"),
+    ("signalwire.ai_chat.client", "ChatResponse"),
+    ("signalwire.ai_chat.client", "ChatLog"),
+    ("signalwire.rest._request_options", "RequestOptions"),
+})
+
+
+_ORACLE_SURFACE_CACHE: "dict[str, dict[str, set[str]]] | None" = None
+
+
+def _oracle_surface_members() -> "dict[str, dict[str, set[str]]]":
+    """Load ``python_surface.json`` (the fold-branch oracle) as
+    ``{module: {Class: set(members)}}``. Cached; empty on any resolution failure
+    (the caller then falls back to the pre-fold restriction). Used to gate the
+    @dataclass FIELD emission for relay Event / AI-Chat DTO / RequestOptions
+    classes so the port emits EXACTLY the reference field set."""
+    global _ORACLE_SURFACE_CACHE
+    if _ORACLE_SURFACE_CACHE is not None:
+        return _ORACLE_SURFACE_CACHE
+    out: "dict[str, dict[str, set[str]]]" = {}
+    GR = _load_generate_rest()
+    if GR is not None:
+        try:
+            psdk = GR.resolve_porting_sdk()
+        except SystemExit:
+            psdk = None
+        if psdk is not None:
+            path = psdk / "python_surface.json"
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                data = None
+            if data is not None:
+                for mod, mentry in data.get("modules", {}).items():
+                    classes = mentry.get("classes", {})
+                    if isinstance(classes, dict):
+                        out[mod] = {
+                            cls: set(members)
+                            for cls, members in classes.items()
+                            if isinstance(members, list)
+                        }
+    _ORACLE_SURFACE_CACHE = out
+    return out
 
 # Relay Action control surface: the reference projects the control methods
 # (stop/pause/resume/volume) directly onto each CONCRETE action (the internal
@@ -1770,9 +1825,32 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
 
             # Method allowlist: drop idiomatic data-properties for classes with
             # a fixed reference contract (kept dunders like __init__ survive if
-            # in the allowlist). Relay event classes -> from_payload only.
+            # in the allowlist).
+            #
+            # FIELD-idiom emission (fold-branch oracle): the relay Event classes,
+            # AI-Chat response DTOs, and RequestOptions now carry public @dataclass
+            # FIELDS on the oracle surface. dotnet exposes these as C# properties;
+            # gate emission on the oracle's per-class member set so exactly the
+            # reference fields surface (union the fixed allowlist so injected
+            # dunders like __init__ / __aenter__ still survive).
+            _oracle_mods = _oracle_surface_members()
+            _oracle_cls_members = _oracle_mods.get(target_mod, {}).get(target_class)
             allow = SURFACE_METHOD_ALLOWLIST.get((target_mod, target_class))
-            if allow is not None:
+            if (target_mod == "signalwire.relay.event"
+                    and _oracle_cls_members is not None):
+                # Intersect parsed members with the oracle set (drops port-only
+                # helpers, keeps the @dataclass fields + from_payload).
+                translated &= _oracle_cls_members
+            elif (target_mod, target_class) in _DATACLASS_FIELD_CLASSES \
+                    and _oracle_cls_members is not None:
+                # AI-Chat DTOs (positional records → params not parsed) + the
+                # RequestOptions record: the oracle surface member set IS the exact
+                # field contract (e.g. RequestOptions -> {abort_signal, merge,
+                # retries, retry_backoff, retry_on_status, timeout}). Emit it
+                # verbatim — the port genuinely carries each field as a record
+                # param / public property.
+                translated = set(_oracle_cls_members)
+            elif allow is not None:
                 translated &= allow
             elif target_mod == "signalwire.relay.event":
                 translated &= _RELAY_EVENT_ONLY
@@ -1886,15 +1964,14 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     if TOPLEVEL_FUNCTION_NAMES:
         merge_module_functions(modules, "signalwire", TOPLEVEL_FUNCTION_NAMES)
 
-    # RequestOptions (plan 4.2) surface == the reference's. The fold-branch oracle's
-    # B1 composition-attribute enrichment now surfaces the class-typed ``abort_signal``
-    # field accessor (optional<_AbortSignal>) ALONGSIDE ``merge()``; .NET exposes both
-    # as public members, so the reference-canonical surface is ``[abort_signal, merge]``.
-    # The remaining dataclass scalar fields are NOT surface symbols (nor in go/ts/ruby/
-    # java) and still reconcile at the signatures layer. Keeps the fleet uniform.
-    _ro = modules.get("signalwire.rest._request_options", {}).get("classes", {})
-    if "RequestOptions" in _ro:
-        _ro["RequestOptions"] = ["abort_signal", "merge"]
+    # RequestOptions surface == the reference's. The fold-branch oracle (HEAD
+    # 7693802) now records ALL @dataclass fields as surface — abort_signal + merge
+    # PLUS the scalar fields timeout/retries/retry_backoff/retry_on_status. dotnet
+    # exposes each as a public record property, so the emission above (gated on the
+    # oracle member set) already produced the exact field contract; nothing to
+    # override here. (Historical note: pre-fold this force-reset to
+    # ``[abort_signal, merge]`` because the scalar fields were not surface — that
+    # is no longer correct under the field-emitting oracle.)
 
     # ------------------------------------------------------------------
     # Composition-attribute + generated-model field-accessor enrichment

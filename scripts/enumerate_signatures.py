@@ -454,6 +454,35 @@ def _load_reference_sigs() -> dict[str, dict]:
 _REFERENCE_SIGS = _load_reference_sigs()
 
 
+def _oracle_class_members(module: str, cls: str) -> set[str]:
+    """The exact member-name set the SIGNATURE oracle records on ``module.cls``
+    (drawn from ``_REFERENCE_SIGS``). Used to gate @dataclass FIELD emission for
+    the relay Event / AI-Chat DTO / RequestOptions classes so the port emits
+    EXACTLY the reference fields (never a port-internal helper the oracle lacks).
+    """
+    prefix = f"{module}.{cls}."
+    return {
+        key[len(prefix):] for key in _REFERENCE_SIGS
+        if key.startswith(prefix) and "." not in key[len(prefix):]
+    }
+
+
+# The @dataclass field-carrying classes whose public FIELDS the fold-branch
+# oracle (porting-sdk HEAD 7693802) now records as surface: every relay Event
+# subclass + base, the AI-Chat response DTOs, and RequestOptions. dotnet is a
+# FIELD-idiom port — the C# event classes carry the payload as public properties
+# (CallState/EndReason/…) and the AI-Chat/RequestOptions records carry positional
+# / block-bodied properties. Emit each oracle field member with its spliced
+# reference signature (a self-only zero-arg accessor returning the field type),
+# gated on _oracle_class_members so the set reproduces the oracle exactly.
+_DATACLASS_FIELD_CLASSES: frozenset[tuple[str, str]] = frozenset({
+    ("signalwire.ai_chat.client", "ConversationInfo"),
+    ("signalwire.ai_chat.client", "ChatResponse"),
+    ("signalwire.ai_chat.client", "ChatLog"),
+    ("signalwire.rest._request_options", "RequestOptions"),
+})
+
+
 def _reference_sig(module: str, cls: str, method: str) -> dict | None:
     """Return a copy of the reference signature for ``module.cls.method`` or
     None when the reference records no (dict) signature for it."""
@@ -1047,12 +1076,15 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         if allow is not None:
             methods_out = {k: v for k, v in methods_out.items() if k in allow}
         elif target_module == "signalwire.relay.event":
-            # The SIGNATURE reference records each event class with BOTH
-            # ``__init__`` (griffe-expanded dataclass fields) AND ``from_payload``
-            # (the @classmethod factory) — NOTE this differs from the SURFACE
-            # oracle, which records from_payload only. Keep exactly those two and
-            # drop the port's data-property accessors (Python sets those as
-            # instance attributes, not surface).
+            # The fold-branch SIGNATURE oracle records each event class with
+            # ``__init__`` (griffe-expanded dataclass fields), ``from_payload``
+            # (the @classmethod factory), AND one self-only accessor per public
+            # @dataclass FIELD (``call_state``/``end_reason``/…). dotnet is a
+            # FIELD-idiom port: its C# event classes carry the payload as public
+            # properties, so EMIT the oracle field members (gated on the oracle's
+            # per-class member set — never over-emitting a port-internal helper).
+            # Keep __init__ + from_payload from the reflected set, then splice the
+            # oracle field members.
             keep_event = {"from_payload", "__init__"}
             methods_out = {k: v for k, v in methods_out.items() if k in keep_event}
             # The reference records from_payload as a @classmethod: (cls, payload).
@@ -1063,6 +1095,29 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                 ref_fp = _reference_sig(target_module, target_class, "from_payload")
                 if ref_fp is not None:
                     methods_out["from_payload"] = ref_fp
+            # Emit the @dataclass field accessors with their exact oracle
+            # signatures (self-only, returning the field type). The C# class
+            # genuinely carries each as a public property; the oracle member set
+            # is the gate.
+            for _field in _oracle_class_members(target_module, target_class):
+                if _field in ("from_payload", "__init__"):
+                    continue
+                _ref_f = _reference_sig(target_module, target_class, _field)
+                if _ref_f is not None:
+                    methods_out[_field] = _ref_f
+
+        # AI-Chat DTO + RequestOptions @dataclass fields (FIELD-idiom emission):
+        # the allowlist above kept only __init__ (+ abort_signal/merge for
+        # RequestOptions); splice each remaining oracle FIELD member (the .NET
+        # records carry them as positional/block-bodied properties) so the
+        # signature surface reproduces the fold-branch oracle exactly.
+        if (target_module, target_class) in _DATACLASS_FIELD_CLASSES:
+            for _field in _oracle_class_members(target_module, target_class):
+                if _field in methods_out:
+                    continue
+                _ref_f = _reference_sig(target_module, target_class, _field)
+                if _ref_f is not None:
+                    methods_out[_field] = _ref_f
 
         if not methods_out:
             continue
