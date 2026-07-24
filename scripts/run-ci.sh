@@ -420,6 +420,17 @@ sched_gate ROOT-HYGIENE res=dayone desc="no audit/scratch clutter tracked at rep
 sched_gate PUBLIC-JARGON res=dayone desc="no internal porting jargon leaked into public doc comments" \
     -- python3 "$PORTING_SDK_DIR/scripts/public_jargon.py" --port dotnet --repo "$PORT_ROOT"
 
+# AI-CHAT (task #22, COORDINATED pass dotnet:ai-chat-client <-> porting-sdk:ai-chat-client):
+# wire-behavioral gate for the AIChatClient. Drives tools/AIChatDump (via the clean-
+# stdout wrapper scripts/ai-chat-dump.sh) through the shared ai_chat_corpus against
+# porting-sdk's in-process mock_ai_chat and asserts the client speaks the AI Chat
+# JSON-RPC protocol per the vendored spec (ai-chat-specs/ai-chat.yaml). The gate script
+# (diff_port_ai_chat.py) + mock live on the porting-sdk `ai-chat-client` branch, so
+# during the coordinated pass PORTING_SDK_REF pins that branch and the gate runs; on
+# plain main it skip-passes until the branch merges.
+sched_gate AI-CHAT desc="AIChatClient speaks the AI Chat protocol per the vendored spec (mock_ai_chat wire-behavioral)" \
+    -- bash -c 'if [ -f "$1/scripts/diff_port_ai_chat.py" ]; then python3 "$1/scripts/diff_port_ai_chat.py" --port dotnet --dump-cmd "bash $2/scripts/ai-chat-dump.sh"; else echo "[ai-chat] diff_port_ai_chat.py not on porting-sdk main yet — skip-pass (coordinated-branch dep: porting-sdk ai-chat-client)"; fi' _ "$PORTING_SDK_DIR" "$PORT_ROOT"
+
 # ---- summary ----------------------------------------------------------------
 
 sched_run

@@ -52,6 +52,27 @@ CLASS_MODULE_MAP: dict[str, str] = {
     # -- agent ------------------------------------------------------------
     "AgentBase": "signalwire.core.agent_base",
 
+    # -- ai_chat ----------------------------------------------------------
+    # The reference consolidates the whole AI-Chat surface into ONE module,
+    # ``signalwire.ai_chat.client``; .NET splits the client, its response
+    # records, and each typed error into their own files under the
+    # ``SignalWire.AIChat`` namespace. Route every one of them onto the single
+    # reference module so the module-consolidation idiom compares equal (the
+    # auto-derived ``signalwire.aichat.<file>`` module for each would otherwise
+    # read as a bogus port ADDITION). ``AIChatException`` renames to the
+    # reference's ``AIChatError`` via CLASS_RENAME_MAP; the five per-turn
+    # *Options classes are the .NET named-idiom for the reference's keyword
+    # arguments and are dropped from the surface entirely (AICHAT_OPTIONS_CLASSES).
+    "AIChatClient": "signalwire.ai_chat.client",
+    "ConversationInfo": "signalwire.ai_chat.client",
+    "ChatResponse": "signalwire.ai_chat.client",
+    "ChatLog": "signalwire.ai_chat.client",
+    "AuthenticationError": "signalwire.ai_chat.client",
+    "ConversationNotFoundError": "signalwire.ai_chat.client",
+    "RateLimitError": "signalwire.ai_chat.client",
+    "ChatInProgressError": "signalwire.ai_chat.client",
+    "SummaryError": "signalwire.ai_chat.client",
+
     # -- item-I implemented subsystems (H/I turn) -------------------------
     # New hand classes routed to their reference core modules (class name
     # matches the reference leaf verbatim).
@@ -223,11 +244,38 @@ CLASS_MODULE_MAP: dict[str, str] = {
 }
 
 
+# AI-Chat per-turn / constructor *Options classes: the .NET named-idiom for the
+# reference's keyword arguments (``config_url=``, ``role=``, ``timeout=``,
+# sampling ``**kwargs``, etc.). The reference passes these as plain method kwargs
+# with NO surface class, so each of these C# classes is dropped from the emitted
+# surface entirely (their fields reconcile in the METHOD signatures, not as a
+# standalone surface symbol). This is the options-object↔kwargs idiom fold
+# (AGENT_RULES §2), NOT an omission. build_native_names still records them so a
+# doc reference to ``ChatOptions`` resolves.
+# The C# namespace hosting the whole AI-Chat surface.
+AICHAT_NAMESPACE = "SignalWire.AIChat"
+
+AICHAT_OPTIONS_CLASSES: frozenset[str] = frozenset({
+    "AIChatClientOptions",
+    "ConversationTurnOptions",
+    "CreateConversationOptions",
+    "ChatOptions",
+    "SummarizeOptions",
+})
+
+
 # (source_namespace, source_class) -> (target_module, target_class) for
 # classes that get a Python-canonical rename.
 CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ("SignalWire.SWML", "Service"): (
         "signalwire.core.swml_service", "SWMLService",
+    ),
+    # AI-Chat base error: .NET names it ``AIChatException`` (the CLR convention
+    # is an ``Exception`` suffix); the reference names the same base
+    # ``AIChatError``. Rename onto the reference name in its consolidated module
+    # so the error family compares equal.
+    ("SignalWire.AIChat", "AIChatException"): (
+        "signalwire.ai_chat.client", "AIChatError",
     ),
     # SignalWire.Relay's ``Client`` is Python's ``RelayClient``.
     ("SignalWire.Relay", "Client"): (
@@ -645,6 +693,16 @@ SURFACE_METHOD_ALIASES: dict[tuple[str, str], dict[str, str]] = {
 # idiom expresses without a matching public method-name. NOT a backdoor for
 # undone work — each entry names a real capability the class already has.
 SURFACE_METHOD_INJECTIONS: dict[tuple[str, str], list[str]] = {
+    # AIChatClient async-context-manager + close: the reference exposes
+    # ``__aenter__`` / ``__aexit__`` / ``close`` for its aiohttp-session
+    # lifecycle. .NET expresses the identical scoped-resource capability through
+    # ``IDisposable``: ``using var client = new AIChatClient(...)`` (the C#
+    # analogue of ``async with``) and ``Dispose()`` (the analogue of ``close``).
+    # The enumerator SKIPs Dispose (a language-required override), so inject the
+    # three reference names — the capability is real, only the idiom differs.
+    ("signalwire.ai_chat.client", "AIChatClient"): [
+        "__aenter__", "__aexit__", "close",
+    ],
     # SkillRegistry is a singleton (private ctor) but the reference records
     # ``__init__``; the object is constructed (via Instance) so the capability
     # exists — the C# ctor is simply private.
@@ -782,6 +840,35 @@ TOPLEVEL_FUNCTION_NAMES: list[str] = ["RestClient"]
 # A genuinely-missing reference method still surfaces as MISSING (checked
 # separately), so this cannot mask undone work — it only drops idiom noise.
 SURFACE_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
+    # AI-Chat: intersect each class with its EXACT reference own-surface so the
+    # .NET idiom's extra public properties/helpers drop out.
+    #   AIChatClient — the reference records the lifecycle + API methods only;
+    #     drop the ``Url`` property (a data attribute Python sets as ``self.url``
+    #     in __init__, NOT a surface member). ``__aenter__``/``__aexit__``/
+    #     ``close`` are injected below (the .NET ``using``/``Dispose`` idiom
+    #     expresses the same scoped-lifetime capability).
+    ("signalwire.ai_chat.client", "AIChatClient"): {
+        "__aenter__", "__aexit__", "__init__", "chat", "close",
+        "create_conversation", "delete", "end", "log", "summarize",
+    },
+    #   AIChatError — the reference records only __init__; ``Code`` /
+    #     ``ServerMessage`` are data attributes and ``FromCode`` is an internal
+    #     .NET static factory (the reference uses a module-level ``_ERROR_BY_CODE``
+    #     dict, not a public class method), so drop all three.
+    ("signalwire.ai_chat.client", "AIChatError"): {"__init__"},
+    #   Typed error subclasses — the reference records EMPTY member lists (they
+    #     only inherit); drop the .NET ctor so each compares equal.
+    ("signalwire.ai_chat.client", "AuthenticationError"): set(),
+    ("signalwire.ai_chat.client", "ConversationNotFoundError"): set(),
+    ("signalwire.ai_chat.client", "RateLimitError"): set(),
+    ("signalwire.ai_chat.client", "ChatInProgressError"): set(),
+    ("signalwire.ai_chat.client", "SummaryError"): set(),
+    #   Response records — the reference @dataclass models record NO surface
+    #     members (their fields are dataclass attributes, not surface); drop the
+    #     C# record's positional-property accessors.
+    ("signalwire.ai_chat.client", "ConversationInfo"): set(),
+    ("signalwire.ai_chat.client", "ChatResponse"): set(),
+    ("signalwire.ai_chat.client", "ChatLog"): set(),
     # RequestOptions (plan 4.2): the reference records exactly __init__ +
     # abort_signal + merge; the .NET record's per-field property accessors
     # (timeout/retries/...) are the dataclass fields Python sets in __init__,
@@ -1027,15 +1114,44 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
             brace_depth += line.count("{") - line.count("}")
             continue
         if cls_m and "{" not in line:
+            # A single-line positional record with NO body:
+            #   ``public sealed record ConversationInfo(string Id, ...);``
+            # closes its parameter list and terminates with ``;`` on the same
+            # line — no ``{`` ever follows. The regex parser otherwise leaves it a
+            # dangling pending_class the NEXT class's ``{`` wrongly consumes, so
+            # the record never surfaces. Emit it method-less immediately (the
+            # oracle records these @dataclass-style response models with no
+            # surface members). SCOPED to the AI-Chat namespace: the reference
+            # ai_chat oracle records ConversationInfo / ChatResponse / ChatLog as
+            # classes, so they MUST appear; elsewhere the historical parser
+            # behavior (dropping bodyless positional records) is preserved to keep
+            # this change contained to the ai_chat surface.
+            if (namespace == AICHAT_NAMESPACE
+                    and "record" in line.split("(")[0]
+                    and line.rstrip().endswith(";")):
+                rec_name = cls_m.group(1)
+                opened_classes.append(rec_name)
+                members.setdefault(rec_name, [])
+                continue
             # Class header on a line without `{` — happens with a multi-line generic
-            # header + constraints (``public class Foo<T>\n    where T : class\n{``).
-            # DEFER the scope push to the opening ``{`` line below: pushing it now at
-            # the current brace_depth means the very next non-``{`` line (a ``where``
-            # constraint) trips the ``brace_depth <= scope[-1].depth`` pop guard and
-            # discards the scope, so every method in the body is lost. Recording a
-            # pending class name that the next ``{`` consumes keeps the scope alive.
+            # header + constraints (``public class Foo<T>\n    where T : class\n{``),
+            # OR a multi-line positional record whose param list + ``);`` terminator
+            # span several lines. DEFER the scope push to the opening ``{`` line below
+            # (see the pending_class consumer); an AI-Chat record that terminates with
+            # ``);`` before any ``{`` is flushed method-less there.
             pending_class = cls_m.group(1)
             opened_classes.append(pending_class)
+            continue
+        # A pending (no-brace) class header that turns out to be a multi-line
+        # positional AI-Chat record: its parameter list closes with ``);`` and no
+        # ``{`` body follows. Flush it as a method-less class (oracle records these
+        # response models with no surface members) so it isn't swallowed by the
+        # next class's ``{``. SCOPED to the AI-Chat namespace (see above).
+        if (pending_class is not None and namespace == AICHAT_NAMESPACE
+                and "{" not in line
+                and ")" in line and line.rstrip().endswith(";")):
+            members.setdefault(pending_class, [])
+            pending_class = None
             continue
         # The opening ``{`` of a deferred (no-brace) class header: push the scope now,
         # at the pre-``{`` depth, then let the brace-tracking below increment.
@@ -1318,6 +1434,12 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             # oracle. Skip emitting it as a class (it survives only as a type ref
             # via CLASS_RENAME_MAP on resolve/status_is_retryable).
             if class_name == "EffectiveRequestOptions":
+                continue
+            # AI-Chat *Options classes are the .NET named-idiom for the
+            # reference's keyword arguments — no surface class exists in the
+            # oracle. Drop them from the surface (their fields reconcile in the
+            # method signatures). See AICHAT_OPTIONS_CLASSES.
+            if class_name in AICHAT_OPTIONS_CLASSES:
                 continue
             # Generated-REST projection (item A/B): the classes under
             # SignalWire.REST.Namespaces.Generated project onto the oracle's

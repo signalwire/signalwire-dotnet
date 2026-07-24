@@ -516,47 +516,70 @@ public class Client : IAsyncDisposable
         _running = false;
         Connected = false;
 
+        // Complete the closing handshake DETERMINISTICALLY, so that when
+        // DisposeAsync returns the server has provably observed the close and
+        // torn down its session (the lifecycle contract callers rely on when they
+        // assert "the server no longer lists my session" right after dispose).
+        // The ORDER is load-bearing:
+        //   1. CloseOutputAsync sends OUR close frame (state -> CloseSent).
+        //   2. Await the reader task. The reader is blocked in ReceiveAsync on
+        //      this socket; it returns when the server's Close reply arrives, hits
+        //      its MessageType.Close branch, and exits — so awaiting it BLOCKS
+        //      until the server has processed our close. We do NOT cancel _cts
+        //      first: token-cancellation aborts ClientWebSocket mid-receive
+        //      (state -> Aborted), skipping the handshake and letting the server
+        //      session linger past dispose under load — the original race.
+        //   3. Cancel _cts only as a FALLBACK if the reader doesn't drain in time
+        //      (the peer never replied), to unblock it before we dispose the handles.
         var ws = _ws;
-        if (ws is not null)
+        if (ws is not null && ws.State == WebSocketState.Open)
         {
-            if (ws.State == WebSocketState.Open)
+            try
             {
-                try
-                {
-                    using var closeCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-                    await ws.CloseOutputAsync(
-                        WebSocketCloseStatus.NormalClosure,
-                        "client dispose",
-                        closeCts.Token).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Debug($"DisposeAsync close error: {ex.Message}");
-                }
+                using var closeCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                await ws.CloseOutputAsync(
+                    WebSocketCloseStatus.NormalClosure,
+                    "client dispose",
+                    closeCts.Token).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"DisposeAsync close error: {ex.Message}");
             }
         }
-
-        // Cancel the reader loop and let it unwind before we dispose the socket
-        // out from under it.
-        try
-        {
-            if (_cts is not null)
-            {
-                await _cts.CancelAsync().ConfigureAwait(false);
-            }
-        }
-        catch (Exception ex) { _logger.Debug($"DisposeAsync cts cancel error: {ex.Message}"); }
 
         var reader = _readerTask;
+        var readerDrained = false;
         if (reader is not null)
         {
             try
             {
                 await reader.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+                readerDrained = true;
             }
             catch (Exception ex)
             {
                 _logger.Debug($"DisposeAsync reader drain: {ex.Message}");
+            }
+        }
+
+        // Fallback: the reader didn't finish the handshake (peer never replied),
+        // so cancel the token to unwind it before disposing the socket beneath it.
+        if (!readerDrained)
+        {
+            try
+            {
+                if (_cts is not null)
+                {
+                    await _cts.CancelAsync().ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex) { _logger.Debug($"DisposeAsync cts cancel error: {ex.Message}"); }
+
+            if (reader is not null)
+            {
+                try { await reader.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false); }
+                catch (Exception ex) { _logger.Debug($"DisposeAsync reader drain (fallback): {ex.Message}"); }
             }
         }
 

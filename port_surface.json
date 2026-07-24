@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ e379f95e38a3d944bb5037699b02bec2165e4580",
+  "generated_from": "signalwire-dotnet @ 0542fbf0cd7c06af41e7016fb52f52e13bc9bc64",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -83,6 +83,34 @@
           "top_p",
           "voice_id"
         ]
+      },
+      "functions": []
+    },
+    "signalwire.ai_chat.client": {
+      "classes": {
+        "AIChatClient": [
+          "__aenter__",
+          "__aexit__",
+          "__init__",
+          "chat",
+          "close",
+          "create_conversation",
+          "delete",
+          "end",
+          "log",
+          "summarize"
+        ],
+        "AIChatError": [
+          "__init__"
+        ],
+        "AuthenticationError": [],
+        "ChatInProgressError": [],
+        "ChatLog": [],
+        "ChatResponse": [],
+        "ConversationInfo": [],
+        "ConversationNotFoundError": [],
+        "RateLimitError": [],
+        "SummaryError": []
       },
       "functions": []
     },
