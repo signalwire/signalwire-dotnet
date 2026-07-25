@@ -87,6 +87,22 @@ static JsonObject? DumpType(Type t)
         ["kind"] = kind,
     };
 
+    // Immediate base type, when it is one of ours. Everything else here is
+    // DeclaredOnly, which is right for the SURFACE (an inherited method is not
+    // re-declared surface) but WRONG for the construction contract: C# object-
+    // initializer syntax sets INHERITED init-settable properties too —
+    // `new CallStateEvent { EventType = …, CallState = … }` is legal, and
+    // EventType is declared on the RelayEvent base. build_construction walks
+    // this chain so a subclass's construction set includes what it inherits.
+    if (t.BaseType is { } bt && (bt.Namespace ?? "").StartsWith("SignalWire"))
+    {
+        typeObj["base_type"] = new JsonObject
+        {
+            ["namespace"] = bt.Namespace ?? "",
+            ["name"] = StripGenericArity(bt.Name),
+        };
+    }
+
     var methods = new JsonArray();
 
     // Constructors → emit as method "__init__" so the Python wrapper can
@@ -129,6 +145,15 @@ static JsonObject? DumpType(Type t)
             ["can_write"] = p.CanWrite,
             ["type"] = TypeName(p.PropertyType),
             ["is_static"] = (p.GetMethod ?? p.SetMethod)?.IsStatic ?? false,
+            // C# `required` modifier. This is the construction contract's
+            // `required` flag (ALLOWLIST_DISCIPLINE.md §10): an options-object
+            // property marked `required` MUST be set by the caller, exactly as a
+            // reference kwarg with no default must be passed. The compiler emits
+            // RequiredMemberAttribute on the property; it is not otherwise
+            // recoverable from reflection.
+            ["is_required"] = p.GetCustomAttributes(inherit: false)
+                .Any(a => a.GetType().FullName
+                    == "System.Runtime.CompilerServices.RequiredMemberAttribute"),
         });
     }
     typeObj["properties"] = properties;
