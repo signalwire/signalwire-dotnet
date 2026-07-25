@@ -781,6 +781,27 @@ FREE_FUNCTION_CLASSES: dict[str, dict] = {
         "module": "signalwire.core.logging_config",
         "aliases": {},
     },
+    # Logger's two STATIC members are a second path to the SAME capability the
+    # reference exposes as module-level free functions in
+    # ``signalwire.core.logging_config`` — ``LoggingConfig.GetLogger`` delegates
+    # straight to ``Logger.GetLogger``, and ``ResetLoggingConfiguration`` calls
+    # ``Logger.Reset``. A re-export is not a second symbol (ALLOWLIST_DISCIPLINE
+    # §4b/§7), so fold them onto the reference free-function names and count once.
+    #
+    # The 8 INSTANCE members (debug/info/warn/error/should_log + the level/name/
+    # suppressed properties) are deliberately NOT projected: in the reference they
+    # are the surface of the structlog BoundLogger that ``get_logger()`` returns —
+    # a third-party object the oracle does not enumerate — so they have no
+    # reference twin to fold onto. They stay on the emitted ``Logger`` class and
+    # remain recorded in PORT_ADDITIONS.md pending an owner ruling.
+    "Logger": {
+        "module": "signalwire.core.logging_config",
+        "aliases": {"reset": "reset_logging_configuration"},
+        "keep": {"get_logger", "reset_logging_configuration"},
+        # Keep emitting the class itself (with its non-static members) — this
+        # spec only projects the static re-exports off it.
+        "keep_class": True,
+    },
     "TypeInference": {
         "module": "signalwire.core.agent.tools.type_inference",
         "aliases": {},
@@ -1769,20 +1790,28 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             # Free-function helper classes (item H/I): a C# static helper class
             # whose methods are the reference's MODULE-LEVEL free functions.
             # Route the methods to the module's functions[] and DO NOT emit the
-            # class (Python has no such class).
+            # class (Python has no such class) — unless the spec sets
+            # ``keep_class``, in which case only the named methods are projected
+            # off it (a re-export fold) and the class keeps its remaining members.
             if class_name in FREE_FUNCTION_CLASSES:
                 spec = FREE_FUNCTION_CLASSES[class_name]
                 aliases = spec.get("aliases", {})
                 keep = spec.get("keep")
                 fns = []
+                projected = set()
                 for m in methods:
                     snake = pascal_to_snake(m)
                     snake = aliases.get(snake, snake)
                     if keep is not None and snake not in keep:
                         continue
                     fns.append(snake)
+                    projected.add(m)
                 merge_module_functions(modules, spec["module"], fns)
-                continue
+                if not spec.get("keep_class"):
+                    continue
+                # Re-export fold: strip the projected members and fall through so
+                # the class is still emitted with whatever remains.
+                methods = [m for m in methods if m not in projected]
 
             # Apply CLASS_RENAME_MAP
             if (namespace, class_name) in CLASS_RENAME_MAP:

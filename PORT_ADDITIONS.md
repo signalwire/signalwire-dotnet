@@ -159,12 +159,10 @@ signalwire.core.skill_base.SkillBase.version: Public method surfaced by the .NET
 signalwire.core.skill_base.SkillBase.wire: Public abstract/virtual properties on SkillBase; Python uses class-level constants instead
 signalwire.logging.logger.Logger.debug: .NET ships Logger as a class with named factory; Python uses module-level functions
 signalwire.logging.logger.Logger.error: .NET ships Logger as a class with named factory; Python uses module-level functions
-signalwire.logging.logger.Logger.get_logger: .NET ships Logger as a class with named factory; Python uses module-level functions
 signalwire.logging.logger.Logger.info: .NET ships Logger as a class with named factory; Python uses module-level functions
 signalwire.logging.logger.Logger.level: .NET ships Logger as a class with named factory; Python uses module-level functions
 signalwire.logging.logger.Logger.name: .NET ships Logger as a class with named factory; Python uses module-level functions
 signalwire.logging.logger.Logger: .NET ships Logger as a class with named factory; Python uses module-level functions
-signalwire.logging.logger.Logger.reset: .NET ships Logger as a class with named factory; Python uses module-level functions
 signalwire.logging.logger.Logger.should_log: .NET ships Logger as a class with named factory; Python uses module-level functions
 signalwire.logging.logger.Logger.suppressed: .NET ships Logger as a class with named factory; Python uses module-level functions
 signalwire.logging.logger.Logger.warn: .NET ships Logger as a class with named factory; Python uses module-level functions

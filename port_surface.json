@@ -216,7 +216,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ 1a064e9c9dc00e8d9d098c1cdaa4f155b49711c1",
+  "generated_from": "signalwire-dotnet @ c2be860651800d011ed52e29e74c11eae66c9be8",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -1351,11 +1351,9 @@
         "Logger": [
           "debug",
           "error",
-          "get_logger",
           "info",
           "level",
           "name",
-          "reset",
           "should_log",
           "suppressed",
           "warn"

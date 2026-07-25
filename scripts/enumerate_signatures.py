@@ -856,6 +856,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             target_mod = spec["module"]
             out_modules.setdefault(target_mod, {})
             out_modules[target_mod].setdefault("functions", {})
+            projected_names: set[str] = set()
             for m in type_entry.get("methods", []):
                 mn = m.get("name", "")
                 if mn == "__init__":
@@ -879,7 +880,17 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                     p for p in sig["params"] if p.get("kind") not in ("self", "cls")
                 ]
                 out_modules[target_mod]["functions"].setdefault(canon, sig)
-            continue
+                projected_names.add(mn)
+            if not spec.get("keep_class"):
+                continue
+            # Re-export fold (mirrors enumerate_surface): the projected members
+            # move to the module's free functions; the class is still emitted
+            # with whatever remains. Shallow-copy so the source entry is intact.
+            type_entry = dict(type_entry)
+            type_entry["methods"] = [
+                m for m in type_entry.get("methods", [])
+                if m.get("name", "") not in projected_names
+            ]
 
         # Resolve canonical (module, class) for this type
         rename = CLASS_RENAME_MAP.get((ns, name))

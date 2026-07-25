@@ -17102,17 +17102,6 @@
               ],
               "returns": "void"
             },
-            "get_logger": {
-              "params": [
-                {
-                  "name": "name",
-                  "type": "string",
-                  "required": false,
-                  "default": "signalwire"
-                }
-              ],
-              "returns": "class:signalwire.logging.logger.Logger"
-            },
             "info": {
               "params": [
                 {
@@ -17144,10 +17133,6 @@
                 }
               ],
               "returns": "string"
-            },
-            "reset": {
-              "params": [],
-              "returns": "void"
             },
             "should_log": {
               "params": [
