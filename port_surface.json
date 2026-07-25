@@ -216,7 +216,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ ee6ad860cce2520b34eaba8a6e525fb903852612",
+  "generated_from": "signalwire-dotnet @ 3ff98a3d199cac6aac5afef6ad938df37080dcdf",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -227,26 +227,6 @@
         "list_skills_with_params",
         "register_skill"
       ]
-    },
-    "signalwire.agent.agent_options": {
-      "classes": {
-        "AgentOptions": [
-          "auto_answer",
-          "basic_auth_password",
-          "basic_auth_user",
-          "host",
-          "name",
-          "port",
-          "record_call",
-          "record_format",
-          "record_stereo",
-          "route",
-          "signing_key",
-          "trust_proxy_for_signature",
-          "use_pom"
-        ]
-      },
-      "functions": []
     },
     "signalwire.agent_server": {
       "classes": {
@@ -3864,19 +3844,6 @@
           "reset",
           "to_dict",
           "version"
-        ]
-      },
-      "functions": []
-    },
-    "signalwire.swml.service_options": {
-      "classes": {
-        "ServiceOptions": [
-          "basic_auth_password",
-          "basic_auth_user",
-          "host",
-          "name",
-          "port",
-          "route"
         ]
       },
       "functions": []

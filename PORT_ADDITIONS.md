@@ -91,18 +91,6 @@ The bulk of additions fall into these architectural buckets:
 
 ## Per-symbol additions
 
-signalwire.agent.agent_options.AgentOptions.auto_answer: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.basic_auth_password: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.basic_auth_user: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.host: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.name: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.port: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.record_call: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.record_format: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.record_stereo: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.route: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.use_pom: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
 signalwire.relay.client_options.ClientOptions: .NET options data class with init-only properties (6.2: replaced the string-keyed Dictionary ctor); Python uses kwargs to RelayClient.__init__
 signalwire.relay.client_options.ClientOptions.project: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
 signalwire.relay.client_options.ClientOptions.token: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
@@ -128,8 +116,6 @@ signalwire.core.agent_base.AgentBase.clone_for_request: .NET-specific AgentBase 
 signalwire.core.agent_base.AgentBase.handle_request: .NET AgentBase overrides Service.handle_request (spliced to the SWMLService reference signature); the reference records handle_request only on SWMLService, so the AgentBase override needs this addition entry to excuse the signature-side missing-reference
 signalwire.core.agent_base.AgentBase.is_webhook_signature_validation_enabled: .NET surfaces a public read-only flag for whether SigningKey is configured; Python users check `bool(agent.signing_key)` directly
 signalwire.core.agent_base.AgentBase.signing_key: Public read-only property exposing the configured Signing Key; Python sets it as an attribute (porting-sdk/webhooks.md AgentBase integration)
-signalwire.agent.agent_options.AgentOptions.signing_key: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
-signalwire.agent.agent_options.AgentOptions.trust_proxy_for_signature: .NET options data class with init-only properties; Python uses kwargs to AgentBase.__init__
 signalwire.core.agent_base.AgentBase.get_skill_manager: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
 signalwire.core.agent_base.AgentBase.render_swml: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
 signalwire.core.agent_base.AgentBase.render_swml_with_context: .NET-specific AgentBase helpers used by the rendering pipeline; Python implements equivalents under signalwire.core.agent.* sub-package
@@ -304,13 +290,6 @@ signalwire.swml.document.Document.render_pretty: .NET ships Document class; Pyth
 signalwire.swml.document.Document.reset: .NET ships Document class; Python uses signalwire.core.swml_builder helpers
 signalwire.swml.document.Document.to_dict: .NET ships Document class; Python uses signalwire.core.swml_builder helpers
 signalwire.swml.document.Document.version: .NET ships Document class; Python uses signalwire.core.swml_builder helpers
-signalwire.swml.service_options.ServiceOptions.basic_auth_password: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
-signalwire.swml.service_options.ServiceOptions.basic_auth_user: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
-signalwire.swml.service_options.ServiceOptions.host: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
-signalwire.swml.service_options.ServiceOptions.name: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
-signalwire.swml.service_options.ServiceOptions: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
-signalwire.swml.service_options.ServiceOptions.port: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
-signalwire.swml.service_options.ServiceOptions.route: .NET options data class with init-only properties; Python uses kwargs to SWMLService.__init__
 signalwire.core.agent_base.AgentBase.create_tool_token: Public helper on AgentBase to mint scoped function-call tokens; Python ships equivalent via SessionManager
 signalwire.core.skill_base.SkillBase.agent: Public read-only property surface; Python @property accessor with the same name
 signalwire.skills.api_ninjas_trivia.skill.ApiNinjasTriviaSkill.register_tools: Inherited from SkillBase abstract API; .NET enumerator emits methods on the declaring class only - these are required overrides per skill

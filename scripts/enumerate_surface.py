@@ -263,6 +263,30 @@ AICHAT_OPTIONS_CLASSES: frozenset[str] = frozenset({
     "SummarizeOptions",
 })
 
+# CONSTRUCTION options classes — the same options-object↔kwargs idiom as the
+# AI-Chat set above, applied to the CONSTRUCTORS. The reference writes
+# ``AgentBase(name=…, route=…, token_expiry_secs=…)``; .NET has to put those
+# keyword arguments somewhere, and that somewhere is an options class. Its
+# init-only properties ARE the reference's constructor kwargs — same capability,
+# different binding — so they reconcile in the CONSTRUCTION CONTRACT
+# (``port_signatures.json``'s ``construction`` node, which unfolds an options
+# param into these very properties), not as standalone surface symbols.
+#
+# The discriminator is the REFERENCE, matching enumerate_signatures' derived
+# rule: an options class is a binding vehicle exactly when the reference has NO
+# class of that name. The reference has no ``AgentOptions`` and no
+# ``ServiceOptions`` — those spellings exist ONLY because .NET needs a home for
+# what Python passes as kwargs. (``RequestOptions`` is deliberately NOT here:
+# the reference DOES record it as a real class, so it is shared surface.)
+#
+# This is the AGENT_RULES §2 / ALLOWLIST_DISCIPLINE §0 idiom fold — folded at the
+# emitter, NOT ledgered. Dropping them here is what keeps a newly-wired
+# construction parameter from surfacing as a phantom port-only addition.
+CONSTRUCTION_OPTIONS_CLASSES: frozenset[str] = frozenset({
+    "AgentOptions",
+    "ServiceOptions",
+})
+
 
 # (source_namespace, source_class) -> (target_module, target_class) for
 # classes that get a Python-canonical rename.
@@ -1753,6 +1777,12 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             # oracle. Drop them from the surface (their fields reconcile in the
             # method signatures). See AICHAT_OPTIONS_CLASSES.
             if class_name in AICHAT_OPTIONS_CLASSES:
+                continue
+            # Construction options classes (AgentOptions / ServiceOptions): the
+            # same idiom applied to constructors. Their properties reconcile in
+            # the construction contract, not as surface symbols. See
+            # CONSTRUCTION_OPTIONS_CLASSES.
+            if class_name in CONSTRUCTION_OPTIONS_CLASSES:
                 continue
             # Generated-REST projection (item A/B): the classes under
             # SignalWire.REST.Namespaces.Generated project onto the oracle's

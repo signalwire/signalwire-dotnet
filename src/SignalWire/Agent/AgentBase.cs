@@ -1,7 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SignalWire.Contexts;
+using SignalWire.Core;
 using SignalWire.Logging;
 using SignalWire.Security;
 using SignalWire.Skills;
@@ -24,6 +26,81 @@ public sealed class AgentOptions
     public string RecordFormat { get; init; } = "wav";
     public bool RecordStereo { get; init; }
     public bool UsePom { get; init; } = true;
+
+    /// <summary>
+    /// Seconds until a session token expires. Forwarded to the agent's
+    /// <see cref="SessionManager"/>. (equivalent to Python's
+    /// <c>AgentBase.__init__(token_expiry_secs=...)</c>, which passes it to
+    /// <c>SessionManager(token_expiry_secs=...)</c>.)
+    /// </summary>
+    public int TokenExpirySecs { get; init; } = 3600;
+
+    /// <summary>
+    /// Optional default <c>web_hook_url</c> applied to every SWAIG function
+    /// that does not specify its own. (equivalent to Python's
+    /// <c>AgentBase.__init__(default_webhook_url=...)</c>.)
+    /// </summary>
+    [SuppressMessage("Usage", "CA1056", Justification = "URL is a wire string emitted verbatim as the SWAIG web_hook_url / used as a config value.")]
+    public string? DefaultWebhookUrl { get; init; }
+
+    /// <summary>
+    /// Optional unique ID for this agent. A GUID is generated when not
+    /// supplied. (equivalent to Python's
+    /// <c>AgentBase.__init__(agent_id=...)</c>.)
+    /// </summary>
+    public string? AgentId { get; init; }
+
+    /// <summary>
+    /// Optional list of native SWAIG function names to include in the rendered
+    /// <c>ai.SWAIG.native_functions</c> array. (equivalent to Python's
+    /// <c>AgentBase.__init__(native_functions=...)</c>.)
+    /// </summary>
+    public IReadOnlyList<string>? NativeFunctions { get; init; }
+
+    /// <summary>
+    /// Optional path to the SWML schema file, forwarded to the SWML service
+    /// base. (equivalent to Python's
+    /// <c>AgentBase.__init__(schema_path=...)</c>, forwarded to
+    /// <c>super().__init__(schema_path=...)</c>.)
+    /// </summary>
+    public string? SchemaPath { get; init; }
+
+    /// <summary>
+    /// Optional path to a JSON configuration file, forwarded to the SWML
+    /// service base. Its <c>service</c> section supplies name/route/host/port
+    /// defaults that explicit options override, and it feeds the unified
+    /// security configuration. (equivalent to Python's
+    /// <c>AgentBase.__init__(config_file=...)</c>, used by
+    /// <c>_load_service_config</c> and forwarded to
+    /// <c>super().__init__(config_file=...)</c>.)
+    /// </summary>
+    public string? ConfigFile { get; init; }
+
+    /// <summary>
+    /// Enable SWML schema validation. Default true. Also disableable via the
+    /// <c>SWML_SKIP_SCHEMA_VALIDATION</c> env var. (equivalent to Python's
+    /// <c>AgentBase.__init__(schema_validation=...)</c>, forwarded to
+    /// <c>super().__init__(schema_validation=...)</c>.)
+    /// </summary>
+    public bool SchemaValidation { get; init; } = true;
+
+    /// <summary>
+    /// Suppress the SDK's structured per-request logs. (equivalent to Python's
+    /// <c>AgentBase.__init__(suppress_logs=...)</c>.)
+    /// </summary>
+    public bool SuppressLogs { get; init; }
+
+    /// <summary>
+    /// Whether to enable post-prompt override. (equivalent to Python's
+    /// <c>AgentBase.__init__(enable_post_prompt_override=...)</c>.)
+    /// </summary>
+    public bool EnablePostPromptOverride { get; init; }
+
+    /// <summary>
+    /// Whether to enable check-for-input override. (equivalent to Python's
+    /// <c>AgentBase.__init__(check_for_input_override=...)</c>.)
+    /// </summary>
+    public bool CheckForInputOverride { get; init; }
 
     /// <summary>
     /// Optional SignalWire Signing Key (from Dashboard → API Credentials).
@@ -121,6 +198,38 @@ public class AgentBase : Service
     private Action<string, Dictionary<string, object?>?, Dictionary<string, string>>? _summaryCallback;
     private Action<Dictionary<string, object?>?, Dictionary<string, string>>? _debugEventHandler;
 
+    // This agent's unique ID — the supplied AgentOptions.AgentId or a generated
+    // GUID. The reference sets a PUBLIC `self.agent_id` (agent_base.py:229),
+    // but the surface oracle does not record plain `__init__` attributes on
+    // non-dataclass classes (the known class-B2 blind spot,
+    // ALLOWLIST_DISCIPLINE §0), so a public property here reads as a phantom
+    // port-only addition. Kept `internal` — the construction contract already
+    // carries `agent_id` as a configurable — rather than ledgering an entry
+    // against an oracle gap.
+    internal string AgentId { get; private set; }
+
+    // The remaining construction switches mirror attributes the reference keeps
+    // PRIVATE (`self._default_webhook_url`, `self._suppress_logs`) or does not
+    // store at all (`enable_post_prompt_override`, `check_for_input_override`).
+    // They are exposed `internal` so the SDK and its tests can observe the
+    // forwarding without inventing public surface the reference does not have.
+    internal string? DefaultWebhookUrl => _defaultWebhookUrl;
+
+    internal bool SuppressLogs => _suppressLogs;
+
+    internal bool EnablePostPromptOverride => _enablePostPromptOverride;
+
+    internal bool CheckForInputOverride => _checkForInputOverride;
+
+    // -- Agent identity / construction switches --
+    // `default_webhook_url` is kept alongside `_webhookUrl` because a later
+    // SetWebHookUrl call replaces the active override while the constructed
+    // default remains the agent's declared value.
+    private readonly string? _defaultWebhookUrl;
+    private readonly bool _suppressLogs;
+    private readonly bool _enablePostPromptOverride;
+    private readonly bool _checkForInputOverride;
+
     // -- Web / URLs --
     private string? _webhookUrl;
     private string? _postPromptUrl;
@@ -157,16 +266,71 @@ public class AgentBase : Service
     //  Constructor
     // ======================================================================
 
-    [SuppressMessage("Design", "CA1062", Justification = "options is consumed by the base initializer, which runs before any constructor-body guard could; a null argument fails fast there. Guarding earlier is not possible without a non-idiomatic static throw-helper around the base call.")]
-    public AgentBase(AgentOptions options) : base(new ServiceOptions
+    /// <summary>
+    /// Build the base <see cref="ServiceOptions"/>, applying the config file's
+    /// <c>service</c> section with the explicit options taking precedence.
+    /// Mirrors Python's <c>AgentBase.__init__</c>, which calls
+    /// <c>_load_service_config(config_file, name)</c> and then computes
+    /// <c>final_route</c> / <c>final_host</c> / <c>final_port</c> /
+    /// <c>final_name</c> before forwarding to <c>super().__init__</c>: a value
+    /// still at its default yields to the config file, an explicit value wins.
+    /// <c>name</c> is the exception — the reference lets the config file
+    /// override it unconditionally (<c>service_config.get("name", name)</c>).
+    /// </summary>
+    private static ServiceOptions BuildServiceOptions(AgentOptions options)
     {
-        Name = options.Name,
-        Route = options.Route,
-        Host = options.Host,
-        Port = options.Port,
-        BasicAuthUser = options.BasicAuthUser,
-        BasicAuthPassword = options.BasicAuthPassword,
-    })
+        ArgumentNullException.ThrowIfNull(options);
+        var serviceConfig = LoadServiceConfig(options.ConfigFile, options.Name);
+
+        return new ServiceOptions
+        {
+            Name = AsString(serviceConfig, "name") ?? options.Name,
+            Route = options.Route != "/" ? options.Route : AsString(serviceConfig, "route") ?? options.Route,
+            Host = options.Host != "0.0.0.0" ? options.Host : AsString(serviceConfig, "host") ?? options.Host,
+            Port = options.Port ?? AsInt(serviceConfig, "port"),
+            BasicAuthUser = options.BasicAuthUser,
+            BasicAuthPassword = options.BasicAuthPassword,
+            SchemaPath = options.SchemaPath,
+            ConfigFile = options.ConfigFile,
+            SchemaValidation = options.SchemaValidation,
+        };
+    }
+
+    /// <summary>
+    /// Load the <c>service</c> section of the config file, discovering one by
+    /// service name when no explicit path is given. Returns an empty map when
+    /// no config file exists or it has no <c>service</c> section. (equivalent
+    /// to Python's <c>AgentBase._load_service_config</c>.)
+    /// </summary>
+    private static Dictionary<string, object?> LoadServiceConfig(string? configFile, string serviceName)
+    {
+        configFile ??= ConfigLoader.FindConfigFile(serviceName);
+        if (string.IsNullOrEmpty(configFile)) return new Dictionary<string, object?>();
+
+        var loader = new ConfigLoader(new[] { configFile });
+        if (!loader.HasConfig()) return new Dictionary<string, object?>();
+
+        return loader.GetSection("service");
+    }
+
+    private static string? AsString(Dictionary<string, object?> config, string key) =>
+        config.TryGetValue(key, out var v) && v is string s && !string.IsNullOrEmpty(s) ? s : null;
+
+    private static int? AsInt(Dictionary<string, object?> config, string key)
+    {
+        if (!config.TryGetValue(key, out var v) || v is null) return null;
+        return v switch
+        {
+            int i => i,
+            long l => (int)l,
+            double d => (int)d,
+            string s when int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) => parsed,
+            _ => null,
+        };
+    }
+
+    [SuppressMessage("Design", "CA1062", Justification = "options is consumed by the base initializer, which runs before any constructor-body guard could; a null argument fails fast there. Guarding earlier is not possible without a non-idiomatic static throw-helper around the base call.")]
+    public AgentBase(AgentOptions options) : base(BuildServiceOptions(options))
     {
         _agentLogger = Logger.GetLogger("agent_base");
 
@@ -202,7 +366,7 @@ public class AgentBase : Service
         _globalData = [];
 
         // Native functions / fillers / debug
-        _nativeFunctions = [];
+        _nativeFunctions = options.NativeFunctions is null ? [] : [.. options.NativeFunctions];
         _internalFillers = [];
         _debugEventsLevel = null;
 
@@ -221,8 +385,12 @@ public class AgentBase : Service
         _summaryCallback = null;
         _debugEventHandler = null;
 
-        // Web / URLs
-        _webhookUrl = null;
+        // Web / URLs. `default_webhook_url` seeds the SWAIG web_hook_url the
+        // same way SetWebHookUrl does — the reference stores it as
+        // `self._default_webhook_url` and applies it to every function that
+        // does not carry its own.
+        _webhookUrl = options.DefaultWebhookUrl;
+        _defaultWebhookUrl = options.DefaultWebhookUrl;
         _postPromptUrl = null;
         _manualProxyUrl = null;
         _swaigQueryParams = [];
@@ -231,10 +399,18 @@ public class AgentBase : Service
         _functionIncludes = [];
 
         // Session / context / skills
-        _sessionManager = new SessionManager();
+        _sessionManager = new SessionManager(options.TokenExpirySecs);
         _contextBuilder = null;
         _skillsList = [];
         _skillManager = null;
+
+        // Agent identity + logging/override switches
+        AgentId = string.IsNullOrEmpty(options.AgentId)
+            ? Guid.NewGuid().ToString()
+            : options.AgentId;
+        _suppressLogs = options.SuppressLogs;
+        _enablePostPromptOverride = options.EnablePostPromptOverride;
+        _checkForInputOverride = options.CheckForInputOverride;
 
         // Webhook signature validation (porting-sdk/webhooks.md). Resolution
         // order: explicit constructor arg → SIGNALWIRE_SIGNING_KEY env var.
@@ -1888,8 +2064,11 @@ public class AgentBase : Service
         clone._skillsList = [.. _skillsList];
         clone._skillManager = null; // Fresh manager for clone
 
-        // Deep-copy objects
-        clone._sessionManager = new SessionManager();
+        // Deep-copy objects. The clone gets a FRESH session manager (its own
+        // secret / session table) but must keep the configured token lifetime —
+        // constructing it bare silently reverted a per-agent `token_expiry_secs`
+        // to the 3600s default for every per-request clone.
+        clone._sessionManager = new SessionManager(_sessionManager.TokenExpirySecs);
 
         // Callbacks preserved by reference
         clone._dynamicConfigCallback = _dynamicConfigCallback;

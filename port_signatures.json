@@ -60,6 +60,15 @@
               ],
               "returns": "void"
             },
+            "agent_id": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
             "auto_answer": {
               "params": [
                 {
@@ -87,6 +96,42 @@
               ],
               "returns": "string"
             },
+            "check_for_input_override": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
+            },
+            "config_file": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "default_webhook_url": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "enable_post_prompt_override": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
+            },
             "host": {
               "params": [
                 {
@@ -104,6 +149,15 @@
                 }
               ],
               "returns": "string"
+            },
+            "native_functions": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "list<string>"
             },
             "port": {
               "params": [
@@ -150,6 +204,24 @@
               ],
               "returns": "string"
             },
+            "schema_path": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "schema_validation": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
+            },
             "signing_key": {
               "params": [
                 {
@@ -158,6 +230,24 @@
                 }
               ],
               "returns": "string"
+            },
+            "suppress_logs": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
+            },
+            "token_expiry_secs": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "int"
             },
             "trust_proxy_for_signature": {
               "params": [
@@ -35661,6 +35751,15 @@
               ],
               "returns": "string"
             },
+            "config_file": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
             "host": {
               "params": [
                 {
@@ -35696,6 +35795,24 @@
                 }
               ],
               "returns": "string"
+            },
+            "schema_path": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "string"
+            },
+            "schema_validation": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "bool"
             }
           }
         }
@@ -36107,6 +36224,10 @@
   "construction": {
     "signalwire.agent.agent_options.AgentOptions": {
       "params": {
+        "agent_id": {
+          "type": "string",
+          "required": false
+        },
         "auto_answer": {
           "type": "bool",
           "required": false
@@ -36119,6 +36240,22 @@
           "type": "string",
           "required": false
         },
+        "check_for_input_override": {
+          "type": "bool",
+          "required": false
+        },
+        "config_file": {
+          "type": "string",
+          "required": false
+        },
+        "default_webhook_url": {
+          "type": "string",
+          "required": false
+        },
+        "enable_post_prompt_override": {
+          "type": "bool",
+          "required": false
+        },
         "host": {
           "type": "string",
           "required": false
@@ -36126,6 +36263,10 @@
         "name": {
           "type": "string",
           "required": true
+        },
+        "native_functions": {
+          "type": "list<string>",
+          "required": false
         },
         "port": {
           "type": "int",
@@ -36147,8 +36288,24 @@
           "type": "string",
           "required": false
         },
+        "schema_path": {
+          "type": "string",
+          "required": false
+        },
+        "schema_validation": {
+          "type": "bool",
+          "required": false
+        },
         "signing_key": {
           "type": "string",
+          "required": false
+        },
+        "suppress_logs": {
+          "type": "bool",
+          "required": false
+        },
+        "token_expiry_secs": {
+          "type": "int",
           "required": false
         },
         "trust_proxy_for_signature": {
@@ -36375,6 +36532,10 @@
     },
     "signalwire.core.agent_base.AgentBase": {
       "params": {
+        "agent_id": {
+          "type": "string",
+          "required": false
+        },
         "auto_answer": {
           "type": "bool",
           "required": false
@@ -36387,6 +36548,22 @@
           "type": "string",
           "required": false
         },
+        "check_for_input_override": {
+          "type": "bool",
+          "required": false
+        },
+        "config_file": {
+          "type": "string",
+          "required": false
+        },
+        "default_webhook_url": {
+          "type": "string",
+          "required": false
+        },
+        "enable_post_prompt_override": {
+          "type": "bool",
+          "required": false
+        },
         "host": {
           "type": "string",
           "required": false
@@ -36394,6 +36571,10 @@
         "name": {
           "type": "string",
           "required": true
+        },
+        "native_functions": {
+          "type": "list<string>",
+          "required": false
         },
         "port": {
           "type": "int",
@@ -36415,8 +36596,24 @@
           "type": "string",
           "required": false
         },
+        "schema_path": {
+          "type": "string",
+          "required": false
+        },
+        "schema_validation": {
+          "type": "bool",
+          "required": false
+        },
         "signing_key": {
           "type": "string",
+          "required": false
+        },
+        "suppress_logs": {
+          "type": "bool",
+          "required": false
+        },
+        "token_expiry_secs": {
+          "type": "int",
           "required": false
         },
         "trust_proxy_for_signature": {
@@ -36643,6 +36840,10 @@
           "type": "string",
           "required": false
         },
+        "config_file": {
+          "type": "string",
+          "required": false
+        },
         "host": {
           "type": "string",
           "required": false
@@ -36657,6 +36858,14 @@
         },
         "route": {
           "type": "string",
+          "required": false
+        },
+        "schema_path": {
+          "type": "string",
+          "required": false
+        },
+        "schema_validation": {
+          "type": "bool",
           "required": false
         }
       }
@@ -36739,6 +36948,10 @@
     },
     "signalwire.prefabs.info_gatherer.InfoGathererAgent": {
       "params": {
+        "agent_id": {
+          "type": "string",
+          "required": false
+        },
         "auto_answer": {
           "type": "bool",
           "required": false
@@ -36751,6 +36964,22 @@
           "type": "string",
           "required": false
         },
+        "check_for_input_override": {
+          "type": "bool",
+          "required": false
+        },
+        "config_file": {
+          "type": "string",
+          "required": false
+        },
+        "default_webhook_url": {
+          "type": "string",
+          "required": false
+        },
+        "enable_post_prompt_override": {
+          "type": "bool",
+          "required": false
+        },
         "host": {
           "type": "string",
           "required": false
@@ -36758,6 +36987,10 @@
         "name": {
           "type": "string",
           "required": true
+        },
+        "native_functions": {
+          "type": "list<string>",
+          "required": false
         },
         "port": {
           "type": "int",
@@ -36783,8 +37016,24 @@
           "type": "string",
           "required": false
         },
+        "schema_path": {
+          "type": "string",
+          "required": false
+        },
+        "schema_validation": {
+          "type": "bool",
+          "required": false
+        },
         "signing_key": {
           "type": "string",
+          "required": false
+        },
+        "suppress_logs": {
+          "type": "bool",
+          "required": false
+        },
+        "token_expiry_secs": {
+          "type": "int",
           "required": false
         },
         "trust_proxy_for_signature": {
@@ -38947,6 +39196,10 @@
           "type": "string",
           "required": false
         },
+        "config_file": {
+          "type": "string",
+          "required": false
+        },
         "host": {
           "type": "string",
           "required": false
@@ -38961,6 +39214,14 @@
         },
         "route": {
           "type": "string",
+          "required": false
+        },
+        "schema_path": {
+          "type": "string",
+          "required": false
+        },
+        "schema_validation": {
+          "type": "bool",
           "required": false
         }
       }
