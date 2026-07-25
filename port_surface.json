@@ -216,7 +216,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ c2be860651800d011ed52e29e74c11eae66c9be8",
+  "generated_from": "signalwire-dotnet @ ee6ad860cce2520b34eaba8a6e525fb903852612",
   "modules": {
     "signalwire": {
       "classes": {},

@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class VerifiedCallers : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.RelayRest.VerifiedCallerIDListResponse, SignalWire.REST.Namespaces.Generated.Types.RelayRest.VerifiedCallerIDResponse>
 {
-    public VerifiedCallers(SignalWire.REST.HttpClient client)
-        : base(client, "/api/relay/rest/verified_caller_ids")
+    public VerifiedCallers(SignalWire.REST.HttpClient http)
+        : base(http, "/api/relay/rest/verified_caller_ids")
     {
     }
 

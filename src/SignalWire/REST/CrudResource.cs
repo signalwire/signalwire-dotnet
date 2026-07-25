@@ -22,9 +22,9 @@ public class CrudResource<TList, TItem>
     protected HttpClient Client { get; }
     public string BasePath { get; }
 
-    public CrudResource(HttpClient client, string basePath)
+    public CrudResource(HttpClient http, string basePath)
     {
-        Client = client;
+        Client = http;
         BasePath = basePath;
     }
 
@@ -116,8 +116,8 @@ public class CrudResource<TList, TItem>
 /// </summary>
 public class CrudResource : CrudResource<Dictionary<string, object?>, Dictionary<string, object?>>
 {
-    public CrudResource(HttpClient client, string basePath)
-        : base(client, basePath)
+    public CrudResource(HttpClient http, string basePath)
+        : base(http, basePath)
     {
     }
 }

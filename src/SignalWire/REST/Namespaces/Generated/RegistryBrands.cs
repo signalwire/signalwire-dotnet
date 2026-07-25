@@ -21,9 +21,9 @@ public class RegistryBrands
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public RegistryBrands(SignalWire.REST.HttpClient client)
+    public RegistryBrands(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class VideoRooms : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.Video.ListRoomsResponse, SignalWire.REST.Namespaces.Generated.Types.Video.RoomResponse>
 {
-    public VideoRooms(SignalWire.REST.HttpClient client)
-        : base(client, "/api/video/rooms")
+    public VideoRooms(SignalWire.REST.HttpClient http)
+        : base(http, "/api/video/rooms")
     {
     }
 

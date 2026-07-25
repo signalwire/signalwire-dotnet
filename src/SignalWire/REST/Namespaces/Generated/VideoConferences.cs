@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class VideoConferences : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.Video.ListConferencesResponse, SignalWire.REST.Namespaces.Generated.Types.Video.Conference>
 {
-    public VideoConferences(SignalWire.REST.HttpClient client)
-        : base(client, "/api/video/conferences")
+    public VideoConferences(SignalWire.REST.HttpClient http)
+        : base(http, "/api/video/conferences")
     {
     }
 

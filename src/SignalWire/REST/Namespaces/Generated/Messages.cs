@@ -21,9 +21,9 @@ public class Messages
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public Messages(SignalWire.REST.HttpClient client)
+    public Messages(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

@@ -23148,7 +23148,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 },
@@ -26428,7 +26428,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -26527,7 +26527,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -26818,7 +26818,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -26885,7 +26885,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -27002,7 +27002,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -27069,7 +27069,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -27296,7 +27296,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -27341,7 +27341,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -27408,7 +27408,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -27449,7 +27449,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -27703,7 +27703,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -27748,7 +27748,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -27924,7 +27924,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -27969,7 +27969,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -28014,7 +28014,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -28081,7 +28081,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -28364,7 +28364,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -28409,7 +28409,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -29492,7 +29492,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -29577,7 +29577,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -29649,7 +29649,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -29734,7 +29734,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -29895,7 +29895,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -30052,7 +30052,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -30173,7 +30173,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -30275,7 +30275,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -30444,7 +30444,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -30504,7 +30504,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -30544,7 +30544,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -30739,7 +30739,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -30885,7 +30885,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -31170,7 +31170,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -31287,7 +31287,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -31365,7 +31365,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -31493,7 +31493,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -31656,7 +31656,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -31696,7 +31696,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -31736,7 +31736,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -31875,7 +31875,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -31967,7 +31967,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -32378,7 +32378,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -32440,7 +32440,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -32564,7 +32564,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -32664,7 +32664,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -32771,7 +32771,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -32937,7 +32937,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -33039,7 +33039,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -33264,7 +33264,7 @@
                   "kind": "self"
                 },
                 {
-                  "name": "client",
+                  "name": "http",
                   "type": "class:signalwire.rest._base.HttpClient",
                   "required": true
                 }
@@ -38051,7 +38051,7 @@
           "type": "string",
           "required": true
         },
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38247,7 +38247,7 @@
     },
     "signalwire.rest.namespaces.chat_resources_generated.Chat": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38255,7 +38255,7 @@
     },
     "signalwire.rest.namespaces.datasphere_resources_generated.DatasphereDocuments": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38263,7 +38263,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.AiAgents": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38271,7 +38271,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.CallFlows": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38279,7 +38279,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.ConferenceRooms": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38287,7 +38287,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.CxmlApplications": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38295,7 +38295,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.CxmlScripts": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38303,7 +38303,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.CxmlWebhooks": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38311,7 +38311,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.FabricAddresses": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38319,7 +38319,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.FabricTokens": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38327,7 +38327,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.FreeswitchConnectors": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38335,7 +38335,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.GenericResources": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38343,7 +38343,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.RelayApplications": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38351,7 +38351,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.SipEndpoints": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38359,7 +38359,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.SipGateways": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38367,7 +38367,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.Subscribers": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38375,7 +38375,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.SwmlScripts": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38383,7 +38383,7 @@
     },
     "signalwire.rest.namespaces.fabric_resources_generated.SwmlWebhooks": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38391,7 +38391,7 @@
     },
     "signalwire.rest.namespaces.fax_resources_generated.FaxLogs": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38399,7 +38399,7 @@
     },
     "signalwire.rest.namespaces.logs_resources_generated.ConferenceLogs": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38407,7 +38407,7 @@
     },
     "signalwire.rest.namespaces.message_resources_generated.MessageLogs": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38415,7 +38415,7 @@
     },
     "signalwire.rest.namespaces.messages_resources_generated.Messages": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38423,7 +38423,7 @@
     },
     "signalwire.rest.namespaces.project_resources_generated.ProjectTokens": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38431,7 +38431,7 @@
     },
     "signalwire.rest.namespaces.projects_resources_generated.Projects": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38439,7 +38439,7 @@
     },
     "signalwire.rest.namespaces.pubsub_resources_generated.PubSub": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38447,7 +38447,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.Addresses": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38455,7 +38455,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.ImportedNumbers": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38463,7 +38463,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.Lookup": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38471,7 +38471,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.Mfa": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38479,7 +38479,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.NumberGroups": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38487,7 +38487,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.PhoneNumbers": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38495,7 +38495,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.Queues": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38503,7 +38503,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.Recordings": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38511,7 +38511,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.RegistryBrands": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38519,7 +38519,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.RegistryCampaigns": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38527,7 +38527,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.RegistryNumbers": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38535,7 +38535,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.RegistryOrders": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38543,7 +38543,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.ShortCodes": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38551,7 +38551,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.SipProfile": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38559,7 +38559,7 @@
     },
     "signalwire.rest.namespaces.relay_rest_resources_generated.VerifiedCallers": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38567,7 +38567,7 @@
     },
     "signalwire.rest.namespaces.video_resources_generated.VideoConferenceTokens": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38575,7 +38575,7 @@
     },
     "signalwire.rest.namespaces.video_resources_generated.VideoConferences": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38583,7 +38583,7 @@
     },
     "signalwire.rest.namespaces.video_resources_generated.VideoRoomRecordings": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38591,7 +38591,7 @@
     },
     "signalwire.rest.namespaces.video_resources_generated.VideoRoomSessions": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38599,7 +38599,7 @@
     },
     "signalwire.rest.namespaces.video_resources_generated.VideoRoomTokens": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38607,7 +38607,7 @@
     },
     "signalwire.rest.namespaces.video_resources_generated.VideoRooms": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38615,7 +38615,7 @@
     },
     "signalwire.rest.namespaces.video_resources_generated.VideoStreams": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }
@@ -38623,7 +38623,7 @@
     },
     "signalwire.rest.namespaces.voice_resources_generated.VoiceLogs": {
       "params": {
-        "client": {
+        "http": {
           "type": "class:signalwire.rest._base.HttpClient",
           "required": true
         }

@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class SipGateways : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.SipGatewayListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.SipGatewayResponse>
 {
-    public SipGateways(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/sip_gateways")
+    public SipGateways(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/sip_gateways")
     {
     }
 

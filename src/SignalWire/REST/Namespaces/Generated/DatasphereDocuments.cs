@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class DatasphereDocuments : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.Datasphere.DocumentListResponse, SignalWire.REST.Namespaces.Generated.Types.Datasphere.Document>
 {
-    public DatasphereDocuments(SignalWire.REST.HttpClient client)
-        : base(client, "/api/datasphere/documents")
+    public DatasphereDocuments(SignalWire.REST.HttpClient http)
+        : base(http, "/api/datasphere/documents")
     {
     }
 

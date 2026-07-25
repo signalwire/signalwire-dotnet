@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class RelayApplications : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.RelayApplicationListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.RelayApplicationResponse>
 {
-    public RelayApplications(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/relay_applications")
+    public RelayApplications(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/relay_applications")
     {
     }
 }

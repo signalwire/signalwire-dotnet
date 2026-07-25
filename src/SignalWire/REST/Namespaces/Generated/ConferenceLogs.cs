@@ -21,9 +21,9 @@ public class ConferenceLogs
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public ConferenceLogs(SignalWire.REST.HttpClient client)
+    public ConferenceLogs(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

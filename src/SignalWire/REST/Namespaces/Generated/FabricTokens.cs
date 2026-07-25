@@ -21,9 +21,9 @@ public class FabricTokens
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public FabricTokens(SignalWire.REST.HttpClient client)
+    public FabricTokens(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class PhoneNumbers : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberListResponse, SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>
 {
-    public PhoneNumbers(SignalWire.REST.HttpClient client)
-        : base(client, "/api/relay/rest/phone_numbers")
+    public PhoneNumbers(SignalWire.REST.HttpClient http)
+        : base(http, "/api/relay/rest/phone_numbers")
     {
     }
 

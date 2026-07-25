@@ -21,9 +21,9 @@ public class VideoRoomRecordings
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public VideoRoomRecordings(SignalWire.REST.HttpClient client)
+    public VideoRoomRecordings(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class AiAgents : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentResponse>
 {
-    public AiAgents(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/ai_agents")
+    public AiAgents(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/ai_agents")
     {
     }
 

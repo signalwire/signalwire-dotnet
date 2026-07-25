@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class CxmlScripts : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.CXMLScriptListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.CXMLScriptResponse>
 {
-    public CxmlScripts(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/cxml_scripts")
+    public CxmlScripts(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/cxml_scripts")
     {
     }
 }

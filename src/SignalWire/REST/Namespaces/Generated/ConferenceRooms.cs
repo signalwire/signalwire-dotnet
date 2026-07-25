@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class ConferenceRooms : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomResponse>
 {
-    public ConferenceRooms(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/conference_rooms")
+    public ConferenceRooms(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/conference_rooms")
     {
     }
 

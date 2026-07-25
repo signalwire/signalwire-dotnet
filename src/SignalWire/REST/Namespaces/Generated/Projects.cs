@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class Projects : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.Projects.ProjectList, SignalWire.REST.Namespaces.Generated.Types.Projects.Project>
 {
-    public Projects(SignalWire.REST.HttpClient client)
-        : base(client, "/api/projects")
+    public Projects(SignalWire.REST.HttpClient http)
+        : base(http, "/api/projects")
     {
     }
 

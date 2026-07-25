@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class CallFlows : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowResponse>
 {
-    public CallFlows(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/call_flows")
+    public CallFlows(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/call_flows")
     {
     }
 

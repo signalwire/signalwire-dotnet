@@ -21,9 +21,9 @@ public class Lookup
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public Lookup(SignalWire.REST.HttpClient client)
+    public Lookup(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>
