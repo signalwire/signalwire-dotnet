@@ -53,6 +53,23 @@ jobs:
         working-directory: signalwire-dotnet
         run: python3 scripts/enumerate_surface.py
 
+      # Record WHICH porting-sdk oracle this job resolved, and fingerprint every diff
+      # input. Without this a symbol-count red is unattributable: it looks identical
+      # whether the job pulled the coordinated pin, main, or a stale cache. (2026-07-26:
+      # a 311-symbol red here reproduced as exit 0 locally against the pin, the committed
+      # port_surface.json, and a fresh regen — every input verified equal — so the log
+      # itself has to say what it held.)
+      - name: Record reference oracle provenance
+        working-directory: signalwire-dotnet
+        run: |
+          echo "PORTING_SDK_REF variable = '${{ vars.PORTING_SDK_REF }}'"
+          git -C ${{ github.workspace }}/porting-sdk rev-parse HEAD
+          git -C ${{ github.workspace }}/porting-sdk log -1 --format='%h %cI %s'
+          md5sum ${{ github.workspace }}/porting-sdk/python_surface.json \
+                 port_surface.json PORT_OMISSIONS.md PORT_ADDITIONS.md
+          python3 -c "import json;d=json.load(open('${{ github.workspace }}/porting-sdk/python_surface.json'));print('oracle generated_from:',d.get('generated_from'));c=d['modules'].get('signalwire.core.agent_base',{}).get('classes',{});print('reference AgentBase has agent_id:', any('agent_id' in v for v in c.values()))"
+          python3 -c "import json;d=json.load(open('port_surface.json'));c=d['modules'].get('signalwire.core.agent_base',{}).get('classes',{});print('PORT AgentBase has agent_id:', any('agent_id' in v for v in c.values()))"
+
       - name: Diff against Python reference
         working-directory: signalwire-dotnet
         run: |
