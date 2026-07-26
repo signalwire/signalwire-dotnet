@@ -297,16 +297,20 @@ sched_gate GEN desc="generated-code freshness suite (GEN-FRESH/-TESTS/-RELAY/-SW
     -- python3 "$PORTING_SDK_DIR/scripts/suites/gen.py" --port dotnet --repo "$PORT_ROOT"
 
 # BEHAVIORAL (Layer-D + REST-COVERAGE/SPEC-PARITY): the 14 per-PR rules. WAIT-LIVENESS
-# (the ONE nightly member) is the separate BEHAVIORAL-NIGHTLY line below. res=msbuild
+# and SECRET-SCRUB-LIVE (the nightly members) are the separate BEHAVIORAL-NIGHTLY line
+# below. res=msbuild
 # + defer=1: contains REST-COVERAGE/SPEC-PARITY (dotnet test / RouteRegistry build)
 # and the BEHAVIORAL-* dumps (build tools/DumpCorpus) — serialize with TEST/FMT/LINT.
 sched_gate BEHAVIORAL defer=1 res=msbuild desc="behavioral suite (REST-COVERAGE/SPEC-PARITY/EMISSION/BEHAVIORAL-*/BEHAVIORAL-STRICT-RENDER/SKILL-CONTRACT/SWAIG-COVERAGE/SWAIG-CLI/ERROR-ENVELOPE/PAGINATION-WIRED/PAGINATION-CORPUS/DOC-WIRE/SECURE-DEFAULT/CA-VAR/SECRET-SCRUB/TLS-VERIFY)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/behavioral.py" --port dotnet --repo "$PORT_ROOT" \
         --rules REST-COVERAGE,SPEC-PARITY,EMISSION,BEHAVIORAL-WIRE,BEHAVIORAL-SWML,BEHAVIORAL-STRICT-RENDER,BEHAVIORAL-STATE,BEHAVIORAL-HTTP,BEHAVIORAL-WIRE-RELAY,SKILL-CONTRACT,SWAIG-COVERAGE,SWAIG-CLI,ERROR-ENVELOPE,PAGINATION-WIRED,PAGINATION-CORPUS,DOC-WIRE,SECURE-DEFAULT,CA-VAR,SECRET-SCRUB,TLS-VERIFY
 
-sched_gate BEHAVIORAL-NIGHTLY tier=nightly defer=1 desc="behavioral suite, nightly rules (WAIT-LIVENESS)" \
+# res=msbuild: SECRET-SCRUB-LIVE's dump builds tools/DumpCorpus (like the BEHAVIORAL
+# line's dumps), so it must hold the same msbuild mutex — concurrent builds against one
+# project contend on the build dir.
+sched_gate BEHAVIORAL-NIGHTLY tier=nightly defer=1 res=msbuild desc="behavioral suite, nightly rules (WAIT-LIVENESS/SECRET-SCRUB-LIVE)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/behavioral.py" --port dotnet --repo "$PORT_ROOT" \
-        --rules WAIT-LIVENESS
+        --rules WAIT-LIVENESS,SECRET-SCRUB-LIVE
 
 # DOC-TRUTH (one markdown walk): DOC-AUDIT/DOC-LINKS/DOC-LANG-PURITY/DOC-ENV/
 # COUNT-CLAIM/ACCESSOR-TRUTH/STATUS-CLAIM/README-INCLUDE. res=surface: DOC-AUDIT +

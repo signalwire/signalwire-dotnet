@@ -20,6 +20,7 @@
     <Compile Include="WireRelayDump.cs" />
     <Compile Include="EnvelopeDump.cs" />
     <Compile Include="SecureDefaultDump.cs" />
+    <Compile Include="SecretScrubDump.cs" />
     <Compile Include="PaginationDump.cs" />
     <Compile Include="MockLifecycle.cs" />
     <Compile Include="Canon.cs" />

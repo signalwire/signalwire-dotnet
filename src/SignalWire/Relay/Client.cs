@@ -1026,7 +1026,13 @@ public class Client : IAsyncDisposable
         if (eventType == "signalwire.authorization.state")
         {
             AuthorizationState = parms.GetValueOrDefault("authorization_state")?.ToString();
-            _logger.Info($"Authorization state: {AuthorizationState}");
+            // SECRET-SCRUB: log only that the blob was stored — NEVER its value. The
+            // server's `authorization_state` is a live re-auth credential: printing it
+            // here leaked it to any log at Info level, defeating the ScrubFrame masking
+            // applied to the raw frame two frames earlier. Mirrors the python reference
+            // (relay/client.py:1003 `logger.debug("Updated authorization_state for
+            // reconnection")` — value-free, and at debug not info).
+            _logger.Debug("Updated authorization_state for reconnection");
             return;
         }
 
