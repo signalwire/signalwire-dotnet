@@ -49,9 +49,29 @@ jobs:
         with:
           python-version: '3.14'
 
+      # The enumerator READS the oracle (python_surface.json) to oracle-gate its
+      # @dataclass / class-B2 field emission, and it resolves porting-sdk itself via
+      # generate_rest.resolve_porting_sdk(): $PORTING_SDK first, else a walk up the
+      # parents looking for a SIBLING `porting-sdk`. In CI porting-sdk is checked out
+      # INSIDE the port repo ($GITHUB_WORKSPACE/porting-sdk), so the sibling walk
+      # fails — and the resolver's failure is SILENT: the oracle loads EMPTY and the
+      # gated fields simply do not emit. Locally the sibling layout resolves, so the
+      # same commit passes on a dev box and reds in CI with a large phantom
+      # missing-symbol count (2026-07-26: 311 missing in CI, exit 0 locally; the
+      # md5 of port_surface.json was the ONLY differing diff input).
+      # Setting PORTING_SDK explicitly removes the guesswork.
       - name: Enumerate .NET public API surface
         working-directory: signalwire-dotnet
-        run: python3 scripts/enumerate_surface.py
+        env:
+          PORTING_SDK: ${{ github.workspace }}/porting-sdk
+        run: |
+          python3 scripts/enumerate_surface.py
+          # Fail LOUD if the oracle did not resolve. Without this the enumerator's
+          # silent-empty fallback produces a valid-looking snapshot that is missing
+          # every oracle-gated field, and the error surfaces later as a phantom
+          # missing-symbol count in the diff — pointing at the port instead of at
+          # the resolution failure that actually caused it.
+          python3 -c "import json,sys;d=json.load(open('port_surface.json'));c=d['modules'].get('signalwire.core.agent_base',{}).get('classes',{});ok=any('agent_id' in v for v in c.values());print('oracle-gated B2 fields present:',ok);sys.exit(0 if ok else 1)"
 
       # Record WHICH porting-sdk oracle this job resolved, and fingerprint every diff
       # input. Without this a symbol-count red is unattributable: it looks identical
