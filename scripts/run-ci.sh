@@ -291,6 +291,15 @@ sched_gate TEST defer=1 res=msbuild desc="docker dotnet test (net8/net9/net10 se
 sched_gate SURFACE res=surface desc="surface parity suite (SIGNATURES/DRIFT/SURFACE-FRESH/SURFACE-DIFF/SEMVER-DIFF/GEN-TYPE-DEGENERACY/ROUTE-COLLISION/GEN-IDIOM)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/surface.py" --port dotnet --repo "$PORT_ROOT"
 
+# TYPE-EROSION: a port may not erase a type the reference DECLARES. compare_param treats
+# `any` on EITHER side as matching anything, so a port emitting `any` silently satisfies
+# every reference declaration — an unlimited opt-out. ConciergeAgent.hours_of_operation is
+# declared optional<dict<string,string>> and go still shipped a bare string, with no gate
+# red. RATCHET, not a hard gate: dynamic languages cannot always express a type, so this
+# banks the current count and fails only on REGRESSION. Drive the number DOWN; never up.
+sched_gate TYPE-EROSION desc="port did not erase a reference-declared param type (ratchet 19)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_type_erosion.py" --port dotnet --repo "$PORT_ROOT" --max 19
+
 # GEN (regen-from-specs family): the 5 GEN-FRESH rules (all pure-python --check;
 # cheap wave, per-PR).
 sched_gate GEN desc="generated-code freshness suite (GEN-FRESH/-TESTS/-RELAY/-SWAIG/-SWML)" \
