@@ -1658,7 +1658,25 @@ def _load_generate_rest():
     mod = importlib.util.module_from_spec(spec)
     try:
         spec.loader.exec_module(mod)
-    except Exception:  # pragma: no cover
+    except Exception as exc:  # pragma: no cover
+        # DO NOT swallow this silently. generate_rest.py requires PyYAML, and when it is
+        # absent this import raises ModuleNotFoundError; returning None then makes
+        # _oracle_surface_members() fall back to an EMPTY oracle, which drops 266
+        # oracle-gated members and surfaces as "311 Python symbol(s) missing from port"
+        # — a phantom count that accuses the port instead of naming the missing
+        # dependency. That cost a full CI investigation on 2026-07-26 precisely because
+        # a dev box has PyYAML and the CI interpreter did not.
+        #
+        # Kept non-fatal (the caller's pre-fold fallback is a real, if degraded, mode)
+        # but now LOUD on stderr, so the cause is in the log the first time it happens.
+        print(
+            f"enumerate_surface: WARNING — could not load generate_rest.py "
+            f"({type(exc).__name__}: {exc}). The reference oracle will NOT be consulted, "
+            f"so oracle-gated @dataclass/B2 fields will not emit and the surface diff "
+            f"will report them as missing from the port. If this is ModuleNotFoundError "
+            f"for 'yaml', install PyYAML (pip install pyyaml).",
+            file=sys.stderr,
+        )
         return None
     return mod
 
