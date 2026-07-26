@@ -216,7 +216,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ 3bb91e2b5ed144b9d2bfefd935b3d9b17a3fbaca",
+  "generated_from": "signalwire-dotnet @ a97a5c8ac127fc2c3e075edcfbd82da3c27c1d7c",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -1058,6 +1058,10 @@
         "AIPromptText": [
           "contexts"
         ],
+        "AiSidecar": [],
+        "AiSidecarConfig": [
+          "SWAIG"
+        ],
         "AllOfProperty": [
           "allOf"
         ],
@@ -1273,6 +1277,7 @@
         "Request": [],
         "RequestConfig": [],
         "Return": [],
+        "RingbackConfig": [],
         "SIPRefer": [],
         "SMSWithBody": [],
         "SMSWithMedia": [],
