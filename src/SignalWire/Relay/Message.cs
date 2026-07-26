@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace SignalWire.Relay;
 
 /// <summary>
@@ -25,6 +27,10 @@ public sealed class Message
     public string? Body { get; private set; }
     public IReadOnlyList<string> Media { get; private set; }
     public IReadOnlyList<string> Tags { get; private set; }
+
+    /// <summary>How many SMS segments the message was split into.
+    /// (equivalent to Python's <c>segments</c>, message.py:53,65.)</summary>
+    public int Segments { get; private set; }
     public string? State { get; private set; }
 
     /// <summary>
@@ -62,6 +68,10 @@ public sealed class Message
         Body = GetStr(parameters, "body");
         Media = GetStringList(parameters, "media");
         Tags = GetStringList(parameters, "tags");
+        // The frame carries `segments`; this port accepted it and read nothing.
+        Segments = parameters.TryGetValue("segments", out var segs) && segs is not null
+            ? Convert.ToInt32(segs, CultureInfo.InvariantCulture)
+            : 0;
         // Production wire uses "message_state"; legacy paths use "state".
         State = GetStr(parameters, "message_state") ?? GetStr(parameters, "state");
         Reason = GetStr(parameters, "reason");

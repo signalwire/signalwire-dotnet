@@ -350,4 +350,47 @@ public class SessionManagerTests
         // The genuine token still validates (compare is correct, not just strict).
         Assert.True(_manager.ValidateToken("get_weather", "call-ct", token));
     }
+
+    // =================================================================
+    //  Construction readback (class B2)
+    // =================================================================
+
+    [Fact]
+    public void SecretKey_SuppliedValueIsReadableBack()
+    {
+        const string secret = "shared-cross-port-secret-key";
+        var manager = new SessionManager(3600, secret);
+        Assert.Equal(secret, manager.SecretKey);
+    }
+
+    [Fact]
+    public void SecretKey_DefaultIsA64CharHexString()
+    {
+        // The reference defaults to secrets.token_hex(32) — a 64-character
+        // lowercase hex STRING (session_manager.py:40), NOT 32 raw bytes. A raw
+        // byte default would make this port's default-key tokens unreproducible
+        // by the reference and by every other port.
+        var manager = new SessionManager();
+        Assert.Equal(64, manager.SecretKey.Length);
+        Assert.Matches("^[0-9a-f]{64}$", manager.SecretKey);
+    }
+
+    [Fact]
+    public void SecretKey_DefaultDiffersPerInstance()
+    {
+        Assert.NotEqual(new SessionManager().SecretKey, new SessionManager().SecretKey);
+    }
+
+    [Fact]
+    public void SecretKey_DefaultKeyedTokenIsReproducibleFromTheReadBackKey()
+    {
+        // The whole point of exposing SecretKey: a second manager built from the
+        // first's key must validate the first's tokens. This is only true if the
+        // HMAC is keyed with the key STRING's bytes, as the reference does.
+        var minted = new SessionManager();
+        var token = minted.CreateToken("lookup", "call-rt");
+
+        var rebuilt = new SessionManager(3600, minted.SecretKey);
+        Assert.True(rebuilt.ValidateToken("lookup", "call-rt", token));
+    }
 }

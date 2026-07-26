@@ -87,6 +87,19 @@ public sealed class Schema
         }
     }
 
+    /// <summary>
+    /// The location the SWML schema was loaded from. The reference resolves a
+    /// caller-supplied <c>schema_path</c> (or its packaged default) and keeps it
+    /// readable as <c>SchemaUtils.schema_path</c>; this port ships the schema as
+    /// an assembly EmbeddedResource, so the resolved location is that resource's
+    /// manifest name. Non-null and stable for the process.
+    /// </summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance property matching the reference's per-instance SchemaUtils.schema_path attribute; the cross-port surface reads it off the instance.")]
+    public string SchemaPath => SchemaResourceName;
+
+    /// <summary>Manifest name of the bundled SWML schema resource.</summary>
+    private const string SchemaResourceName = "SignalWire.SWML.schema.json";
+
     /// <summary>Reset the singleton (for testing).</summary>
     public static void Reset()
     {

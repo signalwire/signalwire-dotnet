@@ -13,6 +13,20 @@ public class FAQBotAgent : AgentBase
     private readonly IReadOnlyList<Dictionary<string, object>> _faqs;
     private readonly bool _suggestRelated;
 
+    /// <summary>The question/answer pairs this bot answers from.
+    /// (equivalent to Python's <c>faqs</c>.)</summary>
+    [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface: the property is the reference attribute (readback), the Get* method the pre-existing cross-port accessor.")]
+    public IReadOnlyList<Dictionary<string, object>> Faqs => _faqs;
+
+    /// <summary>Whether the bot offers related questions alongside an answer.
+    /// (equivalent to Python's <c>suggest_related</c>.)</summary>
+    [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface: the property is the reference attribute (readback), the Get* method the pre-existing cross-port accessor.")]
+    public bool SuggestRelated => _suggestRelated;
+
+    /// <summary>The persona rendered into the prompt's Personality section.
+    /// (equivalent to Python's <c>persona</c>.)</summary>
+    public string Persona { get; }
+
     public FAQBotAgent(
         string name,
         IReadOnlyList<Dictionary<string, object>> faqs,
@@ -23,7 +37,7 @@ public class FAQBotAgent : AgentBase
         _suggestRelated = options?.TryGetValue("suggest_related", out var sr) == true && sr is not false;
         if (!options?.ContainsKey("suggest_related") ?? true) _suggestRelated = true;
 
-        var persona = options?.TryGetValue("persona", out var p) == true
+        Persona = options?.TryGetValue("persona", out var p) == true
             ? p as string ?? "You are a helpful FAQ bot that provides accurate answers to common questions."
             : "You are a helpful FAQ bot that provides accurate answers to common questions.";
 
@@ -33,7 +47,7 @@ public class FAQBotAgent : AgentBase
             ["suggest_related"] = _suggestRelated,
         });
 
-        PromptAddSection("Personality", persona);
+        PromptAddSection("Personality", Persona);
 
         var faqBullets = new List<string>();
         foreach (var faq in _faqs)

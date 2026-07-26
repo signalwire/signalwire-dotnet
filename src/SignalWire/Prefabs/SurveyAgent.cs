@@ -14,6 +14,29 @@ public class SurveyAgent : AgentBase
     private readonly string _surveyName;
     private readonly IReadOnlyList<Dictionary<string, object>> _surveyQuestions;
 
+    /// <summary>The survey's name. (equivalent to Python's <c>survey_name</c>.)</summary>
+    [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface: the property is the reference attribute (readback), the Get* method the pre-existing cross-port accessor.")]
+    public string SurveyName => _surveyName;
+
+    /// <summary>The survey questions. (equivalent to Python's <c>questions</c>.)</summary>
+    public IReadOnlyList<Dictionary<string, object>> Questions => _surveyQuestions;
+
+    /// <summary>The brand the survey agent represents, defaulting to
+    /// <c>"Our Company"</c>. (equivalent to Python's <c>brand_name</c>.)</summary>
+    public string BrandName { get; }
+
+    /// <summary>How many times an invalid response may be retried.
+    /// (equivalent to Python's <c>max_retries</c>.)</summary>
+    public int MaxRetries { get; }
+
+    /// <summary>The opening the agent is instructed to begin with.
+    /// (equivalent to Python's <c>introduction</c>.)</summary>
+    public string Introduction { get; }
+
+    /// <summary>The closing the agent is instructed to end with.
+    /// (equivalent to Python's <c>conclusion</c>.)</summary>
+    public string Conclusion { get; }
+
     public SurveyAgent(
         string name,
         IReadOnlyList<Dictionary<string, object>> questions,
@@ -23,8 +46,23 @@ public class SurveyAgent : AgentBase
         options ??= [];
         _surveyName = options.TryGetValue("survey_name", out var sn) ? sn as string ?? (name.Length > 0 ? name : "Survey") : (name.Length > 0 ? name : "Survey");
         _surveyQuestions = questions;
+        // Every one of these is caller configuration the reference STORES and
+        // RENDERS (survey.py:91-105, 147-197). `brand_name` was previously read
+        // into a local and dropped on the floor; `conclusion` and `max_retries`
+        // were not accepted at all.
         var introduction = options.TryGetValue("introduction", out var intro) ? intro as string ?? "" : "";
         var brandName = options.TryGetValue("brand_name", out var bn) ? bn as string ?? "" : "";
+        var conclusion = options.TryGetValue("conclusion", out var con) ? con as string ?? "" : "";
+        MaxRetries = options.TryGetValue("max_retries", out var mr)
+            ? Convert.ToInt32(mr, CultureInfo.InvariantCulture)
+            : 3;
+        BrandName = brandName.Length > 0 ? brandName : "Our Company";
+        Introduction = introduction.Length > 0
+            ? introduction
+            : $"Welcome to our {_surveyName}. We appreciate your participation.";
+        Conclusion = conclusion.Length > 0
+            ? conclusion
+            : "Thank you for completing our survey. Your feedback is valuable to us.";
 
         SetGlobalData(new Dictionary<string, object>
         {
@@ -35,12 +73,16 @@ public class SurveyAgent : AgentBase
             ["completed"] = false,
         });
 
-        var introText = introduction.Length > 0 ? introduction : $"Welcome to the {_surveyName}.";
-        PromptAddSection("Survey Introduction", introText,
+        PromptAddSection(
+            "Personality",
+            $"You are a friendly and professional survey agent representing {BrandName}.");
+
+        PromptAddSection("Survey Introduction", Introduction,
         [
             "Introduce the survey to the user",
             "Ask each question in sequence",
             "Validate responses based on question type",
+            $"If a response is invalid, explain and retry up to {MaxRetries.ToString(CultureInfo.InvariantCulture)} times",
             "Thank the user when complete",
         ]);
 
@@ -55,6 +97,8 @@ public class SurveyAgent : AgentBase
             qBullets.Add(desc);
         }
         PromptAddSection("Survey Questions", "", qBullets);
+
+        PromptAddSection("Conclusion", $"End with this conclusion: {Conclusion}");
 
         DefineTool(
             "validate_response",

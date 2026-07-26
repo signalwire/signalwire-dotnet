@@ -19,6 +19,16 @@ public class FunctionResult
         _postProcess = postProcess;
     }
 
+    /// <summary>The spoken/returned response text.
+    /// (equivalent to Python's <c>response</c>, function_result.py:79,93.)
+    /// The reference records BOTH this attribute and <c>set_response</c>, so
+    /// this is an added reader, not a rename of the fluent setter.</summary>
+    public string Response => _response;
+
+    /// <summary>Whether the AI post-processes this result before speaking.
+    /// (equivalent to Python's <c>post_process</c>, function_result.py:81,110.)</summary>
+    public bool PostProcess => _postProcess;
+
     // ------------------------------------------------------------------
     // Core
     // ------------------------------------------------------------------

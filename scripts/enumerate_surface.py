@@ -285,6 +285,16 @@ AICHAT_OPTIONS_CLASSES: frozenset[str] = frozenset({
 CONSTRUCTION_OPTIONS_CLASSES: frozenset[str] = frozenset({
     "AgentOptions",
     "ServiceOptions",
+    # ClientOptions carries what the reference passes as kwargs to
+    # ``RelayClient.__init__(project, token, jwt_token, host, contexts,
+    # max_active_calls)`` — the reference has no ``ClientOptions`` class, so the
+    # spelling exists only because .NET needs a home for those keywords. It is
+    # the SAME idiom as AgentOptions/ServiceOptions and was previously carried as
+    # seven PORT_ADDITIONS whose own rationale said "Python uses kwargs to
+    # RelayClient.__init__" — self-declared idiom, so it folds here (§0/§0b) and
+    # those entries are deleted. Its properties reconcile in the construction
+    # contract; every one is also readable off the Client itself.
+    "ClientOptions",
 })
 
 
@@ -682,6 +692,23 @@ SURFACE_METHOD_ALIASES: dict[tuple[str, str], dict[str, str]] = {
     ("signalwire.core.security.session_manager", "SessionManager"): {
         "create_token": "generate_token",
     },
+    # AIChatError: the reference keeps the raw server text as ``message``. In C#
+    # that name is taken by ``Exception.Message`` (which carries the DECORATED
+    # ``[code] message`` form), so the port spells the undecorated attribute
+    # ``ServerMessage``. Base-class name collision -> rename via the adapter,
+    # the same escape as the reserved-word renames (AGENT_RULES §2/§5); the
+    # capability is identical.
+    ("signalwire.ai_chat.client", "AIChatError"): {
+        "server_message": "message",
+    },
+    # POM Section: the reference records ``numberedBullets`` in camelCase
+    # VERBATIM because it IS the wire key — it round-trips through the POM dict
+    # unchanged (pom.py:345,361,371). C# spells the property ``NumberedBullets``,
+    # which snake-cases to ``numbered_bullets``; map it back to the wire spelling
+    # rather than converting the key (converting a wire key would be wrong).
+    ("signalwire.pom.pom", "Section"): {
+        "numbered_bullets": "numberedBullets",
+    },
     # SWAIGFunction: C# ``Call``/``Invoke`` -> the reference dunder ``__call__``.
     # (Keyed by the post-rename class name — emit_class_name maps
     # SwaigFunction -> SWAIGFunction before the alias lookup.)
@@ -884,6 +911,17 @@ TOPLEVEL_FUNCTION_NAMES: list[str] = ["RestClient"]
 # reference set so those idiomatic data-properties don't read as port additions.
 # A genuinely-missing reference method still surfaces as MISSING (checked
 # separately), so this cannot mask undone work — it only drops idiom noise.
+#
+# *** ORACLE-GATED (class B2, 2026-07-26) ***
+# The premise above — "Python sets these in __init__, NOT recorded on the class
+# surface" — was TRUE before the B2 oracle change and is FALSE now: the oracle
+# enumerates a class's public ``__init__`` attributes as surface members. Every
+# set below is therefore a CEILING, not the contract: it is applied via
+# ``apply_member_allowlist`` (below), which UNIONS the oracle's own member set
+# for the class before intersecting. An entry consequently strips a name only
+# while the oracle does NOT record it — so the table self-retires as the oracle
+# grows, instead of needing a hand edit per oracle revision. This is the java
+# ``_CONSTRUCTION_PARAM_ACCESSORS`` fix (campaign §4b) applied to dotnet.
 SURFACE_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
     # AI-Chat: intersect each class with its EXACT reference own-surface so the
     # .NET idiom's extra public properties/helpers drop out.
@@ -1023,6 +1061,32 @@ def _oracle_surface_members() -> "dict[str, dict[str, set[str]]]":
     _ORACLE_SURFACE_CACHE = out
     return out
 
+
+def oracle_class_members(module: str, cls: str) -> "set[str]":
+    """The oracle's own-surface member set for ``module.cls`` (empty if the
+    oracle records no such class or could not be loaded)."""
+    return _oracle_surface_members().get(module, {}).get(cls, set())
+
+
+def apply_member_allowlist(
+    members: "set[str]", allow: "set[str]", module: str, cls: str
+) -> "set[str]":
+    """Intersect ``members`` with a hand-written allowlist that is ORACLE-GATED.
+
+    The hand-written sets in ``SURFACE_METHOD_ALLOWLIST`` / ``_SIG_METHOD_ALLOWLIST``
+    / ``_SWML_SERVICE_ALLOW`` were written when the oracle did not enumerate a
+    class's public ``__init__`` attributes. Now that it does (class B2), a
+    hard-coded set would STRIP members the oracle records — turning a member the
+    port genuinely exposes into a phantom MISSING symbol, and (worse) hiding a
+    read-back capability the reference gives its callers.
+
+    Gating fixes that without hand-editing: the effective allowlist is
+    ``allow | oracle_own_members``, so an entry drops a name only while the
+    ORACLE does not record it. As the oracle grows, entries retire themselves.
+    """
+    return members & (allow | oracle_class_members(module, cls))
+
+
 # Relay Action control surface: the reference projects the control methods
 # (stop/pause/resume/volume) directly onto each CONCRETE action (the internal
 # Stoppable/Pausable/Volume bases are NOT cross-port symbols). .NET declares
@@ -1100,12 +1164,19 @@ PROPERTY_RE = re.compile(
     r"(?:(?:override|virtual|static|new|sealed|readonly|required)\s+)*"
     r"[A-Za-z_][\w<>?,.\[\] *&]*\s+"
     r"(?P<name>[A-Z][A-Za-z0-9_]*)"
-    # Three accepted shapes:
+    # Five accepted shapes:
     #   { get; ... }                -- block-bodied (single line)
     #   => <expression>;            -- expression-bodied (single line)
     #   =>                           -- expression-bodied with body on next line
     #   { ... at EOL                -- block-bodied with body across lines
-    r"\s*(?:\{[^}]*\}|=>\s*[^;]*;|=>\s*$|\{\s*$)"
+    #   <nothing>                   -- block-bodied with the OPENING BRACE on the
+    #                                  NEXT line (the accessor-block style used by
+    #                                  SkillBase.Agent / SkillBase.Params). The
+    #                                  alternative is anchored at end-of-line and
+    #                                  the name must be the last token, so a method
+    #                                  (which has `(`) and an assignment (which has
+    #                                  `=`) cannot match it.
+    r"\s*(?:\{[^}]*\}|=>\s*[^;]*;|=>\s*$|\{\s*$|$)"
 )
 
 
@@ -1910,7 +1981,12 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
                 # param / public property.
                 translated = set(_oracle_cls_members)
             elif allow is not None:
-                translated &= allow
+                # ORACLE-GATED: the hand-written set is a ceiling unioned with
+                # whatever the oracle records for the class, so a B2 __init__
+                # attribute the port genuinely exposes is never stripped.
+                translated = apply_member_allowlist(
+                    translated, allow, target_mod, target_class
+                )
             elif target_mod == "signalwire.relay.event":
                 translated &= _RELAY_EVENT_ONLY
 
@@ -1955,9 +2031,10 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     if "signalwire.core.swml_service" in modules:
         swml_classes = modules["signalwire.core.swml_service"]["classes"]
         if "SWMLService" in swml_classes:
-            swml_classes["SWMLService"] = sorted(
-                set(swml_classes["SWMLService"]) & _SWML_SERVICE_ALLOW
-            )
+            swml_classes["SWMLService"] = sorted(apply_member_allowlist(
+                set(swml_classes["SWMLService"]), _SWML_SERVICE_ALLOW,
+                "signalwire.core.swml_service", "SWMLService",
+            ))
 
     # Relay Action control surface: the oracle projects stop/pause/resume/volume
     # directly onto each concrete action. `stop` lives on the shared C# Action

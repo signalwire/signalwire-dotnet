@@ -37,6 +37,15 @@ public class Call
     public Dictionary<string, object?> Peer { get; private set; } = new();
     public string? EndReason { get; set; }
     public string? Context { get; set; }
+
+    /// <summary>The SignalWire project this call belongs to.
+    /// (equivalent to Python's <c>project_id</c>.)</summary>
+    public string? ProjectId { get; set; }
+
+    /// <summary>The call's segment identifier.
+    /// (equivalent to Python's <c>segment_id</c>.)</summary>
+    public string? SegmentId { get; set; }
+
     public string? Direction { get; set; }
     public bool DialWinner { get; set; }
 
@@ -66,6 +75,11 @@ public class Call
         NodeId = GetStr(parameters, "node_id");
         Tag = GetStr(parameters, "tag");
         Context = GetStr(parameters, "context");
+        // The reference takes both as construction parameters and keeps them as
+        // public attributes (call.py:344,351,357,363); this port accepted the
+        // frame carrying them and read neither.
+        ProjectId = GetStr(parameters, "project_id");
+        SegmentId = GetStr(parameters, "segment_id");
         Direction = GetStr(parameters, "direction");
         // Real RELAY wire key is "call_state" (mod_infrastructure relay.c:
         // relay_call_to_json emits "call_state"; mock_relay emits the same).

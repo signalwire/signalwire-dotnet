@@ -198,15 +198,26 @@ public class AgentBase : Service
     private Action<string, Dictionary<string, object?>?, Dictionary<string, string>>? _summaryCallback;
     private Action<Dictionary<string, object?>?, Dictionary<string, string>>? _debugEventHandler;
 
-    // This agent's unique ID — the supplied AgentOptions.AgentId or a generated
-    // GUID. The reference sets a PUBLIC `self.agent_id` (agent_base.py:229),
-    // but the surface oracle does not record plain `__init__` attributes on
-    // non-dataclass classes (the known class-B2 blind spot,
-    // ALLOWLIST_DISCIPLINE §0), so a public property here reads as a phantom
-    // port-only addition. Kept `internal` — the construction contract already
-    // carries `agent_id` as a configurable — rather than ledgering an entry
-    // against an oracle gap.
-    internal string AgentId { get; private set; }
+    /// <summary>
+    /// This agent's unique ID — the supplied <see cref="AgentOptions.AgentId"/>
+    /// or a generated GUID. (equivalent to Python's <c>agent_id</c>,
+    /// agent_base.py:229.)
+    /// </summary>
+    // Was `internal` on the premise that the surface oracle does not record
+    // plain `__init__` attributes on non-dataclass classes. The oracle DOES
+    // record them now (class B2), and hiding a construction parameter's reader
+    // takes from .NET callers a capability the reference gives Python callers —
+    // exactly what CONSTRUCTION-READBACK exists to catch. Public.
+    public string AgentId { get; private set; }
+
+    /// <summary>
+    /// The native SWAIG function names rendered into
+    /// <c>ai.SWAIG.native_functions</c>. Set via
+    /// <see cref="AgentOptions.NativeFunctions"/> or
+    /// <see cref="SetNativeFunctions"/>. (equivalent to Python's
+    /// <c>native_functions</c>.)
+    /// </summary>
+    public IReadOnlyList<string> NativeFunctions => _nativeFunctions;
 
     // The remaining construction switches mirror attributes the reference keeps
     // PRIVATE (`self._default_webhook_url`, `self._suppress_logs`) or does not

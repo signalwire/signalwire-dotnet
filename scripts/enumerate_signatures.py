@@ -1157,6 +1157,16 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         if allow is None:
             allow = SURFACE_METHOD_ALLOWLIST.get((target_module, target_class))
         if allow is not None:
+            # ORACLE-GATED (class B2, 2026-07-26): both hand-written tables were
+            # written when the oracle did not enumerate a class's public
+            # __init__ attributes. It does now, so the set is a CEILING unioned
+            # with the SIGNATURE oracle's own member set for the class — an entry
+            # strips a name only while the oracle does not record it, and the
+            # table retires itself as the oracle grows. Without this a member the
+            # port genuinely exposes (SWAIGFunction.name, WebService.port,
+            # SignalWireRestError.status_code, …) is stripped back out and reads
+            # as MISSING, hiding a readback capability from .NET callers.
+            allow = allow | _oracle_class_members(target_module, target_class)
             methods_out = {k: v for k, v in methods_out.items() if k in allow}
         elif target_module == "signalwire.relay.event":
             # The fold-branch SIGNATURE oracle records each event class with
@@ -1271,8 +1281,12 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     # pool). Mirrors enumerate_surface's _SWML_SERVICE_ALLOW post-process.
     swml_svc = out_modules.get("signalwire.core.swml_service", {}).get("classes", {}).get("SWMLService")
     if swml_svc is not None:
+        # ORACLE-GATED, same as the per-class allowlists above.
+        _svc_allow = _SWML_SERVICE_ALLOW | _oracle_class_members(
+            "signalwire.core.swml_service", "SWMLService"
+        )
         swml_svc["methods"] = {
-            k: v for k, v in swml_svc["methods"].items() if k in _SWML_SERVICE_ALLOW
+            k: v for k, v in swml_svc["methods"].items() if k in _svc_allow
         }
 
     # Relay Action control surface: the oracle projects stop/pause/resume/volume

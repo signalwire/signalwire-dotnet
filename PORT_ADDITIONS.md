@@ -91,13 +91,6 @@ The bulk of additions fall into these architectural buckets:
 
 ## Per-symbol additions
 
-signalwire.relay.client_options.ClientOptions: .NET options data class with init-only properties (6.2: replaced the string-keyed Dictionary ctor); Python uses kwargs to RelayClient.__init__
-signalwire.relay.client_options.ClientOptions.project: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
-signalwire.relay.client_options.ClientOptions.token: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
-signalwire.relay.client_options.ClientOptions.host: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
-signalwire.relay.client_options.ClientOptions.scheme: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
-signalwire.relay.client_options.ClientOptions.contexts: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__
-signalwire.relay.client_options.ClientOptions.max_active_calls: .NET options data class with init-only properties; Python uses kwargs to RelayClient.__init__ (max_active_calls)
 signalwire.signal_wire_options.SignalWireOptions: .NET DI options data class for the AddSignalWire() IServiceCollection registration (6.2); Python has no host-framework DI layer
 signalwire.signal_wire_options.SignalWireOptions.project_id: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
 signalwire.signal_wire_options.SignalWireOptions.token: .NET DI options data class for AddSignalWire(); Python has no host-framework DI layer
@@ -330,7 +323,6 @@ signalwire.pom.pom.PromptObjectModel.sections: C# auto-property exposing the Pyt
 signalwire.pom.pom.Section.body: C# auto-property exposing the Python attribute ``body`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
 signalwire.pom.pom.Section.bullets: C# auto-property exposing the Python attribute ``bullets`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
 signalwire.pom.pom.Section.numbered: C# auto-property exposing the Python attribute ``numbered`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
-signalwire.pom.pom.Section.numbered_bullets: C# auto-property exposing the Python attribute ``numberedBullets`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
 signalwire.pom.pom.Section.subsections: C# auto-property exposing the Python attribute ``subsections`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
 signalwire.pom.pom.Section.title: C# auto-property exposing the Python attribute ``title`` set in ``__init__``; Python's enumerator emits attributes only when defined on the class
 
