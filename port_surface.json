@@ -216,7 +216,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ 0953d195b1380fcc27e74d5cddf5f9aa7428753e",
+  "generated_from": "signalwire-dotnet @ 45408a8a53e6ec6373765d7247d4f9a03175e160",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -1008,6 +1008,7 @@
           "add_verb",
           "add_verb_to_section",
           "as_router",
+          "domain",
           "extract_sip_username",
           "full_validation_enabled",
           "get_basic_auth_credentials",
@@ -1025,6 +1026,9 @@
           "route",
           "security",
           "serve",
+          "ssl_cert_path",
+          "ssl_enabled",
+          "ssl_key_path",
           "stop"
         ]
       },
@@ -2132,6 +2136,7 @@
           "body",
           "headers",
           "method",
+          "request_id",
           "status_code",
           "url"
         ],
