@@ -2144,9 +2144,17 @@ public class AgentBase : Service
             // :1038-1099): a SECURE tool (the default) rendered WITH a call_id gets
             // a per-tool `__token=<hmac>` appended to its webhook URL — the wire
             // manifestation of `secure`. The platform validates that token on the
-            // callback. An insecure tool (`secure=False`) gets NO token. A
-            // caller-supplied `_webhookUrl` override wins verbatim (matches
-            // python's `func.webhook_url` external-URL branch).
+            // callback. An insecure tool (`secure=False`) gets NO token — and
+            // therefore gets NO per-tool `web_hook_url` AT ALL: it falls back to
+            // the shared SWAIG defaults endpoint. Emitting a per-tool URL without
+            // a token would put an unauthenticated, function-specific callback on
+            // the wire. A caller-supplied `_webhookUrl` override wins verbatim
+            // (matches python's `func.webhook_url` external-URL branch).
+            //
+            // The three-way branch mirrors python agent_base.py:1084-1099 exactly:
+            //   external URL          -> emit it verbatim
+            //   token OR query params -> build the local /swaig URL
+            //   neither               -> emit no `web_hook_url` key whatsoever
             if (tool.ContainsKey("_handler"))
             {
                 var isSecure = tool.TryGetValue("_secure", out var s) && s is bool b && b;
@@ -2164,7 +2172,7 @@ public class AgentBase : Service
                 {
                     funcDef["web_hook_url"] = _webhookUrl;
                 }
-                else
+                else if (!string.IsNullOrEmpty(token) || _swaigQueryParams.Count > 0)
                 {
                     funcDef["web_hook_url"] = BuildSwaigWebhookUrl(headers, token);
                 }
@@ -2175,6 +2183,24 @@ public class AgentBase : Service
         if (functions.Count > 0)
         {
             swaig["functions"] = functions;
+
+            // The shared SWAIG callback endpoint, emitted WHENEVER functions exist
+            // (python agent_base.py:1108-1113). This is the fallback every tool
+            // WITHOUT its own per-tool `web_hook_url` relies on — notably an
+            // insecure (tokenless) tool, which by contract gets no per-tool key.
+            // Without this block such a tool would render with NO reachable
+            // callback at all, so the two belong together.
+            //
+            // The default carries the configured SWAIG query params but NO token
+            // (it is not function-specific); a caller-supplied `_webhookUrl`
+            // override wins verbatim, matching python's `_web_hook_url_override`.
+            if (!swaig.ContainsKey("defaults"))
+            {
+                swaig["defaults"] = new Dictionary<string, object>
+                {
+                    ["web_hook_url"] = _webhookUrl ?? BuildSwaigWebhookUrl(headers),
+                };
+            }
         }
 
         // Native functions

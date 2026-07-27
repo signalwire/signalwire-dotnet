@@ -1004,7 +1004,11 @@ public class AgentBaseTests : IDisposable
         Assert.Equal("get_weather", func["function"]);
         Assert.False(func.ContainsKey("_handler"));
         Assert.False(func.ContainsKey("_secure"));
-        Assert.True(func.ContainsKey("web_hook_url"));
+        // No call_id on this render, so no per-tool token is minted (python mints
+        // only when `func.secure and call_id`, agent_base.py:1038-1041) and no SWAIG
+        // query params are configured — so the entry gets NO per-tool web_hook_url
+        // and falls back to SWAIG.defaults (agent_base.py:1084-1099).
+        Assert.False(func.ContainsKey("web_hook_url"));
     }
 
     [Fact]
@@ -1024,10 +1028,72 @@ public class AgentBaseTests : IDisposable
         agent.DefineTool("tool1", "A tool", new Dictionary<string, object>(),
             (args, raw) => new FunctionResult("ok"));
 
-        var ai = ExtractAiVerb(agent.RenderSwml());
+        // Render WITH a call_id: a secure tool only mints its per-tool token (and
+        // therefore only gets its own web_hook_url) when a call_id is present.
+        var ai = ExtractAiVerb(
+            agent.RenderSwmlWithContext(null, new Dictionary<string, string>(), "call-proxy-test"));
         var functions = (List<Dictionary<string, object>>)((Dictionary<string, object>)ai["SWAIG"])["functions"];
         var webhookUrl = (string)functions[0]["web_hook_url"];
         Assert.Contains("my-proxy.example.com", webhookUrl);
+    }
+
+    // ---- per-tool web_hook_url guard (security) ----
+    //
+    // An INSECURE tool (secure=false, therefore no token) must NOT receive its own
+    // per-tool web_hook_url: that would put an unauthenticated, function-specific
+    // callback on the wire. It falls back to the shared SWAIG defaults endpoint.
+    // Mirrors python agent_base.py:1084-1099 — external URL wins; else a local URL
+    // ONLY when a token or SWAIG query params exist; else NO key at all.
+    [Fact]
+    public void InsecureTool_GetsNoOwnWebhookUrl_SecureToolCarriesToken()
+    {
+        var agent = MakeAgent();
+        agent.DefineTool("secure_tool", "A default-secure tool", new Dictionary<string, object>(),
+            (args, raw) => new FunctionResult("ok"));
+        agent.DefineTool("insecure_tool", "An explicitly-insecure tool", new Dictionary<string, object>(),
+            (args, raw) => new FunctionResult("ok"), secure: false);
+
+        var ai = ExtractAiVerb(
+            agent.RenderSwmlWithContext(null, new Dictionary<string, string>(), "call-guard-test"));
+        var swaig = (Dictionary<string, object>)ai["SWAIG"];
+        var functions = (List<Dictionary<string, object>>)swaig["functions"];
+        var byName = functions.ToDictionary(f => (string)f["function"], f => f);
+
+        // The SECURE tool HAS its own web_hook_url, and it carries the __token.
+        Assert.True(byName["secure_tool"].ContainsKey("web_hook_url"));
+        Assert.Contains("__token=", (string)byName["secure_tool"]["web_hook_url"], StringComparison.Ordinal);
+
+        // The INSECURE tool has NO web_hook_url key at all — not an empty string,
+        // not null, and above all not a tokenless URL.
+        Assert.False(byName["insecure_tool"].ContainsKey("web_hook_url"));
+
+        // ...and the shared fallback it relies on IS present, so the insecure tool
+        // still has a reachable callback. Suppressing the per-tool key without this
+        // would leave it with no endpoint at all.
+        var defaults = (Dictionary<string, object>)swaig["defaults"];
+        var defaultUrl = (string)defaults["web_hook_url"];
+        Assert.EndsWith("/swaig", defaultUrl, StringComparison.Ordinal);
+        Assert.DoesNotContain("__token=", defaultUrl, StringComparison.Ordinal);
+    }
+
+    // SWAIG query params are the OTHER reason a local URL is emitted: with them
+    // configured, even a tokenless (insecure) tool legitimately gets its own URL
+    // carrying those params (python's `elif token or agent._swaig_query_params`).
+    [Fact]
+    public void InsecureTool_WithSwaigQueryParams_GetsWebhookUrlWithoutToken()
+    {
+        var agent = MakeAgent();
+        agent.AddSwaigQueryParams(new Dictionary<string, string> { ["tenant"] = "acme" });
+        agent.DefineTool("insecure_tool", "An explicitly-insecure tool", new Dictionary<string, object>(),
+            (args, raw) => new FunctionResult("ok"), secure: false);
+
+        var ai = ExtractAiVerb(
+            agent.RenderSwmlWithContext(null, new Dictionary<string, string>(), "call-guard-test"));
+        var functions = (List<Dictionary<string, object>>)((Dictionary<string, object>)ai["SWAIG"])["functions"];
+        var url = (string)functions[0]["web_hook_url"];
+
+        Assert.Contains("tenant=acme", url, StringComparison.Ordinal);
+        Assert.DoesNotContain("__token=", url, StringComparison.Ordinal);
     }
 
     [Fact]
