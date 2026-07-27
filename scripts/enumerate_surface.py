@@ -1392,6 +1392,40 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
     return findings
 
 
+_CLASS_BASE_RE = re.compile(
+    r"^\s*public\s+(?:sealed\s+|abstract\s+|static\s+|partial\s+)*"
+    r"(?:class|struct|interface|record)\s+([A-Z][A-Za-z0-9_]*)\s*:\s*([^{]+)"
+)
+
+
+def scan_class_bases(path: Path) -> dict[str, list[str]]:
+    """Return ``{ClassName: [base-clause entries]}`` for the classes declared in
+    ``path``.
+
+    ``parse_cs_file`` deliberately ignores the base clause (it enumerates
+    DECLARED members, which is right for the surface). This scanner recovers it
+    for the ONE case where an inherited member is genuinely the caller's surface
+    and is declared nowhere else — see ``_wired_base_surface``. Kept separate so
+    the member parser's shape and its two call sites are untouched.
+    """
+    out: dict[str, list[str]] = {}
+    try:
+        text = strip_block_comments(path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:  # pragma: no cover
+        return out
+    for raw_line in text.splitlines():
+        line = strip_line_comments(raw_line)
+        m = _CLASS_BASE_RE.match(line)
+        if not m:
+            continue
+        bases = [b.strip() for b in m.group(2).split(",") if b.strip()]
+        # Strip the C# namespace qualification and any generic arity:
+        # ``Namespaces.Generated.ResourceTree`` -> ``ResourceTree``.
+        leafs = [b.split("<", 1)[0].rsplit(".", 1)[-1].strip() for b in bases]
+        out.setdefault(m.group(1), []).extend([b for b in leafs if b])
+    return out
+
+
 def _class_body_depth(scope_stack: list[tuple[str, str, int]]) -> int:
     """Return brace depth one level inside the topmost class scope."""
     for kind, _name, depth in reversed(scope_stack):
@@ -1836,11 +1870,81 @@ def _emit_crud_bases(manifest: dict) -> "dict[str, dict]":
     return out
 
 
+def _wired_base_surface(cs_files, rest_manifest) -> dict[str, list[str]]:
+    """Return ``{ClassName: [inherited surface member names]}`` for classes that
+    reach their surface through a NON-EMITTED generated base.
+
+    This is the SURFACE-axis analogue of ``enumerate_signatures``'s
+    ``_wired_base_accessors``, and of the reference enumerator's
+    ``_wired_base_attributes``
+    (porting-sdk/scripts/enumerate_python_signatures.py).
+
+    ``RestClient`` reaches its 22 namespace accessors — ``client.Calling``,
+    ``client.Fabric``, ``client.Video``, … — by inheriting
+    ``SignalWire.REST.Namespaces.Generated.ResourceTree``, exactly as the
+    reference's ``RestClient`` inherits the private ``_GeneratedResourceTree``.
+    ``ResourceTree`` is a .NET-only composition helper that is NOT in the
+    generator manifest, so the generated-REST branch skips it and its members are
+    emitted nowhere. Without this lift those 22 accessors — real, caller-reachable,
+    and covered end-to-end by ``tests/RestMock/RestClientTreeAccessorMockTest.cs``
+    — read as ``missing-port`` surface drift against a reference that has them.
+
+    Scoped structurally, matching the signature side:
+      * only bases under ``GENERATED_REST_NAMESPACE`` that the manifest does NOT
+        emit as their own oracle class (an emitted base is its own surface symbol
+        whose members are enumerated there — lifting them would duplicate real
+        inheritance);
+      * the base's own declared public members, minus its constructor.
+
+    The caller UNIONs these in, so a locally declared member is unaffected.
+    """
+    emitted = set(rest_manifest.get("class_module", {})) | set(
+        rest_manifest.get("containers", {}))
+
+    # Declared members of every generated class the manifest does NOT emit.
+    unemitted_members: dict[str, list[str]] = {}
+    # ClassName -> its base-clause leaf names, across all files.
+    bases: dict[str, list[str]] = {}
+    for path in cs_files:
+        try:
+            for cls, blist in scan_class_bases(path).items():
+                bases.setdefault(cls, []).extend(blist)
+        except Exception:  # pragma: no cover
+            continue
+        try:
+            findings = parse_cs_file(path)
+        except Exception:  # pragma: no cover
+            continue
+        for namespace, class_name, methods in findings:
+            if namespace != GENERATED_REST_NAMESPACE or class_name in emitted:
+                continue
+            unemitted_members.setdefault(class_name, []).extend(
+                m for m in methods if m != "__init__")
+
+    out: dict[str, list[str]] = {}
+    for cls, blist in bases.items():
+        lifted: list[str] = []
+        for b in blist:
+            lifted.extend(unemitted_members.get(b, []))
+        if lifted:
+            out[cls] = sorted(set(lifted))
+    return out
+
+
 def build_snapshot(repo: Path, src_dir: Path) -> dict:
     modules: dict[str, dict] = {}
     rest_manifest = load_rest_manifest()
 
     cs_files = sorted(src_dir.rglob("*.cs"))
+    cs_files = [
+        p for p in cs_files
+        if "/obj/" not in p.relative_to(repo).as_posix()
+        and "/bin/" not in p.relative_to(repo).as_posix()
+    ]
+
+    # Surface members reachable only through a non-emitted generated base
+    # (RestClient : ResourceTree). See _wired_base_surface.
+    wired_base_surface = _wired_base_surface(cs_files, rest_manifest)
 
     for path in cs_files:
         # Skip build artifacts
@@ -1855,6 +1959,11 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             continue
 
         for namespace, class_name, methods in findings:
+            # Members this class reaches ONLY through a non-emitted generated
+            # base (RestClient : ResourceTree) — declared nowhere else, so they
+            # must be lifted or the caller-reachable accessors are invisible.
+            if class_name in wired_base_surface:
+                methods = sorted(set(methods) | set(wired_base_surface[class_name]))
             # EffectiveRequestOptions is scaffolding for the private
             # _EffectiveOptions type-ref (plan 4.2) — never a public class in the
             # oracle. Skip emitting it as a class (it survives only as a type ref

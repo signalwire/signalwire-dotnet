@@ -775,6 +775,88 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
         out_modules[target_module]["classes"][name] = cls_entry
 
 
+def _wired_base_accessors(type_entry, raw_index, emitted_generated, target_module,
+                          target_class, aliases):
+    """Return ``{canonical_name: signature}`` for the namespace accessors a class
+    inherits from a NON-EMITTED generated base — the .NET analogue of the
+    reference enumerator's ``_wired_base_attributes``
+    (porting-sdk/scripts/enumerate_python_signatures.py).
+
+    ``RestClient`` reaches its 22 namespace accessors — ``client.Calling``,
+    ``client.Fabric``, ``client.Video``, … — by INHERITING
+    ``SignalWire.REST.Namespaces.Generated.ResourceTree``, exactly as the
+    reference's ``RestClient`` reaches ``client.calling`` by inheriting the
+    private ``_GeneratedResourceTree``. Neither base is a surface symbol of its
+    own (``ResourceTree`` is skipped by ``_collect_generated_rest`` as a .NET-only
+    composition helper; ``_GeneratedResourceTree`` is private), so its members are
+    not enumerated anywhere else and MUST be lifted onto the subclass or they are
+    invisible to the oracle.
+
+    Without this the C# reflection dump — which is deliberately ``DeclaredOnly``
+    (right for the surface: an inherited method is not re-declared surface) —
+    records only ``RestClient.__init__``, and all 22 accessors read as
+    ``missing-port`` drift against a reference that has them. They are real,
+    caller-reachable, and covered end-to-end by
+    ``tests/RestMock/RestClientTreeAccessorMockTest.cs``.
+
+    Scoped deliberately narrow, mirroring the reference's rule:
+
+    * Only bases in ``GENERATED_REST_NAMESPACE`` that are NOT emitted as their
+      own oracle class (i.e. not in the generator manifest). A base that IS
+      emitted is its own surface symbol whose members are already enumerated
+      there; lifting those would flatten real inheritance into duplicated
+      members.
+    * Only PUBLIC INSTANCE properties whose type resolves to a ``class:`` ref —
+      the resource / namespace-container accessors. A scalar property is internal
+      transport state, not the resource tree.
+    * The walk follows the base chain so a multi-level composition still
+      resolves.
+
+    The caller applies these with ``setdefault``: a locally declared member
+    always wins.
+    """
+    out: dict[str, dict] = {}
+    seen: set[tuple[str, str]] = set()
+    bt = type_entry.get("base_type")
+    while isinstance(bt, dict) and bt.get("name"):
+        key = (bt.get("namespace", ""), bt["name"])
+        if key in seen:
+            break
+        seen.add(key)
+        base_entry = raw_index.get(key)
+        if base_entry is None:
+            break
+        # Only lift from a generated-REST base that is NOT itself emitted.
+        if key[0] != GENERATED_REST_NAMESPACE or key[1] in emitted_generated:
+            break
+        for p in base_entry.get("properties", []):
+            if p.get("is_static", False):
+                continue
+            pcanon = canonical_method_name(p.get("name", ""))
+            if pcanon is None or pcanon in out:
+                continue
+            ctx = f"{target_module}.{target_class}.{pcanon}"
+            try:
+                ret = translate_dotnet_type(p.get("type", ""), aliases, ctx + "[->]")
+            except TypeTranslationError:
+                # A base property we would not lift anyway (the class-ref filter
+                # below drops every non-resource accessor); the base's OWN
+                # emission path reports any genuine translation failure, so do
+                # not double-report it here.
+                continue
+            # Resource-tree accessors only: a scalar property on the base is
+            # internal transport state (the reference's rule — a non-class
+            # assignment is internal state, not contract).
+            if not ret.startswith("class:"):
+                continue
+            out[pcanon] = {
+                "params": [{"name": "self", "kind": "self"}],
+                "returns": ret,
+            }
+        bt = base_entry.get("base_type")
+    return out
+
+
 def _cs_method_for(canon: str, reflected: dict) -> str:
     """The C# method name whose sidecar key matches this canonical name. The
     sidecar is keyed by the C# method (``SearchAsync``, ``SetAiAgentAsync``,
@@ -815,6 +897,19 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     rest_sidecar = rest_manifest["methods"]
     rest_returns = rest_manifest.get("returns", {})
     rest_crud_bases = rest_manifest.get("crud_bases", {})
+
+    # Index the raw dump by native (namespace, name) so a class can resolve its
+    # BASE's members. The reflection dump is DeclaredOnly (right for surface),
+    # so an inherited member is only reachable through this index —
+    # see _wired_base_accessors.
+    raw_index: dict[tuple[str, str], dict] = {
+        (t.get("namespace", ""), t.get("name", "")): t
+        for t in raw.get("types", [])
+    }
+    # Generated-REST classes that ARE emitted as their own oracle class. A base
+    # in this set is its own surface symbol; only a base OUTSIDE it (the
+    # ResourceTree composition helper) gets lifted onto its subclass.
+    emitted_generated: set[str] = set(rest_class_module) | set(rest_containers)
 
     for type_entry in raw.get("types", []):
         ns = type_entry.get("namespace", "")
@@ -1060,6 +1155,18 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             if not p.get("is_static", False):
                 params_out.append({"name": "self", "kind": "self"})
             methods_out[method_canonical] = {"params": params_out, "returns": ret}
+
+        # WIRED-BASE accessors: lift the namespace accessors this class inherits
+        # from a non-emitted generated base (RestClient : ResourceTree). The
+        # reflection dump is DeclaredOnly, so without this the 22 resource-tree
+        # accessors the caller genuinely reaches off RestClient are invisible.
+        # setdefault: a locally declared member always wins. Mirrors the
+        # reference enumerator's _wired_base_attributes.
+        for _wname, _wsig in _wired_base_accessors(
+            type_entry, raw_index, emitted_generated,
+            target_module, target_class, aliases,
+        ).items():
+            methods_out.setdefault(_wname, _wsig)
 
         # Free-function projections (item H/I): a C# ``public static`` method the
         # reference exposes as a MODULE-level free function. Move the selected
