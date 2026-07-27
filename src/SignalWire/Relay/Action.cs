@@ -27,6 +27,18 @@ public class Action
     public string NodeId { get; }
     protected object Client { get; }
 
+    /// <summary>
+    /// The call this action runs on. The reference holds the <c>Call</c> object
+    /// directly (<c>self.call = call</c>, call.py:82) and drives every control
+    /// method through it; this port stores only the client plus a
+    /// <see cref="CallId"/>, so the call is resolved through the client's live
+    /// call registry rather than a second stored reference that could dangle
+    /// after the call ends. Null only if the call is no longer registered.
+    /// (equivalent to Python's <c>call</c>.)
+    /// </summary>
+    public Call? Call =>
+        Client is Client c && c.Calls.TryGetValue(CallId, out var call) ? call : null;
+
     public string? State { get; protected set; }
     public bool Completed { get; private set; }
     public object? Result { get; private set; }

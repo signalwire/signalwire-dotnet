@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class CxmlWebhooks : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.CXMLWebhookListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.CXMLWebhookResponse>
 {
-    public CxmlWebhooks(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/cxml_webhooks")
+    public CxmlWebhooks(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/cxml_webhooks")
     {
     }
 

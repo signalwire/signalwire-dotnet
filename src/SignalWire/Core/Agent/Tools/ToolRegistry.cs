@@ -38,11 +38,14 @@ public class ToolRegistry
     /// standalone use.</param>
     public ToolRegistry(object? agent = null)
     {
-        // agent is kept as a constructor arg for parity with the Python/Ruby
-        // registries; C# has no use for it here, so it is intentionally discarded
-        // rather than exposed as public surface.
-        _ = agent;
+        // The reference stores this back-reference and exposes it; discarding it
+        // took from .NET callers a readback Python callers have.
+        Agent = agent;
     }
+
+    /// <summary>The parent agent this registry belongs to, or null when built
+    /// standalone. (equivalent to Python's <c>agent</c>.)</summary>
+    public object? Agent { get; }
 
     /// <summary>
     /// Define a SWAIG function that the AI can call. (Python parity: <c>define_tool</c>.)

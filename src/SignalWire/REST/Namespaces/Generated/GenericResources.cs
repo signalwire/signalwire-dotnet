@@ -21,9 +21,9 @@ public class GenericResources
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public GenericResources(SignalWire.REST.HttpClient client)
+    public GenericResources(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

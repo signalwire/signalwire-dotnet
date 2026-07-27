@@ -18,8 +18,8 @@ public class CrudWithAddresses<TList, TItem> : CrudResource<TList, TItem>
     where TList : class
     where TItem : class
 {
-    public CrudWithAddresses(HttpClient client, string basePath)
-        : base(client, basePath) { }
+    public CrudWithAddresses(HttpClient http, string basePath)
+        : base(http, basePath) { }
 
     /// <summary>List the addresses sub-collection for a given resource.
     /// (equivalent to Python's
@@ -38,6 +38,6 @@ public class CrudWithAddresses<TList, TItem> : CrudResource<TList, TItem>
 /// </summary>
 public class CrudWithAddresses : CrudWithAddresses<Dictionary<string, object?>, Dictionary<string, object?>>
 {
-    public CrudWithAddresses(HttpClient client, string basePath)
-        : base(client, basePath) { }
+    public CrudWithAddresses(HttpClient http, string basePath)
+        : base(http, basePath) { }
 }

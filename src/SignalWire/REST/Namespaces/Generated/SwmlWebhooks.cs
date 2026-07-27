@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class SwmlWebhooks : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.SWMLWebhookListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.SWMLWebhookResponse>
 {
-    public SwmlWebhooks(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/swml_webhooks")
+    public SwmlWebhooks(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/swml_webhooks")
     {
     }
 

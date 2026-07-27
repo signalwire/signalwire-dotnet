@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class Queues : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.RelayRest.QueueListResponse, SignalWire.REST.Namespaces.Generated.Types.RelayRest.QueueResponse>
 {
-    public Queues(SignalWire.REST.HttpClient client)
-        : base(client, "/api/relay/rest/queues")
+    public Queues(SignalWire.REST.HttpClient http)
+        : base(http, "/api/relay/rest/queues")
     {
     }
 

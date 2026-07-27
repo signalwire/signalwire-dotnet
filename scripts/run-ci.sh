@@ -291,22 +291,35 @@ sched_gate TEST defer=1 res=msbuild desc="docker dotnet test (net8/net9/net10 se
 sched_gate SURFACE res=surface desc="surface parity suite (SIGNATURES/DRIFT/SURFACE-FRESH/SURFACE-DIFF/SEMVER-DIFF/GEN-TYPE-DEGENERACY/ROUTE-COLLISION/GEN-IDIOM)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/surface.py" --port dotnet --repo "$PORT_ROOT"
 
+# TYPE-EROSION: a port may not erase a type the reference DECLARES. compare_param treats
+# `any` on EITHER side as matching anything, so a port emitting `any` silently satisfies
+# every reference declaration — an unlimited opt-out. ConciergeAgent.hours_of_operation is
+# declared optional<dict<string,string>> and go still shipped a bare string, with no gate
+# red. RATCHET, not a hard gate: dynamic languages cannot always express a type, so this
+# banks the current count and fails only on REGRESSION. Drive the number DOWN; never up.
+sched_gate TYPE-EROSION res=surface desc="port did not erase a reference-declared param type (ratchet 19)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_type_erosion.py" --port dotnet --repo "$PORT_ROOT" --max 19
+
 # GEN (regen-from-specs family): the 5 GEN-FRESH rules (all pure-python --check;
 # cheap wave, per-PR).
 sched_gate GEN desc="generated-code freshness suite (GEN-FRESH/-TESTS/-RELAY/-SWAIG/-SWML)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/gen.py" --port dotnet --repo "$PORT_ROOT"
 
 # BEHAVIORAL (Layer-D + REST-COVERAGE/SPEC-PARITY): the 14 per-PR rules. WAIT-LIVENESS
-# (the ONE nightly member) is the separate BEHAVIORAL-NIGHTLY line below. res=msbuild
+# and SECRET-SCRUB-LIVE (the nightly members) are the separate BEHAVIORAL-NIGHTLY line
+# below. res=msbuild
 # + defer=1: contains REST-COVERAGE/SPEC-PARITY (dotnet test / RouteRegistry build)
 # and the BEHAVIORAL-* dumps (build tools/DumpCorpus) — serialize with TEST/FMT/LINT.
 sched_gate BEHAVIORAL defer=1 res=msbuild desc="behavioral suite (REST-COVERAGE/SPEC-PARITY/EMISSION/BEHAVIORAL-*/BEHAVIORAL-STRICT-RENDER/SKILL-CONTRACT/SWAIG-COVERAGE/SWAIG-CLI/ERROR-ENVELOPE/PAGINATION-WIRED/PAGINATION-CORPUS/DOC-WIRE/SECURE-DEFAULT/CA-VAR/SECRET-SCRUB/TLS-VERIFY)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/behavioral.py" --port dotnet --repo "$PORT_ROOT" \
         --rules REST-COVERAGE,SPEC-PARITY,EMISSION,BEHAVIORAL-WIRE,BEHAVIORAL-SWML,BEHAVIORAL-STRICT-RENDER,BEHAVIORAL-STATE,BEHAVIORAL-HTTP,BEHAVIORAL-WIRE-RELAY,SKILL-CONTRACT,SWAIG-COVERAGE,SWAIG-CLI,ERROR-ENVELOPE,PAGINATION-WIRED,PAGINATION-CORPUS,DOC-WIRE,SECURE-DEFAULT,CA-VAR,SECRET-SCRUB,TLS-VERIFY
 
-sched_gate BEHAVIORAL-NIGHTLY tier=nightly defer=1 desc="behavioral suite, nightly rules (WAIT-LIVENESS)" \
+# res=msbuild: SECRET-SCRUB-LIVE's dump builds tools/DumpCorpus (like the BEHAVIORAL
+# line's dumps), so it must hold the same msbuild mutex — concurrent builds against one
+# project contend on the build dir.
+sched_gate BEHAVIORAL-NIGHTLY tier=nightly defer=1 res=msbuild desc="behavioral suite, nightly rules (WAIT-LIVENESS/SECRET-SCRUB-LIVE)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/behavioral.py" --port dotnet --repo "$PORT_ROOT" \
-        --rules WAIT-LIVENESS
+        --rules WAIT-LIVENESS,SECRET-SCRUB-LIVE
 
 # DOC-TRUTH (one markdown walk): DOC-AUDIT/DOC-LINKS/DOC-LANG-PURITY/DOC-ENV/
 # COUNT-CLAIM/ACCESSOR-TRUTH/STATUS-CLAIM/README-INCLUDE. res=surface: DOC-AUDIT +

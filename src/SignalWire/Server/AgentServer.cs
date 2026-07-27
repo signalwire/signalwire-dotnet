@@ -57,12 +57,26 @@ public partial class AgentServer
     private readonly Dictionary<string, string> _sipUsernameMapping = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, string> _staticRoutes = [];
 
+    [SuppressMessage("Globalization", "CA1308", Justification = "The reference lower-cases log_level (agent_server.py:63) and the level names are lower-case identifiers; upper-casing would not match.")]
     public AgentServer(string host = "0.0.0.0", int? port = null, string logLevel = "info")
     {
+        ArgumentNullException.ThrowIfNull(logLevel);
         _host = host;
         _port = port ?? ParsePortFromEnv() ?? 3000;
+        // The reference lower-cases and RETAINS this (agent_server.py:63) and
+        // feeds it to the server at run time (:716,721). It was accepted here
+        // and discarded, so a caller could neither read it back nor have it
+        // take effect.
+        LogLevel = logLevel.ToLowerInvariant();
         _logger = Logger.GetLogger("agent_server");
     }
+
+    /// <summary>
+    /// The configured logging level (<c>debug</c>, <c>info</c>, <c>warning</c>,
+    /// <c>error</c>, <c>critical</c>), lower-cased. (equivalent to Python's
+    /// <c>log_level</c>.)
+    /// </summary>
+    public string LogLevel { get; }
 
     /// <summary>The agent_server logger. (equivalent to Python's
     /// ``AgentServer.logger`` instance attribute.)</summary>

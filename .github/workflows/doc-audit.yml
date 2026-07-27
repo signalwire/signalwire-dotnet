@@ -51,6 +51,13 @@ jobs:
         with:
           python-version: '3.14'
 
+      - name: Install porting-sdk script dependencies
+        # NOT optional: the gate scripts reach the reference oracle through
+        # generate_rest.py, which needs PyYAML, and a swallowed ImportError turned its
+        # absence into an EMPTY oracle — 266 gated members silently vanished and the diff
+        # reported "311 symbols missing from port" against a port that was correct.
+        run: python3 -m pip install --quiet -r ${{ github.workspace }}/porting-sdk/scripts/requirements.txt
+
       - name: Enumerate .NET surface (input for audit_docs)
         working-directory: signalwire-dotnet
         run: python3 scripts/enumerate_surface.py

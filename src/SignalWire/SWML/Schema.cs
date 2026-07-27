@@ -73,19 +73,44 @@ public sealed class Schema
     }
 
     /// <summary>Thread-safe singleton accessor.</summary>
-    [SuppressMessage("Maintainability", "CA1508", Justification = "Double-checked locking; the analyzer cannot model that Reset() (used by tests) nulls _instance from another method, so its always-null claim is a false positive.")]
+    /// <remarks>
+    /// Returns the instance OBSERVED UNDER THE LOCK, never a re-read of the field.
+    /// The previous form assigned inside the lock and then <c>return _instance;</c>
+    /// outside it, so a concurrent <see cref="Reset"/> — which nulls the field under
+    /// the same lock — could land in that window and make this property hand back
+    /// <see langword="null"/> from a non-nullable getter. Callers then died on a
+    /// NullReferenceException that pointed at their own dereference rather than here.
+    /// Real defect, not a test artifact: xunit.runner.json sets
+    /// parallelizeTestCollections, and ~10 test classes call Reset() in their
+    /// setup/teardown, so the window is genuinely reachable — it surfaced as a
+    /// 1-in-2008 net10.0 failure in ConstructionReadbackTests
+    /// (Schema.Instance.SchemaPath) that passed on every local run.
+    /// </remarks>
     public static Schema Instance
     {
         get
         {
-            if (_instance is not null) return _instance;
+            var seen = _instance;
+            if (seen is not null) return seen;
             lock (Lock)
             {
-                _instance ??= new Schema();
+                return _instance ??= new Schema();
             }
-            return _instance;
         }
     }
+
+    /// <summary>
+    /// The location the SWML schema was loaded from. The reference resolves a
+    /// caller-supplied <c>schema_path</c> (or its packaged default) and keeps it
+    /// readable as <c>SchemaUtils.schema_path</c>; this port ships the schema as
+    /// an assembly EmbeddedResource, so the resolved location is that resource's
+    /// manifest name. Non-null and stable for the process.
+    /// </summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Instance property matching the reference's per-instance SchemaUtils.schema_path attribute; the cross-port surface reads it off the instance.")]
+    public string SchemaPath => SchemaResourceName;
+
+    /// <summary>Manifest name of the bundled SWML schema resource.</summary>
+    private const string SchemaResourceName = "SignalWire.SWML.schema.json";
 
     /// <summary>Reset the singleton (for testing).</summary>
     public static void Reset()

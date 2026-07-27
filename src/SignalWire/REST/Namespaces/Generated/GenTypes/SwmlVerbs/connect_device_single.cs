@@ -42,7 +42,7 @@ public class ConnectDeviceSingle
 
     /// <summary>Wire field <c>ringback</c>.</summary>
     [JsonPropertyName("ringback")]
-    public List<object?>? ringback { get; set; }
+    public Dictionary<string, object?>? ringback { get; set; }
 
     /// <summary>Wire field <c>result</c>.</summary>
     [JsonPropertyName("result")]

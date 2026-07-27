@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class FreeswitchConnectors : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.FreeswitchConnectorListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.FreeswitchConnectorResponse>
 {
-    public FreeswitchConnectors(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/freeswitch_connectors")
+    public FreeswitchConnectors(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/freeswitch_connectors")
     {
     }
 }

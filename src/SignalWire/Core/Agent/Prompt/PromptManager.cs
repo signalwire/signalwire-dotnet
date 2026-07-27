@@ -42,16 +42,20 @@ public class PromptManager
     /// standalone use.</param>
     public PromptManager(object? agent = null)
     {
-        // agent is kept as a constructor arg for parity with the Python/Ruby
-        // managers (they store it as a back-reference); C# has no use for it in
-        // this standalone manager, so it is intentionally discarded rather than
-        // exposed as public surface.
-        _ = agent;
+        // The reference stores this back-reference and exposes it; discarding it
+        // took from .NET callers a readback Python callers have. (The old
+        // rationale — "not exposed as public surface" — rested on the oracle not
+        // enumerating __init__ attributes, which it now does.)
+        Agent = agent;
         Pom = new PromptObjectModel();
         _promptText = null;
         _postPromptText = null;
         _contexts = null;
     }
+
+    /// <summary>The parent agent this manager belongs to, or null when built
+    /// standalone. (equivalent to Python's <c>agent</c>.)</summary>
+    public object? Agent { get; }
 
     /// <summary>
     /// Set the agent's prompt as raw text. (equivalent to Python's <c>set_prompt_text</c>.)

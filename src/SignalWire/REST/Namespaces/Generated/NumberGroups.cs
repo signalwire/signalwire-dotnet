@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class NumberGroups : SignalWire.REST.CrudResource<SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupListResponse, SignalWire.REST.Namespaces.Generated.Types.RelayRest.NumberGroupResponse>
 {
-    public NumberGroups(SignalWire.REST.HttpClient client)
-        : base(client, "/api/relay/rest/number_groups")
+    public NumberGroups(SignalWire.REST.HttpClient http)
+        : base(http, "/api/relay/rest/number_groups")
     {
     }
 

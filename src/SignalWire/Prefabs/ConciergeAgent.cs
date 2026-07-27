@@ -14,6 +14,29 @@ public class ConciergeAgent : AgentBase
     private readonly List<string> _services;
     private readonly Dictionary<string, Dictionary<string, object>> _amenities;
 
+    /// <summary>The venue this concierge represents.
+    /// (equivalent to Python's <c>venue_name</c>.)</summary>
+    [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface: the property is the reference attribute (readback), the Get* method the pre-existing cross-port accessor.")]
+    public string VenueName => _venueName;
+
+    /// <summary>The services the venue offers.
+    /// (equivalent to Python's <c>services</c>.)</summary>
+    [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface: the property is the reference attribute (readback), the Get* method the pre-existing cross-port accessor.")]
+    public IReadOnlyList<string> Services => _services;
+
+    /// <summary>The venue's amenities, keyed by name.
+    /// (equivalent to Python's <c>amenities</c>.)</summary>
+    [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface: the property is the reference attribute (readback), the Get* method the pre-existing cross-port accessor.")]
+    public IReadOnlyDictionary<string, Dictionary<string, object>> Amenities => _amenities;
+
+    /// <summary>The venue's opening hours, keyed by day/label.
+    /// (equivalent to Python's <c>hours_of_operation</c>.)</summary>
+    public IReadOnlyDictionary<string, string> HoursOfOperation { get; }
+
+    /// <summary>Extra instructions appended to the agent's prompt.
+    /// (equivalent to Python's <c>special_instructions</c>.)</summary>
+    public IReadOnlyList<string> SpecialInstructions { get; }
+
     public ConciergeAgent(
         string name,
         Dictionary<string, object> venueInfo,
@@ -25,8 +48,15 @@ public class ConciergeAgent : AgentBase
         _services = venueInfo.TryGetValue("services", out var sv) && sv is List<string> sl ? sl : [];
         _amenities = venueInfo.TryGetValue("amenities", out var am) && am is Dictionary<string, Dictionary<string, object>> ad ? ad : [];
 
-        var hoursOfOperation = venueInfo.TryGetValue("hours_of_operation", out var ho) && ho is Dictionary<string, string> hd ? hd : [];
+        // The reference STORES both (concierge.py:78-79) and defaults the hours
+        // to a single "default" entry; they were previously read into locals,
+        // rendered, and then dropped — a caller could not read back what it set.
+        var hoursOfOperation = venueInfo.TryGetValue("hours_of_operation", out var ho) && ho is Dictionary<string, string> hd && hd.Count > 0
+            ? hd
+            : new Dictionary<string, string> { ["default"] = "9 AM - 5 PM" };
         var specialInstructions = venueInfo.TryGetValue("special_instructions", out var si) && si is List<string> sil ? sil : [];
+        HoursOfOperation = hoursOfOperation;
+        SpecialInstructions = specialInstructions;
         var welcomeMessage = venueInfo.TryGetValue("welcome_message", out var wm) ? wm as string : null;
 
         var welcome = welcomeMessage ?? $"Welcome to {_venueName}. How can I assist you today?";

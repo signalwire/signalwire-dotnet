@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class Subscribers : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberResponse>
 {
-    public Subscribers(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/subscribers")
+    public Subscribers(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/subscribers")
     {
     }
 

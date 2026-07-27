@@ -1786,9 +1786,14 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
     lines.append("{")
     lines.append("    private readonly SignalWire.REST.HttpClient _client;")
     lines.append("")
-    lines.append(f"    public {name}(SignalWire.REST.HttpClient client)")
+    # Ctor param is `http`, matching the reference's construction contract
+    # (ALLOWLIST_DISCIPLINE.md §10 compares construction params BY NAME) and the
+    # `http` this same generator already emits for the namespace/tree classes
+    # below. It was `client` on 48 of the 56 generated resources and `http` on
+    # the other 8 — one generator, two spellings for the identical parameter.
+    lines.append(f"    public {name}(SignalWire.REST.HttpClient http)")
     lines.append("    {")
-    lines.append("        _client = client;")
+    lines.append("        _client = http;")
     lines.append("    }")
     lines.append("")
     lines.append("    /// <summary>The HTTP client this resource dispatches through.</summary>")
@@ -1931,8 +1936,9 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
     lines.append(f"/// </summary>")
     lines.append(f"public class {name} : SignalWire.REST.{parent}{generic}")
     lines.append("{")
-    lines.append(f"    public {name}(SignalWire.REST.HttpClient client)")
-    lines.append(f"        : base(client, {cs_str(bp)})")
+    # `http` not `client` — see the note on the standalone-resource ctor above.
+    lines.append(f"    public {name}(SignalWire.REST.HttpClient http)")
+    lines.append(f"        : base(http, {cs_str(bp)})")
     lines.append("    {")
     lines.append("    }")
 

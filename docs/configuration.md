@@ -73,6 +73,7 @@ Config values support `${VAR_NAME|default}` syntax:
 |----------|---------|-------------|
 | `SIGNALWIRE_PROJECT_ID` | - | Project ID for REST/RELAY clients |
 | `SIGNALWIRE_API_TOKEN` | - | API token for REST/RELAY clients |
+| `SIGNALWIRE_JWT_TOKEN` | - | A SignalWire JWT for the RELAY client. When set it authenticates on its own — the project id is inside the token, so `SIGNALWIRE_PROJECT_ID`/`SIGNALWIRE_API_TOKEN` are not required. An explicit `ClientOptions.JwtToken` wins over this. |
 | `SIGNALWIRE_SPACE` | - | Space hostname (e.g. `example.signalwire.com`) |
 | `SIGNALWIRE_RELAY_SCHEME` | `wss` | WebSocket scheme for the RELAY client (`wss` or `ws`) |
 | `SIGNALWIRE_REST_CA_FILE` | - | Path to a PEM CA bundle the SDK-owned REST HTTP client trusts as an additional TLS root (for a private/self-signed SignalWire space certificate). Unset uses the OS trust store. |
@@ -86,6 +87,7 @@ Config values support `${VAR_NAME|default}` syntax:
 | `HOST` | `0.0.0.0` | Server bind address |
 | `PORT` | `3000` | Server port |
 | `SWML_DOMAIN` | - | Public domain for URL generation |
+| `SWML_SKIP_SCHEMA_VALIDATION` | - | Set to `1`/`true`/`yes` to disable SWML schema validation of rendered documents. An explicit `SchemaValidation = false` also disables it; an explicit `true` does NOT override this variable. |
 
 ### Security Configuration
 

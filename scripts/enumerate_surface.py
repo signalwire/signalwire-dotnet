@@ -263,6 +263,40 @@ AICHAT_OPTIONS_CLASSES: frozenset[str] = frozenset({
     "SummarizeOptions",
 })
 
+# CONSTRUCTION options classes — the same options-object↔kwargs idiom as the
+# AI-Chat set above, applied to the CONSTRUCTORS. The reference writes
+# ``AgentBase(name=…, route=…, token_expiry_secs=…)``; .NET has to put those
+# keyword arguments somewhere, and that somewhere is an options class. Its
+# init-only properties ARE the reference's constructor kwargs — same capability,
+# different binding — so they reconcile in the CONSTRUCTION CONTRACT
+# (``port_signatures.json``'s ``construction`` node, which unfolds an options
+# param into these very properties), not as standalone surface symbols.
+#
+# The discriminator is the REFERENCE, matching enumerate_signatures' derived
+# rule: an options class is a binding vehicle exactly when the reference has NO
+# class of that name. The reference has no ``AgentOptions`` and no
+# ``ServiceOptions`` — those spellings exist ONLY because .NET needs a home for
+# what Python passes as kwargs. (``RequestOptions`` is deliberately NOT here:
+# the reference DOES record it as a real class, so it is shared surface.)
+#
+# This is the AGENT_RULES §2 / ALLOWLIST_DISCIPLINE §0 idiom fold — folded at the
+# emitter, NOT ledgered. Dropping them here is what keeps a newly-wired
+# construction parameter from surfacing as a phantom port-only addition.
+CONSTRUCTION_OPTIONS_CLASSES: frozenset[str] = frozenset({
+    "AgentOptions",
+    "ServiceOptions",
+    # ClientOptions carries what the reference passes as kwargs to
+    # ``RelayClient.__init__(project, token, jwt_token, host, contexts,
+    # max_active_calls)`` — the reference has no ``ClientOptions`` class, so the
+    # spelling exists only because .NET needs a home for those keywords. It is
+    # the SAME idiom as AgentOptions/ServiceOptions and was previously carried as
+    # seven PORT_ADDITIONS whose own rationale said "Python uses kwargs to
+    # RelayClient.__init__" — self-declared idiom, so it folds here (§0/§0b) and
+    # those entries are deleted. Its properties reconcile in the construction
+    # contract; every one is also readable off the Client itself.
+    "ClientOptions",
+})
+
 
 # (source_namespace, source_class) -> (target_module, target_class) for
 # classes that get a Python-canonical rename.
@@ -658,6 +692,23 @@ SURFACE_METHOD_ALIASES: dict[tuple[str, str], dict[str, str]] = {
     ("signalwire.core.security.session_manager", "SessionManager"): {
         "create_token": "generate_token",
     },
+    # AIChatError: the reference keeps the raw server text as ``message``. In C#
+    # that name is taken by ``Exception.Message`` (which carries the DECORATED
+    # ``[code] message`` form), so the port spells the undecorated attribute
+    # ``ServerMessage``. Base-class name collision -> rename via the adapter,
+    # the same escape as the reserved-word renames (AGENT_RULES §2/§5); the
+    # capability is identical.
+    ("signalwire.ai_chat.client", "AIChatError"): {
+        "server_message": "message",
+    },
+    # POM Section: the reference records ``numberedBullets`` in camelCase
+    # VERBATIM because it IS the wire key — it round-trips through the POM dict
+    # unchanged (pom.py:345,361,371). C# spells the property ``NumberedBullets``,
+    # which snake-cases to ``numbered_bullets``; map it back to the wire spelling
+    # rather than converting the key (converting a wire key would be wrong).
+    ("signalwire.pom.pom", "Section"): {
+        "numbered_bullets": "numberedBullets",
+    },
     # SWAIGFunction: C# ``Call``/``Invoke`` -> the reference dunder ``__call__``.
     # (Keyed by the post-rename class name — emit_class_name maps
     # SwaigFunction -> SWAIGFunction before the alias lookup.)
@@ -781,6 +832,27 @@ FREE_FUNCTION_CLASSES: dict[str, dict] = {
         "module": "signalwire.core.logging_config",
         "aliases": {},
     },
+    # Logger's two STATIC members are a second path to the SAME capability the
+    # reference exposes as module-level free functions in
+    # ``signalwire.core.logging_config`` — ``LoggingConfig.GetLogger`` delegates
+    # straight to ``Logger.GetLogger``, and ``ResetLoggingConfiguration`` calls
+    # ``Logger.Reset``. A re-export is not a second symbol (ALLOWLIST_DISCIPLINE
+    # §4b/§7), so fold them onto the reference free-function names and count once.
+    #
+    # The 8 INSTANCE members (debug/info/warn/error/should_log + the level/name/
+    # suppressed properties) are deliberately NOT projected: in the reference they
+    # are the surface of the structlog BoundLogger that ``get_logger()`` returns —
+    # a third-party object the oracle does not enumerate — so they have no
+    # reference twin to fold onto. They stay on the emitted ``Logger`` class and
+    # remain recorded in PORT_ADDITIONS.md pending an owner ruling.
+    "Logger": {
+        "module": "signalwire.core.logging_config",
+        "aliases": {"reset": "reset_logging_configuration"},
+        "keep": {"get_logger", "reset_logging_configuration"},
+        # Keep emitting the class itself (with its non-static members) — this
+        # spec only projects the static re-exports off it.
+        "keep_class": True,
+    },
     "TypeInference": {
         "module": "signalwire.core.agent.tools.type_inference",
         "aliases": {},
@@ -839,6 +911,17 @@ TOPLEVEL_FUNCTION_NAMES: list[str] = ["RestClient"]
 # reference set so those idiomatic data-properties don't read as port additions.
 # A genuinely-missing reference method still surfaces as MISSING (checked
 # separately), so this cannot mask undone work — it only drops idiom noise.
+#
+# *** ORACLE-GATED (class B2, 2026-07-26) ***
+# The premise above — "Python sets these in __init__, NOT recorded on the class
+# surface" — was TRUE before the B2 oracle change and is FALSE now: the oracle
+# enumerates a class's public ``__init__`` attributes as surface members. Every
+# set below is therefore a CEILING, not the contract: it is applied via
+# ``apply_member_allowlist`` (below), which UNIONS the oracle's own member set
+# for the class before intersecting. An entry consequently strips a name only
+# while the oracle does NOT record it — so the table self-retires as the oracle
+# grows, instead of needing a hand edit per oracle revision. This is the java
+# ``_CONSTRUCTION_PARAM_ACCESSORS`` fix (campaign §4b) applied to dotnet.
 SURFACE_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
     # AI-Chat: intersect each class with its EXACT reference own-surface so the
     # .NET idiom's extra public properties/helpers drop out.
@@ -918,10 +1001,91 @@ _SWML_SERVICE_ALLOW = {
     "manual_set_proxy_url", "on_request", "register_routing_callback",
     "register_verb_handler", "render_document", "reset_document", "serve", "stop",
 }
-# Every reference class in signalwire.relay.event exposes exactly ``from_payload``
-# (the typed data fields are instance attributes, not surface). Restrict all
-# event classes to that single method.
+# Every reference class in signalwire.relay.event exposes ``from_payload`` PLUS —
+# since the porting-sdk fold-branch oracle (HEAD 7693802) now emits @dataclass
+# public fields — one member per typed data FIELD (``call_state``/``end_reason``/
+# …). dotnet is a FIELD-idiom port: its C# event classes carry the payload as
+# public properties, so the surface must EMIT those fields, gated on the oracle's
+# per-class member set (below) so exactly the reference fields surface and no
+# port-internal helper leaks. The bare ``from_payload`` floor is the fallback when
+# the oracle is unavailable.
 _RELAY_EVENT_ONLY = {"from_payload"}
+
+
+# The @dataclass field-carrying non-event classes (AI-Chat response DTOs +
+# RequestOptions) whose public FIELDS the fold-branch oracle now records as
+# surface. dotnet exposes them as positional-record params (AI-Chat DTOs) or
+# block-bodied properties (RequestOptions); emit the oracle field set for each.
+_DATACLASS_FIELD_CLASSES: frozenset[tuple[str, str]] = frozenset({
+    ("signalwire.ai_chat.client", "ConversationInfo"),
+    ("signalwire.ai_chat.client", "ChatResponse"),
+    ("signalwire.ai_chat.client", "ChatLog"),
+    ("signalwire.rest._request_options", "RequestOptions"),
+})
+
+
+_ORACLE_SURFACE_CACHE: "dict[str, dict[str, set[str]]] | None" = None
+
+
+def _oracle_surface_members() -> "dict[str, dict[str, set[str]]]":
+    """Load ``python_surface.json`` (the fold-branch oracle) as
+    ``{module: {Class: set(members)}}``. Cached; empty on any resolution failure
+    (the caller then falls back to the pre-fold restriction). Used to gate the
+    @dataclass FIELD emission for relay Event / AI-Chat DTO / RequestOptions
+    classes so the port emits EXACTLY the reference field set."""
+    global _ORACLE_SURFACE_CACHE
+    if _ORACLE_SURFACE_CACHE is not None:
+        return _ORACLE_SURFACE_CACHE
+    out: "dict[str, dict[str, set[str]]]" = {}
+    GR = _load_generate_rest()
+    if GR is not None:
+        try:
+            psdk = GR.resolve_porting_sdk()
+        except SystemExit:
+            psdk = None
+        if psdk is not None:
+            path = psdk / "python_surface.json"
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                data = None
+            if data is not None:
+                for mod, mentry in data.get("modules", {}).items():
+                    classes = mentry.get("classes", {})
+                    if isinstance(classes, dict):
+                        out[mod] = {
+                            cls: set(members)
+                            for cls, members in classes.items()
+                            if isinstance(members, list)
+                        }
+    _ORACLE_SURFACE_CACHE = out
+    return out
+
+
+def oracle_class_members(module: str, cls: str) -> "set[str]":
+    """The oracle's own-surface member set for ``module.cls`` (empty if the
+    oracle records no such class or could not be loaded)."""
+    return _oracle_surface_members().get(module, {}).get(cls, set())
+
+
+def apply_member_allowlist(
+    members: "set[str]", allow: "set[str]", module: str, cls: str
+) -> "set[str]":
+    """Intersect ``members`` with a hand-written allowlist that is ORACLE-GATED.
+
+    The hand-written sets in ``SURFACE_METHOD_ALLOWLIST`` / ``_SIG_METHOD_ALLOWLIST``
+    / ``_SWML_SERVICE_ALLOW`` were written when the oracle did not enumerate a
+    class's public ``__init__`` attributes. Now that it does (class B2), a
+    hard-coded set would STRIP members the oracle records — turning a member the
+    port genuinely exposes into a phantom MISSING symbol, and (worse) hiding a
+    read-back capability the reference gives its callers.
+
+    Gating fixes that without hand-editing: the effective allowlist is
+    ``allow | oracle_own_members``, so an entry drops a name only while the
+    ORACLE does not record it. As the oracle grows, entries retire themselves.
+    """
+    return members & (allow | oracle_class_members(module, cls))
+
 
 # Relay Action control surface: the reference projects the control methods
 # (stop/pause/resume/volume) directly onto each CONCRETE action (the internal
@@ -1000,12 +1164,19 @@ PROPERTY_RE = re.compile(
     r"(?:(?:override|virtual|static|new|sealed|readonly|required)\s+)*"
     r"[A-Za-z_][\w<>?,.\[\] *&]*\s+"
     r"(?P<name>[A-Z][A-Za-z0-9_]*)"
-    # Three accepted shapes:
+    # Five accepted shapes:
     #   { get; ... }                -- block-bodied (single line)
     #   => <expression>;            -- expression-bodied (single line)
     #   =>                           -- expression-bodied with body on next line
     #   { ... at EOL                -- block-bodied with body across lines
-    r"\s*(?:\{[^}]*\}|=>\s*[^;]*;|=>\s*$|\{\s*$)"
+    #   <nothing>                   -- block-bodied with the OPENING BRACE on the
+    #                                  NEXT line (the accessor-block style used by
+    #                                  SkillBase.Agent / SkillBase.Params). The
+    #                                  alternative is anchored at end-of-line and
+    #                                  the name must be the last token, so a method
+    #                                  (which has `(`) and an assignment (which has
+    #                                  `=`) cannot match it.
+    r"\s*(?:\{[^}]*\}|=>\s*[^;]*;|=>\s*$|\{\s*$|$)"
 )
 
 
@@ -1410,6 +1581,261 @@ def merge_module_functions(modules: dict, target_mod: str, fns: list[str]) -> No
     entry["functions"] = sorted(set(entry["functions"]) | set(fns))
 
 
+# ---------------------------------------------------------------------------
+# Composition-attribute enrichment (porting-sdk class B1) + generated-model
+# field-accessor members (the B1 enrichment applied to schema-driven DTOs)
+# ---------------------------------------------------------------------------
+#
+# The fold-branch python surface oracle (enumerate_python._enrich_composition_
+# attributes) imports COMPOSITION ATTRIBUTES from the SIGNATURE oracle: any
+# self-only member that RETURNS an SDK class -- bare ``class:...``,
+# ``optional<...>`` or ``list<...class...>`` (but NOT a top-level ``union<...>``,
+# those are the auto-vivified SWML verb SETTERS, a different idiom class). These
+# are the namespace/composition accessors (``FabricNamespace.addresses``,
+# ``AgentBase.pom``) and the generated data-model FIELD accessors
+# (``AIObject.SWAIG``, ``PostPrompt.call_log``) every getter-idiom port exposes
+# explicitly. .NET ships them as public properties, so the SAME projection must
+# run on the .NET side or they read as ~200 phantom OMISSIONS.
+#
+# Two sources, mirroring how the reference derives them:
+#   1. From the .NET SIGNATURE oracle (port_signatures.json) -- the class-typed
+#      self-only members it already records (REST namespace accessors, AgentBase.
+#      pom, ...). Same gate as the reference (_is_composition_return).
+#   2. From the SCHEMAS the generators consume -- the generated DTO models
+#      (SwmlVerbs / PostPrompt / SwaigRequest) are emitted with lowercase,
+#      wire-verbatim property names the PascalCase parser cannot see; their
+#      composition members are exactly the schema fields that reference a local
+#      ``$ref`` model (bare or under array ``items``), excluding top-level
+#      unions and python-reserved-keyword field names -- reproducing the oracle's
+#      set for these modules EXACTLY.
+
+def _is_composition_return(ret: object) -> bool:
+    """Self-only member returning an SDK class -- bare/optional/list<...class...>,
+    but NOT a top-level ``union<...>``. Mirrors enumerate_python."""
+    if not isinstance(ret, str):
+        return False
+    if ret.startswith("union<"):
+        return False
+    return "class:signalwire." in ret
+
+
+def _enrich_composition_attributes(modules: "dict[str, dict]", signatures_path: Path) -> None:
+    """Import self-only class-returning members from the .NET signature oracle into
+    the surface (in-place). Idempotent; no-op if the signature oracle is absent."""
+    if not signatures_path.is_file():
+        return
+    try:
+        sig = json.loads(signatures_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    for mod, sinv in sig.get("modules", {}).items():
+        for cls, sce in sinv.get("classes", {}).items():
+            smethods = sce.get("methods", {})
+            if not isinstance(smethods, dict):
+                continue
+            comp = [
+                m for m, msig in smethods.items()
+                if isinstance(msig, dict)
+                and [p for p in msig.get("params", []) if p.get("kind") != "self"] == []
+                and _is_composition_return(msig.get("returns"))
+            ]
+            if not comp:
+                continue
+            surf_mod = modules.setdefault(mod, {"classes": {}, "functions": []})
+            existing = surf_mod.setdefault("classes", {}).get(cls)
+            if existing is None:
+                surf_mod["classes"][cls] = sorted(comp)
+            else:
+                surf_mod["classes"][cls] = sorted(set(existing) | set(comp))
+
+
+def _load_generate_rest():
+    import importlib.util
+    here = Path(__file__).resolve().parent
+    spec = importlib.util.spec_from_file_location("generate_rest", here / "generate_rest.py")
+    if spec is None or spec.loader is None:
+        return None
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+    except Exception as exc:  # pragma: no cover
+        # DO NOT swallow this silently. generate_rest.py requires PyYAML, and when it is
+        # absent this import raises ModuleNotFoundError; returning None then makes
+        # _oracle_surface_members() fall back to an EMPTY oracle, which drops 266
+        # oracle-gated members and surfaces as "311 Python symbol(s) missing from port"
+        # — a phantom count that accuses the port instead of naming the missing
+        # dependency. That cost a full CI investigation on 2026-07-26 precisely because
+        # a dev box has PyYAML and the CI interpreter did not.
+        #
+        # Kept non-fatal (the caller's pre-fold fallback is a real, if degraded, mode)
+        # but now LOUD on stderr, so the cause is in the log the first time it happens.
+        print(
+            f"enumerate_surface: WARNING — could not load generate_rest.py "
+            f"({type(exc).__name__}: {exc}). The reference oracle will NOT be consulted, "
+            f"so oracle-gated @dataclass/B2 fields will not emit and the surface diff "
+            f"will report them as missing from the port. If this is ModuleNotFoundError "
+            f"for 'yaml', install PyYAML (pip install pyyaml).",
+            file=sys.stderr,
+        )
+        return None
+    return mod
+
+
+def _local_ref(node: object) -> bool:
+    ref = node.get("$ref") if isinstance(node, dict) else None
+    return isinstance(ref, str) and ref.startswith("#/")
+
+
+def _items_reference_local(node: object) -> bool:
+    if not isinstance(node, dict):
+        return False
+    if _local_ref(node):
+        return True
+    for k in ("anyOf", "oneOf", "allOf"):
+        for branch in node.get(k, []) or []:
+            if _items_reference_local(branch):
+                return True
+    inner = node.get("items")
+    return isinstance(inner, dict) and _items_reference_local(inner)
+
+
+def _schema_field_is_composition(psc: object) -> bool:
+    """A schema property is a composition member iff its type is a local class-ref:
+    a bare ``$ref`` to a local model, or an array whose ``items`` reference one
+    (directly or via a nested anyOf/oneOf/allOf). A TOP-LEVEL anyOf/oneOf/allOf is
+    a union<...> return and is EXCLUDED (verb-setter idiom)."""
+    if not isinstance(psc, dict):
+        return False
+    if _local_ref(psc):
+        return True
+    items = psc.get("items")
+    return isinstance(items, dict) and _items_reference_local(items)
+
+
+def _comp_members_from_props(props) -> "set[str]":
+    import keyword
+    return {
+        name for name, psc in (props or {}).items()
+        if _schema_field_is_composition(psc) and not keyword.iskeyword(name)
+    }
+
+
+def _generated_model_composition_members(psdk: Path, GR) -> "dict[str, dict]":
+    """Compute ``{oracle_module: {ClassName: [composition members]}}`` for the three
+    generated data-model modules whose C# properties are lowercase/wire-verbatim (so
+    the PascalCase parser cannot see them). Derived from the SAME schemas the
+    generators read -- schema.json ($defs) for SWML verbs, and the vendored
+    swaig-specs yaml for post-prompt / swaig-request -- so the set reproduces the
+    reference oracle EXACTLY. Returns empty on any missing input."""
+    out: "dict[str, dict]" = {}
+    if GR is None:
+        return out
+
+    def _add(mod: str, cls: str, members) -> None:
+        if members:
+            out.setdefault(mod, {}).setdefault(cls, sorted(members))
+
+    # --- 1. SWML verbs: porting-sdk/schema.json $defs ------------------------
+    schema_path = psdk / "schema.json"
+    if schema_path.is_file():
+        try:
+            defs = json.loads(schema_path.read_text(encoding="utf-8")).get("$defs", {})
+        except (OSError, json.JSONDecodeError):
+            defs = {}
+        SW_MOD = "signalwire.core.swml_verbs_generated"
+        for raw, node in defs.items():
+            if isinstance(node, dict) and GR.is_object_schema(node):
+                _add(SW_MOD, GR.type_name(raw),
+                     _comp_members_from_props(node.get("properties")))
+        hand = {"answer", "hangup", "ai", "play", "say"}
+        sm = defs.get("SWMLMethod")
+        if isinstance(sm, dict):
+            for ref in sm.get("anyOf") or []:
+                wrapper = (ref.get("$ref", "") or "").rsplit("/", 1)[-1]
+                wdef = defs.get(wrapper)
+                if not isinstance(wdef, dict) or not (wdef.get("properties") or {}):
+                    continue
+                verb = next(iter(wdef["properties"].keys()))
+                if verb in hand:
+                    continue
+                inner = wdef["properties"][verb]
+                if not isinstance(inner, dict):
+                    continue
+                if inner.get("type") == "string" or inner.get("$ref"):
+                    continue
+                has_inline = inner.get("type") == "object" and bool(inner.get("properties"))
+                if not inner.get("oneOf") and not has_inline:
+                    continue
+                props: dict = {}
+                if inner.get("oneOf"):
+                    for b in inner["oneOf"]:
+                        if isinstance(b, dict) and b.get("$ref"):
+                            d = defs.get(b["$ref"].rsplit("/", 1)[-1], {})
+                            props.update((d.get("properties") if isinstance(d, dict) else {}) or {})
+                        elif isinstance(b, dict):
+                            props.update(b.get("properties") or {})
+                else:
+                    props.update(inner.get("properties") or {})
+                if not props:
+                    continue
+                pascal = "".join(w[:1].upper() + w[1:] for w in re.split(r"[._\-\s]", verb) if w)
+                _add(SW_MOD, GR.type_name(pascal + "Config"), _comp_members_from_props(props))
+
+    # --- 2. post-prompt + swaig-request: vendored swaig-specs yaml -----------
+    try:
+        import yaml  # type: ignore
+    except ImportError:
+        yaml = None
+    specs = psdk / "swaig-specs"
+    if yaml is not None and specs.is_dir():
+        def _schemas(fn: str) -> dict:
+            p = specs / fn
+            if not p.is_file():
+                return {}
+            doc = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+            return (doc.get("components", {}) or {}).get("schemas", {}) or {}
+
+        for raw, node in _schemas("post-prompt.yaml").items():
+            if isinstance(node, dict) and GR.is_object_schema(node):
+                _add("signalwire.core.post_prompt_generated", GR.type_name(raw),
+                     _comp_members_from_props(node.get("properties")))
+        sr = _schemas("swaig-request.yaml").get("SwaigRequest")
+        if isinstance(sr, dict):
+            SR_MOD = "signalwire.core.swaig_request_generated"
+            props = dict(sr.get("properties") or {})
+            arg = props.get("argument")
+            if isinstance(arg, dict) and arg.get("properties"):
+                props["argument"] = {"$ref": "#/components/schemas/SwaigArgument"}
+                _add(SR_MOD, "SwaigArgument", _comp_members_from_props(arg.get("properties")))
+            _add(SR_MOD, "SwaigRequest", _comp_members_from_props(props))
+    return out
+
+
+def _emit_generated_model_members(modules: "dict[str, dict]", psdk: Path, GR) -> None:
+    """Merge the schema-driven composition members onto the (currently method-less)
+    generated-model surface classes, in-place."""
+    for mod, classes in _generated_model_composition_members(psdk, GR).items():
+        surf_mod = modules.setdefault(mod, {"classes": {}, "functions": []})
+        for cls, members in classes.items():
+            existing = surf_mod.setdefault("classes", {}).get(cls, [])
+            surf_mod["classes"][cls] = sorted(set(existing) | set(members))
+
+
+def _emit_crud_bases(manifest: dict) -> "dict[str, dict]":
+    """Top-level ``crud_bases`` map ({"module.Class": {base, bind:[...]}}) for the
+    spec-driven REST parity fold -- re-keyed from the generator manifest's bare
+    class names to the oracle's ``<module>.<Class>`` form via ``class_module``."""
+    cb = manifest.get("crud_bases") or {}
+    class_module = manifest.get("class_module") or {}
+    out: "dict[str, dict]" = {}
+    for cls, binding in cb.items():
+        mod = class_module.get(cls)
+        if not mod:
+            continue
+        out[f"{_REST_MODULE_PREFIX}.{mod}.{cls}"] = binding
+    return out
+
+
 def build_snapshot(repo: Path, src_dir: Path) -> dict:
     modules: dict[str, dict] = {}
     rest_manifest = load_rest_manifest()
@@ -1440,6 +1866,12 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             # oracle. Drop them from the surface (their fields reconcile in the
             # method signatures). See AICHAT_OPTIONS_CLASSES.
             if class_name in AICHAT_OPTIONS_CLASSES:
+                continue
+            # Construction options classes (AgentOptions / ServiceOptions): the
+            # same idiom applied to constructors. Their properties reconcile in
+            # the construction contract, not as surface symbols. See
+            # CONSTRUCTION_OPTIONS_CLASSES.
+            if class_name in CONSTRUCTION_OPTIONS_CLASSES:
                 continue
             # Generated-REST projection (item A/B): the classes under
             # SignalWire.REST.Namespaces.Generated project onto the oracle's
@@ -1477,20 +1909,28 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             # Free-function helper classes (item H/I): a C# static helper class
             # whose methods are the reference's MODULE-LEVEL free functions.
             # Route the methods to the module's functions[] and DO NOT emit the
-            # class (Python has no such class).
+            # class (Python has no such class) — unless the spec sets
+            # ``keep_class``, in which case only the named methods are projected
+            # off it (a re-export fold) and the class keeps its remaining members.
             if class_name in FREE_FUNCTION_CLASSES:
                 spec = FREE_FUNCTION_CLASSES[class_name]
                 aliases = spec.get("aliases", {})
                 keep = spec.get("keep")
                 fns = []
+                projected = set()
                 for m in methods:
                     snake = pascal_to_snake(m)
                     snake = aliases.get(snake, snake)
                     if keep is not None and snake not in keep:
                         continue
                     fns.append(snake)
+                    projected.add(m)
                 merge_module_functions(modules, spec["module"], fns)
-                continue
+                if not spec.get("keep_class"):
+                    continue
+                # Re-export fold: strip the projected members and fall through so
+                # the class is still emitted with whatever remains.
+                methods = [m for m in methods if m not in projected]
 
             # Apply CLASS_RENAME_MAP
             if (namespace, class_name) in CLASS_RENAME_MAP:
@@ -1533,10 +1973,38 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
 
             # Method allowlist: drop idiomatic data-properties for classes with
             # a fixed reference contract (kept dunders like __init__ survive if
-            # in the allowlist). Relay event classes -> from_payload only.
+            # in the allowlist).
+            #
+            # FIELD-idiom emission (fold-branch oracle): the relay Event classes,
+            # AI-Chat response DTOs, and RequestOptions now carry public @dataclass
+            # FIELDS on the oracle surface. dotnet exposes these as C# properties;
+            # gate emission on the oracle's per-class member set so exactly the
+            # reference fields surface (union the fixed allowlist so injected
+            # dunders like __init__ / __aenter__ still survive).
+            _oracle_mods = _oracle_surface_members()
+            _oracle_cls_members = _oracle_mods.get(target_mod, {}).get(target_class)
             allow = SURFACE_METHOD_ALLOWLIST.get((target_mod, target_class))
-            if allow is not None:
-                translated &= allow
+            if (target_mod == "signalwire.relay.event"
+                    and _oracle_cls_members is not None):
+                # Intersect parsed members with the oracle set (drops port-only
+                # helpers, keeps the @dataclass fields + from_payload).
+                translated &= _oracle_cls_members
+            elif (target_mod, target_class) in _DATACLASS_FIELD_CLASSES \
+                    and _oracle_cls_members is not None:
+                # AI-Chat DTOs (positional records → params not parsed) + the
+                # RequestOptions record: the oracle surface member set IS the exact
+                # field contract (e.g. RequestOptions -> {abort_signal, merge,
+                # retries, retry_backoff, retry_on_status, timeout}). Emit it
+                # verbatim — the port genuinely carries each field as a record
+                # param / public property.
+                translated = set(_oracle_cls_members)
+            elif allow is not None:
+                # ORACLE-GATED: the hand-written set is a ceiling unioned with
+                # whatever the oracle records for the class, so a B2 __init__
+                # attribute the port genuinely exposes is never stripped.
+                translated = apply_member_allowlist(
+                    translated, allow, target_mod, target_class
+                )
             elif target_mod == "signalwire.relay.event":
                 translated &= _RELAY_EVENT_ONLY
 
@@ -1581,9 +2049,10 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     if "signalwire.core.swml_service" in modules:
         swml_classes = modules["signalwire.core.swml_service"]["classes"]
         if "SWMLService" in swml_classes:
-            swml_classes["SWMLService"] = sorted(
-                set(swml_classes["SWMLService"]) & _SWML_SERVICE_ALLOW
-            )
+            swml_classes["SWMLService"] = sorted(apply_member_allowlist(
+                set(swml_classes["SWMLService"]), _SWML_SERVICE_ALLOW,
+                "signalwire.core.swml_service", "SWMLService",
+            ))
 
     # Relay Action control surface: the oracle projects stop/pause/resume/volume
     # directly onto each concrete action. `stop` lives on the shared C# Action
@@ -1649,14 +2118,39 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     if TOPLEVEL_FUNCTION_NAMES:
         merge_module_functions(modules, "signalwire", TOPLEVEL_FUNCTION_NAMES)
 
-    # RequestOptions (plan 4.2) surface == the reference's: ONLY merge(). .NET's
-    # record exposes abort_signal (and the other fields) as public properties, but
-    # Python's surface lists only merge() — the dataclass fields are not surface
-    # symbols (nor in go/ts/ruby/java). Reduce to the reference-canonical surface;
-    # the fields still reconcile at the signatures layer. Keeps the fleet uniform.
-    _ro = modules.get("signalwire.rest._request_options", {}).get("classes", {})
-    if "RequestOptions" in _ro:
-        _ro["RequestOptions"] = ["merge"]
+    # RequestOptions surface == the reference's. The fold-branch oracle (HEAD
+    # 7693802) now records ALL @dataclass fields as surface — abort_signal + merge
+    # PLUS the scalar fields timeout/retries/retry_backoff/retry_on_status. dotnet
+    # exposes each as a public record property, so the emission above (gated on the
+    # oracle member set) already produced the exact field contract; nothing to
+    # override here. (Historical note: pre-fold this force-reset to
+    # ``[abort_signal, merge]`` because the scalar fields were not surface — that
+    # is no longer correct under the field-emitting oracle.)
+
+    # ------------------------------------------------------------------
+    # Composition-attribute + generated-model field-accessor enrichment
+    # (porting-sdk fold-branch class B1). Runs LAST so it augments the
+    # parsed surface with the class-typed self-only members every getter-
+    # idiom port exposes but the PascalCase parser cannot resolve. See the
+    # helper docstrings above.
+    # ------------------------------------------------------------------
+    # 1. Import class-typed self-only members from the .NET signature oracle
+    #    (REST namespace accessors, AgentBase.pom, ...).
+    _enrich_composition_attributes(modules, repo / "port_signatures.json")
+    # 2. Generated data-model FIELD accessors (SwmlVerbs / PostPrompt /
+    #    SwaigRequest), derived from the SAME schemas the generators read so
+    #    the set reproduces the reference oracle exactly.
+    _GR = _load_generate_rest()
+    _psdk = None
+    if _GR is not None:
+        try:
+            _psdk = _GR.resolve_porting_sdk()
+        except SystemExit:
+            _psdk = None
+    if _psdk is not None:
+        _emit_generated_model_members(modules, _psdk, _GR)
+    # 3. Top-level crud_bases map (spec-driven REST parity fold).
+    crud_bases = _emit_crud_bases(rest_manifest)
 
     # Sort module dict deterministically
     sorted_modules = {k: modules[k] for k in sorted(modules.keys())}
@@ -1667,11 +2161,14 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
         if v["classes"] or v["functions"]
     }
 
-    return {
+    snapshot = {
         "version": "1",
         "generated_from": f"signalwire-dotnet @ {git_sha(repo)}",
         "modules": sorted_modules,
     }
+    if crud_bases:
+        snapshot["crud_bases"] = crud_bases
+    return snapshot
 
 
 def build_native_names(repo: Path, src_dir: Path) -> dict:

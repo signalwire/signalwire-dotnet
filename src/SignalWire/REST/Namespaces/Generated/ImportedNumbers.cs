@@ -21,9 +21,9 @@ public class ImportedNumbers
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public ImportedNumbers(SignalWire.REST.HttpClient client)
+    public ImportedNumbers(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

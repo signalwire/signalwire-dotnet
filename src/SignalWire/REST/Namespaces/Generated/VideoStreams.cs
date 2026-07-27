@@ -21,9 +21,9 @@ public class VideoStreams
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public VideoStreams(SignalWire.REST.HttpClient client)
+    public VideoStreams(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

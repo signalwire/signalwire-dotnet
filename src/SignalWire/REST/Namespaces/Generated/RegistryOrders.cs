@@ -21,9 +21,9 @@ public class RegistryOrders
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public RegistryOrders(SignalWire.REST.HttpClient client)
+    public RegistryOrders(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

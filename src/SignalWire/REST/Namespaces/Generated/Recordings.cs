@@ -21,9 +21,9 @@ public class Recordings
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public Recordings(SignalWire.REST.HttpClient client)
+    public Recordings(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

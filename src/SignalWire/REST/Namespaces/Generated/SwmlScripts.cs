@@ -19,8 +19,8 @@ namespace SignalWire.REST.Namespaces.Generated;
 /// </summary>
 public class SwmlScripts : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namespaces.Generated.Types.Fabric.SwmlScriptListResponse, SignalWire.REST.Namespaces.Generated.Types.Fabric.SwmlScriptResponse>
 {
-    public SwmlScripts(SignalWire.REST.HttpClient client)
-        : base(client, "/api/fabric/resources/swml_scripts")
+    public SwmlScripts(SignalWire.REST.HttpClient http)
+        : base(http, "/api/fabric/resources/swml_scripts")
     {
     }
 }

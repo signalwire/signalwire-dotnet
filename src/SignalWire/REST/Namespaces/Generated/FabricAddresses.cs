@@ -21,9 +21,9 @@ public class FabricAddresses
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public FabricAddresses(SignalWire.REST.HttpClient client)
+    public FabricAddresses(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SignalWire.Core;
 using SignalWire.Logging;
 using SignalWire.SWAIG;
 
@@ -26,6 +27,30 @@ public sealed class ServiceOptions
     public int? Port { get; init; }
     public string? BasicAuthUser { get; init; }
     public string? BasicAuthPassword { get; init; }
+
+    /// <summary>
+    /// Optional path to the SWML schema file. When null the service uses the
+    /// schema bundled with the assembly. (equivalent to Python's
+    /// <c>SWMLService.__init__(schema_path=...)</c>.)
+    /// </summary>
+    public string? SchemaPath { get; init; }
+
+    /// <summary>
+    /// Optional path to a JSON configuration file. When null the service
+    /// discovers one by service name via <see cref="Core.ConfigLoader.FindConfigFile"/>.
+    /// Feeds the unified <see cref="Core.SecurityConfig"/> (SSL, basic-auth,
+    /// CORS, rate limits). (equivalent to Python's
+    /// <c>SWMLService.__init__(config_file=...)</c>.)
+    /// </summary>
+    public string? ConfigFile { get; init; }
+
+    /// <summary>
+    /// Enable SWML schema validation. Default true. Can also be disabled via
+    /// the <c>SWML_SKIP_SCHEMA_VALIDATION=1</c> env var; an explicit false
+    /// here wins regardless of the env var. (equivalent to Python's
+    /// <c>SWMLService.__init__(schema_validation=...)</c>.)
+    /// </summary>
+    public bool SchemaValidation { get; init; } = true;
 }
 
 /// <summary>
@@ -51,6 +76,17 @@ public class Service
     private readonly string _basicAuthPassword;
     private readonly Dictionary<string, Func<Dictionary<string, object?>?, Dictionary<string, string>, object?>> _routingCallbacks = new();
 
+    // Schema validation toggle. Mirrors Python's SchemaUtils._validation_enabled:
+    // `schema_validation and not env_skip` — an explicit false in code disables
+    // validation, and SWML_SKIP_SCHEMA_VALIDATION=1 disables it as well.
+    private readonly bool _schemaValidation;
+
+    // Resolved config-file path (explicit, else discovered by service name) and
+    // the unified security configuration it feeds. Mirrors Python's
+    // `self.security = SecurityConfig(config_file=..., service_name=name)`.
+    private readonly string? _configFile;
+    private readonly string? _schemaPath;
+
     // SWAIG tool registry — lifted from AgentBase so any Service (sidecar,
     // non-agent verb host) can register and dispatch SWAIG functions.
     [SuppressMessage("Design", "CA1051", Justification = "Mutable SWAIG registry shared with the AgentBase subclass (reassigned during clone); intentional protected field.")]
@@ -64,6 +100,27 @@ public class Service
     public string Route { get; }
     public string Host { get; }
     public int Port { get; }
+
+    /// <summary>Unified security configuration (SSL, basic auth, CORS, rate
+    /// limits) loaded from defaults, environment, then the config file.
+    /// (equivalent to Python's <c>SWMLService.security</c>.)</summary>
+    public SecurityConfig Security { get; }
+
+    // The resolved config-file path, the explicit schema path, and the
+    // effective validation flag mirror attributes the reference keeps PRIVATE
+    // (`self._schema_validation`; config_file/schema_path are consumed into
+    // `security` / `schema_utils` rather than re-exposed). Exposed `internal`
+    // so the SDK and its tests can observe the forwarding without inventing
+    // public surface the reference does not have.
+    internal string? ConfigFile => _configFile;
+
+    internal string? SchemaPath => _schemaPath;
+
+    /// <summary>True when SWML schema validation is enabled for this service.
+    /// False when disabled via <c>SchemaValidation = false</c> or the
+    /// <c>SWML_SKIP_SCHEMA_VALIDATION</c> env var. (equivalent to Python's
+    /// private <c>SchemaUtils._validation_enabled</c>.)</summary>
+    internal bool SchemaValidationEnabled => _schemaValidation;
     [SuppressMessage("Naming", "CA1721", Justification = "get_document matches the cross-port SWMLService surface (distinct from the Document property).")]
     public Document Document { get; }
 
@@ -80,7 +137,26 @@ public class Service
         Document = new Document();
         _logger = Logger.GetLogger("swml_service");
 
-        // Auth: explicit > env > auto-generated
+        _schemaPath = options.SchemaPath;
+
+        // Schema validation: explicit false in code wins; SWML_SKIP_SCHEMA_VALIDATION
+        // can also disable it. Mirrors Python's
+        // `self._validation_enabled = schema_validation and not env_skip`.
+        var envSkipRaw = (Environment.GetEnvironmentVariable("SWML_SKIP_SCHEMA_VALIDATION") ?? "").Trim();
+        var envSkip = envSkipRaw.Equals("1", StringComparison.Ordinal)
+            || envSkipRaw.Equals("true", StringComparison.OrdinalIgnoreCase)
+            || envSkipRaw.Equals("yes", StringComparison.OrdinalIgnoreCase);
+        _schemaValidation = options.SchemaValidation && !envSkip;
+
+        // Unified security configuration from the config file. Mirrors Python's
+        // `self.security = SecurityConfig(config_file=config_file, service_name=name)`
+        // — an explicit path is used as-is, otherwise one is discovered by
+        // service name (`<name>_config.json`, `.swml/config.json`, …).
+        Security = new SecurityConfig(options.ConfigFile, options.Name);
+        _configFile = options.ConfigFile ?? ConfigLoader.FindConfigFile(options.Name);
+
+        // Auth: explicit > config file / env (SecurityConfig applies env first,
+        // then the config file at higher priority) > auto-generated.
         bool passwordAutoGenerated = false;
         if (options.BasicAuthUser is not null && options.BasicAuthPassword is not null)
         {
@@ -89,8 +165,10 @@ public class Service
         }
         else
         {
-            var envUser = Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_USER");
-            var envPass = Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_PASSWORD");
+            var envUser = Security.BasicAuthUser
+                ?? Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_USER");
+            var envPass = Security.BasicAuthPassword
+                ?? Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_PASSWORD");
 
             if (envUser is not null && envPass is not null)
             {
@@ -319,6 +397,12 @@ public class Service
     /// </summary>
     private void ValidateVerbConfig(string verbName, object? config)
     {
+        // Validation disabled (ServiceOptions.SchemaValidation = false, or
+        // SWML_SKIP_SCHEMA_VALIDATION set) — skip every check, matching Python's
+        // `if not self._validation_enabled: return True, []` early-out in both
+        // validate_verb and validate_verb_top_level_keys.
+        if (!_schemaValidation) return;
+
         // sleep takes a bare integer value — a valid direct-value verb.
         if (verbName == "sleep" && config is int)
         {
@@ -385,8 +469,8 @@ public class Service
 
     /// <summary>True when full JSON-Schema validation is available/enabled
     /// (the embedded SWML schema loaded and has verb definitions).</summary>
-    [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SWMLService surface; binding it to the instance is intentional.")]
-    public bool FullValidationEnabled() => Schema.Instance.FullValidationAvailable();
+    public bool FullValidationEnabled() =>
+        _schemaValidation && Schema.Instance.FullValidationAvailable();
 
     // ------------------------------------------------------------------
     // Web-serving lifecycle (WebMixin / SWMLService parity)

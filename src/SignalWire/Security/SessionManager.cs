@@ -6,41 +6,47 @@ namespace SignalWire.Security;
 
 /// <summary>
 /// Generates and validates HMAC-SHA256 signed session tokens for SWAIG function calls.
-/// Each instance holds an independent 32-byte random secret.
+/// Each instance holds an independent secret key.
 /// </summary>
 public sealed class SessionManager
 {
     /// <summary>Default token lifetime in seconds.</summary>
     public const int DefaultExpiry = 3600;
 
-    private readonly byte[] _secret;
     private readonly int _tokenExpirySecs;
 
     /// <summary>
     /// Create a session manager. When <paramref name="secretKey"/> is supplied
-    /// it is used verbatim (UTF-8) as the HMAC signing key — enabling
-    /// cross-port token interop with a shared key; otherwise a fresh 32-byte
-    /// random secret is generated. Mirrors signalwire-python's
-    /// <c>SessionManager(token_expiry_secs, secret_key)</c>.
+    /// it is used verbatim as the HMAC signing key (its UTF-8 bytes) — enabling
+    /// cross-port token interop with a shared key; otherwise a fresh random key
+    /// is generated as a 64-character lowercase hex string, exactly as the
+    /// reference's <c>secrets.token_hex(32)</c> default does. Mirrors
+    /// signalwire-python's <c>SessionManager(token_expiry_secs, secret_key)</c>.
     /// </summary>
     /// <param name="tokenExpirySecs">Token lifetime in seconds.</param>
-    /// <param name="secretKey">Optional explicit signing key (UTF-8).</param>
+    /// <param name="secretKey">Optional explicit signing key.</param>
     public SessionManager(int tokenExpirySecs = DefaultExpiry, string? secretKey = null)
     {
         _tokenExpirySecs = tokenExpirySecs;
-        if (secretKey is not null)
-        {
-            _secret = Encoding.UTF8.GetBytes(secretKey);
-        }
-        else
-        {
-            _secret = new byte[32];
-            RandomNumberGenerator.Fill(_secret);
-        }
+        // The reference keys the HMAC with the secret_key STRING's bytes
+        // (``self.secret_key.encode()``, session_manager.py:79,152) and defaults
+        // it to ``secrets.token_hex(32)`` — a 64-char hex STRING, not 32 raw
+        // bytes. Generating raw bytes here would make this port's default-key
+        // tokens un-reproducible by the reference and by every other port, and
+        // would leave nothing to read back through ``SecretKey``.
+        SecretKey = secretKey ?? RandomHex(32);
     }
 
-    /// <summary>Get the configured token expiry duration in seconds.</summary>
-    internal int TokenExpirySecs => _tokenExpirySecs;
+    /// <summary>
+    /// The HMAC signing key. Either the value supplied at construction or the
+    /// generated 64-character hex default. (equivalent to Python's
+    /// <c>secret_key</c>.)
+    /// </summary>
+    public string SecretKey { get; }
+
+    /// <summary>Get the configured token expiry duration in seconds.
+    /// (equivalent to Python's <c>token_expiry_secs</c>.)</summary>
+    public int TokenExpirySecs => _tokenExpirySecs;
 
     /// <summary>
     /// Create or confirm a session, returning the call ID.
@@ -209,7 +215,7 @@ public sealed class SessionManager
     private string ComputeHmac(string message)
     {
         var messageBytes = Encoding.UTF8.GetBytes(message);
-        var hashBytes = HMACSHA256.HashData(_secret, messageBytes);
+        var hashBytes = HMACSHA256.HashData(Encoding.UTF8.GetBytes(SecretKey), messageBytes);
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 

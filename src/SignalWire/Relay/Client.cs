@@ -28,6 +28,15 @@ public sealed class ClientOptions
     /// <summary>SignalWire API token.</summary>
     public string? Token { get; init; }
 
+    /// <summary>
+    /// A SignalWire JWT. When supplied, it authenticates on its own — the
+    /// project id is carried inside the token, so <see cref="Project"/> and
+    /// <see cref="Token"/> are not required. Falls back to the
+    /// <c>SIGNALWIRE_JWT_TOKEN</c> env var. (equivalent to Python's
+    /// <c>RelayClient(jwt_token=...)</c>, relay/client.py:166,173.)
+    /// </summary>
+    public string? JwtToken { get; init; }
+
     /// <summary>SignalWire space host (e.g. <c>example.signalwire.com</c>).
     /// Falls back to the <c>SIGNALWIRE_SPACE</c> env var.</summary>
     public string? Host { get; init; }
@@ -93,6 +102,12 @@ public class Client : IAsyncDisposable
     // -- identity / auth --
     public string Project { get; }
     public string Token { get; }
+
+    /// <summary>
+    /// The JWT this client authenticates with, if any. Empty when using
+    /// project/token auth. (equivalent to Python's <c>jwt_token</c>.)
+    /// </summary>
+    public string JwtToken { get; }
     public string Host { get; set; }
     public string Scheme { get; set; }
     private readonly List<string> _contexts = [];
@@ -215,6 +230,9 @@ public class Client : IAsyncDisposable
         Token = options.Token
             is { Length: > 0 } t ? t
             : Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN") ?? "";
+        JwtToken = options.JwtToken
+            is { Length: > 0 } j ? j
+            : Environment.GetEnvironmentVariable("SIGNALWIRE_JWT_TOKEN") ?? "";
 
         if (options.Contexts is { Count: > 0 } ctxs)
         {
@@ -313,17 +331,24 @@ public class Client : IAsyncDisposable
         // when only one is absent). Mirrors python relay/client.py:187-198. This
         // runs BEFORE any socket is opened, so an empty-credential client never
         // silently connects unauthenticated.
-        if (string.IsNullOrEmpty(Project))
+        // JWT auth stands alone: the project id is inside the token, so neither
+        // Project nor Token is required (relay/client.py:177-180).
+        if (string.IsNullOrEmpty(JwtToken))
         {
-            throw new InvalidOperationException(
-                "project is required. Pass Project=... (ClientOptions) or set the "
-                + "SIGNALWIRE_PROJECT_ID env var.");
-        }
-        if (string.IsNullOrEmpty(Token))
-        {
-            throw new InvalidOperationException(
-                "token is required. Pass Token=... (ClientOptions) or set the "
-                + "SIGNALWIRE_API_TOKEN env var.");
+            if (string.IsNullOrEmpty(Project))
+            {
+                throw new InvalidOperationException(
+                    "project is required. Pass Project=... (ClientOptions) or set the "
+                    + "SIGNALWIRE_PROJECT_ID env var (or use JwtToken / "
+                    + "SIGNALWIRE_JWT_TOKEN for JWT auth).");
+            }
+            if (string.IsNullOrEmpty(Token))
+            {
+                throw new InvalidOperationException(
+                    "token is required. Pass Token=... (ClientOptions) or set the "
+                    + "SIGNALWIRE_API_TOKEN env var (or use JwtToken / "
+                    + "SIGNALWIRE_JWT_TOKEN for JWT auth).");
+            }
         }
 
         var uri = BuildWebSocketUri();
@@ -378,21 +403,34 @@ public class Client : IAsyncDisposable
     {
         _logger.Info("Authenticating");
 
+        // JWT auth replaces the project/token pair entirely — the reference
+        // sends `{"jwt_token": ...}` as the whole authentication object
+        // (relay/client.py:398-401) and emits no project/token alongside it.
         var connectParams = new Dictionary<string, object?>
         {
             ["version"] = Constants.ProtocolVersion,
             ["agent"] = Agent,
             ["event_acks"] = true,
-            ["authentication"] = new Dictionary<string, object?>
+        };
+        if (!string.IsNullOrEmpty(JwtToken))
+        {
+            connectParams["authentication"] = new Dictionary<string, object?>
+            {
+                ["jwt_token"] = JwtToken,
+            };
+        }
+        else
+        {
+            connectParams["authentication"] = new Dictionary<string, object?>
             {
                 ["project"] = Project,
                 ["token"] = Token,
-            },
+            };
             // Top-level project/token mirrors the dual emission Python uses;
             // some fixtures parse from either location.
-            ["project"] = Project,
-            ["token"] = Token,
-        };
+            connectParams["project"] = Project;
+            connectParams["token"] = Token;
+        }
         if (Contexts.Count > 0)
         {
             connectParams["contexts"] = Contexts.ToList();
@@ -988,7 +1026,13 @@ public class Client : IAsyncDisposable
         if (eventType == "signalwire.authorization.state")
         {
             AuthorizationState = parms.GetValueOrDefault("authorization_state")?.ToString();
-            _logger.Info($"Authorization state: {AuthorizationState}");
+            // SECRET-SCRUB: log only that the blob was stored — NEVER its value. The
+            // server's `authorization_state` is a live re-auth credential: printing it
+            // here leaked it to any log at Info level, defeating the ScrubFrame masking
+            // applied to the raw frame two frames earlier. Mirrors the python reference
+            // (relay/client.py:1003 `logger.debug("Updated authorization_state for
+            // reconnection")` — value-free, and at debug not info).
+            _logger.Debug("Updated authorization_state for reconnection");
             return;
         }
 

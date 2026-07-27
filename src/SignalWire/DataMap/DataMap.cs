@@ -26,6 +26,10 @@ public class DataMap
         _functionName = functionName;
     }
 
+    /// <summary>The SWAIG function name this data map defines.
+    /// (equivalent to Python's <c>function_name</c>, data_map.py:72.)</summary>
+    public string FunctionName => _functionName;
+
     /// <summary>
     /// Set the LLM-facing tool description (the "purpose"). PROMPT
     /// ENGINEERING, not developer documentation.

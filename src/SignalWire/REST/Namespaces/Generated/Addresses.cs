@@ -21,9 +21,9 @@ public class Addresses
 {
     private readonly SignalWire.REST.HttpClient _client;
 
-    public Addresses(SignalWire.REST.HttpClient client)
+    public Addresses(SignalWire.REST.HttpClient http)
     {
-        _client = client;
+        _client = http;
     }
 
     /// <summary>The HTTP client this resource dispatches through.</summary>

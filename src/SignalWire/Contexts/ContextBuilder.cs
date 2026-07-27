@@ -83,6 +83,30 @@ public class GatherQuestion
 
     public string Key => _key;
 
+    /// <summary>The question text put to the caller.
+    /// (equivalent to Python's <c>question</c>.)</summary>
+    public string Question => _question;
+
+    /// <summary>The answer's expected type, defaulting to <c>"string"</c>.
+    /// (equivalent to Python's <c>type</c>.)</summary>
+    public string Type => _type;
+
+    /// <summary>Whether the answer must be confirmed back to the caller.
+    /// (equivalent to Python's <c>confirm</c>.)</summary>
+    public bool Confirm => _confirm;
+
+    /// <summary>An optional prompt override for this question.
+    /// (equivalent to Python's <c>prompt</c>.)</summary>
+    public string? Prompt => _prompt;
+
+    /// <summary>The SWAIG functions reachable while answering this question.
+    /// (equivalent to Python's <c>functions</c>.)</summary>
+    public IReadOnlyList<string>? Functions => _functions;
+
+    /// <summary>Tri-state isolation: null inherits the gather_info default.
+    /// (equivalent to Python's <c>isolated</c>.)</summary>
+    public bool? Isolated => _isolated;
+
     public Dictionary<string, object> ToDict()
     {
         var map = new Dictionary<string, object>

@@ -454,6 +454,60 @@ def _load_reference_sigs() -> dict[str, dict]:
 _REFERENCE_SIGS = _load_reference_sigs()
 
 
+def _load_reference_classes() -> set[str]:
+    """Every ``module.Class`` the reference signature oracle records.
+
+    Used by build_construction to tell a port-idiom options-object (a class the
+    reference does NOT have, invented to carry what Python passes as kwargs)
+    apart from a shared value type the reference DOES have and passes as one
+    parameter (``RequestOptions``). Only the former is unfolded.
+    """
+    py_path = PSDK / "python_signatures.json"
+    if not py_path.is_file():
+        return set()
+    try:
+        d = json.loads(py_path.read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+    return {
+        f"{mod}.{cls}"
+        for mod, mod_entry in d.get("modules", {}).items()
+        for cls in (mod_entry.get("classes") or {})
+    }
+
+
+_REFERENCE_CLASSES = _load_reference_classes()
+
+
+def _oracle_class_members(module: str, cls: str) -> set[str]:
+    """The exact member-name set the SIGNATURE oracle records on ``module.cls``
+    (drawn from ``_REFERENCE_SIGS``). Used to gate @dataclass FIELD emission for
+    the relay Event / AI-Chat DTO / RequestOptions classes so the port emits
+    EXACTLY the reference fields (never a port-internal helper the oracle lacks).
+    """
+    prefix = f"{module}.{cls}."
+    return {
+        key[len(prefix):] for key in _REFERENCE_SIGS
+        if key.startswith(prefix) and "." not in key[len(prefix):]
+    }
+
+
+# The @dataclass field-carrying classes whose public FIELDS the fold-branch
+# oracle (porting-sdk HEAD 7693802) now records as surface: every relay Event
+# subclass + base, the AI-Chat response DTOs, and RequestOptions. dotnet is a
+# FIELD-idiom port — the C# event classes carry the payload as public properties
+# (CallState/EndReason/…) and the AI-Chat/RequestOptions records carry positional
+# / block-bodied properties. Emit each oracle field member with its spliced
+# reference signature (a self-only zero-arg accessor returning the field type),
+# gated on _oracle_class_members so the set reproduces the oracle exactly.
+_DATACLASS_FIELD_CLASSES: frozenset[tuple[str, str]] = frozenset({
+    ("signalwire.ai_chat.client", "ConversationInfo"),
+    ("signalwire.ai_chat.client", "ChatResponse"),
+    ("signalwire.ai_chat.client", "ChatLog"),
+    ("signalwire.rest._request_options", "RequestOptions"),
+})
+
+
 def _reference_sig(module: str, cls: str, method: str) -> dict | None:
     """Return a copy of the reference signature for ``module.cls.method`` or
     None when the reference records no (dict) signature for it."""
@@ -737,6 +791,16 @@ def _cs_method_for(canon: str, reflected: dict) -> str:
 def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     out_modules: dict = {}
     failures: list = []
+    # "module.Class" -> {canonical_prop: {type, required}} for every SETTABLE
+    # public instance property. Feeds build_construction (§10).
+    settable_props: dict[str, dict[str, dict]] = {}
+    # "module.Class" -> native ("Namespace", "Name") of its immediate base, so
+    # build_construction can walk the chain for INHERITED init-settable
+    # properties (C# object-initializer syntax sets those too).
+    native_base: dict[str, tuple[str, str]] = {}
+    # native ("Namespace", "Name") -> canonical "module.Class", the index that
+    # resolves a base link onto the canonical key space.
+    native_to_canonical: dict[tuple[str, str], str] = {}
 
     # Generated-REST manifest (item A/B): drives the <ns>_resources_generated /
     # _client_tree_generated projection + the keyword/extras/var_keyword param
@@ -827,6 +891,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             target_mod = spec["module"]
             out_modules.setdefault(target_mod, {})
             out_modules[target_mod].setdefault("functions", {})
+            projected_names: set[str] = set()
             for m in type_entry.get("methods", []):
                 mn = m.get("name", "")
                 if mn == "__init__":
@@ -850,7 +915,17 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                     p for p in sig["params"] if p.get("kind") not in ("self", "cls")
                 ]
                 out_modules[target_mod]["functions"].setdefault(canon, sig)
-            continue
+                projected_names.add(mn)
+            if not spec.get("keep_class"):
+                continue
+            # Re-export fold (mirrors enumerate_surface): the projected members
+            # move to the module's free functions; the class is still emitted
+            # with whatever remains. Shallow-copy so the source entry is intact.
+            type_entry = dict(type_entry)
+            type_entry["methods"] = [
+                m for m in type_entry.get("methods", [])
+                if m.get("name", "") not in projected_names
+            ]
 
         # Resolve canonical (module, class) for this type
         rename = CLASS_RENAME_MAP.get((ns, name))
@@ -930,6 +1005,43 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                     ):
                         continue
             methods_out[method_canonical] = sig
+
+        # Construction contract (§10): index this type's canonical key and its
+        # base link, so build_construction can resolve the inheritance chain.
+        native_to_canonical[(ns, name)] = f"{target_module}.{target_class}"
+        _bt = type_entry.get("base_type")
+        if isinstance(_bt, dict) and _bt.get("name"):
+            native_base[f"{target_module}.{target_class}"] = (
+                _bt.get("namespace", ""), _bt["name"],
+            )
+
+        # Construction contract (ALLOWLIST_DISCIPLINE.md §10): record every
+        # SETTABLE public instance property with its canonical name, canonical
+        # type, and C# ``required`` flag. This is a SEPARATE walk from the
+        # methods-map emission below because that one skips a property whose
+        # canonical name is already taken by a real method — a construction
+        # parameter must not disappear because of a name collision on the
+        # methods side. build_construction() consumes this.
+        for p in type_entry.get("properties", []):
+            if p.get("is_static", False) or not p.get("can_write", False):
+                continue
+            pname = p.get("name", "")
+            pcanon = canonical_method_name(pname)
+            if pcanon is None:
+                continue
+            ctx = f"{target_module}.{target_class}.{pcanon}"
+            try:
+                ptype = translate_dotnet_type(p.get("type", ""), aliases, ctx + "[->]")
+            except TypeTranslationError:
+                # Already reported by the methods walk below; construction just
+                # skips what it cannot type.
+                continue
+            settable_props.setdefault(
+                f"{target_module}.{target_class}", {}
+            ).setdefault(pcanon, {
+                "type": ptype,
+                "required": bool(p.get("is_required", False)),
+            })
 
         # Properties → emit as zero-arg methods on the same class (matches
         # Python @property convention: name + (self), returning the type).
@@ -1045,14 +1157,27 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         if allow is None:
             allow = SURFACE_METHOD_ALLOWLIST.get((target_module, target_class))
         if allow is not None:
+            # ORACLE-GATED (class B2, 2026-07-26): both hand-written tables were
+            # written when the oracle did not enumerate a class's public
+            # __init__ attributes. It does now, so the set is a CEILING unioned
+            # with the SIGNATURE oracle's own member set for the class — an entry
+            # strips a name only while the oracle does not record it, and the
+            # table retires itself as the oracle grows. Without this a member the
+            # port genuinely exposes (SWAIGFunction.name, WebService.port,
+            # SignalWireRestError.status_code, …) is stripped back out and reads
+            # as MISSING, hiding a readback capability from .NET callers.
+            allow = allow | _oracle_class_members(target_module, target_class)
             methods_out = {k: v for k, v in methods_out.items() if k in allow}
         elif target_module == "signalwire.relay.event":
-            # The SIGNATURE reference records each event class with BOTH
-            # ``__init__`` (griffe-expanded dataclass fields) AND ``from_payload``
-            # (the @classmethod factory) — NOTE this differs from the SURFACE
-            # oracle, which records from_payload only. Keep exactly those two and
-            # drop the port's data-property accessors (Python sets those as
-            # instance attributes, not surface).
+            # The fold-branch SIGNATURE oracle records each event class with
+            # ``__init__`` (griffe-expanded dataclass fields), ``from_payload``
+            # (the @classmethod factory), AND one self-only accessor per public
+            # @dataclass FIELD (``call_state``/``end_reason``/…). dotnet is a
+            # FIELD-idiom port: its C# event classes carry the payload as public
+            # properties, so EMIT the oracle field members (gated on the oracle's
+            # per-class member set — never over-emitting a port-internal helper).
+            # Keep __init__ + from_payload from the reflected set, then splice the
+            # oracle field members.
             keep_event = {"from_payload", "__init__"}
             methods_out = {k: v for k, v in methods_out.items() if k in keep_event}
             # The reference records from_payload as a @classmethod: (cls, payload).
@@ -1063,6 +1188,29 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                 ref_fp = _reference_sig(target_module, target_class, "from_payload")
                 if ref_fp is not None:
                     methods_out["from_payload"] = ref_fp
+            # Emit the @dataclass field accessors with their exact oracle
+            # signatures (self-only, returning the field type). The C# class
+            # genuinely carries each as a public property; the oracle member set
+            # is the gate.
+            for _field in _oracle_class_members(target_module, target_class):
+                if _field in ("from_payload", "__init__"):
+                    continue
+                _ref_f = _reference_sig(target_module, target_class, _field)
+                if _ref_f is not None:
+                    methods_out[_field] = _ref_f
+
+        # AI-Chat DTO + RequestOptions @dataclass fields (FIELD-idiom emission):
+        # the allowlist above kept only __init__ (+ abort_signal/merge for
+        # RequestOptions); splice each remaining oracle FIELD member (the .NET
+        # records carry them as positional/block-bodied properties) so the
+        # signature surface reproduces the fold-branch oracle exactly.
+        if (target_module, target_class) in _DATACLASS_FIELD_CLASSES:
+            for _field in _oracle_class_members(target_module, target_class):
+                if _field in methods_out:
+                    continue
+                _ref_f = _reference_sig(target_module, target_class, _field)
+                if _ref_f is not None:
+                    methods_out[_field] = _ref_f
 
         if not methods_out:
             continue
@@ -1133,8 +1281,12 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     # pool). Mirrors enumerate_surface's _SWML_SERVICE_ALLOW post-process.
     swml_svc = out_modules.get("signalwire.core.swml_service", {}).get("classes", {}).get("SWMLService")
     if swml_svc is not None:
+        # ORACLE-GATED, same as the per-class allowlists above.
+        _svc_allow = _SWML_SERVICE_ALLOW | _oracle_class_members(
+            "signalwire.core.swml_service", "SWMLService"
+        )
         swml_svc["methods"] = {
-            k: v for k, v in swml_svc["methods"].items() if k in _SWML_SERVICE_ALLOW
+            k: v for k, v in swml_svc["methods"].items() if k in _svc_allow
         }
 
     # Relay Action control surface: the oracle projects stop/pause/resume/volume
@@ -1404,7 +1556,165 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         "version": "2",
         "generated_from": "SignalWire.dll via SignatureDump (System.Reflection)",
         "modules": sorted_modules,
+        "construction": build_construction(
+            sorted_modules, settable_props, native_base, native_to_canonical,
+        ),
     }, failures
+
+
+# ---------------------------------------------------------------------------
+# Construction contract (porting-sdk ALLOWLIST_DISCIPLINE.md §10)
+# ---------------------------------------------------------------------------
+
+# .NET expresses a wide many-optional-arg constructor as an OPTIONS OBJECT: the
+# reference's ``AgentBase.__init__(name, route, host, port, …)`` becomes
+# ``new AgentBase(new AgentOptions { Name = …, Route = … })``. The options
+# object's init-settable properties ARE the construction parameter set — same
+# capability, different binding — so they satisfy the construction contract
+# rather than being N port-only additions plus one blanket ``__init__``
+# signature omission.
+#
+# The binding is DERIVED, not hand-listed: a ctor parameter whose canonical type
+# is a ``class:`` reference to an options class is unfolded into that class's
+# settable properties. That keeps a newly-added options class wired
+# automatically instead of silently dropping out of the contract the way a
+# hardcoded table would.
+#
+# BUT the discriminator is the REFERENCE, not the name. ``RequestOptions`` also
+# ends in ``Options`` and is also passed as a single ctor param — and it is a
+# class the REFERENCE ITSELF records, both as a module class and in its own
+# construction contract (``RestClient(request_options=RequestOptions(...))``).
+# It is shared surface, not a port-idiom binding vehicle, so unfolding it would
+# destroy a real identity: it manufactures 5 phantom extra-params on RestClient
+# and a phantom missing ``request_options``. An options class is a binding
+# vehicle exactly when the reference has NO class of that name — which is the
+# definition of "this spelling exists only because .NET needs somewhere to put
+# what Python passes as kwargs".
+_OPTIONS_CLASS_SUFFIX = "Options"
+
+# Ctor params that are port-internal construction plumbing rather than a
+# configurable the reference offers: the DI/runtime handles a caller never
+# names as configuration.
+_CTOR_NON_PARAMS = frozenset({"self", "cls"})
+
+
+def _unwrap_class_ref(canon_type: str) -> str | None:
+    """Return the ``module.Class`` inside a canonical ``class:`` type, else None.
+
+    Handles the ``optional<...>`` wrapper, because an options object is very
+    often accepted as a nullable parameter (``Client(ClientOptions? options =
+    null)``) — the options are no less the construction contract for being
+    omissible as a whole.
+    """
+    t = canon_type or ""
+    while t.startswith("optional<") and t.endswith(">"):
+        t = t[len("optional<"):-1]
+    if t.startswith("class:"):
+        return t[len("class:"):]
+    return None
+
+
+def build_construction(
+    modules: dict,
+    settable_props: dict[str, dict[str, dict]],
+    native_base: dict[str, tuple[str, str]] | None = None,
+    native_to_canonical: dict[tuple[str, str], str] | None = None,
+) -> dict:
+    """Return ``{"module.Class": {"params": {name: {type, required}}}}``.
+
+    A NAME-KEYED set — order/arity/mechanism are idiom, the named set is the
+    capability (ALLOWLIST_DISCIPLINE.md §10). Three sources, in precedence
+    order:
+
+      1. the class's own ``__init__`` params;
+      2. for each ctor param that IS an options object, that options class's
+         settable properties, spliced in place of the single ``options`` param —
+         this is the .NET options-object idiom, and those properties are the
+         real configurables;
+      3. for a class whose ctor takes no parameters at all, its own settable
+         properties — the payload-populated data-object idiom the RELAY event
+         classes use (``new CallStateEvent { CallState = … }`` /
+         ``FromPayload``), where object-initializer properties are the only
+         construction surface there is.
+
+    ``required`` is the C# ``required`` modifier as captured by SignatureDump
+    (a ctor param without a default is likewise required). It is compared by the
+    diff and must not vary between ports (owner ruling 2026-07-24): defaulting a
+    required reference param silently accepts an under-specified construction.
+    """
+    out: dict = {}
+    native_base = native_base or {}
+    native_to_canonical = native_to_canonical or {}
+
+    def _add(params: dict, name: str, spec: dict) -> None:
+        # First writer wins: a real ctor param's own required flag outranks the
+        # same name arriving later from an options-object splice, and a
+        # subclass's own property outranks the base's same-named one (C#
+        # `new` / override semantics).
+        params.setdefault(name, {
+            "type": spec.get("type", "any"),
+            "required": bool(spec.get("required", False)),
+        })
+
+    def _props_with_inherited(key: str) -> dict[str, dict]:
+        """Settable properties of ``key`` plus every one it INHERITS.
+
+        C# reflection here is DeclaredOnly (correct for surface — an inherited
+        member is not re-declared surface), but object-initializer syntax sets
+        inherited init-settable properties too, so the construction set must
+        include them. Walks nearest-first so a subclass's own property wins.
+        """
+        merged: dict[str, dict] = {}
+        seen: set[str] = set()
+        cur: str | None = key
+        while cur and cur not in seen:
+            seen.add(cur)
+            for pname, pspec in (settable_props.get(cur) or {}).items():
+                merged.setdefault(pname, pspec)
+            base = native_base.get(cur)
+            cur = native_to_canonical.get(base) if base else None
+        return merged
+
+    for mod, entry in modules.items():
+        for cls, cinfo in (entry.get("classes") or {}).items():
+            key = f"{mod}.{cls}"
+            init = (cinfo.get("methods") or {}).get("__init__")
+            params: dict = {}
+            ctor_args = []
+            if isinstance(init, dict):
+                ctor_args = [
+                    p for p in init.get("params", [])
+                    if isinstance(p, dict)
+                    and (p.get("kind") or "positional") not in _CTOR_NON_PARAMS
+                    and (p.get("name") or "")
+                    and not (p.get("name") or "").startswith("_")
+                ]
+            for p in ctor_args:
+                ref = _unwrap_class_ref(p.get("type", ""))
+                if (ref
+                        and ref.rsplit(".", 1)[-1].endswith(_OPTIONS_CLASS_SUFFIX)
+                        and ref not in _REFERENCE_CLASSES):
+                    # Options-object idiom: the options' properties are the
+                    # construction parameters, not the single `options` handle.
+                    # Gated on the reference NOT having the class — a shared
+                    # value type like RequestOptions stays one param, as the
+                    # reference records it.
+                    for pname, pspec in _props_with_inherited(ref).items():
+                        _add(params, pname, pspec)
+                    continue
+                _add(params, p["name"], {
+                    "type": p.get("type", "any"),
+                    "required": bool(p.get("required", True)),
+                })
+            if not ctor_args:
+                # Parameterless ctor: object-initializer properties are the
+                # only construction surface (RELAY events, plain data objects).
+                for pname, pspec in _props_with_inherited(key).items():
+                    _add(params, pname, pspec)
+            if params:
+                out[key] = {"params": dict(sorted(params.items()))}
+
+    return dict(sorted(out.items()))
 
 
 # ---------------------------------------------------------------------------
