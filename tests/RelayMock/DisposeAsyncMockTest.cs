@@ -52,30 +52,31 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
         var client = bound.Client;
 
-        // Baseline: which session ids exist before we connect.
-        var before = SessionIds();
-
         await client.ConnectAsync();
         Assert.True(client.Connected);
 
-        // The server now lists exactly one NEW live session (our connection).
-        // The mock issues the id under "id"; the SDK's SessionId reads a
-        // different wire key against this mock, so correlate by set-diff.
-        var newIds = await WaitForNewSession(before, RelayMockTest.EventTimeout);
-        Assert.NotEmpty(newIds);
+        // OUR session, and only ours: bound.Harness scopes the control-plane read to
+        // client.SessionId. The mock hands that id back as the ConnectResult `sessionid`
+        // precisely so a test can name its own session, and it is the SAME value the
+        // registry reports as "id" (verified against a live mock: two concurrent clients,
+        // `?session_id=<a>` returns exactly [a]). So no set-diff against a global
+        // baseline is needed — that was the bug, not the correlation strategy.
+        var mine = await WaitForNewSession(bound, RelayMockTest.EventTimeout);
+        Assert.NotEmpty(mine);
 
         // Dispose — closes the socket and frees the handles.
         await client.DisposeAsync();
 
         Assert.False(client.Connected);
 
-        // The server-side session(s) we opened are gone (poll briefly; close is
-        // async on the server's read loop).
+        // OUR session is gone (poll briefly; close is async on the server's read loop).
+        // Scoped, so a neighbour's still-open session cannot fail us — and equally, this
+        // cannot pass vacuously just because the box happens to be quiet.
         var gone = await WaitUntil(() =>
-            !SessionIds().Overlaps(newIds),
+            !SessionIds(bound).Overlaps(mine),
             RelayMockTest.EventTimeout);
         Assert.True(gone,
-            $"server still lists session(s) [{string.Join(",", newIds)}] after DisposeAsync");
+            $"server still lists our session(s) [{string.Join(",", mine)}] after DisposeAsync");
     }
 
     // ------------------------------------------------------------------
@@ -87,18 +88,20 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
     {
         if (Skipped()) return;
 
-        var before = SessionIds();
-        HashSet<string> newIds;
-        await using (var client = RelayMockTest.NewClient(contexts: new[] { "c1" }).Client)
+        // Keep the Bound (not just .Client) — it carries the session scope the assertions
+        // below need. `await using` still drives DisposeAsync on the client itself.
+        var bound = RelayMockTest.NewClient(contexts: new[] { "c1" });
+        HashSet<string> mine;
+        await using (var client = bound.Client)
         {
             await client.ConnectAsync();
             Assert.True(client.Connected);
-            newIds = await WaitForNewSession(before, RelayMockTest.EventTimeout);
-            Assert.NotEmpty(newIds);
+            mine = await WaitForNewSession(bound, RelayMockTest.EventTimeout);
+            Assert.NotEmpty(mine);
         } // DisposeAsync invoked here by `await using`.
 
         var gone = await WaitUntil(() =>
-            !SessionIds().Overlaps(newIds),
+            !SessionIds(bound).Overlaps(mine),
             RelayMockTest.EventTimeout);
         Assert.True(gone, "await using did not close the relay session");
     }
@@ -150,11 +153,23 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
     // Helpers
     // ------------------------------------------------------------------
 
-    /// <summary>Current set of server-side session ids (the mock's "id" field).</summary>
-    private HashSet<string> SessionIds()
+    /// <summary>Session ids visible on the mock, SCOPED to <paramref name="bound"/>'s
+    /// own session when one is given.</summary>
+    /// <remarks>
+    /// Pass the Bound whenever the client has connected: <c>bound.Harness</c> carries the
+    /// client's session id, so the control-plane read returns only OUR session. The
+    /// unscoped default exists only for a caller that has no client yet; nothing in this
+    /// class uses it now, because every assertion here is about a session we own.
+    ///
+    /// Reading the SHARED, unscoped view is what broke this class: ten test classes share
+    /// one mock server, so it returned other tests' live sessions too. See RULES.md §4
+    /// (parallel-safe by SCOPING, never by serialising).
+    /// </remarks>
+    private HashSet<string> SessionIds(RelayMockTest.Bound? bound = null)
     {
+        var harness = bound is not null ? bound.Harness : _fixture.Harness;
         var ids = new HashSet<string>();
-        foreach (var s in _fixture.Harness.Sessions())
+        foreach (var s in harness.Sessions())
         {
             if (s.TryGetValue("id", out var id) && id.GetString() is { } v)
                 ids.Add(v);
@@ -162,21 +177,25 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         return ids;
     }
 
-    /// <summary>Poll until at least one session id appears that wasn't in
-    /// <paramref name="before"/>; return the new ids (empty on timeout).</summary>
-    private async Task<HashSet<string>> WaitForNewSession(HashSet<string> before, TimeSpan timeout)
+    /// <summary>Poll until the mock lists <paramref name="bound"/>'s OWN session;
+    /// return it (empty on timeout).</summary>
+    /// <remarks>
+    /// Scoped, so it cannot pick up a concurrently-running test's session — which the
+    /// previous set-difference-against-a-global-baseline form did, and then handed those
+    /// foreign ids to the caller to wait on. The session id may land slightly after
+    /// ConnectAsync returns (the mock issues it on the connect result), so this polls
+    /// rather than reading once.
+    /// </remarks>
+    private async Task<HashSet<string>> WaitForNewSession(RelayMockTest.Bound bound, TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow + timeout;
         while (DateTime.UtcNow < deadline)
         {
-            var now = SessionIds();
-            now.ExceptWith(before);
+            var now = SessionIds(bound);
             if (now.Count > 0) return now;
             await Task.Delay(100);
         }
-        var final = SessionIds();
-        final.ExceptWith(before);
-        return final;
+        return SessionIds(bound);
     }
 
     private static T GetField<T>(object obj, string name)

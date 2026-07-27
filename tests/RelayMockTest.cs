@@ -288,10 +288,28 @@ public static class RelayMockTest
             return outOp;
         }
 
-        /// <summary>List active WebSocket session metadata.</summary>
+        /// <summary>List active WebSocket session metadata — SCOPED to this
+        /// harness's session when it has one, global otherwise.</summary>
+        /// <remarks>
+        /// The <see cref="SessionQuery"/> suffix is load-bearing under parallel
+        /// execution, and it was missing here while Journal/Scenarios already had it.
+        /// Ten test classes share ONE mock server (RelayMockServerFixture lives for the
+        /// whole run and its Reset() is a deliberate no-op), so an unscoped read returns
+        /// EVERY live session including concurrently-running tests'. A test that then
+        /// waits for "no overlap with the ids that appeared" is waiting on sessions it
+        /// never opened and cannot close.
+        ///
+        /// That is exactly how DisposeAsync_ClosesWebSocket_SessionGoneFromServer failed:
+        /// it opened ONE client, and reported "server still lists session(s) [3 ids] after
+        /// DisposeAsync" having burned the full 30s EventTimeout. Scoping fixes it WITHOUT
+        /// giving up parallelism — and makes the assertion stronger, because it now proves
+        /// DisposeAsync closed OUR socket rather than "nobody on the box holds a session"
+        /// (which would pass vacuously whenever the test happened to run alone).
+        /// See RULES.md §4 "Every test must be PARALLEL-SAFE… isolation by SCOPING".
+        /// </remarks>
         public List<Dictionary<string, JsonElement>> Sessions()
         {
-            var resp = _http.GetAsync(HttpUrl + "/__mock__/sessions")
+            var resp = _http.GetAsync(HttpUrl + "/__mock__/sessions" + SessionQuery())
                 .GetAwaiter().GetResult();
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             using var doc = JsonDocument.Parse(body);
