@@ -643,4 +643,118 @@ public class SWMLServiceTests : IDisposable
         Assert.Equal(200, status);
         Assert.Contains("response", body);
     }
+
+    // ==================================================================
+    //  SWMLService TLS derived attributes (porting-sdk d7c859d)
+    //  The reference hoists four values off `self.security` in __init__:
+    //    self.ssl_enabled / self.domain / self.ssl_cert_path / self.ssl_key_path
+    //  Prove the .NET properties carry the SAME resolved values, including
+    //  the CONFIG-FILE source (which the old env-only serve path ignored).
+    // ==================================================================
+
+    /// <summary>Repo-local scratch dir (never a machine-wide temp).</summary>
+    private static string MakeScratchDir()
+    {
+        var root = AppContext.BaseDirectory;
+        var dir = Path.Combine(root, ".sw-tmp", "swmlservice_tls_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        return dir;
+    }
+
+    [Fact]
+    public void SslPropertiesDefaultToSecurityDefaults()
+    {
+        var svc = MakeService();
+        Assert.False(svc.SslEnabled);
+        Assert.Null(svc.SslCertPath);
+        Assert.Null(svc.SslKeyPath);
+        Assert.Null(svc.Domain);
+        // They mirror `security`, exactly as the reference's __init__ does.
+        Assert.Equal(svc.Security.SslEnabled, svc.SslEnabled);
+        Assert.Equal(svc.Security.SslCertPath, svc.SslCertPath);
+        Assert.Equal(svc.Security.SslKeyPath, svc.SslKeyPath);
+        Assert.Equal(svc.Security.Domain, svc.Domain);
+    }
+
+    [Fact]
+    public void SslPropertiesAreHoistedFromEnvironment()
+    {
+        try
+        {
+            Environment.SetEnvironmentVariable("SWML_SSL_ENABLED", "true");
+            Environment.SetEnvironmentVariable("SWML_SSL_CERT_PATH", "/etc/ssl/env-cert.pem");
+            Environment.SetEnvironmentVariable("SWML_SSL_KEY_PATH", "/etc/ssl/env-key.pem");
+            Environment.SetEnvironmentVariable("SWML_DOMAIN", "env.example.com");
+
+            var svc = MakeService();
+
+            Assert.True(svc.SslEnabled);
+            Assert.Equal("/etc/ssl/env-cert.pem", svc.SslCertPath);
+            Assert.Equal("/etc/ssl/env-key.pem", svc.SslKeyPath);
+            Assert.Equal("env.example.com", svc.Domain);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SWML_SSL_ENABLED", null);
+            Environment.SetEnvironmentVariable("SWML_SSL_CERT_PATH", null);
+            Environment.SetEnvironmentVariable("SWML_SSL_KEY_PATH", null);
+            Environment.SetEnvironmentVariable("SWML_DOMAIN", null);
+        }
+    }
+
+    [Fact]
+    public void SslPropertiesAreHoistedFromTheConfigFile()
+    {
+        var dir = MakeScratchDir();
+        try
+        {
+            var configPath = Path.Combine(dir, "svc_config.json");
+            File.WriteAllText(configPath,
+                "{\"security\":{"
+                + "\"ssl_enabled\":true,"
+                + "\"ssl_cert_path\":\"/etc/ssl/file-cert.pem\","
+                + "\"ssl_key_path\":\"/etc/ssl/file-key.pem\","
+                + "\"domain\":\"file.example.com\""
+                + "}}");
+
+            var svc = new Service(new ServiceOptions
+            {
+                Name = "tls-config-service",
+                BasicAuthUser = "testuser",
+                BasicAuthPassword = "testpass",
+                ConfigFile = configPath,
+            });
+
+            // The config file is the highest-priority source; these values are
+            // what the serve path must use. Reading the environment directly
+            // (as the old SslSettings.FromEnvironment did) would see none of them.
+            Assert.True(svc.SslEnabled);
+            Assert.Equal("/etc/ssl/file-cert.pem", svc.SslCertPath);
+            Assert.Equal("/etc/ssl/file-key.pem", svc.SslKeyPath);
+            Assert.Equal("file.example.com", svc.Domain);
+        }
+        finally
+        {
+            try { Directory.Delete(dir, recursive: true); } catch { }
+        }
+    }
+
+    [Fact]
+    public void SslPropertiesAreCallerOverridableBeforeServing()
+    {
+        // Mirrors the reference's serve(ssl_enabled=…, domain=…) overrides,
+        // which assign onto self.ssl_enabled / self.domain.
+        var svc = MakeService();
+        Assert.False(svc.SslEnabled);
+
+        svc.SslEnabled = true;
+        svc.SslCertPath = "/etc/ssl/override-cert.pem";
+        svc.SslKeyPath = "/etc/ssl/override-key.pem";
+        svc.Domain = "override.example.com";
+
+        Assert.True(svc.SslEnabled);
+        Assert.Equal("/etc/ssl/override-cert.pem", svc.SslCertPath);
+        Assert.Equal("/etc/ssl/override-key.pem", svc.SslKeyPath);
+        Assert.Equal("override.example.com", svc.Domain);
+    }
 }

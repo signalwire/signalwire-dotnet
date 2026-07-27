@@ -106,6 +106,24 @@ public class Service
     /// (equivalent to Python's <c>SWMLService.security</c>.)</summary>
     public SecurityConfig Security { get; }
 
+    /// <summary>Whether TLS is enabled for this service. Read off
+    /// <see cref="Security"/> at construction, and overridable at serve time.
+    /// (equivalent to Python's <c>SWMLService.ssl_enabled</c>, which is
+    /// assigned <c>self.security.ssl_enabled</c> in <c>__init__</c>.)</summary>
+    public bool SslEnabled { get; set; }
+
+    /// <summary>Path to the server TLS certificate (PEM), or null.
+    /// (equivalent to Python's <c>SWMLService.ssl_cert_path</c>.)</summary>
+    public string? SslCertPath { get; set; }
+
+    /// <summary>Path to the server TLS private key (PEM), or null.
+    /// (equivalent to Python's <c>SWMLService.ssl_key_path</c>.)</summary>
+    public string? SslKeyPath { get; set; }
+
+    /// <summary>Serving domain used for TLS/URL generation, or null.
+    /// (equivalent to Python's <c>SWMLService.domain</c>.)</summary>
+    public string? Domain { get; set; }
+
     // The resolved config-file path, the explicit schema path, and the
     // effective validation flag mirror attributes the reference keeps PRIVATE
     // (`self._schema_validation`; config_file/schema_path are consumed into
@@ -154,6 +172,15 @@ public class Service
         // service name (`<name>_config.json`, `.swml/config.json`, …).
         Security = new SecurityConfig(options.ConfigFile, options.Name);
         _configFile = options.ConfigFile ?? ConfigLoader.FindConfigFile(options.Name);
+
+        // Hoist the resolved TLS settings onto the service, mirroring the
+        // reference's `self.ssl_enabled = self.security.ssl_enabled` (and
+        // domain / cert / key) in `SWMLService.__init__`. These are the
+        // caller-observable values `Run()` consumes and `serve(...)` overrides.
+        SslEnabled = Security.SslEnabled;
+        Domain = Security.Domain;
+        SslCertPath = Security.SslCertPath;
+        SslKeyPath = Security.SslKeyPath;
 
         // Auth: explicit > config file / env (SecurityConfig applies env first,
         // then the config file at higher priority) > auto-generated.
@@ -1444,7 +1471,7 @@ public class Service
     /// </summary>
     internal void RunForTest(CancellationToken cancellationToken)
     {
-        var ssl = SslSettings.FromEnvironment();
+        var ssl = SslSettings.FromService(this);
         if (ssl.Enabled)
         {
             RunHttps(ssl, cancellationToken);
@@ -1635,18 +1662,25 @@ public class Service
         public string? CertPath { get; init; }
         public string? KeyPath { get; init; }
 
-        public static SslSettings FromEnvironment()
+        /// <summary>
+        /// Read the effective TLS settings off the service's own
+        /// <see cref="Service.SslEnabled"/> / <see cref="Service.SslCertPath"/> /
+        /// <see cref="Service.SslKeyPath"/>. Those are seeded from
+        /// <see cref="SecurityConfig"/> (defaults → env → config file) at
+        /// construction and may be overridden by the caller before serving —
+        /// mirroring the reference, which serves off <c>self.ssl_enabled</c> /
+        /// <c>self.ssl_cert_path</c> / <c>self.ssl_key_path</c> rather than
+        /// re-reading the environment. (Reading env here would have ignored an
+        /// SSL cert supplied by the config file.)
+        /// </summary>
+        public static SslSettings FromService(Service service)
         {
-            var flag = (Environment.GetEnvironmentVariable("SWML_SSL_ENABLED") ?? "").Trim();
-            var enabled = flag.Equals("true", StringComparison.OrdinalIgnoreCase)
-                || flag.Equals("1", StringComparison.Ordinal)
-                || flag.Equals("yes", StringComparison.OrdinalIgnoreCase);
-            var cert = Environment.GetEnvironmentVariable("SWML_SSL_CERT_PATH");
-            var key = Environment.GetEnvironmentVariable("SWML_SSL_KEY_PATH");
+            var cert = service.SslCertPath;
+            var key = service.SslKeyPath;
 
             // Match SecurityConfig.validate_ssl_config(): enabled-but-incomplete
             // degrades to HTTP rather than crashing.
-            var valid = enabled
+            var valid = service.SslEnabled
                 && !string.IsNullOrWhiteSpace(cert) && File.Exists(cert)
                 && !string.IsNullOrWhiteSpace(key) && File.Exists(key);
 

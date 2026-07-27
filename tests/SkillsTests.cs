@@ -1332,4 +1332,146 @@ public class SkillsTests : IDisposable
         Assert.Contains("gateway", hints);
         Assert.Contains("calc", hints);
     }
+
+    // ==================================================================
+    //  SpiderSkill.remove_xpaths (derived-attr parity, porting-sdk d7c859d)
+    //  The reference prefills seven XPaths in __init__ and drops each
+    //  matched element WHOLE before text extraction. Prove the .NET
+    //  property is (a) prefilled with the same seven and (b) load-bearing:
+    //  removing an entry must let that element's text through, and adding
+    //  one must strip it.
+    // ==================================================================
+
+    /// <summary>Serves one fixed HTML body on an ephemeral loopback port.</summary>
+    private static (string baseUrl, IDisposable disposable) StartHtmlFixture(string html)
+    {
+        var listener = new HttpListener();
+        var port = GetFreePort();
+        var prefix = $"http://127.0.0.1:{port}/";
+        listener.Prefixes.Add(prefix);
+        listener.Start();
+        var cts = new System.Threading.CancellationTokenSource();
+        Task.Run(async () =>
+        {
+            while (!cts.IsCancellationRequested)
+            {
+                try
+                {
+                    var ctx = await listener.GetContextAsync().ConfigureAwait(false);
+                    var bytes = Encoding.UTF8.GetBytes(html);
+                    ctx.Response.StatusCode = 200;
+                    ctx.Response.ContentType = "text/html";
+                    ctx.Response.ContentLength64 = bytes.Length;
+                    await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                    ctx.Response.Close();
+                }
+                catch (HttpListenerException) { break; }
+                catch (ObjectDisposedException) { break; }
+            }
+        });
+        var disposable = new FixtureHandle(() =>
+        {
+            cts.Cancel();
+            try { listener.Stop(); } catch { }
+            try { listener.Close(); } catch { }
+        });
+        return (prefix.TrimEnd('/'), disposable);
+    }
+
+    private const string SpiderFixtureHtml =
+        "<html><body>"
+        + "<nav>NAVJUNK</nav>"
+        + "<header>HEADERJUNK</header>"
+        + "<aside>ASIDEJUNK</aside>"
+        + "<footer>FOOTERJUNK</footer>"
+        + "<noscript>NOSCRIPTJUNK</noscript>"
+        + "<script>SCRIPTJUNK</script>"
+        + "<style>STYLEJUNK</style>"
+        + "<article>KEEPTHISTEXT</article>"
+        + "<blockquote>QUOTETEXT</blockquote>"
+        + "</body></html>";
+
+    private static string ScrapeVia(AgentBase agent, string url)
+    {
+        var result = agent.OnFunctionCall(
+            "scrape_url",
+            new Dictionary<string, object> { ["url"] = url },
+            new Dictionary<string, object?>());
+        Assert.NotNull(result);
+        return (string)result!.ToDict()["response"];
+    }
+
+    [Fact]
+    public void SpiderSkill_RemoveXpathsIsPrefilledWithTheReferenceSeven()
+    {
+        var skill = new SpiderSkill();
+        Assert.Equal(
+            new[] { "//script", "//style", "//nav", "//header", "//footer", "//aside", "//noscript" },
+            skill.RemoveXpaths);
+    }
+
+    [Fact]
+    public void SpiderSkill_RemoveXpathsDropsMatchedElementsWholeFromScrapedText()
+    {
+        var (baseUrl, fixture) = StartHtmlFixture(SpiderFixtureHtml);
+        try
+        {
+            Environment.SetEnvironmentVariable("SPIDER_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            var skill = new SpiderSkill();
+            skill.Wire(agent, []);
+            skill.RegisterTools(agent);
+
+            var response = ScrapeVia(agent, baseUrl + "/page");
+
+            // Every default XPath strips its element AND its inner text.
+            Assert.DoesNotContain("NAVJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("HEADERJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("ASIDEJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("FOOTERJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("NOSCRIPTJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("SCRIPTJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("STYLEJUNK", response, StringComparison.Ordinal);
+            // Non-selected content survives.
+            Assert.Contains("KEEPTHISTEXT", response, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SPIDER_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
+
+    [Fact]
+    public void SpiderSkill_RemoveXpathsIsLoadBearingWhenMutated()
+    {
+        var (baseUrl, fixture) = StartHtmlFixture(SpiderFixtureHtml);
+        try
+        {
+            Environment.SetEnvironmentVariable("SPIDER_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            var skill = new SpiderSkill();
+
+            // Drop "//nav" from the list -> its text must now come through;
+            // add "//blockquote" -> its text must now be stripped.
+            Assert.True(skill.RemoveXpaths.Remove("//nav"));
+            skill.RemoveXpaths.Add("//blockquote");
+
+            skill.Wire(agent, []);
+            skill.RegisterTools(agent);
+
+            var response = ScrapeVia(agent, baseUrl + "/page");
+
+            Assert.Contains("NAVJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("QUOTETEXT", response, StringComparison.Ordinal);
+            // Untouched defaults still apply.
+            Assert.DoesNotContain("SCRIPTJUNK", response, StringComparison.Ordinal);
+            Assert.Contains("KEEPTHISTEXT", response, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SPIDER_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
 }

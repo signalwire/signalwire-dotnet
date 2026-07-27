@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 630ff169c02760ab120450f7afb5bb7412f975b9",
+  "generated_from": "signalwire-dotnet @ 0953d195b1380fcc27e74d5cddf5f9aa7428753e",
   "native_names": [
     "AI",
     "AIAction",
@@ -1645,6 +1645,7 @@
     "RemoveMetadata",
     "RemoveSkill",
     "RemoveStep",
+    "RemoveXpaths",
     "Render",
     "RenderDocument",
     "RenderFunctionResponseSwml",
@@ -1989,6 +1990,9 @@
     "Spid",
     "SpiderSkill",
     "SplitNewlines",
+    "SslCertPath",
+    "SslEnabled",
+    "SslKeyPath",
     "Stability",
     "StandaloneCollectAction",
     "Start",

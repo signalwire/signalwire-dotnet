@@ -216,7 +216,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ a97a5c8ac127fc2c3e075edcfbd82da3c27c1d7c",
+  "generated_from": "signalwire-dotnet @ 0953d195b1380fcc27e74d5cddf5f9aa7428753e",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -3721,6 +3721,7 @@
           "get_instance_key",
           "get_parameter_schema",
           "register_tools",
+          "remove_xpaths",
           "setup"
         ]
       },
