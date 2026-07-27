@@ -107,7 +107,6 @@ The bulk of entries fall into these architectural buckets:
 ## Per-symbol entries
 
 signalwire.agent_server.AgentServer.get_agents: .NET GetAgents returns list of (route, agent) tuples for full enumeration; Python returns just the route strings since registered agents are accessible via .agents dict
-signalwire.agent_server.AgentServer.logger: .NET .Logger property returns the SignalWire.Logging.Logger class instance; Python reference adapter resolves logger to get_logger() which has a different class:path
 signalwire.agent_server.AgentServer.unregister: .NET Unregister returns AgentServer for fluent chaining; Python returns bool indicating whether the route was actually registered
 signalwire.core.agent.prompt.manager.PromptManager.define_contexts: .NET DefineContexts returns ContextBuilder for fluent context construction; Python returns void and takes a contexts dict argument
 signalwire.core.agent.tools.registry.ToolRegistry.define_tool: .NET fluent-builder pattern: returns Service (SWMLService) for chaining (service.DefineTool(...).RegisterSwaigFunction(...)); Python returns void
@@ -140,7 +139,6 @@ signalwire.core.skill_base.SkillBase.register_tools: .NET SkillBase override hoo
 signalwire.core.skill_base.SkillBase.setup: .NET SkillBase override hooks take (agent, parameters) per the Wire(agent, params) lifecycle; Python uses self with agent set on construction
 signalwire.core.skill_base.SkillBase.validate_env_vars: .NET ValidateEnvVars returns the list of missing env-var names; Python returns bool (whether all are present) - same intent, richer return shape
 signalwire.core.skill_manager.SkillManager.load_skill: .NET LoadSkill takes (skill_name, parameters) and looks up skill_class via the SkillRegistry; Python takes skill_class as a third explicit argument
-signalwire.core.skill_manager.SkillManager.logger: .NET .Logger property returns the SignalWire.Logging.Logger class instance; Python reference adapter resolves logger to get_logger() which has a different class:path
 signalwire.core.swml_builder.SWMLBuilder.add_section: .NET SWMLBuilder fluent methods return SWMLBuilder for chaining; Python types this as Self via typing.Self
 signalwire.core.swml_builder.SWMLBuilder.ai: .NET SWMLBuilder fluent methods return SWMLBuilder for chaining; Python types this as Self via typing.Self
 signalwire.core.swml_builder.SWMLBuilder.answer: .NET SWMLBuilder fluent methods return SWMLBuilder for chaining; Python types this as Self via typing.Self
@@ -238,7 +236,6 @@ signalwire.relay.message.Message.wait: .NET Message.Wait/Result returns RelayEve
 signalwire.rest._base.CrudWithAddresses.list_addresses: .NET ListAddresses takes optional Dictionary<string,object> for query params; Python uses **kwargs
 signalwire.skills.registry.SkillRegistry.list_skills: .NET SkillRegistry.ListSkills returns a plain list of skill names (List<string>); Python's list_skills returns the richer list<dict<string,string>> skill-info inventory
 signalwire.skills.registry.SkillRegistry.discover_skills: .NET SkillRegistry.DiscoverSkills returns List<string> of skill names (mirrors ListSkills); Python's discover_skills returns the same list<dict<string,string>> inventory as list_skills
-signalwire.skills.registry.SkillRegistry.logger: .NET .Logger property returns the SignalWire.Logging.Logger class instance; Python reference adapter resolves logger to get_logger() which has a different class:path
 signalwire.skills.registry.SkillRegistry.register_skill: .NET RegisterSkill takes (name, factory) for explicit factory registration; Python takes the skill_class and infers metadata via attributes
 signalwire.skills.spider.skill.SpiderSkill.__init__: .NET skill ctors are parameterless (Wire(agent, params) sets state post-construction); Python skills take agent and params via __init__
 signalwire.relay.call.CollectAction.volume: .NET CollectAction.Volume returns void since callers chain via the Action object state; Python returns dict (the protocol response from the volume subcommand)
