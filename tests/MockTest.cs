@@ -458,13 +458,49 @@ public static class MockTest
                     $"MockTest: previous startup failed: {_startupFailure.Message}", _startupFailure);
             }
 
-            var (host, port) = ResolveHostPort();
+            var (host, port, portFromEnv) = ResolveHostPort();
             var url = $"http://{host}:{port}";
 
             using var probeClient = new System.Net.Http.HttpClient
             {
                 Timeout = TimeSpan.FromSeconds(2)
             };
+
+            // When the port was given EXPLICITLY (MOCK_SIGNALWIRE_PORT in the
+            // environment), a mock is PROMISED there — run-ci.sh picks the port,
+            // spawns the mock, waits for health, and exports the port for the
+            // whole TEST gate. A single 2s probe is too tight under CI load: one
+            // slow first connect would fall through to the self-spawn below,
+            // which then tries to bind the gate's ALREADY-OCCUPIED port. The
+            // child dies with `[Errno 48] address already in use` (exit 3) — but
+            // only AFTER printing a reassuring "listening on ..." line — and
+            // every REST test in the run then fails with connection-refused.
+            // That failure is non-deterministic and test-count-sensitive, so it
+            // reads like a flake; it is not. So: poll the promised endpoint until
+            // StartupTimeout, then FAIL LOUD. Never self-spawn onto a port the
+            // gate is already serving. Mirrors RelayMockTest's identical guard.
+            if (portFromEnv)
+            {
+                var reuseDeadline = DateTime.UtcNow + StartupTimeout;
+                while (DateTime.UtcNow < reuseDeadline)
+                {
+                    if (ProbeHealth(probeClient, url))
+                    {
+                        var reused = new Harness(url, host, port);
+                        _sharedHarness = reused;
+                        return reused;
+                    }
+                    Thread.Sleep(150);
+                }
+                _startupFailure = new InvalidOperationException(
+                    $"MockTest: MOCK_SIGNALWIRE_PORT was set (promising a pre-running " +
+                    $"mock_signalwire on {url}), but its health endpoint never became reachable " +
+                    $"within {StartupTimeout}. Refusing to self-spawn onto that port — it is the " +
+                    $"gate's, and binding it would fail with EADDRINUSE and cascade " +
+                    $"connection-refused across every REST test. The gate must keep that mock " +
+                    $"alive for the whole TEST run.");
+                throw _startupFailure;
+            }
 
             // Step 1: probe — reuse a host-spawned mock if one is already up.
             if (ProbeHealth(probeClient, url))
@@ -474,31 +510,79 @@ public static class MockTest
                 return hr;
             }
 
-            // Step 2: try to spawn. If python is unavailable (e.g., we're
-            // inside the .NET docker container) this will fail, and we
-            // surface a clear error pointing the user at the host-spawn
-            // path.
-            try
+            // Step 2: spawn our own. The port we picked is only free until
+            // someone else takes it, so we do NOT trust a single pick: each
+            // attempt HOLDS a fresh port open until the instant before the child
+            // starts, and if the child still loses the bind (EADDRINUSE) we
+            // discard that port and retry on another. A port is therefore never
+            // silently swapped out from under us — the failure is either a
+            // working mock or a loud error, never a live mock on a port our
+            // clients aren't talking to.
+            Exception? lastSpawnError = null;
+            for (var attempt = 1; attempt <= SpawnAttempts; attempt++)
             {
-                var process = SpawnMockServer(host, port);
+                int attemptPort;
+                var reservation = ReservePort(out attemptPort);
+                var attemptUrl = $"http://{host}:{attemptPort}";
+
+                Process process;
+                try
+                {
+                    // Release only here: the child binds immediately after, so
+                    // the unowned window is as small as the API permits.
+                    reservation.Stop();
+                    process = SpawnMockServer(host, attemptPort);
+                }
+                catch (Exception ex)
+                {
+                    try { reservation.Stop(); } catch { /* already stopped */ }
+                    _startupFailure = new InvalidOperationException(
+                        $"MockTest: failed to spawn `python -m mock_signalwire` on {attemptUrl}: {ex.Message} " +
+                        $"(set MOCK_SIGNALWIRE_HOST / MOCK_SIGNALWIRE_PORT to use a pre-running instance, " +
+                        $"or run inside an environment with python3 + porting-sdk available)", ex);
+                    throw _startupFailure;
+                }
+
                 _mockProcess = process;
                 var deadline = DateTime.UtcNow + StartupTimeout;
+                var lostTheBind = false;
+
                 while (DateTime.UtcNow < deadline)
                 {
-                    if (ProbeHealth(probeClient, url))
+                    if (ProbeHealth(probeClient, attemptUrl))
                     {
                         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
                         {
                             try { if (!process.HasExited) process.Kill(true); } catch { /* best effort */ }
                         };
-                        var hr = new Harness(url, host, port);
+                        var hr = new Harness(attemptUrl, host, attemptPort);
                         _sharedHarness = hr;
                         return hr;
                     }
                     if (process.HasExited)
                     {
+                        // Drain first: the async output handlers can still be
+                        // mid-delivery when HasExited flips, and the bind error
+                        // is written AFTER the "listening on" banner. Classifying
+                        // before the tail arrives would misread a lost bind as a
+                        // fatal startup error and skip the retry.
+                        // WaitForExit() with NO timeout is the overload that also
+                        // waits for the async stdout/stderr handlers to finish;
+                        // the (int) overload does not. The process has already
+                        // exited, so this returns promptly.
+                        try { process.WaitForExit(); } catch { /* best effort */ }
                         var stderr = _mockStderr?.ToString() ?? "";
                         var stdout = _mockStdout?.ToString() ?? "";
+                        // Someone else took the port inside the release window.
+                        // That is retryable on a fresh port — anything else is not.
+                        if (IsAddressInUse(stdout, stderr))
+                        {
+                            lostTheBind = true;
+                            lastSpawnError = new InvalidOperationException(
+                                $"mock_signalwire lost the bind on {attemptUrl} (address already in use); " +
+                                $"retrying on a fresh port (attempt {attempt}/{SpawnAttempts}).");
+                            break;
+                        }
                         _startupFailure = new InvalidOperationException(
                             $"mock_signalwire process exited before becoming ready (exit {process.ExitCode}). " +
                             $"stdout={Truncate(stdout)} stderr={Truncate(stderr)}");
@@ -506,21 +590,42 @@ public static class MockTest
                     }
                     Thread.Sleep(150);
                 }
+
+                if (lostTheBind) continue;
+
                 try { process.Kill(true); } catch { /* best effort */ }
                 _startupFailure = new InvalidOperationException(
-                    $"MockTest: `python -m mock_signalwire` did not become ready within {StartupTimeout} on {url}. " +
+                    $"MockTest: `python -m mock_signalwire` did not become ready within {StartupTimeout} on {attemptUrl}. " +
                     $"Either start it manually on host before running tests, or clone porting-sdk next to signalwire-dotnet.");
                 throw _startupFailure;
             }
-            catch (Exception ex) when (ex is not InvalidOperationException)
-            {
-                _startupFailure = new InvalidOperationException(
-                    $"MockTest: failed to spawn `python -m mock_signalwire` on {url}: {ex.Message} " +
-                    $"(set MOCK_SIGNALWIRE_HOST / MOCK_SIGNALWIRE_PORT to use a pre-running instance, " +
-                    $"or run inside an environment with python3 + porting-sdk available)", ex);
-                throw _startupFailure;
-            }
+
+            _startupFailure = new InvalidOperationException(
+                $"MockTest: `python -m mock_signalwire` lost the port bind on {SpawnAttempts} " +
+                $"consecutive freshly-picked ports. Last: {lastSpawnError?.Message}", lastSpawnError);
+            throw _startupFailure;
         }
+    }
+
+    /// <summary>Number of fresh ports to try before giving up on the self-spawn
+    /// path. Each retry re-picks; losing several consecutive ports means
+    /// something is systematically wrong, not a transient collision.</summary>
+    private const int SpawnAttempts = 5;
+
+    /// <summary>
+    /// True when the mock's output says it could not bind because the address
+    /// was taken. Matched on the errno and its text form so the check does not
+    /// depend on one platform's phrasing. Note the mock prints a reassuring
+    /// "listening on ..." line BEFORE the bind is attempted, so the presence of
+    /// that line proves nothing — only this error does.
+    /// </summary>
+    internal static bool IsAddressInUse(string stdout, string stderr)
+    {
+        var combined = stdout + "\n" + stderr;
+        return combined.Contains("address already in use", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("errno 48", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("errno 98", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("EADDRINUSE", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string Truncate(string s)
@@ -529,7 +634,7 @@ public static class MockTest
         return s.Length > 400 ? s[..400] + "..." : s;
     }
 
-    private static (string Host, int Port) ResolveHostPort()
+    private static (string Host, int Port, bool FromEnv) ResolveHostPort()
     {
         var host = Environment.GetEnvironmentVariable("MOCK_SIGNALWIRE_HOST");
         if (string.IsNullOrWhiteSpace(host)) host = "127.0.0.1";
@@ -537,14 +642,23 @@ public static class MockTest
         var portRaw = Environment.GetEnvironmentVariable("MOCK_SIGNALWIRE_PORT");
         if (!string.IsNullOrWhiteSpace(portRaw) && int.TryParse(portRaw.Trim(), out var p) && p > 0)
         {
-            return (host, p);
+            // An explicit port PROMISES a pre-running mock; EnsureServer polls
+            // and fails loud rather than self-spawning onto it.
+            return (host, p, true);
         }
         // No env override: pick a FREE port (bind :0) rather than the hardcoded
         // default that collides with a stale/concurrent mock and hangs the suite.
-        return (host, PickFreePort());
+        return (host, PickFreePort(), false);
     }
 
-    /// <summary>Ask the OS for a free loopback TCP port (bind :0, read it, release).</summary>
+    /// <summary>
+    /// Ask the OS for a free loopback TCP port.
+    /// <para>A port is inherently unowned between the moment we read it and the
+    /// moment the spawned mock binds it, so this MUST NOT be treated as a
+    /// reservation. The caller closes that window by verifying the port is still
+    /// takeable and retrying on a fresh one — see
+    /// <see cref="ReservePort"/> / <see cref="EnsureServer"/>.</para>
+    /// </summary>
     private static int PickFreePort()
     {
         var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
@@ -557,6 +671,22 @@ public static class MockTest
         {
             listener.Stop();
         }
+    }
+
+    /// <summary>
+    /// Hold a free loopback port OPEN and hand back both the port and the
+    /// listener holding it. The port stays owned by this process until the
+    /// caller disposes the listener, so nothing else can be handed the same port
+    /// in the meantime. The caller releases it immediately before the child
+    /// binds — the only remaining window — and retries a fresh port if the child
+    /// loses that bind.
+    /// </summary>
+    internal static System.Net.Sockets.TcpListener ReservePort(out int port)
+    {
+        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        return listener;
     }
 
     private static Process SpawnMockServer(string host, int port)

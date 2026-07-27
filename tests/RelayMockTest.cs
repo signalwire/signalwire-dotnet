@@ -613,27 +613,71 @@ public static class RelayMockTest
                 return hr;
             }
 
-            try
+            // Self-spawn. Both ports are HELD open until the instant before the
+            // child starts, so nothing else can be handed them in the meantime;
+            // if the child still loses either bind we discard both and retry on
+            // a fresh pair. mock_relay needs WS + HTTP as two INDEPENDENT ports,
+            // so both are reserved before either is released.
+            Exception? lastSpawnError = null;
+            for (var attempt = 1; attempt <= SpawnAttempts; attempt++)
             {
-                var process = SpawnMockServer(host, wsPort, httpPort);
+                int attemptWsPort, attemptHttpPort;
+                var wsReservation = ReservePort(out attemptWsPort);
+                var httpReservation = ReservePort(out attemptHttpPort);
+                var attemptHttpUrl = $"http://{host}:{attemptHttpPort}";
+                var attemptWsUrl = $"ws://{host}:{attemptWsPort}";
+
+                Process process;
+                try
+                {
+                    wsReservation.Stop();
+                    httpReservation.Stop();
+                    process = SpawnMockServer(host, attemptWsPort, attemptHttpPort);
+                }
+                catch (Exception ex)
+                {
+                    try { wsReservation.Stop(); } catch { /* already stopped */ }
+                    try { httpReservation.Stop(); } catch { /* already stopped */ }
+                    _startupFailure = new InvalidOperationException(
+                        $"RelayMockTest: failed to spawn `python -m mock_relay`: {ex.Message} " +
+                        $"(set MOCK_RELAY_HOST / MOCK_RELAY_PORT / MOCK_RELAY_HTTP_PORT to use a pre-running instance, " +
+                        $"or run inside an environment with python3 + porting-sdk available)", ex);
+                    throw _startupFailure;
+                }
+
                 _mockProcess = process;
                 var deadline = DateTime.UtcNow + StartupTimeout;
+                var lostTheBind = false;
+
                 while (DateTime.UtcNow < deadline)
                 {
-                    if (ProbeHealth(probeClient, httpUrl))
+                    if (ProbeHealth(probeClient, attemptHttpUrl))
                     {
                         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
                         {
                             try { if (!process.HasExited) process.Kill(true); } catch { /* best effort */ }
                         };
-                        var hr = new Harness(httpUrl, wsUrl, host, wsPort, httpPort);
+                        var hr = new Harness(attemptHttpUrl, attemptWsUrl, host, attemptWsPort, attemptHttpPort);
                         _sharedHarness = hr;
                         return hr;
                     }
                     if (process.HasExited)
                     {
+                        // Drain the async output handlers before classifying —
+                        // the bind error is written AFTER the startup banner.
+                        // WaitForExit() with no timeout is the overload that
+                        // also waits for those handlers.
+                        try { process.WaitForExit(); } catch { /* best effort */ }
                         var stderr = _mockStderr?.ToString() ?? "";
                         var stdout = _mockStdout?.ToString() ?? "";
+                        if (MockTest.IsAddressInUse(stdout, stderr))
+                        {
+                            lostTheBind = true;
+                            lastSpawnError = new InvalidOperationException(
+                                $"mock_relay lost a bind on {attemptHttpUrl} / {attemptWsUrl} (address already in use); " +
+                                $"retrying on a fresh pair (attempt {attempt}/{SpawnAttempts}).");
+                            break;
+                        }
                         _startupFailure = new InvalidOperationException(
                             $"mock_relay process exited before becoming ready (exit {process.ExitCode}). " +
                             $"stdout={Truncate(stdout)} stderr={Truncate(stderr)}");
@@ -641,21 +685,33 @@ public static class RelayMockTest
                     }
                     Thread.Sleep(150);
                 }
+
+                if (lostTheBind) continue;
+
                 try { process.Kill(true); } catch { /* best effort */ }
                 _startupFailure = new InvalidOperationException(
-                    $"RelayMockTest: `python -m mock_relay` did not become ready within {StartupTimeout} on {httpUrl} / {wsUrl}. " +
+                    $"RelayMockTest: `python -m mock_relay` did not become ready within {StartupTimeout} on {attemptHttpUrl} / {attemptWsUrl}. " +
                     $"Either start it manually on host before running tests, or clone porting-sdk next to signalwire-dotnet.");
                 throw _startupFailure;
             }
-            catch (Exception ex) when (ex is not InvalidOperationException)
-            {
-                _startupFailure = new InvalidOperationException(
-                    $"RelayMockTest: failed to spawn `python -m mock_relay`: {ex.Message} " +
-                    $"(set MOCK_RELAY_HOST / MOCK_RELAY_PORT / MOCK_RELAY_HTTP_PORT to use a pre-running instance, " +
-                    $"or run inside an environment with python3 + porting-sdk available)", ex);
-                throw _startupFailure;
-            }
+
+            _startupFailure = new InvalidOperationException(
+                $"RelayMockTest: `python -m mock_relay` lost a port bind on {SpawnAttempts} " +
+                $"consecutive freshly-picked port pairs. Last: {lastSpawnError?.Message}", lastSpawnError);
+            throw _startupFailure;
         }
+    }
+
+    /// <summary>Fresh port pairs to try before giving up (mirrors MockTest).</summary>
+    private const int SpawnAttempts = 5;
+
+    /// <summary>Hold a free loopback port open; see MockTest.ReservePort.</summary>
+    private static System.Net.Sockets.TcpListener ReservePort(out int port)
+    {
+        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        return listener;
     }
 
     private static string Truncate(string s)
