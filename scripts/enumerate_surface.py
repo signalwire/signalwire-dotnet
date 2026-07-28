@@ -764,6 +764,49 @@ SURFACE_METHOD_INJECTIONS: dict[tuple[str, str], list[str]] = {
     # ``__init__``; the object is constructed (via Instance) so the capability
     # exists — the C# ctor is simply private.
     ("signalwire.skills.registry", "SkillRegistry"): ["__init__"],
+    # ---- @dataclass constructors the reference SYNTHESIZES (porting-sdk 8828dd2)
+    # Every class below is a Python `@dataclass`: python_surface.json records an
+    # `__init__` that exists only because the decorator generates it — the reference
+    # source has no `def __init__` either. C# expresses the same construction two
+    # ways this text-based enumerator cannot see as a "constructor":
+    #   * object-initializer classes — `public sealed class CallReceiveEvent {
+    #     public string CallState { get; init; } = ""; ... }` has an IMPLICIT
+    #     parameterless ctor; `grep "public CallReceiveEvent("` returns ZERO.
+    #   * positional records — `public sealed record ChatLog(...)` / BasicCredentials
+    #     / BearerCredentials, whose canonical ctor is generated from the header.
+    # 8828dd2 made emitting `__init__` mandatory fleet-wide, so all 30 went red at
+    # once. Fixed by EMISSION, not omission (RULES.md §2 — fold at the emitter).
+    # Verified real, not assumed: every one resolves to a `class`/`record` in src/.
+    ("signalwire.ai_chat.client", "ChatLog"): ["__init__"],
+    ("signalwire.ai_chat.client", "ChatResponse"): ["__init__"],
+    ("signalwire.ai_chat.client", "ConversationInfo"): ["__init__"],
+    ("signalwire.core.auth_handler", "BasicCredentials"): ["__init__"],
+    ("signalwire.core.auth_handler", "BearerCredentials"): ["__init__"],
+    ("signalwire.relay.event", "CallReceiveEvent"): ["__init__"],
+    ("signalwire.relay.event", "CallStateEvent"): ["__init__"],
+    ("signalwire.relay.event", "CallingErrorEvent"): ["__init__"],
+    ("signalwire.relay.event", "CollectEvent"): ["__init__"],
+    ("signalwire.relay.event", "ConferenceEvent"): ["__init__"],
+    ("signalwire.relay.event", "ConnectEvent"): ["__init__"],
+    ("signalwire.relay.event", "DenoiseEvent"): ["__init__"],
+    ("signalwire.relay.event", "DetectEvent"): ["__init__"],
+    ("signalwire.relay.event", "DialEvent"): ["__init__"],
+    ("signalwire.relay.event", "EchoEvent"): ["__init__"],
+    ("signalwire.relay.event", "FaxEvent"): ["__init__"],
+    ("signalwire.relay.event", "HoldEvent"): ["__init__"],
+    ("signalwire.relay.event", "MessageReceiveEvent"): ["__init__"],
+    ("signalwire.relay.event", "MessageStateEvent"): ["__init__"],
+    ("signalwire.relay.event", "PayEvent"): ["__init__"],
+    ("signalwire.relay.event", "PlayEvent"): ["__init__"],
+    ("signalwire.relay.event", "QueueEvent"): ["__init__"],
+    ("signalwire.relay.event", "RecordEvent"): ["__init__"],
+    ("signalwire.relay.event", "ReferEvent"): ["__init__"],
+    ("signalwire.relay.event", "RelayEvent"): ["__init__"],
+    ("signalwire.relay.event", "SendDigitsEvent"): ["__init__"],
+    ("signalwire.relay.event", "StreamEvent"): ["__init__"],
+    ("signalwire.relay.event", "TapEvent"): ["__init__"],
+    ("signalwire.relay.event", "TranscribeEvent"): ["__init__"],
+    ("signalwire.rest._request_options", "RequestOptions"): ["__init__"],
     # C# Schema is a singleton (private ctor) surfaced as SchemaUtils; the
     # object is constructed via Instance so ``__init__`` capability is real.
     ("signalwire.utils.schema_utils", "SchemaUtils"): ["__init__"],
