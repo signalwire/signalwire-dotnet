@@ -569,6 +569,130 @@ def _oracle_alignment_score(sig: dict, ref_types: list | None) -> int:
 _REST_MODULE_PREFIX = "signalwire.rest.namespaces"
 
 
+def _union_members(t: str) -> list[str]:
+    """Flatten a canonical ``union<...>`` into its member list (a single
+    non-union type is a one-member union). Splits on TOP-LEVEL commas only, so a
+    nested ``list<string>`` / ``dict<string,any>`` member survives intact."""
+    if not (isinstance(t, str) and t.startswith("union<") and t.endswith(">")):
+        return [t] if isinstance(t, str) else []
+    inner = t[len("union<"):-1]
+    out, depth, buf = [], 0, []
+    for ch in inner:
+        if ch in "<([":
+            depth += 1
+        elif ch in ">)]":
+            depth -= 1
+        if ch == "," and depth == 0:
+            out.append("".join(buf).strip())
+            buf = []
+        else:
+            buf.append(ch)
+    if buf:
+        out.append("".join(buf).strip())
+    # Members may themselves be unions (reference spellings nest); flatten once more.
+    flat: list[str] = []
+    for m in out:
+        flat.extend(_union_members(m) if m.startswith("union<") else [m])
+    return flat
+
+
+def _merge_overload_param_unions(existing: dict, sig: dict, ref_types: list | None) -> None:
+    """REFERENCE-DIRECTED union of param TYPES across two equal-arity overloads.
+
+    C# expresses a reference ``Union[A, B]`` parameter the only way a statically
+    typed language can: as two OVERLOADS of the same method name, one taking ``A``
+    and one taking ``B``. Both are public, both are reachable, and each emits the
+    arm the reference emits for that input type — the CAPABILITY is complete. But
+    the enumerator's dedup keeps exactly ONE overload, so the recorded surface said
+    ``list<string>`` where the reference says ``union<string,list<string>>``, and
+    the checker reported a ``param-mismatch`` for a call the port fully supports.
+    Overloading is C#'s answer to a union parameter, exactly as it is its answer to
+    default arguments (java ea7e0ba) — so the enumerator must read the OVERLOAD SET,
+    not one member of it.
+
+    The merge is REFERENCE-DIRECTED and deliberately narrow. A position is unioned
+    only when ALL of these hold:
+
+      1. The reference records a multi-member ``union<...>`` at that position.
+         (Where the reference is a single concrete type, two overloads are a typed
+         convenience sibling, NOT a union — folding there would INVENT a union the
+         reference does not have. This is what keeps ``FunctionResult.RecordCall``
+         / ``Tap`` untouched: the reference types ``format``/``direction``/``codec``
+         as bare ``string``, and the existing ``_oracle_alignment_score`` already
+         selects the string overload, so those positions compare equal today and
+         must keep doing so.)
+      2. The two overloads actually DISAGREE at that position (nothing to merge
+         otherwise).
+      3. The resulting member SET is a SUBSET of the reference's member set — i.e.
+         every arm the port offers is an arm the reference offers. An overload
+         taking a type the reference does NOT accept is port-invented surface, and
+         the checker must keep reporting it rather than have it laundered into a
+         union that happens to normalise clean.
+
+    Only ``type`` is touched; ``required``/``default``/``kind`` still come from
+    whichever overload dedup selects. Arity mismatch means the two are not the same
+    call shape (a convenience wrapper, not a union sibling) — left alone.
+    """
+    if not ref_types:
+        return
+    pa, pb = existing.get("params", []), sig.get("params", [])
+    if len(pa) != len(pb):
+        return
+    for i, (x, y) in enumerate(zip(pa, pb)):
+        if x.get("kind") == "self" or y.get("kind") == "self":
+            continue
+        if i >= len(ref_types):
+            break
+        ref_t = ref_types[i]
+        ref_members = set(_union_members(ref_t))
+        if len(ref_members) < 2:
+            continue  # (1) reference is not a union here
+        xt, yt = x.get("type"), y.get("type")
+        if not isinstance(xt, str) or not isinstance(yt, str) or xt == yt:
+            continue  # (2) nothing to merge
+        merged = set(_union_members(xt)) | set(_union_members(yt))
+        if not merged <= ref_members:
+            continue  # (3) the port offers an arm the reference does not
+        canon = "union<" + ",".join(sorted(merged)) + ">"
+        x["type"] = canon
+        y["type"] = canon
+
+
+def _merge_overload_return_union(existing: dict, sig: dict, ref_return) -> None:
+    """REFERENCE-DIRECTED union of RETURN types across overloads of one name.
+
+    The return-side twin of ``_merge_overload_param_unions``. Where the reference
+    declares a union return whose arm depends on an argument
+    (``get_basic_auth_credentials(include_source)`` -> ``tuple[str,str] |
+    tuple[str,str,str]``), C# expresses it as overloads with different return
+    types — a C# method cannot return an anonymous union, and overloads are the
+    language's own answer. Only one survives dedup, so the recorded return named a
+    single arm and the checker reported a ``return-mismatch`` for a shape the port
+    fully produces.
+
+    Same three gates as the param merge: the REFERENCE return must be a
+    multi-member union, the two overloads must disagree, and the port's combined
+    arm set must be a SUBSET of the reference's — a port returning a shape the
+    reference never returns is real drift the gate must keep reporting. Unlike the
+    param merge, arity is NOT required to match: which overload you call is
+    precisely what selects the return arm.
+    """
+    if not isinstance(ref_return, str):
+        return
+    ref_members = set(_union_members(ref_return))
+    if len(ref_members) < 2:
+        return
+    xr, yr = existing.get("returns"), sig.get("returns")
+    if not isinstance(xr, str) or not isinstance(yr, str) or xr == yr:
+        return
+    merged = set(_union_members(xr)) | set(_union_members(yr))
+    if not merged <= ref_members:
+        return
+    canon = "union<" + ",".join(sorted(merged)) + ">"
+    existing["returns"] = canon
+    sig["returns"] = canon
+
+
 # The generated-type oracle MODULES whose classes the reference's SIGNATURE
 # oracle (griffe) records WITH per-field accessors: only the read-side SWML-verbs
 # + SWAIG payload modules. The REST ``<ns>_types_generated`` wire-type modules,
@@ -1081,6 +1205,21 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                 ref_key = f"{target_module}.{target_class}.{method_canonical}"
                 py_count = _PY_PARAM_COUNTS.get(ref_key)
                 ref_types = _PY_PARAM_TYPES.get(ref_key)
+                # A UNION PARAMETER IS A PROPERTY OF THE METHOD NAME, NOT OF ONE
+                # OVERLOAD. C# says "this parameter accepts A or B" by declaring an
+                # overload for each; only one survives dedup, so the union must be
+                # merged BEFORE a winner is chosen or the recorded surface would
+                # claim the port accepts only the selected arm. Reference-directed
+                # and subset-checked — see _merge_overload_param_unions.
+                _merge_overload_param_unions(existing, sig, ref_types)
+                # Same argument on the RETURN side: which overload you call is
+                # what selects the reference's return arm.
+                _ref_sig_for_merge = _REFERENCE_SIGS.get(ref_key)
+                _merge_overload_return_union(
+                    existing, sig,
+                    _ref_sig_for_merge.get("returns")
+                    if isinstance(_ref_sig_for_merge, dict) else None,
+                )
                 if py_count is not None:
                     new_diff = abs(len(sig["params"]) - py_count)
                     old_diff = abs(len(existing["params"]) - py_count)
@@ -1369,7 +1508,20 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             out_modules.setdefault(mod, {"classes": {}})
             out_modules[mod].setdefault("classes", {})
             out_modules[mod]["classes"].setdefault(cls, {"methods": {}})
-            out_modules[mod]["classes"][cls]["methods"].update(present)
+            # A PROJECTION MUST NEVER OVERWRITE A REAL CLASS'S OWN SIGNATURE.
+            # Some projection targets are REAL C# classes that are ALSO delegation
+            # targets — PromptManager and ToolRegistry both exist in C# and carry
+            # their own methods. enumerate_surface.py already unions here
+            # (``existing | set(present)``); the signature side used ``.update()``,
+            # so AgentBase's DELEGATING form silently replaced the real class's own
+            # signature: PromptManager.DefineContexts(object contexts) -> void was
+            # overwritten by AgentBase.DefineContexts() -> ContextBuilder, and the
+            # recorded surface then claimed PromptManager cannot take a contexts
+            # argument at all. Project only where the class does not already
+            # declare the member itself.
+            _dest = out_modules[mod]["classes"][cls]["methods"]
+            _added = {m: s for m, s in present.items() if m not in _dest}
+            _dest.update(_added)
             projected_names.update(present)
         # Pop the projected names from AgentBase only (Service methods
         # remain on Service since SWMLService is itself a Python class

@@ -62,14 +62,22 @@ public class ToolRegistry
     /// <param name="required">Required parameter names.</param>
     /// <param name="isTypedHandler">Whether the handler uses typed parameters.</param>
     /// <param name="swaigFields">Extra fields merged into the definition.</param>
-    /// <returns>The stored definition dictionary.</returns>
     /// <exception cref="ArgumentException">If the tool name already exists.</exception>
+    /// <remarks>
+    /// <paramref name="parameters"/> and <paramref name="handler"/> are REQUIRED
+    /// and the method returns void, matching the reference
+    /// (signalwire/core/agent/tools/registry.py:36 —
+    /// <c>define_tool(name, description, parameters, handler, ...) -&gt; None</c>).
+    /// They previously defaulted to <c>null</c>, which let a .NET caller register
+    /// a tool with no schema and no handler — a definition the reference cannot
+    /// produce. The stored definition is reachable via <see cref="GetFunction"/>.
+    /// </remarks>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API / used as a config value.")]
-    public Dictionary<string, object> DefineTool(
+    public void DefineTool(
         string name,
         string description,
-        Dictionary<string, object>? parameters = null,
-        Func<Dictionary<string, object?>, Dictionary<string, object?>, object?>? handler = null,
+        Dictionary<string, object> parameters,
+        Func<Dictionary<string, object?>, Dictionary<string, object?>, object?> handler,
         bool secure = true,
         Dictionary<string, object>? fillers = null,
         string? waitFile = null,
@@ -79,20 +87,19 @@ public class ToolRegistry
         bool isTypedHandler = false,
         Dictionary<string, object>? swaigFields = null)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(handler);
         if (_swaigFunctions.ContainsKey(name))
         {
             throw new ArgumentException($"Tool with name '{name}' already exists", nameof(name));
         }
 
-        var definition = BuildDefinition(
+        _swaigFunctions[name] = BuildDefinition(
             name, description, parameters, required,
             handler: handler, secure: secure, fillers: fillers,
             waitFile: waitFile, waitFileLoops: waitFileLoops,
             webhookUrl: webhookUrl, isTypedHandler: isTypedHandler,
             swaigFields: swaigFields);
-
-        _swaigFunctions[name] = definition;
-        return definition;
     }
 
     /// <summary>
@@ -101,9 +108,14 @@ public class ToolRegistry
     /// duplicates. (Python parity: <c>register_swaig_function</c>.)
     /// </summary>
     /// <param name="functionDict">Complete SWAIG function definition.</param>
-    /// <returns>The stored definition dictionary.</returns>
     /// <exception cref="ArgumentException">If the name is missing or already exists.</exception>
-    public Dictionary<string, object> RegisterSwaigFunction(Dictionary<string, object> functionDict)
+    /// <remarks>
+    /// Returns void, matching the reference
+    /// (signalwire/core/agent/tools/registry.py <c>register_swaig_function</c>).
+    /// The stored copy is reachable via <see cref="GetFunction"/>; no caller ever
+    /// consumed the previously-returned dictionary.
+    /// </remarks>
+    public void RegisterSwaigFunction(Dictionary<string, object> functionDict)
     {
         ArgumentNullException.ThrowIfNull(functionDict);
 
@@ -119,9 +131,7 @@ public class ToolRegistry
             throw new ArgumentException($"Tool with name '{fname}' already exists", nameof(functionDict));
         }
 
-        var stored = new Dictionary<string, object>(functionDict);
-        _swaigFunctions[fname] = stored;
-        return stored;
+        _swaigFunctions[fname] = new Dictionary<string, object>(functionDict);
     }
 
     /// <summary>

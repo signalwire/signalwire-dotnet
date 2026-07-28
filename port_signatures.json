@@ -1233,9 +1233,14 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "contexts",
+                  "type": "any",
+                  "required": true
                 }
               ],
-              "returns": "class:signalwire.core.contexts.ContextBuilder"
+              "returns": "class:signalwire.core.agent.prompt.manager.PromptManager"
             },
             "get_contexts": {
               "params": [
@@ -1262,7 +1267,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "any"
+              "returns": "optional<any>"
             },
             "get_raw_prompt": {
               "params": [
@@ -1315,7 +1320,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.core.agent_base.AgentBase"
+              "returns": "class:signalwire.core.agent.prompt.manager.PromptManager"
             },
             "prompt_add_subsection": {
               "params": [
@@ -1346,7 +1351,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.core.agent_base.AgentBase"
+              "returns": "class:signalwire.core.agent.prompt.manager.PromptManager"
             },
             "prompt_add_to_section": {
               "params": [
@@ -1378,7 +1383,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.core.agent_base.AgentBase"
+              "returns": "class:signalwire.core.agent.prompt.manager.PromptManager"
             },
             "prompt_has_section": {
               "params": [
@@ -1406,7 +1411,7 @@
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.core.agent_base.AgentBase"
+              "returns": "class:signalwire.core.agent.prompt.manager.PromptManager"
             },
             "set_prompt_pom": {
               "params": [
@@ -1420,7 +1425,7 @@
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.core.agent_base.AgentBase"
+              "returns": "class:signalwire.core.agent.prompt.manager.PromptManager"
             },
             "set_prompt_text": {
               "params": [
@@ -1434,7 +1439,7 @@
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.core.agent_base.AgentBase"
+              "returns": "class:signalwire.core.agent.prompt.manager.PromptManager"
             }
           }
         }
@@ -1612,7 +1617,7 @@
                 },
                 {
                   "name": "handler",
-                  "type": "callable<list<dict<string,any>,dict<string,any>>,class:signalwire.core.function_result.FunctionResult>",
+                  "type": "callable<list<dict<string,any>,dict<string,any>>,any>",
                   "required": true
                 },
                 {
@@ -1620,9 +1625,51 @@
                   "type": "bool",
                   "required": false,
                   "default": true
+                },
+                {
+                  "name": "fillers",
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "wait_file",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "wait_file_loops",
+                  "type": "optional<int>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "webhook_url",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "required",
+                  "type": "optional<list<string>>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "is_typed_handler",
+                  "type": "bool",
+                  "required": false,
+                  "default": false
+                },
+                {
+                  "name": "swaig_fields",
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
                 }
               ],
-              "returns": "class:signalwire.core.agent_base.AgentBase"
+              "returns": "void"
             },
             "get_all_functions": {
               "params": [
@@ -1668,12 +1715,12 @@
                   "kind": "self"
                 },
                 {
-                  "name": "func_def",
+                  "name": "function_dict",
                   "type": "dict<string,any>",
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.core.agent_base.AgentBase"
+              "returns": "void"
             },
             "remove_function": {
               "params": [
@@ -4452,7 +4499,7 @@
                 },
                 {
                   "name": "keys",
-                  "type": "list<string>",
+                  "type": "union<list<string>,string>",
                   "required": true
                 }
               ],
@@ -4466,7 +4513,7 @@
                 },
                 {
                   "name": "keys",
-                  "type": "list<string>",
+                  "type": "union<list<string>,string>",
                   "required": true
                 }
               ],
@@ -17899,7 +17946,7 @@
                 },
                 {
                   "name": "target_title",
-                  "type": "string",
+                  "type": "union<class:signalwire.pom.pom.Section,string>",
                   "required": true
                 },
                 {
