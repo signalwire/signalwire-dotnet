@@ -562,7 +562,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var call = bound.Client.GetCall("ec-list")!;
-            var done = new TaskCompletionSource<Event>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var done = new TaskCompletionSource<RelayEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
             call.On("calling.call.play", evt => done.TrySetResult(evt));
 
             bound.Harness.Push(BareEventFrame("calling.call.play", new()
@@ -573,6 +573,69 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
             }));
             var seen = await done.Task.WaitAsync(TimeSpan.FromSeconds(2));
             Assert.Equal("calling.call.play", seen.EventType);
+            // The listener receives the reference's RelayEvent shape, with
+            // call_id/params projected off the raw dispatch frame.
+            Assert.Equal("ec-list", seen.CallId);
+            Assert.Equal("playing", seen.Params["state"]);
+        }
+        finally { bound.Client.Disconnect(); }
+    }
+
+    [Fact]
+    public async Task WaitFor_ResolvesOnFirstMatchingEventWhenNoPredicate()
+    {
+        if (Skipped()) return;
+        using var bound = await AnsweredCall("ec-wf-any");
+        try
+        {
+            var call = bound.Client.GetCall("ec-wf-any")!;
+            var waitTask = call.WaitForAsync("calling.call.play", timeout: 5.0);
+
+            bound.Harness.Push(BareEventFrame("calling.call.play", new()
+            {
+                ["call_id"] = "ec-wf-any",
+                ["control_id"] = "c1",
+                ["state"] = "playing",
+            }));
+
+            var evt = await waitTask;
+            Assert.Equal("calling.call.play", evt.EventType);
+            Assert.Equal("playing", evt.Params["state"]);
+        }
+        finally { bound.Client.Disconnect(); }
+    }
+
+    [Fact]
+    public async Task WaitFor_PredicateSkipsNonMatchingEvents()
+    {
+        if (Skipped()) return;
+        using var bound = await AnsweredCall("ec-wf-pred");
+        try
+        {
+            var call = bound.Client.GetCall("ec-wf-pred")!;
+            // Only the event whose control_id is "wanted" may resolve the wait.
+            var waitTask = call.WaitForAsync(
+                "calling.call.play",
+                evt => evt.Params.TryGetValue("control_id", out var c)
+                       && c?.ToString() == "wanted",
+                timeout: 5.0);
+
+            bound.Harness.Push(BareEventFrame("calling.call.play", new()
+            {
+                ["call_id"] = "ec-wf-pred",
+                ["control_id"] = "ignored",
+                ["state"] = "playing",
+            }));
+            bound.Harness.Push(BareEventFrame("calling.call.play", new()
+            {
+                ["call_id"] = "ec-wf-pred",
+                ["control_id"] = "wanted",
+                ["state"] = "finished",
+            }));
+
+            var evt = await waitTask;
+            Assert.Equal("wanted", evt.Params["control_id"]);
+            Assert.Equal("finished", evt.Params["state"]);
         }
         finally { bound.Client.Disconnect(); }
     }

@@ -19723,11 +19723,11 @@
                 },
                 {
                   "name": "callback",
-                  "type": "callable<list<class:signalwire.relay.event.Event>,void>",
+                  "type": "callable<list<class:signalwire.relay.event.RelayEvent>,void>",
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.relay.call.Call"
+              "returns": "void"
             },
             "on_event_callbacks": {
               "params": [
@@ -20219,7 +20219,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "dict<string,list<callable<list<class:signalwire.relay.event.Event>,void>>>"
+              "returns": "dict<string,list<callable<list<class:signalwire.relay.event.RelayEvent>,void>>>"
             },
             "unhold": {
               "params": [
@@ -20252,9 +20252,15 @@
                   "kind": "self"
                 },
                 {
-                  "name": "state",
+                  "name": "event_type",
                   "type": "string",
                   "required": true
+                },
+                {
+                  "name": "predicate",
+                  "type": "optional<callable<list<class:signalwire.relay.event.RelayEvent>,bool>>",
+                  "required": false,
+                  "default": null
                 },
                 {
                   "name": "timeout",
@@ -20263,7 +20269,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.event.Event"
+              "returns": "class:signalwire.relay.event.RelayEvent"
             },
             "wait_for_answered": {
               "params": [
@@ -20278,7 +20284,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.event.Event"
+              "returns": "class:signalwire.relay.event.RelayEvent"
             },
             "wait_for_ended": {
               "params": [
@@ -20293,7 +20299,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.event.Event"
+              "returns": "class:signalwire.relay.event.RelayEvent"
             },
             "wait_for_ending": {
               "params": [
@@ -20308,7 +20314,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.event.Event"
+              "returns": "class:signalwire.relay.event.RelayEvent"
             },
             "wait_for_ringing": {
               "params": [
@@ -20323,7 +20329,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.relay.event.Event"
+              "returns": "class:signalwire.relay.event.RelayEvent"
             }
           }
         },
