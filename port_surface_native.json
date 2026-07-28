@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 79b4b32a97b57ab2563105e1483737104f7446f6",
+  "generated_from": "signalwire-dotnet @ 0a8447cb679772f0689a24c8fed8040d938545ea",
   "native_names": [
     "AI",
     "AIAction",
@@ -172,6 +172,8 @@
     "BaseUrl",
     "BasicAuthPassword",
     "BasicAuthUser",
+    "BasicCredentials",
+    "BearerCredentials",
     "BedrockAgent",
     "BedrockOptions",
     "BedrockParams",
@@ -635,6 +637,7 @@
     "CreateTypedHandlerWrapper",
     "CreateVerifiedCallerIDRequest",
     "CreatedAt",
+    "Credentials",
     "CrudResource",
     "CrudWithAddresses",
     "CspBrandReference",

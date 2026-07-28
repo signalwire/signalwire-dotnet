@@ -242,14 +242,24 @@ public sealed class SessionManager
         return Convert.ToHexString(buffer).ToLowerInvariant();
     }
 
-    /// <summary>Base64url-encode (RFC 4648 without padding).</summary>
+    /// <summary>
+    /// Base64url-encode, PADDING INTACT.
+    /// </summary>
+    /// <remarks>
+    /// The reference mints with <c>base64.urlsafe_b64encode</c>, which KEEPS the '=' padding,
+    /// and validates with <c>base64.urlsafe_b64decode</c>, which RAISES on a stripped '='.
+    /// The previous <c>.TrimEnd('=')</c> therefore made every token this port minted unusable
+    /// to the reference and to any port that decodes strictly, even though the message and the
+    /// HMAC were correct. Our own <see cref="Base64UrlDecode"/> still accepted them because it
+    /// re-pads before decoding — that asymmetry is why round-tripping against ourselves could
+    /// not catch it, and why the TOKEN-INTEROP gate validates against the REFERENCE decoder.
+    /// </remarks>
     private static string Base64UrlEncode(string data)
     {
         var bytes = Encoding.UTF8.GetBytes(data);
         return Convert.ToBase64String(bytes)
             .Replace('+', '-')
-            .Replace('/', '_')
-            .TrimEnd('=');
+            .Replace('/', '_');
     }
 
     /// <summary>Base64url-decode (RFC 4648 without padding).</summary>
