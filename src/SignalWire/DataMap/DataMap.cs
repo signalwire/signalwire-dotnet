@@ -115,19 +115,23 @@ public class DataMap
     public DataMap Expression(
         string testValue,
         string pattern,
-        object output,
-        object? nomatchOutput = null)
+        FunctionResult output,
+        FunctionResult? nomatchOutput = null)
     {
+        ArgumentNullException.ThrowIfNull(output);
         var expr = new Dictionary<string, object>
         {
             ["string"] = testValue,
             ["pattern"] = pattern,
-            ["output"] = output,
+            ["output"] = output.ToDict(),
         };
 
         if (nomatchOutput is not null)
         {
-            expr["nomatch_output"] = nomatchOutput;
+            // Wire key is HYPHENATED (`nomatch-output`), matching the reference
+            // (data_map.py:202) and the behavioral manifest. An underscore here is a
+            // key the server does not recognise, so the no-match branch never fires.
+            expr["nomatch-output"] = nomatchOutput.ToDict();
         }
 
         _expressions.Add(expr);
@@ -196,15 +200,17 @@ public class DataMap
         return this;
     }
 
-    public DataMap Output(object result)
+    public DataMap Output(FunctionResult result)
     {
-        if (_webhooks.Count > 0) _webhooks[^1]["output"] = ResolveOutput(result);
+        ArgumentNullException.ThrowIfNull(result);
+        if (_webhooks.Count > 0) _webhooks[^1]["output"] = result.ToDict();
         return this;
     }
 
-    public DataMap FallbackOutput(object result)
+    public DataMap FallbackOutput(FunctionResult result)
     {
-        _globalOutput = ResolveOutput(result);
+        ArgumentNullException.ThrowIfNull(result);
+        _globalOutput = result.ToDict();
         _hasGlobalOutput = true;
         return this;
     }
@@ -256,7 +262,7 @@ public class DataMap
         Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public static Dictionary<string, object> CreateSimpleApiTool(
         string name, string purpose, IReadOnlyList<Dictionary<string, object>> parameters,
-        string method, string url, object output,
+        string method, string url, FunctionResult output,
         Dictionary<string, string>? headers = null)
     {
         ArgumentNullException.ThrowIfNull(parameters);
@@ -291,14 +297,16 @@ public class DataMap
         }
         foreach (var expr in expressions)
         {
-            expr.TryGetValue("nomatch_output", out var nomatch);
-            builder.Expression((string)expr["string"], (string)expr["pattern"], expr["output"], nomatch);
+            // Accept either wire spelling on INPUT (these dictionaries are caller-
+            // supplied), but Expression() always EMITS the hyphenated reference key.
+            if (!expr.TryGetValue("nomatch-output", out var nomatch))
+            {
+                expr.TryGetValue("nomatch_output", out nomatch);
+            }
+            builder.Expression(
+                (string)expr["string"], (string)expr["pattern"],
+                (FunctionResult)expr["output"], nomatch as FunctionResult);
         }
         return builder.ToSwaigFunction();
-    }
-
-    private static object ResolveOutput(object result)
-    {
-        return result is FunctionResult fr ? fr.ToDict() : result;
     }
 }

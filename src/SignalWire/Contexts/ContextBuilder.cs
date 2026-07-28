@@ -235,9 +235,9 @@ public class Step
     /// server-side runtime only resets the active set when a step
     /// explicitly declares its <c>functions</c> field. This is the most
     /// common source of bugs in multi-step agents: forgetting
-    /// <see cref="SetFunctions"/> on a later step lets the previous step's
+    /// <see cref="SetFunctions(IReadOnlyList{string})"/> on a later step lets the previous step's
     /// tools leak through. Best practice is to call
-    /// <see cref="SetFunctions"/> explicitly on every step that should
+    /// <see cref="SetFunctions(IReadOnlyList{string})"/> explicitly on every step that should
     /// differ from the previous one.</para>
     ///
     /// <para>Keep the per-step active set small: LLM tool selection
@@ -262,7 +262,22 @@ public class Step
     /// <item>The string <c>"none"</c> — synonym for the empty list.</item>
     /// </list>
     /// </param>
-    public Step SetFunctions(object functions) { _functions = functions; return this; }
+    public Step SetFunctions(IReadOnlyList<string> functions)
+    {
+        ArgumentNullException.ThrowIfNull(functions);
+        _functions = functions;
+        return this;
+    }
+
+    /// <inheritdoc cref="SetFunctions(IReadOnlyList{string})"/>
+    /// <remarks>The string arm of the reference's <c>str | list[str]</c>; the only
+    /// meaningful value is <c>"none"</c>, a synonym for the empty list.</remarks>
+    public Step SetFunctions(string functions)
+    {
+        ArgumentNullException.ThrowIfNull(functions);
+        _functions = functions;
+        return this;
+    }
 
     public Step SetValidSteps(IReadOnlyList<string> steps) { _validSteps = steps; return this; }
     public Step SetValidContexts(IReadOnlyList<string> contexts) { _validContexts = contexts; return this; }
@@ -475,7 +490,13 @@ public class Context
         {
             if (opts.TryGetValue("text", out var t)) step.SetText((string)t);
             if (opts.TryGetValue("step_criteria", out var sc)) step.SetStepCriteria((string)sc);
-            if (opts.TryGetValue("functions", out var f)) step.SetFunctions(f);
+            if (opts.TryGetValue("functions", out var f))
+            {
+                // The reference's `str | list[str]` union: dispatch to the matching
+                // overload rather than erasing both arms back to `object`.
+                if (f is string fs) step.SetFunctions(fs);
+                else step.SetFunctions((IReadOnlyList<string>)f);
+            }
             if (opts.TryGetValue("valid_steps", out var vs)) step.SetValidSteps((List<string>)vs);
             if (opts.TryGetValue("valid_contexts", out var vc)) step.SetValidContexts((List<string>)vc);
         }
@@ -719,11 +740,11 @@ public class Context
 /// agent that defines a SWAIG tool with one of them. See
 /// <see cref="ReservedToolNames.Reserved"/>.</para>
 ///
-/// <para><b>Function whitelisting (<see cref="Step.SetFunctions"/>):</b>
+/// <para><b>Function whitelisting (<see cref="Step.SetFunctions(IReadOnlyList{string})"/>):</b>
 /// Each step may declare a functions whitelist. The whitelist is applied
 /// in-memory at the start of each LLM turn. CRITICALLY: if a step does
 /// NOT declare a functions field, it INHERITS the previous step's active
-/// set. See <see cref="Step.SetFunctions"/> for details and examples.</para>
+/// set. See <see cref="Step.SetFunctions(IReadOnlyList{string})"/> for details and examples.</para>
 /// </summary>
 public class ContextBuilder
 {

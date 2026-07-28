@@ -246,7 +246,9 @@ public class SwmlStrictRenderTests : IDisposable
             var contexts = agent.DefineContexts();
             var step = contexts.AddContext("default").AddStep("help");
             step.SetText("help the caller");
-            step.SetFunctions(value);
+            // Both arms of the reference's `str | list[str]` union.
+            if (value is string s) step.SetFunctions(s);
+            else step.SetFunctions((IReadOnlyList<string>)value);
             var doc = contexts.ToDict();
             Assert.True(doc.ContainsKey("default"));
         }
