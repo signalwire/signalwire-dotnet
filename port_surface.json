@@ -216,7 +216,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ ec53a8350cfeabe5b8b2e638dca7d9ebe7b766ec",
+  "generated_from": "signalwire-dotnet @ 01bd09f59f1626caa6a3d9a6822ac2259ce3dadc",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -419,6 +419,14 @@
           "verify_api_key",
           "verify_basic_auth",
           "verify_bearer_token"
+        ],
+        "BasicCredentials": [
+          "password",
+          "username"
+        ],
+        "BearerCredentials": [
+          "credentials",
+          "scheme"
         ]
       },
       "functions": []

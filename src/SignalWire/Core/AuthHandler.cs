@@ -10,11 +10,67 @@
 // ``get_fastapi_dependency`` (FastAPI dependency factory) are framework-bound
 // and have no C# equivalent — they are omitted here (impossible:), matching the
 // TypeScript, PHP, and Ruby ports which also drop the framework-specific forms.
+//
+// The credential CARRIERS, by contrast, are NOT framework-bound. The reference
+// records BasicCredentials (username, password) and BearerCredentials (scheme,
+// credentials) as real classes on this module — two-string value objects. They
+// are expressed here as records with explicit init-only properties (the .NET
+// idiom for the reference's pydantic models), so VerifyBasicAuth /
+// VerifyBearerToken carry the same single-credentials-object contract the
+// reference does.
 
 using System.Security.Cryptography;
 using System.Text;
 
 namespace SignalWire.Core;
+
+/// <summary>
+/// The credentials carried by an HTTP Basic <c>Authorization</c> header, as
+/// presented to <see cref="AuthHandler.VerifyBasicAuth"/>. Mirrors the
+/// reference's <c>signalwire.core.auth_handler.BasicCredentials</c>.
+/// Framework-agnostic: ASP.NET middleware, a raw <c>HttpListener</c>, or a test
+/// can all construct one.
+/// </summary>
+public sealed record BasicCredentials
+{
+    /// <summary>Initializes the pair decoded from a Basic authorization header.</summary>
+    /// <param name="username">The username decoded from the header.</param>
+    /// <param name="password">The password decoded from the header.</param>
+    public BasicCredentials(string username, string password)
+    {
+        Username = username;
+        Password = password;
+    }
+
+    /// <summary>The username decoded from the Basic authorization header.</summary>
+    public string Username { get; init; }
+
+    /// <summary>The password decoded from the Basic authorization header.</summary>
+    public string Password { get; init; }
+}
+
+/// <summary>
+/// The credentials carried by an HTTP <c>Authorization</c> header that has a
+/// scheme, as presented to <see cref="AuthHandler.VerifyBearerToken"/>. Mirrors
+/// the reference's <c>signalwire.core.auth_handler.BearerCredentials</c>.
+/// </summary>
+public sealed record BearerCredentials
+{
+    /// <summary>Initializes the scheme/token pair from an authorization header.</summary>
+    /// <param name="scheme">The authorization scheme (e.g. <c>Bearer</c>).</param>
+    /// <param name="credentials">The token following the scheme.</param>
+    public BearerCredentials(string scheme, string credentials)
+    {
+        Scheme = scheme;
+        Credentials = credentials;
+    }
+
+    /// <summary>The authorization scheme, e.g. <c>Bearer</c>.</summary>
+    public string Scheme { get; init; }
+
+    /// <summary>The token following the scheme in the authorization header.</summary>
+    public string Credentials { get; init; }
+}
 
 /// <summary>
 /// Unified authentication handler supporting multiple auth methods. Provides a
@@ -99,26 +155,32 @@ public sealed class AuthHandler
     }
 
     /// <summary>Verify basic auth credentials. Timing-safe.</summary>
-    public bool VerifyBasicAuth(string username, string password)
+    public bool VerifyBasicAuth(BasicCredentials credentials)
     {
+        ArgumentNullException.ThrowIfNull(credentials);
         if (!MethodEnabled("basic"))
         {
             return false;
         }
         var basic = _authMethods["basic"];
-        var usernameCorrect = SecureEquals(username, (string?)basic["username"]);
-        var passwordCorrect = SecureEquals(password, (string?)basic["password"]);
+        var usernameCorrect = SecureEquals(credentials.Username, (string?)basic["username"]);
+        var passwordCorrect = SecureEquals(credentials.Password, (string?)basic["password"]);
         return usernameCorrect && passwordCorrect;
     }
 
-    /// <summary>Verify a bearer token. Timing-safe.</summary>
-    public bool VerifyBearerToken(string token)
+    /// <summary>
+    /// Verify a bearer token. Timing-safe. Mirrors the reference, which
+    /// compares only the <c>Credentials</c> field — the <c>Scheme</c> is
+    /// carried but is not part of the comparison (auth_handler.py:113-119).
+    /// </summary>
+    public bool VerifyBearerToken(BearerCredentials credentials)
     {
+        ArgumentNullException.ThrowIfNull(credentials);
         if (!MethodEnabled("bearer"))
         {
             return false;
         }
-        return SecureEquals(token, (string?)_authMethods["bearer"]["token"]);
+        return SecureEquals(credentials.Credentials, (string?)_authMethods["bearer"]["token"]);
     }
 
     /// <summary>Verify an API key. Timing-safe.</summary>

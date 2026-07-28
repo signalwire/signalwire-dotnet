@@ -79,6 +79,12 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "ConfigLoader": "signalwire.core.config_loader",
     "SecurityConfig": "signalwire.core.security_config",
     "AuthHandler": "signalwire.core.auth_handler",
+    # Credential carriers for AuthHandler.VerifyBasicAuth / VerifyBearerToken.
+    # The reference records both as real classes on this module (oracle dcff742
+    # resolved them out of FastAPI into signalwire.core.auth_handler); .NET
+    # expresses them as positional records in the same C# file.
+    "BasicCredentials": "signalwire.core.auth_handler",
+    "BearerCredentials": "signalwire.core.auth_handler",
     "WebService": "signalwire.web.web_service",
     "SwaigFunction": "signalwire.core.swaig_function",
     "BedrockAgent": "signalwire.agents.bedrock",
@@ -952,6 +958,15 @@ SURFACE_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
     ("signalwire.ai_chat.client", "ConversationInfo"): set(),
     ("signalwire.ai_chat.client", "ChatResponse"): set(),
     ("signalwire.ai_chat.client", "ChatLog"): set(),
+    #   Credential carriers — same shape: the reference records ONLY the two
+    #     fields (BasicCredentials -> username/password, BearerCredentials ->
+    #     scheme/credentials), not ``__init__`` (they are pydantic models whose
+    #     ctor is generated, exactly like a @dataclass). C# must declare an
+    #     explicit ctor to construct one, so drop it from the SURFACE projection;
+    #     the construction contract still compares in SIGNATURES. Self-retiring:
+    #     if the oracle ever records __init__ on these, the union keeps it.
+    ("signalwire.core.auth_handler", "BasicCredentials"): {"password", "username"},
+    ("signalwire.core.auth_handler", "BearerCredentials"): {"credentials", "scheme"},
     # RequestOptions (plan 4.2): the reference records exactly __init__ +
     # abort_signal + merge; the .NET record's per-field property accessors
     # (timeout/retries/...) are the dataclass fields Python sets in __init__,
