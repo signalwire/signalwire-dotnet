@@ -7810,7 +7810,7 @@
                   "name": "token_expiry_secs",
                   "type": "int",
                   "required": false,
-                  "default": 3600
+                  "default": 900
                 },
                 {
                   "name": "secret_key",

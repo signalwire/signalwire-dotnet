@@ -10,8 +10,16 @@ namespace SignalWire.Security;
 /// </summary>
 public sealed class SessionManager
 {
-    /// <summary>Default token lifetime in seconds.</summary>
-    public const int DefaultExpiry = 3600;
+    /// <summary>Default token lifetime in seconds (15 minutes).</summary>
+    /// <remarks>
+    /// Mirrors the reference's <c>SessionManager(token_expiry_secs: int = 900)</c>
+    /// (session_manager.py:30, "Seconds until tokens expire (default: 15 minutes)").
+    /// Note this is DISTINCT from <c>AgentBase</c>'s own <c>token_expiry_secs</c>
+    /// default of 3600 (agent_base.py:130) — an agent passes its configured value
+    /// down explicitly, so the two defaults do not have to agree and the reference's
+    /// do not.
+    /// </remarks>
+    public const int DefaultExpiry = 900;
 
     private readonly int _tokenExpirySecs;
 
