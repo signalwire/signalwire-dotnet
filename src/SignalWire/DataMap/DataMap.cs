@@ -140,11 +140,10 @@ public class DataMap
         string method,
         string url,
         Dictionary<string, string>? headers = null,
-        string formParam = "",
+        string? formParam = null,
         bool inputArgsAsParams = false,
         IReadOnlyList<string>? requireArgs = null)
     {
-        ArgumentNullException.ThrowIfNull(formParam);
         var wh = new Dictionary<string, object>
         {
             ["method"] = method,
@@ -155,7 +154,7 @@ public class DataMap
         {
             wh["headers"] = headers;
         }
-        if (formParam.Length > 0)
+        if (!string.IsNullOrEmpty(formParam))
         {
             wh["form_param"] = formParam;
         }

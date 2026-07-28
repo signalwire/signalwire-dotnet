@@ -408,7 +408,8 @@ public class FunctionResult
     /// summary placeholder or a string for custom replacement text.
     /// Matches Python's ``replace_in_history(text: Union[bool, str] = True)``.
     /// </summary>
-    public FunctionResult ReplaceInHistory(object? text = null)
+    public FunctionResult ReplaceInHistory(
+        [System.ComponentModel.DefaultValue(true)] object? text = null)
     {
         var value = text ?? true;
         _actions.Add(new Dictionary<string, object>
@@ -479,7 +480,7 @@ public class FunctionResult
     /// sets {wav,mp3,mp4} / {speak,listen,both}; this overload surfaces those
     /// knowable sets as enums so a bad value is a compile error rather than a
     /// runtime <c>ValueError</c> (a same-arity bare-string overload preserves the
-    /// Python <c>str</c> path — see <see cref="RecordCall(string, bool, string, string, string?, bool, double, double?, double?, double?, string?)"/>).
+    /// Python <c>str</c> path — see <see cref="RecordCall(string?, bool, string, string, string?, bool, double, double?, double?, double?, string?)"/>).
     /// The <c>record_call</c> verb is wrapped in a SWML document
     /// (<c>{version, sections: {main: [{record_call: ...}]}}</c>) and emitted under
     /// the <c>SWML</c> action key — there is no bare top-level <c>record_call</c>
@@ -490,7 +491,7 @@ public class FunctionResult
     /// </remarks>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult RecordCall(
-        string controlId = "",
+        string? controlId = null,
         bool stereo = false,
         RecordFormat format = RecordFormat.Wav,
         RecordDirection direction = RecordDirection.Both,
@@ -515,7 +516,7 @@ public class FunctionResult
 
     /// <summary>
     /// String-typed convenience overload of
-    /// <see cref="RecordCall(string, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>:
+    /// <see cref="RecordCall(string?, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>:
     /// start background call recording with <paramref name="format"/> and
     /// <paramref name="direction"/> as bare strings, validated at runtime against
     /// the same closed sets ({wav,mp3,mp4} / {speak,listen,both}). This preserves
@@ -541,7 +542,7 @@ public class FunctionResult
     /// </exception>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult RecordCall(
-        string controlId = "",
+        string? controlId = null,
         bool stereo = false,
         string format = "wav",
         string direction = "both",
@@ -574,7 +575,7 @@ public class FunctionResult
     /// so the typed and string paths are byte-for-byte identical.
     /// </summary>
     private FunctionResult RecordCallCore(
-        string controlId,
+        string? controlId,
         bool stereo,
         string format,
         string direction,
@@ -988,7 +989,7 @@ public class FunctionResult
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult Tap(
         string uri,
-        string controlId = "",
+        string? controlId = null,
         TapDirection direction = TapDirection.Both,
         Codec codec = Codec.Pcmu,
         int rtpPtime = 20,
@@ -1005,7 +1006,7 @@ public class FunctionResult
 
     /// <summary>
     /// String-typed convenience overload of
-    /// <see cref="Tap(string, string, TapDirection, Codec, int, string?)"/>: start
+    /// <see cref="Tap(string, string?, TapDirection, Codec, int, string?)"/>: start
     /// a background call tap with <paramref name="direction"/> and
     /// <paramref name="codec"/> as bare strings, validated at runtime against the
     /// same closed sets ({speak,hear,both} / {PCMU,PCMA}). This keeps consistency
@@ -1036,7 +1037,7 @@ public class FunctionResult
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult Tap(
         string uri,
-        string controlId = "",
+        string? controlId = null,
         string direction = "both",
         string codec = "PCMU",
         int rtpPtime = 20,
@@ -1067,7 +1068,7 @@ public class FunctionResult
     /// </summary>
     private FunctionResult TapCore(
         string uri,
-        string controlId,
+        string? controlId,
         string direction,
         string codec,
         int rtpPtime,
@@ -1179,7 +1180,7 @@ public class FunctionResult
         int timeout = 5,
         int maxAttempts = 1,
         bool securityCode = true,
-        object? postalCode = null,
+        [System.ComponentModel.DefaultValue(true)] object? postalCode = null,
         int minPostalCodeLength = 0,
         string tokenType = "reusable",
         string? chargeAmount = null,

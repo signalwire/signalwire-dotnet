@@ -247,8 +247,21 @@ public class Call
     public Task<Dictionary<string, object?>> DenoiseStopAsync()
         => ExecuteAsync("calling.denoise.stop");
 
-    public Task<Dictionary<string, object?>> TransferAsync(Dictionary<string, object?>? extra = null)
-        => ExecuteAsync("calling.transfer", extra);
+    /// <summary>Transfer call control to another RELAY app or SWML script.
+    /// Mirrors the reference <c>Call.transfer(dest, **kwargs)</c>: <c>dest</c>
+    /// is REQUIRED and rides the wire as the <c>dest</c> param; anything in
+    /// <paramref name="extra"/> is merged alongside it.</summary>
+    public Task<Dictionary<string, object?>> TransferAsync(
+        string dest, Dictionary<string, object?>? extra = null)
+    {
+        ArgumentNullException.ThrowIfNull(dest);
+        var parms = new Dictionary<string, object?> { ["dest"] = dest };
+        if (extra is not null)
+        {
+            foreach (var kvp in extra) parms[kvp.Key] = kvp.Value;
+        }
+        return ExecuteAsync("calling.transfer", parms);
+    }
 
     public Task<Dictionary<string, object?>> JoinConferenceAsync(Dictionary<string, object?>? extra = null)
         => ExecuteAsync("calling.join_conference", extra);

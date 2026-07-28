@@ -47,7 +47,7 @@ internal static class HttpDump
         // ---- handle_request: 307 redirect via routing callback ----
         {
             var svc = NewService();
-            svc.RegisterRoutingCallback("/sip", RedirectCallback);
+            svc.RegisterRoutingCallback(RedirectCallback, path: "/sip");
             var (status, headers, body) = svc.HandleRequest("POST", "/swml/sip",
                 new Dictionary<string, string> { ["Authorization"] = BasicAuth(User, Password) },
                 "{\"call\":{\"to\":\"sip:redirect-me@space\"}}");
@@ -56,7 +56,7 @@ internal static class HttpDump
         // ---- handle_request: callback returns null -> normal 200 SWML ----
         {
             var svc = NewService();
-            svc.RegisterRoutingCallback("/sip", RedirectCallback);
+            svc.RegisterRoutingCallback(RedirectCallback, path: "/sip");
             var (status, headers, body) = svc.HandleRequest("POST", "/swml/sip",
                 new Dictionary<string, string> { ["Authorization"] = BasicAuth(User, Password) },
                 "{\"call\":{\"to\":\"sip:keep@space\"}}");

@@ -211,7 +211,7 @@ public partial class AgentServer
             AutoMapAgentSipUsernames(agent, agentRoute);
         }
 
-        agent.RegisterRoutingCallback(_sipRoute, (body, headers) =>
+        agent.RegisterRoutingCallback((body, headers) =>
         {
             var sipUsername = SWML.Service.ExtractSipUsername(body);
             if (!string.IsNullOrEmpty(sipUsername))
@@ -226,7 +226,7 @@ public partial class AgentServer
                 _logger.Warn($"No route found for SIP username: {sipUsername}");
             }
             return null;
-        });
+        }, path: _sipRoute);
     }
 
     /// <summary>Auto-map an agent's derived SIP username(s) to its route

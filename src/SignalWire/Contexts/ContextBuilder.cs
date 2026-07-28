@@ -1009,7 +1009,7 @@ public class ContextBuilder
         return result;
     }
 
-    public static ContextBuilder CreateSimpleContext(string name)
+    public static ContextBuilder CreateSimpleContext(string name = "default")
     {
         var builder = new ContextBuilder();
         builder.AddContext(name);

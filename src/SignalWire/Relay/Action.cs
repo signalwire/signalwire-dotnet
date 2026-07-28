@@ -59,12 +59,21 @@ public class Action
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Await until the action completes or the timeout elapses.
-    /// Returns the resolved result, or null on timeout.
+    /// Await until the action completes, or until <paramref name="timeout"/>
+    /// seconds elapse. Mirrors the reference
+    /// <c>Action.wait(timeout: float | None = None)</c>: with no timeout the
+    /// wait is unbounded and resolves with the terminal event; with a timeout a
+    /// timed-out wait returns null WITHOUT poisoning the action, so a later
+    /// wait still returns the terminal result once it arrives.
     /// </summary>
-    public async Task<object?> WaitAsync(int timeoutSeconds = 30)
+    public async Task<object?> WaitAsync(double? timeout = null)
     {
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+        if (timeout is null)
+        {
+            return await _tcs.Task.ConfigureAwait(false);
+        }
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout.Value));
 
         try
         {

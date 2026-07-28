@@ -738,21 +738,35 @@ public class AgentBaseTests : IDisposable
     [Fact]
     public void EnableDebugEvents()
     {
+        // Reference contract (ai_config_mixin.enable_debug_events(level: int = 1)
+        // + agent_base's `_params["debug_webhook_level"] = _debug_events_level`):
+        // the DEFAULT level is the int 1, emitted under `debug_webhook_level`.
+        // Called with NO argument, so this pins the default, not a passed value.
         var agent = MakeAgent();
         agent.EnableDebugEvents();
         var ai = ExtractAiVerb(agent.RenderSwml());
         var p = (Dictionary<string, object>)ai["params"];
-        Assert.Equal("all", p["debug_events"]);
+        Assert.Equal(1, p["debug_webhook_level"]);
+        Assert.False(p.ContainsKey("debug_events"));
     }
 
     [Fact]
     public void EnableDebugEvents_CustomLevel()
     {
         var agent = MakeAgent();
-        agent.EnableDebugEvents("verbose");
+        agent.EnableDebugEvents(2);
         var ai = ExtractAiVerb(agent.RenderSwml());
         var p = (Dictionary<string, object>)ai["params"];
-        Assert.Equal("verbose", p["debug_events"]);
+        Assert.Equal(2, p["debug_webhook_level"]);
+    }
+
+    [Fact]
+    public void EnableDebugEvents_NotEmittedUnlessEnabled()
+    {
+        var agent = MakeAgent();
+        var ai = ExtractAiVerb(agent.RenderSwml());
+        Assert.False(ai.TryGetValue("params", out var pObj)
+            && ((Dictionary<string, object>)pObj).ContainsKey("debug_webhook_level"));
     }
 
     [Fact]

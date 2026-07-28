@@ -283,7 +283,7 @@ public class SWMLServiceSwaigTests : IDisposable
 
         // 3. Register an event-sink endpoint via routing callback.
         var eventsSeen = new List<string>();
-        svc.RegisterRoutingCallback("/events", (body, headers) =>
+        svc.RegisterRoutingCallback((body, headers) =>
         {
             if (body is not null && body.TryGetValue("type", out var tObj) && tObj is JsonElement te
                 && te.ValueKind == JsonValueKind.String)
@@ -291,7 +291,7 @@ public class SWMLServiceSwaigTests : IDisposable
                 eventsSeen.Add(te.GetString()!);
             }
             return (object)new { ok = true };
-        });
+        }, path: "/events");
 
         // SWAIG dispatch end-to-end.
         var swaigPayload = JsonSerializer.Serialize(new

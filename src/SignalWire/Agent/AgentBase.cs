@@ -181,7 +181,8 @@ public class AgentBase : Service
     // -- Native functions / fillers / debug --
     private List<string> _nativeFunctions;
     private List<string> _internalFillers;
-    private string? _debugEventsLevel;
+    private bool _debugEventsEnabled;
+    private int _debugEventsLevel = 1;
 
     // -- LLM params --
     private Dictionary<string, object> _promptLlmParams;
@@ -379,7 +380,8 @@ public class AgentBase : Service
         // Native functions / fillers / debug
         _nativeFunctions = options.NativeFunctions is null ? [] : [.. options.NativeFunctions];
         _internalFillers = [];
-        _debugEventsLevel = null;
+        _debugEventsEnabled = false;
+        _debugEventsLevel = 1;
 
         // LLM params
         _promptLlmParams = [];
@@ -784,11 +786,11 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase AddLanguage(string name, string code, string voice)
-    {
-        return AddLanguage(name, code, voice, null, null, null, null, null);
-    }
-
+    /// <summary>Convenience overload carrying ONLY the per-language engine
+    /// params dict, skipping the filler/engine/model slots. The plain
+    /// <c>AddLanguage(name, code, voice)</c> call binds the full overload below
+    /// by defaulting its five trailing parameters, matching the reference
+    /// <c>AIConfigMixin.add_language</c>.</summary>
     public AgentBase AddLanguage(
         string name,
         string code,
@@ -825,11 +827,11 @@ public class AgentBase : Service
         string name,
         string code,
         string voice,
-        IReadOnlyList<string>? speechFillers,
-        IReadOnlyList<string>? functionFillers,
-        string? engine,
-        string? model,
-        Dictionary<string, object?>? languageParams)
+        IReadOnlyList<string>? speechFillers = null,
+        IReadOnlyList<string>? functionFillers = null,
+        string? engine = null,
+        string? model = null,
+        Dictionary<string, object?>? languageParams = null)
     {
         ArgumentNullException.ThrowIfNull(voice);
 
@@ -903,7 +905,7 @@ public class AgentBase : Service
     /// <summary>
     /// Set (or replace) the per-language <c>params</c> dict on an
     /// already-added language. Useful when language entries are built
-    /// up via <see cref="AddLanguage(string, string, string)"/> first and
+    /// up via <see cref="AddLanguage(string, string, string, IReadOnlyList{string}, IReadOnlyList{string}, string, string, Dictionary{string, object})"/> first and
     /// engine-specific tuning is added later (e.g., from a config loader).
     /// Empty dict removes the key. No-op if <paramref name="code"/> isn't
     /// found — matches Python's silent-skip behavior.
@@ -1236,8 +1238,17 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase EnableDebugEvents(string level = "all")
+    /// <summary>
+    /// Enable the debug-event webhook for this agent. Mirrors the reference
+    /// <c>AIConfigMixin.enable_debug_events(level: int = 1)</c>: level 1 is the
+    /// high-level event set (barge, errors, session start/end, step changes);
+    /// 2+ adds the high-volume events (every LLM request/response,
+    /// conversation_add). The level is emitted on the wire as
+    /// <c>ai.params.debug_webhook_level</c>.
+    /// </summary>
+    public AgentBase EnableDebugEvents(int level = 1)
     {
+        _debugEventsEnabled = true;
         _debugEventsLevel = level;
         return this;
     }
@@ -1353,9 +1364,9 @@ public class AgentBase : Service
     /// <summary>Append config to the post-answer ``answer`` verb. Matches
     /// Python's ``add_answer_verb(self, config)`` shape where the verb name
     /// is implicit.</summary>
-    public AgentBase AddAnswerVerb(Dictionary<string, object> config)
+    public AgentBase AddAnswerVerb(Dictionary<string, object>? config = null)
     {
-        return AddPostAnswerVerb("answer", config);
+        return AddPostAnswerVerb("answer", config ?? []);
     }
 
     public AgentBase AddPostAiVerb(string verb, Dictionary<string, object> config)
@@ -1608,7 +1619,7 @@ public class AgentBase : Service
     /// auto-mapping behaviour (sip_username = agent name); ``path`` lets
     /// the caller pin a specific SIP route prefix.
     /// </summary>
-    public AgentBase EnableSipRouting(bool autoMap = false, string path = "")
+    public AgentBase EnableSipRouting(bool autoMap = true, string path = "/sip")
     {
         SetParam("sip_routing", true);
         if (autoMap) SetParam("sip_routing_auto_map", true);
@@ -1798,9 +1809,11 @@ public class AgentBase : Service
         {
             mergedParams["internal_fillers"] = _internalFillers;
         }
-        if (_debugEventsLevel is not null)
+        if (_debugEventsEnabled)
         {
-            mergedParams["debug_events"] = _debugEventsLevel;
+            // Reference wire key + type: ai.params.debug_webhook_level, an int
+            // (agent_base.py: _params["debug_webhook_level"] = _debug_events_level).
+            mergedParams["debug_webhook_level"] = _debugEventsLevel;
         }
         if (mergedParams.Count > 0)
         {

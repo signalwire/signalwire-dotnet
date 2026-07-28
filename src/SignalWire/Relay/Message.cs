@@ -124,12 +124,20 @@ public sealed class Message
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Await until the message completes or the timeout elapses.
-    /// Returns the resolved result, or null on timeout.
+    /// Await until the message reaches a terminal state, or until
+    /// <paramref name="timeout"/> seconds elapse. Mirrors the reference
+    /// <c>Message.wait(timeout: float | None = None)</c>: with no timeout the
+    /// wait is unbounded; a timed-out wait returns null without poisoning the
+    /// message, so a later wait still returns the terminal state.
     /// </summary>
-    public async Task<string?> WaitAsync(int timeoutSeconds = 30)
+    public async Task<string?> WaitAsync(double? timeout = null)
     {
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+        if (timeout is null)
+        {
+            return await _tcs.Task.ConfigureAwait(false);
+        }
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout.Value));
 
         try
         {

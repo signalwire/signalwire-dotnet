@@ -95,14 +95,18 @@ public class Section
     /// <summary>Add a subsection under this section, returning the new
     /// Section. (equivalent to Python's ``Section.add_subsection``.)</summary>
     public Section AddSubsection(
-        string? title = null,
+        string title,
         string body = "",
         IReadOnlyList<string>? bullets = null,
-        bool? numbered = null,
+        bool numbered = false,
         bool numberedBullets = false)
     {
+        // The reference REQUIRES a title (``add_subsection(self, title: str, *, …)``)
+        // and raises ValueError when it is None. Omitting the argument is now a
+        // C# compile error; an EXPLICIT null still raises the port's ValueError
+        // analogue (ArgumentException), preserving the reference's behaviour.
         if (title is null)
-            throw new ArgumentException("Subsections must have a title");
+            throw new ArgumentException("Subsections must have a title", nameof(title));
         var sub = new Section(title, body, bullets, numbered, numberedBullets);
         _subsections.Add(sub);
         return sub;

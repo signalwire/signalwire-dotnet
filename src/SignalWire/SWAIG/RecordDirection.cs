@@ -1,7 +1,7 @@
 namespace SignalWire.SWAIG;
 
 /// <summary>
-/// Audio direction for <see cref="FunctionResult.RecordCall(string, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>, as a typed,
+/// Audio direction for <see cref="FunctionResult.RecordCall(string?, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>, as a typed,
 /// compile-time-checked closed set.
 /// </summary>
 /// <remarks>
@@ -14,7 +14,7 @@ namespace SignalWire.SWAIG;
 /// distinct from the read-only inbound/outbound <c>direction</c> field carried
 /// on a RELAY <c>Call</c> event (that one stays a plain string, as it is server
 /// state, not a caller choice).
-/// <see cref="FunctionResult.RecordCall(string, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>
+/// <see cref="FunctionResult.RecordCall(string?, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>
 /// accepts this enum OR a string: the enum gives editor autocompletion and turns
 /// a typo into a compile error, while the string overload also accepts
 /// the plain wire string (which is all the Python API takes).

@@ -345,8 +345,8 @@ public class Service
     /// and a leading slash is added, so lookup is consistent regardless of the
     /// caller's spelling (<c>"/sip/"</c> and <c>"sip"</c> both key <c>"/sip"</c>).</summary>
     public void RegisterRoutingCallback(
-        string path,
-        Func<Dictionary<string, object?>?, Dictionary<string, string>, object?> callback)
+        Func<Dictionary<string, object?>?, Dictionary<string, string>, object?> callback,
+        string path = "/sip")
     {
         ArgumentNullException.ThrowIfNull(path);
         var normalized = path.TrimEnd('/');
@@ -897,8 +897,9 @@ public class Service
     public virtual FunctionResult? OnFunctionCall(
         string name,
         Dictionary<string, object> args,
-        Dictionary<string, object?> rawData)
+        Dictionary<string, object?>? rawData = null)
     {
+        rawData ??= [];
         if (!_tools.TryGetValue(name, out var tool))
         {
             return null;

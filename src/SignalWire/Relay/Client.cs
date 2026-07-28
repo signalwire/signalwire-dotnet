@@ -841,9 +841,10 @@ public class Client : IAsyncDisposable
     /// Returns the "result" portion of the response.
     /// </summary>
     public async Task<Dictionary<string, object?>> ExecuteAsync(
-        string method, Dictionary<string, object?>? parameters = null,
+        string method, Dictionary<string, object?> parameters,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
         var id = Guid.NewGuid().ToString();
 
         var msg = new Dictionary<string, object?>
@@ -851,7 +852,7 @@ public class Client : IAsyncDisposable
             ["jsonrpc"] = "2.0",
             ["id"] = id,
             ["method"] = method,
-            ["params"] = parameters ?? new Dictionary<string, object?>(),
+            ["params"] = parameters,
         };
 
         var tcs = new TaskCompletionSource<Dictionary<string, object?>>(

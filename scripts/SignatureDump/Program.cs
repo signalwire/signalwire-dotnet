@@ -178,7 +178,21 @@ static JsonObject DumpMethod(MethodBase m, bool isCtor)
             ["is_optional"] = p.IsOptional,
             ["nullable"] = NullabilityOf(p),
         };
-        if (p.HasDefaultValue)
+        // C# CS1763 forbids a non-null compile-time default on a reference-typed
+        // parameter other than string, so a reference slot the Python reference
+        // types as a union with a non-null default (e.g.
+        // ``postal_code: bool | str = True``) MUST be declared ``object? x = null``
+        // and resolved inside the body (``x ??= true``). The semantic default is
+        // then declared with the BCL's [DefaultValue] attribute — the standard
+        // .NET mechanism for exactly this — and it is what the caller observes,
+        // so it is what the signature oracle records.
+        var semantic = p.GetCustomAttribute<System.ComponentModel.DefaultValueAttribute>();
+        if (semantic is not null)
+        {
+            paramObj["has_default"] = true;
+            paramObj["default"] = DefaultValueToJson(semantic.Value);
+        }
+        else if (p.HasDefaultValue)
         {
             paramObj["default"] = DefaultValueToJson(p.DefaultValue);
         }

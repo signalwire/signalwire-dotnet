@@ -1760,8 +1760,9 @@
                 },
                 {
                   "name": "config",
-                  "type": "dict<string,any>",
-                  "required": true
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -1950,13 +1951,13 @@
                   "name": "auto_map",
                   "type": "bool",
                   "required": false,
-                  "default": false
+                  "default": true
                 },
                 {
                   "name": "path",
                   "type": "string",
                   "required": false,
-                  "default": ""
+                  "default": "/sip"
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -3452,7 +3453,8 @@
             {
               "name": "name",
               "type": "string",
-              "required": true
+              "required": false,
+              "default": "default"
             }
           ],
           "returns": "class:signalwire.core.contexts.ContextBuilder"
@@ -3711,9 +3713,9 @@
                 },
                 {
                   "name": "form_param",
-                  "type": "string",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 },
                 {
                   "name": "input_args_as_params",
@@ -4267,7 +4269,7 @@
                   "name": "postal_code",
                   "type": "optional<any>",
                   "required": false,
-                  "default": null
+                  "default": true
                 },
                 {
                   "name": "min_postal_code_length",
@@ -4375,9 +4377,9 @@
                 },
                 {
                   "name": "control_id",
-                  "type": "string",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 },
                 {
                   "name": "stereo",
@@ -4480,7 +4482,7 @@
                   "name": "text",
                   "type": "optional<any>",
                   "required": false,
-                  "default": null
+                  "default": true
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -4879,9 +4881,9 @@
                 },
                 {
                   "name": "control_id",
-                  "type": "string",
+                  "type": "optional<string>",
                   "required": false,
-                  "default": ""
+                  "default": null
                 },
                 {
                   "name": "direction",
@@ -5122,27 +5124,32 @@
                 {
                   "name": "speech_fillers",
                   "type": "optional<list<string>>",
-                  "required": true
+                  "required": false,
+                  "default": null
                 },
                 {
                   "name": "function_fillers",
                   "type": "optional<list<string>>",
-                  "required": true
+                  "required": false,
+                  "default": null
                 },
                 {
                   "name": "engine",
                   "type": "optional<string>",
-                  "required": true
+                  "required": false,
+                  "default": null
                 },
                 {
                   "name": "model",
                   "type": "optional<string>",
-                  "required": true
+                  "required": false,
+                  "default": null
                 },
                 {
                   "name": "language_params",
                   "type": "optional<dict<string,any>>",
-                  "required": true
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -5242,9 +5249,9 @@
                 },
                 {
                   "name": "level",
-                  "type": "string",
+                  "type": "int",
                   "required": false,
-                  "default": "all"
+                  "default": 1
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -5943,8 +5950,9 @@
                 },
                 {
                   "name": "raw_data",
-                  "type": "dict<string,any>",
-                  "required": true
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "optional<class:signalwire.core.function_result.FunctionResult>"
@@ -6052,14 +6060,15 @@
                   "kind": "self"
                 },
                 {
-                  "name": "path",
-                  "type": "string",
-                  "required": true
-                },
-                {
                   "name": "callback",
                   "type": "callable<list<dict<string,any>,dict<string,string>>,any>",
                   "required": true
+                },
+                {
+                  "name": "path",
+                  "type": "string",
+                  "required": false,
+                  "default": "/sip"
                 }
               ],
               "returns": "void"
@@ -10071,14 +10080,15 @@
                   "kind": "self"
                 },
                 {
-                  "name": "path",
-                  "type": "string",
-                  "required": true
-                },
-                {
                   "name": "callback",
                   "type": "callable<list<dict<string,any>,dict<string,string>>,any>",
                   "required": true
+                },
+                {
+                  "name": "path",
+                  "type": "string",
+                  "required": false,
+                  "default": "/sip"
                 }
               ],
               "returns": "void"
@@ -18115,9 +18125,8 @@
                 },
                 {
                   "name": "title",
-                  "type": "optional<string>",
-                  "required": false,
-                  "default": null
+                  "type": "string",
+                  "required": true
                 },
                 {
                   "name": "body",
@@ -18133,9 +18142,9 @@
                 },
                 {
                   "name": "numbered",
-                  "type": "optional<bool>",
+                  "type": "bool",
                   "required": false,
-                  "default": null
+                  "default": false
                 },
                 {
                   "name": "numbered_bullets",
@@ -19113,10 +19122,10 @@
                   "kind": "self"
                 },
                 {
-                  "name": "timeout_seconds",
-                  "type": "int",
+                  "name": "timeout",
+                  "type": "optional<float>",
                   "required": false,
-                  "default": 30
+                  "default": null
                 }
               ],
               "returns": "any"
@@ -20141,6 +20150,11 @@
                 {
                   "name": "self",
                   "kind": "self"
+                },
+                {
+                  "name": "dest",
+                  "type": "string",
+                  "required": true
                 },
                 {
                   "name": "extra",
@@ -21183,9 +21197,8 @@
                 },
                 {
                   "name": "parameters",
-                  "type": "optional<dict<string,any>>",
-                  "required": false,
-                  "default": null
+                  "type": "dict<string,any>",
+                  "required": true
                 },
                 {
                   "name": "cancellation_token",
@@ -23487,10 +23500,10 @@
                   "kind": "self"
                 },
                 {
-                  "name": "timeout_seconds",
-                  "type": "int",
+                  "name": "timeout",
+                  "type": "optional<float>",
                   "required": false,
-                  "default": 30
+                  "default": null
                 }
               ],
               "returns": "string"

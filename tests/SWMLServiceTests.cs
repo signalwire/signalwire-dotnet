@@ -632,11 +632,11 @@ public class SWMLServiceTests : IDisposable
     {
         var svc = MakeService();
         var called = false;
-        svc.RegisterRoutingCallback("/custom", (data, headers) =>
+        svc.RegisterRoutingCallback((data, headers) =>
         {
             called = true;
             return new Dictionary<string, object> { ["custom"] = "response" };
-        });
+        }, path: "/custom");
 
         var (status, _, body) = svc.HandleRequest("POST", "/custom", AuthHeader(), "{}");
         Assert.True(called);

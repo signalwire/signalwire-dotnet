@@ -88,8 +88,8 @@ internal static class StateDump
         // ---- routing-callback registration on Service (path-normalized) ----
         {
             var svc = new Service(new ServiceOptions { Name = "svc", Route = "/svc" });
-            svc.RegisterRoutingCallback("/sip/", (_, _) => null);
-            svc.RegisterRoutingCallback("voice", (_, _) => null);
+            svc.RegisterRoutingCallback((_, _) => null, path: "/sip/");
+            svc.RegisterRoutingCallback((_, _) => null, path: "voice");
             outMap["state_register_routing_callback"] = Canon.Plain(svc.GetRoutingCallbackPaths());
         }
 

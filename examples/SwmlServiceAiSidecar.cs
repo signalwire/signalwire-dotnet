@@ -96,7 +96,7 @@ service.DefineTool(
 
 // 3. (Optional) Mount an event sink for ai_sidecar lifecycle events at
 //    POST /sales-sidecar/events. mod_openai POSTs each event as JSON.
-service.RegisterRoutingCallback("/events", (body, headers) =>
+service.RegisterRoutingCallback((body, headers) =>
 {
     var eventType = "<unknown>";
     if (body is not null && body.TryGetValue("type", out var t))
@@ -110,7 +110,7 @@ service.RegisterRoutingCallback("/events", (body, headers) =>
     }
     Console.WriteLine($"[sidecar event] type={eventType}");
     return new { ok = true };
-});
+}, path: "/events");
 
 var (authUser, authPass) = service.GetBasicAuthCredentials();
 Console.WriteLine("Starting AI sidecar host at http://0.0.0.0:3000/sales-sidecar");

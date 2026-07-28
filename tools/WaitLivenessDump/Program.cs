@@ -81,7 +81,7 @@ internal static class WaitLivenessDump
 
         // WaitAsync with the shared deadline as the timeout — a wait that never
         // returns hits it and classifies as timed_out (a hung wait), not a hang.
-        var result = await action.WaitAsync((int)Math.Ceiling(DeadlineS)).ConfigureAwait(false);
+        var result = await action.WaitAsync(DeadlineS).ConfigureAwait(false);
         var returnedMs = sw.Elapsed.TotalMilliseconds;
 
         // A null result from WaitAsync means the timeout fired first → hung wait.
