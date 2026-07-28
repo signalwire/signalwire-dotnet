@@ -21416,11 +21416,11 @@
                 },
                 {
                   "name": "callback",
-                  "type": "callable<list<class:signalwire.relay.call.Call,class:signalwire.relay.event.Event>,void>",
+                  "type": "callable<list<class:signalwire.relay.call.Call>,void>",
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.relay.client.RelayClient"
+              "returns": "callable<list<class:signalwire.relay.call.Call>,void>"
             },
             "on_call_handler": {
               "params": [
@@ -21429,7 +21429,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "callable<list<class:signalwire.relay.call.Call,class:signalwire.relay.event.Event>,void>"
+              "returns": "callable<list<class:signalwire.relay.call.Call>,void>"
             },
             "on_event_handler": {
               "params": [
@@ -21448,11 +21448,11 @@
                 },
                 {
                   "name": "callback",
-                  "type": "callable<list<class:signalwire.relay.message.Message,class:signalwire.relay.event.Event>,void>",
+                  "type": "callable<list<class:signalwire.relay.message.Message>,void>",
                   "required": true
                 }
               ],
-              "returns": "class:signalwire.relay.client.RelayClient"
+              "returns": "callable<list<class:signalwire.relay.message.Message>,void>"
             },
             "on_message_handler": {
               "params": [
@@ -21461,7 +21461,7 @@
                   "kind": "self"
                 }
               ],
-              "returns": "callable<list<class:signalwire.relay.message.Message,class:signalwire.relay.event.Event>,void>"
+              "returns": "callable<list<class:signalwire.relay.message.Message>,void>"
             },
             "project": {
               "params": [

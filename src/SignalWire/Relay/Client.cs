@@ -161,14 +161,14 @@ public class Client : IAsyncDisposable
     private readonly int _maxActiveCalls;
 
     // -- event handlers --
-    public Func<Call, Event, Task>? OnCallHandler { get; set; }
+    public Func<Call, Task>? OnCallHandler { get; set; }
 
     /// <summary>
     /// Inbound message handler. Mirrors Python's <c>@client.on_message</c>:
     /// fires with a fully-formed <see cref="Message"/> for every
     /// <c>messaging.receive</c> event.
     /// </summary>
-    public Func<Message, Event, Task>? OnMessageHandler { get; set; }
+    public Func<Message, Task>? OnMessageHandler { get; set; }
 
     public Func<Event, Dictionary<string, object?>, Task>? OnEventHandler { get; set; }
 
@@ -1065,7 +1065,7 @@ public class Client : IAsyncDisposable
             {
                 try
                 {
-                    _ = OnMessageHandler(inboundMsg, evt);
+                    _ = OnMessageHandler(inboundMsg);
                 }
                 catch (Exception ex)
                 {
@@ -1279,18 +1279,26 @@ public class Client : IAsyncDisposable
         _logger.Info($"Unsubscribed from contexts: {string.Join(", ", ctxList)}");
     }
 
-    /// <summary>Register a handler for inbound calls.</summary>
-    public Client OnCall(Func<Call, Event, Task> callback)
+    /// <summary>
+    /// Register a handler for inbound calls. Mirrors Python's decorator form
+    /// (<c>relay/client.py: def on_call(self, handler) -> CallHandler</c>): the
+    /// handler itself is returned so it can be used as a decorator and so the
+    /// caller keeps the reference for later detach.
+    /// </summary>
+    public Func<Call, Task> OnCall(Func<Call, Task> callback)
     {
         OnCallHandler = callback;
-        return this;
+        return callback;
     }
 
-    /// <summary>Register a handler for inbound messages.</summary>
-    public Client OnMessage(Func<Message, Event, Task> callback)
+    /// <summary>
+    /// Register a handler for inbound messages. Mirrors Python's decorator form
+    /// (<c>relay/client.py: def on_message(self, handler) -> MessageHandler</c>).
+    /// </summary>
+    public Func<Message, Task> OnMessage(Func<Message, Task> callback)
     {
         OnMessageHandler = callback;
-        return this;
+        return callback;
     }
 
     // -- accessors --
@@ -1335,7 +1343,7 @@ public class Client : IAsyncDisposable
         {
             try
             {
-                _ = OnCallHandler(call, evt);
+                _ = OnCallHandler(call);
             }
             catch (Exception ex)
             {

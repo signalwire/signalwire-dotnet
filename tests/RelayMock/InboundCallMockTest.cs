@@ -91,7 +91,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         {
             var seen = new List<Call>();
             var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall((call, evt) =>
+            bound.Client.OnCall(call =>
             {
                 seen.Add(call);
                 done.TrySetResult();
@@ -123,7 +123,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
             var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             string? callId = null;
             string? direction = null;
-            bound.Client.OnCall((call, evt) =>
+            bound.Client.OnCall(call =>
             {
                 callId = call.CallId;
                 direction = call.Direction;
@@ -153,7 +153,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         {
             var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             Dictionary<string, object?>? dev = null;
-            bound.Client.OnCall((call, evt) =>
+            bound.Client.OnCall(call =>
             {
                 dev = call.Device;
                 done.TrySetResult();
@@ -187,7 +187,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         {
             var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             string? state = null;
-            bound.Client.OnCall((call, evt) =>
+            bound.Client.OnCall(call =>
             {
                 state = call.State;
                 done.TrySetResult();
@@ -217,7 +217,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var answered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall(async (call, evt) =>
+            bound.Client.OnCall(async call =>
             {
                 await call.AnswerAsync();
                 answered.TrySetResult();
@@ -248,7 +248,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         {
             Call? captured = null;
             var handlerReturned = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall(async (call, evt) =>
+            bound.Client.OnCall(async call =>
             {
                 captured = call;
                 await call.AnswerAsync();
@@ -288,7 +288,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall(async (call, evt) =>
+            bound.Client.OnCall(async call =>
             {
                 await call.HangupAsync(reason: "busy");
                 done.TrySetResult();
@@ -321,7 +321,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall(async (call, evt) =>
+            bound.Client.OnCall(async call =>
             {
                 await call.PassAsync();
                 done.TrySetResult();
@@ -356,7 +356,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         {
             var seen = new List<Call>();
             var bothDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall((call, evt) =>
+            bound.Client.OnCall(call =>
             {
                 lock (seen)
                 {
@@ -395,7 +395,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         {
             var calls = new Dictionary<string, Call>();
             var bothDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall(async (call, evt) =>
+            bound.Client.OnCall(async call =>
             {
                 lock (calls)
                 {
@@ -448,7 +448,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         {
             Call? captured = null;
             var handlerDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall(async (call, evt) =>
+            bound.Client.OnCall(async call =>
             {
                 captured = call;
                 await call.AnswerAsync();
@@ -507,7 +507,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         {
             var fired = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             string? callId = null;
-            bound.Client.OnCall(async (call, evt) =>
+            bound.Client.OnCall(async call =>
             {
                 await Task.Delay(10);
                 callId = call.CallId;
@@ -533,7 +533,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var fired = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall((call, evt) =>
+            bound.Client.OnCall(call =>
             {
                 fired.TrySetResult();
                 throw new InvalidOperationException("intentional from handler");
@@ -566,7 +566,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         {
             Call? captured = null;
             var handlerStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall(async (call, evt) =>
+            bound.Client.OnCall(async call =>
             {
                 captured = call;
                 await call.AnswerAsync();
@@ -661,7 +661,7 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall((call, evt) =>
+            bound.Client.OnCall(call =>
             {
                 done.TrySetResult();
                 return Task.CompletedTask;

@@ -122,7 +122,7 @@ var client = new Client(new ClientOptions
     Contexts = new[] { "default" },
 });
 
-client.OnCall(async (call, evt) =>
+client.OnCall(async call =>
 {
     await call.AnswerAsync();
     var action = call.PlayTts("Welcome to SignalWire!");

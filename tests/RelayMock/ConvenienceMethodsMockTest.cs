@@ -54,7 +54,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
 
         Call? captured = null;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        bound.Client.OnCall(async (call, evt) =>
+        bound.Client.OnCall(async call =>
         {
             captured = call;
             await call.AnswerAsync();
@@ -397,7 +397,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
 
             Call? captured = null;
             var got = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall((call, evt) => { captured = call; got.TrySetResult(); return Task.CompletedTask; });
+            bound.Client.OnCall(call => { captured = call; got.TrySetResult(); return Task.CompletedTask; });
             bound.Harness.InboundCall(new RelayMockTest.InboundCallSpec
             {
                 CallId = "conv-wait-ans",
@@ -466,7 +466,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
 
             Call? captured = null;
             var got = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall((call, evt) => { captured = call; got.TrySetResult(); return Task.CompletedTask; });
+            bound.Client.OnCall(call => { captured = call; got.TrySetResult(); return Task.CompletedTask; });
             bound.Harness.InboundCall(new RelayMockTest.InboundCallSpec
             {
                 CallId = "conv-wait-end",

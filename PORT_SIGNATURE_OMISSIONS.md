@@ -199,8 +199,6 @@ signalwire.relay.call.RecordAction.resume: .NET action subcommand returns the pr
 signalwire.relay.call.CollectAction.pause: .NET CollectAction.Pause returns void since callers chain via the Action object state; Python returns dict (the protocol response from the pause subcommand)
 signalwire.relay.call.CollectAction.resume: .NET CollectAction.Resume returns void since callers chain via the Action object state; Python returns dict (the protocol response from the resume subcommand)
 signalwire.relay.client.RelayClient.dial: .NET RelayClient/Message methods take a Params data class; Python uses individual named keyword arguments
-signalwire.relay.client.RelayClient.on_call: .NET RelayClient.OnCall/OnMessage returns a typed handler delegate (CallHandler/MessageHandler) for unsubscribe support; Python returns the RelayClient itself for fluent chaining
-signalwire.relay.client.RelayClient.on_message: .NET RelayClient.OnCall/OnMessage returns a typed handler delegate (CallHandler/MessageHandler) for unsubscribe support; Python returns the RelayClient itself for fluent chaining
 signalwire.relay.client.RelayClient.send_message: .NET RelayClient/Message methods take a Params data class; Python uses individual named keyword arguments
 signalwire.relay.message.Message.on: .NET Message.On takes a typed Action<Message,Event> delegate; Python uses Callable
 signalwire.relay.message.Message.result: .NET Message.Wait/Result returns RelayEvent for typed access to the resolution; Python returns the bare string outcome

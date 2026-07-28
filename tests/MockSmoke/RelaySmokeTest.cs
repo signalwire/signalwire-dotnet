@@ -182,7 +182,7 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
 
         Call? received = null;
         var tcs = new TaskCompletionSource<Call>(TaskCreationOptions.RunContinuationsAsynchronously);
-        bound.Client.OnCall((call, evt) =>
+        bound.Client.OnCall(call =>
         {
             received = call;
             tcs.TrySetResult(call);

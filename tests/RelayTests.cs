@@ -700,7 +700,7 @@ public class RelayTests : IDisposable
     {
         var client = new TestableClient();
         Call? receivedCall = null;
-        client.OnCallHandler = (call, evt) => { receivedCall = call; return Task.CompletedTask; };
+        client.OnCallHandler = call => { receivedCall = call; return Task.CompletedTask; };
 
         client.HandleEvent(new()
         {

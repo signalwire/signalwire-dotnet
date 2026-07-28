@@ -45,7 +45,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
 
         Call? captured = null;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        bound.Client.OnCall(async (call, evt) =>
+        bound.Client.OnCall(async call =>
         {
             captured = call;
             await call.AnswerAsync();

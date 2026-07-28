@@ -32,7 +32,7 @@ static Dictionary<string, object> Tts(string text) => new()
     ["params"] = new Dictionary<string, object> { ["text"] = text },
 };
 
-client.OnCall(async (call, evt) =>
+client.OnCall(async call =>
 {
     Console.WriteLine($"Incoming call: {call.CallId}");
     await call.AnswerAsync();

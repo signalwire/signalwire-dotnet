@@ -323,7 +323,7 @@ public class MessagingMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var done = new TaskCompletionSource<Message>(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnMessage((msg, evt) =>
+            bound.Client.OnMessage(msg =>
             {
                 done.TrySetResult(msg);
                 return Task.CompletedTask;

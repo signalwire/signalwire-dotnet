@@ -53,7 +53,7 @@ Register a message handler to receive inbound messages:
 The callback receives the `Message` object and the `Event`:
 
 ```csharp
-client.OnMessage(async (message, evt) =>
+client.OnMessage(async message =>
 {
     var from    = message.FromNumber ?? "unknown";
     var to      = message.ToNumber ?? "unknown";
