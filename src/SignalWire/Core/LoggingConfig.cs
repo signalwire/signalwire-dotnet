@@ -68,10 +68,22 @@ public static class LoggingConfig
         {
             if (eventDict[key] is string s)
             {
-                eventDict[key] = ControlCharRe.Replace(s, "");
+                eventDict[key] = StripControlCharsValue(s);
             }
         }
         return eventDict;
+    }
+
+    /// <summary>
+    /// Strip control characters from a single string. This is the unit the log
+    /// emitter needs: <see cref="StripControlChars"/> is the reference's
+    /// event-dictionary contract, but a line-oriented writer has one string, not
+    /// a dictionary. Both go through the same regex so they can never diverge.
+    /// </summary>
+    internal static string StripControlCharsValue(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        return ControlCharRe.Replace(value, "");
     }
 
     /// <summary>

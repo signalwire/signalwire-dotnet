@@ -217,4 +217,66 @@ public class LoggerTests : IDisposable
         var b = Logger.GetLogger("test");
         Assert.NotSame(a, b);
     }
+
+    /// <summary>
+    /// The control-char scrub must be ON THE EMISSION PATH, not merely available.
+    ///
+    /// <c>LoggingConfig.StripControlChars</c> shipped public and correct with ZERO
+    /// call sites, so a caller-supplied NUL or ESC-[ escape reached the terminal
+    /// verbatim and could forge log lines. A test that calls the scrub helper
+    /// directly passes even with the wiring deleted — the only assertion that can
+    /// tell the difference is one that reads what the logger ACTUALLY wrote.
+    /// </summary>
+    [Fact]
+    public void LogOutput_HasControlCharsStripped()
+    {
+        var line = CaptureLog(logger => logger.Info("user said\u0000\u001b[31mRED\u0007"));
+
+        Assert.DoesNotContain('\u0000', line);
+        Assert.DoesNotContain('\u001b', line);
+        Assert.DoesNotContain('\u0007', line);
+        // The ordinary space is legal and survives; only the control bytes go, so
+        // the ESC-[ escape is defanged down to the visible text "[31mRED".
+        Assert.Contains("user said[31mRED", line, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Tab/newline/CR are LEGAL in a log line and must survive — a scrub that ate
+    /// them would satisfy "no control chars" while mangling multi-line messages.
+    /// </summary>
+    [Fact]
+    public void LogOutput_KeepsLegalWhitespace()
+    {
+        const string Legal = "line1\tcol\nline2\r end";
+
+        var line = CaptureLog(logger => logger.Info(Legal));
+
+        Assert.Contains(Legal, line, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Drive the real Logger and return what it wrote to stderr.
+    ///
+    /// <c>Console.SetError</c> is process-global, so this is only safe because the
+    /// class sits in <see cref="GlobalStateCollection"/>, which xUnit runs without
+    /// a concurrent sibling. The original writer is restored in a finally.
+    /// </summary>
+    private static string CaptureLog(Action<Logger> emit)
+    {
+        var originalErr = Console.Error;
+        var captured = new StringWriter();
+        Console.SetError(captured);
+        try
+        {
+            var logger = Logger.GetLogger("inject.test");
+            logger.Level = LogLevel.Debug;
+            emit(logger);
+        }
+        finally
+        {
+            Console.SetError(originalErr);
+        }
+
+        return captured.ToString();
+    }
 }

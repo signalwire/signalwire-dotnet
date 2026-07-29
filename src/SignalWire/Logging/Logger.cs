@@ -62,7 +62,13 @@ public sealed class Logger
 
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
         var upper = level.ToString().ToUpperInvariant();
-        Console.Error.WriteLine($"[{timestamp}] [{upper}] [{Name}] {message}");
+        // Scrub control characters BEFORE emitting — log-injection defence, and the
+        // reason the reference registers strip_control_chars in both of its structlog
+        // processor chains. A port that merely EXPOSES the scrub without putting it on
+        // the emission path offers no protection at all: a caller-supplied NUL or an
+        // ESC-[ escape reaches the terminal verbatim and can forge log lines.
+        var safe = Core.LoggingConfig.StripControlCharsValue(message);
+        Console.Error.WriteLine($"[{timestamp}] [{upper}] [{Name}] {safe}");
     }
 
     private static LogLevel? ParseLevel(string? value)
