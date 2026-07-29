@@ -12,6 +12,39 @@ using System.Text.Json;
 
 namespace SignalWire.SWML;
 
+/// <summary>
+/// Fluent builder for a SWML document. Wraps a <see cref="Service"/> and
+/// appends verbs to its document; every verb method returns <c>this</c>, so
+/// a document reads as one chain:
+/// <c>builder.Answer().Ai(promptText: "…").Hangup()</c>.
+///
+/// <para>The builder holds no state of its own — verbs go straight onto
+/// <see cref="Service"/>'s document in call order, which is the order the
+/// engine executes them. <see cref="Reset"/> clears that document, so a
+/// long-lived <see cref="Service"/> can be reused across requests;
+/// forgetting it appends the new document onto the previous one.</para>
+///
+/// <para><b>Optional arguments are omitted, not defaulted.</b> Every verb
+/// method writes a key only when its argument is non-null (and, for
+/// strings, non-empty), leaving the engine's own default in force. A
+/// consequence is that an intentionally empty string is indistinguishable
+/// from an unset argument and will not reach the wire.</para>
+///
+/// <para><b>Wire contract for <see cref="Ai"/>:</b> the SWML <c>ai</c>
+/// verb requires <c>prompt</c> to be an <b>object</b> —
+/// <c>{"text": …}</c> or <c>{"pom": […]}</c> — never a bare string. The
+/// AI engine treats a non-object prompt as fatal and aborts the call, so
+/// <see cref="Ai"/> wraps whichever of <c>promptText</c>/<c>promptPom</c>
+/// was supplied (text wins when both are). <c>post_prompt</c> follows the
+/// same object contract. <c>swaig</c> is emitted under the upper-case key
+/// <c>SWAIG</c>, and <c>extraParams</c> entries are merged into the verb
+/// config last, so they can overwrite any key set above them.</para>
+///
+/// <para><see cref="Play"/> prefers <c>urls</c> over <c>url</c> when both
+/// are supplied — the two are mutually exclusive on the wire.</para>
+///
+/// <para>Mirrors Python's <c>signalwire.core.swml_builder.SWMLBuilder</c>.</para>
+/// </summary>
 public class SWMLBuilder
 {
     public Service Service { get; }

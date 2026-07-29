@@ -10,6 +10,40 @@ using System.Text.Json;
 
 namespace SignalWire.POM;
 
+/// <summary>
+/// Fluent, title-addressed front end over <see cref="PromptObjectModel"/>.
+/// Where the model requires you to hold a <see cref="Section"/> reference to
+/// extend it, this builder keeps a title-to-section index so content can be
+/// added by name in any order.
+///
+/// <para><b>Auto-vivification is the point:</b>
+/// <see cref="AddToSection"/> and <see cref="AddSubsection"/> create the
+/// named (parent) section when it does not yet exist instead of throwing,
+/// so a prompt can be assembled by several independent pieces of code
+/// without any of them owning the ordering. Sections appear in the rendered
+/// output in creation order.</para>
+///
+/// <para><b>Body appends, it does not replace.</b> Successive
+/// <see cref="AddToSection"/> calls that pass a body join the fragments
+/// with a blank line — unlike <see cref="Section.AddBody"/>, which
+/// overwrites. Bullets always append.</para>
+///
+/// <para><b>Duplicate titles collapse.</b> The index is keyed by title, so
+/// adding a second section with an existing title leaves both in the
+/// underlying model's section list but points <see cref="HasSection"/> /
+/// <see cref="GetSection"/> — and therefore all subsequent
+/// <see cref="AddToSection"/> calls — at the most recently added one.
+/// Untitled sections are not indexed at all and can only be reached
+/// through <see cref="Pom"/>.</para>
+///
+/// <para>Rendering and serialization pass straight through to
+/// <see cref="Pom"/>, so output parity with the reference is the model's
+/// (see <see cref="PromptObjectModel"/>). <see cref="FromSections"/>
+/// rebuilds a builder — index included — from previously serialized
+/// section dicts.</para>
+///
+/// <para>Mirrors Python's <c>signalwire.core.pom_builder.PomBuilder</c>.</para>
+/// </summary>
 public class PomBuilder
 {
     public PromptObjectModel Pom { get; private set; }

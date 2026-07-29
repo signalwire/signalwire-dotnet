@@ -16,6 +16,45 @@ using System.Text.Json;
 
 namespace SignalWire.SWML;
 
+/// <summary>
+/// One-call SWML document rendering for the two shapes an agent needs: the
+/// initial AI-configured document handed to the engine when a call starts
+/// (<see cref="RenderSwml"/>), and the document returned from a SWAIG
+/// function to speak a reply and queue follow-up verbs
+/// (<see cref="RenderFunctionResponseSwml"/>).
+///
+/// <para>Both are static and take the <see cref="Service"/> whose document
+/// they render. <b>Both reset that document first</b>, so anything already
+/// staged on the service is discarded — these are whole-document renderers,
+/// not appenders. Use <see cref="SWMLBuilder"/> directly to add verbs
+/// incrementally.</para>
+///
+/// <para><b>Argument-driven verb order</b> in <see cref="RenderSwml"/> is
+/// fixed: an optional <c>answer</c>, then an optional <c>record_call</c>,
+/// then the <c>ai</c> verb. Optional AI settings are written only when
+/// supplied, and the <c>params</c> dictionary is merged into the AI config
+/// last, so its entries can overwrite the keys set from the named
+/// arguments. A <c>SWAIG</c> block is emitted only when at least one
+/// function is passed; <c>defaultWebhookUrl</c> becomes its
+/// <c>defaults.web_hook_url</c> and applies to every function that does not
+/// carry its own.</para>
+///
+/// <para><b>YAML is not supported on .NET.</b> Passing
+/// <c>format: "yaml"</c> (case-insensitive) throws
+/// <see cref="NotSupportedException"/> rather than returning a document —
+/// and it throws <i>after</i> the verbs have already been staged on the
+/// service. To emit YAML, take the dictionary from
+/// <c>SWMLBuilder.Build()</c> / <c>Service.Document.ToDict()</c> and hand
+/// it to a YAML library. Any other <c>format</c> value, including an
+/// unrecognized one, yields JSON.</para>
+///
+/// <para><see cref="RenderFunctionResponseSwml"/> copies only the
+/// recognized action verbs <c>play</c>, <c>hangup</c>, <c>transfer</c>, and
+/// <c>ai</c> out of each supplied action dictionary; any other key is
+/// silently dropped rather than reported.</para>
+///
+/// <para>Mirrors Python's <c>signalwire.core.swml_renderer.SwmlRenderer</c>.</para>
+/// </summary>
 public static class SwmlRenderer
 {
     /// <summary>Generate a complete SWML document with AI configuration.
