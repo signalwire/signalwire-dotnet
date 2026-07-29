@@ -459,6 +459,14 @@ sched_gate PUBLIC-JARGON res=dayone desc="no internal porting jargon leaked into
 sched_gate AI-CHAT desc="AIChatClient speaks the AI Chat protocol per the vendored spec (mock_ai_chat wire-behavioral)" \
     -- bash -c 'if [ -f "$1/scripts/diff_port_ai_chat.py" ]; then python3 "$1/scripts/diff_port_ai_chat.py" --port dotnet --dump-cmd "bash $2/scripts/ai-chat-dump.sh"; else echo "[ai-chat] diff_port_ai_chat.py not on porting-sdk main yet — skip-pass (coordinated-branch dep: porting-sdk ai-chat-client)"; fi' _ "$PORTING_SDK_DIR" "$PORT_ROOT"
 
+# DOC-SURFACE — XML doc-comment coverage floor on the public type surface. The floor is
+# pinned in .doc_surface_floor and ratchets up via --write-floor. BLOCKING and pinned at
+# 100.0 as of the 2026-07-29 burn: every public class/interface/record/enum/struct carries
+# a /// <summary>, so a new undocumented one is a real regression, not a note. Cheap (a
+# pure text scan, no build), so per-PR rather than nightly.
+sched_gate DOC-SURFACE desc="public XML doc-comment coverage floor (.doc_surface_floor ratchet; 100% — blocking)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/doc_surface.py" --port dotnet --repo "$PORT_ROOT"
+
 # ---- summary ----------------------------------------------------------------
 
 sched_run
