@@ -62,17 +62,36 @@ public class PortReservationTests
     }
 
     /// <summary>
-    /// Concurrent acquisitions must each end up owning a DISTINCT port, and must
-    /// still own it when the call returns.
+    /// Concurrent acquisitions must each end up owning a DISTINCT port for as
+    /// long as the reservation is HELD, and must still own it when the call
+    /// returns.
     ///
-    /// <para>Scope note, so this test is not mistaken for more than it is: on a
-    /// monotonic-allocator OS this can never observe a duplicate by chance.
-    /// Measured on this platform, bind(:0) walks 49152-65535 in order with a
-    /// minimum reuse distance of ~15,350 allocations — 9,600 concurrent picks
-    /// with a 40ms window produced ZERO collisions. So this test pins the
-    /// no-duplicate + still-owned invariants cheaply, but the defect that
-    /// actually bit us is NOT observable from inside the allocating process
-    /// (the losing binder is a separate process). That case is covered by
+    /// <para><b>What "distinct" may and may not mean here.</b> The invariant a
+    /// reservation buys is that a port is never handed to a second caller
+    /// <em>while the first still holds it</em>. It is emphatically NOT that a
+    /// port is never handed out twice in the lifetime of the process: once a
+    /// listener closes, its port returns to the ephemeral pool and the kernel
+    /// recycling it is correct behaviour, not a defect. This test therefore
+    /// keys on SIMULTANEOUS ownership — it releases a port from the
+    /// "outstanding" set when that reservation is dropped — rather than on a
+    /// cumulative never-seen-before set.</para>
+    ///
+    /// <para>That distinction is load-bearing and platform-visible. macOS
+    /// assigns bind(:0) monotonically over 49152-65535, so a cumulative
+    /// assertion happens to hold there. Linux draws randomly from 32768-60999
+    /// and recycles immediately, so a cumulative assertion is simply false:
+    /// measured on Linux with this exact worker shape and NOTHING else running,
+    /// 20/20 runs saw ~85 recycled ports each, and in 456/456 sampled cases the
+    /// earlier holder had ALREADY CLOSED (zero cases of two live listeners
+    /// sharing a port). The recycling comes from within this test — fast
+    /// workers finish their 40 rounds and free 40 ports while slower workers
+    /// are still reserving.</para>
+    ///
+    /// <para>Scope note, so this test is not mistaken for more than it is: it
+    /// pins the no-overlap + still-owned invariants cheaply, but the defect
+    /// that actually bit us is NOT observable from inside the allocating
+    /// process (the losing binder is a separate process). That case is covered
+    /// by
     /// <see cref="SelfSpawn_RecoversWhenTheMockLosesTheBind_InsteadOfServingADeadEndpoint"/>,
     /// which is the mutation-discriminating test.</para>
     /// </summary>
@@ -80,21 +99,25 @@ public class PortReservationTests
     public void ConcurrentAcquisitions_EachCallerStillOwnsItsPortOnReturn()
     {
         var notOwned = new ConcurrentBag<int>();
-        var handedOut = new ConcurrentDictionary<int, int>();
-        var duplicates = new ConcurrentBag<int>();
+        // Ports currently RESERVED and not yet released. A port leaves this set
+        // when its listener is stopped, so recycling a closed port is not a
+        // violation — only an overlap is.
+        var outstanding = new ConcurrentDictionary<int, int>();
+        var overlaps = new ConcurrentBag<int>();
 
         var tasks = new List<Task>();
         for (var w = 0; w < Workers; w++)
         {
             tasks.Add(Task.Run(() =>
             {
-                var mine = new List<TcpListener>();
+                var mine = new List<(TcpListener Listener, int Port)>();
                 for (var r = 0; r < RoundsPerWorker; r++)
                 {
                     var listener = ReservePort(out var port);
-                    mine.Add(listener);
+                    mine.Add((listener, port));
 
-                    if (!handedOut.TryAdd(port, 1)) duplicates.Add(port);
+                    // Two LIVE reservations on one port is the real defect.
+                    if (!outstanding.TryAdd(port, 1)) overlaps.Add(port);
 
                     try
                     {
@@ -109,15 +132,19 @@ public class PortReservationTests
                     }
                 }
 
-                foreach (var l in mine)
+                foreach (var (l, port) in mine)
                 {
+                    // Drop the reservation BEFORE freeing the port, so the
+                    // window in which a recycled port could look like an
+                    // overlap never exists.
+                    outstanding.TryRemove(port, out _);
                     try { l.Stop(); } catch { /* best effort */ }
                 }
             }));
         }
         Task.WaitAll(tasks.ToArray());
 
-        Assert.Empty(duplicates);
+        Assert.Empty(overlaps);
         Assert.Empty(notOwned);
     }
 
