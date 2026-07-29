@@ -211,6 +211,29 @@ public class DataMapTests
         Assert.False(wh.ContainsKey("require_args"));
     }
 
+    /// <summary>
+    /// The reference upper-cases the method on the wire (core/data_map.py:230,
+    /// <c>"method": method.upper()</c>), so a caller writing a lower-case method must still
+    /// produce byte-identical SWML across languages.
+    /// </summary>
+    [Fact]
+    public void Webhook_UpperCasesMethodOnTheWire()
+    {
+        var dm = new DM("case_fn");
+        dm.Webhook("get", "https://api.example.com");
+        dm.Webhook("post", "https://api2.example.com");
+        var webhooks = (List<Dictionary<string, object>>)((Dictionary<string, object>)dm.ToSwaigFunction()["data_map"])["webhooks"];
+
+        Assert.Equal("GET", webhooks[0]["method"]);
+        Assert.Equal("POST", webhooks[1]["method"]);
+
+        // An already-upper-case method is left unchanged (no double transform).
+        var dm2 = new DM("case_fn2");
+        dm2.Webhook("DELETE", "https://api3.example.com");
+        var webhooks2 = (List<Dictionary<string, object>>)((Dictionary<string, object>)dm2.ToSwaigFunction()["data_map"])["webhooks"];
+        Assert.Equal("DELETE", webhooks2[0]["method"]);
+    }
+
     // =================================================================
     //  Webhook modifiers
     // =================================================================

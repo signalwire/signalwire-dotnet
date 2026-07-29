@@ -148,9 +148,15 @@ public class DataMap
         bool inputArgsAsParams = false,
         IReadOnlyList<string>? requireArgs = null)
     {
+        ArgumentNullException.ThrowIfNull(method);
         var wh = new Dictionary<string, object>
         {
-            ["method"] = method,
+            // The reference upper-cases the method on the wire (core/data_map.py:230,
+            // `"method": method.upper()`), so the same program emits byte-identical SWML in
+            // both languages. The engine itself compares case-insensitively. Invariant
+            // culture, not ToUpper(): a Turkish locale would map "i" to "İ" and produce a
+            // different wire value per machine.
+            ["method"] = method.ToUpperInvariant(),
             ["url"] = url,
         };
 
