@@ -167,6 +167,28 @@ dotnet_diagnostic.CA1515.severity = none
 # Rule stays ON for src/. (mike@signalwire.com, 2026-07-30)
 dotnet_diagnostic.CA2000.severity = none
 
+# CA2007 — call ConfigureAwait on the awaited task. DIRECTLY CONTRADICTS the test
+# framework: xUnit1030 is "Test methods should not call ConfigureAwait(false), as
+# it may bypass parallelization limits". xUnit owns the synchronization context a
+# test body runs on, so inside a [Fact]/[Theory] its rule is the authoritative one
+# and CA2007's advice is actively harmful.
+#
+# Proven by OSCILLATION, not argued: burning CA2007 to zero here produced 19
+# xUnit1030 errors, and removing the ConfigureAwait to satisfy xUnit put the
+# CA2007 findings straight back. There is no source text that satisfies both.
+#
+# This is the THIRD analyzer-vs-xUnit contradiction in this suite — CA1707 vs the
+# Method_Scenario naming xUnit's own docs use, CA1515 vs xUnit1000/xUnit1027
+# ("test classes must be public"), and now CA2007 vs xUnit1030. The pattern is
+# consistent: where a CA rule and the test framework disagree about a TEST BODY,
+# the framework wins, because it owns the runtime the body executes in.
+#
+# Burned everywhere it was NOT a test body — src/, tools/, examples/ and the test
+# HELPERS are all clean and stay that way. This grant covers only what xUnit
+# governs. Rule stays ON for src/, where ConfigureAwait genuinely matters.
+# (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA2007.severity = none
+
 [examples/**.cs]
 # CA1303 — do not pass literals as localized parameters. An example's
 # `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING
