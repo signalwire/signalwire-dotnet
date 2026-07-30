@@ -360,7 +360,9 @@ public static class TlsHarness
             catch { /* not ready / handshake racing startup */ }
             Thread.Sleep(250);
         }
-        try { proc.Kill(true); } catch { }
+        try { proc.Kill(true); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         return null;
     }
 
@@ -457,7 +459,9 @@ public static class TlsHarness
             catch { /* not ready */ }
             Thread.Sleep(200);
         }
-        try { proc.Kill(true); } catch { }
+        try { proc.Kill(true); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         return null;
     }
 
@@ -505,7 +509,8 @@ public static class TlsHarness
     private static string? DiscoverTlsDir()
     {
         var anchors = new List<string>();
-        try { anchors.Add(AppContext.BaseDirectory); } catch { }
+        try { anchors.Add(AppContext.BaseDirectory); }
+        catch (InvalidOperationException) { /* no base dir in this host */ }
         anchors.Add(Environment.CurrentDirectory);
 
         foreach (var anchor in anchors)

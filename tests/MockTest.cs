@@ -574,7 +574,9 @@ public static class MockTest
                         // waits for the async stdout/stderr handlers to finish;
                         // the (int) overload does not. The process has already
                         // exited, so this returns promptly.
-                        try { process.WaitForExit(); } catch { /* best effort */ }
+                        try { process.WaitForExit(); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         var stderr = _mockStderr?.ToString() ?? "";
                         var stdout = _mockStdout?.ToString() ?? "";
                         // Someone else took the port inside the release window.

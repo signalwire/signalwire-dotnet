@@ -305,7 +305,9 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
             data.GetProperty("signalwire_error_code").GetString());
 
         try { await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "done", CancellationToken.None); }
-        catch { /* best effort */ }
+        catch (System.Net.WebSockets.WebSocketException) { /* peer already gone */ }
+        catch (ObjectDisposedException) { /* socket already disposed */ }
+        catch (OperationCanceledException) { /* shutting down */ }
     }
 
     // ------------------------------------------------------------------
@@ -369,6 +371,8 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
         Assert.NotEmpty(jwtConnects);
 
         try { await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "done", CancellationToken.None); }
-        catch { /* best effort */ }
+        catch (System.Net.WebSockets.WebSocketException) { /* peer already gone */ }
+        catch (ObjectDisposedException) { /* socket already disposed */ }
+        catch (OperationCanceledException) { /* shutting down */ }
     }
 }

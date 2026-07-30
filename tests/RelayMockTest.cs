@@ -684,7 +684,9 @@ public static class RelayMockTest
                         // the bind error is written AFTER the startup banner.
                         // WaitForExit() with no timeout is the overload that
                         // also waits for those handlers.
-                        try { process.WaitForExit(); } catch { /* best effort */ }
+                        try { process.WaitForExit(); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         var stderr = _mockStderr?.ToString() ?? "";
                         var stdout = _mockStdout?.ToString() ?? "";
                         if (MockTest.IsAddressInUse(stdout, stderr))

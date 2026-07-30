@@ -164,7 +164,9 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
         {
             await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "smoke test done", CancellationToken.None);
         }
-        catch { /* best effort */ }
+    catch (System.Net.WebSockets.WebSocketException) { /* peer already gone */ }
+    catch (ObjectDisposedException) { /* socket already disposed */ }
+    catch (OperationCanceledException) { /* shutting down */ }
     }
 
     [Fact]

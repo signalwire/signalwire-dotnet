@@ -814,7 +814,9 @@ public sealed class SWMLServiceTests : IDisposable
         }
         finally
         {
-            try { Directory.Delete(dir, recursive: true); } catch { }
+            try { Directory.Delete(dir, recursive: true); }
+            catch (IOException) { /* still in use */ }
+            catch (UnauthorizedAccessException) { /* best effort */ }
         }
     }
 

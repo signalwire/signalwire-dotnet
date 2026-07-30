@@ -79,7 +79,9 @@ public class TlsRelayWssTest
         }
         finally
         {
-            try { client.Disconnect(); } catch { /* best effort */ }
+            try { client.Disconnect(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.WebSockets.WebSocketException) { /* socket already gone */ }
         }
 
         // Negative control: the same endpoint must reject a client that does NOT

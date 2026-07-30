@@ -548,8 +548,12 @@ public sealed class SkillsTests : IDisposable
         var disposable = new FixtureHandle(() =>
         {
             cts.Cancel();
-            try { listener.Stop(); } catch { }
-            try { listener.Close(); } catch { }
+            try { listener.Stop(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            try { listener.Close(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
         });
         return (prefix.TrimEnd('/'), disposable);
     }
@@ -611,8 +615,12 @@ public sealed class SkillsTests : IDisposable
         public void Dispose()
         {
             _cts.Cancel();
-            try { _listener.Stop(); } catch { }
-            try { _listener.Close(); } catch { }
+            try { _listener.Stop(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            try { _listener.Close(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
         }
     }
 
@@ -1256,8 +1264,12 @@ public sealed class SkillsTests : IDisposable
         public void Dispose()
         {
             _cts.Cancel();
-            try { _listener.Stop(); } catch { }
-            try { _listener.Close(); } catch { }
+            try { _listener.Stop(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            try { _listener.Close(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
         }
     }
 
@@ -1445,8 +1457,12 @@ public sealed class SkillsTests : IDisposable
         var disposable = new FixtureHandle(() =>
         {
             cts.Cancel();
-            try { listener.Stop(); } catch { }
-            try { listener.Close(); } catch { }
+            try { listener.Stop(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            try { listener.Close(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
         });
         return (prefix.TrimEnd('/'), disposable);
     }
