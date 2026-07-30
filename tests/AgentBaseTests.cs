@@ -62,16 +62,16 @@ public sealed class AgentBaseTests : IDisposable
         {
             foreach (var verb in typedList)
             {
-                if (verb.ContainsKey("ai"))
-                    return (Dictionary<string, object>)verb["ai"]!;
+                if (verb.TryGetValue("ai", out var foundai))
+                    return (Dictionary<string, object>)foundai!;
             }
         }
         else if (main is List<Dictionary<string, object>> untypedList)
         {
             foreach (var verb in untypedList)
             {
-                if (verb.ContainsKey("ai"))
-                    return (Dictionary<string, object>)verb["ai"];
+                if (verb.TryGetValue("ai", out var foundai))
+                    return (Dictionary<string, object>)foundai!;
             }
         }
 

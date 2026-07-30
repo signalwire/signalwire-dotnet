@@ -538,7 +538,7 @@ public sealed class SkillsTests : IDisposable
                     ctx.Response.StatusCode = 200;
                     ctx.Response.ContentType = "application/json";
                     ctx.Response.ContentLength64 = bytes.Length;
-                    await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                    await ctx.Response.OutputStream.WriteAsync(bytes.AsMemory(0, bytes.Length)).ConfigureAwait(false);
                     ctx.Response.Close();
                 }
                 catch (HttpListenerException) { break; }
@@ -603,7 +603,7 @@ public sealed class SkillsTests : IDisposable
                         ctx.Response.StatusCode = 200;
                         ctx.Response.ContentType = "application/json";
                         ctx.Response.ContentLength64 = bytes.Length;
-                        await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                        await ctx.Response.OutputStream.WriteAsync(bytes.AsMemory(0, bytes.Length)).ConfigureAwait(false);
                         ctx.Response.Close();
                     }
                     catch (HttpListenerException) { break; }
@@ -1255,7 +1255,7 @@ public sealed class SkillsTests : IDisposable
                     ctx.Response.StatusCode = 200;
                     ctx.Response.ContentType = "application/json";
                     ctx.Response.ContentLength64 = bytes.Length;
-                    await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                    await ctx.Response.OutputStream.WriteAsync(bytes.AsMemory(0, bytes.Length)).ConfigureAwait(false);
                     ctx.Response.Close();
                 }
             });
@@ -1447,7 +1447,7 @@ public sealed class SkillsTests : IDisposable
                     ctx.Response.StatusCode = 200;
                     ctx.Response.ContentType = "text/html";
                     ctx.Response.ContentLength64 = bytes.Length;
-                    await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                    await ctx.Response.OutputStream.WriteAsync(bytes.AsMemory(0, bytes.Length)).ConfigureAwait(false);
                     ctx.Response.Close();
                 }
                 catch (HttpListenerException) { break; }
