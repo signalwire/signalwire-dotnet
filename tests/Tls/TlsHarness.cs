@@ -94,9 +94,9 @@ public static class TlsHarness
                 proc.WaitForExit(30_000);
                 if (proc.ExitCode != 0) return null;
             }
-    #pragma warning disable CA1031 // A spawn helper returns null on ANY failure so the
-        // TLS tests skip cleanly when the mock cannot start; narrowing it would let an
-        // unexpected failure abort the class instead.
+#pragma warning disable CA1031 // A spawn helper returns null on ANY failure so the
+            // TLS tests skip cleanly when the mock cannot start; narrowing it would let an
+            // unexpected failure abort the class instead.
             catch
             {
                 return null;
