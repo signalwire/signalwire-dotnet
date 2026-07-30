@@ -121,6 +121,19 @@ dotnet_diagnostic.CA1822.severity = none
 # because it "would de-idiomatize test code". (mike@signalwire.com, 2026-07-30)
 dotnet_diagnostic.CA1707.severity = none
 
+# CA1307 / CA1310 — string comparison without an explicit StringComparison.
+# These fire on xUnit's OWN assertion API: `Assert.Contains(expected, actual)`,
+# `Assert.StartsWith`, `Assert.DoesNotContain`, `Assert.EndsWith` — 190 of the
+# 199 sites in this tree. The rule targets production string comparison you
+# control; the comparison here happens inside the test framework, and the
+# remedy (a third StringComparison argument on every substring assertion in the
+# suite) adds no signal because the fixtures are ASCII literals. The nine real
+# `string.Contains/Replace/IndexOf` sites in tests/ were BURNED, not excused
+# (commit 0b38ac6), and any new one is caught by review — this grant only
+# covers the framework's overload. (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA1307.severity = none
+dotnet_diagnostic.CA1310.severity = none
+
 [examples/**.cs]
 # CA1303 — do not pass literals as localized parameters. An example's
 # `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING
