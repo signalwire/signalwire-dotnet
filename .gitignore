@@ -10,7 +10,9 @@ obj/
 .env
 TestResults/
 *.nupkg
-scripts/__pycache__/
+# Python bytecode caches, anywhere in the tree (scripts/ holds the
+# build/audit infrastructure; tests/dotnet_adapter_goldens/ imports it).
+__pycache__/
 # Unix core dumps ONLY. These MUST be anchored (leading /) and match files, not
 # dirs — a bare `core` pattern matches any path component named core at any depth,
 # and on a case-insensitive filesystem (macOS) it also swallowed the entire

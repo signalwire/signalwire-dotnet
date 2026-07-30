@@ -1,0 +1,13 @@
+# Python dev dependencies for signalwire-dotnet.
+#
+# This is a .NET SDK, but its build/audit infrastructure is Python
+# (scripts/enumerate_*.py — the surface + signature adapters the SIGNATURES /
+# DRIFT gates read; scripts/generate_*.py — the REST/RELAY/SWML/SWAIG code
+# generators the GEN-FRESH gates re-run; tests/dotnet_adapter_goldens/
+# run_goldens.py). That code is linted and formatted at the same bar as the
+# shipped C# library, so the linter is a real dependency of the FMT/LINT gates —
+# not something that happens to be on a developer's machine.
+#
+# Install: python3 -m pip install -r requirements-dev.txt
+
+ruff>=0.15
