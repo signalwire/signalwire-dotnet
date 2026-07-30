@@ -122,16 +122,16 @@ public class ConstructionReadbackTests
     }
 
     [Fact]
-    public void Client_JwtTokenIsReadableBack()
+    public async Task Client_JwtTokenIsReadableBack()
     {
-        var client = new Client(new ClientOptions { JwtToken = "jwt-abc" });
+        await using var client = new Client(new ClientOptions { JwtToken = "jwt-abc" });
         Assert.Equal("jwt-abc", client.JwtToken);
     }
 
     [Fact]
-    public void Action_CallResolvesThroughTheClientRegistry()
+    public async Task Action_CallResolvesThroughTheClientRegistry()
     {
-        var client = new Client();
+        await using var client = new Client();
         var call = new Call(new Dictionary<string, object?> { ["call_id"] = "c-act" }, client);
         client.Calls["c-act"] = call;
 

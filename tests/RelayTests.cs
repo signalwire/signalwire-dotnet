@@ -402,9 +402,9 @@ public sealed class RelayTests : IDisposable
     // ==================================================================
 
     [Fact]
-    public void Call_Construction()
+    public async Task Call_Construction()
     {
-        var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new()
         {
             ["call_id"] = "c-1",
@@ -423,17 +423,17 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_DefaultState()
+    public async Task Call_DefaultState()
     {
-        var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new(), client);
         Assert.Equal("created", call.State);
     }
 
     [Fact]
-    public void Call_DispatchEvent_StateChange()
+    public async Task Call_DispatchEvent_StateChange()
     {
-        var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         // Real RELAY wire key is call_state (relay.c + mock_relay).
@@ -446,12 +446,12 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_DispatchEvent_IgnoresBareStateKey()
+    public async Task Call_DispatchEvent_IgnoresBareStateKey()
     {
         // A stray top-level "state" on a call.state event is NOT the call-state
         // field (that belongs to control_id-routed component events) and must
         // not move the call's state off its default.
-        var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         call.DispatchEvent(new Event("calling.call.state", new()
@@ -463,9 +463,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_DispatchEvent_EndResolves()
+    public async Task Call_DispatchEvent_EndResolves()
     {
-        var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new()
         {
             ["call_id"] = "c-1",
@@ -488,9 +488,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_DispatchEvent_ActionTerminalState()
+    public async Task Call_DispatchEvent_ActionTerminalState()
     {
-        var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new()
         {
             ["call_id"] = "c-1",
@@ -511,9 +511,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_DispatchEvent_ConnectSetsPeer()
+    public async Task Call_DispatchEvent_ConnectSetsPeer()
     {
-        var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         var peerDict = new Dictionary<string, object?> { ["call_id"] = "c-peer" };
@@ -526,9 +526,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_OnEventCallback()
+    public async Task Call_OnEventCallback()
     {
-        var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         Event? received = null;
@@ -544,9 +544,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_ResolveAllActions()
+    public async Task Call_ResolveAllActions()
     {
-        var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var client = new Client(new() { Project = "p1", Token = "t1" });
         var call = new Call(new() { ["call_id"] = "c-1", ["node_id"] = "n-1" }, client);
 
         var a1 = new PlayAction("ctrl-1", "c-1", "n-1", client);
@@ -602,9 +602,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleMessage_PingAck()
+    public async Task Client_HandleMessage_PingAck()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
 
         client.HandleMessage(JsonSerializer.Serialize(new Dictionary<string, object?>
         {
@@ -619,9 +619,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleMessage_EventAck()
+    public async Task Client_HandleMessage_EventAck()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
 
         client.HandleMessage(JsonSerializer.Serialize(new Dictionary<string, object?>
         {
@@ -643,9 +643,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleMessage_Response()
+    public async Task Client_HandleMessage_Response()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
 
         // Register a pending request
         var tcs = new TaskCompletionSource<Dictionary<string, object?>>(
@@ -667,9 +667,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleMessage_ErrorResponse()
+    public async Task Client_HandleMessage_ErrorResponse()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
 
         var tcs = new TaskCompletionSource<Dictionary<string, object?>>(
             TaskCreationOptions.RunContinuationsAsynchronously);
@@ -698,9 +698,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleEvent_InboundCall()
+    public async Task Client_HandleEvent_InboundCall()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
         Call? receivedCall = null;
         client.OnCallHandler = call => { receivedCall = call; return Task.CompletedTask; };
 
@@ -721,11 +721,11 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_InboundCall_CapBounded_DropsWhenFull()
+    public async Task Client_InboundCall_CapBounded_DropsWhenFull()
     {
         // The Calls map is bounded by max_active_calls: once full, further
         // inbound calls are dropped rather than accumulating forever (r5 F5.4).
-        var client = new TestableClient(maxActiveCalls: 2);
+        await using var client = new TestableClient(maxActiveCalls: 2);
 
         for (var i = 0; i < 5; i++)
         {
@@ -763,11 +763,11 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_Disconnect_SweepsCorrelationMaps()
+    public async Task Client_Disconnect_SweepsCorrelationMaps()
     {
         // Disconnect frees every tracked entry — a suppressed terminal event
         // cannot leak an entry past the session that owned it (r5 F5.4).
-        var client = new TestableClient();
+        await using var client = new TestableClient();
         client.Calls["c-1"] = new Call(new() { ["call_id"] = "c-1" }, client);
         client.Messages["m-1"] = new Message(new() { ["message_id"] = "m-1" });
         Assert.NotEmpty(client.Calls);
@@ -780,9 +780,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleEvent_MessageState()
+    public async Task Client_HandleEvent_MessageState()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
         var msg = new Message(new() { ["message_id"] = "msg-1" });
         client.Messages["msg-1"] = msg;
 
@@ -801,9 +801,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleEvent_RoutesToCall()
+    public async Task Client_HandleEvent_RoutesToCall()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
         client.Calls["c-1"] = call;
 
@@ -821,9 +821,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleEvent_EndedCallRemoved()
+    public async Task Client_HandleEvent_EndedCallRemoved()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
         client.Calls["c-1"] = call;
 
@@ -841,9 +841,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleEvent_DialCreatesCall()
+    public async Task Client_HandleEvent_DialCreatesCall()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
 
         var tcs = new TaskCompletionSource<Call>(TaskCreationOptions.RunContinuationsAsynchronously);
         client.PendingDials["tag-dial"] = tcs;
@@ -879,9 +879,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_Disconnect()
+    public async Task Client_Disconnect()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
         client.Connected = true;
         client.Disconnect();
 
@@ -1035,11 +1035,11 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_CallStateAccessor_AgreesWithString()
+    public async Task Call_CallStateAccessor_AgreesWithString()
     {
         // Drive Call.State through its real DispatchEvent path (no mocks of the
         // Call itself), then assert the typed accessor agrees with the string.
-        var client = new TestableClient();
+        await using var client = new TestableClient();
         var call = new Call(new Dictionary<string, object?> { ["call_id"] = "c-typed" }, client);
 
         Assert.Equal("created", call.State);
@@ -1058,9 +1058,9 @@ public sealed class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_CallStateAccessor_NullForUnknownState()
+    public async Task Call_CallStateAccessor_NullForUnknownState()
     {
-        var client = new TestableClient();
+        await using var client = new TestableClient();
         var call = new Call(new Dictionary<string, object?> { ["call_id"] = "c-unknown" }, client);
         // Force an out-of-set value the way a future server might.
         call.State = "transferring";
