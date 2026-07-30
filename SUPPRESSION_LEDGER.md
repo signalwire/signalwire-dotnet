@@ -61,6 +61,20 @@ would be meaningless.
 - tools/DumpCorpus/HttpDump.cs:300 — CA5350 (weak crypto HMACSHA1) in `WebhookSig`: the algorithm is the server's webhook signature scheme, reproduced verbatim for the HTTP corpus (mike@signalwire.com, 2026-07-30)
 - tools/DumpCorpus/HttpDump.cs:304 — CA1308 (prefer ToUpperInvariant) in `WebhookSig`: lowercase hex is the on-the-wire signature form (mike@signalwire.com, 2026-07-30)
 
+## Test-side wire-signature and loopback-TLS suppressions (per-line pragmas)
+
+Same wire contract as the tools/DumpCorpus entries above: HMAC-SHA1 and lowercase
+hex are the SERVER'S webhook signature scheme (`src/SignalWire/Security/
+WebhookValidator.cs`, "Scheme A (RELAY/SWML/JSON): hex(HMAC-SHA1(key, url +
+raw_body))"). A test that used a different algorithm would not be testing the
+contract at all.
+
+- tests/Security/WebhookMiddlewareTest.cs:65 — CA5350 + CA1308: reproduces the server's hex HMAC-SHA1 webhook signature so the middleware test exercises the real contract (mike@signalwire.com, 2026-07-30)
+- tests/Security/WebhookValidatorTest.cs:141 — CA5350: reproduces the server's base64 HMAC-SHA1 (Scheme B, Compat/cXML form) signature (mike@signalwire.com, 2026-07-30)
+- tests/WebServiceTests.cs:56 — CA5399 + CA5400: a loopback HttpClient against an in-process mock with a self-signed certificate; there is no revocation endpoint to check and enabling the check would make the test depend on outbound network access (mike@signalwire.com, 2026-07-30)
+- tests/Tls/TlsRestHttpsTest.cs:87 — CA5399 + CA5400: same loopback/self-signed reason (mike@signalwire.com, 2026-07-30)
+- tests/Tls/TlsServerHttpsTest.cs:162 — CA5399 + CA5400: same loopback/self-signed reason (mike@signalwire.com, 2026-07-30)
+
 ## Generated-REST-tree suppressions (`src/SignalWire/REST/Namespaces/Generated/**.cs`)
 
 These files are LINTED (`generated_code = false`); the disables below are the only
