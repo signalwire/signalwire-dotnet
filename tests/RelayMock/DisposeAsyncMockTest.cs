@@ -117,7 +117,8 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
     {
         if (Skipped()) return;
 
-        await using var client = RelayMockTest.NewClient().Client;
+        var client = RelayMockTest.NewClient().Client;
+        await using var clientScope = client.ConfigureAwait(false);
         await client.ConnectAsync();
 
         // Before dispose: the internal WS and CTS are allocated.
@@ -140,7 +141,8 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
     {
         if (Skipped()) return;
 
-        await using var client = RelayMockTest.NewClient().Client;
+        var client = RelayMockTest.NewClient().Client;
+        await using var clientScope = client.ConfigureAwait(false);
         await client.ConnectAsync();
 
         await client.DisposeAsync();
