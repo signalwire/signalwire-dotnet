@@ -5,22 +5,37 @@
 # this (RUN_LINT_FORMAT_SPEC.md). Self-bootstraps the toolchain via
 # scripts/_env.sh, so it works from ANY CWD.
 #
-# Tool: `dotnet build` of the shipped library with the curated analyzer set on.
-# Directory.Build.props sets EnableNETAnalyzers=true, AnalysisMode=All,
-# TreatWarningsAsErrors=true across net8/9/10 — so a build warning IS a lint
-# violation and the build fails. Builds src/SignalWire only (that is the shipped
-# surface where analyzers run; tests/examples/tools are not linted here).
+# Two tools, one bar:
 #
-# The .NET analyzer build has no autofix flow, so --fix is accepted for
-# cross-port CLI symmetry but is a report-only no-op (a clean build is the bar).
+#   1. C# — `dotnet build` of EVERY project in the repo with the curated
+#      analyzer set on. Directory.Build.props sets EnableNETAnalyzers=true,
+#      AnalysisLevel=latest, AnalysisMode=All, TreatWarningsAsErrors=true
+#      UNCONDITIONALLY, so a build warning IS a lint violation and the build
+#      fails. Scope is the WHOLE tree — src/, tests/, examples/, tools/ and
+#      scripts/ (19 projects), enumerated from the .csproj files on disk rather
+#      than a solution file, because SignalWire.sln only lists two of them.
+#      Building src/SignalWire alone would leave the other 17 unanalysed even
+#      with the analyzers on, so the scope is enumerated, not assumed.
+#
+#   2. Python — `ruff check` over the repo's Python (scripts/enumerate_*.py,
+#      scripts/generate_*.py, tests/dotnet_adapter_goldens/run_goldens.py). That
+#      code is load-bearing build/audit infrastructure: a defect in it corrupts
+#      the artifacts the parity gates compare. Config: ruff.toml (rule selection
+#      mirrors the python reference).
+#
+# Nothing is directory-excluded — there is no third-party vendored source here.
+#
+# --fix runs ruff's autofixer over the Python; the .NET analyzer build has no
+# autofix flow, so for C# it stays report-only (a clean build is the bar).
 
 set -euo pipefail
 
 # shellcheck source=scripts/_env.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_env.sh"
 
+FIX=0
 if [ "${1:-}" = "--fix" ]; then
-    echo "    (--fix: the .NET analyzer build has no autofix; running report-only)"
+    FIX=1
     shift
 elif [ -n "${1:-}" ]; then
     echo "usage: run-lint.sh [--fix]" >&2
@@ -31,6 +46,33 @@ cd "$REPO"
 DN="$(dotnet_cmd)"
 dotnet_restore_if_needed
 
-echo "==> dotnet build (analyzers, AnalysisMode=All, warnings-as-errors)"
-# shellcheck disable=SC2086
-exec $DN build src/SignalWire/SignalWire.csproj -c Release --no-incremental
+RC=0
+
+# ── 1. Python ──────────────────────────────────────────────────────────────
+if command -v ruff >/dev/null 2>&1; then
+    if [ "$FIX" = "1" ]; then
+        echo "==> ruff check --fix (whole tree; config ruff.toml)"
+        ruff check --fix "$REPO" || RC=1
+    else
+        echo "==> ruff check (whole tree; config ruff.toml)"
+        ruff check "$REPO" || RC=1
+    fi
+else
+    echo "FATAL: 'ruff' not found on PATH — the Python half of this gate cannot run." >&2
+    echo "       Install it: pip install ruff  (declared in requirements-dev.txt)." >&2
+    exit 1
+fi
+
+# ── 2. C# ──────────────────────────────────────────────────────────────────
+if [ "$FIX" = "1" ]; then
+    echo "    (--fix: the .NET analyzer build has no autofix; running report-only)"
+fi
+NPROJ="$(dotnet_require_projects)"
+echo "==> dotnet build x$NPROJ projects (analyzers, AnalysisMode=All, warnings-as-errors)"
+while IFS= read -r proj; do
+    echo "    -- ${proj#"$REPO"/}"
+    # shellcheck disable=SC2086
+    $DN build "$proj" -c Release --no-incremental || RC=1
+done < <(dotnet_all_projects)
+
+exit "$RC"

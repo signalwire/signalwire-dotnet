@@ -13,14 +13,16 @@
   -->
 
   <!--
-    The analyzer bar applies ONLY to the shipped library (SignalWire.csproj) —
-    that is the public surface the LINT gate polices. Test/example/tool projects
-    (tests/, examples/, tools/, scripts/) carry intentionally loose code (audit
-    harnesses, corpus dumps) and would only fight the gate, so they are left at
-    the SDK defaults. Keyed off the project file name so the scoping is robust
-    regardless of path-separator quirks.
+    SCOPE: EVERY project in this repo — the shipped library, the tests, the
+    examples, the tools and the scripts' helper projects — carries the SAME
+    analyzer bar. There is no looser tier for harness code (owner ruling
+    2026-07-30: "all the full directories should be linted and formatted
+    including tests examples and all ... examples and tests are shipping code
+    too"). This PropertyGroup is deliberately UNCONDITIONAL: any condition
+    scoping it to a subset of projects is the carve-out the ruling removes.
+    Nothing in this tree is third-party vendored code, so nothing is excluded.
   -->
-  <PropertyGroup Condition="'$(MSBuildProjectFile)' == 'SignalWire.csproj'">
+  <PropertyGroup>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
     <AnalysisMode>All</AnalysisMode>

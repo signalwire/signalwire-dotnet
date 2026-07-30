@@ -79,3 +79,38 @@ dotnet_restore_if_needed() {
 }
 
 export SLN
+
+# ---------------------------------------------------------------------------
+# THE LINT/FORMAT SCOPE — every .csproj in the repo.
+#
+# `SignalWire.sln` lists only TWO projects (src/SignalWire + tests). Driving the
+# FMT/LINT gates off it, or off `src/SignalWire/SignalWire.csproj` alone, left
+# the other 17 projects (examples/, tools/, scripts/, the goldens' DumpFixtures)
+# entirely unanalysed and unformatted. Owner ruling 2026-07-30: every directory
+# is linted and formatted at the bar the shipped library meets — so the scope is
+# ENUMERATED FROM DISK, not read off a checked-in list that silently goes stale
+# when someone adds a project. A new .csproj is in scope the moment it exists.
+#
+# Only build output is skipped (obj/, bin/) — those hold no source we own, and
+# there is no third-party vendored code in this tree.
+#
+# Prints one project path per line, sorted (stable ordering across machines).
+dotnet_all_projects() {
+    find "$REPO" -name '*.csproj' \
+        -not -path '*/obj/*' -not -path '*/bin/*' -not -path '*/.git/*' \
+        | LC_ALL=C sort
+}
+
+# Fail loud if the enumeration comes back empty — an empty scope makes both
+# gates vacuously green, which is worse than a red. (A gate that checks nothing
+# passes on anything.)
+dotnet_require_projects() {
+    local n
+    n="$(dotnet_all_projects | grep -c . || true)"
+    if [ "$n" -lt 2 ]; then
+        echo "FATAL: project enumeration found $n .csproj under $REPO — refusing" >&2
+        echo "       to run a vacuous gate. Check the repo checkout." >&2
+        exit 1
+    fi
+    echo "$n"
+}

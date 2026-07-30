@@ -119,6 +119,14 @@ jobs:
           pip install -e porting-sdk/test_harness/mock_relay
           pip install -e porting-sdk/test_harness/mock_signalwire
 
+      # ruff is a REAL dependency of the FMT + LINT gates: this repo's Python
+      # build/audit infrastructure (scripts/enumerate_*.py, scripts/generate_*.py,
+      # tests/dotnet_adapter_goldens/run_goldens.py) is linted and formatted at
+      # the same bar as the shipped C# library. run-lint.sh / run-format.sh fail
+      # loud if it is absent, so it must be installed here, not assumed present.
+      - name: Install Python dev dependencies (ruff — FMT/LINT gates)
+        run: pip install -r signalwire-dotnet/requirements-dev.txt
+
       # TEST (OS-sensitive suite #1): the canonical per-TFM serialized runner.
       # bash is available on both runners (macOS: system bash; Windows: Git Bash).
       # D3 strict REST mode rides here exactly as in run-ci.sh.
