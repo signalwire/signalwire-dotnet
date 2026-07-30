@@ -211,7 +211,7 @@ internal static class StateDump
     }
 
     // Renders the context builder and reduces to per-context {name, valid_steps}.
-    private static object ContextsNav(ContextBuilder cb)
+    private static Dictionary<string, object?> ContextsNav(ContextBuilder cb)
     {
         var rendered = Canon.Plain(cb.ToDict()) as Dictionary<string, object?> ?? new();
         var nav = new Dictionary<string, object?>();

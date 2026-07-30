@@ -72,7 +72,8 @@ internal static class WireRelayDump
 
     private static async Task CaptureFramesAsync(Dictionary<string, object?> outMap)
     {
-        using var client = new CapturingClient();
+        var client = new CapturingClient();
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(
             new Dictionary<string, object?> { ["call_id"] = CallId, ["node_id"] = Node },
             client);

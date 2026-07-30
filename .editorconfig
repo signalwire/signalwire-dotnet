@@ -101,3 +101,31 @@ dotnet_diagnostic.CA1720.severity = none
 # tests require); it returns a constant path, so the analyzer suggests static,
 # but making it static would break instance access. Deliberate surface shape.
 dotnet_diagnostic.CA1822.severity = none
+
+# ── Rule-level exceptions for tests/ and examples/ ─────────────────────────
+# These directories are LINTED AT THE FULL SHIPPING BAR (owner ruling
+# 2026-07-30: "all the full directories should be linted and formatted
+# including tests examples and all ... examples and tests are shipping code
+# too"). Nothing here is a directory carve-out. Each entry below names ONE rule
+# that the code in that directory legitimately and correctly violates, and every
+# other rule stays at error over these trees — so both are burnable to zero and
+# STAY zero. Both rules remain ON for src/.
+
+[tests/**/*.cs]
+# CA1707 — underscores in member names. Every test is named `Method_Scenario`
+# (`AgentBase_AgentIdIsReadableBack`, `Register_Agent`,
+# `Tools_ExposesRegisteredFunction`): the xUnit convention, where the underscore
+# is precisely the subject/scenario split that makes a failure report legible.
+# Obeying the rule would rename ~1,273 test methods and destroy the readability
+# the convention exists for. Same shape as java declining AvoidStarImport
+# because it "would de-idiomatize test code". (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA1707.severity = none
+
+[examples/**/*.cs]
+# CA1303 — do not pass literals as localized parameters. An example's
+# `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING
+# TEXT printed to a developer's terminal, not a localizable product string; the
+# rule's remedy (a .resx resource table per demo) would obscure the very thing
+# the example exists to show. The shipped library has zero such sites, which is
+# why this never fired before. (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA1303.severity = none

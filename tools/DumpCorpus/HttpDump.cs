@@ -289,8 +289,20 @@ internal static class HttpDump
 
     private static string WebhookSig(string url, string body, string key)
     {
-        using var mac = new HMACSHA1(Encoding.UTF8.GetBytes(key));
-        var hash = mac.ComputeHash(Encoding.UTF8.GetBytes(url + body));
+        // CA5350/CA1308 suppressed here by owner approval (2026-07-30), recorded in
+        // SUPPRESSION_LEDGER.md. This dump must reproduce the SignalWire webhook
+        // signature BYTE-FOR-BYTE so the cross-port corpus can be compared against
+        // the Python oracle. HMAC-SHA1 and lowercase hex are the SERVER'S wire
+        // contract (see src/SignalWire/Security/WebhookValidator.cs, "Scheme A
+        // (RELAY/SWML/JSON): hex(HMAC-SHA1(key, url + raw_body))"), not an
+        // algorithm this code is free to choose; a stronger hash or upper-case hex
+        // would emit different bytes and the comparison would be meaningless.
+#pragma warning disable CA5350 // HMAC-SHA1 is the server's webhook signature algorithm
+        var hash = HMACSHA1.HashData(
+            Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes(url + body));
+#pragma warning restore CA5350
+#pragma warning disable CA1308 // lowercase hex is the on-the-wire signature form
         return Convert.ToHexString(hash).ToLowerInvariant();
+#pragma warning restore CA1308
     }
 }
