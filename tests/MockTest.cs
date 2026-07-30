@@ -76,7 +76,7 @@ public static class MockTest
     /// Convenience that returns both the bound <see cref="SignalWire.REST.HttpClient"/>
     /// and the <see cref="Harness"/>. Resets journal/scenarios on the way out.
     /// </summary>
-    public static Bound NewClient()
+    internal static Bound NewClient()
     {
         var h = EnsureServer();
         h.Reset();
@@ -84,7 +84,7 @@ public static class MockTest
     }
 
     /// <summary>Returns the shared harness, ensuring the server is running.</summary>
-    public static Harness GetHarness()
+    internal static Harness GetHarness()
     {
         var h = EnsureServer();
         h.Reset();
@@ -92,14 +92,14 @@ public static class MockTest
     }
 
     /// <summary>Returns the shared harness without resetting (for assertions across tests).</summary>
-    public static Harness GetHarnessNoReset() => EnsureServer();
+    internal static Harness GetHarnessNoReset() => EnsureServer();
 
     /// <summary>True iff adjacency walk finds a usable porting-sdk on disk.</summary>
     public static bool IsAdjacencyAvailable()
         => DiscoverPortingSdkPackage("mock_signalwire") is not null;
 
     /// <summary>Tuple of HttpClient + Harness bound to the same mock.</summary>
-    public sealed class Bound
+    internal sealed class Bound
     {
         public SignalWire.REST.HttpClient Http { get; }
         public Harness Harness { get; }
@@ -171,7 +171,7 @@ public static class MockTest
     /// Live mock-server handle. Exposes the HTTP control plane:
     /// journal access, scenario overrides, reset.
     /// </summary>
-    public sealed class Harness
+    internal sealed class Harness
     {
         public string Url { get; }
         public string Host { get; }
@@ -228,7 +228,7 @@ public static class MockTest
     /// <summary>
     /// Wrapper around <c>/__mock__/journal</c> + <c>/__mock__/journal/reset</c>.
     /// </summary>
-    public sealed class JournalApi
+    internal sealed class JournalApi
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
@@ -315,7 +315,7 @@ public static class MockTest
     /// <summary>
     /// Wrapper around <c>/__mock__/scenarios/&lt;id&gt;</c> + reset.
     /// </summary>
-    public sealed class ScenariosApi
+    internal sealed class ScenariosApi
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
@@ -401,7 +401,7 @@ public static class MockTest
     /// Lightweight view of a request the mock server recorded. Mirrors the
     /// dataclass in <c>mock_signalwire.journal.JournalEntry</c>.
     /// </summary>
-    public sealed class JournalEntry
+    internal sealed class JournalEntry
     {
         [JsonPropertyName("timestamp")]
         public double Timestamp { get; set; }
@@ -789,7 +789,7 @@ public sealed class MockServerFixture : IDisposable
     /// TypeScript port's per-test <c>newMockClient()</c>.</para>
     /// Falls back to an unscoped harness when the mock is unavailable.
     /// </summary>
-    public MockTest.Harness Harness { get; private set; }
+    internal MockTest.Harness Harness { get; private set; }
     public bool Available { get; }
 
     /// <summary>The unique random project the CURRENT test's clients

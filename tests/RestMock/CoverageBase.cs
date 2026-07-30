@@ -53,7 +53,7 @@ public abstract class CoverageBase : IClassFixture<MockServerFixture>
     /// <summary>Assert the last journal entry matched <paramref name="endpointId"/>
     /// with the expected HTTP method + path. Returns the entry for further
     /// per-test assertions.</summary>
-    protected MockTest.JournalEntry AssertRoute(string method, string path, string endpointId)
+    private protected MockTest.JournalEntry AssertRoute(string method, string path, string endpointId)
     {
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal(method, j.Method);
@@ -82,7 +82,7 @@ public abstract class CoverageBase : IClassFixture<MockServerFixture>
         return err.StatusCode;
     }
 
-    protected static string? StringField(MockTest.JournalEntry j, string key)
+    private protected static string? StringField(MockTest.JournalEntry j, string key)
     {
         var map = j.BodyMap();
         if (map is null || !map.TryGetValue(key, out var v)) return null;

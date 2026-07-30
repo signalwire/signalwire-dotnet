@@ -60,7 +60,7 @@ public static class RelayMockTest
         => MockTest.DiscoverPortingSdkPackage("mock_relay") is not null;
 
     /// <summary>Returns the shared harness; resets journal/scenarios.</summary>
-    public static Harness GetHarness()
+    internal static Harness GetHarness()
     {
         var h = EnsureServer();
         h.Reset();
@@ -68,7 +68,7 @@ public static class RelayMockTest
     }
 
     /// <summary>Returns the shared harness without resetting.</summary>
-    public static Harness GetHarnessNoReset() => EnsureServer();
+    internal static Harness GetHarnessNoReset() => EnsureServer();
 
     /// <summary>Convenience: build a configured Relay <see cref="SignalWire.Relay.Client"/>
     /// pointed at the local mock's WebSocket. Caller is responsible for
@@ -79,7 +79,7 @@ public static class RelayMockTest
     public static readonly string[] CreatedAnswered = ["created", "answered"];
     public static readonly string[] CreatedEnded = ["created", "ended"];
 
-    public static Bound NewClient(string project = "test_proj", string token = "test_tok",
+    internal static Bound NewClient(string project = "test_proj", string token = "test_tok",
         IEnumerable<string>? contexts = null)
     {
         var shared = EnsureServer();
@@ -109,7 +109,7 @@ public static class RelayMockTest
     /// <summary>Tuple of Relay client + Harness bound to the same mock. The
     /// <see cref="Harness"/> view is session-scoped to <see cref="Client"/>
     /// (lazily, once the connect handshake assigns a session id).</summary>
-    public sealed class Bound : IDisposable
+    internal sealed class Bound : IDisposable
     {
         public SignalWire.Relay.Client Client { get; }
         private readonly Harness _shared;
@@ -171,7 +171,7 @@ public static class RelayMockTest
 
     /// <summary>Live mock-server handle exposing the HTTP control plane
     /// + push helpers.</summary>
-    public sealed class Harness
+    internal sealed class Harness
     {
         public string HttpUrl { get; }
         public string WsUrl { get; }
@@ -370,7 +370,7 @@ public static class RelayMockTest
     }
 
     /// <summary>Wrapper around <c>/__mock__/journal</c> + reset.</summary>
-    public sealed class JournalApi
+    internal sealed class JournalApi
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
@@ -440,7 +440,7 @@ public static class RelayMockTest
     }
 
     /// <summary>Wrapper around <c>/__mock__/scenarios/&lt;id&gt;</c> + reset.</summary>
-    public sealed class ScenariosApi
+    internal sealed class ScenariosApi
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
@@ -505,7 +505,7 @@ public static class RelayMockTest
     }
 
     /// <summary>Inbound call factory spec.</summary>
-    public sealed class InboundCallSpec
+    internal sealed class InboundCallSpec
     {
         public string? CallId { get; set; }
         public string FromNumber { get; set; } = "+15551234567";
@@ -520,7 +520,7 @@ public static class RelayMockTest
     /// Lightweight view of a frame the mock server recorded. Mirrors the
     /// dataclass in <c>mock_relay.journal._JournalEntry</c>.
     /// </summary>
-    public sealed class JournalEntry
+    internal sealed class JournalEntry
     {
         [JsonPropertyName("timestamp")]
         public double Timestamp { get; set; }
@@ -853,7 +853,7 @@ public static class RelayMockTest
 /// </summary>
 public sealed class RelayMockServerFixture : IDisposable
 {
-    public RelayMockTest.Harness Harness { get; }
+    internal RelayMockTest.Harness Harness { get; }
     public bool Available { get; }
 
     public RelayMockServerFixture()

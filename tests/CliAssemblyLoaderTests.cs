@@ -218,7 +218,7 @@ public sealed class CliAssemblyLoaderTests : IDisposable
     /// pattern users will follow when wrapping SwmlServiceSwaigStandalone
     /// or SwmlServiceAiSidecar in a class for in-process introspection.
     /// </summary>
-    public class LoaderTestService : Service
+    internal class LoaderTestService : Service
     {
         public LoaderTestService() : base(new ServiceOptions
         {

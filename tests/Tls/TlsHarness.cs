@@ -154,7 +154,7 @@ public static class TlsHarness
     /// <see cref="System.Net.Http.HttpClientHandler.ServerCertificateCustomValidationCallback"/>
     /// and <see cref="System.Net.WebSockets.ClientWebSocketOptions.RemoteCertificateValidationCallback"/>.
     /// </summary>
-    public sealed class ChainValidator
+    internal sealed class ChainValidator
     {
         private readonly X509Certificate2 _ca;
         public ChainValidator(X509Certificate2 ca) => _ca = ca;
@@ -190,7 +190,7 @@ public static class TlsHarness
     }
 
     /// <summary>Build a <see cref="ChainValidator"/> trusting the test CA.</summary>
-    public static ChainValidator Validator() => new(LoadCa());
+    internal static ChainValidator Validator() => new(LoadCa());
 
     /// <summary>
     /// A validator anchored on an EMPTY custom trust store. Every server cert is
@@ -200,7 +200,7 @@ public static class TlsHarness
     /// <c>ServerCertificateCustomValidationCallback</c>-shaped, matching
     /// <see cref="ChainValidator"/>.
     /// </summary>
-    public sealed class RejectingValidator
+    internal sealed class RejectingValidator
     {
         /// <summary>RemoteCertificateValidationCallback-shaped delegate.</summary>
         public bool Validate(object sender, X509Certificate? cert, X509Chain? chain, SslPolicyErrors errors)
@@ -225,7 +225,7 @@ public static class TlsHarness
     }
 
     /// <summary>A validator that rejects every server cert (empty trust store).</summary>
-    public static RejectingValidator UntrustedValidator() => new();
+    internal static RejectingValidator UntrustedValidator() => new();
 
     private static X509Certificate2 LoadFromRaw(byte[] raw)
     {
@@ -241,7 +241,7 @@ public static class TlsHarness
     // =====================================================================
 
     /// <summary>A running <c>mock_signalwire --tls</c> (HTTPS) on a dedicated port.</summary>
-    public sealed class TlsMockSignalwire : IDisposable
+    internal sealed class TlsMockSignalwire : IDisposable
     {
         public int Port { get; }
         public string BaseUrl { get; }
@@ -261,7 +261,7 @@ public static class TlsHarness
     }
 
     /// <summary>A running <c>mock_relay --tls</c> (WSS) on dedicated ports.</summary>
-    public sealed class TlsMockRelay : IDisposable
+    internal sealed class TlsMockRelay : IDisposable
     {
         public int WsPort { get; }
         public int HttpPort { get; }
@@ -291,7 +291,7 @@ public static class TlsHarness
     /// bind-release port-steal race the RELAY overload guards against (see its
     /// remarks). Returns the bound port via <paramref name="port"/>.
     /// </summary>
-    public static TlsMockSignalwire? StartTlsMockSignalwire(
+    internal static TlsMockSignalwire? StartTlsMockSignalwire(
         System.Net.Http.HttpClient trustingClient, out int port, int attempts = 4)
     {
         port = 0;
@@ -319,7 +319,7 @@ public static class TlsHarness
     /// the retrying <see cref="StartTlsMockSignalwire(System.Net.Http.HttpClient, out int, int)"/>
     /// overload for tests.
     /// </summary>
-    public static TlsMockSignalwire? StartTlsMockSignalwire(int port, System.Net.Http.HttpClient trustingClient)
+    internal static TlsMockSignalwire? StartTlsMockSignalwire(int port, System.Net.Http.HttpClient trustingClient)
     {
         var pkgDir = MockTest.DiscoverPortingSdkPackage("mock_signalwire");
         if (pkgDir is null) return null;
@@ -386,7 +386,7 @@ public static class TlsHarness
     /// </summary>
     /// <param name="wsPort">bound WS port of the started mock (out)</param>
     /// <param name="httpPort">bound HTTP control-plane port (out)</param>
-    public static TlsMockRelay? StartTlsMockRelay(out int wsPort, out int httpPort, int attempts = 4)
+    internal static TlsMockRelay? StartTlsMockRelay(out int wsPort, out int httpPort, int attempts = 4)
     {
         wsPort = 0;
         httpPort = 0;
@@ -417,7 +417,7 @@ public static class TlsHarness
     /// Prefer the retrying <see cref="StartTlsMockRelay(out int, out int, int)"/>
     /// overload for tests — it removes the port-steal race.
     /// </summary>
-    public static TlsMockRelay? StartTlsMockRelay(int wsPort, int httpPort)
+    internal static TlsMockRelay? StartTlsMockRelay(int wsPort, int httpPort)
     {
         var pkgDir = MockTest.DiscoverPortingSdkPackage("mock_relay");
         if (pkgDir is null) return null;
