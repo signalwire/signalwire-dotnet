@@ -1917,7 +1917,8 @@ public class AgentBase : Service
         string method,
         string path,
         Dictionary<string, string> headers,
-        string? body)
+        string? body,
+        string? queryString = null)
     {
         ArgumentNullException.ThrowIfNull(path);
 
@@ -1925,7 +1926,7 @@ public class AgentBase : Service
         // base dispatch handles the request as before.
         if (_webhookValidationMiddleware is null)
         {
-            return base.HandleRequest(method, path, headers, body);
+            return base.HandleRequest(method, path, headers, body, queryString);
         }
 
         // We only gate POST requests to the signed routes. GET requests
@@ -1934,7 +1935,7 @@ public class AgentBase : Service
         // SDK's GET handler returns SWML / health JSON.
         if (!IsSignedPostRoute(method, path))
         {
-            return base.HandleRequest(method, path, headers, body);
+            return base.HandleRequest(method, path, headers, body, queryString);
         }
 
         var rejected = _webhookValidationMiddleware.Validate(
@@ -1947,7 +1948,7 @@ public class AgentBase : Service
 
         // Valid — dispatch as normal. The base does its own body-parse,
         // and `body` is the raw bytes the validator already verified.
-        return base.HandleRequest(method, path, headers, body);
+        return base.HandleRequest(method, path, headers, body, queryString);
     }
 
     /// <summary>
@@ -2026,6 +2027,112 @@ public class AgentBase : Service
 
     // HandleSwaigRequest is now provided by Service (parent). The lifted
     // version handles GET (renders SWML) and POST (dispatches via OnFunctionCall).
+
+    /// <summary>
+    /// Enforce the <c>secure: true</c> contract for one SWAIG call,
+    /// independently of the transport that carried it.
+    ///
+    /// <para>A tool registered <c>secure: true</c> REQUIRES a valid per-call
+    /// token. An ABSENT token is refused exactly like a forged one — omitting
+    /// the credential must never be weaker than presenting a wrong one, or
+    /// <c>secure</c> would be a flag that permits anonymous calls. An absent
+    /// <paramref name="callId"/> is refused for the same reason: a token can
+    /// only be checked against a call_id, so having none means nothing was
+    /// validated.</para>
+    ///
+    /// <para>The refusal shape is a <b>200 + FunctionResult body</b>, NOT an
+    /// HTTP error status: the engine has no handling for a SWAIG refusal
+    /// status, so the tool reports that it cannot execute and the model relays
+    /// that.</para>
+    ///
+    /// <para>Three nullable strings in, a nullable result out — no framework
+    /// types, so every transport (HTTP, Lambda, Azure, GCF, CGI) shares this
+    /// one decision instead of each re-deriving it.</para>
+    /// </summary>
+    /// <returns>Null to proceed with dispatch, or the refusal body to return
+    /// in its place.</returns>
+    internal Dictionary<string, object>? SwaigValidateToken(
+        string functionName, string? token, string? callId)
+    {
+        // Not one of our registered tools — not this check's business; the
+        // dispatcher will 404 it.
+        if (!HasFunction(functionName))
+        {
+            return null;
+        }
+
+        // A token is only meaningful against a call_id. Without one there is
+        // nothing to validate against, so it counts as unvalidated.
+        var isValid = !string.IsNullOrEmpty(token)
+            && callId is not null
+            && ValidateToolToken(functionName, token!, callId);
+
+        if (isValid)
+        {
+            return null;
+        }
+
+        // Invalid/absent — but an INSECURE tool was never gated, so it runs.
+        var def = GetFunction(functionName);
+        var isSecure = def is null
+            || !def.TryGetValue("_secure", out var s)
+            || s is not bool b
+            || b;
+        if (!isSecure)
+        {
+            return null;
+        }
+
+        _agentLogger.Warn(
+            $"secure_function_refused: function={functionName} token_present={!string.IsNullOrEmpty(token)}");
+
+        return new FunctionResult(
+            "I'm sorry, the security token for this function is invalid "
+            + "or expired. I cannot execute this action.").ToDict();
+    }
+
+    /// <summary>
+    /// Extract the credential from the request's query string, then hand the
+    /// decision to <see cref="SwaigValidateToken"/>. On success, fall through
+    /// to the base hook's dynamic-config ephemeral-copy behaviour.
+    /// </summary>
+    protected override (Service Target, Dictionary<string, object>? ShortCircuit) SwaigPreDispatch(
+        Dictionary<string, object?> requestData,
+        Dictionary<string, string> headers,
+        string functionName,
+        string? queryString)
+    {
+        ArgumentNullException.ThrowIfNull(requestData);
+
+        var token = TokenFromQueryString(queryString);
+        var callId = CallIdFromBody(requestData);
+
+        var refusal = SwaigValidateToken(functionName, token, callId);
+        if (refusal is not null)
+        {
+            return (this, refusal);
+        }
+
+        return base.SwaigPreDispatch(requestData, headers, functionName, queryString);
+    }
+
+    /// <summary>Read the <c>call_id</c> out of the parsed POST body — the half
+    /// of the credential pair that does NOT ride the query string.</summary>
+    private static string? CallIdFromBody(Dictionary<string, object?> requestData)
+    {
+        if (!requestData.TryGetValue("call_id", out var raw) || raw is null)
+        {
+            return null;
+        }
+        var value = raw switch
+        {
+            string s => s,
+            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.String } je
+                => je.GetString(),
+            _ => raw.ToString(),
+        };
+        return string.IsNullOrEmpty(value) ? null : value;
+    }
 
     /// <summary>Handle the post-prompt callback.</summary>
     protected override (int, Dictionary<string, string>, string) HandlePostPrompt(

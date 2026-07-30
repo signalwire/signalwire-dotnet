@@ -86,6 +86,7 @@ internal static class HttpDump
 
         // ---- serverless (lambda) ----
         outMap["http_serverless_lambda_swaig"] = ServerlessSwaig();
+        outMap["http_serverless_lambda_swaig_valid_token"] = ServerlessSwaigValidToken();
         outMap["http_serverless_lambda_noauth_401"] = ServerlessNoAuth();
 
         return outMap;
@@ -138,7 +139,30 @@ internal static class HttpDump
     // ServerlessSwaig drives the lambda adapter for the /swaig dispatch case.
     // The agent is built at route "/" so the event's root-relative "/swaig"
     // path routes correctly.
+    //
+    // The tool is `secure` (DefineTool's default) and this event carries NO
+    // __token, so the golden pins the REFUSAL — the negative half of the
+    // serverless token contract.
     private static Dictionary<string, object?> ServerlessSwaig()
+        => ReduceLambda(Adapter.HandleLambda(SwaigAgent(), SwaigEvent(token: null)));
+
+    // The POSITIVE half: identical to ServerlessSwaig in every respect EXCEPT
+    // that it carries a GENUINELY MINTED __token in the lambda query string, so
+    // it pins that a valid credential is ACCEPTED and the secure tool RUNS.
+    // Without it the contract would only ever be proven in the refusing
+    // direction, and a port that refuses EVERYTHING would sail through.
+    //
+    // The token cannot be a literal: it is an HMAC keyed by the agent's
+    // per-process random SessionManager secret and it expires. It is minted
+    // from the SAME agent instance the fixture then drives.
+    private static Dictionary<string, object?> ServerlessSwaigValidToken()
+    {
+        var a = SwaigAgent();
+        var token = a.CreateToolToken("say_hello", "c1");
+        return ReduceLambda(Adapter.HandleLambda(a, SwaigEvent(token)));
+    }
+
+    private static AgentBase SwaigAgent()
     {
         var a = new AgentBase(new AgentOptions
         {
@@ -149,7 +173,14 @@ internal static class HttpDump
         });
         a.DefineTool("say_hello", "greet", new Dictionary<string, object>(),
             (_, _) => new FunctionResult("hello there"));
+        return a;
+    }
 
+    // The token rides the QUERY STRING (`queryStringParameters`, the parsed
+    // mapping both lambda payload versions supply); the call_id rides the POST
+    // BODY. That split is the same one the HTTP path uses.
+    private static Dictionary<string, object?> SwaigEvent(string? token)
+    {
         var evt = new Dictionary<string, object?>
         {
             ["rawPath"] = "/swaig",
@@ -164,7 +195,11 @@ internal static class HttpDump
             },
             ["body"] = "{\"function\":\"say_hello\",\"argument\":{\"parsed\":[{}]},\"call_id\":\"c1\"}",
         };
-        return ReduceLambda(Adapter.HandleLambda(a, evt));
+        if (token is not null)
+        {
+            evt["queryStringParameters"] = new Dictionary<string, object?> { ["__token"] = token };
+        }
+        return evt;
     }
 
     private static Dictionary<string, object?> ServerlessNoAuth()

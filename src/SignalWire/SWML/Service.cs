@@ -616,11 +616,27 @@ public class Service
     /// <summary>
     /// Handle an HTTP request. Returns a tuple of (status, headers, body).
     /// </summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="path">The request path, WITHOUT its query string.</param>
+    /// <param name="headers">The request headers.</param>
+    /// <param name="body">The raw request body, or null.</param>
+    /// <param name="queryString">
+    /// The raw <c>a=b&amp;c=d</c> query string (with or without a leading
+    /// <c>?</c>), or null when the request carried none.
+    ///
+    /// <para>This is <b>load-bearing for security</b>, not a convenience: a
+    /// per-call SWAIG <c>__token</c> rides the query string (the call_id rides
+    /// the POST body), so a transport that drops it makes a <c>secure: true</c>
+    /// tool unvalidatable and the dispatch would fail closed on every call.
+    /// Every adapter that calls into this core — the ASP.NET router, the
+    /// HttpListener loop, and each serverless envelope — must forward it.</para>
+    /// </param>
     public virtual (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
         string method,
         string path,
         Dictionary<string, string> headers,
-        string? body)
+        string? body,
+        string? queryString = null)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(headers);
@@ -696,7 +712,7 @@ public class Service
         }
         if (subPath == "/swaig")
         {
-            return HandleSwaigRequest(method, requestData, headers);
+            return HandleSwaigRequest(method, requestData, headers, queryString);
         }
         if (subPath == "/post_prompt")
         {
@@ -967,15 +983,61 @@ public class Service
     /// Extension point: invoked between argument parsing and function
     /// dispatch. Returns (target, shortCircuit). When shortCircuit is
     /// non-null, it's returned directly without calling OnFunctionCall.
-    /// AgentBase may override to add session-token validation or ephemeral
-    /// dynamic-config copies.
+    /// AgentBase overrides this to enforce the <c>secure: true</c> token
+    /// contract and to build ephemeral dynamic-config copies.
+    ///
+    /// <para><paramref name="queryString"/> is part of this signature because
+    /// the per-call SWAIG <c>__token</c> rides the query string. A hook that
+    /// received only the body would be structurally incapable of validating
+    /// the credential no matter how it was overridden.</para>
     /// </summary>
     protected virtual (Service Target, Dictionary<string, object>? ShortCircuit) SwaigPreDispatch(
         Dictionary<string, object?> requestData,
         Dictionary<string, string> headers,
-        string functionName)
+        string functionName,
+        string? queryString)
     {
         return (this, null);
+    }
+
+    /// <summary>
+    /// Pick the <c>__token</c> credential out of a raw <c>a=b&amp;c=d</c> query
+    /// string, falling back to a bare <c>token</c> — the same two spellings, in
+    /// the same order, the reference reads off its request's query params.
+    /// Returns null when neither is present or the value is empty.
+    /// </summary>
+    internal static string? TokenFromQueryString(string? queryString)
+    {
+        if (string.IsNullOrEmpty(queryString))
+        {
+            return null;
+        }
+        var q = queryString[0] == '?' ? queryString[1..] : queryString;
+
+        string? bare = null;
+        foreach (var pair in q.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = pair.IndexOf('=', StringComparison.Ordinal);
+            if (eq < 0)
+            {
+                continue;
+            }
+            var key = Uri.UnescapeDataString(pair[..eq]);
+            var value = Uri.UnescapeDataString(pair[(eq + 1)..]);
+            if (value.Length == 0)
+            {
+                continue;
+            }
+            if (key == "__token")
+            {
+                return value;
+            }
+            if (key == "token")
+            {
+                bare ??= value;
+            }
+        }
+        return bare;
     }
 
     /// <summary>
@@ -991,7 +1053,8 @@ public class Service
     protected virtual (int, Dictionary<string, string>, string) HandleSwaigRequest(
         string method,
         Dictionary<string, object?>? requestData,
-        Dictionary<string, string> headers)
+        Dictionary<string, string> headers,
+        string? queryString = null)
     {
         if (string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase))
         {
@@ -1083,7 +1146,7 @@ public class Service
             }
         }
 
-        var (target, shortCircuit) = SwaigPreDispatch(requestData, headers, functionName);
+        var (target, shortCircuit) = SwaigPreDispatch(requestData, headers, functionName, queryString);
         if (shortCircuit is not null)
         {
             return JsonResponse(200, shortCircuit);
@@ -1414,6 +1477,11 @@ public class Service
 
         var method = http.Request.Method;
         var path = http.Request.Path.HasValue ? http.Request.Path.Value! : "/";
+        // The query string carries the per-call SWAIG __token; dropping it here
+        // is what made a `secure: true` tool unvalidatable on this transport.
+        var queryString = http.Request.QueryString.HasValue
+            ? http.Request.QueryString.Value
+            : null;
         var headers = new Dictionary<string, string>();
         foreach (var h in http.Request.Headers)
         {
@@ -1430,7 +1498,7 @@ public class Service
         string responseBody;
         try
         {
-            (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
+            (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body, queryString);
         }
         catch (Exception ex)
         {
@@ -1560,7 +1628,8 @@ public class Service
                         body = reader.ReadToEnd();
                     }
 
-                    var (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
+                    var (status, responseHeaders, responseBody) =
+                        HandleRequest(method, path, headers, body, ctx.Request.Url?.Query);
                     ctx.Response.StatusCode = status;
                     // Stamp HTTP-layer headers onto the bare decision-core triple.
                     foreach (var (k, v) in HttpLayerHeaders(status, responseHeaders, responseBody))

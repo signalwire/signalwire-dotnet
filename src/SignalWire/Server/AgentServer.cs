@@ -332,7 +332,8 @@ public partial class AgentServer
             }
 
             var (status, respHeaders, body) = HandleRequest(
-                ctx.Request.HttpMethod, ctx.Request.Url?.AbsolutePath ?? "/", reqHeaders, reqBody);
+                ctx.Request.HttpMethod, ctx.Request.Url?.AbsolutePath ?? "/", reqHeaders, reqBody,
+                ctx.Request.Url?.Query);
 
             ctx.Response.StatusCode = status;
             foreach (var (k, v) in respHeaders)
@@ -358,8 +359,16 @@ public partial class AgentServer
     // ==================================================================
 
     /// <summary>Handle an HTTP request. Returns (status, headers, body).</summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="path">The request path, WITHOUT its query string.</param>
+    /// <param name="headers">The request headers.</param>
+    /// <param name="body">The raw request body, or null.</param>
+    /// <param name="queryString">The raw query string. Forwarded to the matched
+    /// agent because a per-call SWAIG <c>__token</c> rides it; dropping it here
+    /// would make every hosted agent's secure tools unvalidatable.</param>
     public (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
-        string method, string path, Dictionary<string, string>? headers = null, string? body = null)
+        string method, string path, Dictionary<string, string>? headers = null, string? body = null,
+        string? queryString = null)
     {
         ArgumentNullException.ThrowIfNull(path);
         headers ??= [];
@@ -397,7 +406,7 @@ public partial class AgentServer
         if (matchedRoute is not null)
         {
             var agent = _agents[matchedRoute];
-            return agent.HandleRequest(method, path, headers, body);
+            return agent.HandleRequest(method, path, headers, body, queryString);
         }
 
         return JsonResponse(404, new Dictionary<string, object> { ["error"] = "Not Found" });
