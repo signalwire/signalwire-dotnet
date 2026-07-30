@@ -24,6 +24,8 @@ namespace SignalWire.Tests;
 [Collection(GlobalStateCollection.Name)]
 public sealed class ParameterSchemaTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] ServiceDateArray = new[] { "service", "date" };
     public ParameterSchemaTests()
     {
         Logger.Reset();
@@ -234,7 +236,7 @@ public sealed class ParameterSchemaTests : IDisposable
         Assert.False(((Dictionary<string, object>)built["count"]).ContainsKey("required"));
 
         // And the top-level required-array form is available for DataMap-style callers.
-        Assert.Equal(new[] { "service", "date" }, ParameterSchema.Create()
+        Assert.Equal(ServiceDateArray, ParameterSchema.Create()
             .String("service", "The service")
             .Integer("count", "How many")
             .Number("ratio", "A ratio", defaultValue: 1.5)

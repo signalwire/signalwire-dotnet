@@ -13,6 +13,8 @@ namespace SignalWire.Tests;
 // each test starts and stops the server so nothing hangs.
 public sealed class WebServiceTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly int[] Arr403404400Array = new[] { 403, 404, 400 };
     private const string User = "webuser";
     private const string Pass = "webpass";
 
@@ -109,7 +111,7 @@ public sealed class WebServiceTests : IDisposable
         var res = Get("/static/../../etc/passwd");
         var code = (int)res.StatusCode;
 
-        Assert.Contains(code, new[] { 403, 404, 400 });
+        Assert.Contains(code, Arr403404400Array);
         Assert.DoesNotContain("root:", Body(res));
     }
 

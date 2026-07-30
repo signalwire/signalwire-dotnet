@@ -8,6 +8,8 @@ namespace SignalWire.Tests;
 /// </summary>
 public class ToolRegistryTests
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] ABArray = new[] { "a", "b" };
     private readonly ToolRegistry _registry = new();
 
     // The reference requires BOTH `parameters` and `handler`
@@ -159,7 +161,7 @@ public class ToolRegistryTests
         _registry.RegisterSwaigFunction(new Dictionary<string, object> { ["function"] = "b" });
         var all = _registry.GetAllFunctions();
 
-        Assert.Equal(new[] { "a", "b" }, all.Keys.OrderBy(k => k, StringComparer.Ordinal));
+        Assert.Equal(ABArray, all.Keys.OrderBy(k => k, StringComparer.Ordinal));
 
         // Mutating the returned dictionary must not affect the registry.
         all.Remove("a");

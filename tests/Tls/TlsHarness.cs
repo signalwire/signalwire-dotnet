@@ -346,7 +346,7 @@ public static class TlsHarness
             if (proc.HasExited) return null;
             try
             {
-                var resp = trustingClient.GetAsync(baseUrl + "/__mock__/health")
+                var resp = trustingClient.GetAsync(new Uri(baseUrl + "/__mock__/health"))
                     .GetAwaiter().GetResult();
                 if (resp.IsSuccessStatusCode)
                 {
@@ -444,7 +444,7 @@ public static class TlsHarness
             if (proc.HasExited) return null;
             try
             {
-                var resp = probe.GetAsync(httpUrl + "/__mock__/health").GetAwaiter().GetResult();
+                var resp = probe.GetAsync(new Uri(httpUrl + "/__mock__/health")).GetAwaiter().GetResult();
                 if (resp.IsSuccessStatusCode)
                 {
                     return new TlsMockRelay(wsPort, httpPort, httpUrl, proc);

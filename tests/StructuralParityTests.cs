@@ -29,6 +29,9 @@ namespace SignalWire.Tests;
 [Collection(GlobalStateCollection.Name)]
 public class StructuralParityTests
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] ABArray = new[] { "A", "B" };
+    private static readonly string[] XYArray = new[] { "x", "y" };
     // -------------------------------------------------------------------
     // AgentBase.AddAnswerVerb / AddPostAnswerVerb — Python takes only
     // (config); the verb name is implicit. Provide a 1-arg overload
@@ -990,7 +993,7 @@ public class StructuralParityTests
         pom.AddSection("A");
         pom.AddSection("B");
         var titles = pom.Sections.Select(s => s.Title).ToList();
-        Assert.Equal(new[] { "A", "B" }, titles);
+        Assert.Equal(ABArray, titles);
     }
 
     [Fact]
@@ -1058,7 +1061,7 @@ public class StructuralParityTests
         var y = pom.ToYaml();
         var restored = SignalWire.POM.PromptObjectModel.FromYaml(y);
         Assert.NotNull(restored.FindSection("A"));
-        Assert.Equal(new[] { "x", "y" }, restored.FindSection("A")!.Bullets);
+        Assert.Equal(XYArray, restored.FindSection("A")!.Bullets);
     }
 
     [Fact]

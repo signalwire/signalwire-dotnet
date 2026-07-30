@@ -11,6 +11,11 @@ namespace SignalWire.Tests;
 // schema — the analog of Ruby's Proc#parameters reflection.
 public class TypeInferenceTests
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] CityDaysArray = new[] { "city", "days" };
+    private static readonly string[] CityArray = new[] { "city" };
+    private static readonly string[] ABArray = new[] { "a", "b" };
+    private static readonly string[] AArray = new[] { "a" };
     // A typed handler with a required param, an optional param (default), and
     // the raw_data channel. Parameter names are the wire arg names.
     private static string TypedHandler(string city, int days = 3, Dictionary<string, object?>? raw_data = null) =>
@@ -22,10 +27,10 @@ public class TypeInferenceTests
         var schema = TypeInference.InferSchema(
             (Func<string, int, Dictionary<string, object?>?, string>)TypedHandler);
 
-        Assert.Equal(new[] { "city", "days" }, schema.Parameters.Keys.OrderBy(k => k).ToArray());
+        Assert.Equal(CityDaysArray, schema.Parameters.Keys.OrderBy(k => k).ToArray());
         Assert.Equal("string", schema.Parameters["city"]["type"]);
         // city is required (no default); days has a default.
-        Assert.Equal(new[] { "city" }, schema.Required.ToArray());
+        Assert.Equal(CityArray, schema.Required.ToArray());
         Assert.Null(schema.Description);
         Assert.True(schema.IsTyped);
         Assert.True(schema.HasRawData);
@@ -80,8 +85,8 @@ public class TypeInferenceTests
         // a: required (no default), b: optional (default 2).
         var schema = TypeInference.InferSchema((Func<int, int, object?>)WithDefault);
 
-        Assert.Equal(new[] { "a", "b" }, schema.Parameters.Keys.OrderBy(k => k).ToArray());
-        Assert.Equal(new[] { "a" }, schema.Required.ToArray());
+        Assert.Equal(ABArray, schema.Parameters.Keys.OrderBy(k => k).ToArray());
+        Assert.Equal(AArray, schema.Required.ToArray());
     }
 
     private static object? WithDefault(int a, int b = 2) => null;

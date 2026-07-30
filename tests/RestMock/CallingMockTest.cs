@@ -27,6 +27,8 @@ namespace SignalWire.Tests.RestMock;
 [Trait("Category", "RestMock")]
 public class CallingMockTest : IClassFixture<MockServerFixture>
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] OPUSG729VP8Array = new[] { "OPUS", "G729", "VP8", "PCMA" };
     private const string CallsPath = "/api/calling/calls";
 
     private readonly MockServerFixture _fixture;
@@ -97,7 +99,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
             url: "https://example.com/swml",
             extras: new Dictionary<string, object?>
             {
-                ["codecs"] = new[] { "OPUS", "G729", "VP8", "PCMA" },
+                ["codecs"] = OPUSG729VP8Array,
             });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
@@ -109,7 +111,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
             .Where(e => e.ValueKind == JsonValueKind.String)
             .Select(e => e.GetString())
             .ToArray();
-        Assert.Equal(new[] { "OPUS", "G729", "VP8", "PCMA" }, arr);
+        Assert.Equal(OPUSG729VP8Array, arr);
     }
 
     [Fact]

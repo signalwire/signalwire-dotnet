@@ -17,6 +17,10 @@ namespace SignalWire.Tests.POM;
 [Trait("Category", "POM")]
 public class PromptObjectModelTest
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] GuestAGuestBArray = new[] { "GuestA", "GuestB" };
+    private static readonly string[] OneTwoThreeArray = new[] { "one", "two", "three" };
+    private static readonly string[] TitleBodyArray = new[] { "title", "body" };
     // ----------------------------------------------------------------
     // Empty POM
     // ----------------------------------------------------------------
@@ -364,7 +368,7 @@ public class PromptObjectModelTest
         guest.AddSection("GuestB", body: "bb");
 
         host.AddPomAsSubsection(target, guest);
-        Assert.Equal(new[] { "GuestA", "GuestB" },
+        Assert.Equal(GuestAGuestBArray,
             target.Subsections.Select(s => s.Title).ToArray());
     }
 
@@ -397,7 +401,7 @@ public class PromptObjectModelTest
         var s = new Section("X");
         s.AddBullets(new List<string> { "one" });
         s.AddBullets(new List<string> { "two", "three" });
-        Assert.Equal(new[] { "one", "two", "three" }, s.Bullets.ToArray());
+        Assert.Equal(OneTwoThreeArray, s.Bullets.ToArray());
     }
 
     [Fact]
@@ -448,7 +452,7 @@ public class PromptObjectModelTest
         var keys = dicts[0].Keys.ToList();
         // Section with only title + body emits exactly those two keys
         // in that order — no empty bullets/subsections/numbered.
-        Assert.Equal(new[] { "title", "body" }, keys.ToArray());
+        Assert.Equal(TitleBodyArray, keys.ToArray());
     }
 
     [Fact]

@@ -7,6 +7,8 @@ namespace SignalWire.Tests;
 [Collection(GlobalStateCollection.Name)]
 public sealed class RelayTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] TypeParamsArray = new[] { "type", "params" };
     public RelayTests()
     {
         Logging.Logger.Reset();
@@ -1115,7 +1117,7 @@ public sealed class RelayTests : IDisposable
         Assert.Equal(
             (Dictionary<string, object?>)handWritten["params"]!,
             (Dictionary<string, object?>)typed["params"]!);
-        Assert.Equal(new[] { "type", "params" }, typed.Keys.ToArray());
+        Assert.Equal(TypeParamsArray, typed.Keys.ToArray());
     }
 
     [Fact]

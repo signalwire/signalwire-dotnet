@@ -14,6 +14,8 @@ namespace SignalWire.Tests;
 [Collection(GlobalStateCollection.Name)]
 public sealed class CoreConfigLoaderTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] NonexistentDefinitelyNotArray = new[] { "/nonexistent/definitely-not-here.json" };
     private readonly List<string> _tempDirs = new();
     private readonly List<string> _envKeys = new();
 
@@ -75,7 +77,7 @@ public sealed class CoreConfigLoaderTests : IDisposable
     [Fact]
     public void NoConfigWhenMissing()
     {
-        var loader = new ConfigLoader(new[] { "/nonexistent/definitely-not-here.json" });
+        var loader = new ConfigLoader(NonexistentDefinitelyNotArray);
 
         Assert.False(loader.HasConfig());
         Assert.Null(loader.GetConfigFile());

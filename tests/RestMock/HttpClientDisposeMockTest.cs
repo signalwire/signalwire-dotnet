@@ -63,7 +63,12 @@ public class HttpClientDisposeMockTest : IClassFixture<MockServerFixture>
 
         // If Dispose() had wrongly disposed the injected client, this real
         // request would throw ObjectDisposedException. It must succeed.
+        // A RELATIVE path resolved against the client's BaseAddress. new Uri("/x")
+        // would build an absolute file: URI and break the call, so CA2234's Uri
+        // overload does not apply here.
+#pragma warning disable CA2234
         var resp = await injected.GetAsync("/__mock__/health");
+#pragma warning restore CA2234
         Assert.True(resp.IsSuccessStatusCode);
         var body = await resp.Content.ReadAsStringAsync();
         Assert.Contains("specs_loaded", body);

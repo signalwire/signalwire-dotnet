@@ -9,6 +9,10 @@ namespace SignalWire.Tests;
 /// </summary>
 public class PromptManagerTests
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] BeConciseBeArray = new[] { "Be concise", "Be accurate" };
+    private static readonly string[] FirstArray = new[] { "first" };
+    private static readonly string[] ABArray = new[] { "a", "b" };
     private readonly PromptManager _pm = new();
 
     private static List<Dictionary<string, object>> AsSections(object? prompt) =>
@@ -42,7 +46,7 @@ public class PromptManagerTests
         Assert.Equal("Personality", prompt[0]["title"]);
         Assert.Equal("Be helpful", prompt[0]["body"]);
         var bullets = Assert.IsAssignableFrom<IReadOnlyList<string>>(prompt[1]["bullets"]);
-        Assert.Equal(new[] { "Be concise", "Be accurate" }, bullets);
+        Assert.Equal(BeConciseBeArray, bullets);
     }
 
     [Fact]
@@ -62,7 +66,7 @@ public class PromptManagerTests
 
         Assert.Equal("New", section["title"]);
         var bullets = Assert.IsAssignableFrom<IReadOnlyList<string>>(section["bullets"]);
-        Assert.Equal(new[] { "first" }, bullets);
+        Assert.Equal(FirstArray, bullets);
     }
 
     [Fact]
@@ -77,7 +81,7 @@ public class PromptManagerTests
         Assert.Equal("Sub", sub["title"]);
         Assert.Equal("Sub body", sub["body"]);
         var bullets = Assert.IsAssignableFrom<IReadOnlyList<string>>(sub["bullets"]);
-        Assert.Equal(new[] { "a", "b" }, bullets);
+        Assert.Equal(ABArray, bullets);
     }
 
     [Fact]

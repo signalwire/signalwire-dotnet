@@ -24,6 +24,8 @@ namespace SignalWire.Tests;
 [Collection(GlobalStateCollection.Name)]
 public sealed class CliAssemblyLoaderTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] FirstSecondThirdArray = new[] { "first", "second", "third" };
     public CliAssemblyLoaderTests()
     {
         Schema.Reset();
@@ -90,7 +92,7 @@ public sealed class CliAssemblyLoaderTests : IDisposable
             (a, r) => new FunctionResult());
 
         var names = svc.Tools.Select(t => (string)t["function"]).ToArray();
-        Assert.Equal(new[] { "first", "second", "third" }, names);
+        Assert.Equal(FirstSecondThirdArray, names);
     }
 
     [Fact]

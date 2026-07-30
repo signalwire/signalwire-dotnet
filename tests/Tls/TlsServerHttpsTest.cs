@@ -90,7 +90,7 @@ public class TlsServerHttpsTest
                 }
                 try
                 {
-                    resp = await client.GetAsync(baseUrl + "/health");
+                    resp = await client.GetAsync(new Uri(baseUrl + "/health"));
                     break;
                 }
                 catch (Exception ex) { lastErr = ex; await Task.Delay(150); }
@@ -110,7 +110,7 @@ public class TlsServerHttpsTest
             using var untrusted = BuildHttp(rejecting.Validate);
             var ex2 = await Assert.ThrowsAnyAsync<Exception>(async () =>
             {
-                await untrusted.GetAsync(baseUrl + "/health").ConfigureAwait(false);
+                await untrusted.GetAsync(new Uri(baseUrl + "/health")).ConfigureAwait(false);
             });
             // The untrusted client must NOT obtain a healthy response — the
             // positive control above already proved the server presents a cert a

@@ -319,7 +319,7 @@ public static class RelayMockTest
         /// </remarks>
         public List<Dictionary<string, JsonElement>> Sessions()
         {
-            var resp = _http.GetAsync(HttpUrl + "/__mock__/sessions" + SessionQuery())
+            var resp = _http.GetAsync(new Uri(HttpUrl + "/__mock__/sessions" + SessionQuery()))
                 .GetAwaiter().GetResult();
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             using var doc = JsonDocument.Parse(body);
@@ -347,7 +347,7 @@ public static class RelayMockTest
         {
             var json = JsonSerializer.Serialize(body);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(HttpUrl + path, content).GetAwaiter().GetResult();
+            var resp = _http.PostAsync(new Uri(HttpUrl + path), content).GetAwaiter().GetResult();
             var respBody = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -388,7 +388,7 @@ public static class RelayMockTest
 
         public List<JournalEntry> All()
         {
-            var resp = _http.GetAsync(_baseUrl + "/__mock__/journal" + _sessionQuery)
+            var resp = _http.GetAsync(new Uri(_baseUrl + "/__mock__/journal" + _sessionQuery))
                 .GetAwaiter().GetResult();
             if (resp.StatusCode != HttpStatusCode.OK)
             {
@@ -428,7 +428,7 @@ public static class RelayMockTest
         public void Reset()
         {
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/journal/reset" + _sessionQuery, content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/journal/reset" + _sessionQuery), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -463,7 +463,7 @@ public static class RelayMockTest
         {
             var json = JsonSerializer.Serialize(events.ToList());
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + method + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/" + method + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -479,7 +479,7 @@ public static class RelayMockTest
         {
             var json = JsonSerializer.Serialize(opts);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/dial" + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/dial" + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -493,7 +493,7 @@ public static class RelayMockTest
         public void Reset()
         {
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/reset" + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/reset" + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -819,7 +819,7 @@ public static class RelayMockTest
     {
         try
         {
-            var resp = client.GetAsync(baseUrl + "/__mock__/health")
+            var resp = client.GetAsync(new Uri(baseUrl + "/__mock__/health"))
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode) return false;
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();

@@ -16,6 +16,11 @@ namespace SignalWire.Tests;
 [Collection(GlobalStateCollection.Name)]
 public sealed class SWMLServiceSwaigTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] FirstSecondArray = new[] { "first", "second" };
+    private static readonly string[] ABArray = new[] { "a", "b" };
+    private static readonly string[] RemoteCallerLocalArray = new[] { "remote-caller", "local-caller" };
+    private static readonly string[] InsightArray = new[] { "insight" };
     public SWMLServiceSwaigTests()
     {
         Schema.Reset();
@@ -86,7 +91,7 @@ public sealed class SWMLServiceSwaigTests : IDisposable
         var svc = Svc();
         svc.DefineTool("first", "f", new Dictionary<string, object>(), (a, r) => new FunctionResult());
         svc.RegisterSwaigFunction(new Dictionary<string, object> { ["function"] = "second" });
-        Assert.Equal(new[] { "first", "second" }, svc.ListToolNames());
+        Assert.Equal(FirstSecondArray, svc.ListToolNames());
     }
 
     // ------------------------------------------------------------------
@@ -165,7 +170,7 @@ public sealed class SWMLServiceSwaigTests : IDisposable
                 {
                     new
                     {
-                        tags = new[] { "a", "b" },
+                        tags = ABArray,
                         filters = new { active = true, limit = 5 },
                         count = 3,
                     },
@@ -271,7 +276,7 @@ public sealed class SWMLServiceSwaigTests : IDisposable
         {
             ["prompt"] = "real-time copilot",
             ["lang"] = "en-US",
-            ["direction"] = new[] { "remote-caller", "local-caller" },
+            ["direction"] = RemoteCallerLocalArray,
         });
 
         // 2. Register a SWAIG tool the sidecar's LLM can call.
@@ -307,6 +312,6 @@ public sealed class SWMLServiceSwaigTests : IDisposable
         var eventPayload = JsonSerializer.Serialize(new { type = "insight", tick_id = 7 });
         var (eventStatus, _, _) = svc.HandleRequest("POST", "/events", Auth(), eventPayload);
         Assert.Equal(200, eventStatus);
-        Assert.Equal(new[] { "insight" }, eventsSeen);
+        Assert.Equal(InsightArray, eventsSeen);
     }
 }

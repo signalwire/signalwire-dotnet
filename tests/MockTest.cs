@@ -260,7 +260,7 @@ public static class MockTest
             {
                 try
                 {
-                    resp = _http.GetAsync(_baseUrl + "/__mock__/journal")
+                    resp = _http.GetAsync(new Uri(_baseUrl + "/__mock__/journal"))
                         .GetAwaiter().GetResult();
                     break;
                 }
@@ -302,7 +302,7 @@ public static class MockTest
         public void Reset()
         {
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/journal/reset", content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/journal/reset"), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -352,7 +352,7 @@ public static class MockTest
             };
             var json = JsonSerializer.Serialize(payload);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + endpointId + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/" + endpointId + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -373,7 +373,7 @@ public static class MockTest
         {
             var json = JsonSerializer.Serialize(payload);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + endpointId + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/" + endpointId + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -387,7 +387,7 @@ public static class MockTest
         public void Reset()
         {
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/reset" + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/reset" + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -742,7 +742,7 @@ public static class MockTest
     {
         try
         {
-            var resp = client.GetAsync(baseUrl + "/__mock__/health")
+            var resp = client.GetAsync(new Uri(baseUrl + "/__mock__/health"))
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode) return false;
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();

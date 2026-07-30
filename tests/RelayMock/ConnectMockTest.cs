@@ -22,6 +22,8 @@ namespace SignalWire.Tests.RelayMock;
 [Trait("Category", "RelayMock")]
 public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] C1Array = new[] { "c1" };
     private readonly RelayMockServerFixture _fixture;
 
     public ConnectMockTest(RelayMockServerFixture fixture)
@@ -190,7 +192,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
 
         // First connection captures the issued protocol.
         string? issued;
-        using (var bound1 = RelayMockTest.NewClient(contexts: new[] { "c1" }))
+        using (var bound1 = RelayMockTest.NewClient(contexts: C1Array))
         {
             await bound1.Client.ConnectAsync();
             issued = bound1.Client.Protocol;
@@ -200,7 +202,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
 
         // Second connection sends the saved protocol back. bound2.Harness is
         // scoped to bound2's fresh session, so it only sees the second connect.
-        using (var bound2 = RelayMockTest.NewClient(contexts: new[] { "c1" }))
+        using (var bound2 = RelayMockTest.NewClient(contexts: C1Array))
         {
             bound2.Client.Protocol = issued;
             await bound2.Client.ConnectAsync();

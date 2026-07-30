@@ -25,6 +25,8 @@ namespace SignalWire.Tests.RelayMock;
 [Trait("Category", "RelayMock")]
 public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] C1Array = new[] { "c1" };
     private readonly RelayMockServerFixture _fixture;
 
     public DisposeAsyncMockTest(RelayMockServerFixture fixture)
@@ -90,7 +92,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
 
         // Keep the Bound (not just .Client) — it carries the session scope the assertions
         // below need. `await using` still drives DisposeAsync on the client itself.
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "c1" });
+        using var bound = RelayMockTest.NewClient(contexts: C1Array);
         HashSet<string> mine;
         await using (var client = bound.Client)
         {

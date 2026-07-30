@@ -15,6 +15,8 @@ namespace SignalWire.Tests;
 [Collection(GlobalStateCollection.Name)]
 public sealed class SkillsTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] ScriptStyleNavArray = new[] { "//script", "//style", "//nav", "//header", "//footer", "//aside", "//noscript" };
     public SkillsTests()
     {
         Logger.Reset();
@@ -1477,7 +1479,7 @@ public sealed class SkillsTests : IDisposable
     {
         var skill = new SpiderSkill();
         Assert.Equal(
-            new[] { "//script", "//style", "//nav", "//header", "//footer", "//aside", "//noscript" },
+            ScriptStyleNavArray,
             skill.RemoveXpaths);
     }
 

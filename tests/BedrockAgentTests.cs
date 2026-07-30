@@ -14,6 +14,8 @@ namespace SignalWire.Tests;
 [Collection(GlobalStateCollection.Name)]
 public sealed class BedrockAgentTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] SWAIGPostPromptArray = new[] { "SWAIG", "post_prompt", "post_prompt_url", "prompt" };
     public BedrockAgentTests()
     {
         Logger.Reset();
@@ -122,7 +124,7 @@ public sealed class BedrockAgentTests : IDisposable
         var ab = BedrockVerb(agent);
 
         var keys = ab.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray();
-        Assert.Equal(new[] { "SWAIG", "post_prompt", "post_prompt_url", "prompt" }, keys);
+        Assert.Equal(SWAIGPostPromptArray, keys);
     }
 
     [Fact]

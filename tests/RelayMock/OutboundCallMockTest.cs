@@ -22,6 +22,8 @@ namespace SignalWire.Tests.RelayMock;
 [Trait("Category", "RelayMock")]
 public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] CreatedRingingAnsweredArray = new[] { "created", "ringing", "answered" };
     private readonly RelayMockServerFixture _fixture;
 
     public OutboundCallMockTest(RelayMockServerFixture fixture)
@@ -98,7 +100,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             ArmDial(bound, tag: "t-happy", winnerCallId: "winner-1",
-                states: new[] { "created", "ringing", "answered" });
+                states: CreatedRingingAnsweredArray);
 
             var call = await bound.Client.DialAsync(new()
             {
@@ -131,7 +133,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             ArmDial(bound, tag: "t-typed-state", winnerCallId: "typed-winner",
-                states: new[] { "created", "ringing", "answered" });
+                states: CreatedRingingAnsweredArray);
 
             var call = await bound.Client.DialAsync(new()
             {
@@ -599,7 +601,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             ArmDial(bound, "t-prog", "WIN-PROG",
-                new[] { "created", "ringing", "answered" });
+                CreatedRingingAnsweredArray);
             var call = await bound.Client.DialAsync(new()
             {
                 ["devices"] = new List<List<Dictionary<string, object?>>>

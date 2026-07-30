@@ -106,7 +106,7 @@ public class TlsRelayWssTest
     private static async Task<bool> SawRecvAsync(string httpUrl, string method)
     {
         using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-        var body = await http.GetStringAsync(httpUrl + "/__mock__/journal").ConfigureAwait(false);
+        var body = await http.GetStringAsync(new Uri(httpUrl + "/__mock__/journal")).ConfigureAwait(false);
         using var doc = JsonDocument.Parse(body);
         if (doc.RootElement.ValueKind != JsonValueKind.Array) return false;
         foreach (var entry in doc.RootElement.EnumerateArray())
