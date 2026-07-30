@@ -621,6 +621,7 @@ public sealed class SkillsTests : IDisposable
             try { _listener.Close(); }
             catch (ObjectDisposedException) { /* already torn down */ }
             catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            _cts.Dispose();
         }
     }
 
@@ -1270,6 +1271,7 @@ public sealed class SkillsTests : IDisposable
             try { _listener.Close(); }
             catch (ObjectDisposedException) { /* already torn down */ }
             catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            _cts.Dispose();
         }
     }
 

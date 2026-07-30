@@ -309,7 +309,7 @@ public static class MockTest
 
         public void Reset()
         {
-            #pragma warning disable CA2025 // the request is BLOCKED on below
+#pragma warning disable CA2025 // the request is BLOCKED on below
             using var content = new StringContent("");
             var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/journal/reset"), content)
                 .GetAwaiter().GetResult();
@@ -395,7 +395,7 @@ public static class MockTest
         /// or all of them when unscoped.</summary>
         public void Reset()
         {
-            #pragma warning disable CA2025 // the request is BLOCKED on below
+#pragma warning disable CA2025 // the request is BLOCKED on below
             using var content = new StringContent("");
             var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/reset" + Q()), content)
                 .GetAwaiter().GetResult();
@@ -543,16 +543,16 @@ public static class MockTest
                     // Release only here: the child binds immediately after, so
                     // the unowned window is as small as the API permits.
                     reservation.Stop();
-                    #pragma warning disable CA2000 // ownership TRANSFERS to the returned handle,
-        // which owns teardown; disposing here would tear the mock down early.
-        process = SpawnMockServer(host, attemptPort);
+#pragma warning disable CA2000 // ownership TRANSFERS to the returned handle,
+                    // which owns teardown; disposing here would tear the mock down early.
+                    process = SpawnMockServer(host, attemptPort);
 #pragma warning restore CA2000
                 }
                 catch (Exception ex)
                 {
                     try { reservation.Stop(); }
-        catch (ObjectDisposedException) { /* already stopped */ }
-        catch (System.Net.Sockets.SocketException) { /* best effort */ }
+                    catch (ObjectDisposedException) { /* already stopped */ }
+                    catch (System.Net.Sockets.SocketException) { /* best effort */ }
                     _startupFailure = new InvalidOperationException(
                         $"MockTest: failed to spawn `python -m mock_signalwire` on {attemptUrl}: {ex.Message} " +
                         $"(set MOCK_SIGNALWIRE_HOST / MOCK_SIGNALWIRE_PORT to use a pre-running instance, " +
@@ -571,8 +571,8 @@ public static class MockTest
                         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
                         {
                             try { if (!process.HasExited) process.Kill(true); }
-        catch (InvalidOperationException) { /* already exited */ }
-        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+                            catch (InvalidOperationException) { /* already exited */ }
+                            catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         };
                         var hr = new Harness(attemptUrl, host, attemptPort);
                         _sharedHarness = hr;
@@ -590,8 +590,8 @@ public static class MockTest
                         // the (int) overload does not. The process has already
                         // exited, so this returns promptly.
                         try { process.WaitForExit(); }
-        catch (InvalidOperationException) { /* already exited */ }
-        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+                        catch (InvalidOperationException) { /* already exited */ }
+                        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         var stderr = _mockStderr?.ToString() ?? "";
                         var stdout = _mockStdout?.ToString() ?? "";
                         // Someone else took the port inside the release window.
@@ -615,8 +615,8 @@ public static class MockTest
                 if (lostTheBind) continue;
 
                 try { process.Kill(true); }
-        catch (InvalidOperationException) { /* already exited */ }
-        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+                catch (InvalidOperationException) { /* already exited */ }
+                catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                 _startupFailure = new InvalidOperationException(
                     $"MockTest: `python -m mock_signalwire` did not become ready within {StartupTimeout} on {attemptUrl}. " +
                     $"Either start it manually on host before running tests, or clone porting-sdk next to signalwire-dotnet.");

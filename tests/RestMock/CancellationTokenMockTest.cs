@@ -166,7 +166,8 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
                     lock (accepted) accepted.Add(c);
                 }
             }
-            catch { /* listener stopped */ }
+            catch (ObjectDisposedException) { /* already stopped */ }
+            catch (System.Net.Sockets.SocketException) { /* listener stopped */ }
         });
 
         try
@@ -196,7 +197,10 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
             {
                 foreach (var c in accepted) { try { c.Dispose(); } catch (ObjectDisposedException) { /* already disposed */ } }
             }
-            try { await acceptLoop; } catch { /* best effort */ }
+            try { await acceptLoop.ConfigureAwait(false); }
+            catch (ObjectDisposedException) { /* listener already gone */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            catch (OperationCanceledException) { /* cancelled by the test */ }
         }
     }
 

@@ -62,10 +62,10 @@ public sealed class WebhookMiddlewareTest : IDisposable
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
         var msgBytes = Encoding.UTF8.GetBytes(message);
-        #pragma warning disable CA5350 // HMAC-SHA1 is the SERVER'S webhook signature
+#pragma warning disable CA5350 // HMAC-SHA1 is the SERVER'S webhook signature
         // algorithm (see src/SignalWire/Security/WebhookValidator.cs); the test must
         // reproduce it byte-for-byte or it is not testing the contract.
-        #pragma warning disable CA1308 // lowercase hex is the on-the-wire signature form
+#pragma warning disable CA1308 // lowercase hex is the on-the-wire signature form
         return Convert.ToHexString(HMACSHA1.HashData(keyBytes, msgBytes)).ToLowerInvariant();
 #pragma warning restore CA1308
 #pragma warning restore CA5350

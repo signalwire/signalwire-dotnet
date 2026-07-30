@@ -139,8 +139,8 @@ public class PortReservationTests
                     // overlap never exists.
                     outstanding.TryRemove(port, out _);
                     try { l.Stop(); }
-        catch (ObjectDisposedException) { /* already stopped */ }
-        catch (System.Net.Sockets.SocketException) { /* best effort */ }
+                    catch (ObjectDisposedException) { /* already stopped */ }
+                    catch (System.Net.Sockets.SocketException) { /* best effort */ }
                 }
             }));
         }

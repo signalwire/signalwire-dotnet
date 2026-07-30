@@ -58,7 +58,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
         if (expectedId is null)
         {
             Assert.False(body.ContainsKey("id"),
-                $"expected no id at body root, got {(body.ContainsKey("id") ? body["id"].ToString() : "<absent>")}");
+                $"expected no id at body root, got {(body.TryGetValue("id", out var idVal) ? idVal.ToString() : "<absent>")}");
         }
         else
         {

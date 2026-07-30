@@ -63,12 +63,12 @@ public sealed class ParameterSchemaTests : IDisposable
         if (main is List<Dictionary<string, object?>> typedList)
         {
             foreach (var verb in typedList)
-                if (verb.ContainsKey("ai")) return (Dictionary<string, object>)verb["ai"]!;
+                if (verb.TryGetValue("ai", out var aiVal)) return (Dictionary<string, object>)aiVal!;
         }
         else if (main is List<Dictionary<string, object>> untypedList)
         {
             foreach (var verb in untypedList)
-                if (verb.ContainsKey("ai")) return (Dictionary<string, object>)verb["ai"];
+                if (verb.TryGetValue("ai", out var aiVal)) return (Dictionary<string, object>)aiVal!;
         }
         throw new InvalidOperationException("AI verb not found in rendered SWML");
     }

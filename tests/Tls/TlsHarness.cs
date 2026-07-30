@@ -255,8 +255,8 @@ public static class TlsHarness
         public void Dispose()
         {
             try { if (!_proc.HasExited) _proc.Kill(true); }
-        catch (InvalidOperationException) { /* already exited */ }
-        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+            catch (InvalidOperationException) { /* already exited */ }
+            catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         }
     }
 
@@ -280,8 +280,8 @@ public static class TlsHarness
         public void Dispose()
         {
             try { if (!_proc.HasExited) _proc.Kill(true); }
-        catch (InvalidOperationException) { /* already exited */ }
-        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+            catch (InvalidOperationException) { /* already exited */ }
+            catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         }
     }
 
@@ -357,7 +357,8 @@ public static class TlsHarness
                     return new TlsMockSignalwire(port, baseUrl, proc);
                 }
             }
-            catch { /* not ready / handshake racing startup */ }
+            catch (System.Net.Http.HttpRequestException) { /* not ready / handshake racing startup */ }
+            catch (TaskCanceledException) { /* probe timeout */ }
             Thread.Sleep(250);
         }
         try { proc.Kill(true); }
@@ -456,7 +457,9 @@ public static class TlsHarness
                     return new TlsMockRelay(wsPort, httpPort, httpUrl, proc);
                 }
             }
-            catch { /* not ready */ }
+            catch (System.Net.WebSockets.WebSocketException) { /* not ready */ }
+            catch (System.Net.Http.HttpRequestException) { /* not ready */ }
+            catch (TaskCanceledException) { /* probe timeout */ }
             Thread.Sleep(200);
         }
         try { proc.Kill(true); }

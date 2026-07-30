@@ -34,7 +34,11 @@ namespace SignalWire.Tests.RestMock;
 /// this one collection makes xUnit run them sequentially, so the shared journal
 /// deterministically accumulates every route's success+error traffic.</summary>
 [CollectionDefinition("RestCoverage", DisableParallelization = true)]
+// CA1711: "Collection" is xUnit's concept name for a test collection, not a
+// System.Collections type; renaming breaks the [Collection(...)] wiring.
+#pragma warning disable CA1711
 public sealed class RestCoverageCollection { }
+#pragma warning restore CA1711
 
 [Collection("RestCoverage")]
 [Trait("Category", "RestCoverage")]
@@ -90,5 +94,8 @@ public abstract class CoverageBase : IClassFixture<MockServerFixture>
     }
 
     protected static bool HasKey(Dictionary<string, object?> body, params string[] keys)
-        => keys.Any(body.ContainsKey);
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        return keys.Any(body.ContainsKey);
+    }
 }

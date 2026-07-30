@@ -37,6 +37,7 @@ public sealed class WebServiceTests : IDisposable
 
     public void Dispose()
     {
+        _svc?.Dispose();
         _svc.Stop();
         if (Directory.Exists(_dir))
         {
@@ -53,7 +54,7 @@ public sealed class WebServiceTests : IDisposable
         // servers + blocking-sync clients run concurrently under the assembly's
         // unbounded xUnit parallelism (MaxParallelThreads=-1). A tight 5s deadline
         // here was an intermittent TaskCanceledException on net8 under that load.
-        #pragma warning disable CA5399, CA5400 // Loopback test client against a mock
+#pragma warning disable CA5399, CA5400 // Loopback test client against a mock
         // with a self-signed cert: there is no revocation endpoint to check, and
         // enabling the check makes the test depend on outbound network access.
         using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };

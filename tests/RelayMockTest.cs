@@ -436,7 +436,7 @@ public static class RelayMockTest
 
         public void Reset()
         {
-            #pragma warning disable CA2025 // the request is BLOCKED on below
+#pragma warning disable CA2025 // the request is BLOCKED on below
             using var content = new StringContent("");
             var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/journal/reset" + _sessionQuery), content)
                 .GetAwaiter().GetResult();
@@ -502,7 +502,7 @@ public static class RelayMockTest
         /// when unscoped).</summary>
         public void Reset()
         {
-            #pragma warning disable CA2025 // the request is BLOCKED on below
+#pragma warning disable CA2025 // the request is BLOCKED on below
             using var content = new StringContent("");
             var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/reset" + Q()), content)
                 .GetAwaiter().GetResult();
@@ -655,19 +655,19 @@ public static class RelayMockTest
                 {
                     wsReservation.Stop();
                     httpReservation.Stop();
-                    #pragma warning disable CA2000 // ownership TRANSFERS to the returned handle,
-        // which owns teardown; disposing here would tear the mock down early.
-        process = SpawnMockServer(host, attemptWsPort, attemptHttpPort);
+#pragma warning disable CA2000 // ownership TRANSFERS to the returned handle,
+                    // which owns teardown; disposing here would tear the mock down early.
+                    process = SpawnMockServer(host, attemptWsPort, attemptHttpPort);
 #pragma warning restore CA2000
                 }
                 catch (Exception ex)
                 {
                     try { wsReservation.Stop(); }
-        catch (ObjectDisposedException) { /* already stopped */ }
-        catch (System.Net.Sockets.SocketException) { /* best effort */ }
+                    catch (ObjectDisposedException) { /* already stopped */ }
+                    catch (System.Net.Sockets.SocketException) { /* best effort */ }
                     try { httpReservation.Stop(); }
-        catch (ObjectDisposedException) { /* already stopped */ }
-        catch (System.Net.Sockets.SocketException) { /* best effort */ }
+                    catch (ObjectDisposedException) { /* already stopped */ }
+                    catch (System.Net.Sockets.SocketException) { /* best effort */ }
                     _startupFailure = new InvalidOperationException(
                         $"RelayMockTest: failed to spawn `python -m mock_relay`: {ex.Message} " +
                         $"(set MOCK_RELAY_HOST / MOCK_RELAY_PORT / MOCK_RELAY_HTTP_PORT to use a pre-running instance, " +
@@ -686,8 +686,8 @@ public static class RelayMockTest
                         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
                         {
                             try { if (!process.HasExited) process.Kill(true); }
-        catch (InvalidOperationException) { /* already exited */ }
-        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+                            catch (InvalidOperationException) { /* already exited */ }
+                            catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         };
                         var hr = new Harness(attemptHttpUrl, attemptWsUrl, host, attemptWsPort, attemptHttpPort);
                         _sharedHarness = hr;
@@ -700,8 +700,8 @@ public static class RelayMockTest
                         // WaitForExit() with no timeout is the overload that
                         // also waits for those handlers.
                         try { process.WaitForExit(); }
-        catch (InvalidOperationException) { /* already exited */ }
-        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+                        catch (InvalidOperationException) { /* already exited */ }
+                        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         var stderr = _mockStderr?.ToString() ?? "";
                         var stdout = _mockStdout?.ToString() ?? "";
                         if (MockTest.IsAddressInUse(stdout, stderr))
@@ -723,8 +723,8 @@ public static class RelayMockTest
                 if (lostTheBind) continue;
 
                 try { process.Kill(true); }
-        catch (InvalidOperationException) { /* already exited */ }
-        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+                catch (InvalidOperationException) { /* already exited */ }
+                catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                 _startupFailure = new InvalidOperationException(
                     $"RelayMockTest: `python -m mock_relay` did not become ready within {StartupTimeout} on {attemptHttpUrl} / {attemptWsUrl}. " +
                     $"Either start it manually on host before running tests, or clone porting-sdk next to signalwire-dotnet.");

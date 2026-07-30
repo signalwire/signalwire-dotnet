@@ -84,7 +84,7 @@ public class TlsRestHttpsTest
         {
             ServerCertificateCustomValidationCallback = validate,
         };
-        #pragma warning disable CA5399, CA5400 // Loopback test client against a mock
+#pragma warning disable CA5399, CA5400 // Loopback test client against a mock
         // with a self-signed cert: there is no revocation endpoint to check, and
         // enabling the check makes the test depend on outbound network access.
         return new System.Net.Http.HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
