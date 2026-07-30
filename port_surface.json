@@ -216,7 +216,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ a7bcf4a35367b2643f3fbf345a8cb7e4dee6691d",
+  "generated_from": "signalwire-dotnet @ 0cb7d47f8746df1da041040baca7d9235c481102",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -550,7 +550,6 @@
       "classes": {
         "DataMap": [
           "__init__",
-          "body",
           "description",
           "error_keys",
           "expression",

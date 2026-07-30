@@ -3603,20 +3603,6 @@
               ],
               "returns": "void"
             },
-            "body": {
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "self"
-                },
-                {
-                  "name": "data",
-                  "type": "dict<string,any>",
-                  "required": true
-                }
-              ],
-              "returns": "class:signalwire.core.data_map.DataMap"
-            },
             "description": {
               "params": [
                 {
@@ -9573,12 +9559,6 @@
                   "default": null
                 },
                 {
-                  "name": "say_text",
-                  "type": "optional<string>",
-                  "required": false,
-                  "default": null
-                },
-                {
                   "name": "say_voice",
                   "type": "optional<string>",
                   "required": false,
@@ -9587,6 +9567,18 @@
                 {
                   "name": "say_language",
                   "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "say_gender",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "auto_answer",
+                  "type": "optional<bool>",
                   "required": false,
                   "default": null
                 }
@@ -9631,6 +9623,18 @@
                 {
                   "name": "language",
                   "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "gender",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "volume",
+                  "type": "optional<float>",
                   "required": false,
                   "default": null
                 }
