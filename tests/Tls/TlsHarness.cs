@@ -335,7 +335,7 @@ public static class TlsHarness
 
         // Ownership TRANSFERS to the caller / the returned handle, which owns teardown.
 #pragma warning disable CA2000
-            var proc = StartDrained(psi);
+        var proc = StartDrained(psi);
 #pragma warning restore CA2000
         if (proc is null) return null;
 
@@ -433,7 +433,7 @@ public static class TlsHarness
 
         // Ownership TRANSFERS to the caller / the returned handle, which owns teardown.
 #pragma warning disable CA2000
-            var proc = StartDrained(psi);
+        var proc = StartDrained(psi);
 #pragma warning restore CA2000
         if (proc is null) return null;
 
