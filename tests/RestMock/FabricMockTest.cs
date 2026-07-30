@@ -360,6 +360,6 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         Assert.Equal(2, gets.Count);
         Assert.NotNull(gets[1].QueryParams);
         Assert.True(gets[1].QueryParams!.ContainsKey("page_token"));
-        Assert.Equal(new List<string> { "PA_page2" }, gets[1].QueryParams["page_token"]);
+        Assert.Equal(new List<string> { "PA_page2" }, gets[1].QueryParams!["page_token"]);
     }
 }

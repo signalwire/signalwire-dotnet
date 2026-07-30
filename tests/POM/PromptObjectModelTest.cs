@@ -420,7 +420,10 @@ public class PromptObjectModelTest
     {
         var parent = new Section("P");
         Assert.Throws<System.ArgumentException>(() =>
-            parent.AddSubsection(title: null));
+#pragma warning disable CS8625 // passing null IS the assertion: this proves
+        // AddSubsection rejects a null title with ArgumentException.
+            parent.AddSubsection(title: null!));
+#pragma warning restore CS8625
     }
 
     // ----------------------------------------------------------------

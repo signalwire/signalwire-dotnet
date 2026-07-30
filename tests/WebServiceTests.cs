@@ -37,8 +37,8 @@ public sealed class WebServiceTests : IDisposable
 
     public void Dispose()
     {
-        _svc?.Dispose();
         _svc.Stop();
+        _svc.Dispose();
         if (Directory.Exists(_dir))
         {
             Directory.Delete(_dir, recursive: true);

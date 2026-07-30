@@ -120,7 +120,7 @@ public class PaginationMockTest : IClassFixture<MockServerFixture>
         // Second fetch carries the page_token parsed from page 1's next link.
         Assert.NotNull(gets[1].QueryParams);
         Assert.True(gets[1].QueryParams!.ContainsKey("page_token"));
-        Assert.Equal(new List<string> { "PA_page2" }, gets[1].QueryParams["page_token"]);
+        Assert.Equal(new List<string> { "PA_page2" }, gets[1].QueryParams!["page_token"]);
     }
 
     [Fact]

@@ -199,7 +199,7 @@ public class FunctionResultTests
         Assert.Equal("true", action["transfer"]);
         var swml = (Dictionary<string, object>)action["SWML"];
         Assert.Equal("1.0.0", swml["version"]);
-        var main = Main(action);
+        var main = MainSections(action);
         var set = (Dictionary<string, object>)main[0]["set"];
         Assert.Equal("Goodbye!", set["ai_response"]);
         var transfer = (Dictionary<string, object>)main[1]["transfer"];
@@ -213,7 +213,7 @@ public class FunctionResultTests
         fr.SwmlTransfer("sip:support@company.com", "Welcome back!", false);
         var action = GetAction(fr, 0);
         Assert.Equal("false", action["transfer"]);
-        var transfer = (Dictionary<string, object>)Main(action)[1]["transfer"];
+        var transfer = (Dictionary<string, object>)MainSections(action)[1]["transfer"];
         Assert.Equal("sip:support@company.com", transfer["dest"]);
     }
 
@@ -374,7 +374,7 @@ public class FunctionResultTests
         Assert.True(action.ContainsKey("SWML"));
         var swml = (Dictionary<string, object>)action["SWML"];
         Assert.Equal("1.0.0", swml["version"]);
-        var userEvent = (Dictionary<string, object>)Main(action)[0]["user_event"];
+        var userEvent = (Dictionary<string, object>)MainSections(action)[0]["user_event"];
         var evt = (Dictionary<string, object>)userEvent["event"];
         Assert.Equal("cards_dealt", evt["type"]);
         Assert.Equal(21, evt["score"]);
@@ -786,7 +786,7 @@ public class FunctionResultTests
         var fr = new FunctionResult();
         fr.JoinConference("my-conference");
         var action = GetAction(fr, 0);
-        var verb = Main(action)[0]["join_conference"];
+        var verb = MainSections(action)[0]["join_conference"];
         Assert.Equal("my-conference", verb);
     }
 
@@ -1159,7 +1159,7 @@ public class FunctionResultTests
         var fr = new FunctionResult();
         fr.Pay("https://pay.example.com/connector");
         var action = GetAction(fr, 0);
-        var main = Main(action);
+        var main = MainSections(action);
         // First verb is set ai_response.
         var set = (Dictionary<string, object>)main[0]["set"];
         Assert.True(set.ContainsKey("ai_response"));
@@ -1189,7 +1189,7 @@ public class FunctionResultTests
         fr.Pay("https://pay.example.com", "voice", "https://status.example.com", "credit-card",
             10, 3, false, "90210", 5, "one-time", "49.99", "eur", "fr-FR", "man",
             "Monthly subscription", "visa amex", null, null, "Payment processed.");
-        var main = Main(GetAction(fr, 0));
+        var main = MainSections(GetAction(fr, 0));
         var pay = (Dictionary<string, object>)main[1]["pay"];
         Assert.Equal("voice", pay["input"]);
         Assert.Equal("https://status.example.com", pay["status_url"]);  // status_url, not action_url
@@ -1220,7 +1220,7 @@ public class FunctionResultTests
         var parameters = new List<Dictionary<string, string>> { new() { ["name"] = "store_id", ["value"] = "123" } };
         var fr = new FunctionResult();
         fr.Pay("https://pay.example.com", parameters: parameters, prompts: prompts);
-        var pay = (Dictionary<string, object>)Main(GetAction(fr, 0))[1]["pay"];
+        var pay = (Dictionary<string, object>)MainSections(GetAction(fr, 0))[1]["pay"];
         Assert.Equal(prompts, pay["prompts"]);
         Assert.Equal(parameters, pay["parameters"]);
     }
@@ -1231,7 +1231,7 @@ public class FunctionResultTests
         // Python parity (test_pay_postal_code_boolean_false): bool False -> "false".
         var fr = new FunctionResult();
         fr.Pay("https://pay.example.com", postalCode: false);
-        var pay = (Dictionary<string, object>)Main(GetAction(fr, 0))[1]["pay"];
+        var pay = (Dictionary<string, object>)MainSections(GetAction(fr, 0))[1]["pay"];
         Assert.Equal("false", pay["postal_code"]);
     }
 
@@ -1497,7 +1497,7 @@ public class FunctionResultTests
         => Actions(fr)[index];
 
     // For SWML-wrapped actions: pull the main[] section list out of {SWML:{...}}.
-    private static List<Dictionary<string, object>> Main(Dictionary<string, object> action)
+    private static List<Dictionary<string, object>> MainSections(Dictionary<string, object> action)
     {
         var swml = (Dictionary<string, object>)action["SWML"];
         var sections = (Dictionary<string, object>)swml["sections"];
@@ -1506,5 +1506,5 @@ public class FunctionResultTests
 
     // Pull the params object of the single verb in a SWML-wrapped action's main[0].
     private static Dictionary<string, object> MainVerb(Dictionary<string, object> action, string verb)
-        => (Dictionary<string, object>)Main(action)[0][verb];
+        => (Dictionary<string, object>)MainSections(action)[0][verb];
 }
