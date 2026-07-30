@@ -73,6 +73,12 @@ public static class RelayMockTest
     /// <summary>Convenience: build a configured Relay <see cref="SignalWire.Relay.Client"/>
     /// pointed at the local mock's WebSocket. Caller is responsible for
     /// calling <c>ConnectAsync()</c>.</summary>
+    // Literal arrays reused across the RelayMock suite, hoisted so each call site
+    // does not allocate a fresh one (CA1861).
+    public static readonly string[] DefaultContexts = ["default"];
+    public static readonly string[] CreatedAnswered = ["created", "answered"];
+    public static readonly string[] CreatedEnded = ["created", "ended"];
+
     public static Bound NewClient(string project = "test_proj", string token = "test_tok",
         IEnumerable<string>? contexts = null)
     {

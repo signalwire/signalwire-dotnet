@@ -48,9 +48,9 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     /// <summary>Spin up a client, take an inbound call, answer it, return bound.</summary>
     private async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId)
     {
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
-        await bound.Client.ReceiveAsync(new[] { "default" });
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
 
         Call? captured = null;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -389,11 +389,11 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     public async Task WaitForAnswered_ResolvesWhenStateArrives()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         try
         {
             await bound.Client.ConnectAsync();
-            await bound.Client.ReceiveAsync(new[] { "default" });
+            await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
 
             Call? captured = null;
             var got = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -458,11 +458,11 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     public async Task WaitForEnding_ResolvesWhenEndingStateArrives()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         try
         {
             await bound.Client.ConnectAsync();
-            await bound.Client.ReceiveAsync(new[] { "default" });
+            await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
 
             Call? captured = null;
             var got = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

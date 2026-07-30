@@ -45,7 +45,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     public async Task Connect_Returns_ProtocolString()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -65,7 +65,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     public async Task Connect_Journal_RecordsSignalwireConnect()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -85,7 +85,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
         if (Skipped()) return;
         using var bound = RelayMockTest.NewClient(
             project: "test_proj", token: "test_tok",
-            contexts: new[] { "default" });
+            contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -109,7 +109,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     public async Task Connect_Journal_CarriesContexts()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -134,7 +134,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     public async Task Connect_Journal_CarriesAgentAndVersion()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -161,7 +161,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     public async Task Connect_Journal_EventAcksTrue()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try

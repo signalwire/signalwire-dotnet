@@ -39,9 +39,9 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
 
     private async Task<RelayMockTest.Bound> AnsweredCall(string callId = "evt-call-1")
     {
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
-        await bound.Client.ReceiveAsync(new[] { "default" });
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
 
         Call? captured = null;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -221,7 +221,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
     public async Task UnknownEventType_DoesNotCrash()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
         try
         {
@@ -237,7 +237,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
     public async Task EventWithBadCallId_IsDropped()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
         try
         {
@@ -257,7 +257,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
     public async Task EventWithEmptyEventType_IsDropped()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
         try
         {
@@ -348,7 +348,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
     public async Task EventAck_SentBackToServer()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
         try
         {
@@ -394,11 +394,11 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
     public async Task DialEvent_RoutesViaTag_WhenNoTopLevelCallId()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
         try
         {
-            ArmDial(bound, "ec-tag-route", "WINTAG", new[] { "created", "answered" });
+            ArmDial(bound, "ec-tag-route", "WINTAG", RelayMockTest.CreatedAnswered);
 
             var call = await bound.Client.DialAsync(new()
             {
@@ -485,7 +485,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
     public async Task AuthorizationState_EventCaptured()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
         try
         {
@@ -511,7 +511,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
     public async Task CallingErrorEvent_DoesNotCrash()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
         try
         {

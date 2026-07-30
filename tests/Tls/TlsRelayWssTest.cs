@@ -51,7 +51,7 @@ public class TlsRelayWssTest
             Token = "test_tok",
             Host = mock!.RelayHost,
             Scheme = "wss",
-            Contexts = new[] { "default" },
+            Contexts = RelayMockTest.DefaultContexts,
         })
         {
             // Trust the test CA for the WSS handshake (real chain validation).

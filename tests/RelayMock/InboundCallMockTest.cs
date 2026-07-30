@@ -72,9 +72,9 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
 
     private async Task<RelayMockTest.Bound> ConnectedClient()
     {
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
-        await bound.Client.ReceiveAsync(new[] { "default" });
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
         return bound;
     }
 

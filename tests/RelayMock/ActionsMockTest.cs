@@ -45,9 +45,9 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
 
     private async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId = "act-call-1")
     {
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync();
-        await bound.Client.ReceiveAsync(new[] { "default" });
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
 
         Call? captured = null;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

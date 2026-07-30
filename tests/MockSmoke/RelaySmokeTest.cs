@@ -178,7 +178,7 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
 
         // Use the real Relay Client (not raw WebSocket) so we exercise the
         // SDK's signalwire.event ack path + Call object plumbing.
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         Call? received = null;
         var tcs = new TaskCompletionSource<Call>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -192,7 +192,7 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
         await bound.Client.ConnectAsync();
 
         // Subscribe to inbound contexts (mirrors what real production code does).
-        await bound.Client.ReceiveAsync(new[] { "default" });
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
 
         // Push an inbound call via the control plane. mock_relay synthesizes
         // a calling.call.receive event and broadcasts it to the connected

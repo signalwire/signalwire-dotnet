@@ -49,7 +49,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
     {
         if (Skipped()) return;
 
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         var client = bound.Client;
 
         await client.ConnectAsync();
