@@ -11,8 +11,8 @@ Format (one bullet per suppression):
 - <relpath>:<line> — <reason> (<approver>, <YYYY-MM-DD>)
 ```
 
-There are fifteen `.editorconfig` analyzer-severity disables (two global
-VB-interop, eight scoped to the generated REST tree, three scoped to `tests/`
+There are sixteen `.editorconfig` analyzer-severity disables (two global
+VB-interop, eight scoped to the generated REST tree, four scoped to `tests/`
 and one to `examples/`) plus one `<NoWarn>` in the csproj (the doc-coverage pair behind the
 6.3 GenerateDocumentationFile floor).
 
@@ -42,7 +42,8 @@ violates, every other rule stays at error there, and both rules stay ON for `src
 - .editorconfig:122 — CA1707 (underscores in member names), scoped `[tests/**/*.cs]`: every test is named `Method_Scenario` (`AgentBase_AgentIdIsReadableBack`, `Register_Agent`, `Tools_ExposesRegisteredFunction`) — the xUnit convention, where the underscore IS the subject/scenario split that makes a failure report legible. Obeying the rule would rename ~1,273 test methods and destroy the readability the convention exists for. Same shape as java declining AvoidStarImport because it "would de-idiomatize test code" (mike@signalwire.com, 2026-07-30)
 - .editorconfig:134 — CA1307 (string comparison without an explicit StringComparison), scoped `[tests/**.cs]`: fires on xUnit's OWN assertion API — `Assert.Contains(expected, actual)` / `Assert.StartsWith` / `Assert.DoesNotContain` / `Assert.EndsWith` — at 190 of the 199 sites in this tree. The rule targets production string comparison you control; here the comparison happens inside the test framework and the remedy (a third argument on every substring assertion in the suite) adds no signal, the fixtures being ASCII literals. The nine real `string.Contains/Replace/IndexOf` sites in tests/ were BURNED, not excused (commit 0b38ac6) (mike@signalwire.com, 2026-07-30)
 - .editorconfig:135 — CA1310 (StartsWith/EndsWith without StringComparison), scoped `[tests/**.cs]`: same xUnit-overload reason as CA1307 above, for `Assert.StartsWith`/`Assert.EndsWith` (mike@signalwire.com, 2026-07-30)
-- .editorconfig:144 — CA1303 (do not pass literals as localized parameters), scoped `[examples/**/*.cs]`: an example's `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING TEXT printed to a developer's terminal, not a localizable product string; the rule's remedy (a .resx resource table per demo) would obscure the very thing the example exists to show. The shipped library has zero such sites, which is why this never fired before (mike@signalwire.com, 2026-07-30)
+- .editorconfig:143 — CA1515 (types can be made internal), scoped `[tests/**.cs]`: DIRECTLY CONTRADICTS the test framework — xUnit's own analyzers require the opposite (xUnit1000 "Test classes must be public", xUnit1027 "Collection definition classes must be public"). Applying CA1515 across this tree produced 93 xUnit1000/xUnit1027 build errors; no code satisfies both rules, so this is a genuine conflict, not a preference (mike@signalwire.com, 2026-07-30)
+- .editorconfig:152 — CA1303 (do not pass literals as localized parameters), scoped `[examples/**/*.cs]`: an example's `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING TEXT printed to a developer's terminal, not a localizable product string; the rule's remedy (a .resx resource table per demo) would obscure the very thing the example exists to show. The shipped library has zero such sites, which is why this never fired before (mike@signalwire.com, 2026-07-30)
 
 ## Wire-signature suppressions (`tools/DumpCorpus`, per-line pragmas)
 

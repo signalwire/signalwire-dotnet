@@ -134,6 +134,14 @@ dotnet_diagnostic.CA1707.severity = none
 dotnet_diagnostic.CA1307.severity = none
 dotnet_diagnostic.CA1310.severity = none
 
+# CA1515 — types can be made internal. This DIRECTLY CONTRADICTS xUnit: the test
+# framework's own analyzers require the opposite (xUnit1000 "Test classes must be
+# public", xUnit1027 "Collection definition classes must be public"). Applying
+# CA1515 across this tree produced 93 xUnit1000/xUnit1027 build errors — there is
+# no code that satisfies both rules, so this is a genuine conflict rather than a
+# preference. (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA1515.severity = none
+
 [examples/**.cs]
 # CA1303 — do not pass literals as localized parameters. An example's
 # `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING
