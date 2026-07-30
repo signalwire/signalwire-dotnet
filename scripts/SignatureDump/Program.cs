@@ -53,7 +53,7 @@ var asm = marker;
 
 var types = new JsonArray();
 foreach (var t in asm.GetExportedTypes()
-                     .Where(t => (t.Namespace ?? "").StartsWith("SignalWire"))
+                     .Where(t => (t.Namespace ?? "").StartsWith("SignalWire", StringComparison.Ordinal))
                      .OrderBy(t => t.FullName))
 {
     var typeObj = DumpType(t);
@@ -78,7 +78,7 @@ static JsonObject? DumpType(Type t)
         : "class";
 
     // Skip compiler-generated and obvious non-API types
-    if (t.Name.StartsWith("<") || t.Name.Contains("AnonymousType")) return null;
+    if (t.Name.StartsWith('<') || t.Name.Contains("AnonymousType", StringComparison.Ordinal)) return null;
 
     var typeObj = new JsonObject
     {
@@ -94,7 +94,7 @@ static JsonObject? DumpType(Type t)
     // `new CallStateEvent { EventType = …, CallState = … }` is legal, and
     // EventType is declared on the RelayEvent base. build_construction walks
     // this chain so a subclass's construction set includes what it inherits.
-    if (t.BaseType is { } bt && (bt.Namespace ?? "").StartsWith("SignalWire"))
+    if (t.BaseType is { } bt && (bt.Namespace ?? "").StartsWith("SignalWire", StringComparison.Ordinal))
     {
         typeObj["base_type"] = new JsonObject
         {
@@ -221,8 +221,8 @@ static JsonObject DumpMethod(MethodBase m, bool isCtor)
 
 static string StripGenericArity(string name)
 {
-    var tick = name.IndexOf('`');
-    return tick < 0 ? name : name.Substring(0, tick);
+    var tick = name.IndexOf('`', StringComparison.Ordinal);
+    return tick < 0 ? name : name[..tick];
 }
 
 // Render a Type as a stable string name preserving generics in a form the
