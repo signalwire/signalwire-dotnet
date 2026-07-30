@@ -598,9 +598,9 @@ public sealed class SWMLServiceTests : IDisposable
     [Fact]
     public void ExtractSipUsername_ValidUri()
     {
-        var body = new Dictionary<string, object>
+        var body = new Dictionary<string, object?>
         {
-            ["call"] = new Dictionary<string, object> { ["to"] = "sip:agent1@example.com" },
+            ["call"] = new Dictionary<string, object?> { ["to"] = "sip:agent1@example.com" },
         };
         Assert.Equal("agent1", Service.ExtractSipUsername(body));
     }
@@ -608,14 +608,14 @@ public sealed class SWMLServiceTests : IDisposable
     [Fact]
     public void ExtractSipUsername_FromTopLevelTo()
     {
-        var body = new Dictionary<string, object> { ["to"] = "sip:myuser@host.com" };
+        var body = new Dictionary<string, object?> { ["to"] = "sip:myuser@host.com" };
         Assert.Equal("myuser", Service.ExtractSipUsername(body));
     }
 
     [Fact]
     public void ExtractSipUsername_ValidChars()
     {
-        var body = new Dictionary<string, object> { ["to"] = "sip:user.name-test_1@host.com" };
+        var body = new Dictionary<string, object?> { ["to"] = "sip:user.name-test_1@host.com" };
         Assert.Equal("user.name-test_1", Service.ExtractSipUsername(body));
     }
 
@@ -626,7 +626,7 @@ public sealed class SWMLServiceTests : IDisposable
     [Fact]
     public void ExtractSipUsername_UnusualChars_ReturnedVerbatim()
     {
-        var body = new Dictionary<string, object> { ["to"] = "sip:user;drop@host.com" };
+        var body = new Dictionary<string, object?> { ["to"] = "sip:user;drop@host.com" };
         Assert.Equal("user;drop", Service.ExtractSipUsername(body));
     }
 
@@ -634,16 +634,16 @@ public sealed class SWMLServiceTests : IDisposable
     public void ExtractSipUsername_LongName_ReturnedVerbatim()
     {
         var longName = new string('a', 65);
-        var body = new Dictionary<string, object> { ["to"] = $"sip:{longName}@host.com" };
+        var body = new Dictionary<string, object?> { ["to"] = $"sip:{longName}@host.com" };
         Assert.Equal(longName, Service.ExtractSipUsername(body));
     }
 
     [Fact]
     public void ExtractSipUsername_TelUri_ReturnsNumber()
     {
-        var body = new Dictionary<string, object>
+        var body = new Dictionary<string, object?>
         {
-            ["call"] = new Dictionary<string, object> { ["to"] = "tel:+15551234567" },
+            ["call"] = new Dictionary<string, object?> { ["to"] = "tel:+15551234567" },
         };
         Assert.Equal("+15551234567", Service.ExtractSipUsername(body));
     }
@@ -657,7 +657,7 @@ public sealed class SWMLServiceTests : IDisposable
     [Fact]
     public void ExtractSipUsername_EmptyBody_ReturnsNull()
     {
-        Assert.Null(Service.ExtractSipUsername(new Dictionary<string, object>()));
+        Assert.Null(Service.ExtractSipUsername(new Dictionary<string, object?>()));
     }
 
     // ------------------------------------------------------------------

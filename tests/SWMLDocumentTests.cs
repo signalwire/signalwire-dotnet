@@ -88,7 +88,7 @@ public sealed class SWMLDocumentTests : IDisposable
     public void AddRawVerb_AppendsPreformatted()
     {
         var doc = new Document();
-        var raw = new Dictionary<string, object> { ["answer"] = new Dictionary<string, object> { ["max_duration"] = 3600 } };
+        var raw = new Dictionary<string, object?> { ["answer"] = new Dictionary<string, object?> { ["max_duration"] = 3600 } };
         doc.AddRawVerb("main", raw);
 
         var verbs = doc.GetVerbs("main");
