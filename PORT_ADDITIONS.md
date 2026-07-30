@@ -215,11 +215,9 @@ signalwire.serverless.adapter.Adapter.handle_google_cloud_function: .NET ships A
 signalwire.serverless.adapter.Adapter.handle_lambda: .NET ships Adapter class; Python uses ServerlessMixin on AgentBase + signalwire.utils.is_serverless_mode
 signalwire.serverless.adapter.Adapter: .NET ships Adapter class; Python uses ServerlessMixin on AgentBase + signalwire.utils.is_serverless_mode
 signalwire.serverless.adapter.Adapter.serve: .NET ships Adapter class; Python uses ServerlessMixin on AgentBase + signalwire.utils.is_serverless_mode
-signalwire.skills.claude_skills.skill.ClaudeSkillsSkill.get_prompt_sections: Skill subclass overrides (Python ships the same overrides; the .NET file path differs from Python's nested module structure)
 signalwire.skills.custom_skills.skill.CustomSkillsSkill: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.custom_skills.skill.CustomSkillsSkill.register_tools: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.custom_skills.skill.CustomSkillsSkill.setup: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
-signalwire.skills.info_gatherer.skill.InfoGathererSkill.get_prompt_sections: Skill subclass overrides (Python ships the same overrides; the .NET file path differs from Python's nested module structure)
 signalwire.skills.registry.SkillRegistry.reset: Public method surfaced by the .NET enumerator under SignalWire.<namespace>; not in Python reference at this exact path
 signalwire.skills.skill_name_extensions.SkillNameExtensions: dotnet_enum_idiom: static extension class exposing ToWireName() for the SkillName closed-set enum; .NET-only typed helper, no Python reference equivalent (Python uses bare str skill names).
 signalwire.skills.skill_name_extensions.SkillNameExtensions.to_wire_name: dotnet_enum_idiom: maps the typed SkillName closed-set enum member to its canonical snake_case wire name; AddSkill/RemoveSkill/HasSkill expose a SkillName overload next to the string overload so built-in skill names are typo-checked at compile time, with the string path preserved for parity (Python uses bare str) and custom skills.

@@ -537,6 +537,39 @@ def _oracle_class_members(module: str, cls: str) -> set[str]:
     }
 
 
+def _skillbase_final_signature_members() -> set[str]:
+    """The ``_SKILLBASE_INHERITABLE`` members the SIGNATURE oracle records on
+    ``SkillBase`` ONLY — FINAL template methods no skill subclass overrides
+    publicly. The signature-axis mirror of
+    ``enumerate_surface._skillbase_final_surface_members``; keep the two in step.
+
+    Derived, never hand-listed: ``get_prompt_sections`` became a final template
+    method delegating to a PROTECTED ``_get_prompt_sections()`` hook, so the
+    oracle now records the public member on the base alone.
+
+    The "recorded on the base and on NO subclass" test is deliberate. A plain
+    per-class intersection would ALSO delete members the griffe oracle simply
+    under-enumerates — setup / register_tools / get_instance_key /
+    get_parameter_schema / get_hints / cleanup are declared in the reference
+    SOURCE for ApiNinjasTrivia / PlayBackgroundFile / Spider / WeatherApi /
+    WikipediaSearch and missing from the oracle. Those .NET implementations are
+    real; they stay emitted for the ledger to adjudicate rather than being
+    deleted behind an oracle bug.
+
+    Empty — gate disabled — if the oracle records nothing for ``SkillBase``.
+    """
+    base = _oracle_class_members("signalwire.core.skill_base", "SkillBase")
+    if not base:
+        return set()
+    subclass_members: set[str] = set()
+    for key in _REFERENCE_SIGS:
+        if not (key.startswith("signalwire.skills.") and ".skill." in key):
+            continue
+        tail = key.rsplit(".", 1)[-1]
+        subclass_members.add(tail)
+    return (_SKILLBASE_INHERITABLE & base) - subclass_members
+
+
 # The @dataclass field-carrying classes whose public FIELDS the fold-branch
 # oracle (porting-sdk HEAD 7693802) now records as surface: every relay Event
 # subclass + base, the AI-Chat response DTOs, and RequestOptions. dotnet is a
@@ -1769,6 +1802,8 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     )
     _fold_skill_ctor_state(skillbase_methods)
 
+    _skill_final_members = _skillbase_final_signature_members()
+
     for mod_name, entry in out_modules.items():
         if not (
             mod_name.startswith("signalwire.skills.") and mod_name.endswith(".skill")
@@ -1785,6 +1820,29 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                 base_sig = skillbase_methods.get(inj)
                 if base_sig is not None:
                     methods[inj] = json.loads(json.dumps(base_sig))
+            # ORACLE GATE, mirroring enumerate_surface.py's skill loop. Without it
+            # the two enumerators had a MIRROR GAP: this projection only ADDED
+            # members, so a lifecycle member the reference stopped exposing stayed
+            # emitted here (the C# override is parsed from source — no hand list is
+            # involved in keeping it), landing as an excused addition on the
+            # signature axis while the surface axis went red on the same symbols.
+            #
+            # The reference made ``SkillBase.get_prompt_sections()`` a FINAL
+            # template method applying the ``skip_prompt`` guard and delegating to
+            # a PROTECTED ``_get_prompt_sections()`` hook (signalwire-python
+            # core/skill_base.py:88-97), so the oracle records the public member on
+            # the BASE ONLY. .NET has no template-method split: each of the 12 C#
+            # skills overrides the public ``GetPromptSections`` and re-applies the
+            # guard via ``SkipPrompt`` (behaviourally identical) — so the C#
+            # override IS this port's spelling of the protected hook and must not
+            # be emitted under the public name on the subclass.
+            #
+            # See _skillbase_final_signature_members() for why the gate is
+            # "recorded on the base and on NO subclass" rather than a per-class
+            # intersection: the latter would also delete the real .NET members the
+            # griffe oracle under-enumerates on ApiNinjasTrivia / Spider / … .
+            for meth in _skill_final_members:
+                methods.pop(meth, None)
 
     # Top-level ``signalwire`` module function names that are class re-exports
     # (e.g. ``RestClient``) — the reference records these in functions[]. Supply

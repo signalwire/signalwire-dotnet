@@ -1320,6 +1320,33 @@ def oracle_class_members(module: str, cls: str) -> set[str]:
     return _oracle_surface_members().get(module, {}).get(cls, set())
 
 
+def _skillbase_final_surface_members() -> set[str]:
+    """The ``_SKILLBASE_INHERITABLE`` members the reference exposes on
+    ``SkillBase`` ONLY — i.e. FINAL template methods no skill subclass overrides
+    publicly. Derived from the live surface oracle, never hand-listed.
+
+    ``get_prompt_sections`` is the live case: the reference made it a final
+    template method applying the ``skip_prompt`` guard and delegating to a
+    PROTECTED ``_get_prompt_sections()`` hook, so the oracle now records the
+    public member on the base alone while every subclass overrides the protected
+    one. See ``_project_builtin_skills``' caller for why the "no subclass records
+    it" test (rather than a plain per-class intersection) is the correct gate.
+
+    Empty — i.e. gate disabled — if the oracle cannot be resolved or records
+    nothing for ``SkillBase``.
+    """
+    oracle = _oracle_surface_members()
+    base = oracle.get("signalwire.core.skill_base", {}).get("SkillBase", set())
+    if not base:
+        return set()
+    subclass_members: set[str] = set()
+    for mod, classes in oracle.items():
+        if mod.startswith("signalwire.skills.") and mod.endswith(".skill"):
+            for members in classes.values():
+                subclass_members |= members
+    return (_SKILLBASE_INHERITABLE & base) - subclass_members
+
+
 def apply_member_allowlist(
     members: set[str], allow: set[str], module: str, cls: str
 ) -> set[str]:
@@ -2555,6 +2582,45 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     # Skill subclasses: drop the data-carrying property extras (name /
     # description / …) and project the SkillBase-inherited methods each skill's
     # reference records (real, callable via C# inheritance — see the tables).
+    #
+    # ORACLE-GATED, not list-gated. Both the ``_SKILLBASE_INHERITABLE`` set and
+    # ``SKILL_INHERITED_PROJECTIONS``' per-class lists are HAND-KEPT, so they go
+    # stale the moment the reference moves a lifecycle member — and the C#
+    # subclass overrides this loop KEEPS are parsed from source, so a reference
+    # move leaves them emitted with no hand list involved at all.
+    #
+    # It moved: the reference made ``SkillBase.get_prompt_sections()`` a FINAL
+    # template method that applies the ``skip_prompt`` guard and delegates to a
+    # PROTECTED ``_get_prompt_sections()`` hook (signalwire-python
+    # core/skill_base.py:88-97). Every subclass now overrides the protected hook,
+    # so the oracle records the public member on the BASE ONLY. .NET has no
+    # template-method split here — each of the 12 C# skills overrides the public
+    # ``GetPromptSections`` and re-applies the guard itself via the ``SkipPrompt``
+    # helper (behaviourally identical; verified on all 12) — so the C# override IS
+    # this port's spelling of the protected hook, and its public name must not be
+    # emitted as subclass surface the reference does not expose.
+    #
+    # So the lifecycle member set is gated on what the surface oracle LIVE
+    # records, and the gate is derived rather than hand-listed: a
+    # ``_SKILLBASE_INHERITABLE`` member the oracle records on ``SkillBase`` but on
+    # NO skill subclass is a FINAL template method, and is stripped from every
+    # subclass. A reference move of this shape now self-corrects on the next
+    # regen with no hand edit.
+    #
+    # The "no subclass records it" test is what keeps this from over-reaching. A
+    # member the oracle records on SOME subclass is a normally-overridable hook,
+    # so a subclass the oracle omits it from is ORACLE UNDER-ENUMERATION, not a
+    # reference move — the griffe oracle demonstrably misses members the reference
+    # SOURCE declares (ApiNinjasTrivia/PlayBackgroundFile/Spider/WeatherApi/
+    # WikipediaSearch setup/register_tools/get_instance_key/get_parameter_schema/
+    # get_hints/cleanup are all present in signalwire-python and absent from the
+    # oracle). Those .NET implementations are REAL and must stay emitted for the
+    # ledger to adjudicate; deleting them would hide port surface behind an oracle
+    # bug. Only ``get_prompt_sections`` currently meets the base-only test.
+    #
+    # Fail-safe: an unresolvable oracle, or one recording nothing for SkillBase,
+    # falls back to the hand tables rather than stripping every lifecycle member.
+    _skill_final_members = _skillbase_final_surface_members()
     for mod_name, entry in modules.items():
         if not (
             mod_name.startswith("signalwire.skills.") and mod_name.endswith(".skill")
@@ -2565,6 +2631,8 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             for inj in SKILL_INHERITED_PROJECTIONS.get(cls_name, []):
                 if inj in _SKILLBASE_INHERITABLE and inj not in kept:
                     kept.append(inj)
+            if _skill_final_members:
+                kept = [m for m in kept if m not in _skill_final_members]
             entry["classes"][cls_name] = sorted(set(kept))
 
     # Top-level ``signalwire`` module function names that are class re-exports
