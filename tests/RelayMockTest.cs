@@ -85,7 +85,11 @@ public static class RelayMockTest
             Scheme = "ws",
             Contexts = contexts?.ToList(),
         };
+        // Ownership TRANSFERS to the caller (this is a factory), so it is not
+        // disposed here.
+#pragma warning disable CA2000
         var client = new SignalWire.Relay.Client(opts);
+#pragma warning restore CA2000
         // The caller connects the client (some tests cover the connect path
         // itself). The returned Bound exposes a per-client Harness view that
         // scopes journal reads/resets + pushes to THIS client's session id —
@@ -622,8 +626,8 @@ public static class RelayMockTest
             for (var attempt = 1; attempt <= SpawnAttempts; attempt++)
             {
                 int attemptWsPort, attemptHttpPort;
-                var wsReservation = ReservePort(out attemptWsPort);
-                var httpReservation = ReservePort(out attemptHttpPort);
+                using var wsReservation = ReservePort(out attemptWsPort);
+                using var httpReservation = ReservePort(out attemptHttpPort);
                 var attemptHttpUrl = $"http://{host}:{attemptHttpPort}";
                 var attemptWsUrl = $"ws://{host}:{attemptWsPort}";
 
@@ -744,7 +748,7 @@ public static class RelayMockTest
     /// <summary>Ask the OS for a free loopback TCP port (bind :0, read it, release).</summary>
     private static int PickFreePort()
     {
-        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
         try
         {

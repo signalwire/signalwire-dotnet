@@ -31,7 +31,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void Construction_Explicit()
     {
-        var client = new RestClient("proj-1", "tok-1", "test.signalwire.com");
+        using var client = new RestClient("proj-1", "tok-1", "test.signalwire.com");
         Assert.Equal("proj-1", client.ProjectId);
         Assert.Equal("tok-1", client.Token);
         Assert.Equal("test.signalwire.com", client.Space);
@@ -45,7 +45,7 @@ public class RestClientTests : IDisposable
         Environment.SetEnvironmentVariable("SIGNALWIRE_API_TOKEN", "env-tok");
         Environment.SetEnvironmentVariable("SIGNALWIRE_SPACE", "env.signalwire.com");
 
-        var client = new RestClient();
+        using var client = new RestClient();
         Assert.Equal("env-proj", client.ProjectId);
         Assert.Equal("env-tok", client.Token);
         Assert.Equal("env.signalwire.com", client.Space);
@@ -79,7 +79,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void Namespace_Fabric_Initialized()
     {
-        var client = new RestClient("p", "t", "s.signalwire.com");
+        using var client = new RestClient("p", "t", "s.signalwire.com");
         var fabric = client.Fabric;
         Assert.NotNull(fabric);
         Assert.Same(fabric, client.Fabric); // lazy singleton
@@ -88,7 +88,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void Namespace_Calling_Initialized()
     {
-        var client = new RestClient("p", "t", "s.signalwire.com");
+        using var client = new RestClient("p", "t", "s.signalwire.com");
         var calling = client.Calling;
         Assert.NotNull(calling);
         Assert.Equal("/api/calling/calls", calling.BasePath);
@@ -97,7 +97,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void Namespace_PhoneNumbers_Path()
     {
-        var client = new RestClient("p", "t", "s.signalwire.com");
+        using var client = new RestClient("p", "t", "s.signalwire.com");
         Assert.Equal("/api/relay/rest/phone_numbers", client.PhoneNumbers.BasePath);
     }
 
@@ -108,7 +108,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void CrudResource_BasePath()
     {
-        var http = new HttpClient("p", "t", "https://test.com");
+        using var http = new HttpClient("p", "t", "https://test.com");
         var crud = new CrudResource(http, "/api/test/items");
         Assert.Equal("/api/test/items", crud.BasePath);
     }
@@ -116,7 +116,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void CrudResource_Datasphere_Path()
     {
-        var client = new RestClient("p", "t", "s.signalwire.com");
+        using var client = new RestClient("p", "t", "s.signalwire.com");
         // Datasphere is a container; its Documents resource carries the route.
         Assert.Equal("/api/datasphere/documents", client.Datasphere.Documents.BasePath);
     }
@@ -124,7 +124,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void CrudResource_Video_Path()
     {
-        var client = new RestClient("p", "t", "s.signalwire.com");
+        using var client = new RestClient("p", "t", "s.signalwire.com");
         // Video is a container; its Rooms resource carries the CRUD route.
         Assert.Equal("/api/video/rooms", client.Video.Rooms.BasePath);
     }
@@ -132,7 +132,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void CrudResource_AllNamespacePaths()
     {
-        var client = new RestClient("p", "t", "s.signalwire.com");
+        using var client = new RestClient("p", "t", "s.signalwire.com");
 
         Assert.Equal("/api/relay/rest/addresses", client.Addresses.BasePath);
         // Python parity: queues live at /api/relay/rest/queues, not under
@@ -300,7 +300,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void HttpClient_AuthHeader()
     {
-        var http = new HttpClient("proj-id", "secret-token", "https://api.example.com");
+        using var http = new HttpClient("proj-id", "secret-token", "https://api.example.com");
         var expected = "Basic " + Convert.ToBase64String(
             System.Text.Encoding.UTF8.GetBytes("proj-id:secret-token"));
         Assert.Equal(expected, http.AuthHeader);
@@ -309,14 +309,14 @@ public class RestClientTests : IDisposable
     [Fact]
     public void HttpClient_BaseUrl_TrimsSlash()
     {
-        var http = new HttpClient("p", "t", "https://api.example.com/");
+        using var http = new HttpClient("p", "t", "https://api.example.com/");
         Assert.Equal("https://api.example.com", http.BaseUrl);
     }
 
     [Fact]
     public void HttpClient_Accessors()
     {
-        var http = new HttpClient("proj", "tok", "https://test.example.com");
+        using var http = new HttpClient("proj", "tok", "https://test.example.com");
         Assert.Equal("proj", http.ProjectId);
         Assert.Equal("tok", http.Token);
     }
@@ -328,7 +328,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void Fabric_Subscribers_Path()
     {
-        var http = new HttpClient("p", "t", "https://test.com");
+        using var http = new HttpClient("p", "t", "https://test.com");
         var fabric = new FabricNamespace(http);
         Assert.Equal("/api/fabric/resources/subscribers", fabric.Subscribers.BasePath);
     }
@@ -336,7 +336,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void Fabric_AllSubResourcePaths()
     {
-        var http = new HttpClient("p", "t", "https://test.com");
+        using var http = new HttpClient("p", "t", "https://test.com");
         var fabric = new FabricNamespace(http);
 
         Assert.Equal("/api/fabric/resources/sip_endpoints", fabric.SipEndpoints.BasePath);
@@ -355,7 +355,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void Fabric_LazySingleton()
     {
-        var http = new HttpClient("p", "t", "https://test.com");
+        using var http = new HttpClient("p", "t", "https://test.com");
         var fabric = new FabricNamespace(http);
         Assert.Same(fabric.Subscribers, fabric.Subscribers);
         Assert.Same(fabric.AiAgents, fabric.AiAgents);
@@ -368,7 +368,7 @@ public class RestClientTests : IDisposable
     [Fact]
     public void Calling_BasePath()
     {
-        var http = new HttpClient("p", "t", "https://test.com");
+        using var http = new HttpClient("p", "t", "https://test.com");
         var calling = new Calling(http);
         Assert.Equal("/api/calling/calls", calling.BasePath);
     }

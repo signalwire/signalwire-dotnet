@@ -150,7 +150,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         // A real TCP listener that ACCEPTS the connection but never writes a
         // response — a genuine slow/hung endpoint, not a transport mock. The
         // SDK uses a real System.Net.Http.HttpClient against it.
-        var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
         var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
 

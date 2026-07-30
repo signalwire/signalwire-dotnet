@@ -1363,7 +1363,7 @@ public class AgentBaseTests : IDisposable
     {
         var agent = MakeAgent();
         var originalErr = Console.Error;
-        var captured = new StringWriter();
+        using var captured = new StringWriter();
         Console.SetError(captured);
         try
         {

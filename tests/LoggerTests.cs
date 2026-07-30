@@ -264,7 +264,7 @@ public class LoggerTests : IDisposable
     private static string CaptureLog(Action<Logger> emit)
     {
         var originalErr = Console.Error;
-        var captured = new StringWriter();
+        using var captured = new StringWriter();
         Console.SetError(captured);
         try
         {

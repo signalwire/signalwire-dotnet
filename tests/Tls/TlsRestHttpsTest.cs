@@ -47,7 +47,7 @@ public class TlsRestHttpsTest
             "mock_signalwire --tls did not become ready (~15s cold start; is python3 + porting-sdk available?)");
 
         // Build a real REST HttpClient that talks HTTPS via the trusting transport.
-        var sdkHttp = new SignalWire.REST.HttpClient("test_proj", "test_tok", mock!.BaseUrl, trustingHttp);
+        using var sdkHttp = new SignalWire.REST.HttpClient("test_proj", "test_tok", mock!.BaseUrl, trustingHttp);
         var addresses = new Addresses(sdkHttp);
 
         // GET a spec-backed collection endpoint over HTTPS. A real JSON response

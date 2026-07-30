@@ -389,7 +389,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     public async Task WaitForAnswered_ResolvesWhenStateArrives()
     {
         if (Skipped()) return;
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
         try
         {
             await bound.Client.ConnectAsync();
@@ -458,7 +458,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     public async Task WaitForEnding_ResolvesWhenEndingStateArrives()
     {
         if (Skipped()) return;
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
         try
         {
             await bound.Client.ConnectAsync();

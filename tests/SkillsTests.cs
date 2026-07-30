@@ -514,6 +514,9 @@ public class SkillsTests : IDisposable
     /// xUnit tests can run in parallel without colliding.</summary>
     private static (string baseUrl, IDisposable disposable) StartCseFixture(string body)
     {
+        // The returned FixtureHandle owns the listener + CTS and disposes both;
+        // ownership TRANSFERS to the caller, so they are not scoped here.
+#pragma warning disable CA2000
         var listener = new HttpListener();
         // 0 → kernel picks an unused port; bind to loopback IPv4.
         var port = GetFreePort();
@@ -521,6 +524,7 @@ public class SkillsTests : IDisposable
         listener.Prefixes.Add(prefix);
         listener.Start();
         var cts = new System.Threading.CancellationTokenSource();
+#pragma warning restore CA2000
         Task.Run(async () =>
         {
             while (!cts.IsCancellationRequested)
@@ -655,7 +659,7 @@ public class SkillsTests : IDisposable
     private static int GetFreePort()
     {
         // Bind to port 0 to let the OS pick; then read the assigned port.
-        var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
         l.Start();
         var port = ((System.Net.IPEndPoint)l.LocalEndpoint).Port;
         l.Stop();
@@ -883,7 +887,7 @@ public class SkillsTests : IDisposable
         var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
         // A handler that would hang forever if touched — proving the fast path
         // never scrapes.
-        var handler = new DelayingScrapeHandler(TimeSpan.FromMinutes(5));
+        using var handler = new DelayingScrapeHandler(TimeSpan.FromMinutes(5));
         WebSearchSkill.ScrapeHandlerFactory = () => handler;
         try
         {
@@ -917,7 +921,7 @@ public class SkillsTests : IDisposable
         var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
         // Each scrape would take 30s; the 1.0s deadline must abort them and we
         // fall back to the (non-empty) snippet response.
-        var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(30));
+        using var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(30));
         WebSearchSkill.ScrapeHandlerFactory = () => handler;
         try
         {
@@ -959,7 +963,7 @@ public class SkillsTests : IDisposable
     public void WebSearchSkill_OverallDeadlineEnforcedInSequentialMode()
     {
         var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
-        var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(30));
+        using var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(30));
         WebSearchSkill.ScrapeHandlerFactory = () => handler;
         try
         {
@@ -999,7 +1003,7 @@ public class SkillsTests : IDisposable
         // Each scrape takes 10s but per_page_timeout is 0.3s, so every page is
         // abandoned well before its body arrives. overall_deadline is generous
         // (10s default) — this isolates the per-page timeout.
-        var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(10));
+        using var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(10));
         WebSearchSkill.ScrapeHandlerFactory = () => handler;
         try
         {
@@ -1037,7 +1041,7 @@ public class SkillsTests : IDisposable
         // Fast scrapes under a generous deadline must yield the normal
         // fully-scraped response (proving the deadline machinery doesn't
         // truncate healthy runs).
-        var handler = new DelayingScrapeHandler(TimeSpan.FromMilliseconds(20));
+        using var handler = new DelayingScrapeHandler(TimeSpan.FromMilliseconds(20));
         WebSearchSkill.ScrapeHandlerFactory = () => handler;
         try
         {
@@ -1409,12 +1413,15 @@ public class SkillsTests : IDisposable
     /// <summary>Serves one fixed HTML body on an ephemeral loopback port.</summary>
     private static (string baseUrl, IDisposable disposable) StartHtmlFixture(string html)
     {
+        // Ownership TRANSFERS to the returned FixtureHandle, as in StartCseFixture.
+#pragma warning disable CA2000
         var listener = new HttpListener();
         var port = GetFreePort();
         var prefix = $"http://127.0.0.1:{port}/";
         listener.Prefixes.Add(prefix);
         listener.Start();
         var cts = new System.Threading.CancellationTokenSource();
+#pragma warning restore CA2000
         Task.Run(async () =>
         {
             while (!cts.IsCancellationRequested)

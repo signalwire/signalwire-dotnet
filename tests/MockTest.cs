@@ -522,7 +522,7 @@ public static class MockTest
             for (var attempt = 1; attempt <= SpawnAttempts; attempt++)
             {
                 int attemptPort;
-                var reservation = ReservePort(out attemptPort);
+                using var reservation = ReservePort(out attemptPort);
                 var attemptUrl = $"http://{host}:{attemptPort}";
 
                 Process process;
@@ -661,7 +661,7 @@ public static class MockTest
     /// </summary>
     private static int PickFreePort()
     {
-        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
         try
         {

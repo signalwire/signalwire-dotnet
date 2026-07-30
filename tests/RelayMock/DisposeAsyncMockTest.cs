@@ -49,7 +49,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
     {
         if (Skipped()) return;
 
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
         var client = bound.Client;
 
         await client.ConnectAsync();
@@ -90,7 +90,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
 
         // Keep the Bound (not just .Client) — it carries the session scope the assertions
         // below need. `await using` still drives DisposeAsync on the client itself.
-        var bound = RelayMockTest.NewClient(contexts: new[] { "c1" });
+        using var bound = RelayMockTest.NewClient(contexts: new[] { "c1" });
         HashSet<string> mine;
         await using (var client = bound.Client)
         {
@@ -115,7 +115,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
     {
         if (Skipped()) return;
 
-        var client = RelayMockTest.NewClient().Client;
+        await using var client = RelayMockTest.NewClient().Client;
         await client.ConnectAsync();
 
         // Before dispose: the internal WS and CTS are allocated.
@@ -138,7 +138,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
     {
         if (Skipped()) return;
 
-        var client = RelayMockTest.NewClient().Client;
+        await using var client = RelayMockTest.NewClient().Client;
         await client.ConnectAsync();
 
         await client.DisposeAsync();

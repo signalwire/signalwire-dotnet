@@ -86,7 +86,7 @@ public class ReconnectTeardownMockTest : IClassFixture<RelayMockServerFixture>
         TaskScheduler.UnobservedTaskException += Handler;
         try
         {
-            var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+            using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
             var client = bound.Client;
             await client.ConnectAsync();
 

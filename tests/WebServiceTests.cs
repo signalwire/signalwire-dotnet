@@ -160,7 +160,7 @@ public sealed class WebServiceTests : IDisposable
     [Fact]
     public void AddDirectory_MissingDirectoryThrows()
     {
-        var svc = new WebService();
+        using var svc = new WebService();
         Assert.Throws<ArgumentException>(() =>
             svc.AddDirectory("/x", Path.Combine(_dir, "nope-does-not-exist")));
     }

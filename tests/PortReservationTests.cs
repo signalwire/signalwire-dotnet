@@ -55,7 +55,7 @@ public class PortReservationTests
     /// </summary>
     private static int PickAndRelease()
     {
-        var listener = new TcpListener(IPAddress.Loopback, 0);
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         try { return ((IPEndPoint)listener.LocalEndpoint).Port; }
         finally { listener.Stop(); }
@@ -175,7 +175,7 @@ public class PortReservationTests
         }
 
         // Occupy a port, then have the real mock try to take it.
-        var squatter = ReservePort(out var contendedPort);
+        using var squatter = ReservePort(out var contendedPort);
         try
         {
             var pkgDir = SignalWire.Tests.Mock.MockTest.DiscoverPortingSdkPackage("mock_signalwire");
@@ -256,13 +256,13 @@ public class PortReservationTests
         var port = PickAndRelease();
 
         // An unrelated caller takes the "free" port inside the window.
-        var interloper = new TcpListener(IPAddress.Loopback, port);
+        using var interloper = new TcpListener(IPAddress.Loopback, port);
         interloper.Start();
         try
         {
             // The intended user now loses the bind — the failure mode that
             // cascaded connection-refused across the REST suite.
-            var intended = new TcpListener(IPAddress.Loopback, port);
+            using var intended = new TcpListener(IPAddress.Loopback, port);
             var ex = Assert.Throws<SocketException>(() => intended.Start());
             Assert.Equal(SocketError.AddressAlreadyInUse, ex.SocketErrorCode);
         }
@@ -280,10 +280,10 @@ public class PortReservationTests
     [Fact]
     public void ReservedPort_CannotBeTakenWhileHeld()
     {
-        var reservation = ReservePort(out var port);
+        using var reservation = ReservePort(out var port);
         try
         {
-            var interloper = new TcpListener(IPAddress.Loopback, port);
+            using var interloper = new TcpListener(IPAddress.Loopback, port);
             var ex = Assert.Throws<SocketException>(() => interloper.Start());
             Assert.Equal(SocketError.AddressAlreadyInUse, ex.SocketErrorCode);
         }

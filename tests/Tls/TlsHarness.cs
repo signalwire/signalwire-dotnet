@@ -48,7 +48,7 @@ public static class TlsHarness
     /// </summary>
     public static int FreeTcpPort()
     {
-        var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
         l.Start();
         try
         {
@@ -294,7 +294,10 @@ public static class TlsHarness
         for (var i = 0; i < attempts; i++)
         {
             var p = FreeTcpPort();
+            // Ownership TRANSFERS to the caller / the returned handle, which owns teardown.
+#pragma warning disable CA2000
             var mock = StartTlsMockSignalwire(p, trustingClient);
+#pragma warning restore CA2000
             if (mock is not null)
             {
                 port = p;
@@ -330,7 +333,10 @@ public static class TlsHarness
         psi.ArgumentList.Add("error");
         psi.Environment["SIGNALWIRE_MOCK_TLS"] = "1";
 
-        var proc = StartDrained(psi);
+        // Ownership TRANSFERS to the caller / the returned handle, which owns teardown.
+#pragma warning disable CA2000
+            var proc = StartDrained(psi);
+#pragma warning restore CA2000
         if (proc is null) return null;
 
         // mock_signalwire has a ~15s cold start (loads 13 OpenAPI specs).
@@ -382,7 +388,10 @@ public static class TlsHarness
         {
             var ws = FreeTcpPort();
             var http = FreeTcpPort();
+            // Ownership TRANSFERS to the caller / the returned handle, which owns teardown.
+#pragma warning disable CA2000
             var mock = StartTlsMockRelay(ws, http);
+#pragma warning restore CA2000
             if (mock is not null)
             {
                 wsPort = ws;
@@ -422,7 +431,10 @@ public static class TlsHarness
         psi.ArgumentList.Add("error");
         psi.Environment["SIGNALWIRE_MOCK_TLS"] = "1";
 
-        var proc = StartDrained(psi);
+        // Ownership TRANSFERS to the caller / the returned handle, which owns teardown.
+#pragma warning disable CA2000
+            var proc = StartDrained(psi);
+#pragma warning restore CA2000
         if (proc is null) return null;
 
         using var probe = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(2) };

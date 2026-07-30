@@ -1212,7 +1212,7 @@ public class StructuralParityTests
     [Fact]
     public void Fabric_PythonParitySubResources_Exposed()
     {
-        var http = new SignalWire.REST.HttpClient("p", "t", "https://test.com");
+        using var http = new SignalWire.REST.HttpClient("p", "t", "https://test.com");
         var fabric = new SignalWire.REST.Namespaces.Generated.FabricNamespace(http);
         // 9 sub-resources Python exposes, now served by the generated tree.
         Assert.Equal("/api/fabric/resources/cxml_applications", fabric.CxmlApplications.BasePath);
