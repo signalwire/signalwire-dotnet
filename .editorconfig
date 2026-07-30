@@ -142,6 +142,31 @@ dotnet_diagnostic.CA1310.severity = none
 # preference. (mike@signalwire.com, 2026-07-30)
 dotnet_diagnostic.CA1515.severity = none
 
+# CA1515 above; CA2000 below.
+#
+# CA2000 — dispose objects before losing scope. The analyzer cannot see ownership
+# TRANSFER, and this suite is fixture-based, so almost every finding it reports
+# here is a transfer rather than a leak. Measured, not assumed: applying `using`
+# where it pointed took the suite from 2127 passing to 114 failing with
+# ObjectDisposedException — MockServerFixture.NewHttp() hands out clients that
+# share a fixture-owned transport (103 of those failures, all of RestMock),
+# StartCseFixture/StartHtmlFixture return a handle owning the listener + CTS,
+# TlsHarness returns a handle owning the mock process, RelayMockTest.NewClient is
+# a factory. Going the other way was no better: making Harness IDisposable to
+# satisfy CA1001 made the count go UP (98 -> 100), because a Harness is a VIEW
+# onto the process-wide mock and every borrower then looked like an owner.
+#
+# WHAT THIS TRADES AWAY — read before assuming the gate has you covered.
+# CA2000 is the signal that FOUND the real leak in this tree: NewHttp() minted a
+# SignalWire.REST.HttpClient per call and tracked none of them, so the suite
+# leaked one client and transport handle PER TEST for the entire run (fixed in
+# 544487a — the fixture now records what it issues and disposes them together).
+# Turning the rule off in tests/ means the next harness that mints-and-forgets
+# will NOT be caught here. If you add a factory that hands out IDisposable, the
+# owning fixture must track and release it; nothing will remind you.
+# Rule stays ON for src/. (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA2000.severity = none
+
 [examples/**.cs]
 # CA1303 — do not pass literals as localized parameters. An example's
 # `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING

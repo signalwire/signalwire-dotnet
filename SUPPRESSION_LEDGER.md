@@ -11,8 +11,8 @@ Format (one bullet per suppression):
 - <relpath>:<line> — <reason> (<approver>, <YYYY-MM-DD>)
 ```
 
-There are sixteen `.editorconfig` analyzer-severity disables (two global
-VB-interop, eight scoped to the generated REST tree, four scoped to `tests/`
+There are seventeen `.editorconfig` analyzer-severity disables (two global
+VB-interop, eight scoped to the generated REST tree, five scoped to `tests/`
 and one to `examples/`) plus one `<NoWarn>` in the csproj (the doc-coverage pair behind the
 6.3 GenerateDocumentationFile floor).
 
@@ -43,7 +43,8 @@ violates, every other rule stays at error there, and both rules stay ON for `src
 - .editorconfig:134 — CA1307 (string comparison without an explicit StringComparison), scoped `[tests/**.cs]`: fires on xUnit's OWN assertion API — `Assert.Contains(expected, actual)` / `Assert.StartsWith` / `Assert.DoesNotContain` / `Assert.EndsWith` — at 190 of the 199 sites in this tree. The rule targets production string comparison you control; here the comparison happens inside the test framework and the remedy (a third argument on every substring assertion in the suite) adds no signal, the fixtures being ASCII literals. The nine real `string.Contains/Replace/IndexOf` sites in tests/ were BURNED, not excused (commit 0b38ac6) (mike@signalwire.com, 2026-07-30)
 - .editorconfig:135 — CA1310 (StartsWith/EndsWith without StringComparison), scoped `[tests/**.cs]`: same xUnit-overload reason as CA1307 above, for `Assert.StartsWith`/`Assert.EndsWith` (mike@signalwire.com, 2026-07-30)
 - .editorconfig:143 — CA1515 (types can be made internal), scoped `[tests/**.cs]`: DIRECTLY CONTRADICTS the test framework — xUnit's own analyzers require the opposite (xUnit1000 "Test classes must be public", xUnit1027 "Collection definition classes must be public"). Applying CA1515 across this tree produced 93 xUnit1000/xUnit1027 build errors; no code satisfies both rules, so this is a genuine conflict, not a preference (mike@signalwire.com, 2026-07-30)
-- .editorconfig:152 — CA1303 (do not pass literals as localized parameters), scoped `[examples/**/*.cs]`: an example's `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING TEXT printed to a developer's terminal, not a localizable product string; the rule's remedy (a .resx resource table per demo) would obscure the very thing the example exists to show. The shipped library has zero such sites, which is why this never fired before (mike@signalwire.com, 2026-07-30)
+- .editorconfig:168 — CA2000 (dispose objects before losing scope), scoped `[tests/**.cs]`: the analyzer cannot see ownership TRANSFER, and this suite is fixture-based, so nearly every finding is a transfer rather than a leak. Measured: applying `using` where it pointed took the suite from 2127 passing to **114 failing with ObjectDisposedException** (NewHttp's fixture-owned shared transport accounted for 103, all of RestMock); and satisfying the sibling CA1001 by making `Harness` IDisposable made the count go UP (98 -> 100) because a Harness is a view onto the process-wide mock. **KNOWN COST, recorded deliberately:** CA2000 is the signal that found the one real leak here — `NewHttp()` minted a REST client per call and tracked none, leaking one client + transport handle per test for the whole run (fixed 544487a). With the rule off in tests/, a future mint-and-forget harness will NOT be flagged; the owning fixture must track and release what it hands out (mike@signalwire.com, 2026-07-30)
+- .editorconfig:177 — CA1303 (do not pass literals as localized parameters), scoped `[examples/**/*.cs]`: an example's `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING TEXT printed to a developer's terminal, not a localizable product string; the rule's remedy (a .resx resource table per demo) would obscure the very thing the example exists to show. The shipped library has zero such sites, which is why this never fired before (mike@signalwire.com, 2026-07-30)
 
 ## Wire-signature suppressions (`tools/DumpCorpus`, per-line pragmas)
 
