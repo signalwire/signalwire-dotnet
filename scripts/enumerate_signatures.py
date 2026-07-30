@@ -2186,8 +2186,15 @@ def main() -> int:
     )
     parser.add_argument(
         "--strict",
-        action="store_true",
-        help="Exit non-zero if any type fails to translate.",
+        # Fail-loud is the DEFAULT, not an opt-in. As `store_true` this flag was
+        # dead code: the usage header advertised it, but no gate ever passed it, so
+        # a type that failed to translate silently DROPPED THE WHOLE SYMBOL and the
+        # artifact was written anyway at exit 0 — the port then got blamed for an
+        # omission it never had. `--no-strict` remains as the explicit escape hatch.
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Exit non-zero if any type fails to translate "
+        "(default: on; use --no-strict to opt out).",
     )
     args = parser.parse_args()
 
