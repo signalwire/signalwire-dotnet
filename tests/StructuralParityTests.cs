@@ -842,10 +842,17 @@ public class StructuralParityTests
         Assert.Throws<SignalWire.SWML.SchemaValidationError>(() =>
             svc.AddVerb("play", new Dictionary<string, object> { ["text"] = "nope" }));
 
-        // hangup.reason is a closed enum (hangup|busy|decline) — an off-enum
-        // value must be rejected on the same path the builder uses.
+        // hangup.reason is NOT closed: the schema marks it open-valued, so the
+        // listed values are a hint and the platform accepts any string. This
+        // previously asserted a rejection, which is what made the SDK refuse
+        // real platform reasons like `no_answer`. What must still be rejected
+        // is the wrong BASE TYPE. Done on a throwaway service so the accepted
+        // verb does not land in the section counted below.
+        var scratch = new SignalWire.SWML.Service(
+            new SignalWire.SWML.ServiceOptions { Name = "t2", Route = "/r2" });
+        scratch.AddVerb("hangup", new Dictionary<string, object> { ["reason"] = "done" });
         Assert.Throws<SignalWire.SWML.SchemaValidationError>(() =>
-            svc.AddVerb("hangup", new Dictionary<string, object> { ["reason"] = "done" }));
+            scratch.AddVerb("hangup", new Dictionary<string, object> { ["reason"] = 42 }));
 
         // The builder's own emissions all survive that same path.
         builder.Answer().Play(url: "https://example.com/a.mp3").Say("bye").Hangup(reason: "hangup");
