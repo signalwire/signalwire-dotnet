@@ -205,7 +205,7 @@ public class ReferenceDefaultsTests
         // Behavioural: omit the argument, assert the reference's true reaches
         // the pay params.
         var verb = RecordVerb(new FunctionResult().Pay("https://example.com/pay"), "pay");
-        Assert.Equal("true", verb["postal_code"]?.ToString()?.ToLowerInvariant());
+        Assert.Equal("TRUE", verb["postal_code"]?.ToString()?.ToUpperInvariant());
     }
 
     [Fact]

@@ -69,7 +69,7 @@ public sealed class PrefabsTests : IDisposable
         Assert.IsType<FunctionResult>(result);
         // Single-question flow: submitting the only answer completes the flow.
         var dict = result!.ToDict();
-        Assert.Contains("answered", (dict["response"] as string ?? "").ToLowerInvariant());
+        Assert.Contains("ANSWERED", (dict["response"] as string ?? "").ToUpperInvariant());
     }
 
     // Tier-2 contract 3: submit_answer STATE MACHINE (records answer, advances
