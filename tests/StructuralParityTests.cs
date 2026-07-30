@@ -321,7 +321,7 @@ public class StructuralParityTests
     //     test_on_swml_request_called
     // -------------------------------------------------------------------
 
-    private class CustomSwmlAgent : AgentBase
+    private sealed class CustomSwmlAgent : AgentBase
     {
         public CustomSwmlAgent(AgentOptions opts) : base(opts) { }
         public Dictionary<string, object>? CustomReturn { get; set; }

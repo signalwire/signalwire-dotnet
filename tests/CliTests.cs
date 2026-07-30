@@ -300,7 +300,7 @@ public class CliTests
         return opts;
     }
 
-    private class CliTestOptions
+    private sealed class CliTestOptions
     {
         public string BaseUrl { get; set; } = "";
         public bool HasUrl { get; set; }

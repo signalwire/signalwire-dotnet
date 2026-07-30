@@ -1139,7 +1139,7 @@ public sealed class RelayTests : IDisposable
     }
 
     /// <summary>Test helper that captures sent messages instead of writing to a socket.</summary>
-    private class TestableClient : Client
+    private sealed class TestableClient : Client
     {
         public List<Dictionary<string, object?>> SentMessages { get; } = [];
 

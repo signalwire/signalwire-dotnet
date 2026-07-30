@@ -374,7 +374,7 @@ public sealed class ServerlessTests : IDisposable
     //  Mock agent for testing
     // ==================================================================
 
-    private class MockAgent : SignalWire.SWML.Service
+    private sealed class MockAgent : SignalWire.SWML.Service
     {
         private readonly int _mockStatus;
         private readonly Dictionary<string, string> _mockHeaders;

@@ -24,7 +24,6 @@ namespace SignalWire.Tests.RelayMock;
 public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
 {
     private readonly RelayMockServerFixture _fixture;
-    private static readonly System.Net.Http.HttpClient HttpClient = new();
 
     public ActionsMockTest(RelayMockServerFixture fixture)
     {

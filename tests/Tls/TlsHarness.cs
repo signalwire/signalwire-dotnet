@@ -508,7 +508,7 @@ public static class TlsHarness
         {
             if (string.IsNullOrEmpty(anchor)) continue;
             var dir = new DirectoryInfo(Path.GetFullPath(anchor));
-            while (dir is not null)
+            while (true)
             {
                 var parent = dir.Parent;
                 if (parent is null) break;

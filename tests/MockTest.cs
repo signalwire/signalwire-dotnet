@@ -150,7 +150,7 @@ public static class MockTest
         {
             if (string.IsNullOrEmpty(anchor)) continue;
             var dir = new DirectoryInfo(System.IO.Path.GetFullPath(anchor));
-            while (dir != null)
+            while (true)
             {
                 var parent = dir.Parent;
                 if (parent == null) break;
@@ -817,7 +817,7 @@ public sealed class MockServerFixture : IDisposable
     }
 
     private static string NewProject()
-        => "test_proj_" + Guid.NewGuid().ToString("N").Substring(0, 12);
+        => string.Concat("test_proj_", Guid.NewGuid().ToString("N").AsSpan(0, 12));
 
     private static string BasicAuth(string project)
         => "Basic " + Convert.ToBase64String(
