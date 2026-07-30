@@ -77,7 +77,7 @@ public class WebhookValidatorTest
     public void SchemeA_NegativeTamperedBody()
     {
         // Same key/url, body changed → returns false.
-        var tampered = VectorARawBody.Replace("answered", "ringing");
+        var tampered = VectorARawBody.Replace("answered", "ringing", StringComparison.Ordinal);
         Assert.False(WebhookValidator.ValidateWebhookSignature(
             VectorASigningKey, VectorAExpected, VectorAUrl, tampered));
     }

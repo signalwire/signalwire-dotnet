@@ -92,7 +92,8 @@ public class ParameterSchemaTests : IDisposable
                     sb.Append("null");
                     break;
                 case string s:
-                    sb.Append('"').Append(s.Replace("\\", "\\\\").Replace("\"", "\\\"")).Append('"');
+                    sb.Append('"').Append(s.Replace("\\", "\\\\", StringComparison.Ordinal)
+                        .Replace("\"", "\\\"", StringComparison.Ordinal)).Append('"');
                     break;
                 case bool b:
                     sb.Append(b ? "true" : "false");

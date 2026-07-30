@@ -156,7 +156,7 @@ public class SwmlHandlerTests
         });
 
         Assert.False(valid);
-        Assert.Contains(errors, e => e.Contains("mutually exclusive"));
+        Assert.Contains(errors, e => e.Contains("mutually exclusive", StringComparison.Ordinal));
     }
 
     [Fact]

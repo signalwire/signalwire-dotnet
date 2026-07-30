@@ -815,7 +815,7 @@ public static class RelayMockTest
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             // The health endpoint emits a JSON object containing
             // "schemas_loaded"; treat any other shape as a probe failure.
-            return body.Contains("\"schemas_loaded\"");
+            return body.Contains("\"schemas_loaded\"", StringComparison.Ordinal);
         }
         catch
         {

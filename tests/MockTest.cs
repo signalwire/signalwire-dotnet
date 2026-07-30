@@ -748,7 +748,7 @@ public static class MockTest
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             // The health endpoint always emits a JSON object containing
             // "specs_loaded"; treat any other shape as a probe failure.
-            return body.Contains("\"specs_loaded\"");
+            return body.Contains("\"specs_loaded\"", StringComparison.Ordinal);
         }
         catch
         {
