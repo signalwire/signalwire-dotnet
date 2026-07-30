@@ -301,7 +301,7 @@ internal static class Program
                 : (optional ? null : Activator.CreateInstance(u));
             if (optional) { literal = null; return true; }
             var elem = u.GetGenericArguments()[0];
-            literal = $"new List<{FriendlyType(elem)}>()";
+            literal = $"new List<{FriendlyElem(elem)}>()";
             if (value is null) value = Activator.CreateInstance(u);
             return true;
         }
@@ -339,6 +339,18 @@ internal static class Program
         if (t == typeof(double)) return "double";
         return t.Name;
     }
+
+    /// <summary>Element type for a generated List&lt;T&gt; literal.
+    ///
+    /// The .NET generated bodies declare list params as List&lt;object?&gt;, but a
+    /// C# nullable-reference annotation is NOT part of the runtime Type — reflection
+    /// reports plain `object`. Emitting `new List&lt;object&gt;()` therefore produced a
+    /// literal the compiler rejects against the real signature (CS8620, "Argument of
+    /// type List&lt;object&gt; cannot be used for parameter of type List&lt;object?&gt;").
+    /// Same reasoning FriendlyDict already applied to the dictionary VALUE type; the
+    /// list branch simply never got it.</summary>
+    private static string FriendlyElem(Type t) =>
+        t == typeof(object) ? "object?" : FriendlyType(t);
 
     private static string FriendlyDict(Type[] gargs)
     {

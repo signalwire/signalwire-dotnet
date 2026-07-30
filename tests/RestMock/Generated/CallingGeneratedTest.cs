@@ -401,7 +401,7 @@ public class CallingGeneratedTest : CoverageBase
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Calling.PlayAsync("x", new List<object>());
+        var body = await tree.Calling.PlayAsync("x", new List<object?>());
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
@@ -414,7 +414,7 @@ public class CallingGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("calling.call-commands", 500,
-            () => tree.Calling.PlayAsync("x", new List<object>()));
+            () => tree.Calling.PlayAsync("x", new List<object?>()));
         Assert.Equal(500, status);
     }
 
