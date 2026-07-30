@@ -843,11 +843,24 @@ public sealed class MockServerFixture : IDisposable
         };
     }
 
+    /// <summary>Clients handed out by <see cref="NewHttp"/>. The FIXTURE owns
+    /// them, not the individual test: they share a transport, so disposing one
+    /// inside a test breaks every sibling test in the class. Disposed together
+    /// when xUnit tears the fixture down.</summary>
+    private readonly List<SignalWire.REST.HttpClient> _issued = [];
+
     /// <summary>Build an SDK <see cref="SignalWire.REST.HttpClient"/> bound to
     /// the mock and authenticating with this fixture's scoped project, so its
-    /// requests are filterable in <see cref="Harness"/>'s journal.</summary>
+    /// requests are filterable in <see cref="Harness"/>'s journal.
+    ///
+    /// The returned client is OWNED BY THIS FIXTURE — do not dispose it in a
+    /// test (see <see cref="_issued"/>).</summary>
     public SignalWire.REST.HttpClient NewHttp()
-        => new(Project, Token, Harness.Url);
+    {
+        var http = new SignalWire.REST.HttpClient(Project, Token, Harness.Url);
+        lock (_issued) { _issued.Add(http); }
+        return http;
+    }
 
     /// <summary>
     /// Re-mint this fixture's per-test scope: a brand-new random project =&gt;
@@ -865,5 +878,14 @@ public sealed class MockServerFixture : IDisposable
         Harness = BuildScopedHarness(Project, AuthHeader);
     }
 
-    public void Dispose() { /* shared mock lives for whole test run */ }
+    /// <summary>The shared mock lives for the whole test run, but the clients
+    /// this fixture issued are its own and are released here.</summary>
+    public void Dispose()
+    {
+        lock (_issued)
+        {
+            foreach (var http in _issued) http.Dispose();
+            _issued.Clear();
+        }
+    }
 }
