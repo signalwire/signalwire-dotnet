@@ -196,7 +196,7 @@ public class PortReservationTests
             psi.ArgumentList.Add("--host");
             psi.ArgumentList.Add("127.0.0.1");
             psi.ArgumentList.Add("--port");
-            psi.ArgumentList.Add(contendedPort.ToString());
+            psi.ArgumentList.Add(contendedPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
             psi.ArgumentList.Add("--log-level");
             psi.ArgumentList.Add("error");
             psi.Environment["PYTHONPATH"] = pkgDir;

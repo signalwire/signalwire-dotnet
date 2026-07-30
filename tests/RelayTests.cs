@@ -931,7 +931,7 @@ public sealed class RelayTests : IDisposable
         Assert.Equal(Constants.CallStateEnded, CallState.Ended.ToWireName());
 
         // wire -> enum round-trips for every member.
-        foreach (CallState s in Enum.GetValues(typeof(CallState)))
+        foreach (CallState s in Enum.GetValues<CallState>())
         {
             Assert.True(CallStateExtensions.TryParse(s.ToWireName(), out var parsed));
             Assert.Equal(s, parsed);
@@ -959,7 +959,7 @@ public sealed class RelayTests : IDisposable
         Assert.False(CallState.Answered.IsTerminal());
         Assert.False(CallState.Ending.IsTerminal());
 
-        foreach (CallState s in Enum.GetValues(typeof(CallState)))
+        foreach (CallState s in Enum.GetValues<CallState>())
         {
             Assert.Equal(Constants.CallTerminalStates.Contains(s.ToWireName()), s.IsTerminal());
         }
@@ -972,7 +972,7 @@ public sealed class RelayTests : IDisposable
         Assert.Equal(Constants.DialStateAnswered, DialState.Answered.ToWireName());
         Assert.Equal(Constants.DialStateFailed, DialState.Failed.ToWireName());
 
-        foreach (DialState s in Enum.GetValues(typeof(DialState)))
+        foreach (DialState s in Enum.GetValues<DialState>())
         {
             Assert.True(DialStateExtensions.TryParse(s.ToWireName(), out var parsed));
             Assert.Equal(s, parsed);
@@ -1008,7 +1008,7 @@ public sealed class RelayTests : IDisposable
         Assert.Equal(Constants.MessageStateFailed, MessageState.Failed.ToWireName());
         Assert.Equal(Constants.MessageStateReceived, MessageState.Received.ToWireName());
 
-        foreach (MessageState s in Enum.GetValues(typeof(MessageState)))
+        foreach (MessageState s in Enum.GetValues<MessageState>())
         {
             Assert.True(MessageStateExtensions.TryParse(s.ToWireName(), out var parsed));
             Assert.Equal(s, parsed);
@@ -1035,7 +1035,7 @@ public sealed class RelayTests : IDisposable
         Assert.False(MessageState.Sent.IsTerminal());
         Assert.False(MessageState.Received.IsTerminal());
 
-        foreach (MessageState s in Enum.GetValues(typeof(MessageState)))
+        foreach (MessageState s in Enum.GetValues<MessageState>())
         {
             Assert.Equal(Constants.MessageTerminalStates.Contains(s.ToWireName()), s.IsTerminal());
         }

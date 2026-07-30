@@ -37,7 +37,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
     // Helpers
     // ------------------------------------------------------------------
 
-    private async Task<RelayMockTest.Bound> AnsweredCall(string callId = "evt-call-1")
+    private static async Task<RelayMockTest.Bound> AnsweredCall(string callId = "evt-call-1")
     {
         var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync().ConfigureAwait(false);
@@ -76,7 +76,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
             },
         };
 
-    private void ArmDial(RelayMockTest.Bound bound, string tag, string winnerCallId, IEnumerable<string> states)
+    private static void ArmDial(RelayMockTest.Bound bound, string tag, string winnerCallId, IEnumerable<string> states)
     {
         var body = new Dictionary<string, object?>
         {

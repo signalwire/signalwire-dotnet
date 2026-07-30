@@ -331,7 +331,7 @@ public static class TlsHarness
         psi.ArgumentList.Add("--host");
         psi.ArgumentList.Add("127.0.0.1");
         psi.ArgumentList.Add("--port");
-        psi.ArgumentList.Add(port.ToString());
+        psi.ArgumentList.Add(port.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--tls");
         psi.ArgumentList.Add("--log-level");
         psi.ArgumentList.Add("error");
@@ -427,9 +427,9 @@ public static class TlsHarness
         psi.ArgumentList.Add("--host");
         psi.ArgumentList.Add("127.0.0.1");
         psi.ArgumentList.Add("--ws-port");
-        psi.ArgumentList.Add(wsPort.ToString());
+        psi.ArgumentList.Add(wsPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--http-port");
-        psi.ArgumentList.Add(httpPort.ToString());
+        psi.ArgumentList.Add(httpPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--tls");
         psi.ArgumentList.Add("--log-level");
         psi.ArgumentList.Add("error");

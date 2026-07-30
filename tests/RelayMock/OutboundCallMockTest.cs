@@ -55,7 +55,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
             },
         };
 
-    private void ArmDial(
+    private static void ArmDial(
         RelayMockTest.Bound bound,
         string tag,
         string winnerCallId,
@@ -81,7 +81,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         bound.Harness.Scenarios.ArmDial(body);
     }
 
-    private async Task<RelayMockTest.Bound> ConnectedClient()
+    private static async Task<RelayMockTest.Bound> ConnectedClient()
     {
         var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync().ConfigureAwait(false);

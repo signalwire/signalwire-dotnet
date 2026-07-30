@@ -46,7 +46,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     // ------------------------------------------------------------------
 
     /// <summary>Spin up a client, take an inbound call, answer it, return bound.</summary>
-    private async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId)
+    private static async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId)
     {
         var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync().ConfigureAwait(false);

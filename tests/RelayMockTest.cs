@@ -791,9 +791,9 @@ public static class RelayMockTest
         psi.ArgumentList.Add("--host");
         psi.ArgumentList.Add(host);
         psi.ArgumentList.Add("--ws-port");
-        psi.ArgumentList.Add(wsPort.ToString());
+        psi.ArgumentList.Add(wsPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--http-port");
-        psi.ArgumentList.Add(httpPort.ToString());
+        psi.ArgumentList.Add(httpPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--log-level");
         psi.ArgumentList.Add("error");
 

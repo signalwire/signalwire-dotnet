@@ -711,7 +711,7 @@ public static class MockTest
         psi.ArgumentList.Add("--host");
         psi.ArgumentList.Add(host);
         psi.ArgumentList.Add("--port");
-        psi.ArgumentList.Add(port.ToString());
+        psi.ArgumentList.Add(port.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--log-level");
         psi.ArgumentList.Add("error");
 

@@ -42,7 +42,7 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
     // Helpers
     // ------------------------------------------------------------------
 
-    private async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId = "act-call-1")
+    private static async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId = "act-call-1")
     {
         var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         await bound.Client.ConnectAsync().ConfigureAwait(false);
@@ -69,7 +69,7 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
         return bound;
     }
 
-    private void ArmMethod(RelayMockTest.Bound bound, string method, IEnumerable<Dictionary<string, object?>> events)
+    private static void ArmMethod(RelayMockTest.Bound bound, string method, IEnumerable<Dictionary<string, object?>> events)
     {
         bound.Harness.Scenarios.ArmMethod(method, events);
     }

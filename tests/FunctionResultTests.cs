@@ -1037,7 +1037,7 @@ public class FunctionResultTests
 
         // (c) every value round-trips to the wire, including the default which
         // the per-key guard omits (both -> direction key absent on both paths).
-        foreach (var d in (TapDirection[])Enum.GetValues(typeof(TapDirection)))
+        foreach (var d in (TapDirection[])Enum.GetValues<TapDirection>())
         {
             var e = MainVerb(GetAction(new FunctionResult().Tap("u", direction: d, codec: Codec.Pcmu), 0), "tap");
             var s = MainVerb(GetAction(new FunctionResult().Tap("u", "", d.ToWireName(), "PCMU", 20, null), 0), "tap");
@@ -1066,7 +1066,7 @@ public class FunctionResultTests
 
         // (c) every value round-trips to the wire, including the default which
         // the per-key guard omits (PCMU -> codec key absent on both paths).
-        foreach (var c in (Codec[])Enum.GetValues(typeof(Codec)))
+        foreach (var c in (Codec[])Enum.GetValues<Codec>())
         {
             var e = MainVerb(GetAction(new FunctionResult().Tap("u", direction: TapDirection.Both, codec: c), 0), "tap");
             var s = MainVerb(GetAction(new FunctionResult().Tap("u", "", "both", c.ToWireName(), 20, null), 0), "tap");

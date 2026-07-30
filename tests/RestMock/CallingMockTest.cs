@@ -47,7 +47,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
 
     /// <summary>Asserts journal entry shape — method/path/command — and
     /// returns the params element for caller-specific assertions.</summary>
-    private JsonElement CommandAssert(MockTest.JournalEntry j, string command, string? expectedId)
+    private static JsonElement CommandAssert(MockTest.JournalEntry j, string command, string? expectedId)
     {
         Assert.Equal("POST", j.Method);
         Assert.Equal(CallsPath, j.Path);
