@@ -11,10 +11,17 @@ Format (one bullet per suppression):
 - <relpath>:<line> — <reason> (<approver>, <YYYY-MM-DD>)
 ```
 
-There are exactly eleven analyzer-severity disables: ten in `.editorconfig`
-(scoped to the generated REST tree EXCEPT the two global VB-interop ones) and
-one `<NoWarn>` in the csproj (the doc-coverage pair behind the 6.3
-GenerateDocumentationFile floor). Each is justified by the WIRE shape (a
+There are thirteen `.editorconfig` analyzer-severity disables (two global
+VB-interop, eight scoped to the generated REST tree, two scoped to `tests/` and
+`examples/`) plus one `<NoWarn>` in the csproj (the doc-coverage pair behind the
+6.3 GenerateDocumentationFile floor).
+
+NOTE ON SCOPE: the SUPPRESSION-LEDGER gate deliberately does NOT match per-line
+`#pragma warning disable` (see porting-sdk/scripts/suppression_ledger.py — a
+per-line disable is "the CORRECT, self-documenting form and must stay
+unflagged"). The wire-signature pragmas recorded below are therefore listed
+BY CHOICE, not because the gate demands them: they are owner-approved
+exceptions and the campaign's bar for a justified exception is a ledger entry. Each is justified by the WIRE shape (a
 value/type System.Text.Json must round-trip verbatim), by CROSS-PORT SURFACE
 PARITY (a name the python-reference oracle records, that SURFACE-DIFF +
 StructuralParity compare dotnet against), or by an owner-approved plan
@@ -24,6 +31,32 @@ decision cited in the entry. None disables a rule to hide undone cleanup.
 
 - .editorconfig:41 — CA1716: `Event`/`Call`/`Action` are the idiomatic .NET type names AND the cross-port concept names the surface records; VB-keyword interop is a non-goal for this SDK, so renaming would churn the public surface for no benefit (mike@signalwire.com, 2026-07-15)
 - .editorconfig:46 — CA1724: the few type/namespace collisions are intentional concept names shared across the cross-port surface (e.g. `Fabric`, `Video`); renaming would diverge dotnet's type names from the other ports for no functional gain (mike@signalwire.com, 2026-07-15)
+
+## Test / example rule-level suppressions
+
+Both directories are LINTED AT THE FULL SHIPPING BAR (owner ruling 2026-07-30 —
+"examples and tests are shipping code too"). Neither entry is a directory
+carve-out: each names ONE rule the code in that tree legitimately and correctly
+violates, every other rule stays at error there, and both rules stay ON for `src/`.
+
+- .editorconfig:122 — CA1707 (underscores in member names), scoped `[tests/**/*.cs]`: every test is named `Method_Scenario` (`AgentBase_AgentIdIsReadableBack`, `Register_Agent`, `Tools_ExposesRegisteredFunction`) — the xUnit convention, where the underscore IS the subject/scenario split that makes a failure report legible. Obeying the rule would rename ~1,273 test methods and destroy the readability the convention exists for. Same shape as java declining AvoidStarImport because it "would de-idiomatize test code" (mike@signalwire.com, 2026-07-30)
+- .editorconfig:131 — CA1303 (do not pass literals as localized parameters), scoped `[examples/**/*.cs]`: an example's `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING TEXT printed to a developer's terminal, not a localizable product string; the rule's remedy (a .resx resource table per demo) would obscure the very thing the example exists to show. The shipped library has zero such sites, which is why this never fired before (mike@signalwire.com, 2026-07-30)
+
+## Wire-signature suppressions (`tools/DumpCorpus`, per-line pragmas)
+
+The corpus dumps must reproduce the SignalWire webhook signature BYTE-FOR-BYTE so
+the cross-port artifacts can be compared against the Python oracle. HMAC-SHA1 and
+lowercase hex are the SERVER'S wire contract — see
+`src/SignalWire/Security/WebhookValidator.cs`: "Scheme A (RELAY/SWML/JSON):
+hex(HMAC-SHA1(key, url + raw_body))" — not an algorithm this code may choose. A
+stronger hash or upper-case hex would emit different bytes and the comparison
+would be meaningless.
+
+- tools/DumpCorpus/WireDump.cs:143 — CA5350 (weak crypto HMACSHA1) in `HexHmacSha1`: the algorithm is the server's webhook signature scheme, reproduced verbatim for the wire corpus (mike@signalwire.com, 2026-07-30)
+- tools/DumpCorpus/WireDump.cs:147 — CA1308 (prefer ToUpperInvariant) in `HexHmacSha1`: lowercase hex is the on-the-wire signature form (mike@signalwire.com, 2026-07-30)
+- tools/DumpCorpus/WireDump.cs:128 — CA1308 (prefer ToUpperInvariant) in `HexHmacSha256`: same lowercase-hex wire form for the SHA-256 SWAIG token signature (mike@signalwire.com, 2026-07-30)
+- tools/DumpCorpus/HttpDump.cs:300 — CA5350 (weak crypto HMACSHA1) in `WebhookSig`: the algorithm is the server's webhook signature scheme, reproduced verbatim for the HTTP corpus (mike@signalwire.com, 2026-07-30)
+- tools/DumpCorpus/HttpDump.cs:304 — CA1308 (prefer ToUpperInvariant) in `WebhookSig`: lowercase hex is the on-the-wire signature form (mike@signalwire.com, 2026-07-30)
 
 ## Generated-REST-tree suppressions (`src/SignalWire/REST/Namespaces/Generated/**.cs`)
 
