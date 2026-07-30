@@ -1467,10 +1467,16 @@ def scan_class_bases(path: Path) -> dict[str, list[str]]:
     the member parser's shape and its two call sites are untouched.
     """
     out: dict[str, list[str]] = {}
+    # An unreadable source file must ABORT, not return an empty base map: an
+    # empty map silently drops this class's inherited surface members from
+    # port_surface_native.json, which SURFACE-DIFF then reports as the port
+    # omitting them. A false omission is worse than a hard failure.
     try:
         text = strip_block_comments(path.read_text(encoding="utf-8", errors="replace"))
-    except Exception:  # pragma: no cover
-        return out
+    except OSError as exc:
+        raise SystemExit(
+            f"enumerate_surface.py: cannot read {path}: {exc}"
+        ) from exc
     for raw_line in text.splitlines():
         line = strip_line_comments(raw_line)
         m = _CLASS_BASE_RE.match(line)
@@ -1964,15 +1970,23 @@ def _wired_base_surface(cs_files, rest_manifest) -> dict[str, list[str]]:
     # ClassName -> its base-clause leaf names, across all files.
     bases: dict[str, list[str]] = {}
     for path in cs_files:
+        # A parse failure here SILENTLY DROPS a generated class's inherited
+        # members from the surface artifact SURFACE-DIFF compares — i.e. it
+        # manufactures a false "the port omits this member". Fail loud instead
+        # (repo convention: an unresolvable input aborts, it never degrades).
         try:
             for cls, blist in scan_class_bases(path).items():
                 bases.setdefault(cls, []).extend(blist)
-        except Exception:  # pragma: no cover
-            continue
+        except Exception as exc:
+            raise SystemExit(
+                f"enumerate_surface.py: scan_class_bases failed on {path}: {exc}"
+            ) from exc
         try:
             findings = parse_cs_file(path)
-        except Exception:  # pragma: no cover
-            continue
+        except Exception as exc:
+            raise SystemExit(
+                f"enumerate_surface.py: parse_cs_file failed on {path}: {exc}"
+            ) from exc
         for namespace, class_name, methods in findings:
             if namespace != GENERATED_REST_NAMESPACE or class_name in emitted:
                 continue
