@@ -43,13 +43,13 @@ internal static class WaitLivenessDump
         {
             ["live_play_wait"] = await RunCase(
                 new PlayAction("ctl-live-1", "call-live-1", "node-live-1", new object()),
-                "calling.call.play"),
+                "calling.call.play").ConfigureAwait(false),
             ["live_record_wait"] = await RunCase(
                 new RecordAction("ctl-live-1", "call-live-1", "node-live-1", new object()),
-                "calling.call.record"),
+                "calling.call.record").ConfigureAwait(false),
         };
 
-        Console.WriteLine(JsonSerializer.Serialize(results));
+        await Console.Out.WriteLineAsync(JsonSerializer.Serialize(results)).ConfigureAwait(false);
         return 0;
     }
 
