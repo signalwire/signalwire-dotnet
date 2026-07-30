@@ -162,7 +162,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
             {
                 while (true)
                 {
-                    var c = await listener.AcceptTcpClientAsync();
+                    var c = await listener.AcceptTcpClientAsync().ConfigureAwait(false);
                     lock (accepted) accepted.Add(c);
                 }
             }

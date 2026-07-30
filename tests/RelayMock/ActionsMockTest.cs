@@ -46,15 +46,15 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
     private async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId = "act-call-1")
     {
         var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
-        await bound.Client.ConnectAsync();
-        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
+        await bound.Client.ConnectAsync().ConfigureAwait(false);
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts).ConfigureAwait(false);
 
         Call? captured = null;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         bound.Client.OnCall(async call =>
         {
             captured = call;
-            await call.AnswerAsync();
+            await call.AnswerAsync().ConfigureAwait(false);
             done.TrySetResult();
         });
 
@@ -63,7 +63,7 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
             CallId = callId,
             AutoStates = new() { "created" },
         });
-        await done.Task.WaitAsync(RelayMockTest.EventTimeout);
+        await done.Task.WaitAsync(RelayMockTest.EventTimeout).ConfigureAwait(false);
 
         // Mark as answered so subsequent actions don't think the call ended.
         captured!.State = "answered";

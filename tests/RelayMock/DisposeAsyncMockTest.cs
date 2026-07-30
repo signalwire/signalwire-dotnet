@@ -193,7 +193,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         {
             var now = SessionIds(bound);
             if (now.Count > 0) return now;
-            await Task.Delay(100);
+            await Task.Delay(100).ConfigureAwait(false);
         }
         return SessionIds(bound);
     }
@@ -213,7 +213,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         while (DateTime.UtcNow < deadline)
         {
             if (condition()) return true;
-            await Task.Delay(100);
+            await Task.Delay(100).ConfigureAwait(false);
         }
         return condition();
     }

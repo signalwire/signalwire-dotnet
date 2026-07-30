@@ -147,7 +147,7 @@ public class PaginationMockTest : IClassFixture<MockServerFixture>
         // Exhausted.
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
-            await it.NextAsync();
+            await it.NextAsync().ConfigureAwait(false);
         });
     }
 }

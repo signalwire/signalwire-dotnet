@@ -226,7 +226,7 @@ public sealed class RelayTests : IDisposable
 
         _ = Task.Run(async () =>
         {
-            await Task.Delay(50);
+            await Task.Delay(50).ConfigureAwait(false);
             action.Resolve("result");
         });
 
@@ -384,7 +384,7 @@ public sealed class RelayTests : IDisposable
 
         _ = Task.Run(async () =>
         {
-            await Task.Delay(50);
+            await Task.Delay(50).ConfigureAwait(false);
             msg.DispatchEvent(new Event("messaging.state", new()
             {
                 ["state"] = "delivered",

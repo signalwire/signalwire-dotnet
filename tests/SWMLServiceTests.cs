@@ -357,11 +357,11 @@ public sealed class SWMLServiceTests : IDisposable
         var responseStream = new MemoryStream();
         ctx.Response.Body = responseStream;
 
-        await router(ctx);
+        await router(ctx).ConfigureAwait(false);
 
         responseStream.Position = 0;
         using var reader = new StreamReader(responseStream, Encoding.UTF8);
-        var text = await reader.ReadToEndAsync();
+        var text = await reader.ReadToEndAsync().ConfigureAwait(false);
         return (ctx.Response.StatusCode, text, ctx);
     }
 

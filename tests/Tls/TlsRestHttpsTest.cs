@@ -68,7 +68,7 @@ public class TlsRestHttpsTest
         using var untrusted = BuildHttp(rejecting.Validate);
         var ex = await Assert.ThrowsAnyAsync<Exception>(async () =>
         {
-            await untrusted.GetAsync(mock.BaseUrl + "/__mock__/health");
+            await untrusted.GetAsync(mock.BaseUrl + "/__mock__/health").ConfigureAwait(false);
         });
         Assert.True(
             ex is System.Net.Http.HttpRequestException
@@ -91,7 +91,7 @@ public class TlsRestHttpsTest
 
     private static async Task<JournalView> LastJournalAsync(string baseUrl, System.Net.Http.HttpClient http)
     {
-        var body = await http.GetStringAsync(baseUrl + "/__mock__/journal");
+        var body = await http.GetStringAsync(baseUrl + "/__mock__/journal").ConfigureAwait(false);
         using var doc = JsonDocument.Parse(body);
         Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
         var arr = doc.RootElement;

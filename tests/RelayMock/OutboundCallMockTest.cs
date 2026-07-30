@@ -82,7 +82,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
     private async Task<RelayMockTest.Bound> ConnectedClient()
     {
         var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
-        await bound.Client.ConnectAsync();
+        await bound.Client.ConnectAsync().ConfigureAwait(false);
         return bound;
     }
 
@@ -269,7 +269,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
                             seenTag = t.GetString();
                         break;
                     }
-                    await Task.Delay(10);
+                    await Task.Delay(10).ConfigureAwait(false);
                 }
                 if (seenTag is null) return;
                 bound.Harness.Push(new Dictionary<string, object?>
@@ -304,7 +304,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
                     { new() { PhoneDevice() } },
                 ["dial_timeout"] = 5.0,
             });
-            await pusher;
+            await pusher.ConfigureAwait(false);
 
             Assert.Equal("auto-tag-winner", call.CallId);
             Assert.NotNull(seenTag);
@@ -333,7 +333,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 for (int i = 0; i < 200; i++)
                 {
                     if (bound.Harness.Journal.Recv("calling.dial").Count > 0) break;
-                    await Task.Delay(10);
+                    await Task.Delay(10).ConfigureAwait(false);
                 }
                 bound.Harness.Push(new Dictionary<string, object?>
                 {
@@ -363,7 +363,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
                     ["dial_timeout"] = 5.0,
                 }));
             Assert.Contains("Dial failed", ex.Message);
-            await pusher;
+            await pusher.ConfigureAwait(false);
         }
         finally { bound.Client.Disconnect(); }
     }

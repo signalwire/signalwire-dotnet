@@ -49,15 +49,15 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     private async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId)
     {
         var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
-        await bound.Client.ConnectAsync();
-        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
+        await bound.Client.ConnectAsync().ConfigureAwait(false);
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts).ConfigureAwait(false);
 
         Call? captured = null;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         bound.Client.OnCall(async call =>
         {
             captured = call;
-            await call.AnswerAsync();
+            await call.AnswerAsync().ConfigureAwait(false);
             done.TrySetResult();
         });
 
@@ -66,7 +66,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
             CallId = callId,
             AutoStates = new() { "created" },
         });
-        await done.Task.WaitAsync(RelayMockTest.EventTimeout);
+        await done.Task.WaitAsync(RelayMockTest.EventTimeout).ConfigureAwait(false);
         captured!.State = "answered";
         return bound;
     }
@@ -411,7 +411,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
             Assert.False(waitTask.IsCompleted);
 
             bound.Harness.Push(StatePushFrame("conv-wait-ans", "answered"));
-            var evt = await waitTask;
+            var evt = await waitTask.ConfigureAwait(false);
             Assert.Equal("answered", evt.Params["call_state"]);
             Assert.Equal("answered", captured.State);
         }
@@ -479,7 +479,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
             Assert.False(waitTask.IsCompleted);
 
             bound.Harness.Push(StatePushFrame("conv-wait-end", "ending"));
-            var evt = await waitTask;
+            var evt = await waitTask.ConfigureAwait(false);
             Assert.Equal("ending", evt.Params["call_state"]);
         }
         finally { bound.Client.Disconnect(); }

@@ -38,7 +38,7 @@ public class MessagingMockTest : IClassFixture<RelayMockServerFixture>
     private async Task<RelayMockTest.Bound> ConnectedClient()
     {
         var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
-        await bound.Client.ConnectAsync();
+        await bound.Client.ConnectAsync().ConfigureAwait(false);
         return bound;
     }
 

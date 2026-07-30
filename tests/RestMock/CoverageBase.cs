@@ -74,7 +74,7 @@ public abstract class CoverageBase : IClassFixture<MockServerFixture>
     {
         Fixture.Harness.Scenarios.Set(endpointId, status,
             new Dictionary<string, object?> { ["error"] = "boom" });
-        var err = await Assert.ThrowsAsync<SignalWireRestError>(async () => await call());
+        var err = await Assert.ThrowsAsync<SignalWireRestError>(async () => await call()).ConfigureAwait(false);
         Assert.Equal(status, err.StatusCode);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal(endpointId, j.MatchedRoute);

@@ -40,15 +40,15 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
     private async Task<RelayMockTest.Bound> AnsweredCall(string callId = "evt-call-1")
     {
         var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
-        await bound.Client.ConnectAsync();
-        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
+        await bound.Client.ConnectAsync().ConfigureAwait(false);
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts).ConfigureAwait(false);
 
         Call? captured = null;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         bound.Client.OnCall(async call =>
         {
             captured = call;
-            await call.AnswerAsync();
+            await call.AnswerAsync().ConfigureAwait(false);
             done.TrySetResult();
         });
 
@@ -57,7 +57,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
             CallId = callId,
             AutoStates = new() { "created" },
         });
-        await done.Task.WaitAsync(RelayMockTest.EventTimeout);
+        await done.Task.WaitAsync(RelayMockTest.EventTimeout).ConfigureAwait(false);
         captured!.State = "answered";
         return bound;
     }
@@ -598,7 +598,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
                 ["state"] = "playing",
             }));
 
-            var evt = await waitTask;
+            var evt = await waitTask.ConfigureAwait(false);
             Assert.Equal("calling.call.play", evt.EventType);
             Assert.Equal("playing", evt.Params["state"]);
         }
@@ -633,7 +633,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
                 ["state"] = "finished",
             }));
 
-            var evt = await waitTask;
+            var evt = await waitTask.ConfigureAwait(false);
             Assert.Equal("wanted", evt.Params["control_id"]);
             Assert.Equal("finished", evt.Params["state"]);
         }
