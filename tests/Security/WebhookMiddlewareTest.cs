@@ -203,7 +203,7 @@ public sealed class WebhookMiddlewareTest : IDisposable
         Assert.NotNull(rejected);
         Assert.Equal(403, rejected!.Value.Status);
         Assert.Equal("", rejected.Value.Body); // empty body
-        Assert.DoesNotContain("scheme", (rejected.Value.Headers["Content-Type"] ?? "").ToLowerInvariant());
+        Assert.DoesNotContain("SCHEME", (rejected.Value.Headers["Content-Type"] ?? "").ToUpperInvariant());
     }
 
     [Fact]

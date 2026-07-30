@@ -104,7 +104,7 @@ public class PaginationMockTest : IClassFixture<MockServerFixture>
         var it = new PaginatedIterator(http, FabricAddressesPath, dataKey: "data");
 
         var collected = new List<Dictionary<string, object?>>();
-        await foreach (var item in it)
+        await foreach (var item in it.ConfigureAwait(false))
         {
             collected.Add(item);
         }

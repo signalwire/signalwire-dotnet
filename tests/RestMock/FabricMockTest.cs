@@ -344,7 +344,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
         var it = fabric.Addresses.Paginate();
 
         var ids = new List<string?>();
-        await foreach (var item in it)
+        await foreach (var item in it.ConfigureAwait(false))
         {
             ids.Add((string?)item["id"]);
         }

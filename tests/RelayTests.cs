@@ -675,7 +675,7 @@ public sealed class RelayTests : IDisposable
         }));
 
         Assert.True(tcs.Task.IsCompletedSuccessfully);
-        Assert.Equal("sess-abc", tcs.Task.Result["session_id"]?.ToString());
+        Assert.Equal("sess-abc", (await tcs.Task.ConfigureAwait(false))["session_id"]?.ToString());
     }
 
     [Fact]
@@ -895,7 +895,7 @@ public sealed class RelayTests : IDisposable
         });
 
         Assert.True(tcs.Task.IsCompletedSuccessfully);
-        Assert.True(tcs.Task.Result.DialWinner);
+        Assert.True((await tcs.Task.ConfigureAwait(false)).DialWinner);
     }
 
     [Fact]

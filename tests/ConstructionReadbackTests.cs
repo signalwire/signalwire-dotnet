@@ -144,7 +144,9 @@ public class ConstructionReadbackTests
     [Fact]
     public void Action_CallIsNullWhenTheCallIsNoLongerRegistered()
     {
+        #pragma warning disable CA2000 // ownership transfers to the caller / enclosing scope
         var action = new SignalWire.Relay.Action("ctrl-2", "c-gone", "node-1", new Client());
+#pragma warning restore CA2000
         Assert.Null(action.Call);
     }
 

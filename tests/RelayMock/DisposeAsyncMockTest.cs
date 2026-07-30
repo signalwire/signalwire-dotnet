@@ -94,7 +94,8 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         // below need. `await using` still drives DisposeAsync on the client itself.
         using var bound = RelayMockTest.NewClient(contexts: C1Array);
         HashSet<string> mine;
-        await using (var client = bound.Client)
+        var client = bound.Client;
+        await using (client.ConfigureAwait(false))
         {
             await client.ConnectAsync();
             Assert.True(client.Connected);

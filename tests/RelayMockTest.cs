@@ -765,11 +765,11 @@ public static class RelayMockTest
         // hardcoded default — WS and HTTP control plane picked independently.
         var wsRaw = Environment.GetEnvironmentVariable("MOCK_RELAY_PORT");
         var wsFromEnv = !string.IsNullOrWhiteSpace(wsRaw) && int.TryParse(wsRaw.Trim(), out var w) && w > 0;
-        var wsPort = wsFromEnv ? int.Parse(wsRaw!.Trim()) : PickFreePort();
+        var wsPort = wsFromEnv ? int.Parse(wsRaw!.Trim(), System.Globalization.CultureInfo.InvariantCulture) : PickFreePort();
 
         var httpRaw = Environment.GetEnvironmentVariable("MOCK_RELAY_HTTP_PORT");
         var httpFromEnv = !string.IsNullOrWhiteSpace(httpRaw) && int.TryParse(httpRaw.Trim(), out var hp) && hp > 0;
-        var httpPort = httpFromEnv ? int.Parse(httpRaw!.Trim()) : PickFreePort();
+        var httpPort = httpFromEnv ? int.Parse(httpRaw!.Trim(), System.Globalization.CultureInfo.InvariantCulture) : PickFreePort();
 
         // Either explicit port signals "a mock is promised on these ports"
         // (the CI gate's host-spawned mock, reused via --network host). In that
