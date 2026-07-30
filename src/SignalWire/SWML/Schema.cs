@@ -15,8 +15,8 @@ namespace SignalWire.SWML;
 public sealed record VerbInfo(string Name, string SchemaName, JsonElement Definition);
 
 /// <summary>Validation error raised by SchemaUtils.ValidateVerb when a
-/// verb config violates its schema. (equivalent to Python's
-/// ``signalwire.utils.schema_utils.SchemaValidationError``.)</summary>
+/// verb config violates its schema.
+/// </summary>
 [SuppressMessage("Naming", "CA1710", Justification = "Type name matches the cross-port surface (Python SchemaValidationError); renaming to *Exception would break parity.")]
 public class SchemaValidationError : Exception
 {
@@ -141,14 +141,13 @@ public sealed class Schema
     /// <summary>Number of verbs defined in the schema.</summary>
     public int VerbCount => _verbs.Count;
 
-    /// <summary>Alias of <see cref="GetVerbNames"/>. (equivalent to Python's
-    /// ``SchemaUtils.get_all_verb_names``.)</summary>
+    /// <summary>Alias of <see cref="GetVerbNames"/>.</summary>
     public IReadOnlyList<string> GetAllVerbNames() => GetVerbNames();
 
     /// <summary>Public load-schema accessor. Returns the embedded SWML
     /// schema as a Dictionary&lt;string, JsonElement&gt;. Empty dict
-    /// when the schema can't be loaded. (equivalent to Python's
-    /// ``SchemaUtils.load_schema``.)</summary>
+    /// when the schema can't be loaded.
+    /// </summary>
     [SuppressMessage("Performance", "CA1822", Justification = "Instance accessor matching the cross-port surface (Python SchemaUtils.load_schema); kept non-static so callers reach it via Schema.Instance.")]
     public Dictionary<string, JsonElement> LoadSchemaPublic()
     {
@@ -166,8 +165,8 @@ public sealed class Schema
 
     /// <summary>Get the parameter (property) definitions for a verb.
     /// Returns an empty dict when the verb is unknown or has no
-    /// ``properties``. (equivalent to Python's
-    /// ``SchemaUtils.get_verb_parameters(verb_name)``.)</summary>
+    /// ``properties``.
+    /// </summary>
     public Dictionary<string, JsonElement> GetVerbParameters(string verbName)
     {
         var verb = GetVerb(verbName);
@@ -189,8 +188,7 @@ public sealed class Schema
     /// Returns ``(true, [])`` on success or ``(false, [errors...])`` on
     /// failure. Lightweight verb-presence check — full JSON-Schema
     /// validation is out of scope for the bundled SDK.
-    /// (equivalent to Python's
-    /// ``SchemaUtils.validate_document(document) -> (bool, list)``.)</summary>
+    /// </summary>
     public (bool Valid, List<string> Errors) ValidateDocument(Dictionary<string, object> document)
     {
         var errors = new List<string>();
@@ -227,17 +225,16 @@ public sealed class Schema
     // ------------------------------------------------------------------
 
     /// <summary>True when the full JSON-Schema validator is wired up (the
-    /// embedded schema compiled). (equivalent to Python's
-    /// ``SchemaUtils.full_validation_available``.)</summary>
+    /// embedded schema compiled).
+    /// </summary>
     public bool FullValidationAvailable() => _fullValidator is not null;
 
     /// <summary>Get the ``properties`` object for a verb (its parameter
-    /// definitions). (equivalent to Python's ``get_verb_properties``.)</summary>
+    /// definitions).</summary>
     public Dictionary<string, JsonElement> GetVerbProperties(string verbName)
         => GetVerbParameters(verbName);
 
-    /// <summary>Get the list of required property names for a verb.
-    /// (equivalent to Python's ``get_verb_required_properties``.)</summary>
+    /// <summary>Get the list of required property names for a verb.</summary>
     public IReadOnlyList<string> GetVerbRequiredProperties(string verbName)
     {
         var verb = GetVerb(verbName);
@@ -259,7 +256,7 @@ public sealed class Schema
     /// rejected, not silently dropped (the STRICT-RENDER contract). Falls back
     /// to a lightweight required-property check when the validator failed to
     /// compile. Returns ``(true, [])`` on success else ``(false, [errors...])``.
-    /// (equivalent to Python's ``validate_verb``.)</summary>
+    /// </summary>
     public (bool Valid, List<string> Errors) ValidateVerb(
         string verbName, Dictionary<string, object?> verbConfig)
     {
@@ -336,8 +333,8 @@ public sealed class Schema
     /// prompt.pom for a promptless agent, SWAIG defaults/functions[].web_hook_url
     /// / __token), so the handler owns the deep shape and only stray top-level
     /// keys (e.g. ``temperatur`` / ``zzz``) are caught here. A no-op when the
-    /// verb has no enumerable closed key-set. (equivalent to Python's
-    /// ``validate_verb_top_level_keys``.)</summary>
+    /// verb has no enumerable closed key-set.
+    /// </summary>
     public (bool Valid, List<string> Errors) ValidateVerbTopLevelKeys(
         string verbName, Dictionary<string, object?> verbConfig)
     {
@@ -368,8 +365,8 @@ public sealed class Schema
     /// <summary>Resolve the set of KNOWN top-level property names for a verb's
     /// config object, following a single ``$ref`` (e.g. ai -> AIObject). Returns
     /// null when the verb's config schema is not a CLOSED object-with-properties
-    /// (no enumerable known-key set, so no shallow check applies). Mirrors
-    /// Python's ``_verb_top_level_property_names``.</summary>
+    /// (no enumerable known-key set, so no shallow check applies).
+    /// </summary>
     private HashSet<string>? VerbTopLevelPropertyNames(string verbName)
     {
         var verb = GetVerb(verbName);
@@ -595,7 +592,7 @@ public sealed class Schema
     }
 
     /// <summary>Generate a C#/pseudocode method signature for a verb (used by
-    /// codegen/tooling). (equivalent to Python's ``generate_method_signature``.)</summary>
+    /// codegen/tooling).</summary>
     public string GenerateMethodSignature(string verbName)
     {
         var parameters = string.Join(", ",
@@ -603,8 +600,7 @@ public sealed class Schema
         return $"public void {verbName}({parameters})";
     }
 
-    /// <summary>Generate a method-body stub that adds the verb to the document.
-    /// (equivalent to Python's ``generate_method_body``.)</summary>
+    /// <summary>Generate a method-body stub that adds the verb to the document.</summary>
     public string GenerateMethodBody(string verbName)
     {
         var keys = GetVerbParameters(verbName).Keys.ToList();

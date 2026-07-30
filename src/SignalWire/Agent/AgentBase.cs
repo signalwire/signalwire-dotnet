@@ -29,39 +29,32 @@ public sealed class AgentOptions
 
     /// <summary>
     /// Seconds until a session token expires. Forwarded to the agent's
-    /// <see cref="SessionManager"/>. (equivalent to Python's
-    /// <c>AgentBase.__init__(token_expiry_secs=...)</c>, which passes it to
-    /// <c>SessionManager(token_expiry_secs=...)</c>.)
+    /// <see cref="SessionManager"/>.
     /// </summary>
     public int TokenExpirySecs { get; init; } = 3600;
 
     /// <summary>
     /// Optional default <c>web_hook_url</c> applied to every SWAIG function
-    /// that does not specify its own. (equivalent to Python's
-    /// <c>AgentBase.__init__(default_webhook_url=...)</c>.)
+    /// that does not specify its own.
     /// </summary>
     [SuppressMessage("Usage", "CA1056", Justification = "URL is a wire string emitted verbatim as the SWAIG web_hook_url / used as a config value.")]
     public string? DefaultWebhookUrl { get; init; }
 
     /// <summary>
     /// Optional unique ID for this agent. A GUID is generated when not
-    /// supplied. (equivalent to Python's
-    /// <c>AgentBase.__init__(agent_id=...)</c>.)
+    /// supplied.
     /// </summary>
     public string? AgentId { get; init; }
 
     /// <summary>
     /// Optional list of native SWAIG function names to include in the rendered
-    /// <c>ai.SWAIG.native_functions</c> array. (equivalent to Python's
-    /// <c>AgentBase.__init__(native_functions=...)</c>.)
+    /// <c>ai.SWAIG.native_functions</c> array.
     /// </summary>
     public IReadOnlyList<string>? NativeFunctions { get; init; }
 
     /// <summary>
     /// Optional path to the SWML schema file, forwarded to the SWML service
-    /// base. (equivalent to Python's
-    /// <c>AgentBase.__init__(schema_path=...)</c>, forwarded to
-    /// <c>super().__init__(schema_path=...)</c>.)
+    /// base.
     /// </summary>
     public string? SchemaPath { get; init; }
 
@@ -69,36 +62,28 @@ public sealed class AgentOptions
     /// Optional path to a JSON configuration file, forwarded to the SWML
     /// service base. Its <c>service</c> section supplies name/route/host/port
     /// defaults that explicit options override, and it feeds the unified
-    /// security configuration. (equivalent to Python's
-    /// <c>AgentBase.__init__(config_file=...)</c>, used by
-    /// <c>_load_service_config</c> and forwarded to
-    /// <c>super().__init__(config_file=...)</c>.)
+    /// security configuration.
     /// </summary>
     public string? ConfigFile { get; init; }
 
     /// <summary>
     /// Enable SWML schema validation. Default true. Also disableable via the
-    /// <c>SWML_SKIP_SCHEMA_VALIDATION</c> env var. (equivalent to Python's
-    /// <c>AgentBase.__init__(schema_validation=...)</c>, forwarded to
-    /// <c>super().__init__(schema_validation=...)</c>.)
+    /// <c>SWML_SKIP_SCHEMA_VALIDATION</c> env var.
     /// </summary>
     public bool SchemaValidation { get; init; } = true;
 
     /// <summary>
-    /// Suppress the SDK's structured per-request logs. (equivalent to Python's
-    /// <c>AgentBase.__init__(suppress_logs=...)</c>.)
+    /// Suppress the SDK's structured per-request logs.
     /// </summary>
     public bool SuppressLogs { get; init; }
 
     /// <summary>
-    /// Whether to enable post-prompt override. (equivalent to Python's
-    /// <c>AgentBase.__init__(enable_post_prompt_override=...)</c>.)
+    /// Whether to enable post-prompt override.
     /// </summary>
     public bool EnablePostPromptOverride { get; init; }
 
     /// <summary>
-    /// Whether to enable check-for-input override. (equivalent to Python's
-    /// <c>AgentBase.__init__(check_for_input_override=...)</c>.)
+    /// Whether to enable check-for-input override.
     /// </summary>
     public bool CheckForInputOverride { get; init; }
 
@@ -107,8 +92,7 @@ public sealed class AgentOptions
     /// When set, webhook signature validation is enforced on POST /, /swaig,
     /// /post_prompt — unsigned or invalidly-signed requests get a 403. Falls
     /// back to the <c>SIGNALWIRE_SIGNING_KEY</c> env var if not passed. See
-    /// the webhook signature validation reference for the contract. (equivalent to Python's
-    /// <c>AgentBase.__init__(signing_key=...)</c>.)
+    /// the webhook signature validation reference for the contract.
     /// </summary>
     public string? SigningKey { get; init; }
 
@@ -116,8 +100,7 @@ public sealed class AgentOptions
     /// If true, honor <c>X-Forwarded-Proto</c> / <c>X-Forwarded-Host</c>
     /// headers when reconstructing the URL for signature validation. Default
     /// false because proxy headers are spoofable; opt in only when you
-    /// control the proxy chain. (equivalent to Python's
-    /// <c>AgentBase.__init__(trust_proxy_for_signature=...)</c>.)
+    /// control the proxy chain.
     /// </summary>
     public bool TrustProxyForSignature { get; init; }
 }
@@ -201,8 +184,7 @@ public class AgentBase : Service
 
     /// <summary>
     /// This agent's unique ID — the supplied <see cref="AgentOptions.AgentId"/>
-    /// or a generated GUID. (equivalent to Python's <c>agent_id</c>,
-    /// agent_base.py:229.)
+    /// or a generated GUID.
     /// </summary>
     // Was `internal` on the premise that the surface oracle does not record
     // plain `__init__` attributes on non-dataclass classes. The oracle DOES
@@ -215,8 +197,7 @@ public class AgentBase : Service
     /// The native SWAIG function names rendered into
     /// <c>ai.SWAIG.native_functions</c>. Set via
     /// <see cref="AgentOptions.NativeFunctions"/> or
-    /// <see cref="SetNativeFunctions"/>. (equivalent to Python's
-    /// <c>native_functions</c>.)
+    /// <see cref="SetNativeFunctions"/>.
     /// </summary>
     public IReadOnlyList<string> NativeFunctions => _nativeFunctions;
 
@@ -265,13 +246,13 @@ public class AgentBase : Service
     /// <summary>The configured Signing Key, or null when validation is
     /// disabled. Read-only — the resolution order
     /// (constructor arg → <c>SIGNALWIRE_SIGNING_KEY</c> env) is fixed at
-    /// construction time. (equivalent to Python's <c>agent.signing_key</c>.)</summary>
+    /// construction time.</summary>
     public string? SigningKey => _signingKey;
 
     /// <summary>True iff signature validation is enabled — i.e. either the
     /// <c>SigningKey</c> option or <c>SIGNALWIRE_SIGNING_KEY</c> env var
-    /// was set at construction time. (equivalent to Python's
-    /// <c>bool(agent.signing_key)</c>.)</summary>
+    /// was set at construction time.
+    /// </summary>
     public bool IsWebhookSignatureValidationEnabled => _signingKey is not null;
 
     // ======================================================================
@@ -281,10 +262,7 @@ public class AgentBase : Service
     /// <summary>
     /// Build the base <see cref="ServiceOptions"/>, applying the config file's
     /// <c>service</c> section with the explicit options taking precedence.
-    /// Mirrors Python's <c>AgentBase.__init__</c>, which calls
-    /// <c>_load_service_config(config_file, name)</c> and then computes
-    /// <c>final_route</c> / <c>final_host</c> / <c>final_port</c> /
-    /// <c>final_name</c> before forwarding to <c>super().__init__</c>: a value
+    /// A value
     /// still at its default yields to the config file, an explicit value wins.
     /// <c>name</c> is the exception — the reference lets the config file
     /// override it unconditionally (<c>service_config.get("name", name)</c>).
@@ -311,8 +289,7 @@ public class AgentBase : Service
     /// <summary>
     /// Load the <c>service</c> section of the config file, discovering one by
     /// service name when no explicit path is given. Returns an empty map when
-    /// no config file exists or it has no <c>service</c> section. (equivalent
-    /// to Python's <c>AgentBase._load_service_config</c>.)
+    /// no config file exists or it has no <c>service</c> section.
     /// </summary>
     private static Dictionary<string, object?> LoadServiceConfig(string? configFile, string serviceName)
     {
@@ -469,7 +446,7 @@ public class AgentBase : Service
     }
 
     /// <summary>Add a top-level POM section with an optional body, bullets,
-    /// numbering, and subsections. (equivalent to Python's ``prompt_add_section``.)</summary>
+    /// numbering, and subsections.</summary>
     public AgentBase PromptAddSection(
         string title,
         string body = "",
@@ -504,8 +481,7 @@ public class AgentBase : Service
         return this;
     }
 
-    /// <summary>Add a subsection nested under an existing parent section.
-    /// (equivalent to Python's ``prompt_add_subsection(parent_title, title, body, bullets)``.)</summary>
+    /// <summary>Add a subsection nested under an existing parent section.</summary>
     public AgentBase PromptAddSubsection(
         string parentTitle,
         string title,
@@ -544,8 +520,8 @@ public class AgentBase : Service
     }
 
     /// <summary>Append body text, a single bullet, and/or bullets list to an
-    /// existing section. (equivalent to Python's
-    /// ``prompt_add_to_section(title, body, bullet, bullets)``.)</summary>
+    /// existing section.
+    /// </summary>
     public AgentBase PromptAddToSection(
         string title,
         string? body = null,
@@ -615,22 +591,19 @@ public class AgentBase : Service
         return $"You are {Name}, a helpful AI assistant.";
     }
 
-    /// <summary>Return the raw prompt text if set, else null.
-    /// (equivalent to Python's ``PromptManager.get_raw_prompt``.)</summary>
+    /// <summary>Return the raw prompt text if set, else null.</summary>
     public string? GetRawPrompt() => string.IsNullOrEmpty(_promptText) ? null : _promptText;
 
-    /// <summary>Return the post-prompt text if set, else null.
-    /// (equivalent to Python's ``PromptManager.get_post_prompt``.)</summary>
+    /// <summary>Return the post-prompt text if set, else null.</summary>
     public string? GetPostPrompt() => string.IsNullOrEmpty(_postPrompt) ? null : _postPrompt;
 
-    /// <summary>Return the contexts configuration if defined, else null.
-    /// (equivalent to Python's ``PromptManager.get_contexts``.)</summary>
+    /// <summary>Return the contexts configuration if defined, else null.</summary>
     public Dictionary<string, object>? GetContexts() =>
         _contextBuilder is null ? null : _contextBuilder.ToDict();
 
     /// <summary>Set the prompt as a list-of-section dicts (POM form).
-    /// Throws when ``UsePom`` is false. (equivalent to Python's
-    /// ``PromptManager.set_prompt_pom``.)</summary>
+    /// Throws when ``UsePom`` is false.
+    /// </summary>
     public AgentBase SetPromptPom(IReadOnlyList<Dictionary<string, object>> pom)
     {
         if (!_usePom)
@@ -643,7 +616,7 @@ public class AgentBase : Service
     }
 
     /// <summary>The prompt as a <see cref="POM.PromptObjectModel"/>
-    /// instance (equivalent to Python's ``agent.pom``). Returns null when
+    /// instance. Returns null when
     /// <c>UsePom</c> is false. Materialised on each access from the
     /// internal list-of-dicts so mutations stay round-trip-safe. To
     /// inspect raw section dicts, use <see cref="GetPromptSections"/>.</summary>
@@ -675,7 +648,7 @@ public class AgentBase : Service
     public IReadOnlyList<Dictionary<string, object>> GetPromptSections() => _pomSections;
 
     /// <summary>Create a per-call SWAIG-function token. Returns empty
-    /// string on failure. (equivalent to Python's ``StateMixin._create_tool_token``.)</summary>
+    /// string on failure.</summary>
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort token creation; any failure returns an empty string to match the Python reference's swallow-and-fallback behavior.")]
     public string CreateToolToken(string toolName, string callId)
     {
@@ -691,8 +664,8 @@ public class AgentBase : Service
 
     /// <summary>Validate a per-call SWAIG-function token. Rejects
     /// when the function is not registered, when the SessionManager
-    /// rejects the token, or on any error. (equivalent to Python's
-    /// ``StateMixin.validate_tool_token``.)</summary>
+    /// rejects the token, or on any error.
+    /// </summary>
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort token validation; any failure is treated as an invalid token (returns false) to match the Python reference's swallow-and-reject behavior.")]
     public bool ValidateToolToken(string functionName, string token, string callId)
     {
@@ -1038,8 +1011,8 @@ public class AgentBase : Service
     }
 
     /// <summary>
-    /// Add a pronunciation rule. Mirrors Python
-    /// <c>add_pronunciation(replace, with_text, ignore_case=False)</c>: the SWML
+    /// Add a pronunciation rule.
+    /// The SWML
     /// wire keys are <c>replace</c>, <c>with</c>, and <c>ignore_case</c> (a bool,
     /// emitted only when true — matches signalwire-agents schema.json
     /// <c>Pronounce</c>).
@@ -1447,11 +1420,11 @@ public class AgentBase : Service
         return _skillManager;
     }
 
-    /// <summary>Skill manager (equivalent to Python's ``agent.skill_manager``).</summary>
+    /// <summary>Skill manager.</summary>
     [SuppressMessage("Naming", "CA1721", Justification = "The SkillManager property and GetSkillManager() both intentionally exist to mirror the Python reference surface (skill_manager + get_skill_manager()).")]
     public SkillManager SkillManager => GetSkillManager();
 
-    /// <summary>Return the agent name (equivalent to Python's ``agent.get_name()``).</summary>
+    /// <summary>Return the agent name.</summary>
     [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface (Python agent.get_name()).")]
     [SuppressMessage("Naming", "CA1721", Justification = "GetName() and the inherited Name property both intentionally exist to mirror the Python reference surface (get_name() + name).")]
     public string GetName() => Name;
@@ -1461,7 +1434,7 @@ public class AgentBase : Service
     // Python's ``agent.get_full_url(include_auth=False)``.
 
     /// <summary>Enable auto-mapping of SIP usernames to this agent's
-    /// route (equivalent to Python's ``agent.auto_map_sip_usernames()``).
+    /// route.
     /// Chainable.</summary>
     public AgentBase AutoMapSipUsernames()
     {
@@ -1909,9 +1882,8 @@ public class AgentBase : Service
     /// non-signed route): delegates to <see cref="Service.HandleRequest"/>.
     /// </para>
     ///
-    /// <para>(equivalent to Python's <c>web_mixin._register_routes</c> wraps the
-    /// signed POST routes in a FastAPI <c>Depends(sig_dep)</c> dependency
-    /// when <c>signing_key</c> is set; this is the .NET equivalent.)</para>
+    /// <para>
+    /// </para>
     /// </summary>
     public override (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
         string method,

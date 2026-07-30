@@ -42,7 +42,7 @@ namespace SignalWire.Utils;
 /// as defence in depth, not as a substitute for network-level egress
 /// restrictions.</para>
 ///
-/// <para>Mirrors Python's <c>signalwire.utils.url_validator.validate_url</c>.</para>
+/// <para></para>
 /// </summary>
 public static class UrlValidator
 {
@@ -55,8 +55,8 @@ public static class UrlValidator
 
     /// <summary>Validate that a URL is safe to fetch (not pointing to
     /// private/internal resources). Returns true when safe, false when
-    /// rejected. (equivalent to Python's
-    /// ``signalwire.utils.url_validator.validate_url(url, allow_private)``.)</summary>
+    /// rejected.
+    /// </summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API and validated as text; converting churns call sites.")]
     public static bool ValidateUrl(string url, bool allowPrivate = false)
     {

@@ -42,7 +42,7 @@ namespace SignalWire.POM;
 /// rebuilds a builder — index included — from previously serialized
 /// section dicts.</para>
 ///
-/// <para>Mirrors Python's <c>signalwire.core.pom_builder.PomBuilder</c>.</para>
+/// <para></para>
 /// </summary>
 public class PomBuilder
 {
@@ -55,8 +55,7 @@ public class PomBuilder
         _sections = new Dictionary<string, Section>();
     }
 
-    /// <summary>Add a new section. (equivalent to Python's
-    /// ``PomBuilder.add_section``.)</summary>
+    /// <summary>Add a new section.</summary>
     public PomBuilder AddSection(
         string title,
         string body = "",
@@ -83,7 +82,7 @@ public class PomBuilder
     }
 
     /// <summary>Add content to an existing section (auto-vivifies if
-    /// missing). (equivalent to Python's ``PomBuilder.add_to_section``.)</summary>
+    /// missing).</summary>
     public PomBuilder AddToSection(
         string title,
         string? body = null,
@@ -113,8 +112,8 @@ public class PomBuilder
     }
 
     /// <summary>Add a subsection under an existing section
-    /// (auto-vivifies parent if missing). (equivalent to Python's
-    /// ``PomBuilder.add_subsection``.)</summary>
+    /// (auto-vivifies parent if missing).
+    /// </summary>
     public PomBuilder AddSubsection(
         string parentTitle,
         string title,
@@ -129,12 +128,10 @@ public class PomBuilder
         return this;
     }
 
-    /// <summary>Check if a section with the given title exists.
-    /// (equivalent to Python's ``PomBuilder.has_section``.)</summary>
+    /// <summary>Check if a section with the given title exists.</summary>
     public bool HasSection(string title) => _sections.ContainsKey(title);
 
-    /// <summary>Get a section by title, or null if absent.
-    /// (equivalent to Python's ``PomBuilder.get_section``.)</summary>
+    /// <summary>Get a section by title, or null if absent.</summary>
     public Section? GetSection(string title) =>
         _sections.TryGetValue(title, out var s) ? s : null;
 
@@ -150,8 +147,7 @@ public class PomBuilder
     /// <summary>Serialize the POM to a JSON string.</summary>
     public string ToJson() => Pom.ToJson();
 
-    /// <summary>Build a PomBuilder from a list of section dicts.
-    /// (equivalent to Python's ``PomBuilder.from_sections`` classmethod.)</summary>
+    /// <summary>Build a PomBuilder from a list of section dicts.</summary>
     public static PomBuilder FromSections(IReadOnlyList<Dictionary<string, object>> sections)
     {
         var builder = new PomBuilder();

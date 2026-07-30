@@ -32,8 +32,7 @@ public sealed class ClientOptions
     /// A SignalWire JWT. When supplied, it authenticates on its own — the
     /// project id is carried inside the token, so <see cref="Project"/> and
     /// <see cref="Token"/> are not required. Falls back to the
-    /// <c>SIGNALWIRE_JWT_TOKEN</c> env var. (equivalent to Python's
-    /// <c>RelayClient(jwt_token=...)</c>, relay/client.py:166,173.)
+    /// <c>SIGNALWIRE_JWT_TOKEN</c> env var.
     /// </summary>
     public string? JwtToken { get; init; }
 
@@ -94,7 +93,7 @@ public class Client : IAsyncDisposable
     /// keys wherever they appear in the (JSON) frame, so a
     /// <c>SIGNALWIRE_LOG_LEVEL=debug</c> session never emits live credentials or
     /// the re-auth blob. Non-string / structural content is preserved so the
-    /// frame stays diagnostic. Mirrors Python's <c>_scrub_frame</c>.
+    /// frame stays diagnostic.
     /// </summary>
     internal static string ScrubFrame(string raw)
         => ScrubRe.Replace(raw ?? "", "$1\"***\"");
@@ -105,7 +104,7 @@ public class Client : IAsyncDisposable
 
     /// <summary>
     /// The JWT this client authenticates with, if any. Empty when using
-    /// project/token auth. (equivalent to Python's <c>jwt_token</c>.)
+    /// project/token auth.
     /// </summary>
     public string JwtToken { get; }
     public string Host { get; set; }
@@ -164,8 +163,8 @@ public class Client : IAsyncDisposable
     public Func<Call, Task>? OnCallHandler { get; set; }
 
     /// <summary>
-    /// Inbound message handler. Mirrors Python's <c>@client.on_message</c>:
-    /// fires with a fully-formed <see cref="Message"/> for every
+    /// Inbound message handler.
+    /// Fires with a fully-formed <see cref="Message"/> for every
     /// <c>messaging.receive</c> event.
     /// </summary>
     public Func<Message, Task>? OnMessageHandler { get; set; }

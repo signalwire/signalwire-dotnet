@@ -29,7 +29,7 @@ namespace SignalWire.AIChat;
 /// <c>aiohttp.ClientTimeout(total=None, connect=10, sock_read=60)</c>. Leading
 /// keepalive whitespace is valid JSON, so the buffered parse is unaffected.</para>
 ///
-/// <para>Mirrors the python reference <c>signalwire.ai_chat.AIChatClient</c>.</para>
+/// <para></para>
 ///
 /// <example>
 /// <code>

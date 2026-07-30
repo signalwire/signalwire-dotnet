@@ -33,8 +33,7 @@ public static class ExecutionMode
     /// <summary>Returns the execution-mode string —
     /// ``"server"`` (default), ``"cgi"``, ``"lambda"``,
     /// ``"google_cloud_function"``, ``"azure_function"``.
-    /// (equivalent to Python's
-    /// ``signalwire.core.logging_config.get_execution_mode``.)</summary>
+    /// </summary>
     public static string GetExecutionMode()
     {
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GATEWAY_INTERFACE")))
@@ -58,7 +57,7 @@ public static class ExecutionMode
     }
 
     /// <summary>True when running in any serverless environment
-    /// (anything other than ``"server"``). (equivalent to Python's
-    /// ``signalwire.utils.is_serverless_mode``.)</summary>
+    /// (anything other than ``"server"``).
+    /// </summary>
     public static bool IsServerlessMode() => GetExecutionMode() != "server";
 }

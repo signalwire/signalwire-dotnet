@@ -47,13 +47,11 @@ public sealed class SessionManager
 
     /// <summary>
     /// The HMAC signing key. Either the value supplied at construction or the
-    /// generated 64-character hex default. (equivalent to Python's
-    /// <c>secret_key</c>.)
+    /// generated 64-character hex default.
     /// </summary>
     public string SecretKey { get; }
 
-    /// <summary>Get the configured token expiry duration in seconds.
-    /// (equivalent to Python's <c>token_expiry_secs</c>.)</summary>
+    /// <summary>Get the configured token expiry duration in seconds.</summary>
     public int TokenExpirySecs => _tokenExpirySecs;
 
     /// <summary>
@@ -159,9 +157,7 @@ public sealed class SessionManager
     // Tool-token aliases + legacy session lifecycle (SessionManager parity)
     // ------------------------------------------------------------------
 
-    /// <summary>Alias of the token generator, kept for API consistency.
-    /// (equivalent to Python's ``generate_token`` == C# ``CreateToken``; also exposed as
-    /// ``create_tool_token``.)</summary>
+    /// <summary>Alias of the token generator, kept for API consistency.</summary>
     public string CreateToolToken(string functionName, string callId)
         => CreateToken(functionName, callId);
 
@@ -186,7 +182,7 @@ public sealed class SessionManager
     public bool SetSessionMetadata(string callId, string key, object value) => true;
 
     /// <summary>Decode a token into its components WITHOUT validating it (for
-    /// debugging). (equivalent to Python's ``debug_token``.)</summary>
+    /// debugging).</summary>
     [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
     public Dictionary<string, object> DebugToken(string token)
     {

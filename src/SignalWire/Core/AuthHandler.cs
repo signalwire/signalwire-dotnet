@@ -98,8 +98,7 @@ public sealed class AuthHandler
         SetupAuthMethods();
     }
 
-    /// <summary>The security configuration this handler authenticates against.
-    /// (equivalent to Python's <c>security_config</c>, auth_handler.py:63.)</summary>
+    /// <summary>The security configuration this handler authenticates against.</summary>
     public SecurityConfig SecurityConfig => _securityConfig;
 
     // Test/embedding seam mirroring the Python reference's duck-typed

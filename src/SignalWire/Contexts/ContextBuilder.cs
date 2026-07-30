@@ -103,28 +103,22 @@ public class GatherQuestion
 
     public string Key => _key;
 
-    /// <summary>The question text put to the caller.
-    /// (equivalent to Python's <c>question</c>.)</summary>
+    /// <summary>The question text put to the caller.</summary>
     public string Question => _question;
 
-    /// <summary>The answer's expected type, defaulting to <c>"string"</c>.
-    /// (equivalent to Python's <c>type</c>.)</summary>
+    /// <summary>The answer's expected type, defaulting to <c>"string"</c>.</summary>
     public string Type => _type;
 
-    /// <summary>Whether the answer must be confirmed back to the caller.
-    /// (equivalent to Python's <c>confirm</c>.)</summary>
+    /// <summary>Whether the answer must be confirmed back to the caller.</summary>
     public bool Confirm => _confirm;
 
-    /// <summary>An optional prompt override for this question.
-    /// (equivalent to Python's <c>prompt</c>.)</summary>
+    /// <summary>An optional prompt override for this question.</summary>
     public string? Prompt => _prompt;
 
-    /// <summary>The SWAIG functions reachable while answering this question.
-    /// (equivalent to Python's <c>functions</c>.)</summary>
+    /// <summary>The SWAIG functions reachable while answering this question.</summary>
     public IReadOnlyList<string>? Functions => _functions;
 
-    /// <summary>Tri-state isolation: null inherits the gather_info default.
-    /// (equivalent to Python's <c>isolated</c>.)</summary>
+    /// <summary>Tri-state isolation: null inherits the gather_info default.</summary>
     public bool? Isolated => _isolated;
 
     public Dictionary<string, object> ToDict()

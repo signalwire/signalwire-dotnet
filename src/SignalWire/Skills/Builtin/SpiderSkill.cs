@@ -32,8 +32,7 @@ public sealed class SpiderSkill : SkillBase
     /// XPath expressions selecting the elements dropped whole (element AND its
     /// text) before text extraction. Prefilled with the same seven the
     /// reference sets in <c>__init__</c>; callers may add or remove entries to
-    /// change what gets stripped. (equivalent to Python's
-    /// <c>SpiderSkill.remove_xpaths</c>.)
+    /// change what gets stripped.
     /// </summary>
     /// <remarks>
     /// The reference evaluates these with lxml. The .NET port ships a regex

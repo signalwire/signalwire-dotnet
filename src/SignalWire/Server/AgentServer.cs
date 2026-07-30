@@ -73,13 +73,11 @@ public partial class AgentServer
 
     /// <summary>
     /// The configured logging level (<c>debug</c>, <c>info</c>, <c>warning</c>,
-    /// <c>error</c>, <c>critical</c>), lower-cased. (equivalent to Python's
-    /// <c>log_level</c>.)
+    /// <c>error</c>, <c>critical</c>), lower-cased.
     /// </summary>
     public string LogLevel { get; }
 
-    /// <summary>The agent_server logger. (equivalent to Python's
-    /// ``AgentServer.logger`` instance attribute.)</summary>
+    /// <summary>The agent_server logger.</summary>
     public Logger Logger => _logger;
 
     // ==================================================================
@@ -153,8 +151,7 @@ public partial class AgentServer
     /// <summary>
     /// Enable SIP routing on this server. ``route`` lets the caller pin
     /// a non-default SIP route prefix; ``autoMap`` opts agents into
-    /// auto-mapped sip_username = agent name. Matches Python's
-    /// ``setup_sip_routing(self, route='/sip', auto_map=True)``.
+    /// auto-mapped sip_username = agent name.
     /// </summary>
     public AgentServer SetupSipRouting(string route = "/sip", bool autoMap = true)
     {
@@ -230,8 +227,7 @@ public partial class AgentServer
     }
 
     /// <summary>Auto-map an agent's derived SIP username(s) to its route
-    /// (equivalent to Python's ``_auto_map_agent_sip_usernames``: clean name + clean
-    /// route segment).</summary>
+    /// .</summary>
     [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the normalized SIP-username mapping-key form (matches Python's cleaned .lower() name/route).")]
     private void AutoMapAgentSipUsernames(AgentBase agent, string agentRoute)
     {

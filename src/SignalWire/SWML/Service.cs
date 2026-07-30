@@ -30,8 +30,7 @@ public sealed class ServiceOptions
 
     /// <summary>
     /// Optional path to the SWML schema file. When null the service uses the
-    /// schema bundled with the assembly. (equivalent to Python's
-    /// <c>SWMLService.__init__(schema_path=...)</c>.)
+    /// schema bundled with the assembly.
     /// </summary>
     public string? SchemaPath { get; init; }
 
@@ -39,16 +38,14 @@ public sealed class ServiceOptions
     /// Optional path to a JSON configuration file. When null the service
     /// discovers one by service name via <see cref="Core.ConfigLoader.FindConfigFile"/>.
     /// Feeds the unified <see cref="Core.SecurityConfig"/> (SSL, basic-auth,
-    /// CORS, rate limits). (equivalent to Python's
-    /// <c>SWMLService.__init__(config_file=...)</c>.)
+    /// CORS, rate limits).
     /// </summary>
     public string? ConfigFile { get; init; }
 
     /// <summary>
     /// Enable SWML schema validation. Default true. Can also be disabled via
     /// the <c>SWML_SKIP_SCHEMA_VALIDATION=1</c> env var; an explicit false
-    /// here wins regardless of the env var. (equivalent to Python's
-    /// <c>SWMLService.__init__(schema_validation=...)</c>.)
+    /// here wins regardless of the env var.
     /// </summary>
     public bool SchemaValidation { get; init; } = true;
 }
@@ -103,25 +100,21 @@ public class Service
 
     /// <summary>Unified security configuration (SSL, basic auth, CORS, rate
     /// limits) loaded from defaults, environment, then the config file.
-    /// (equivalent to Python's <c>SWMLService.security</c>.)</summary>
+    /// </summary>
     public SecurityConfig Security { get; }
 
     /// <summary>Whether TLS is enabled for this service. Read off
     /// <see cref="Security"/> at construction, and overridable at serve time.
-    /// (equivalent to Python's <c>SWMLService.ssl_enabled</c>, which is
-    /// assigned <c>self.security.ssl_enabled</c> in <c>__init__</c>.)</summary>
+    /// </summary>
     public bool SslEnabled { get; set; }
 
-    /// <summary>Path to the server TLS certificate (PEM), or null.
-    /// (equivalent to Python's <c>SWMLService.ssl_cert_path</c>.)</summary>
+    /// <summary>Path to the server TLS certificate (PEM), or null.</summary>
     public string? SslCertPath { get; set; }
 
-    /// <summary>Path to the server TLS private key (PEM), or null.
-    /// (equivalent to Python's <c>SWMLService.ssl_key_path</c>.)</summary>
+    /// <summary>Path to the server TLS private key (PEM), or null.</summary>
     public string? SslKeyPath { get; set; }
 
-    /// <summary>Serving domain used for TLS/URL generation, or null.
-    /// (equivalent to Python's <c>SWMLService.domain</c>.)</summary>
+    /// <summary>Serving domain used for TLS/URL generation, or null.</summary>
     public string? Domain { get; set; }
 
     // The resolved config-file path, the explicit schema path, and the
@@ -136,8 +129,8 @@ public class Service
 
     /// <summary>True when SWML schema validation is enabled for this service.
     /// False when disabled via <c>SchemaValidation = false</c> or the
-    /// <c>SWML_SKIP_SCHEMA_VALIDATION</c> env var. (equivalent to Python's
-    /// private <c>SchemaUtils._validation_enabled</c>.)</summary>
+    /// <c>SWML_SKIP_SCHEMA_VALIDATION</c> env var.
+    /// </summary>
     internal bool SchemaValidationEnabled => _schemaValidation;
     [SuppressMessage("Naming", "CA1721", Justification = "get_document matches the cross-port SWMLService surface (distinct from the Document property).")]
     public Document Document { get; }
@@ -296,8 +289,8 @@ public class Service
     }
 
     /// <summary>Get the Basic Auth credentials plus the SOURCE of the
-    /// credentials (equivalent to Python's
-    /// ``get_basic_auth_credentials(include_source=True)``).
+    /// credentials
+    /// .
     /// Source is one of "provided", "environment", or "generated".</summary>
     public (string User, string Password, string Source) GetBasicAuthCredentialsWithSource()
     {
@@ -322,7 +315,7 @@ public class Service
 
     /// <summary>Validate provided basic-auth credentials against the
     /// configured ones (constant-time comparison)
-    /// (equivalent to Python's ``validate_basic_auth(username, password)``).</summary>
+    /// .</summary>
     public virtual bool ValidateBasicAuth(string username, string password)
     {
         if (_basicAuthUser is null || _basicAuthPassword is null) return false;
@@ -395,7 +388,7 @@ public class Service
     /// The verb config is validated against the SWML schema (the STRICT-RENDER
     /// contract): an unknown verb, an unknown/misspelled config key, or a
     /// wrong-typed value throws <see cref="SchemaValidationError"/> rather than
-    /// being silently dropped. Mirrors Python's <c>SWMLService.add_verb</c>.</summary>
+    /// being silently dropped.</summary>
     public bool AddVerb(string verbName, object config)
     {
         ValidateVerbConfig(verbName, config);
@@ -517,8 +510,8 @@ public class Service
 
     /// <summary>Enable debug routes for testing/development. Debug routes are
     /// always registered by the request handler, so this method exists only for
-    /// backward compatibility and method chaining (equivalent to Python's
-    /// <c>enable_debug_routes</c> is likewise a no-op that returns self).</summary>
+    /// backward compatibility and method chaining
+    /// .</summary>
     public virtual Service EnableDebugRoutes()
     {
         return this;
@@ -590,7 +583,7 @@ public class Service
     /// typically override <see cref="OnSwmlRequest"/> instead of this
     /// method. Return null to use the default SWML rendering, or a
     /// dictionary of modifications to merge in.
-    /// (equivalent to Python's ``WebMixin.on_request``.)</summary>
+    /// </summary>
     public virtual Dictionary<string, object>? OnRequest(
         Dictionary<string, object?>? requestData = null,
         string? callbackPath = null)
@@ -600,8 +593,8 @@ public class Service
 
     /// <summary>Customization hook for subclasses to modify SWML based
     /// on request data. Return null to use default rendering, or a
-    /// dictionary of modifications. (equivalent to Python's
-    /// ``WebMixin.on_swml_request``.)</summary>
+    /// dictionary of modifications.
+    /// </summary>
     public virtual Dictionary<string, object>? OnSwmlRequest(
         Dictionary<string, object?>? requestData = null,
         string? callbackPath = null)
@@ -882,23 +875,22 @@ public class Service
     }
 
     /// <summary>Check if a SWAIG function is registered
-    /// (equivalent to Python's ``tool_registry.has_function(name)``).</summary>
+    /// .</summary>
     public virtual bool HasFunction(string name) => _tools.ContainsKey(name);
 
     /// <summary>Get a registered SWAIG function by name, or null
-    /// (equivalent to Python's ``tool_registry.get_function(name)``).</summary>
+    /// .</summary>
     public virtual Dictionary<string, object>? GetFunction(string name) =>
         _tools.TryGetValue(name, out var fn) ? fn : null;
 
     /// <summary>Get a snapshot of all registered SWAIG functions
-    /// (equivalent to Python's ``tool_registry.get_all_functions()`` — returns
-    /// a copy so subsequent registrations don't mutate the snapshot).</summary>
+    /// .</summary>
     public virtual Dictionary<string, Dictionary<string, object>> GetAllFunctions() =>
         new Dictionary<string, Dictionary<string, object>>(_tools);
 
     /// <summary>Remove a registered SWAIG function. Returns true if
-    /// removed, false if not found (equivalent to Python's
-    /// ``tool_registry.remove_function(name)``).</summary>
+    /// removed, false if not found
+    /// .</summary>
     public virtual bool RemoveFunction(string name)
     {
         if (!_tools.ContainsKey(name)) return false;
@@ -1339,7 +1331,7 @@ public class Service
     /// Stamp the HTTP-layer headers (security headers + a default
     /// <c>Content-Type</c>) onto a bare decision-core triple's header map. The
     /// framework-free <see cref="HandleRequest"/> core returns bare headers
-    /// (equivalent to Python's <c>_handle_request_core</c> returns <c>(status, {}, body)</c>);
+    /// ;
     /// the security + Content-Type headers belong to the wire response and are
     /// applied only when actually serving over HTTP. Headers the core already
     /// set (e.g. <c>WWW-Authenticate</c>, <c>Location</c>) are preserved; a

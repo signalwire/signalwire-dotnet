@@ -21,8 +21,7 @@ namespace SignalWire.Agents;
 /// Agent implementation for the Amazon Bedrock voice-to-voice model.
 /// </summary>
 /// <remarks>
-/// Mirrors the Python reference <c>signalwire.agents.bedrock.BedrockAgent</c> and
-/// the Ruby <c>SignalWire::Agents::BedrockAgent</c>. It renders the same base SWML
+/// Renders the same base SWML
 /// as <see cref="AgentBase"/> and then transforms the <c>ai</c> verb into an
 /// <c>amazon_bedrock</c> verb whose object carries voice and inference parameters
 /// inside its prompt config, per the SWML <c>amazon_bedrock</c> schema (keys:
@@ -44,9 +43,7 @@ public class BedrockAgent : AgentBase
     private int _maxTokens;
 
     /// <summary>
-    /// Initialize a BedrockAgent. (equivalent to Python's
-    /// <c>__init__(name="bedrock_agent", route="/bedrock", system_prompt=None,
-    /// voice_id="matthew", temperature=0.7, top_p=0.9, max_tokens=1024, **kwargs)</c>.)
+    /// Initialize a BedrockAgent.
     /// </summary>
     public BedrockAgent(BedrockOptions? options = null)
         : base(ToAgentOptions(options ??= new BedrockOptions()))
@@ -74,8 +71,7 @@ public class BedrockAgent : AgentBase
 
     /// <summary>
     /// Transform the rendered SWML document, swapping the <c>ai</c> verb for an
-    /// <c>amazon_bedrock</c> verb. (equivalent to Python's <c>_render_swml</c> overrides the
-    /// base render to swap the <c>ai</c> verb structure for <c>amazon_bedrock</c>.)
+    /// <c>amazon_bedrock</c> verb.
     /// Overrides the protected <see cref="AgentBase.TransformRenderedSwml"/> hook so
     /// it stays off the public SDK surface — matching the private reference override.
     /// </summary>
@@ -106,7 +102,7 @@ public class BedrockAgent : AgentBase
     }
 
     /// <summary>
-    /// Set the Bedrock voice id. (equivalent to Python's <c>set_voice</c>.)
+    /// Set the Bedrock voice id.
     /// </summary>
     public BedrockAgent SetVoice(string voiceId)
     {
@@ -116,7 +112,6 @@ public class BedrockAgent : AgentBase
 
     /// <summary>
     /// Update Bedrock inference parameters. Only non-null values are applied.
-    /// (equivalent to Python's <c>set_inference_params(temperature=None, top_p=None, max_tokens=None)</c>.)
     /// </summary>
     public BedrockAgent SetInferenceParams(double? temperature = null, double? topP = null, int? maxTokens = null)
     {
@@ -144,7 +139,7 @@ public class BedrockAgent : AgentBase
 
     /// <summary>
     /// Set LLM model — not applicable for Bedrock (fixed voice-to-voice model).
-    /// Logs a warning and does nothing. (equivalent to Python's <c>set_llm_model</c>.)
+    /// Logs a warning and does nothing.
     /// </summary>
     public BedrockAgent SetLlmModel(string model)
     {
@@ -155,7 +150,6 @@ public class BedrockAgent : AgentBase
 
     /// <summary>
     /// Set LLM temperature — redirects to <see cref="SetInferenceParams"/>.
-    /// (equivalent to Python's <c>set_llm_temperature</c>.)
     /// </summary>
     public BedrockAgent SetLlmTemperature(double temperature)
     {
@@ -164,8 +158,7 @@ public class BedrockAgent : AgentBase
 
     /// <summary>
     /// Set post-prompt LLM parameters — not applicable for Bedrock (the post-prompt
-    /// uses OpenAI configured server-side). Warns and no-ops. (equivalent to Python's
-    /// <c>set_post_prompt_llm_params</c>.)
+    /// uses OpenAI configured server-side). Warns and no-ops.
     /// </summary>
     public new BedrockAgent SetPostPromptLlmParams(Dictionary<string, object>? parameters = null)
     {
@@ -177,7 +170,7 @@ public class BedrockAgent : AgentBase
 
     /// <summary>
     /// Set prompt LLM parameters — use <see cref="SetInferenceParams"/> instead for
-    /// Bedrock. Warns and no-ops. (equivalent to Python's <c>set_prompt_llm_params</c>.)
+    /// Bedrock. Warns and no-ops.
     /// </summary>
     public new BedrockAgent SetPromptLlmParams(Dictionary<string, object>? parameters = null)
     {

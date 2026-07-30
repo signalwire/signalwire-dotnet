@@ -38,12 +38,10 @@ public class Call
     public string? EndReason { get; set; }
     public string? Context { get; set; }
 
-    /// <summary>The SignalWire project this call belongs to.
-    /// (equivalent to Python's <c>project_id</c>.)</summary>
+    /// <summary>The SignalWire project this call belongs to.</summary>
     public string? ProjectId { get; set; }
 
-    /// <summary>The call's segment identifier.
-    /// (equivalent to Python's <c>segment_id</c>.)</summary>
+    /// <summary>The call's segment identifier.</summary>
     public string? SegmentId { get; set; }
 
     public string? Direction { get; set; }
@@ -715,7 +713,7 @@ public class Call
         => WaitForStateAsync(Constants.CallStateEnding, timeout);
 
     /// <summary>Wait for a specific event, optionally filtered by a predicate
-    /// (equivalent to Python's ``Call.wait_for(event_type, predicate, timeout)``).
+    /// .
     /// When <paramref name="predicate"/> is null the first event of that type
     /// resolves the wait.</summary>
     public async Task<RelayEvent> WaitForAsync(
@@ -755,13 +753,12 @@ public class Call
         }
     }
 
-    /// <summary>Wait for the call to reach the ended state.
-    /// (equivalent to Python's ``Call.wait_for_ended``.)</summary>
+    /// <summary>Wait for the call to reach the ended state.</summary>
     public Task<RelayEvent> WaitForEndedAsync(double? timeout = null)
         => WaitForStateAsync(Constants.CallStateEnded, timeout);
 
-    /// <summary>A concise debug representation of this call (equivalent to Python's
-    /// ``Call.__repr__``).</summary>
+    /// <summary>A concise debug representation of this call
+    /// .</summary>
     public override string ToString() => $"<Call id={CallId} state={State}>";
 
     // ------------------------------------------------------------------

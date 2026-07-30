@@ -61,8 +61,8 @@ namespace SignalWire.POM;
 public class Section
 {
     /// <summary>Section title. Null for the (allowed) first untitled
-    /// top-level section. (equivalent to Python's ``Section.title`` is
-    /// ``Optional[str]``.)</summary>
+    /// top-level section.
+    /// </summary>
     public string? Title { get; set; }
 
     public string Body { get; set; }
@@ -76,8 +76,8 @@ public class Section
     internal List<string> BulletsMutable => _bullets;
 
     /// <summary>Three-state numbering: null = inherit, true = force on,
-    /// false = force off. (equivalent to Python's ``numbered`` is
-    /// ``Optional[bool]``.) Sibling propagation: if any sibling at the
+    /// false = force off.
+    ///  Sibling propagation: if any sibling at the
     /// same level has Numbered==true, all siblings get numbered unless
     /// they have Numbered==false.</summary>
     public bool? Numbered { get; set; }
@@ -107,16 +107,14 @@ public class Section
         _subsections = new List<Section>();
     }
 
-    /// <summary>Set or replace this section's body text.
-    /// (equivalent to Python's ``Section.add_body``.)</summary>
+    /// <summary>Set or replace this section's body text.</summary>
     public Section AddBody(string body)
     {
         Body = body;
         return this;
     }
 
-    /// <summary>Append bullets to this section.
-    /// (equivalent to Python's ``Section.add_bullets``.)</summary>
+    /// <summary>Append bullets to this section.</summary>
     public Section AddBullets(IReadOnlyList<string> bullets)
     {
         ArgumentNullException.ThrowIfNull(bullets);
@@ -125,7 +123,7 @@ public class Section
     }
 
     /// <summary>Add a subsection under this section, returning the new
-    /// Section. (equivalent to Python's ``Section.add_subsection``.)</summary>
+    /// Section.</summary>
     public Section AddSubsection(
         string title,
         string body = "",
@@ -277,7 +275,7 @@ public class Section
     /// <summary>Serialize to a Dictionary suitable for JSON. Emits
     /// keys in this exact order: title, body, bullets, subsections,
     /// numbered, numberedBullets — and only when non-empty / non-null /
-    /// non-default. Mirrors Python's ``Section.to_dict``.</summary>
+    /// non-default.</summary>
     public Dictionary<string, object> ToDict()
     {
         var d = new Dictionary<string, object>();
@@ -350,7 +348,7 @@ public class PromptObjectModel
 
     /// <summary>Add a top-level section to the model, returning the new
     /// Section. Only the first added section may have a null title.
-    /// (equivalent to Python's ``PromptObjectModel.add_section``.)</summary>
+    /// </summary>
     public Section AddSection(
         string? title = null,
         string body = "",
@@ -367,7 +365,7 @@ public class PromptObjectModel
     }
 
     /// <summary>Recursively find a section by title. Returns null if not
-    /// found. (equivalent to Python's ``PromptObjectModel.find_section``.)</summary>
+    /// found.</summary>
     public Section? FindSection(string title)
     {
         foreach (var s in _sections)
@@ -484,8 +482,7 @@ public class PromptObjectModel
         return serializer.Serialize(sectionDicts);
     }
 
-    /// <summary>Construct a PromptObjectModel from YAML string.
-    /// (equivalent to Python's ``PromptObjectModel.from_yaml``.)</summary>
+    /// <summary>Construct a PromptObjectModel from YAML string.</summary>
     public static PromptObjectModel FromYaml(string yaml)
     {
         var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
@@ -517,8 +514,7 @@ public class PromptObjectModel
         }
     }
 
-    /// <summary>Construct a PromptObjectModel from JSON.
-    /// (equivalent to Python's ``PromptObjectModel.from_json``.)</summary>
+    /// <summary>Construct a PromptObjectModel from JSON.</summary>
     public static PromptObjectModel FromJson(string json)
     {
         var pom = new PromptObjectModel();
@@ -593,7 +589,7 @@ public class PromptObjectModel
 
     /// <summary>Add a PromptObjectModel as a subsection of an existing
     /// section in this model, identified by title.
-    /// (equivalent to Python's ``PromptObjectModel.add_pom_as_subsection``.)</summary>
+    /// </summary>
     public void AddPomAsSubsection(string targetTitle, PromptObjectModel pomToAdd)
     {
         ArgumentNullException.ThrowIfNull(pomToAdd);
@@ -605,7 +601,7 @@ public class PromptObjectModel
 
     /// <summary>Add a PromptObjectModel as a subsection of an existing
     /// Section object directly. Overload mirrors Python's polymorphism.
-    /// (equivalent to Python's ``PromptObjectModel.add_pom_as_subsection``.)</summary>
+    /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Performance", "CA1822:Mark members as static",
         Justification = "Instance overload mirrors the AddPomAsSubsection(string, ...) sibling and the cross-port instance surface.")]

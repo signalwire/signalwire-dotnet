@@ -28,8 +28,7 @@ public sealed class Message
     public IReadOnlyList<string> Media { get; private set; }
     public IReadOnlyList<string> Tags { get; private set; }
 
-    /// <summary>How many SMS segments the message was split into.
-    /// (equivalent to Python's <c>segments</c>, message.py:53,65.)</summary>
+    /// <summary>How many SMS segments the message was split into.</summary>
     public int Segments { get; private set; }
     public string? State { get; private set; }
 
@@ -48,8 +47,8 @@ public sealed class Message
     public bool Completed { get; private set; }
     public string? Result { get; private set; }
 
-    /// <summary>A concise debug representation of this message (equivalent to Python's
-    /// ``Message.__repr__``).</summary>
+    /// <summary>A concise debug representation of this message
+    /// .</summary>
     public override string ToString()
         => $"<Message id={MessageId} state={State}>";
 

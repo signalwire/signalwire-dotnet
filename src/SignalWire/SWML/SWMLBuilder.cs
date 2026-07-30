@@ -51,7 +51,7 @@ namespace SignalWire.SWML;
 /// wrong-typed value throws instead of being written into the document
 /// unchecked.</para>
 ///
-/// <para>Mirrors Python's <c>signalwire.core.swml_builder.SWMLBuilder</c>.</para>
+/// <para></para>
 /// </summary>
 public class SWMLBuilder
 {
@@ -62,8 +62,7 @@ public class SWMLBuilder
         Service = service;
     }
 
-    /// <summary>Add an ``answer`` verb. (equivalent to Python's
-    /// ``SWMLBuilder.answer(max_duration, codecs)``.)</summary>
+    /// <summary>Add an ``answer`` verb.</summary>
     public SWMLBuilder Answer(int? maxDuration = null, string? codecs = null)
     {
         var config = new Dictionary<string, object>();
@@ -73,8 +72,7 @@ public class SWMLBuilder
         return this;
     }
 
-    /// <summary>Add a ``hangup`` verb. (equivalent to Python's
-    /// ``SWMLBuilder.hangup(reason)``.)</summary>
+    /// <summary>Add a ``hangup`` verb.</summary>
     public SWMLBuilder Hangup(string? reason = null)
     {
         var config = new Dictionary<string, object>();
@@ -83,8 +81,7 @@ public class SWMLBuilder
         return this;
     }
 
-    /// <summary>Add an ``ai`` verb. (equivalent to Python's
-    /// ``SWMLBuilder.ai(prompt_text, prompt_pom, post_prompt, post_prompt_url, swaig, ...)``.)</summary>
+    /// <summary>Add an ``ai`` verb.</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API as a SWML field value.")]
     public SWMLBuilder Ai(
         string? promptText = null,
@@ -118,8 +115,7 @@ public class SWMLBuilder
         return this;
     }
 
-    /// <summary>Add a ``play`` verb. (equivalent to Python's
-    /// ``SWMLBuilder.play(url, urls, volume, say_voice, say_language, say_gender, auto_answer)``.)</summary>
+    /// <summary>Add a ``play`` verb.</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API as a SWML field value.")]
     public SWMLBuilder Play(
         string? url = null,
@@ -153,7 +149,7 @@ public class SWMLBuilder
     /// exactly as the reference does. Emitting a literal <c>say</c> verb
     /// produced a document the schema rejects and the engine never executes.</para>
     ///
-    /// (equivalent to Python's ``SWMLBuilder.say(text, voice, language, gender, volume)``.)</summary>
+    /// </summary>
     public SWMLBuilder Say(
         string text,
         string? voice = null,
@@ -169,24 +165,20 @@ public class SWMLBuilder
             volume: volume);
     }
 
-    /// <summary>Add a section to the underlying document.
-    /// (equivalent to Python's ``SWMLBuilder.add_section``.)</summary>
+    /// <summary>Add a section to the underlying document.</summary>
     public SWMLBuilder AddSection(string sectionName)
     {
         Service.Document.AddSection(sectionName);
         return this;
     }
 
-    /// <summary>Build the SWML document as a dict.
-    /// (equivalent to Python's ``SWMLBuilder.build``.)</summary>
+    /// <summary>Build the SWML document as a dict.</summary>
     public Dictionary<string, object> Build() => Service.Document.ToDict();
 
-    /// <summary>Render the SWML document as a JSON string.
-    /// (equivalent to Python's ``SWMLBuilder.render``.)</summary>
+    /// <summary>Render the SWML document as a JSON string.</summary>
     public string Render() => JsonSerializer.Serialize(Build());
 
-    /// <summary>Reset the underlying document.
-    /// (equivalent to Python's ``SWMLBuilder.reset``.)</summary>
+    /// <summary>Reset the underlying document.</summary>
     public SWMLBuilder Reset()
     {
         Service.Document.Reset();

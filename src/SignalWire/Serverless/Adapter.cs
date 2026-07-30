@@ -185,8 +185,7 @@ public static class Adapter
     /// Extracts method, path, headers, and body from the GCF request
     /// dictionary (a normalized Flask-request shape), calls
     /// agent.HandleRequest(), and returns a response dictionary
-    /// (status, headers, body). Equivalent to Python's
-    /// ``_handle_google_cloud_function_request``.
+    /// (status, headers, body).
     /// </summary>
     public static Dictionary<string, object?> HandleGoogleCloudFunction(
         SWML.Service agent,

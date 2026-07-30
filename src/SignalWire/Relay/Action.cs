@@ -34,7 +34,6 @@ public class Action
     /// <see cref="CallId"/>, so the call is resolved through the client's live
     /// call registry rather than a second stored reference that could dangle
     /// after the call ends. Null only if the call is no longer registered.
-    /// (equivalent to Python's <c>call</c>.)
     /// </summary>
     public Call? Call =>
         Client is Client c && c.Calls.TryGetValue(CallId, out var call) ? call : null;
@@ -371,8 +370,8 @@ public class CollectAction : Action
 
 /// <summary>
 /// Handle for standalone calling.collect operations (a collect without an
-/// accompanying play prompt). Mirrors the Python reference
-/// <c>StandaloneCollectAction</c> in <c>signalwire.relay.call</c>: same shape as
+/// accompanying play prompt).
+/// Same shape as
 /// <see cref="CollectAction"/> but always uses the plain <c>collect</c> command
 /// prefix (never <c>play_and_collect</c>).
 /// </summary>

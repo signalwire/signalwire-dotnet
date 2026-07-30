@@ -26,8 +26,7 @@ public class DataMap
         _functionName = functionName;
     }
 
-    /// <summary>The SWAIG function name this data map defines.
-    /// (equivalent to Python's <c>function_name</c>, data_map.py:72.)</summary>
+    /// <summary>The SWAIG function name this data map defines.</summary>
     public string FunctionName => _functionName;
 
     /// <summary>
