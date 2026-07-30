@@ -176,7 +176,15 @@ public static class MockTest
         public string Url { get; }
         public string Host { get; }
         public int Port { get; }
+        // CA1001: this type holds an HttpClient but is deliberately NOT
+        // IDisposable. A Harness is a view onto the PROCESS-WIDE shared mock
+        // server; callers borrow it, they never own it. Making it disposable made
+        // every borrower look like an owner (CA2213 on each field, CA2000 at each
+        // call site) — the opposite of the real lifetime. The client lives for the
+        // test run and is released when the process exits.
+#pragma warning disable CA1001
         private readonly System.Net.Http.HttpClient _http;
+#pragma warning restore CA1001
 
         /// <summary>
         /// The unique random project this harness's client authenticates with
@@ -301,7 +309,8 @@ public static class MockTest
 
         public void Reset()
         {
-            using var content = new StringContent("");
+            var content = new StringContent("");
+            using var contentScope = content;
             var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/journal/reset"), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
@@ -386,7 +395,8 @@ public static class MockTest
         /// or all of them when unscoped.</summary>
         public void Reset()
         {
-            using var content = new StringContent("");
+            var content = new StringContent("");
+            using var contentScope = content;
             var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/reset" + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
@@ -401,6 +411,8 @@ public static class MockTest
     /// Lightweight view of a request the mock server recorded. Mirrors the
     /// dataclass in <c>mock_signalwire.journal.JournalEntry</c>.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812",
+        Justification = "Deserialization target — constructed reflectively by System.Text.Json.")]
     internal sealed class JournalEntry
     {
         [JsonPropertyName("timestamp")]
