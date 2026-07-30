@@ -4,7 +4,7 @@ using SignalWire.SWML;
 
 namespace SignalWire.Tests;
 
-public class SWMLDocumentTests : IDisposable
+public sealed class SWMLDocumentTests : IDisposable
 {
     public void Dispose()
     {

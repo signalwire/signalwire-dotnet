@@ -21,7 +21,7 @@ namespace SignalWire.Tests;
 /// string-valued field is still rejected.</para>
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class SchemaWidenTests : IDisposable
+public sealed class SchemaWidenTests : IDisposable
 {
     public SchemaWidenTests() => Schema.Reset();
 

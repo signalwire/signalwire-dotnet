@@ -31,7 +31,7 @@ namespace SignalWire.Tests;
 /// suites.</para>
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class SwmlStrictRenderTests : IDisposable
+public sealed class SwmlStrictRenderTests : IDisposable
 {
     public SwmlStrictRenderTests()
     {

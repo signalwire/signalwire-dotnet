@@ -15,7 +15,7 @@ using Xunit;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class CoreAuthHandlerTests : IDisposable
+public sealed class CoreAuthHandlerTests : IDisposable
 {
     private static readonly string[] EnvKeys =
     {

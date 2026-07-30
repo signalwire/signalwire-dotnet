@@ -22,7 +22,7 @@ namespace SignalWire.Tests;
 ///      lacks a `dotnet` SDK to build a separate example DLL.
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class CliAssemblyLoaderTests : IDisposable
+public sealed class CliAssemblyLoaderTests : IDisposable
 {
     public CliAssemblyLoaderTests()
     {

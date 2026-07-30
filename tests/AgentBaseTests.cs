@@ -10,7 +10,7 @@ using SignalWire.SWML;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class AgentBaseTests : IDisposable
+public sealed class AgentBaseTests : IDisposable
 {
     public AgentBaseTests()
     {

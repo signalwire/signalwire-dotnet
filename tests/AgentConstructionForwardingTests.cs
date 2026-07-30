@@ -20,7 +20,7 @@ namespace SignalWire.Tests;
 /// capability gap these tests pin.</para>
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class AgentConstructionForwardingTests : IDisposable
+public sealed class AgentConstructionForwardingTests : IDisposable
 {
     private readonly string _tempDir;
 

@@ -14,7 +14,7 @@ namespace SignalWire.Tests;
 /// surface that previously lived only on AgentBase.
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class SWMLServiceSwaigTests : IDisposable
+public sealed class SWMLServiceSwaigTests : IDisposable
 {
     public SWMLServiceSwaigTests()
     {

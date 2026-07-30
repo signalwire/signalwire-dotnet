@@ -31,7 +31,7 @@ using SignalWire.SWML;
 namespace SignalWire.Tests.Security;
 
 [Collection(SignalWire.Tests.GlobalStateCollection.Name)]
-public class WebhookMiddlewareTest : IDisposable
+public sealed class WebhookMiddlewareTest : IDisposable
 {
     public WebhookMiddlewareTest()
     {

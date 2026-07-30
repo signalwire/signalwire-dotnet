@@ -22,7 +22,7 @@ namespace SignalWire.Tests;
 ///       function's <c>argument.properties</c>; the function also dispatches.
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class ParameterSchemaTests : IDisposable
+public sealed class ParameterSchemaTests : IDisposable
 {
     public ParameterSchemaTests()
     {

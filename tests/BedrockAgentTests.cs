@@ -12,7 +12,7 @@ namespace SignalWire.Tests;
 /// opts into the serial global-state collection and resets state per test.
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class BedrockAgentTests : IDisposable
+public sealed class BedrockAgentTests : IDisposable
 {
     public BedrockAgentTests()
     {

@@ -12,7 +12,7 @@ using Xunit;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class CoreConfigLoaderTests : IDisposable
+public sealed class CoreConfigLoaderTests : IDisposable
 {
     private readonly List<string> _tempDirs = new();
     private readonly List<string> _envKeys = new();

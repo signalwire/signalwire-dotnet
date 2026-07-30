@@ -31,7 +31,7 @@ namespace SignalWire.Tests;
 /// weaker transport, just a different envelope.</para>
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class SwaigTokenEnforcementTests : IDisposable
+public sealed class SwaigTokenEnforcementTests : IDisposable
 {
     private const string User = "u";
     private const string Password = "p";

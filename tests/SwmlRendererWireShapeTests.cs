@@ -31,7 +31,7 @@ namespace SignalWire.Tests;
 /// <c>tests/unit/core/test_swml_renderer.py</c>.</para>
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class SwmlRendererWireShapeTests : IDisposable
+public sealed class SwmlRendererWireShapeTests : IDisposable
 {
     public SwmlRendererWireShapeTests()
     {

@@ -8,7 +8,7 @@ using SignalWire.SWML;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class PrefabsTests : IDisposable
+public sealed class PrefabsTests : IDisposable
 {
     public PrefabsTests()
     {

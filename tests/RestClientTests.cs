@@ -6,7 +6,7 @@ using HttpClient = SignalWire.REST.HttpClient;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class RestClientTests : IDisposable
+public sealed class RestClientTests : IDisposable
 {
     public RestClientTests()
     {

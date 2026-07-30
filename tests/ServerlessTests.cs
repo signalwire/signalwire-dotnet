@@ -4,7 +4,7 @@ using SignalWire.Serverless;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class ServerlessTests : IDisposable
+public sealed class ServerlessTests : IDisposable
 {
     public ServerlessTests()
     {
