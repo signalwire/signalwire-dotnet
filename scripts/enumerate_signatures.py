@@ -72,6 +72,8 @@ from enumerate_surface import (  # type: ignore
     _SWML_SERVICE_ALLOW,
     RELAY_ACTION_CONTROL_METHODS,
     _SKILL_PROPERTY_EXTRAS,
+    _SKILLBASE_INHERITABLE,
+    SKILL_INHERITED_PROJECTIONS,
     SURFACE_METHOD_INJECTIONS,
     AICHAT_OPTIONS_CLASSES,
 )
@@ -1715,24 +1717,74 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
 
     # Skill subclasses: drop the data-carrying property extras (name /
     # description / supports_multiple_instances / version — Python sets these as
-    # instance attributes in __init__, NOT recorded on the class surface).
+    # instance attributes in __init__, NOT recorded on the class surface), then
+    # reconcile the two SkillBase-lifecycle idioms below.
     #
-    # We do NOT project the SkillBase-inherited methods here (unlike the SURFACE
-    # enumerator's SKILL_INHERITED_PROJECTIONS): the SIGNATURE oracle (griffe)
-    # does NOT re-record inherited methods on a subclass — it records only each
-    # skill's OWN methods (get_tools / search_wiki / __init__). Injecting the
-    # inherited set would create phantom ``missing-reference`` drift against the
-    # subclass's minimal own-surface. Inheritance parity is covered by SkillBase
-    # itself carrying the methods.
+    # (a) INHERITED-OVERRIDE PROJECTION. This block previously injected nothing,
+    # on the premise that "the SIGNATURE oracle (griffe) does not re-record
+    # inherited methods on a subclass". That premise is FALSE as of porting-sdk
+    # 8496c77 ("a class whose every method is a base-identical override
+    # vanished"): a per-method skip was emptying such classes and dropping them
+    # entirely, so only 7 of 18 skill modules were visible. With all 18 visible
+    # the oracle records each subclass's real declared overrides — e.g.
+    # ``DataSphereSkill`` genuinely declares cleanup / get_hints /
+    # get_instance_key / get_parameter_schema / get_prompt_sections /
+    # get_global_data / setup / register_tools in the reference source. .NET
+    # declares the same overrides but the C# reflection dump reports only the
+    # members whose declaring type IS the subclass, so a base-identical override
+    # (``public override string GetInstanceKey() => base…``-shaped, or simply
+    # not re-declared because C# inherits the virtual implementation) is absent.
+    # Project the same per-class set the SURFACE enumerator already projects
+    # (SKILL_INHERITED_PROJECTIONS), taking the signature from SkillBase so the
+    # inherited contract compares equal. This is the idiom fold; it is NOT an
+    # omission, and it keeps every projected member under active comparison.
+    #
+    # (b) RECEIVER-IDIOM FOLD for the two abstract lifecycle hooks. Python's
+    # ``SkillBase.__init__(agent, params)`` stores both on the instance, so
+    # ``setup(self)`` / ``register_tools(self)`` take no further params. .NET's
+    # ``Wire(agent, parameters)`` lifecycle passes them explicitly to
+    # ``Setup(agent, parameters)`` / ``RegisterTools(agent)``. Same hook, same
+    # capability, receiver-vs-explicit-argument binding — fold the explicitly
+    # passed constructor state off the signature so the two compare equal,
+    # everywhere the shape occurs, rather than excusing it class by class.
+    _SKILL_CTOR_STATE_PARAMS = {
+        "setup": ("agent", "parameters"),
+        "register_tools": ("agent",),
+    }
+
+    def _fold_skill_ctor_state(methods: dict) -> None:
+        for meth_name, drop_names in _SKILL_CTOR_STATE_PARAMS.items():
+            sig = methods.get(meth_name)
+            if not sig:
+                continue
+            sig["params"] = [
+                p for p in sig.get("params", []) if p.get("name") not in drop_names
+            ]
+
+    skillbase_methods = (
+        out_modules.get("signalwire.core.skill_base", {})
+        .get("classes", {})
+        .get("SkillBase", {})
+        .get("methods", {})
+    )
+    _fold_skill_ctor_state(skillbase_methods)
+
     for mod_name, entry in out_modules.items():
         if not (
             mod_name.startswith("signalwire.skills.") and mod_name.endswith(".skill")
         ):
             continue
-        for cls_entry in entry.get("classes", {}).values():
+        for cls_name, cls_entry in entry.get("classes", {}).items():
             methods = cls_entry.get("methods", {})
             for extra in list(_SKILL_PROPERTY_EXTRAS):
                 methods.pop(extra, None)
+            _fold_skill_ctor_state(methods)
+            for inj in SKILL_INHERITED_PROJECTIONS.get(cls_name, []):
+                if inj not in _SKILLBASE_INHERITABLE or inj in methods:
+                    continue
+                base_sig = skillbase_methods.get(inj)
+                if base_sig is not None:
+                    methods[inj] = json.loads(json.dumps(base_sig))
 
     # Top-level ``signalwire`` module function names that are class re-exports
     # (e.g. ``RestClient``) — the reference records these in functions[]. Supply
