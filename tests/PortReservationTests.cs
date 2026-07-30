@@ -138,7 +138,9 @@ public class PortReservationTests
                     // window in which a recycled port could look like an
                     // overlap never exists.
                     outstanding.TryRemove(port, out _);
-                    try { l.Stop(); } catch { /* best effort */ }
+                    try { l.Stop(); }
+        catch (ObjectDisposedException) { /* already stopped */ }
+        catch (System.Net.Sockets.SocketException) { /* best effort */ }
                 }
             }));
         }

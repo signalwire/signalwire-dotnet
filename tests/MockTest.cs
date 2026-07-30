@@ -136,14 +136,14 @@ public static class MockTest
         {
             anchors.Add(AppContext.BaseDirectory);
         }
-        catch { /* best effort */ }
+        catch (InvalidOperationException) { /* no base dir in this host */ }
         try
         {
             var asm = Assembly.GetExecutingAssembly().Location;
             if (!string.IsNullOrEmpty(asm))
                 anchors.Add(System.IO.Path.GetDirectoryName(asm) ?? "");
         }
-        catch { /* best effort */ }
+        catch (NotSupportedException) { /* dynamic assembly has no location */ }
         anchors.Add(Environment.CurrentDirectory);
 
         foreach (var anchor in anchors)
@@ -535,7 +535,9 @@ public static class MockTest
                 }
                 catch (Exception ex)
                 {
-                    try { reservation.Stop(); } catch { /* already stopped */ }
+                    try { reservation.Stop(); }
+        catch (ObjectDisposedException) { /* already stopped */ }
+        catch (System.Net.Sockets.SocketException) { /* best effort */ }
                     _startupFailure = new InvalidOperationException(
                         $"MockTest: failed to spawn `python -m mock_signalwire` on {attemptUrl}: {ex.Message} " +
                         $"(set MOCK_SIGNALWIRE_HOST / MOCK_SIGNALWIRE_PORT to use a pre-running instance, " +
@@ -553,7 +555,9 @@ public static class MockTest
                     {
                         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
                         {
-                            try { if (!process.HasExited) process.Kill(true); } catch { /* best effort */ }
+                            try { if (!process.HasExited) process.Kill(true); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         };
                         var hr = new Harness(attemptUrl, host, attemptPort);
                         _sharedHarness = hr;
@@ -593,7 +597,9 @@ public static class MockTest
 
                 if (lostTheBind) continue;
 
-                try { process.Kill(true); } catch { /* best effort */ }
+                try { process.Kill(true); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                 _startupFailure = new InvalidOperationException(
                     $"MockTest: `python -m mock_signalwire` did not become ready within {StartupTimeout} on {attemptUrl}. " +
                     $"Either start it manually on host before running tests, or clone porting-sdk next to signalwire-dotnet.");
@@ -750,8 +756,10 @@ public static class MockTest
             // "specs_loaded"; treat any other shape as a probe failure.
             return body.Contains("\"specs_loaded\"", StringComparison.Ordinal);
         }
-        catch
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
+                                      or OperationCanceledException or System.Net.Sockets.SocketException)
         {
+            // Not up yet (connection refused / timeout) — exactly what this probe asks.
             return false;
         }
     }

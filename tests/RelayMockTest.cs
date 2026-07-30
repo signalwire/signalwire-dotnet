@@ -160,7 +160,8 @@ public static class RelayMockTest
             // swallows its fault), so nothing escapes. Block on it here because
             // Bound is IDisposable and Client is IAsyncDisposable-only.
             try { Client.DisposeAsync().AsTask().GetAwaiter().GetResult(); }
-            catch { /* best effort */ }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.WebSockets.WebSocketException) { /* socket already gone */ }
         }
     }
 
@@ -646,8 +647,12 @@ public static class RelayMockTest
                 }
                 catch (Exception ex)
                 {
-                    try { wsReservation.Stop(); } catch { /* already stopped */ }
-                    try { httpReservation.Stop(); } catch { /* already stopped */ }
+                    try { wsReservation.Stop(); }
+        catch (ObjectDisposedException) { /* already stopped */ }
+        catch (System.Net.Sockets.SocketException) { /* best effort */ }
+                    try { httpReservation.Stop(); }
+        catch (ObjectDisposedException) { /* already stopped */ }
+        catch (System.Net.Sockets.SocketException) { /* best effort */ }
                     _startupFailure = new InvalidOperationException(
                         $"RelayMockTest: failed to spawn `python -m mock_relay`: {ex.Message} " +
                         $"(set MOCK_RELAY_HOST / MOCK_RELAY_PORT / MOCK_RELAY_HTTP_PORT to use a pre-running instance, " +
@@ -665,7 +670,9 @@ public static class RelayMockTest
                     {
                         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
                         {
-                            try { if (!process.HasExited) process.Kill(true); } catch { /* best effort */ }
+                            try { if (!process.HasExited) process.Kill(true); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         };
                         var hr = new Harness(attemptHttpUrl, attemptWsUrl, host, attemptWsPort, attemptHttpPort);
                         _sharedHarness = hr;
@@ -698,7 +705,9 @@ public static class RelayMockTest
 
                 if (lostTheBind) continue;
 
-                try { process.Kill(true); } catch { /* best effort */ }
+                try { process.Kill(true); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                 _startupFailure = new InvalidOperationException(
                     $"RelayMockTest: `python -m mock_relay` did not become ready within {StartupTimeout} on {attemptHttpUrl} / {attemptWsUrl}. " +
                     $"Either start it manually on host before running tests, or clone porting-sdk next to signalwire-dotnet.");
@@ -827,8 +836,10 @@ public static class RelayMockTest
             // "schemas_loaded"; treat any other shape as a probe failure.
             return body.Contains("\"schemas_loaded\"", StringComparison.Ordinal);
         }
-        catch
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
+                                      or OperationCanceledException or System.Net.Sockets.SocketException)
         {
+            // Not up yet (connection refused / timeout) — exactly what this probe asks.
             return false;
         }
     }

@@ -194,7 +194,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
             listener.Stop();
             lock (accepted)
             {
-                foreach (var c in accepted) { try { c.Dispose(); } catch { } }
+                foreach (var c in accepted) { try { c.Dispose(); } catch (ObjectDisposedException) { /* already disposed */ } }
             }
             try { await acceptLoop; } catch { /* best effort */ }
         }

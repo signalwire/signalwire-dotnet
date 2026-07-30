@@ -254,7 +254,9 @@ public static class TlsHarness
         }
         public void Dispose()
         {
-            try { if (!_proc.HasExited) _proc.Kill(true); } catch { /* best effort */ }
+            try { if (!_proc.HasExited) _proc.Kill(true); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         }
     }
 
@@ -277,7 +279,9 @@ public static class TlsHarness
         }
         public void Dispose()
         {
-            try { if (!_proc.HasExited) _proc.Kill(true); } catch { /* best effort */ }
+            try { if (!_proc.HasExited) _proc.Kill(true); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         }
     }
 
