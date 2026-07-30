@@ -6,6 +6,7 @@ porting-audit contract/artifact file that porting-sdk's shared audit scripts
 repo root by relative path; moving them under `eng/` would break the shared
 audit pipeline (which this repo cannot edit). Verified reader per file below.
 
+- .doc_surface_floor — DOC-SURFACE XML-doc-coverage ratchet floor, read at exactly this root path by porting-sdk doc_surface.py (`FLOOR_FILE = ".doc_surface_floor"`, read as `repo / FLOOR_FILE` at :379 and ratcheted at :415) and asserted by a_bar.py:63; the constant has no flag or override, so the path IS the contract and moving it under eng/ would break the shared audit pipeline this repo cannot edit. Written by scripts/run-ci.sh's DOC-SURFACE gate. Same grounds as port_surface_native.json below (red-dotnet, 2026-07-30)
 - CHECKLIST.md — required audit-contract file read by porting-sdk audit scripts (orchestrator, 2026-07-06)
 - DOC_AUDIT_IGNORE.md — required audit-contract file read by porting-sdk audit scripts (audit_docs.py, ignore_ledger_verify.py) (orchestrator, 2026-07-06)
 - INTENTIONAL_THIN_TESTS.md — required audit-contract file read by porting-sdk audit scripts (audit_no_cheat_tests.py) (orchestrator, 2026-07-06)
