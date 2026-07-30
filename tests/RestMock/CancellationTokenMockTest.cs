@@ -55,7 +55,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         var http = _fixture.NewHttp();
 
         using var cts = new CancellationTokenSource();
-        cts.Cancel(); // cancel BEFORE issuing the call
+        await cts.CancelAsync().ConfigureAwait(false); // cancel BEFORE issuing the call
 
         // The token is honoured all the way down to System.Net.Http.HttpClient,
         // so the call aborts with OperationCanceledException — NOT a wrapped
@@ -75,7 +75,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         var http = _fixture.NewHttp();
 
         using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync().ConfigureAwait(false);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => http.PostAsync("/api/relay/rest/phone_numbers",
@@ -93,7 +93,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         var crud = new CrudResource(http, "/api/relay/rest/phone_numbers");
 
         using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync().ConfigureAwait(false);
 
         // The token threads from the CrudResource surface through to transport.
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
@@ -110,7 +110,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         var calling = new Calling(_fixture.NewHttp());
 
         using var cts = new CancellationTokenSource();
-        cts.Cancel(); // cancel BEFORE issuing the command
+        await cts.CancelAsync().ConfigureAwait(false); // cancel BEFORE issuing the command
 
         // The command-dispatch surface now threads CancellationToken from the
         // generated method through ExecuteAsync to the HttpClient POST — the same

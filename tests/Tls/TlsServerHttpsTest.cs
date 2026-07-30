@@ -133,7 +133,7 @@ public class TlsServerHttpsTest
         }
         finally
         {
-            cts.Cancel();
+            await cts.CancelAsync().ConfigureAwait(false);
             // Await the server task's shutdown (bounded), rather than a blocking
             // .Wait() — keeps the whole test off blocking task ops (xUnit1031) so
             // it can't deadlock the sync context.

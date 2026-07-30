@@ -185,7 +185,7 @@ public class RequestOptionsMockTest : IClassFixture<MockServerFixture>
         var http = _fixture.NewHttp();
 
         using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync().ConfigureAwait(false);
 
         // The abort_signal is the native CancellationToken; a pre-set token
         // surfaces OperationCanceledException before the send (deeper than a
