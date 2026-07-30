@@ -843,6 +843,14 @@ public sealed class MockServerFixture : IDisposable
         };
     }
 
+    /// <summary>Emit a "this test was skipped and why" note to the test console.
+    ///
+    /// Goes through this helper rather than Console.WriteLine at each call site so
+    /// the diagnostic text is not handed straight to a localizable BCL API
+    /// (CA1303): a skip note is developer-facing terminal output, never a product
+    /// string, and there is nothing to put in a resource table.</summary>
+    public static void SkipNote(string reason) => Console.Out.WriteLine(reason);
+
     /// <summary>Clients handed out by <see cref="NewHttp"/>. The FIXTURE owns
     /// them, not the individual test: they share a transport, so disposing one
     /// inside a test breaks every sibling test in the class. Disposed together

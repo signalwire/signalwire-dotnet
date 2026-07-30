@@ -42,7 +42,7 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
     {
         if (!_fixture.Available)
         {
-            Console.WriteLine("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
+            MockServerFixture.SkipNote("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
             return;
         }
         Assert.NotNull(_fixture.Harness);
@@ -72,7 +72,7 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
     {
         if (!_fixture.Available)
         {
-            Console.WriteLine("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
+            MockServerFixture.SkipNote("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
             return;
         }
 
@@ -172,7 +172,7 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
     {
         if (!_fixture.Available)
         {
-            Console.WriteLine("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
+            MockServerFixture.SkipNote("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
             return;
         }
 

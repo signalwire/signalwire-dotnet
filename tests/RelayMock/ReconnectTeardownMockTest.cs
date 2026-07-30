@@ -43,7 +43,7 @@ public class ReconnectTeardownMockTest : IClassFixture<RelayMockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_relay unreachable");
+        MockServerFixture.SkipNote("[SKIP] mock_relay unreachable");
         return true;
     }
 

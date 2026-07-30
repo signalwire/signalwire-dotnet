@@ -37,7 +37,7 @@ public class HttpClientDisposeMockTest : IClassFixture<MockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_signalwire unreachable on http://127.0.0.1:8784");
+        MockServerFixture.SkipNote("[SKIP] mock_signalwire unreachable on http://127.0.0.1:8784");
         return true;
     }
 

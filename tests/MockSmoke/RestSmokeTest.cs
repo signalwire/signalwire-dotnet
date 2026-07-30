@@ -47,7 +47,7 @@ public class RestSmokeTest : IClassFixture<MockServerFixture>
             // Adjacency missing AND no host-spawned mock: print a clear message
             // and skip the body. Not using xUnit Skip attribute so this stays
             // runnable as a smoke signal regardless of test framework version.
-            Console.WriteLine("[SKIP] mock_signalwire unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_signalwire --port 8784` on host");
+            MockServerFixture.SkipNote("[SKIP] mock_signalwire unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_signalwire --port 8784` on host");
             return;
         }
         Assert.NotNull(_fixture.Harness);
@@ -70,7 +70,7 @@ public class RestSmokeTest : IClassFixture<MockServerFixture>
         // Skip cleanly when the mock can't be reached.
         if (!_fixture.Available)
         {
-            Console.WriteLine("[SKIP] mock_signalwire unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_signalwire --port 8784` on host");
+            MockServerFixture.SkipNote("[SKIP] mock_signalwire unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_signalwire --port 8784` on host");
             return;
         }
 
@@ -105,7 +105,7 @@ public class RestSmokeTest : IClassFixture<MockServerFixture>
     {
         if (!_fixture.Available)
         {
-            Console.WriteLine("[SKIP] mock_signalwire unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_signalwire --port 8784` on host");
+            MockServerFixture.SkipNote("[SKIP] mock_signalwire unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_signalwire --port 8784` on host");
             return;
         }
 
