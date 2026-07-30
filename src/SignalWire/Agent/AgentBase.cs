@@ -1863,13 +1863,26 @@ public class AgentBase : Service
             ai["global_data"] = _globalData;
         }
 
-        // -- Context switch --
+        // -- Contexts --
+        // These belong INSIDE prompt, not at the ai top level. $defs/AIObject is
+        // CLOSED (unevaluatedProperties: {"not": {}}) over exactly nine keys —
+        // SWAIG, global_data, hints, languages, params, post_prompt,
+        // post_prompt_url, prompt, pronounce — so any other key makes the
+        // document schema-invalid. `contexts` is declared on $defs/AIPromptText
+        // and $defs/AIPromptPom, and the reference writes it there too
+        // (swml_handler.py:191 `prompt_config["contexts"] = contexts`, fed by
+        // agent_base.py's `build_config(..., contexts=contexts_dict)`).
+        //
+        // This previously emitted a TOP-LEVEL `ai.context_switch`, which is
+        // neither an AIObject key nor anything the reference emits —
+        // `context_switch` is a standalone VERB ($defs/ContextSwitchAction), not
+        // an ai field. Every document produced with contexts defined was invalid.
         if (_contextBuilder is not null && _contextBuilder.HasContexts())
         {
             var contextArray = _contextBuilder.ToDict();
             if (contextArray.Count > 0)
             {
-                ai["context_switch"] = contextArray;
+                prompt["contexts"] = contextArray;
             }
         }
 

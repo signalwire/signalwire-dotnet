@@ -918,6 +918,48 @@ public class AgentBaseTests : IDisposable
         Assert.Same(builder1, builder2);
     }
 
+    /// <summary>
+    /// Contexts belong INSIDE <c>ai.prompt</c>, never at the <c>ai</c> top
+    /// level. <c>$defs/AIObject</c> is closed
+    /// (<c>unevaluatedProperties: {"not": {}}</c>) over nine keys — SWAIG,
+    /// global_data, hints, languages, params, post_prompt, post_prompt_url,
+    /// prompt, pronounce — and <c>contexts</c> is declared on
+    /// <c>$defs/AIPromptText</c>/<c>$defs/AIPromptPom</c>. The reference agrees
+    /// (<c>swml_handler.py:191</c>).
+    ///
+    /// <para>This previously emitted a top-level <c>ai.context_switch</c>, which
+    /// is not an AIObject key at all — <c>context_switch</c> is a standalone
+    /// VERB (<c>$defs/ContextSwitchAction</c>) — so every document rendered with
+    /// contexts defined was schema-invalid.</para>
+    /// </summary>
+    [Fact]
+    public void RenderSwml_ContextsNestUnderPrompt_NotAtTheAiTopLevel()
+    {
+        var agent = MakeAgent();
+        agent.DefineContexts().AddContext("default").AddStep("greeting").SetText("Say hello");
+
+        var ai = ExtractAiVerb(agent.RenderSwml());
+
+        Assert.False(ai.ContainsKey("context_switch"));
+        Assert.False(ai.ContainsKey("contexts"));
+
+        var prompt = (Dictionary<string, object>)ai["prompt"];
+        Assert.True(prompt.ContainsKey("contexts"));
+
+        // Nothing outside the closed AIObject key set may appear at the ai top
+        // level. `multilingual` is permitted: the ENGINE's own ai allowlist
+        // (mod_infrastructure/swml_schema.c:1880 SWML_CHECK_METHOD) accepts it
+        // along with agent/engine/voice/post_prompt_auth_*, which the vendored
+        // schema.json's AIObject has not caught up with.
+        var permitted = new HashSet<string>
+        {
+            "SWAIG", "global_data", "hints", "languages", "params",
+            "post_prompt", "post_prompt_url", "prompt", "pronounce",
+            "multilingual",
+        };
+        Assert.All(ai.Keys, k => Assert.Contains(k, permitted));
+    }
+
     // =================================================================
     //  Dynamic config isolation
     // =================================================================
