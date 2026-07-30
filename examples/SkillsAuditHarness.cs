@@ -117,13 +117,13 @@ skill.RegisterTools(agent);
 
 object? result = skillName switch
 {
-    "web_search"        => DispatchHandler(agent, "web_search", handlerArgs),
-    "wikipedia_search"  => DispatchHandler(agent, "search_wiki", handlerArgs),
-    "datasphere"        => DispatchHandler(agent, "search_knowledge", handlerArgs),
-    "spider"            => DispatchHandler(agent, "scrape_url", handlerArgs),
+    "web_search" => DispatchHandler(agent, "web_search", handlerArgs),
+    "wikipedia_search" => DispatchHandler(agent, "search_wiki", handlerArgs),
+    "datasphere" => DispatchHandler(agent, "search_knowledge", handlerArgs),
+    "spider" => DispatchHandler(agent, "scrape_url", handlerArgs),
     "api_ninjas_trivia" => await ExecuteDataMap(agent, "get_trivia", EnsureCategory(handlerArgs)),
-    "weather_api"       => await ExecuteDataMap(agent, "get_weather", handlerArgs),
-    _                   => null,
+    "weather_api" => await ExecuteDataMap(agent, "get_weather", handlerArgs),
+    _ => null,
 };
 
 if (result is null)
@@ -170,10 +170,10 @@ static object UnwrapJsonElement(object value)
     {
         JsonValueKind.String => el.GetString() ?? "",
         JsonValueKind.Number => el.TryGetInt64(out var i) ? i : el.GetDouble(),
-        JsonValueKind.True   => true,
-        JsonValueKind.False  => false,
-        JsonValueKind.Null   => "",
-        _                    => el.GetRawText(),
+        JsonValueKind.True => true,
+        JsonValueKind.False => false,
+        JsonValueKind.Null => "",
+        _ => el.GetRawText(),
     };
 }
 
@@ -220,9 +220,9 @@ static async Task<object?> ExecuteDataMap(AgentBase agent, string toolName, Dict
     {
         resp = method switch
         {
-            "GET"  => await http.GetAsync(url),
+            "GET" => await http.GetAsync(url),
             "POST" => await http.PostAsync(url, new StringContent("", System.Text.Encoding.UTF8, "application/json")),
-            _      => await http.SendAsync(new HttpRequestMessage(new HttpMethod(method), url)),
+            _ => await http.SendAsync(new HttpRequestMessage(new HttpMethod(method), url)),
         };
     }
     catch (Exception ex)

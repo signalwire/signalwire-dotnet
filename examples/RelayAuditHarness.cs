@@ -47,10 +47,10 @@ var contexts = contextsEnv
 
 var client = new Client(new()
 {
-    Project  = project,
-    Token    = token,
-    Host     = host,
-    Scheme   = scheme,
+    Project = project,
+    Token = token,
+    Host = host,
+    Scheme = scheme,
     Contexts = contexts,
 });
 
@@ -70,12 +70,12 @@ client.OnEventHandler = (evt, parms) =>
         client.Send(new Dictionary<string, object?>
         {
             ["jsonrpc"] = "2.0",
-            ["method"]  = "signalwire.event",
-            ["id"]      = $"harness-dispatch-{Guid.NewGuid():N}",
-            ["params"]  = new Dictionary<string, object?>
+            ["method"] = "signalwire.event",
+            ["id"] = $"harness-dispatch-{Guid.NewGuid():N}",
+            ["params"] = new Dictionary<string, object?>
             {
                 ["event_type"] = "harness.dispatched",
-                ["params"]     = new Dictionary<string, object?> { ["from"] = "dotnet-harness" },
+                ["params"] = new Dictionary<string, object?> { ["from"] = "dotnet-harness" },
             },
         });
     }

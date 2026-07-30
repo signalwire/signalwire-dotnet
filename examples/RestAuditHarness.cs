@@ -73,8 +73,8 @@ try
 {
     result = operation switch
     {
-        "phone_numbers.list"        => await new SignalWire.REST.CrudResource(http, "/api/relay/rest/phone_numbers").ListAsync(StringQuery(handlerArgs)),
-        "fabric.subscribers.list"   => await new SignalWire.REST.CrudResource(http, "/api/fabric/resources/subscribers").ListAsync(StringQuery(handlerArgs)),
+        "phone_numbers.list" => await new SignalWire.REST.CrudResource(http, "/api/relay/rest/phone_numbers").ListAsync(StringQuery(handlerArgs)),
+        "fabric.subscribers.list" => await new SignalWire.REST.CrudResource(http, "/api/fabric/resources/subscribers").ListAsync(StringQuery(handlerArgs)),
         _ => null,
     };
 }
@@ -104,15 +104,15 @@ static Dictionary<string, string> StringQuery(Dictionary<string, object?> args)
     {
         if (v is null) continue;
         if (v is string s) { q[k] = s; continue; }
-        if (v is bool b)   { q[k] = b ? "true" : "false"; continue; }
+        if (v is bool b) { q[k] = b ? "true" : "false"; continue; }
         if (v is JsonElement je)
         {
             q[k] = je.ValueKind switch
             {
                 JsonValueKind.String => je.GetString() ?? "",
                 JsonValueKind.Number => je.GetRawText(),
-                JsonValueKind.True   => "true",
-                JsonValueKind.False  => "false",
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
                 _ => je.GetRawText(),
             };
             continue;
