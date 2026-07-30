@@ -292,7 +292,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
         while (true)
         {
             var result = await ws.ReceiveAsync(buffer, readCts.Token);
-            await assembled.WriteAsync(buffer.AsMemory(0, result.Count)).ConfigureAwait(false);
+            await assembled.WriteAsync(buffer.AsMemory(0, result.Count));
             if (result.EndOfMessage) break;
         }
         var raw = Encoding.UTF8.GetString(assembled.ToArray());
@@ -352,7 +352,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
         while (true)
         {
             var result = await ws.ReceiveAsync(buffer, readCts.Token);
-            await assembled.WriteAsync(buffer.AsMemory(0, result.Count)).ConfigureAwait(false);
+            await assembled.WriteAsync(buffer.AsMemory(0, result.Count));
             if (result.EndOfMessage) break;
         }
 

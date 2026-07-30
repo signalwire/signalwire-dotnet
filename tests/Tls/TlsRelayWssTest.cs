@@ -93,7 +93,7 @@ public class TlsRelayWssTest
         {
             await untrusted.ConnectAsync(
                 new Uri($"wss://127.0.0.1:{wsPort}/api/relay/ws"),
-                CancellationToken.None);
+                CancellationToken.None).ConfigureAwait(false);
         });
         Assert.True(
             ex is WebSocketException || ex.InnerException is System.Security.Authentication.AuthenticationException

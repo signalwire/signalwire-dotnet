@@ -171,20 +171,19 @@ public static class MockTest
     /// Live mock-server handle. Exposes the HTTP control plane:
     /// journal access, scenario overrides, reset.
     /// </summary>
+    // CA1001: this type holds an HttpClient but is deliberately NOT IDisposable.
+    // A Harness is a VIEW onto the PROCESS-WIDE shared mock server; callers borrow
+    // it, they never own it. Making it disposable was tried and made things worse —
+    // the finding count went UP (98 -> 100) because every borrower then looked like
+    // an owner (CA2213 on each field holding one, CA2000 at each site producing
+    // one). The client lives for the whole test run and is released at process exit.
+#pragma warning disable CA1001
     internal sealed class Harness
     {
         public string Url { get; }
         public string Host { get; }
         public int Port { get; }
-        // CA1001: this type holds an HttpClient but is deliberately NOT
-        // IDisposable. A Harness is a view onto the PROCESS-WIDE shared mock
-        // server; callers borrow it, they never own it. Making it disposable made
-        // every borrower look like an owner (CA2213 on each field, CA2000 at each
-        // call site) — the opposite of the real lifetime. The client lives for the
-        // test run and is released when the process exits.
-#pragma warning disable CA1001
         private readonly System.Net.Http.HttpClient _http;
-#pragma warning restore CA1001
 
         /// <summary>
         /// The unique random project this harness's client authenticates with
@@ -232,6 +231,7 @@ public static class MockTest
             Scenarios.Reset();
         }
     }
+#pragma warning restore CA1001
 
     /// <summary>
     /// Wrapper around <c>/__mock__/journal</c> + <c>/__mock__/journal/reset</c>.
@@ -829,12 +829,16 @@ public sealed class MockServerFixture : IDisposable
             _shared = MockTest.GetHarnessNoReset();
             Available = true;
         }
+#pragma warning disable CA1031 // A fixture ctor must not throw: any failure to
+        // reach the mock has to become "Available = false" so every test in the
+        // class skips cleanly instead of the whole class erroring out.
         catch (Exception)
         {
             // Defer the failure: tests check Available and skip cleanly when
             // adjacency walk + spawn both failed.
             _shared = null;
         }
+#pragma warning restore CA1031
         // Mint the first per-test scope. Reset() re-mints before each test.
         Project = NewProject();
         AuthHeader = BasicAuth(Project);

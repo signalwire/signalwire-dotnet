@@ -57,7 +57,7 @@ namespace SignalWire.Tests;
 public class SchemaSingletonConcurrencyTests
 {
     [Fact]
-    public void InstanceNeverReturnsNullWhileAnotherThreadResets()
+    public async Task InstanceNeverReturnsNullWhileAnotherThreadResets()
     {
         // Warm the singleton so the path under test is the CHEAP one (field
         // already populated). The expensive construct-under-lock path is what
@@ -103,8 +103,8 @@ public class SchemaSingletonConcurrencyTests
             }
         });
 
-        cts.Cancel();
-        resetter.Wait();
+        await cts.CancelAsync();
+        await resetter;
 
         Assert.Equal(0, nulls);
         Assert.Equal(0, nullDerefs);

@@ -171,6 +171,13 @@ public static class RelayMockTest
 
     /// <summary>Live mock-server handle exposing the HTTP control plane
     /// + push helpers.</summary>
+    // CA1001: this type holds an HttpClient but is deliberately NOT IDisposable.
+    // A Harness is a VIEW onto the PROCESS-WIDE shared mock server; callers borrow
+    // it, they never own it. Making it disposable was tried and made things worse —
+    // the finding count went UP (98 -> 100) because every borrower then looked like
+    // an owner (CA2213 on each field holding one, CA2000 at each site producing
+    // one). The client lives for the whole test run and is released at process exit.
+#pragma warning disable CA1001
     internal sealed class Harness
     {
         public string HttpUrl { get; }
@@ -193,15 +200,7 @@ public static class RelayMockTest
         /// </summary>
         public string SessionId { get; set; } = "";
 
-        // CA1001: this type holds an HttpClient but is deliberately NOT
-        // IDisposable. A Harness is a view onto the PROCESS-WIDE shared mock
-        // server; callers borrow it, they never own it. Making it disposable made
-        // every borrower look like an owner (CA2213 on each field, CA2000 at each
-        // call site) — the opposite of the real lifetime. The client lives for the
-        // test run and is released when the process exits.
-#pragma warning disable CA1001
         private readonly System.Net.Http.HttpClient _http;
-#pragma warning restore CA1001
 
         internal Harness(string httpUrl, string wsUrl, string host, int wsPort, int httpPort)
         {
@@ -356,7 +355,10 @@ public static class RelayMockTest
         {
             var json = JsonSerializer.Serialize(body);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
+#pragma warning disable CA2025 // the request is BLOCKED on right here, so `content`
+            // is alive for its whole lifetime; the analyzer cannot see the join.
             var resp = _http.PostAsync(new Uri(HttpUrl + path), content).GetAwaiter().GetResult();
+#pragma warning restore CA2025
             var respBody = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -376,6 +378,7 @@ public static class RelayMockTest
             return result;
         }
     }
+#pragma warning restore CA1001
 
     /// <summary>Wrapper around <c>/__mock__/journal</c> + reset.</summary>
     internal sealed class JournalApi
@@ -879,10 +882,14 @@ public sealed class RelayMockServerFixture : IDisposable
             Harness = RelayMockTest.GetHarnessNoReset();
             Available = true;
         }
+#pragma warning disable CA1031 // A fixture ctor must not throw: any failure to
+        // reach the mock has to become "Available = false" so every test in the
+        // class skips cleanly instead of the whole class erroring out.
         catch (Exception)
         {
             Harness = null!;
         }
+#pragma warning restore CA1031
     }
 
     /// <summary>
@@ -896,10 +903,14 @@ public sealed class RelayMockServerFixture : IDisposable
     /// constructors that call it. Mirrors the REST <c>MockServerFixture.Reset</c>
     /// no-op for scoped harnesses.
     /// </summary>
+#pragma warning disable CA1822 // deliberately an INSTANCE method: it mirrors
+    // MockServerFixture.Reset so both fixtures satisfy the same shape their test
+    // constructors call. Static would break every call site.
     public void Reset()
     {
         // intentionally empty — see remarks above.
     }
+#pragma warning restore CA1822
 
     public void Dispose() { /* shared mock lives for whole test run */ }
 }

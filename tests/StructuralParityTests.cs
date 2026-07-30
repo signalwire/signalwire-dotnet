@@ -820,7 +820,7 @@ public class StructuralParityTests
         var main = sections["main"];
 
         Assert.DoesNotContain(main, v => v.ContainsKey("say"));
-        var play = Assert.Single(main.Where(v => v.ContainsKey("play")));
+        var play = Assert.Single(main, v => v.ContainsKey("play"));
         var config = (Dictionary<string, object>)play["play"]!;
         Assert.Equal("say:Hello there", config["url"]);
         Assert.Equal("en-US-Neural2-A", config["say_voice"]);

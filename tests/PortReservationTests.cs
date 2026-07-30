@@ -96,7 +96,7 @@ public class PortReservationTests
     /// which is the mutation-discriminating test.</para>
     /// </summary>
     [Fact]
-    public void ConcurrentAcquisitions_EachCallerStillOwnsItsPortOnReturn()
+    public async Task ConcurrentAcquisitions_EachCallerStillOwnsItsPortOnReturn()
     {
         var notOwned = new ConcurrentBag<int>();
         // Ports currently RESERVED and not yet released. A port leaves this set
@@ -144,7 +144,7 @@ public class PortReservationTests
                 }
             }));
         }
-        Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks);
 
         Assert.Empty(overlaps);
         Assert.Empty(notOwned);

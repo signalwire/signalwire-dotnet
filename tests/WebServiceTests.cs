@@ -133,7 +133,11 @@ public sealed class WebServiceTests : IDisposable
     {
         using var handler = new HttpClientHandler { AllowAutoRedirect = false };
         // 30s CI-safe timeout (see Get()); tight deadlines flake under parallelism.
+#pragma warning disable CA5399 // loopback client against an in-process server; there
+        // is no revocation endpoint to check and enabling it would make the test need
+        // outbound network access.
         using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+#pragma warning restore CA5399
         using var req = new HttpRequestMessage(
             HttpMethod.Get, $"http://127.0.0.1:{_port}/static/hello.txt");
         var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{User}:wrongpass"));

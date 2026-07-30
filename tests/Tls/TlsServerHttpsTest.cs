@@ -93,7 +93,11 @@ public class TlsServerHttpsTest
                     resp = await client.GetAsync(new Uri(baseUrl + "/health"));
                     break;
                 }
+#pragma warning disable CA1031 // a readiness poll: it RECORDS whatever the attempt
+                // threw in lastErr and retries; the recorded error is reported if the
+                // server never comes up, so nothing is swallowed.
                 catch (Exception ex) { lastErr = ex; await Task.Delay(150); }
+#pragma warning restore CA1031
             }
             Assert.True(resp is not null,
                 "server /health never became reachable over https: " + (lastErr?.Message ?? "timeout"));
@@ -133,7 +137,7 @@ public class TlsServerHttpsTest
         }
         finally
         {
-            await cts.CancelAsync().ConfigureAwait(false);
+            await cts.CancelAsync();
             // Await the server task's shutdown (bounded), rather than a blocking
             // .Wait() — keeps the whole test off blocking task ops (xUnit1031) so
             // it can't deadlock the sync context.

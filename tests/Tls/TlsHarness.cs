@@ -94,10 +94,14 @@ public static class TlsHarness
                 proc.WaitForExit(30_000);
                 if (proc.ExitCode != 0) return null;
             }
+    #pragma warning disable CA1031 // A spawn helper returns null on ANY failure so the
+        // TLS tests skip cleanly when the mock cannot start; narrowing it would let an
+        // unexpected failure abort the class instead.
             catch
             {
                 return null;
             }
+#pragma warning restore CA1031
 
             var certs = Path.Combine(tlsDir, "certs");
             if (!File.Exists(Path.Combine(certs, "ca.crt"))
@@ -160,6 +164,8 @@ public static class TlsHarness
         public ChainValidator(X509Certificate2 ca) => _ca = ca;
 
         /// <summary>RemoteCertificateValidationCallback-shaped delegate.</summary>
+#pragma warning disable CA1822 // bound as a DELEGATE TARGET on an instance; static
+        // breaks the call sites (proven: CS0176).
         public bool Validate(object sender, X509Certificate? cert, X509Chain? chain, SslPolicyErrors errors)
             => Validate(cert);
 
@@ -503,10 +509,14 @@ public static class TlsHarness
             proc.BeginErrorReadLine();
             return proc;
         }
+#pragma warning disable CA1031 // A spawn helper returns null on ANY failure so the
+        // TLS tests skip cleanly when the mock cannot start; narrowing it would let an
+        // unexpected failure abort the class instead.
         catch
         {
             return null;
         }
+#pragma warning restore CA1031
     }
 
     private static string? DiscoverTlsDir()

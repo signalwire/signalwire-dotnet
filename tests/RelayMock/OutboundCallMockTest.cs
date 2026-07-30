@@ -306,7 +306,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
                     { new() { PhoneDevice() } },
                 ["dial_timeout"] = 5.0,
             });
-            await pusher.ConfigureAwait(false);
+            await pusher;
 
             Assert.Equal("auto-tag-winner", call.CallId);
             Assert.NotNull(seenTag);
@@ -365,7 +365,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
                     ["dial_timeout"] = 5.0,
                 }));
             Assert.Contains("Dial failed", ex.Message);
-            await pusher.ConfigureAwait(false);
+            await pusher;
         }
         finally { bound.Client.Disconnect(); }
     }

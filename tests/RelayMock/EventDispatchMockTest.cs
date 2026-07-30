@@ -598,7 +598,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
                 ["state"] = "playing",
             }));
 
-            var evt = await waitTask.ConfigureAwait(false);
+            var evt = await waitTask;
             Assert.Equal("calling.call.play", evt.EventType);
             Assert.Equal("playing", evt.Params["state"]);
         }
@@ -633,7 +633,7 @@ public class EventDispatchMockTest : IClassFixture<RelayMockServerFixture>
                 ["state"] = "finished",
             }));
 
-            var evt = await waitTask.ConfigureAwait(false);
+            var evt = await waitTask;
             Assert.Equal("wanted", evt.Params["control_id"]);
             Assert.Equal("finished", evt.Params["state"]);
         }

@@ -411,7 +411,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
             Assert.False(waitTask.IsCompleted);
 
             bound.Harness.Push(StatePushFrame("conv-wait-ans", "answered"));
-            var evt = await waitTask.ConfigureAwait(false);
+            var evt = await waitTask;
             Assert.Equal("answered", evt.Params["call_state"]);
             Assert.Equal("answered", captured.State);
         }
@@ -479,7 +479,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
             Assert.False(waitTask.IsCompleted);
 
             bound.Harness.Push(StatePushFrame("conv-wait-end", "ending"));
-            var evt = await waitTask.ConfigureAwait(false);
+            var evt = await waitTask;
             Assert.Equal("ending", evt.Params["call_state"]);
         }
         finally { bound.Client.Disconnect(); }
