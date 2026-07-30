@@ -19,7 +19,7 @@ if (args.Length < 1)
 var asm = Assembly.LoadFrom(args[0]);
 var types = new JsonArray();
 foreach (var t in asm.GetExportedTypes()
-                     .Where(t => (t.Namespace ?? "").StartsWith("SignalWire.Tools.GoldenFixtures"))
+                     .Where(t => (t.Namespace ?? "").StartsWith("SignalWire.Tools.GoldenFixtures", StringComparison.Ordinal))
                      .OrderBy(t => t.FullName))
 {
     var typeObj = DumpType(t);
@@ -37,7 +37,7 @@ return 0;
 
 static JsonObject? DumpType(Type t)
 {
-    if (t.Name.StartsWith("<") || t.Name.Contains("AnonymousType")) return null;
+    if (t.Name.StartsWith('<') || t.Name.Contains("AnonymousType", StringComparison.Ordinal)) return null;
 
     var typeObj = new JsonObject
     {
@@ -100,7 +100,7 @@ static JsonObject DumpMethod(MethodBase m, bool isCtor)
 
 static string StripGenericArity(string name)
 {
-    var tick = name.IndexOf('`');
+    var tick = name.IndexOf('`', StringComparison.Ordinal);
     return tick < 0 ? name : name.Substring(0, tick);
 }
 
