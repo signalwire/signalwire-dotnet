@@ -309,8 +309,8 @@ public static class MockTest
 
         public void Reset()
         {
-            var content = new StringContent("");
-            using var contentScope = content;
+            #pragma warning disable CA2025 // the request is BLOCKED on below
+            using var content = new StringContent("");
             var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/journal/reset"), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
@@ -395,8 +395,8 @@ public static class MockTest
         /// or all of them when unscoped.</summary>
         public void Reset()
         {
-            var content = new StringContent("");
-            using var contentScope = content;
+            #pragma warning disable CA2025 // the request is BLOCKED on below
+            using var content = new StringContent("");
             var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/reset" + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
@@ -543,7 +543,10 @@ public static class MockTest
                     // Release only here: the child binds immediately after, so
                     // the unowned window is as small as the API permits.
                     reservation.Stop();
-                    process = SpawnMockServer(host, attemptPort);
+                    #pragma warning disable CA2000 // ownership TRANSFERS to the returned handle,
+        // which owns teardown; disposing here would tear the mock down early.
+        process = SpawnMockServer(host, attemptPort);
+#pragma warning restore CA2000
                 }
                 catch (Exception ex)
                 {

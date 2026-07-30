@@ -436,8 +436,8 @@ public static class RelayMockTest
 
         public void Reset()
         {
-            var content = new StringContent("");
-            using var contentScope = content;
+            #pragma warning disable CA2025 // the request is BLOCKED on below
+            using var content = new StringContent("");
             var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/journal/reset" + _sessionQuery), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
@@ -502,8 +502,8 @@ public static class RelayMockTest
         /// when unscoped).</summary>
         public void Reset()
         {
-            var content = new StringContent("");
-            using var contentScope = content;
+            #pragma warning disable CA2025 // the request is BLOCKED on below
+            using var content = new StringContent("");
             var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/reset" + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
@@ -655,7 +655,10 @@ public static class RelayMockTest
                 {
                     wsReservation.Stop();
                     httpReservation.Stop();
-                    process = SpawnMockServer(host, attemptWsPort, attemptHttpPort);
+                    #pragma warning disable CA2000 // ownership TRANSFERS to the returned handle,
+        // which owns teardown; disposing here would tear the mock down early.
+        process = SpawnMockServer(host, attemptWsPort, attemptHttpPort);
+#pragma warning restore CA2000
                 }
                 catch (Exception ex)
                 {
