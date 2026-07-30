@@ -1090,6 +1090,70 @@ public class SkillsTests : IDisposable
         AssertParam("response_postfix", "string", "");
     }
 
+    /// <summary>
+    /// The serverless DataSphere search payload must ride on the webhook's
+    /// <c>params</c> key. The engine reads ONLY <c>params</c> and <c>headers</c>
+    /// off a data_map webhook object (mod_openai/actions.c:735-739 — there is no
+    /// read of <c>body</c> anywhere), so a payload emitted under <c>body</c> is
+    /// silently dropped and the search runs with NO parameters at all.
+    ///
+    /// <para>Likewise the foreach block's per-item template key is
+    /// <c>append</c>, not <c>template</c> — <c>${formatted_results}</c> in the
+    /// output is populated only by <c>append</c>, so a <c>template</c> key
+    /// leaves the response body empty.</para>
+    ///
+    /// <para>This asserts on the EMITTED PAYLOAD rather than on construction:
+    /// the construction-shaped assertions passed happily while both keys were
+    /// wrong. Mirrors the reference at
+    /// <c>signalwire/skills/datasphere_serverless/skill.py:211-218</c>
+    /// (<c>.params(webhook_params).foreach({input_key, output_key, max, append})</c>).</para>
+    /// </summary>
+    [Fact]
+    public void DatasphereServerlessSkill_WebhookCarriesParamsNotBody()
+    {
+        var agent = MakeAgent();
+        var skill = new DatasphereServerlessSkill();
+        var parameters = new Dictionary<string, object>
+        {
+            ["space_name"] = "test.signalwire.com",
+            ["project_id"] = "proj",
+            ["token"] = "tok",
+            ["document_id"] = "doc-789",
+            ["count"] = 3,
+            ["distance"] = 2.5,
+        };
+        Assert.True(skill.Setup(agent, parameters));
+        skill.Wire(agent, parameters);
+        skill.RegisterTools(agent);
+
+        var funcDef = agent.GetFunction("search_knowledge");
+        Assert.NotNull(funcDef);
+        var dataMap = (Dictionary<string, object>)funcDef!["data_map"];
+        var webhooks = (List<Dictionary<string, object>>)dataMap["webhooks"];
+        var webhook = Assert.Single(webhooks);
+
+        // The search payload must ride on "params" — the engine never reads "body".
+        Assert.False(
+            webhook.ContainsKey("body"),
+            "webhook must not carry a body key; the engine never reads it");
+        Assert.True(webhook.ContainsKey("params"), "webhook must carry params");
+        var wparams = (Dictionary<string, object>)webhook["params"];
+        Assert.Equal("${args.query}", wparams["query_string"]);
+        Assert.Equal("doc-789", wparams["document_id"]);
+        Assert.Equal(3, wparams["count"]);
+        Assert.Equal(2.5, wparams["distance"]);
+
+        // ${formatted_results} is populated only by the foreach block's "append".
+        var foreachBlock = (Dictionary<string, object>)webhook["foreach"];
+        Assert.Equal("chunks", foreachBlock["input_key"]);
+        Assert.Equal("formatted_results", foreachBlock["output_key"]);
+        Assert.False(
+            foreachBlock.ContainsKey("template"),
+            "foreach's per-item key is 'append'; 'template' is never read");
+        Assert.True(foreachBlock.ContainsKey("max"), "foreach must carry max");
+        Assert.Contains("${this.text}", (string)foreachBlock["append"], StringComparison.Ordinal);
+    }
+
     [Fact]
     public void DatasphereSkill_RequiresParams()
     {

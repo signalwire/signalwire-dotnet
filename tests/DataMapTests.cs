@@ -261,23 +261,25 @@ public class DataMapTests
         Assert.False(result.ContainsKey("data_map"));
     }
 
+    /// <summary>
+    /// A data_map webhook must never carry a <c>body</c> key. schema.json's
+    /// <c>$defs/Webhook</c> declares ten permitted properties under
+    /// <c>unevaluatedProperties: {"not": {}}</c> and <c>body</c> is not one of
+    /// them, so the document is invalid and the engine — which reads
+    /// <c>params</c> and <c>headers</c> only — never sees the payload. Request
+    /// data goes on <c>params</c>; the builder has no <c>Body</c> method.
+    /// (Replaces the pair of tests that asserted the removed builder.)
+    /// </summary>
     [Fact]
-    public void Body_ModifiesLastWebhook()
+    public void Webhook_NeverCarriesABodyKey()
     {
         var dm = new DM("fn");
         dm.Webhook("POST", "https://a.com");
-        dm.Body(new Dictionary<string, object> { ["key"] = "${args.val}" });
+        dm.Params(new Dictionary<string, object> { ["key"] = "${args.val}" });
         var wh = ((List<Dictionary<string, object>>)((Dictionary<string, object>)dm.ToSwaigFunction()["data_map"])["webhooks"])[0];
-        var body = (Dictionary<string, object>)wh["body"];
-        Assert.Equal("${args.val}", body["key"]);
-    }
 
-    [Fact]
-    public void Body_IgnoredWithNoWebhooks()
-    {
-        var dm = new DM("fn");
-        dm.Body(new Dictionary<string, object> { ["k"] = "v" });
-        Assert.False(dm.ToSwaigFunction().ContainsKey("data_map"));
+        Assert.False(wh.ContainsKey("body"));
+        Assert.Equal("${args.val}", ((Dictionary<string, object>)wh["params"])["key"]);
     }
 
     [Fact]
@@ -511,7 +513,6 @@ public class DataMapTests
         Assert.Same(dm, dm.Expression("s", "p", new FunctionResult("o")));
         Assert.Same(dm, dm.Webhook("GET", "https://x.com"));
         Assert.Same(dm, dm.WebhookExpressions([]));
-        Assert.Same(dm, dm.Body(new Dictionary<string, object>()));
         Assert.Same(dm, dm.Params(new Dictionary<string, object>()));
         Assert.Same(dm, dm.ForEach(new Dictionary<string, object> { ["input_key"] = "a", ["output_key"] = "b" }));
         Assert.Same(dm, dm.Output(new FunctionResult("x")));
@@ -527,7 +528,7 @@ public class DataMapTests
             .Purpose("Test API")
             .Parameter("q", "string", "Query", true)
             .Webhook("POST", "https://api.test.com")
-            .Body(new Dictionary<string, object> { ["query"] = "${args.q}" })
+            .Params(new Dictionary<string, object> { ["query"] = "${args.q}" })
             .Output(new FunctionResult("${result}"))
             .GlobalErrorKeys(["err"])
             .ToSwaigFunction();
@@ -551,20 +552,20 @@ public class DataMapTests
         dm.Webhook("GET", "https://first.com");
         dm.Webhook("POST", "https://second.com");
         dm.Output(new FunctionResult("from second"));
-        dm.Body(new Dictionary<string, object> { ["key"] = "val" });
         dm.Params(new Dictionary<string, object> { ["p"] = "v" });
+        dm.ForEach(new Dictionary<string, object> { ["input_key"] = "a", ["output_key"] = "b" });
         dm.ErrorKeys(["err"]);
 
         var webhooks = (List<Dictionary<string, object>>)((Dictionary<string, object>)dm.ToSwaigFunction()["data_map"])["webhooks"];
 
         Assert.False(webhooks[0].ContainsKey("output"));
-        Assert.False(webhooks[0].ContainsKey("body"));
         Assert.False(webhooks[0].ContainsKey("params"));
+        Assert.False(webhooks[0].ContainsKey("foreach"));
         Assert.False(webhooks[0].ContainsKey("error_keys"));
 
         Assert.True(webhooks[1].ContainsKey("output"));
-        Assert.True(webhooks[1].ContainsKey("body"));
         Assert.True(webhooks[1].ContainsKey("params"));
+        Assert.True(webhooks[1].ContainsKey("foreach"));
         Assert.True(webhooks[1].ContainsKey("error_keys"));
     }
 }

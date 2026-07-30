@@ -188,12 +188,17 @@ public class DataMap
         return this;
     }
 
-    public DataMap Body(Dictionary<string, object> data)
-    {
-        if (_webhooks.Count > 0) _webhooks[^1]["body"] = data;
-        return this;
-    }
-
+    /// <summary>
+    /// Set request params for the last added webhook — the ONLY key that
+    /// carries request data on the wire.
+    ///
+    /// <para>There is deliberately no <c>Body</c> counterpart: schema.json's
+    /// <c>$defs/Webhook</c> lists ten permitted properties under
+    /// <c>unevaluatedProperties: {"not": {}}</c> and <c>body</c> is not among
+    /// them, so a <c>body</c> key makes the document invalid; the engine's
+    /// webhook readers look up <c>params</c> and never <c>body</c>. Use this
+    /// method for POST/PUT request data.</para>
+    /// </summary>
     public DataMap Params(Dictionary<string, object> data)
     {
         if (_webhooks.Count > 0) _webhooks[^1]["params"] = data;
