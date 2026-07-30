@@ -37,7 +37,7 @@ namespace SignalWire.POM;
 /// through <see cref="Pom"/>.</para>
 ///
 /// <para>Rendering and serialization pass straight through to
-/// <see cref="Pom"/>, so output parity with the reference is the model's
+/// <see cref="Pom"/>, so the exact output is defined by the underlying model
 /// (see <see cref="PromptObjectModel"/>). <see cref="FromSections"/>
 /// rebuilds a builder — index included — from previously serialized
 /// section dicts.</para>

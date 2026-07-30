@@ -31,11 +31,11 @@ public class ToolRegistry
     private readonly Dictionary<string, Dictionary<string, object>> _swaigFunctions = [];
 
     /// <summary>
-    /// Create a tool registry. (Python parity: <c>__init__(agent=None)</c>.)
+    /// Create a tool registry. (Equivalent to Python's <c>__init__(agent=None)</c>.)
     /// </summary>
     /// <param name="agent">Optional parent AgentBase instance, kept as a
-    /// back-reference for parity with the Python/Ruby registries; may be null for
-    /// standalone use.</param>
+    /// back-reference so callers can read it back off the registry; may be null
+    /// for standalone use.</param>
     public ToolRegistry(object? agent = null)
     {
         // The reference stores this back-reference and exposes it; discarding it
@@ -44,11 +44,11 @@ public class ToolRegistry
     }
 
     /// <summary>The parent agent this registry belongs to, or null when built
-    /// standalone. (equivalent to Python's <c>agent</c>.)</summary>
+    /// standalone. (Equivalent to Python's <c>agent</c>.)</summary>
     public object? Agent { get; }
 
     /// <summary>
-    /// Define a SWAIG function that the AI can call. (Python parity: <c>define_tool</c>.)
+    /// Define a SWAIG function that the AI can call. (Equivalent to Python's <c>define_tool</c>.)
     /// </summary>
     /// <param name="name">Function name (must be unique).</param>
     /// <param name="description">LLM-facing description.</param>
@@ -105,7 +105,7 @@ public class ToolRegistry
     /// <summary>
     /// Register a raw SWAIG function dictionary (e.g. from a DataMap's
     /// <c>to_swaig_function</c>). Requires a <c>function</c> field and rejects
-    /// duplicates. (Python parity: <c>register_swaig_function</c>.)
+    /// duplicates. (Equivalent to Python's <c>register_swaig_function</c>.)
     /// </summary>
     /// <param name="functionDict">Complete SWAIG function definition.</param>
     /// <exception cref="ArgumentException">If the name is missing or already exists.</exception>
@@ -135,7 +135,7 @@ public class ToolRegistry
     }
 
     /// <summary>
-    /// Get a registered function by name. (Python parity: <c>get_function</c>.)
+    /// Get a registered function by name. (Equivalent to Python's <c>get_function</c>.)
     /// </summary>
     /// <returns>The definition dictionary, or null if not found.</returns>
     public Dictionary<string, object>? GetFunction(string name)
@@ -145,7 +145,7 @@ public class ToolRegistry
 
     /// <summary>
     /// Get a copy of all registered functions. Mutating the returned dictionary
-    /// does not affect the registry. (Python parity: <c>get_all_functions</c>.)
+    /// does not affect the registry. (Equivalent to Python's <c>get_all_functions</c>.)
     /// </summary>
     [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface.")]
     public Dictionary<string, Dictionary<string, object>> GetAllFunctions()
@@ -154,7 +154,7 @@ public class ToolRegistry
     }
 
     /// <summary>
-    /// Check whether a function is registered. (Python parity: <c>has_function</c>.)
+    /// Check whether a function is registered. (Equivalent to Python's <c>has_function</c>.)
     /// </summary>
     public bool HasFunction(string name)
     {
@@ -162,7 +162,7 @@ public class ToolRegistry
     }
 
     /// <summary>
-    /// Remove a registered function. (Python parity: <c>remove_function</c>.)
+    /// Remove a registered function. (Equivalent to Python's <c>remove_function</c>.)
     /// </summary>
     /// <returns>True if removed, false if not found.</returns>
     public bool RemoveFunction(string name)

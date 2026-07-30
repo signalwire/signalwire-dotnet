@@ -52,10 +52,10 @@ namespace SignalWire.POM;
 /// children render at the same level, so an untitled wrapper adds
 /// structure without adding depth.</para>
 ///
-/// <para><b>Rendering</b> is byte-for-byte matched to the Python
-/// reference in all three forms — markdown, XML, and dict. Note that
-/// <see cref="RenderXml"/> performs <b>no</b> XML escaping (reference
-/// parity), so a body containing <c>&lt;</c> or <c>&amp;</c> produces
+/// <para><b>Rendering</b> is byte-for-byte identical to the Python SDK in
+/// all three forms — markdown, XML, and dict. Note that
+/// <see cref="RenderXml"/> performs <b>no</b> XML escaping (matching the
+/// Python SDK), so a body containing <c>&lt;</c> or <c>&amp;</c> produces
 /// output that is not well-formed XML.</para>
 /// </summary>
 public class Section
@@ -319,12 +319,12 @@ public class Section
 /// so duplicate titles are resolvable only by holding the
 /// <see cref="Section"/> reference.</para>
 ///
-/// <para><b>Output parity is a contract, not a convenience:</b> markdown,
+/// <para><b>The exact output is a contract, not a convenience:</b> markdown,
 /// XML, JSON, and YAML output are matched byte-for-byte against the Python
-/// reference's <c>render_markdown</c> / <c>render_xml</c> / <c>to_json</c> /
-/// <c>to_yaml</c>, so a prompt built here and one built in any other port
-/// produce identical engine input. Changing the rendering is a
-/// cross-port wire change.</para>
+/// SDK's <c>render_markdown</c> / <c>render_xml</c> / <c>to_json</c> /
+/// <c>to_yaml</c>, so a prompt built here and one built with any other
+/// SignalWire SDK produce identical engine input. Changing the rendering is
+/// a breaking wire change.</para>
 ///
 /// <para><see cref="Debug"/> is carried on the model but does not affect
 /// rendering.</para>
