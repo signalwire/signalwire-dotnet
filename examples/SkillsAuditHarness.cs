@@ -43,7 +43,7 @@ var argsRaw = Environment.GetEnvironmentVariable("SKILL_HANDLER_ARGS") ?? "{}";
 
 if (skillName.Length == 0)
 {
-    await Console.Error.WriteLineAsync("SkillsAuditHarness: SKILL_NAME required.");
+    await Console.Error.WriteLineAsync("SkillsAuditHarness: SKILL_NAME required.").ConfigureAwait(false);
     return 1;
 }
 
@@ -54,7 +54,7 @@ try
 }
 catch (JsonException)
 {
-    await Console.Error.WriteLineAsync("SkillsAuditHarness: SKILL_HANDLER_ARGS is not a JSON object.");
+    await Console.Error.WriteLineAsync("SkillsAuditHarness: SKILL_HANDLER_ARGS is not a JSON object.").ConfigureAwait(false);
     return 1;
 }
 
@@ -87,7 +87,7 @@ switch (skillName)
         skillParams["api_key"] = Environment.GetEnvironmentVariable("WEATHER_API_KEY") ?? "";
         break;
     default:
-        await Console.Error.WriteLineAsync($"SkillsAuditHarness: unsupported skill '{skillName}'");
+        await Console.Error.WriteLineAsync($"SkillsAuditHarness: unsupported skill '{skillName}'").ConfigureAwait(false);
         return 2;
 }
 
@@ -95,7 +95,7 @@ var registry = SkillRegistry.Instance;
 var factory = registry.GetFactory(skillName);
 if (factory is null)
 {
-    await Console.Error.WriteLineAsync($"SkillsAuditHarness: skill '{skillName}' not registered");
+    await Console.Error.WriteLineAsync($"SkillsAuditHarness: skill '{skillName}' not registered").ConfigureAwait(false);
     return 2;
 }
 
@@ -110,7 +110,7 @@ var skill = factory();
 skill.Wire(agent, skillParams);
 if (!skill.Setup(agent, skillParams))
 {
-    await Console.Error.WriteLineAsync($"SkillsAuditHarness: skill '{skillName}' Setup() returned false");
+    await Console.Error.WriteLineAsync($"SkillsAuditHarness: skill '{skillName}' Setup() returned false").ConfigureAwait(false);
     return 1;
 }
 skill.RegisterTools(agent);
@@ -121,14 +121,15 @@ object? result = skillName switch
     "wikipedia_search" => DispatchHandler(agent, "search_wiki", handlerArgs),
     "datasphere" => DispatchHandler(agent, "search_knowledge", handlerArgs),
     "spider" => DispatchHandler(agent, "scrape_url", handlerArgs),
-    "api_ninjas_trivia" => await ExecuteDataMap(agent, "get_trivia", EnsureCategory(handlerArgs)),
-    "weather_api" => await ExecuteDataMap(agent, "get_weather", handlerArgs),
+    "api_ninjas_trivia" => await ExecuteDataMap(agent, "get_trivia", EnsureCategory(handlerArgs))
+        .ConfigureAwait(false),
+    "weather_api" => await ExecuteDataMap(agent, "get_weather", handlerArgs).ConfigureAwait(false),
     _ => null,
 };
 
 if (result is null)
 {
-    await Console.Error.WriteLineAsync($"SkillsAuditHarness: dispatch returned null for '{skillName}'");
+    await Console.Error.WriteLineAsync($"SkillsAuditHarness: dispatch returned null for '{skillName}'").ConfigureAwait(false);
     return 1;
 }
 
@@ -184,7 +185,7 @@ static async Task<object?> ExecuteDataMap(AgentBase agent, string toolName, Dict
         return new Dictionary<string, object> { ["error"] = $"tool '{toolName}' not registered" };
     }
     var defs = agent.Tools;
-    IReadOnlyDictionary<string, object>? webhook = null;
+    Dictionary<string, object>? webhook = null;
     foreach (var def in defs)
     {
         var fnName = def.TryGetValue("function", out var n) ? n as string : null;
@@ -215,27 +216,44 @@ static async Task<object?> ExecuteDataMap(AgentBase agent, string toolName, Dict
     }
 
     using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+    var uri = new Uri(url);
     HttpResponseMessage resp;
     try
     {
-        resp = method switch
+        switch (method)
         {
-            "GET" => await http.GetAsync(url),
-            "POST" => await http.PostAsync(url, new StringContent("", System.Text.Encoding.UTF8, "application/json")),
-            _ => await http.SendAsync(new HttpRequestMessage(new HttpMethod(method), url)),
-        };
+            case "GET":
+                resp = await http.GetAsync(uri).ConfigureAwait(false);
+                break;
+            case "POST":
+                using (var content = new StringContent("", System.Text.Encoding.UTF8, "application/json"))
+                {
+                    resp = await http.PostAsync(uri, content).ConfigureAwait(false);
+                }
+                break;
+            default:
+                using (var request = new HttpRequestMessage(new HttpMethod(method), uri))
+                {
+                    resp = await http.SendAsync(request).ConfigureAwait(false);
+                }
+                break;
+        }
     }
+#pragma warning disable CA1031 // The harness reports any transport failure as a data
+    // field so the audit still produces a comparable artifact.
     catch (Exception ex)
     {
         return new Dictionary<string, object> { ["error"] = $"HTTP {method} {url} failed: {ex.Message}" };
     }
-    var body = await resp.Content.ReadAsStringAsync();
+#pragma warning restore CA1031
+    using var respScope = resp;
+    var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
     object parsedBody = body;
     try
     {
         parsedBody = JsonSerializer.Deserialize<object>(body) ?? body;
     }
-    catch { /* keep raw body */ }
+    catch (JsonException) { /* not JSON — keep the raw body */ }
     return new Dictionary<string, object>
     {
         ["status"] = (int)resp.StatusCode,

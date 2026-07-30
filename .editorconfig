@@ -111,7 +111,7 @@ dotnet_diagnostic.CA1822.severity = none
 # other rule stays at error over these trees — so both are burnable to zero and
 # STAY zero. Both rules remain ON for src/.
 
-[tests/**/*.cs]
+[tests/**.cs]
 # CA1707 — underscores in member names. Every test is named `Method_Scenario`
 # (`AgentBase_AgentIdIsReadableBack`, `Register_Agent`,
 # `Tools_ExposesRegisteredFunction`): the xUnit convention, where the underscore
@@ -121,7 +121,7 @@ dotnet_diagnostic.CA1822.severity = none
 # because it "would de-idiomatize test code". (mike@signalwire.com, 2026-07-30)
 dotnet_diagnostic.CA1707.severity = none
 
-[examples/**/*.cs]
+[examples/**.cs]
 # CA1303 — do not pass literals as localized parameters. An example's
 # `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING
 # TEXT printed to a developer's terminal, not a localizable product string; the
