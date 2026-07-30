@@ -42,6 +42,7 @@ Usage:
     python3 scripts/generate_swaig_payloads.py --check    # GEN-FRESH: fail if stale
     python3 scripts/generate_swaig_payloads.py --out DIR  # scratch: emit into DIR
 """
+
 from __future__ import annotations
 
 import argparse
@@ -53,7 +54,9 @@ from pathlib import Path
 
 def _load_rest_generator():
     here = Path(__file__).resolve().parent
-    spec = importlib.util.spec_from_file_location("generate_rest", here / "generate_rest.py")
+    spec = importlib.util.spec_from_file_location(
+        "generate_rest", here / "generate_rest.py"
+    )
     if spec is None or spec.loader is None:  # pragma: no cover
         raise SystemExit("generate_swaig_payloads.py: cannot load generate_rest.py")
     mod = importlib.util.module_from_spec(spec)
@@ -93,8 +96,9 @@ def _emit(cs_ns, subdir, cs_name, props, desc, ref_names, pascal_props=False):
     # (their property names the oracle records wire-key-verbatim), so they stay
     # verbatim (pascal_props=False).
     fn = "/".join(subdir) + f"/{GR.snake(cs_name)}.cs"
-    src = GR.emit_methodless_class(cs_ns, cs_name, props, desc, ref_names=ref_names,
-                                   pascal_props=pascal_props)
+    src = GR.emit_methodless_class(
+        cs_ns, cs_name, props, desc, ref_names=ref_names, pascal_props=pascal_props
+    )
     return fn, src
 
 
@@ -117,12 +121,24 @@ def _build_swaig_request(psdk: Path) -> dict:
     arg = props.get("argument")
     props = dict(props)
     if isinstance(arg, dict) and arg.get("properties"):
-        fn, src = _emit(SR_NS, SR_SUBDIR, "SwaigArgument", arg["properties"],
-                        "inline swaig-request `argument` object (lifted)", {})
+        fn, src = _emit(
+            SR_NS,
+            SR_SUBDIR,
+            "SwaigArgument",
+            arg["properties"],
+            "inline swaig-request `argument` object (lifted)",
+            {},
+        )
         outs[fn] = src
         props["argument"] = {"$ref": "#/components/schemas/SwaigArgument"}
-    fn, src = _emit(SR_NS, SR_SUBDIR, "SwaigRequest", props,
-                    "swaig-request `SwaigRequest` schema", ref_names)
+    fn, src = _emit(
+        SR_NS,
+        SR_SUBDIR,
+        "SwaigRequest",
+        props,
+        "swaig-request `SwaigRequest` schema",
+        ref_names,
+    )
     outs[fn] = src
     return outs
 
@@ -148,8 +164,14 @@ def _build_post_prompt(psdk: Path) -> dict:
         if cs_name in emitted:
             continue
         emitted.add(cs_name)
-        fn, src = _emit(PP_NS, PP_SUBDIR, cs_name, node.get("properties") or {},
-                        f"post-prompt components/schemas {raw_name!r}", ref_names)
+        fn, src = _emit(
+            PP_NS,
+            PP_SUBDIR,
+            cs_name,
+            node.get("properties") or {},
+            f"post-prompt components/schemas {raw_name!r}",
+            ref_names,
+        )
         outs[fn] = src
     return outs
 
@@ -159,7 +181,11 @@ def _build_swaig_actions(psdk: Path) -> dict:
     actions = spec["components"]["schemas"]["SwaigAction"]["properties"]
 
     def _is_obj(s) -> bool:
-        return isinstance(s, dict) and s.get("type") == "object" and bool(s.get("properties"))
+        return (
+            isinstance(s, dict)
+            and s.get("type") == "object"
+            and bool(s.get("properties"))
+        )
 
     outs: dict = {}
     emitted: set = set()
@@ -173,15 +199,23 @@ def _build_swaig_actions(psdk: Path) -> dict:
             if not _is_obj(b):
                 continue
             obj_i += 1
-            cs_name = GR.type_name(_pascal_verb(verb) + "Action" + ("" if obj_i == 1 else str(obj_i)))
+            cs_name = GR.type_name(
+                _pascal_verb(verb) + "Action" + ("" if obj_i == 1 else str(obj_i))
+            )
             if cs_name in emitted:
                 continue
             emitted.add(cs_name)
             # swaig-actions are NOT in the sig oracle -> method-less both sides;
             # PascalCase props (DOTNET-2) — wire preserved by [JsonPropertyName].
-            fn, src = _emit(SA_NS, SA_SUBDIR, cs_name, b.get("properties") or {},
-                            f"swaig-response action {verb!r} value object", {},
-                            pascal_props=True)
+            fn, src = _emit(
+                SA_NS,
+                SA_SUBDIR,
+                cs_name,
+                b.get("properties") or {},
+                f"swaig-response action {verb!r} value object",
+                {},
+                pascal_props=True,
+            )
             outs[fn] = src
     return outs
 
@@ -204,7 +238,9 @@ _SUBDIRS = (PP_SUBDIR, SR_SUBDIR, SA_SUBDIR)
 
 def main(argv: list) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--check", action="store_true", help="GEN-FRESH: exit non-zero if stale")
+    ap.add_argument(
+        "--check", action="store_true", help="GEN-FRESH: exit non-zero if stale"
+    )
     ap.add_argument("--out", default="", help="scratch: emit into this dir")
     args = ap.parse_args(argv)
 
@@ -214,7 +250,9 @@ def main(argv: list) -> int:
     if args.out:
         out_dir = Path(args.out)
     else:
-        out_dir = repo_root() / "src" / "SignalWire" / "REST" / "Namespaces" / "Generated"
+        out_dir = (
+            repo_root() / "src" / "SignalWire" / "REST" / "Namespaces" / "Generated"
+        )
 
     if args.check:
         stale: list = []
@@ -232,11 +270,15 @@ def main(argv: list) -> int:
                         if rel not in expected:
                             stale.append(f"{p} (leftover — not in generator output)")
         if stale:
-            sys.stderr.write("GEN-FRESH FAIL: %d generated SWAIG-payload file(s) stale:\n" % len(stale))
+            sys.stderr.write(
+                f"GEN-FRESH FAIL: {len(stale)} generated SWAIG-payload file(s) stale:\n"
+            )
             for s in stale:
-                sys.stderr.write("  - %s\n" % s)
+                sys.stderr.write(f"  - {s}\n")
             return 1
-        print("GEN-FRESH: generated SWAIG-payload files match porting-sdk/swaig-specs/.")
+        print(
+            "GEN-FRESH: generated SWAIG-payload files match porting-sdk/swaig-specs/."
+        )
         return 0
 
     for fn, src in outs.items():

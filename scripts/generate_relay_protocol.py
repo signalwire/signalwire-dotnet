@@ -35,6 +35,7 @@ Usage:
     python3 scripts/generate_relay_protocol.py --check    # GEN-FRESH: fail if stale
     python3 scripts/generate_relay_protocol.py --out DIR  # scratch: emit into DIR
 """
+
 from __future__ import annotations
 
 import argparse
@@ -47,7 +48,9 @@ from pathlib import Path
 
 def _load_rest_generator():
     here = Path(__file__).resolve().parent
-    spec = importlib.util.spec_from_file_location("generate_rest", here / "generate_rest.py")
+    spec = importlib.util.spec_from_file_location(
+        "generate_rest", here / "generate_rest.py"
+    )
     if spec is None or spec.loader is None:  # pragma: no cover
         raise SystemExit("generate_relay_protocol.py: cannot load generate_rest.py")
     mod = importlib.util.module_from_spec(spec)
@@ -98,16 +101,21 @@ def build_outputs(psdk: Path) -> dict:
             # RELAY-proto types are NOT in the sig oracle -> plain scalar props
             # are fine (they surface method-less). No sibling ref set needed.
             outs[fn] = GR.emit_methodless_class(
-                RELAY_CS_NS, cs_name, node.get("properties") or {},
+                RELAY_CS_NS,
+                cs_name,
+                node.get("properties") or {},
                 f"RELAY method {method!r}, {phase}",
-                pascal_props=True)  # DOTNET-2: RELAY-proto types are method-less (surface [] / no sig accessors)
+                pascal_props=True,
+            )  # DOTNET-2: RELAY-proto types are method-less (surface [] / no sig accessors)
 
     return outs
 
 
 def main(argv: list) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--check", action="store_true", help="GEN-FRESH: exit non-zero if stale")
+    ap.add_argument(
+        "--check", action="store_true", help="GEN-FRESH: exit non-zero if stale"
+    )
     ap.add_argument("--out", default="", help="scratch: emit into this dir")
     args = ap.parse_args(argv)
 
@@ -117,7 +125,9 @@ def main(argv: list) -> int:
     if args.out:
         out_dir = Path(args.out)
     else:
-        out_dir = repo_root() / "src" / "SignalWire" / "REST" / "Namespaces" / "Generated"
+        out_dir = (
+            repo_root() / "src" / "SignalWire" / "REST" / "Namespaces" / "Generated"
+        )
 
     if args.check:
         stale: list = []
@@ -133,11 +143,15 @@ def main(argv: list) -> int:
                 if rel not in expected:
                     stale.append(f"{p} (leftover — not in generator output)")
         if stale:
-            sys.stderr.write("GEN-FRESH FAIL: %d generated RELAY-protocol file(s) stale:\n" % len(stale))
+            sys.stderr.write(
+                f"GEN-FRESH FAIL: {len(stale)} generated RELAY-protocol file(s) stale:\n"
+            )
             for s in stale:
-                sys.stderr.write("  - %s\n" % s)
+                sys.stderr.write(f"  - {s}\n")
             return 1
-        print("GEN-FRESH: generated RELAY-protocol files match porting-sdk/relay-protocol/.")
+        print(
+            "GEN-FRESH: generated RELAY-protocol files match porting-sdk/relay-protocol/."
+        )
         return 0
 
     for fn, src in outs.items():

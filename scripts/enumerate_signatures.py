@@ -52,15 +52,28 @@ if not PSDK.is_dir():
 
 sys.path.insert(0, str(HERE))
 from enumerate_surface import (  # type: ignore
-    CLASS_MODULE_MAP, CLASS_RENAME_MAP, METHOD_RENAMES, MIXIN_PROJECTIONS,
-    SKILL_RENAMES, SKIP_METHOD_NAMES, module_for_class, pascal_to_snake,
-    GENERATED_REST_NAMESPACE, load_rest_manifest, generated_type_module,
-    SURFACE_METHOD_ALIASES, FREE_FUNCTION_CLASSES, FREE_FUNCTION_PROJECTIONS,
-    TOPLEVEL_FUNCTION_PROJECTIONS, TOPLEVEL_FUNCTION_NAMES,
-    SURFACE_METHOD_ALLOWLIST, _SWML_SERVICE_ALLOW, _RELAY_EVENT_ONLY,
-    RELAY_ACTION_CONTROL_METHODS, _SKILL_PROPERTY_EXTRAS,
-    SKILL_INHERITED_PROJECTIONS, _SKILLBASE_INHERITABLE,
-    SURFACE_METHOD_INJECTIONS, AICHAT_OPTIONS_CLASSES,
+    CLASS_MODULE_MAP,
+    CLASS_RENAME_MAP,
+    METHOD_RENAMES,
+    MIXIN_PROJECTIONS,
+    SKILL_RENAMES,
+    SKIP_METHOD_NAMES,
+    module_for_class,
+    pascal_to_snake,
+    GENERATED_REST_NAMESPACE,
+    load_rest_manifest,
+    generated_type_module,
+    SURFACE_METHOD_ALIASES,
+    FREE_FUNCTION_CLASSES,
+    FREE_FUNCTION_PROJECTIONS,
+    TOPLEVEL_FUNCTION_PROJECTIONS,
+    TOPLEVEL_FUNCTION_NAMES,
+    SURFACE_METHOD_ALLOWLIST,
+    _SWML_SERVICE_ALLOW,
+    RELAY_ACTION_CONTROL_METHODS,
+    _SKILL_PROPERTY_EXTRAS,
+    SURFACE_METHOD_INJECTIONS,
+    AICHAT_OPTIONS_CLASSES,
 )
 
 
@@ -85,8 +98,14 @@ _SIG_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
     # signature oracle records the dataclass ctor. The concrete signatures are
     # spliced from the oracle by the AI-Chat unfold post-process.
     ("signalwire.ai_chat.client", "AIChatClient"): {
-        "__init__", "chat", "close", "create_conversation",
-        "delete", "end", "log", "summarize",
+        "__init__",
+        "chat",
+        "close",
+        "create_conversation",
+        "delete",
+        "end",
+        "log",
+        "summarize",
     },
     ("signalwire.ai_chat.client", "AIChatError"): {"__init__"},
     ("signalwire.ai_chat.client", "ConversationInfo"): {"__init__"},
@@ -94,36 +113,55 @@ _SIG_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
     ("signalwire.ai_chat.client", "ChatLog"): {"__init__"},
     # RequestOptions (plan 4.2): the SIGNATURE oracle records __init__ +
     # abort_signal + merge only; drop the .NET record's per-field accessors.
-    ("signalwire.rest._request_options", "RequestOptions"):
-        {"__init__", "abort_signal", "merge"},
+    ("signalwire.rest._request_options", "RequestOptions"): {
+        "__init__",
+        "abort_signal",
+        "merge",
+    },
     # No __call__ (its signature reference is null) and no data-property accessors.
     ("signalwire.core.swaig_function", "SWAIGFunction"): {
-        "__init__", "execute", "to_swaig", "validate_args",
+        "__init__",
+        "execute",
+        "to_swaig",
+        "validate_args",
     },
     # No generate_method_body / generate_method_signature (surface-only); no
     # convenience accessors the griffe oracle omits.
     ("signalwire.utils.schema_utils", "SchemaUtils"): {
-        "__init__", "get_all_verb_names", "get_verb_parameters",
-        "get_verb_properties", "get_verb_required_properties", "load_schema",
-        "validate_document", "validate_verb",
+        "__init__",
+        "get_all_verb_names",
+        "get_verb_parameters",
+        "get_verb_properties",
+        "get_verb_required_properties",
+        "load_schema",
+        "validate_document",
+        "validate_verb",
     },
     # WebService: keep the port's own methods; app/security are reference-only
     # (missing-port, documented) and start's return/param idiom is documented.
     ("signalwire.web.web_service", "WebService"): {
-        "__init__", "add_directory", "app", "remove_directory", "security",
-        "start", "stop",
+        "__init__",
+        "add_directory",
+        "app",
+        "remove_directory",
+        "security",
+        "start",
+        "stop",
     },
 }
 
 
 def load_aliases() -> dict[str, str]:
     data = yaml.safe_load((PSDK / "type_aliases.yaml").read_text(encoding="utf-8"))
-    return {str(k): str(v) for k, v in data.get("aliases", {}).get("dotnet", {}).items()}
+    return {
+        str(k): str(v) for k, v in data.get("aliases", {}).get("dotnet", {}).items()
+    }
 
 
 # ---------------------------------------------------------------------------
 # .NET type translation
 # ---------------------------------------------------------------------------
+
 
 def split_generic(name: str) -> tuple[str, list[str]]:
     """Split ``Foo.Bar<A,B>`` into (``Foo.Bar``, [``A``, ``B``]).
@@ -245,9 +283,7 @@ def translate_dotnet_type(t: str, aliases: dict[str, str], context: str) -> str:
         return f"list<{canon_args[0]}>"
     # Generic future / async wrapper that carries no Python equivalent;
     # treat as the wrapped type.
-    if head in (
-        "System.Threading.Tasks.TaskCompletionSource",
-    ):
+    if head in ("System.Threading.Tasks.TaskCompletionSource",):
         return canon_args[0] if canon_args else "any"
 
     # Tuples
@@ -300,6 +336,7 @@ def _translate_sdk_class_ref(full_name: str) -> str:
 # Default-value canonicalisation
 # ---------------------------------------------------------------------------
 
+
 def canonical_default(raw, has_default: bool):
     """Return (default_present, default_value)."""
     if not has_default:
@@ -330,6 +367,7 @@ def canonical_method_name(name: str) -> str | None:
 # ---------------------------------------------------------------------------
 # Building canonical inventory
 # ---------------------------------------------------------------------------
+
 
 def kind_for_param(p: dict) -> str | None:
     """Return canonical kind, or None to use default 'positional'."""
@@ -369,7 +407,9 @@ def build_signature(method: dict, aliases: dict, context: str, is_static: bool) 
         param["type"] = canon
 
         # Required / default
-        has_default, default = canonical_default(p.get("default"), p.get("has_default", False))
+        has_default, default = canonical_default(
+            p.get("default"), p.get("has_default", False)
+        )
         if has_default:
             param["required"] = False
             param["default"] = default
@@ -383,7 +423,9 @@ def build_signature(method: dict, aliases: dict, context: str, is_static: bool) 
         return_canonical = translate_dotnet_type(
             method.get("return_type", "System.Void"), aliases, context + "[->]"
         )
-        if method.get("return_nullable") and not return_canonical.startswith("optional<"):
+        if method.get("return_nullable") and not return_canonical.startswith(
+            "optional<"
+        ):
             return_canonical = f"optional<{return_canonical}>"
     return {"params": params_out, "returns": return_canonical}
 
@@ -487,8 +529,9 @@ def _oracle_class_members(module: str, cls: str) -> set[str]:
     """
     prefix = f"{module}.{cls}."
     return {
-        key[len(prefix):] for key in _REFERENCE_SIGS
-        if key.startswith(prefix) and "." not in key[len(prefix):]
+        key[len(prefix) :]
+        for key in _REFERENCE_SIGS
+        if key.startswith(prefix) and "." not in key[len(prefix) :]
     }
 
 
@@ -500,12 +543,14 @@ def _oracle_class_members(module: str, cls: str) -> set[str]:
 # / block-bodied properties. Emit each oracle field member with its spliced
 # reference signature (a self-only zero-arg accessor returning the field type),
 # gated on _oracle_class_members so the set reproduces the oracle exactly.
-_DATACLASS_FIELD_CLASSES: frozenset[tuple[str, str]] = frozenset({
-    ("signalwire.ai_chat.client", "ConversationInfo"),
-    ("signalwire.ai_chat.client", "ChatResponse"),
-    ("signalwire.ai_chat.client", "ChatLog"),
-    ("signalwire.rest._request_options", "RequestOptions"),
-})
+_DATACLASS_FIELD_CLASSES: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("signalwire.ai_chat.client", "ConversationInfo"),
+        ("signalwire.ai_chat.client", "ChatResponse"),
+        ("signalwire.ai_chat.client", "ChatLog"),
+        ("signalwire.rest._request_options", "RequestOptions"),
+    }
+)
 
 
 def _reference_sig(module: str, cls: str, method: str) -> dict | None:
@@ -575,7 +620,7 @@ def _union_members(t: str) -> list[str]:
     nested ``list<string>`` / ``dict<string,any>`` member survives intact."""
     if not (isinstance(t, str) and t.startswith("union<") and t.endswith(">")):
         return [t] if isinstance(t, str) else []
-    inner = t[len("union<"):-1]
+    inner = t[len("union<") : -1]
     out, depth, buf = [], 0, []
     for ch in inner:
         if ch in "<([":
@@ -596,7 +641,9 @@ def _union_members(t: str) -> list[str]:
     return flat
 
 
-def _merge_overload_param_unions(existing: dict, sig: dict, ref_types: list | None) -> None:
+def _merge_overload_param_unions(
+    existing: dict, sig: dict, ref_types: list | None
+) -> None:
     """REFERENCE-DIRECTED union of param TYPES across two equal-arity overloads.
 
     C# expresses a reference ``Union[A, B]`` parameter the only way a statically
@@ -638,7 +685,7 @@ def _merge_overload_param_unions(existing: dict, sig: dict, ref_types: list | No
     pa, pb = existing.get("params", []), sig.get("params", [])
     if len(pa) != len(pb):
         return
-    for i, (x, y) in enumerate(zip(pa, pb)):
+    for i, (x, y) in enumerate(zip(pa, pb, strict=True)):
         if x.get("kind") == "self" or y.get("kind") == "self":
             continue
         if i >= len(ref_types):
@@ -708,7 +755,9 @@ _SIG_ACCESSOR_MODULES = {
 }
 
 
-def _collect_generated_type(type_entry, name, target_module, aliases, out_modules, failures):
+def _collect_generated_type(
+    type_entry, name, target_module, aliases, out_modules, failures
+):
     """Emit signatures for a generated method-less TYPE class (SESSION_CHANGESET
     item D3) onto its oracle ``*_generated`` module.
 
@@ -751,7 +800,9 @@ def _collect_generated_type(type_entry, name, target_module, aliases, out_module
         # precisely would DRIFT: my generator can't reproduce griffe's exact
         # class-ref resolution for non-object $ref targets without inventing
         # surface classes the reference doesn't carry.)
-        params_out = [] if p.get("is_static", False) else [{"name": "self", "kind": "self"}]
+        params_out = (
+            [] if p.get("is_static", False) else [{"name": "self", "kind": "self"}]
+        )
         methods_out[pname] = {"params": params_out, "returns": "any"}
 
     if not methods_out:
@@ -769,9 +820,19 @@ def _collect_generated_type(type_entry, name, target_module, aliases, out_module
     }
 
 
-def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
-                            rest_class_module, rest_containers, rest_surface, rest_sidecar,
-                            rest_returns=None, rest_crud_bases=None):
+def _collect_generated_rest(
+    type_entry,
+    name,
+    aliases,
+    out_modules,
+    failures,
+    rest_class_module,
+    rest_containers,
+    rest_surface,
+    rest_sidecar,
+    rest_returns=None,
+    rest_crud_bases=None,
+):
     """Emit signatures for a generated-REST class onto the oracle's
     ``<ns>_resources_generated`` / ``_client_tree_generated`` module.
 
@@ -826,7 +887,9 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
             except TypeTranslationError as e:
                 failures.append(str(e))
                 continue
-            params_out = [] if p.get("is_static", False) else [{"name": "self", "kind": "self"}]
+            params_out = (
+                [] if p.get("is_static", False) else [{"name": "self", "kind": "self"}]
+            )
             methods_out[pcanon] = {"params": params_out, "returns": ret}
 
     rest_returns = rest_returns or {}
@@ -850,16 +913,18 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
                 if m is not None:
                     ctx = f"{target_module}.{name}.{canon}[paginate->]"
                     try:
-                        ret = translate_dotnet_type(m.get("return_type", ""), aliases, ctx)
+                        ret = translate_dotnet_type(
+                            m.get("return_type", ""), aliases, ctx
+                        )
                     except TypeTranslationError as e:
                         failures.append(str(e))
                 methods_out[canon] = {
-                    "params": [{"name": "self", "kind": "self"}] + records,
+                    "params": [{"name": "self", "kind": "self"}, *records],
                     "returns": ret,
                 }
             else:
                 methods_out[canon] = {
-                    "params": [{"name": "self", "kind": "self"}] + records,
+                    "params": [{"name": "self", "kind": "self"}, *records],
                     "returns": typed_ret or "dict<string,any>",
                 }
             continue
@@ -873,7 +938,9 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
         if m is not None:
             ctx = f"{target_module}.{name}.{canon}"
             try:
-                sig = build_signature(m, aliases, ctx, is_static=m.get("is_static", False))
+                sig = build_signature(
+                    m, aliases, ctx, is_static=m.get("is_static", False)
+                )
             except TypeTranslationError as e:
                 failures.append(str(e))
                 sig = {"params": [{"name": "self", "kind": "self"}], "returns": "any"}
@@ -886,7 +953,10 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
                 "returns": typed_ret,
             }
         else:
-            methods_out[canon] = {"params": [{"name": "self", "kind": "self"}], "returns": "any"}
+            methods_out[canon] = {
+                "params": [{"name": "self", "kind": "self"}],
+                "returns": "any",
+            }
 
     if methods_out:
         out_modules.setdefault(target_module, {"classes": {}})
@@ -899,8 +969,9 @@ def _collect_generated_rest(type_entry, name, aliases, out_modules, failures,
         out_modules[target_module]["classes"][name] = cls_entry
 
 
-def _wired_base_accessors(type_entry, raw_index, emitted_generated, target_module,
-                          target_class, aliases):
+def _wired_base_accessors(
+    type_entry, raw_index, emitted_generated, target_module, target_class, aliases
+):
     """Return ``{canonical_name: signature}`` for the namespace accessors a class
     inherits from a NON-EMITTED generated base — the .NET analogue of the
     reference enumerator's ``_wired_base_attributes``
@@ -1027,8 +1098,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     # so an inherited member is only reachable through this index —
     # see _wired_base_accessors.
     raw_index: dict[tuple[str, str], dict] = {
-        (t.get("namespace", ""), t.get("name", "")): t
-        for t in raw.get("types", [])
+        (t.get("namespace", ""), t.get("name", "")): t for t in raw.get("types", [])
     }
     # Generated-REST classes that ARE emitted as their own oracle class. A base
     # in this set is its own surface symbol; only a base OUTSIDE it (the
@@ -1061,9 +1131,17 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         # are replaced by the canonical recorded shape.
         if ns == GENERATED_REST_NAMESPACE:
             _collect_generated_rest(
-                type_entry, name, aliases, out_modules, failures,
-                rest_class_module, rest_containers, rest_surface, rest_sidecar,
-                rest_returns, rest_crud_bases,
+                type_entry,
+                name,
+                aliases,
+                out_modules,
+                failures,
+                rest_class_module,
+                rest_containers,
+                rest_surface,
+                rest_sidecar,
+                rest_returns,
+                rest_crud_bases,
             )
             continue
 
@@ -1078,7 +1156,12 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         gen_type_mod = generated_type_module(ns)
         if gen_type_mod is not None:
             _collect_generated_type(
-                type_entry, name, gen_type_mod, aliases, out_modules, failures,
+                type_entry,
+                name,
+                gen_type_mod,
+                aliases,
+                out_modules,
+                failures,
             )
             continue
 
@@ -1094,8 +1177,10 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         # signature module now carries infer_schema/create_typed_handler_wrapper,
         # so it is NO LONGER empty and must project (removed from this set).
         _SIG_EMPTY_FREE_FN_MODULES: set[str] = set()
-        if name in FREE_FUNCTION_CLASSES and \
-                FREE_FUNCTION_CLASSES[name]["module"] in _SIG_EMPTY_FREE_FN_MODULES:
+        if (
+            name in FREE_FUNCTION_CLASSES
+            and FREE_FUNCTION_CLASSES[name]["module"] in _SIG_EMPTY_FREE_FN_MODULES
+        ):
             continue
 
         # Free-function helper classes (item H/I): a C# static helper class whose
@@ -1124,7 +1209,10 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                 ctx = f"{target_mod}.{canon}"
                 try:
                     sig = build_signature(
-                        m, aliases, ctx, is_static=m.get("is_static", False),
+                        m,
+                        aliases,
+                        ctx,
+                        is_static=m.get("is_static", False),
                     )
                 except TypeTranslationError as e:
                     failures.append(str(e))
@@ -1142,7 +1230,8 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             # with whatever remains. Shallow-copy so the source entry is intact.
             type_entry = dict(type_entry)
             type_entry["methods"] = [
-                m for m in type_entry.get("methods", [])
+                m
+                for m in type_entry.get("methods", [])
                 if m.get("name", "") not in projected_names
             ]
 
@@ -1179,7 +1268,9 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             ctx = f"{target_module}.{target_class}.{method_canonical}"
             try:
                 sig = build_signature(
-                    m, aliases, ctx,
+                    m,
+                    aliases,
+                    ctx,
                     is_static=m.get("is_static", False),
                 )
             except TypeTranslationError as e:
@@ -1216,9 +1307,11 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                 # what selects the reference's return arm.
                 _ref_sig_for_merge = _REFERENCE_SIGS.get(ref_key)
                 _merge_overload_return_union(
-                    existing, sig,
+                    existing,
+                    sig,
                     _ref_sig_for_merge.get("returns")
-                    if isinstance(_ref_sig_for_merge, dict) else None,
+                    if isinstance(_ref_sig_for_merge, dict)
+                    else None,
                 )
                 if py_count is not None:
                     new_diff = abs(len(sig["params"]) - py_count)
@@ -1246,7 +1339,8 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         _bt = type_entry.get("base_type")
         if isinstance(_bt, dict) and _bt.get("name"):
             native_base[f"{target_module}.{target_class}"] = (
-                _bt.get("namespace", ""), _bt["name"],
+                _bt.get("namespace", ""),
+                _bt["name"],
             )
 
         # Construction contract (ALLOWLIST_DISCIPLINE.md §10): record every
@@ -1270,12 +1364,13 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                 # Already reported by the methods walk below; construction just
                 # skips what it cannot type.
                 continue
-            settable_props.setdefault(
-                f"{target_module}.{target_class}", {}
-            ).setdefault(pcanon, {
-                "type": ptype,
-                "required": bool(p.get("is_required", False)),
-            })
+            settable_props.setdefault(f"{target_module}.{target_class}", {}).setdefault(
+                pcanon,
+                {
+                    "type": ptype,
+                    "required": bool(p.get("is_required", False)),
+                },
+            )
 
         # Properties → emit as zero-arg methods on the same class (matches
         # Python @property convention: name + (self), returning the type).
@@ -1302,8 +1397,12 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         # setdefault: a locally declared member always wins. Mirrors the
         # reference enumerator's _wired_base_attributes.
         for _wname, _wsig in _wired_base_accessors(
-            type_entry, raw_index, emitted_generated,
-            target_module, target_class, aliases,
+            type_entry,
+            raw_index,
+            emitted_generated,
+            target_module,
+            target_class,
+            aliases,
         ).items():
             methods_out.setdefault(_wname, _wsig)
 
@@ -1318,7 +1417,8 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                     msig = methods_out.pop(pn)
                     free_sig = {
                         "params": [
-                            p for p in msig["params"]
+                            p
+                            for p in msig["params"]
                             if p.get("kind") not in ("self", "cls")
                         ],
                         "returns": msig["returns"],
@@ -1342,14 +1442,17 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                     msig = methods_out[c_name]
                     free_sig = {
                         "params": [
-                            p for p in msig["params"]
+                            p
+                            for p in msig["params"]
                             if p.get("kind") not in ("self", "cls")
                         ],
                         "returns": msig["returns"],
                     }
                     out_modules.setdefault("signalwire", {})
                     out_modules["signalwire"].setdefault("functions", {})
-                    out_modules["signalwire"]["functions"].setdefault(ref_name, free_sig)
+                    out_modules["signalwire"]["functions"].setdefault(
+                        ref_name, free_sig
+                    )
 
         # Per-class method-name aliases (idiom -> reference name): rename the
         # method KEY so it compares equal (e.g. call -> __call__, pass -> pass_,
@@ -1380,7 +1483,9 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             ("signalwire.rest._request_options", "RequestOptions"): {"__init__"},
         }
         _overwrite = _sig_inject_overwrite.get((target_module, target_class), set())
-        _inject_names = list(SURFACE_METHOD_INJECTIONS.get((target_module, target_class), []))
+        _inject_names = list(
+            SURFACE_METHOD_INJECTIONS.get((target_module, target_class), [])
+        )
         _inject_names += [n for n in _overwrite if n not in _inject_names]
         for inj in _inject_names:
             if inj not in methods_out or inj in _overwrite:
@@ -1491,8 +1596,16 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     # Python mixin module, then remove them from AgentBase so the diff
     # against python_signatures.json doesn't flag them as extras (Python
     # keeps them only on the mixin class). Mirrors enumerate_surface.py.
-    ab_entry = out_modules.get("signalwire.core.agent_base", {}).get("classes", {}).get("AgentBase")
-    svc_entry = out_modules.get("signalwire.core.swml_service", {}).get("classes", {}).get("SWMLService")
+    ab_entry = (
+        out_modules.get("signalwire.core.agent_base", {})
+        .get("classes", {})
+        .get("AgentBase")
+    )
+    svc_entry = (
+        out_modules.get("signalwire.core.swml_service", {})
+        .get("classes", {})
+        .get("SWMLService")
+    )
     if ab_entry is not None or svc_entry is not None:
         ab_methods = ab_entry["methods"] if ab_entry else {}
         svc_methods = svc_entry["methods"] if svc_entry else {}
@@ -1538,7 +1651,11 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     # legitimately satisfy a mixin while NOT being part of the reference
     # SWMLService's own surface, so restricting inline would starve the mixin
     # pool). Mirrors enumerate_surface's _SWML_SERVICE_ALLOW post-process.
-    swml_svc = out_modules.get("signalwire.core.swml_service", {}).get("classes", {}).get("SWMLService")
+    swml_svc = (
+        out_modules.get("signalwire.core.swml_service", {})
+        .get("classes", {})
+        .get("SWMLService")
+    )
     if swml_svc is not None:
         # ORACLE-GATED, same as the per-class allowlists above.
         _svc_allow = _SWML_SERVICE_ALLOW | _oracle_class_members(
@@ -1608,10 +1725,11 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     # subclass's minimal own-surface. Inheritance parity is covered by SkillBase
     # itself carrying the methods.
     for mod_name, entry in out_modules.items():
-        if not (mod_name.startswith("signalwire.skills.")
-                and mod_name.endswith(".skill")):
+        if not (
+            mod_name.startswith("signalwire.skills.") and mod_name.endswith(".skill")
+        ):
             continue
-        for cls_name, cls_entry in entry.get("classes", {}).items():
+        for cls_entry in entry.get("classes", {}).values():
             methods = cls_entry.get("methods", {})
             for extra in list(_SKILL_PROPERTY_EXTRAS):
                 methods.pop(extra, None)
@@ -1625,7 +1743,8 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         if fn_name not in sw["functions"]:
             ref = _REFERENCE_SIGS.get(f"signalwire.{fn_name}")
             sw["functions"][fn_name] = (
-                json.loads(json.dumps(ref)) if ref is not None
+                json.loads(json.dumps(ref))
+                if ref is not None
                 else {"params": [], "returns": "any"}
             )
 
@@ -1661,7 +1780,9 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             if allowed is not None and mname not in allowed:
                 continue
             free_sig = {
-                "params": [p for p in msig["params"] if p.get("kind") not in ("self", "cls")],
+                "params": [
+                    p for p in msig["params"] if p.get("kind") not in ("self", "cls")
+                ],
                 "returns": msig["returns"],
             }
             out_modules[mod]["functions"].setdefault(mname, free_sig)
@@ -1689,14 +1810,18 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     # Validate/ExtractSignatureHeader/ReconstructUrl surface) STAYS as a
     # PORT_ADDITION — this only adds the required decomposed core alongside it.
     _WEBHOOK_MW_MOD = "signalwire.core.security.webhook_middleware"
-    _wh_cls = out_modules.get(_WEBHOOK_MW_MOD, {}).get("classes", {}).get(
-        "WebhookValidationMiddleware")
+    _wh_cls = (
+        out_modules.get(_WEBHOOK_MW_MOD, {})
+        .get("classes", {})
+        .get("WebhookValidationMiddleware")
+    )
     if _wh_cls and "validate" in _wh_cls.get("methods", {}):
         _wh_ref = _REFERENCE_SIGS.get(f"{_WEBHOOK_MW_MOD}.validate")
         if _wh_ref is not None:
             out_modules[_WEBHOOK_MW_MOD].setdefault("functions", {})
             out_modules[_WEBHOOK_MW_MOD]["functions"].setdefault(
-                "validate", json.loads(json.dumps(_wh_ref)))
+                "validate", json.loads(json.dumps(_wh_ref))
+            )
 
     # Decomposed framework-free request-dispatch core -> reference signature.
     # The oracle requires ``SWMLService.handle_request(method, url, headers,
@@ -1712,7 +1837,8 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     # its AgentBase override so the param shapes compare equal. AgentServer's
     # own ``handle_request`` stays a PORT_ADDITION (no reference counterpart).
     _hr_ref = _REFERENCE_SIGS.get(
-        "signalwire.core.swml_service.SWMLService.handle_request")
+        "signalwire.core.swml_service.SWMLService.handle_request"
+    )
     if _hr_ref is not None:
         for _hr_mod, _hr_cls in (
             ("signalwire.core.swml_service", "SWMLService"),
@@ -1750,9 +1876,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             _ref_n = len(_ti_ref.get("params", []))
             _port_params = _ti_fns[_ti_name].get("params", [])
             if len(_port_params) > _ref_n:
-                _merged["params"] = (
-                    _merged.get("params", []) + _port_params[_ref_n:]
-                )
+                _merged["params"] = _merged.get("params", []) + _port_params[_ref_n:]
             _ti_fns[_ti_name] = _merged
 
     # Per-method free-function routing for static helpers whose methods
@@ -1760,16 +1884,21 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     # one static class for ergonomics; Python scatters them.
     # Map: (source_mod, ClassName, source_method) ->
     #      (target_mod, target_function_name).
-    STATIC_METHOD_FREE_FN_PROJECTIONS: dict[
-        tuple[str, str, str], tuple[str, str]
-    ] = {
-        ("signalwire.utils.execution_mode", "ExecutionMode", "is_serverless_mode"):
-            ("signalwire.utils", "is_serverless_mode"),
-        ("signalwire.utils.execution_mode", "ExecutionMode", "get_execution_mode"):
-            ("signalwire.core.logging_config", "get_execution_mode"),
+    STATIC_METHOD_FREE_FN_PROJECTIONS: dict[tuple[str, str, str], tuple[str, str]] = {
+        ("signalwire.utils.execution_mode", "ExecutionMode", "is_serverless_mode"): (
+            "signalwire.utils",
+            "is_serverless_mode",
+        ),
+        ("signalwire.utils.execution_mode", "ExecutionMode", "get_execution_mode"): (
+            "signalwire.core.logging_config",
+            "get_execution_mode",
+        ),
     }
     cls_to_drop: set[tuple[str, str]] = set()
-    for (src_mod, src_cls, src_method), (tgt_mod, tgt_fn) in STATIC_METHOD_FREE_FN_PROJECTIONS.items():
+    for (src_mod, src_cls, src_method), (
+        tgt_mod,
+        tgt_fn,
+    ) in STATIC_METHOD_FREE_FN_PROJECTIONS.items():
         cls_entry = out_modules.get(src_mod, {}).get("classes", {}).get(src_cls)
         if not cls_entry:
             continue
@@ -1778,13 +1907,15 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             continue
         out_modules.setdefault(tgt_mod, {}).setdefault("functions", {})
         free_sig = {
-            "params": [p for p in msig["params"] if p.get("kind") not in ("self", "cls")],
+            "params": [
+                p for p in msig["params"] if p.get("kind") not in ("self", "cls")
+            ],
             "returns": msig["returns"],
         }
         out_modules[tgt_mod]["functions"].setdefault(tgt_fn, free_sig)
         cls_to_drop.add((src_mod, src_cls))
     # Drop source classes once all methods have been projected.
-    for (src_mod, src_cls) in cls_to_drop:
+    for src_mod, src_cls in cls_to_drop:
         if src_mod in out_modules and "classes" in out_modules[src_mod]:
             out_modules[src_mod]["classes"].pop(src_cls, None)
             if not out_modules[src_mod]["classes"]:
@@ -1816,7 +1947,10 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         "generated_from": "SignalWire.dll via SignatureDump (System.Reflection)",
         "modules": sorted_modules,
         "construction": build_construction(
-            sorted_modules, settable_props, native_base, native_to_canonical,
+            sorted_modules,
+            settable_props,
+            native_base,
+            native_to_canonical,
         ),
     }, failures
 
@@ -1867,9 +2001,9 @@ def _unwrap_class_ref(canon_type: str) -> str | None:
     """
     t = canon_type or ""
     while t.startswith("optional<") and t.endswith(">"):
-        t = t[len("optional<"):-1]
+        t = t[len("optional<") : -1]
     if t.startswith("class:"):
-        return t[len("class:"):]
+        return t[len("class:") :]
     return None
 
 
@@ -1910,10 +2044,13 @@ def build_construction(
         # same name arriving later from an options-object splice, and a
         # subclass's own property outranks the base's same-named one (C#
         # `new` / override semantics).
-        params.setdefault(name, {
-            "type": spec.get("type", "any"),
-            "required": bool(spec.get("required", False)),
-        })
+        params.setdefault(
+            name,
+            {
+                "type": spec.get("type", "any"),
+                "required": bool(spec.get("required", False)),
+            },
+        )
 
     def _props_with_inherited(key: str) -> dict[str, dict]:
         """Settable properties of ``key`` plus every one it INHERITS.
@@ -1942,7 +2079,8 @@ def build_construction(
             ctor_args = []
             if isinstance(init, dict):
                 ctor_args = [
-                    p for p in init.get("params", [])
+                    p
+                    for p in init.get("params", [])
                     if isinstance(p, dict)
                     and (p.get("kind") or "positional") not in _CTOR_NON_PARAMS
                     and (p.get("name") or "")
@@ -1950,9 +2088,11 @@ def build_construction(
                 ]
             for p in ctor_args:
                 ref = _unwrap_class_ref(p.get("type", ""))
-                if (ref
-                        and ref.rsplit(".", 1)[-1].endswith(_OPTIONS_CLASS_SUFFIX)
-                        and ref not in _REFERENCE_CLASSES):
+                if (
+                    ref
+                    and ref.rsplit(".", 1)[-1].endswith(_OPTIONS_CLASS_SUFFIX)
+                    and ref not in _REFERENCE_CLASSES
+                ):
                     # Options-object idiom: the options' properties are the
                     # construction parameters, not the single `options` handle.
                     # Gated on the reference NOT having the class — a shared
@@ -1961,10 +2101,14 @@ def build_construction(
                     for pname, pspec in _props_with_inherited(ref).items():
                         _add(params, pname, pspec)
                     continue
-                _add(params, p["name"], {
-                    "type": p.get("type", "any"),
-                    "required": bool(p.get("required", True)),
-                })
+                _add(
+                    params,
+                    p["name"],
+                    {
+                        "type": p.get("type", "any"),
+                        "required": bool(p.get("required", True)),
+                    },
+                )
             if not ctor_args:
                 # Parameterless ctor: object-initializer properties are the
                 # only construction surface (RELAY events, plain data objects).
@@ -1979,6 +2123,7 @@ def build_construction(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def run_dump() -> dict:
     """Build + run SignatureDump and parse its stdout.
@@ -1995,15 +2140,22 @@ def run_dump() -> dict:
     # Resolve `dotnet` from $PATH (CI / fresh checkouts). Fail loud if absent —
     # no hardcoded developer-machine fallback path.
     import shutil
+
     dotnet = shutil.which("dotnet")
     if not dotnet:
         raise RuntimeError("enumerate_signatures.py: `dotnet` not found on PATH")
     cmd = [
-        dotnet, "run", "--project",
+        dotnet,
+        "run",
+        "--project",
         str(HERE / "SignatureDump" / "SignatureDump.csproj"),
     ]
     cp = subprocess.run(
-        cmd, cwd=PORT_ROOT, capture_output=True, text=True, timeout=600,
+        cmd,
+        cwd=PORT_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=600,
     )
     if cp.returncode != 0:
         raise RuntimeError(
@@ -2022,15 +2174,21 @@ def run_dump() -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--raw", type=Path, default=None,
+        "--raw",
+        type=Path,
+        default=None,
         help="Path to a pre-dumped SignatureDump JSON; skips the dotnet run.",
     )
     parser.add_argument(
-        "--out", type=Path,
+        "--out",
+        type=Path,
         default=PORT_ROOT / "port_signatures.json",
     )
-    parser.add_argument("--strict", action="store_true",
-                        help="Exit non-zero if any type fails to translate.")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero if any type fails to translate.",
+    )
     args = parser.parse_args()
 
     if args.raw and args.raw.is_file():
