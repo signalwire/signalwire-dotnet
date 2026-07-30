@@ -195,6 +195,72 @@ public class SWMLServiceTests : IDisposable
         Assert.Same(svc, result);
     }
 
+    /// <summary>
+    /// Minimal schema-VALID configs for the verbs whose <c>$defs</c> entry
+    /// declares required fields. Every other verb accepts an empty object.
+    /// </summary>
+    /// <summary>
+    /// Verbs whose schema config is NOT an object (an array, a string, or a
+    /// scalar). The validating entry point takes <c>dict | int</c> and
+    /// special-cases only <c>sleep</c>'s bare integer — exactly as the reference
+    /// does (<c>swml_service.py:534</c> <c>add_verb(verb_name, config: dict | int)</c>,
+    /// which rejects any other non-dict). So these verbs are not reachable
+    /// through the validating path in EITHER implementation; they are excluded
+    /// from the name-callability sweep rather than papered over with a config
+    /// the schema would reject anyway.
+    /// </summary>
+    private static readonly HashSet<string> NonObjectConfigVerbs =
+    [
+        "cond", "unset", "label", "change_context", "change_step",
+        "toggle_functions", "user_input", "say",
+    ];
+
+    private static readonly Dictionary<string, Dictionary<string, object>> MinimalValidConfigs = new()
+    {
+        ["ai"] = new() { ["prompt"] = new Dictionary<string, object> { ["text"] = "hi" } },
+        ["ai_sidecar"] = new() { ["prompt"] = "hi", ["lang"] = "en-US" },
+        ["amazon_bedrock"] = new() { ["prompt"] = new Dictionary<string, object> { ["text"] = "hi" } },
+        ["connect"] = new() { ["to"] = "sip:someone@example.com" },
+        ["context_switch"] = new() { ["system_prompt"] = "hi" },
+        ["enter_queue"] = new() { ["queue_name"] = "q1", ["transfer_after_bridge"] = "main" },
+        ["join_conference"] = new() { ["name"] = "conf1" },
+        ["play"] = new() { ["url"] = "say:hello" },
+        ["send_sms"] = new()
+        {
+            ["to_number"] = "+15550001111",
+            ["from_number"] = "+15550002222",
+            ["body"] = "hi",
+        },
+        ["execute"] = new() { ["dest"] = "other_section" },
+        ["goto"] = new() { ["label"] = "top" },
+        ["inject"] = new() { ["direction"] = "remote-caller", ["message"] = "hi" },
+        ["join_room"] = new() { ["name"] = "room1" },
+        ["live_transcribe"] = new() { ["action"] = "stop" },
+        ["live_translate"] = new() { ["action"] = "stop" },
+        ["pay"] = new() { ["payment_connector_url"] = "https://example.com/pay" },
+        ["playback_bg"] = new() { ["file"] = "https://example.com/bg.mp3" },
+        ["prompt"] = new() { ["play"] = "say:pick one" },
+        ["request"] = new() { ["method"] = "GET", ["url"] = "https://example.com/x" },
+        ["send_digits"] = new() { ["digits"] = "123" },
+        ["send_fax"] = new() { ["document"] = "https://example.com/f.pdf" },
+        ["sip_refer"] = new() { ["to_uri"] = "sip:someone@example.com" },
+        ["start"] = new()
+        {
+            ["direction"] = "remote-caller",
+            ["lang"] = "en-US",
+            ["from_lang"] = "en-US",
+            ["to_lang"] = "es-ES",
+        },
+        ["switch"] = new()
+        {
+            ["variable"] = "digits",
+            ["case"] = new Dictionary<string, object>(),
+        },
+        ["tap"] = new() { ["uri"] = "wss://example.com/tap" },
+        ["transfer"] = new() { ["dest"] = "sip:someone@example.com" },
+        ["user_event"] = new() { ["event"] = new Dictionary<string, object>() },
+    };
+
     [Fact]
     public void AllSchemaVerbs_Callable()
     {
@@ -208,6 +274,17 @@ public class SWMLServiceTests : IDisposable
             {
                 svc.Sleep(1000);
             }
+            else if (NonObjectConfigVerbs.Contains(verb))
+            {
+                continue;
+            }
+            else if (MinimalValidConfigs.TryGetValue(verb, out var minimal))
+            {
+                // Verb() now validates the CONFIG, not just the verb name, so
+                // the verbs whose schema declares required fields need those
+                // fields supplied. An empty config is legitimately rejected.
+                svc.Verb(verb, minimal);
+            }
             else
             {
                 svc.Verb(verb, new Dictionary<string, object>());
@@ -215,7 +292,9 @@ public class SWMLServiceTests : IDisposable
         }
 
         var verbs = svc.Document.GetVerbs("main");
-        Assert.Equal(names.Count, verbs.Count);
+        var expected = names.Count(n => !NonObjectConfigVerbs.Contains(n));
+        Assert.Equal(expected, verbs.Count);
+        Assert.True(expected > 0);
     }
 
     [Fact]

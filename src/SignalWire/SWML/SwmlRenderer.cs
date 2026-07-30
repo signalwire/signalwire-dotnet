@@ -113,7 +113,7 @@ public static class SwmlRenderer
                 ["format"] = recordFormat,
                 ["stereo"] = recordStereo,
             };
-            service.Document.AddVerb("record_call", recordConfig);
+            service.AddVerb("record_call", recordConfig);
         }
 
         Dictionary<string, object>? swaigConfig = null;
@@ -198,7 +198,7 @@ public static class SwmlRenderer
         // swml_renderer.render_function_response_swml.
         if (!string.IsNullOrEmpty(responseText))
         {
-            service.Document.AddVerb("play", new Dictionary<string, object> { ["url"] = $"say:{responseText}" });
+            service.AddVerb("play", new Dictionary<string, object> { ["url"] = $"say:{responseText}" });
         }
 
         if (actions is not null)
@@ -209,7 +209,7 @@ public static class SwmlRenderer
                 {
                     if (kv.Key is "play" or "hangup" or "transfer" or "ai")
                     {
-                        service.Document.AddVerb(kv.Key, kv.Value);
+                        service.AddVerb(kv.Key, kv.Value);
                     }
                 }
             }

@@ -255,10 +255,15 @@ public class SwmlRendererWireShapeTests : IDisposable
     [Fact]
     public void RenderFunctionResponseSwml_Actions_AppendAfterTheSayPlay()
     {
+        // Schema-valid values: play's url needs an http(s)/ring/say/silence
+        // scheme (a bare "test.mp3" is rejected) and hangup.reason is the closed
+        // enum hangup|busy|decline (never "completed"). Both invalid values rode
+        // the raw Document path here until the renderer was moved onto the
+        // validating Service.AddVerb.
         var actions = new List<Dictionary<string, object>>
         {
-            new() { ["play"] = new Dictionary<string, object> { ["url"] = "test.mp3" } },
-            new() { ["hangup"] = new Dictionary<string, object> { ["reason"] = "completed" } },
+            new() { ["play"] = new Dictionary<string, object> { ["url"] = "https://example.com/test.mp3" } },
+            new() { ["hangup"] = new Dictionary<string, object> { ["reason"] = "busy" } },
         };
         var json = SwmlRenderer.RenderFunctionResponseSwml(
             "Response complete", MakeService(), actions);
@@ -266,7 +271,7 @@ public class SwmlRendererWireShapeTests : IDisposable
 
         Assert.Equal(3, verbs.Length);
         Assert.Equal("say:Response complete", verbs[0].GetProperty("play").GetProperty("url").GetString());
-        Assert.Equal("test.mp3", verbs[1].GetProperty("play").GetProperty("url").GetString());
-        Assert.Equal("completed", verbs[2].GetProperty("hangup").GetProperty("reason").GetString());
+        Assert.Equal("https://example.com/test.mp3", verbs[1].GetProperty("play").GetProperty("url").GetString());
+        Assert.Equal("busy", verbs[2].GetProperty("hangup").GetProperty("reason").GetString());
     }
 }

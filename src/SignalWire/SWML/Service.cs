@@ -236,7 +236,10 @@ public class Service
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Add a verb to the specified section. Validates the verb name against the schema.
+    /// Add a verb to the specified section. Validates the verb name AND its
+    /// config against the schema (the STRICT-RENDER contract) — an unknown verb,
+    /// an unknown/misspelled config key, or a wrong-typed value throws rather
+    /// than being written into the document unchecked.
     /// Returns this service for fluent chaining.
     /// </summary>
     public Service Verb(string verbName, string section, object? config)
@@ -247,12 +250,14 @@ public class Service
             throw new ArgumentException($"Unknown SWML verb: {verbName}", nameof(verbName));
         }
 
+        ValidateVerbConfig(verbName, config);
         Document.AddVerbToSection(section, verbName, config);
         return this;
     }
 
     /// <summary>
-    /// Add a verb to the main section. Validates the verb name against the schema.
+    /// Add a verb to the main section. Validated the same way as
+    /// <see cref="Verb(string, string, object)"/> (name AND config).
     /// Returns this service for fluent chaining.
     /// </summary>
     public Service Verb(string verbName, object? config)
@@ -262,6 +267,9 @@ public class Service
 
     /// <summary>
     /// Add a sleep verb with a duration in milliseconds to the specified section.
+    /// Validated through the same STRICT-RENDER path as every other verb;
+    /// <c>sleep</c> takes a bare integer, which the validator accepts as a
+    /// direct-value verb.
     /// </summary>
     public Service Sleep(int milliseconds, string section = "main")
     {
@@ -271,6 +279,7 @@ public class Service
             throw new InvalidOperationException("'sleep' verb not found in schema");
         }
 
+        ValidateVerbConfig("sleep", milliseconds);
         Document.AddVerbToSection(section, "sleep", milliseconds);
         return this;
     }
