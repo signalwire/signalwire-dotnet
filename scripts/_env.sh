@@ -91,13 +91,17 @@ export SLN
 # ENUMERATED FROM DISK, not read off a checked-in list that silently goes stale
 # when someone adds a project. A new .csproj is in scope the moment it exists.
 #
-# Only build output is skipped (obj/, bin/) — those hold no source we own, and
-# there is no third-party vendored code in this tree.
+# Only build output and gitignored scratch are skipped (obj/, bin/, .sw-tmp/,
+# .tmp/) — those hold no source we own, and there is no third-party vendored
+# code in this tree. The scratch skip is load-bearing, not tidiness: a transient
+# probe project written under .sw-tmp/ WILL otherwise be enumerated and its
+# findings reported as repo findings.
 #
 # Prints one project path per line, sorted (stable ordering across machines).
 dotnet_all_projects() {
     find "$REPO" -name '*.csproj' \
         -not -path '*/obj/*' -not -path '*/bin/*' -not -path '*/.git/*' \
+        -not -path '*/.sw-tmp/*' -not -path '*/.tmp/*' \
         | LC_ALL=C sort
 }
 
