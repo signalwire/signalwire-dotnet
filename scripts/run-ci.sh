@@ -291,6 +291,17 @@ sched_gate TEST defer=1 res=msbuild desc="docker dotnet test (net8/net9/net10 se
 sched_gate SURFACE res=surface desc="surface parity suite (SIGNATURES/DRIFT/SURFACE-FRESH/SURFACE-DIFF/SEMVER-DIFF/GEN-TYPE-DEGENERACY/ROUTE-COLLISION/GEN-IDIOM)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/surface.py" --port dotnet --repo "$PORT_ROOT"
 
+# SIGNATURES-FRESH: nothing previously guarded port_signatures.json's freshness —
+# SURFACE-FRESH covers only port_surface.json. That artifact is DRIFT's INPUT, so a
+# stale one makes the parity gate compare against a fiction and report clean.
+# A STANDALONE sched_gate, deliberately NOT a _surface_commands.py table entry: only
+# 8 of the 10 run-ci scripts read that table (rust and python never do), so a table
+# entry would be silently skipped for them. res=surface keeps it off the SURFACE
+# suite's in-place regenerate/restore of the artifacts it reads.
+sched_gate SIGNATURES-FRESH res=surface desc="committed port_signatures.json matches a fresh regen" \
+    -- python3 "$PORTING_SDK_DIR/scripts/suites/_signatures_fresh.py" \
+        --port dotnet --repo "$PORT_ROOT" --porting-sdk "$PORTING_SDK_DIR"
+
 # TYPE-EROSION: a port may not erase a type the reference DECLARES. compare_param treats
 # `any` on EITHER side as matching anything, so a port emitting `any` silently satisfies
 # every reference declaration — an unlimited opt-out. ConciergeAgent.hours_of_operation is

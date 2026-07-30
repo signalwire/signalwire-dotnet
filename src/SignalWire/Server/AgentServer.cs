@@ -292,7 +292,8 @@ public partial class AgentServer
     /// <summary>
     /// Run the multi-agent HTTP server. Binds an <see cref="System.Net.HttpListener"/>
     /// on the given host/port (defaulting to the <c>PORT</c> env var or 3000) and
-    /// dispatches each request through <see cref="HandleRequest"/> until the
+    /// dispatches each request through
+    /// <see cref="HandleRequest(string, string, Dictionary{string, string}, string)"/> until the
     /// process is interrupted. Mirrors ``AgentServer.run``.
     /// </summary>
     public void Run(string host = "0.0.0.0", int? port = null)
@@ -359,16 +360,24 @@ public partial class AgentServer
     // ==================================================================
 
     /// <summary>Handle an HTTP request. Returns (status, headers, body).</summary>
-    /// <param name="method">The HTTP method.</param>
-    /// <param name="path">The request path, WITHOUT its query string.</param>
-    /// <param name="headers">The request headers.</param>
-    /// <param name="body">The raw request body, or null.</param>
+    public (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
+        string method, string path, Dictionary<string, string>? headers = null, string? body = null)
+        => HandleRequest(method, path, headers, body, queryString: null);
+
+    /// <summary>
+    /// The query-string-carrying form. Kept INTERNAL rather than widening the
+    /// public overload above: the reference has no counterpart for this method,
+    /// so a new public parameter here would be port-invented surface. The
+    /// built-in HttpListener loop and the test suite reach it directly; an
+    /// external host calling the public overload simply has no query string to
+    /// forward.
+    /// </summary>
     /// <param name="queryString">The raw query string. Forwarded to the matched
     /// agent because a per-call SWAIG <c>__token</c> rides it; dropping it here
     /// would make every hosted agent's secure tools unvalidatable.</param>
-    public (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
-        string method, string path, Dictionary<string, string>? headers = null, string? body = null,
-        string? queryString = null)
+    internal (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
+        string method, string path, Dictionary<string, string>? headers, string? body,
+        string? queryString)
     {
         ArgumentNullException.ThrowIfNull(path);
         headers ??= [];
