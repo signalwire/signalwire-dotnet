@@ -74,7 +74,7 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
         _space = !string.IsNullOrEmpty(space) ? space
             : Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "";
 
-        _baseUrl = $"https://{_space}";
+        _baseUrl = BuildBaseUrl(_space);
         // Re-derive the transport the base already owns so RestClient can dispose it.
         _http = GeneratedHttp;
     }
@@ -95,7 +95,45 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
         if (string.IsNullOrEmpty(space))
             throw new ArgumentException("space is required (pass explicitly or set SIGNALWIRE_SPACE)");
 
-        return new HttpClient(projectId, token, $"https://{space}", httpClient, requestOptions);
+        return new HttpClient(projectId, token, BuildBaseUrl(space), httpClient, requestOptions);
+    }
+
+    /// <summary>
+    /// True if <paramref name="host"/> (a bare host, or host:port) is a local
+    /// loopback address — i.e. a local mock/dev server that speaks plain HTTP.
+    /// </summary>
+    private static bool IsLoopbackHost(string host)
+    {
+        var hostname = host.Contains(':', StringComparison.Ordinal)
+            ? host[..host.LastIndexOf(':')]
+            : host;
+        return hostname is "127.0.0.1" or "localhost" or "::1" or "[::1]";
+    }
+
+    /// <summary>
+    /// Compose the REST base URL from a space.
+    /// </summary>
+    /// <remarks>
+    /// An explicit scheme in the space string is honored verbatim. Otherwise the
+    /// scheme is https, EXCEPT for a bare loopback host
+    /// (<c>127.0.0.1[:port]</c> / <c>localhost[:port]</c>), which is a local
+    /// mock/dev server speaking plain HTTP. That exception is what lets a shipped
+    /// example run verbatim against the local mock via
+    /// <c>SIGNALWIRE_SPACE=127.0.0.1:&lt;port&gt;</c> with no code change and no
+    /// explicit scheme. Mirrors the reference's
+    /// <c>_is_loopback_host</c> (signalwire/rest/_base.py). A real space
+    /// (<c>&lt;name&gt;.signalwire.com</c>) is never loopback, so production is
+    /// unaffected.
+    /// </remarks>
+    private static string BuildBaseUrl(string space)
+    {
+        if (space.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || space.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return space.TrimEnd('/');
+        }
+
+        return (IsLoopbackHost(space) ? "http://" : "https://") + space;
     }
 
     // ------------------------------------------------------------------

@@ -44,7 +44,16 @@ public sealed class SwmlServiceBindFailureTests
             Route = "/probe",
             Host = "127.0.0.1",
             Port = port,
-        });
+        })
+        {
+            // Pin the HTTP path. SslEnabled is read from SWML_SSL_ENABLED at
+            // construction, and sibling tests in this assembly set that variable
+            // PROCESS-WIDE while running concurrently — so without this the
+            // service can take the Kestrel/TLS branch instead of RunHttp and the
+            // assertion below sees Kestrel's IOException rather than the
+            // HttpListener path under test.
+            SslEnabled = false,
+        };
 
         // The bind cannot succeed. It must fail with the actionable message, NOT
         // with ObjectDisposedException from a reused, already-disposed listener.
@@ -72,7 +81,12 @@ public sealed class SwmlServiceBindFailureTests
             Route = "/probe",
             Host = "0.0.0.0",
             Port = port,
-        });
+        })
+        {
+            // Pin the HTTP path — see the note in the sibling test: sibling tests
+            // set SWML_SSL_ENABLED process-wide while running concurrently.
+            SslEnabled = false,
+        };
 
         using var cts = new CancellationTokenSource();
         ObjectDisposedException? disposedFailure = null;
