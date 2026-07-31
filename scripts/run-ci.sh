@@ -441,14 +441,18 @@ sched_gate SNIPPET-COMPILE tier=nightly defer=1 res=msbuild desc="documented C# 
 sched_gate DOC-CLI desc="documented swaig-test invocations parse (line-detected; dotnet CLI not built here)" \
     -- python3 "$PORTING_SDK_DIR/scripts/doc_cli.py" --port dotnet --repo "$PORT_ROOT"
 
-# EXAMPLES-PROJECTS — every tracked examples/*.cs must have its own .csproj.
-# This is the gate that closes the hole task #204 found: 53 of 57 examples had NO
-# project, so they were in no solution, invisible to run-lint.sh's *.csproj
-# enumeration, and compiled by NOTHING — 16 of them had rotted into
-# non-compiling state without a single gate noticing. With a project each, they
-# fall inside the existing LINT gate's analyzer build automatically (that gate
-# `find`s every .csproj on disk), so THIS check only has to assert the projects
-# exist and match the generator; LINT does the compiling.
+# EXAMPLES-PROJECTS — every tracked example must have its own .csproj, across all
+# three roots the EXAMPLES-RUN gate globs (examples/, rest/examples/,
+# relay/examples/).
+#
+# This closes the hole task #204 found: of 71 tracked examples, only FOUR had a
+# project. The other 67 were in no solution, invisible to run-lint.sh's *.csproj
+# enumeration, and compiled by NOTHING — 16 under examples/ and all 14 under
+# rest/+relay/examples/ had rotted into non-compiling state without a single gate
+# noticing. With a project each they fall inside the existing LINT gate's
+# analyzer build automatically (that gate `find`s every .csproj on disk), so THIS
+# check only has to assert the projects exist and match the generator; LINT does
+# the compiling.
 # Cheap (a file listing + string compare) → not deferred, no resource class.
 sched_gate EXAMPLES-PROJECTS desc="every shipped example has a .csproj (else it is compiled by nothing; LINT then builds them)" \
     -- python3 "$PORT_ROOT/scripts/generate_example_projects.py" --check
