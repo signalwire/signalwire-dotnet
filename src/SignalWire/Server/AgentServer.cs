@@ -286,6 +286,64 @@ public partial class AgentServer
     // ==================================================================
 
     /// <summary>
+    /// Start an <see cref="System.Net.HttpListener"/> on <paramref name="prefix"/>,
+    /// falling back to an explicit <c>localhost</c> prefix when a wildcard bind is
+    /// refused.
+    /// </summary>
+    /// <remarks>
+    /// A FAILED <see cref="System.Net.HttpListener.Start"/> DISPOSES the listener,
+    /// so the fallback must build a SECOND listener — calling
+    /// <c>Prefixes.Clear()</c> on the first throws
+    /// <see cref="ObjectDisposedException"/> and the retry never happens. Same
+    /// defect and same fix as <c>SignalWire.SWML.Service.BindListener</c>; both
+    /// copies of this bind-with-fallback existed and both were wrong.
+    /// </remarks>
+    private static System.Net.HttpListener BindListener(string prefix)
+    {
+        var listener = new System.Net.HttpListener();
+        listener.Prefixes.Add(prefix);
+        try
+        {
+            listener.Start();
+            return listener;
+        }
+        catch (System.Net.HttpListenerException ex)
+        {
+            listener.Close();
+
+            // Fall back to loopback when the wildcard binding is not permitted.
+            // A FRESH listener — the one above is disposed.
+            if (prefix.StartsWith("http://+:", StringComparison.Ordinal))
+            {
+                var fallback = new System.Net.HttpListener();
+                fallback.Prefixes.Add(prefix.Replace("http://+:", "http://localhost:", StringComparison.Ordinal));
+                try
+                {
+                    fallback.Start();
+                    return fallback;
+                }
+                catch (System.Net.HttpListenerException fallbackEx)
+                {
+                    fallback.Close();
+                    throw new InvalidOperationException(
+                        $"failed to bind {prefix} and its localhost fallback: {fallbackEx.Message}. " +
+                        "Another process may already be listening on this port; on Linux, binding " +
+                        "0.0.0.0 may require root or `setcap CAP_NET_BIND_SERVICE+ep` on the dotnet " +
+                        "binary. Rebind to a free port or stop the other listener.",
+                        fallbackEx);
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"failed to bind {prefix}: {ex.Message}. Another process may already be " +
+                "listening on this port; on Linux, binding 0.0.0.0 may require root or " +
+                "`setcap CAP_NET_BIND_SERVICE+ep` on the dotnet binary; rebind to localhost " +
+                "or use a port >= 1024.",
+                ex);
+        }
+    }
+
+    /// <summary>
     /// Run the multi-agent HTTP server. Binds an <see cref="System.Net.HttpListener"/>
     /// on the given host/port (defaulting to the <c>PORT</c> env var or 3000) and
     /// dispatches each request through
@@ -295,20 +353,8 @@ public partial class AgentServer
     public void Run(string host = "0.0.0.0", int? port = null)
     {
         var boundPort = port ?? ParsePortFromEnv() ?? 3000;
-        using var listener = new System.Net.HttpListener();
         var bindHost = host is "0.0.0.0" or "" ? "+" : host;
-        try
-        {
-            listener.Prefixes.Add($"http://{bindHost}:{boundPort}/");
-            listener.Start();
-        }
-        catch (System.Net.HttpListenerException)
-        {
-            // Fall back to loopback when the wildcard binding is not permitted.
-            listener.Prefixes.Clear();
-            listener.Prefixes.Add($"http://localhost:{boundPort}/");
-            listener.Start();
-        }
+        using var listener = BindListener($"http://{bindHost}:{boundPort}/");
 
         while (listener.IsListening)
         {
