@@ -189,7 +189,12 @@ dotnet_diagnostic.CA2000.severity = none
 # (mike@signalwire.com, 2026-07-30)
 dotnet_diagnostic.CA2007.severity = none
 
-[examples/**.cs]
+# The shipped examples live in THREE roots — examples/, rest/examples/ and
+# relay/examples/ — which is the set the EXAMPLES-RUN gate globs. A grant scoped
+# to `examples/**.cs` alone silently misses the other two (verified: the 14
+# rest/relay examples reported the full un-granted finding set until this
+# pattern was widened). Keep all three in the selector.
+[{examples,rest/examples,relay/examples}/**.cs]
 # CA1303 — do not pass literals as localized parameters. An example's
 # `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING
 # TEXT printed to a developer's terminal, not a localizable product string; the

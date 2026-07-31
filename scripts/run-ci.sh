@@ -441,11 +441,25 @@ sched_gate SNIPPET-COMPILE tier=nightly defer=1 res=msbuild desc="documented C# 
 sched_gate DOC-CLI desc="documented swaig-test invocations parse (line-detected; dotnet CLI not built here)" \
     -- python3 "$PORTING_SDK_DIR/scripts/doc_cli.py" --port dotnet --repo "$PORT_ROOT"
 
-# EXAMPLES-RUN + SNIPPET-RUN self-skip for dotnet (compiled port; examples have no
-# dotnet-run target, and snippet_run is dynamic-ports only) — they exit 0 with a
-# note. STRICT-MOCKS (MOCK_RELAY_STRICT=1) is set for parity so the moment a run
-# target is added, a wrong-wire example fails LOUD against the strict mock.
-sched_gate EXAMPLES-RUN tier=nightly defer=1 desc="shipped examples load/start (dotnet: SKIPPED-WITH-NOTE, no run target; STRICT-MOCKS: MOCK_RELAY_STRICT=1)" \
+# EXAMPLES-PROJECTS — every tracked examples/*.cs must have its own .csproj.
+# This is the gate that closes the hole task #204 found: 53 of 57 examples had NO
+# project, so they were in no solution, invisible to run-lint.sh's *.csproj
+# enumeration, and compiled by NOTHING — 16 of them had rotted into
+# non-compiling state without a single gate noticing. With a project each, they
+# fall inside the existing LINT gate's analyzer build automatically (that gate
+# `find`s every .csproj on disk), so THIS check only has to assert the projects
+# exist and match the generator; LINT does the compiling.
+# Cheap (a file listing + string compare) → not deferred, no resource class.
+sched_gate EXAMPLES-PROJECTS desc="every shipped example has a .csproj (else it is compiled by nothing; LINT then builds them)" \
+    -- python3 "$PORT_ROOT/scripts/generate_example_projects.py" --check
+
+# EXAMPLES-RUN really RUNS dotnet's examples now: each examples/<Stem>.csproj is a
+# `dotnet run` target, so examples_run.py drives dotnet through the same
+# compiled-runnable path as java's gradle runExample. STRICT-MOCKS
+# (MOCK_RELAY_STRICT=1) means a wrong-wire example fails LOUD against the strict
+# mock rather than being tolerantly journaled. SNIPPET-RUN still self-skips
+# (snippet_run is dynamic-ports only).
+sched_gate EXAMPLES-RUN tier=nightly defer=1 res=msbuild desc="shipped examples build+run against the mock (STRICT-MOCKS: MOCK_RELAY_STRICT=1)" \
     -- env MOCK_RELAY_STRICT=1 python3 "$PORTING_SDK_DIR/scripts/examples_run.py" --port dotnet --repo "$PORT_ROOT"
 
 sched_gate SNIPPET-RUN tier=nightly defer=1 desc="dynamic-port doc snippets run to zero exit (dotnet: self-skips, compiled port; STRICT-MOCKS: MOCK_RELAY_STRICT=1)" \
