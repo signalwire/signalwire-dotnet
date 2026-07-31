@@ -27,11 +27,11 @@ const string PublicUrl = "https://your-host.example.com/sales-sidecar";
 
 var service = new Service(new ServiceOptions
 {
-    Name              = "sales-sidecar",
-    Route             = "/sales-sidecar",
-    Host              = "0.0.0.0",
-    Port              = 3000,
-    BasicAuthUser     = "user",
+    Name = "sales-sidecar",
+    Route = "/sales-sidecar",
+    Host = "0.0.0.0",
+    Port = 3000,
+    BasicAuthUser = "user",
     BasicAuthPassword = "pass",
 });
 
@@ -45,7 +45,7 @@ service.Document.AddVerbToSection("main", "ai_sidecar", new Dictionary<string, o
     // Required by mod_openai.
     ["prompt"] = "You are a real-time sales copilot. Listen to the call "
                + "and surface competitor pricing comparisons when relevant.",
-    ["lang"]   = "en-US",
+    ["lang"] = "en-US",
 
     // Both legs — the sidecar listens to remote AND local audio.
     ["direction"] = new[] { "remote-caller", "local-caller" },
@@ -72,14 +72,14 @@ service.Verb("hangup", "main", new Dictionary<string, object>());
 // 2. Register tools the sidecar's LLM can call. Same DefineTool you'd
 //    use on AgentBase — it lives on Service.
 service.DefineTool(
-    name:        "lookup_competitor",
+    name: "lookup_competitor",
     description: "Look up competitor pricing by company name. The sidecar should call "
                + "this whenever the caller mentions a competitor.",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["competitor"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "The competitor's company name, e.g. 'ACME'.",
         },
     },
@@ -103,9 +103,9 @@ service.RegisterRoutingCallback((body, headers) =>
     {
         eventType = t switch
         {
-            string s                                                    => s,
+            string s => s,
             JsonElement { ValueKind: JsonValueKind.String } je => je.GetString() ?? "<unknown>",
-            _                                                            => t?.ToString() ?? "<unknown>",
+            _ => t?.ToString() ?? "<unknown>",
         };
     }
     Console.WriteLine($"[sidecar event] type={eventType}");

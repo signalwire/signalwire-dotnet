@@ -10,7 +10,7 @@ using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "swaig-features",
+    Name = "swaig-features",
     Route = "/swaig-features",
 });
 
@@ -29,22 +29,22 @@ agent.PromptAddSection("Instructions", "", new List<string>
 
 // Transfer with post-processing (AI speaks before transfer)
 agent.DefineTool(
-    name:        "transfer_call",
+    name: "transfer_call",
     description: "Transfer the call to a department",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["department"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Department: sales, support, billing",
         },
     },
     handler: (args, raw) =>
     {
-        var dept = (args.GetValueOrDefault("department")?.ToString() ?? "support").ToLower();
+        var dept = (args.GetValueOrDefault("department")?.ToString() ?? "support").ToLowerInvariant();
         var numbers = new Dictionary<string, string>
         {
-            ["sales"]   = "+15551001001",
+            ["sales"] = "+15551001001",
             ["support"] = "+15551002002",
             ["billing"] = "+15551003003",
         };
@@ -59,46 +59,46 @@ agent.DefineTool(
 
 // Send SMS
 agent.DefineTool(
-    name:        "send_sms",
+    name: "send_sms",
     description: "Send an SMS notification",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["phone"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Phone number in E.164 format",
         },
         ["message"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Message text",
         },
     },
     handler: (args, raw) =>
     {
         var phone = args.GetValueOrDefault("phone")?.ToString() ?? "+15551234567";
-        var msg   = args.GetValueOrDefault("message")?.ToString() ?? "Hello";
+        var msg = args.GetValueOrDefault("message")?.ToString() ?? "Hello";
 
         var result = new FunctionResult($"SMS sent to {phone}.");
-        result.SendSms(to: phone, from: "+15559999999", body: msg);
+        result.SendSms(toNumber: phone, fromNumber: "+15559999999", body: msg);
         return result;
     }
 );
 
 // Toggle functions on/off
 agent.DefineTool(
-    name:        "toggle_features",
+    name: "toggle_features",
     description: "Enable or disable agent features",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["feature"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Feature to toggle: send_sms",
         },
         ["enabled"] = new Dictionary<string, object>
         {
-            ["type"]        = "boolean",
+            ["type"] = "boolean",
             ["description"] = "Enable or disable",
         },
     },
@@ -118,13 +118,13 @@ agent.DefineTool(
 
 // Dynamic speech hints
 agent.DefineTool(
-    name:        "adjust_speech",
+    name: "adjust_speech",
     description: "Add speech recognition hints for unusual terms",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["hints"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Comma-separated terms to add as hints",
         },
     },

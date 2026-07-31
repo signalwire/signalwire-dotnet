@@ -3,16 +3,17 @@
 // This example demonstrates creating an agent using explicit methods
 // to manipulate the POM (Prompt Object Model) structure directly.
 
+using System.Globalization;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
 // Create an agent
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "simple",
+    Name = "simple",
     Route = "/simple",
-    Host  = "0.0.0.0",
-    Port  = 3000,
+    Host = "0.0.0.0",
+    Port = 3000,
 });
 
 // --- Prompt Configuration ---
@@ -30,10 +31,10 @@ agent.PromptAddSection("Instructions", "", new List<string>
 // LLM parameters
 agent.SetPromptLlmParams(new Dictionary<string, object>
 {
-    ["temperature"]       = 0.3,
-    ["top_p"]             = 0.9,
-    ["barge_confidence"]  = 0.7,
-    ["presence_penalty"]  = 0.1,
+    ["temperature"] = 0.3,
+    ["top_p"] = 0.9,
+    ["barge_confidence"] = 0.7,
+    ["presence_penalty"] = 0.1,
     ["frequency_penalty"] = 0.2,
 });
 
@@ -61,18 +62,18 @@ agent.AddLanguage("French", "fr-FR", "inworld.Hanna");
 
 agent.SetParams(new Dictionary<string, object>
 {
-    ["ai_model"]              = "gpt-4.1-nano",
-    ["wait_for_user"]         = false,
+    ["ai_model"] = "gpt-4.1-nano",
+    ["wait_for_user"] = false,
     ["end_of_speech_timeout"] = 1000,
-    ["ai_volume"]             = 5,
-    ["languages_enabled"]     = true,
-    ["local_tz"]              = "America/Los_Angeles",
+    ["ai_volume"] = 5,
+    ["languages_enabled"] = true,
+    ["local_tz"] = "America/Los_Angeles",
 });
 
 agent.SetGlobalData(new Dictionary<string, object>
 {
-    ["company_name"]       = "SignalWire",
-    ["product"]            = "AI Agent SDK",
+    ["company_name"] = "SignalWire",
+    ["product"] = "AI Agent SDK",
     ["supported_features"] = new List<string> { "Voice AI", "Telephone integration", "SWAIG functions" },
 });
 
@@ -83,24 +84,24 @@ agent.SetNativeFunctions(new List<string> { "check_time", "wait_seconds" });
 // --- Tool Definitions ---
 
 agent.DefineTool(
-    name:        "get_time",
+    name: "get_time",
     description: "Get the current time",
-    parameters:  new Dictionary<string, object>(),
+    parameters: new Dictionary<string, object>(),
     handler: (args, rawData) =>
     {
-        var time = DateTime.Now.ToString("HH:mm:ss");
+        var time = DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
         return new FunctionResult($"The current time is {time}");
     }
 );
 
 agent.DefineTool(
-    name:        "get_weather",
+    name: "get_weather",
     description: "Get the current weather for a location",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["location"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "The city or location to get weather for",
         },
     },

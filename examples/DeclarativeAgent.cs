@@ -3,15 +3,16 @@
 // Demonstrates defining an agent's prompt structure declaratively
 // using PromptAddSection calls for structured, maintainable prompts.
 
+using System.Globalization;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "declarative",
+    Name = "declarative",
     Route = "/declarative",
-    Host  = "0.0.0.0",
-    Port  = 3000,
+    Host = "0.0.0.0",
+    Port = 3000,
 });
 
 // Declarative prompt sections
@@ -44,24 +45,24 @@ agent.SetParams(new Dictionary<string, object> { ["ai_model"] = "gpt-4.1-nano" }
 
 // Tools
 agent.DefineTool(
-    name:        "get_time",
+    name: "get_time",
     description: "Get the current time",
-    parameters:  new Dictionary<string, object>(),
+    parameters: new Dictionary<string, object>(),
     handler: (args, raw) =>
     {
-        var time = DateTime.Now.ToString("HH:mm:ss");
+        var time = DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
         return new FunctionResult($"The current time is {time}");
     }
 );
 
 agent.DefineTool(
-    name:        "get_weather",
+    name: "get_weather",
     description: "Get the current weather for a location",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["location"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "The city or location to get weather for",
         },
     },

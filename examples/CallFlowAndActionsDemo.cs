@@ -8,8 +8,8 @@ using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name       = "call-flow-demo",
-    Route      = "/call-flow",
+    Name = "call-flow-demo",
+    Route = "/call-flow",
     AutoAnswer = true,
     RecordCall = true,
 });
@@ -30,7 +30,7 @@ agent.PromptAddSection(
 // Pre-answer verb: play hold music before the AI answers
 agent.AddPreAnswerVerb("play", new Dictionary<string, object>
 {
-    ["url"]    = "https://cdn.signalwire.com/default-music/welcome.mp3",
+    ["url"] = "https://cdn.signalwire.com/default-music/welcome.mp3",
     ["volume"] = -5,
 });
 
@@ -40,8 +40,10 @@ agent.AddPostAiVerb("play", new Dictionary<string, object>
     ["url"] = "say:Thank you for calling. Goodbye.",
 });
 
-// Enable debug events
-agent.EnableDebugEvents("all");
+// Enable debug events. `level` is an int verbosity, not a category name:
+//   1 = high-level events (barge, errors, session start/end, step changes)
+//   2+ = also the high-volume events (every LLM request/response, conversation_add)
+agent.EnableDebugEvents(level: 2);
 
 // Debug event handler
 agent.OnDebugEvent((evt, headers) =>
@@ -51,13 +53,13 @@ agent.OnDebugEvent((evt, headers) =>
 
 // --- Tool: transfer_call ---
 agent.DefineTool(
-    name:        "transfer_call",
+    name: "transfer_call",
     description: "Transfer the call to a phone number",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["department"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Department name (sales, support, billing)",
         },
     },
@@ -65,11 +67,11 @@ agent.DefineTool(
     {
         var numbers = new Dictionary<string, string>
         {
-            ["sales"]   = "+15551001001",
+            ["sales"] = "+15551001001",
             ["support"] = "+15551002002",
             ["billing"] = "+15551003003",
         };
-        var dept = (args.GetValueOrDefault("department")?.ToString() ?? "support").ToLower();
+        var dept = (args.GetValueOrDefault("department")?.ToString() ?? "support").ToLowerInvariant();
         var num = numbers.GetValueOrDefault(dept, numbers["support"]);
 
         var result = new FunctionResult($"Transferring you to {dept} now.");
@@ -80,13 +82,13 @@ agent.DefineTool(
 
 // --- Tool: send_notification ---
 agent.DefineTool(
-    name:        "send_notification",
+    name: "send_notification",
     description: "Send an SMS notification to the caller",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["message"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "SMS message to send",
         },
     },
@@ -94,8 +96,8 @@ agent.DefineTool(
     {
         var result = new FunctionResult("SMS notification sent.");
         result.SendSms(
-            to:   "+15551234567",
-            from: "+15559876543",
+            toNumber: "+15551234567",
+            fromNumber: "+15559876543",
             body: args.GetValueOrDefault("message")?.ToString() ?? "Notification from call center"
         );
         return result;
@@ -104,9 +106,9 @@ agent.DefineTool(
 
 // --- Tool: put_on_hold ---
 agent.DefineTool(
-    name:        "put_on_hold",
+    name: "put_on_hold",
     description: "Put the caller on hold briefly",
-    parameters:  new Dictionary<string, object>(),
+    parameters: new Dictionary<string, object>(),
     handler: (args, raw) =>
     {
         var result = new FunctionResult("Placing you on hold for a moment.");

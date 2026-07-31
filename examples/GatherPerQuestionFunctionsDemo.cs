@@ -33,7 +33,7 @@ using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "gather_per_question_functions_demo",
+    Name = "gather_per_question_functions_demo",
     Route = "/",
 });
 
@@ -91,7 +91,7 @@ agent.DefineTool(
 );
 
 // Build a single-context agent with one onboarding step.
-var cb  = agent.DefineContexts();
+var cb = agent.DefineContexts();
 var ctx = cb.AddContext("default");
 
 var onboard = ctx.AddStep("onboard");
@@ -112,7 +112,7 @@ onboard
     })
     .SetGatherInfo(new Dictionary<string, object>
     {
-        ["output_key"]        = "customer",
+        ["output_key"] = "customer",
         ["completion_action"] = "next_step",
         ["prompt"] =
             "I'll need to collect a few details to set up your " +
@@ -122,17 +122,17 @@ onboard
 // Question 1: email — only validate_email + gather_submit callable.
 onboard.AddGatherQuestion(new Dictionary<string, object>
 {
-    ["key"]       = "email",
-    ["question"]  = "What's your email address?",
-    ["confirm"]   = true,
+    ["key"] = "email",
+    ["question"] = "What's your email address?",
+    ["confirm"] = true,
     ["functions"] = new List<string> { "validate_email" },
 });
 
 // Question 2: zip — only geocode_zip + gather_submit callable.
 onboard.AddGatherQuestion(new Dictionary<string, object>
 {
-    ["key"]       = "zip",
-    ["question"]  = "What's your ZIP code?",
+    ["key"] = "zip",
+    ["question"] = "What's your ZIP code?",
     ["functions"] = new List<string> { "geocode_zip" },
 });
 
@@ -140,9 +140,9 @@ onboard.AddGatherQuestion(new Dictionary<string, object>
 // callable.
 onboard.AddGatherQuestion(new Dictionary<string, object>
 {
-    ["key"]       = "age",
-    ["question"]  = "How old are you?",
-    ["type"]      = "integer",
+    ["key"] = "age",
+    ["question"] = "How old are you?",
+    ["type"] = "integer",
     ["functions"] = new List<string> { "check_age_eligibility" },
 });
 
@@ -151,7 +151,7 @@ onboard.AddGatherQuestion(new Dictionary<string, object>
 // This is the right pattern when a question needs no tools.
 onboard.AddGatherQuestion(new Dictionary<string, object>
 {
-    ["key"]      = "referral_source",
+    ["key"] = "referral_source",
     ["question"] = "How did you hear about us?",
 });
 
@@ -165,4 +165,11 @@ ctx.AddStep("confirm")
     .SetEnd(true);
 
 var swml = agent.RenderSwml();
-Console.WriteLine(JsonSerializer.Serialize(swml, new JsonSerializerOptions { WriteIndented = true }));
+Console.WriteLine(JsonSerializer.Serialize(swml, ExampleJson.Indented));
+
+/// <summary>Cached serializer options. JsonSerializerOptions is expensive to
+/// construct and is designed to be created once and reused.</summary>
+internal static class ExampleJson
+{
+    internal static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
+}

@@ -3,6 +3,7 @@
 // Demonstrates using the InfoGatherer prefab agent to collect structured
 // information from callers via a guided question flow.
 
+using SignalWire.Agent;
 using SignalWire.Prefabs;
 
 var agent = new InfoGathererAgent(
@@ -15,7 +16,7 @@ var agent = new InfoGathererAgent(
     },
     options: new AgentOptions
     {
-        Name  = "registration",
+        Name = "registration",
         Route = "/register",
     }
 );

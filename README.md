@@ -114,7 +114,7 @@ Real-time call control and messaging over WebSocket. The RELAY client connects t
 ```csharp
 using SignalWire.Relay;
 
-var client = new Client(new ClientOptions
+await using var client = new Client(new ClientOptions
 {
     Project  = "your-project-id",
     Token    = "your-token",
@@ -151,7 +151,7 @@ Async REST client (`Task`-based) for managing SignalWire resources and controlli
 ```csharp
 using SignalWire.REST;
 
-var client = new RestClient("project-id", "token", "example.signalwire.com");
+using var client = new RestClient("project-id", "token", "example.signalwire.com");
 
 await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
 {

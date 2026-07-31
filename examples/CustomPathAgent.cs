@@ -7,10 +7,10 @@ using SignalWire.Agent;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "Custom Path Agent",
+    Name = "Custom Path Agent",
     Route = "/api/v2/my-agent",
-    Host  = "0.0.0.0",
-    Port  = 3000,
+    Host = "0.0.0.0",
+    Port = 3000,
 });
 
 agent.AddLanguage("English", "en-US", "inworld.Mark");

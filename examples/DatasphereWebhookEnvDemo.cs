@@ -6,6 +6,7 @@
 // Required: SIGNALWIRE_SPACE_NAME, SIGNALWIRE_PROJECT_ID,
 //           SIGNALWIRE_API_TOKEN, DATASPHERE_DOCUMENT_ID
 
+using System.Globalization;
 using SignalWire.Agent;
 
 string GetRequired(string name)
@@ -14,17 +15,17 @@ string GetRequired(string name)
            ?? throw new InvalidOperationException($"Set environment variable {name}");
 }
 
-var spaceName  = GetRequired("SIGNALWIRE_SPACE_NAME");
-var projectId  = GetRequired("SIGNALWIRE_PROJECT_ID");
-var token      = GetRequired("SIGNALWIRE_API_TOKEN");
+var spaceName = GetRequired("SIGNALWIRE_SPACE_NAME");
+var projectId = GetRequired("SIGNALWIRE_PROJECT_ID");
+var token = GetRequired("SIGNALWIRE_API_TOKEN");
 var documentId = GetRequired("DATASPHERE_DOCUMENT_ID");
 
-var count    = int.Parse(Environment.GetEnvironmentVariable("DATASPHERE_COUNT") ?? "3");
-var distance = double.Parse(Environment.GetEnvironmentVariable("DATASPHERE_DISTANCE") ?? "4.0");
+var count = int.Parse(Environment.GetEnvironmentVariable("DATASPHERE_COUNT") ?? "3", CultureInfo.InvariantCulture);
+var distance = double.Parse(Environment.GetEnvironmentVariable("DATASPHERE_DISTANCE") ?? "4.0", CultureInfo.InvariantCulture);
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "DataSphere Webhook Assistant",
+    Name = "DataSphere Webhook Assistant",
     Route = "/datasphere-webhook",
 });
 
@@ -36,19 +37,19 @@ agent.PromptAddSection("Role",
 );
 
 try { agent.AddSkill("datetime"); } catch { /* optional */ }
-try { agent.AddSkill("math"); }     catch { /* optional */ }
+try { agent.AddSkill("math"); } catch { /* optional */ }
 
 try
 {
     agent.AddSkill("datasphere", new Dictionary<string, object>
     {
-        ["space_name"]  = spaceName,
-        ["project_id"]  = projectId,
-        ["token"]       = token,
+        ["space_name"] = spaceName,
+        ["project_id"] = projectId,
+        ["token"] = token,
         ["document_id"] = documentId,
-        ["count"]       = count,
-        ["distance"]    = distance,
-        ["tool_name"]   = "search_knowledge",
+        ["count"] = count,
+        ["distance"] = distance,
+        ["tool_name"] = "search_knowledge",
     });
     Console.WriteLine("Added DataSphere skill (webhook mode)");
 }

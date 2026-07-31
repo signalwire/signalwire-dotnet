@@ -7,7 +7,7 @@ using SignalWire.Agent;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "DataSphere Multi-Instance",
+    Name = "DataSphere Multi-Instance",
     Route = "/datasphere-multi",
 });
 
@@ -31,24 +31,24 @@ var spaceName = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE_NAME")
                 ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE_NAME");
 var projectId = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                 ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID");
-var token     = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+var token = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                 ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN");
-var docId1    = Environment.GetEnvironmentVariable("DATASPHERE_DOC_ID_PRODUCT")
+var docId1 = Environment.GetEnvironmentVariable("DATASPHERE_DOC_ID_PRODUCT")
                 ?? throw new InvalidOperationException("Set DATASPHERE_DOC_ID_PRODUCT");
-var docId2    = Environment.GetEnvironmentVariable("DATASPHERE_DOC_ID_FAQ")
+var docId2 = Environment.GetEnvironmentVariable("DATASPHERE_DOC_ID_FAQ")
                 ?? throw new InvalidOperationException("Set DATASPHERE_DOC_ID_FAQ");
 
 try
 {
     agent.AddSkill("datasphere", new Dictionary<string, object>
     {
-        ["space_name"]  = spaceName,
-        ["project_id"]  = projectId,
-        ["token"]       = token,
+        ["space_name"] = spaceName,
+        ["project_id"] = projectId,
+        ["token"] = token,
         ["document_id"] = docId1,
-        ["count"]       = 3,
-        ["distance"]    = 4.0,
-        ["tool_name"]   = "search_product_docs",
+        ["count"] = 3,
+        ["distance"] = 4.0,
+        ["tool_name"] = "search_product_docs",
     });
     Console.WriteLine("Added product docs DataSphere skill");
 }
@@ -59,13 +59,13 @@ try
 {
     agent.AddSkill("datasphere", new Dictionary<string, object>
     {
-        ["space_name"]  = spaceName,
-        ["project_id"]  = projectId,
-        ["token"]       = token,
+        ["space_name"] = spaceName,
+        ["project_id"] = projectId,
+        ["token"] = token,
         ["document_id"] = docId2,
-        ["count"]       = 3,
-        ["distance"]    = 4.0,
-        ["tool_name"]   = "search_faq",
+        ["count"] = 3,
+        ["distance"] = 4.0,
+        ["tool_name"] = "search_faq",
     });
     Console.WriteLine("Added FAQ DataSphere skill");
 }

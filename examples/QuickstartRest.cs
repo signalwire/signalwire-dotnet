@@ -6,11 +6,11 @@
 // region: rest
 using SignalWire.REST;
 
-var client = new RestClient("project-id", "token", "example.signalwire.com");
+using var client = new RestClient("project-id", "token", "example.signalwire.com");
 
 await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
 {
-    ["name"]   = "Support Bot",
+    ["name"] = "Support Bot",
     ["prompt"] = new Dictionary<string, object?> { ["text"] = "You are helpful." },
 });
 await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacode"] = "512" });

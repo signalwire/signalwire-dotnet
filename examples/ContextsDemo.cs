@@ -9,7 +9,7 @@ using SignalWire.Agent;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "Advanced Computer Sales Agent",
+    Name = "Advanced Computer Sales Agent",
     Route = "/advanced-contexts-demo",
 });
 
@@ -25,57 +25,44 @@ agent.PromptAddSection(
     }
 );
 
-// Define contexts using the ContextBuilder
+// Define contexts using the ContextBuilder. `AddContext(name)` returns the
+// Context; `AddStep(name)` returns the Step. Both are fluent builders, so the
+// context's entry parameters and each step's text/criteria/navigation are set
+// with typed methods rather than string-keyed dictionaries.
 var ctx = agent.DefineContexts();
 
-// Sales context
-ctx.AddContext("sales", new Dictionary<string, object>
-{
-    ["system_prompt"] = "You are Franklin, a friendly computer sales consultant.",
-    ["consolidate"]   = true,
-    ["steps"] = new List<Dictionary<string, object>>
-    {
-        new()
-        {
-            ["name"]        = "greeting",
-            ["prompt"]      = "Greet the customer and ask what kind of computer they need.",
-            ["criteria"]    = "Customer has stated their general needs.",
-            ["valid_steps"] = new List<string> { "needs_assessment" },
-        },
-        new()
-        {
-            ["name"]           = "needs_assessment",
-            ["prompt"]         = "Ask about budget, use case, and specific requirements.",
-            ["criteria"]       = "Budget and use case are known.",
-            ["valid_steps"]    = new List<string> { "recommendation" },
-            ["valid_contexts"] = new List<string> { "support" },
-        },
-        new()
-        {
-            ["name"]           = "recommendation",
-            ["prompt"]         = "Recommend a computer based on the gathered requirements.",
-            ["criteria"]       = "Customer has received a recommendation.",
-            ["valid_contexts"] = new List<string> { "support" },
-        },
-    },
-});
+// Sales context — `SetConsolidate(true)` collapses the prior conversation into
+// a summary when the caller enters this context.
+var sales = ctx.AddContext("sales")
+    .SetSystemPrompt("You are Franklin, a friendly computer sales consultant.")
+    .SetConsolidate(true);
 
-// Support context
-ctx.AddContext("support", new Dictionary<string, object>
-{
-    ["system_prompt"] = "You are Rachael, a technical support specialist.",
-    ["full_reset"]    = true,
-    ["steps"] = new List<Dictionary<string, object>>
-    {
-        new()
-        {
-            ["name"]           = "diagnose",
-            ["prompt"]         = "Help the customer with any technical questions or issues.",
-            ["criteria"]       = "Issue has been identified or question answered.",
-            ["valid_contexts"] = new List<string> { "sales" },
-        },
-    },
-});
+sales.AddStep("greeting")
+    .SetText("Greet the customer and ask what kind of computer they need.")
+    .SetStepCriteria("Customer has stated their general needs.")
+    .SetValidSteps(new List<string> { "needs_assessment" });
+
+sales.AddStep("needs_assessment")
+    .SetText("Ask about budget, use case, and specific requirements.")
+    .SetStepCriteria("Budget and use case are known.")
+    .SetValidSteps(new List<string> { "recommendation" })
+    .SetValidContexts(new List<string> { "support" });
+
+sales.AddStep("recommendation")
+    .SetText("Recommend a computer based on the gathered requirements.")
+    .SetStepCriteria("Customer has received a recommendation.")
+    .SetValidContexts(new List<string> { "support" });
+
+// Support context — `SetFullReset(true)` starts the new persona from a clean
+// conversation instead of consolidating the old one.
+var support = ctx.AddContext("support")
+    .SetSystemPrompt("You are Rachael, a technical support specialist.")
+    .SetFullReset(true);
+
+support.AddStep("diagnose")
+    .SetText("Help the customer with any technical questions or issues.")
+    .SetStepCriteria("Issue has been identified or question answered.")
+    .SetValidContexts(new List<string> { "sales" });
 
 agent.AddLanguage("English", "en-US", "inworld.Mark");
 agent.SetParams(new Dictionary<string, object> { ["ai_model"] = "gpt-4.1-nano" });

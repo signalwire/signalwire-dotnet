@@ -7,11 +7,11 @@
 // region: relay
 using SignalWire.Relay;
 
-var client = new Client(new ClientOptions
+await using var client = new Client(new ClientOptions
 {
-    Project  = "your-project-id",
-    Token    = "your-token",
-    Host     = "example.signalwire.com",
+    Project = "your-project-id",
+    Token = "your-token",
+    Host = "example.signalwire.com",
     Contexts = new[] { "default" },
 });
 

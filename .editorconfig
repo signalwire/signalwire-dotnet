@@ -197,3 +197,54 @@ dotnet_diagnostic.CA2007.severity = none
 # the example exists to show. The shipped library has zero such sites, which is
 # why this never fired before. (mike@signalwire.com, 2026-07-30)
 dotnet_diagnostic.CA1303.severity = none
+
+# ---------------------------------------------------------------------------
+# The grants below landed with task #204, when every examples/*.cs first got a
+# .csproj and therefore entered the LINT gate's project enumeration for the
+# first time. Before that these files were compiled by NOTHING, so none of these
+# rules had ever been evaluated against them. Each grant below is a rule whose
+# REMEDY would damage the example as teaching material; every finding that had a
+# clean code fix (CA1304/CA1311/CA1305 culture, CA1869 cached serializer
+# options, CA2000 using-var, CA2234 Uri overload) was FIXED IN CODE instead and
+# is not listed here.
+# ---------------------------------------------------------------------------
+
+# CA2007 — call ConfigureAwait on the awaited task. Microsoft's own guidance is
+# that CA2007 targets LIBRARY code; application entry points should not use
+# ConfigureAwait(false), and an example IS an application entry point (a
+# top-level-statements Program). Threading `.ConfigureAwait(false)` through
+# every `await call.AnswerAsync()` in a RELAY demo triples the visual noise of
+# the exact lines the example exists to teach, and the three README quickstarts
+# (QuickstartAgent/QuickstartRelay/QuickstartRest) are rendered verbatim on the
+# repo front page. Rule stays ON for src/, where it genuinely matters.
+dotnet_diagnostic.CA2007.severity = none
+
+# CA1031 — do not catch general exception types. Every site is a demo's
+# top-level `try { ...the thing being demonstrated... } catch (Exception ex) {
+# Console.WriteLine($"failed: {ex.Message}"); }`. Catching broadly IS the
+# demonstrated behavior: it keeps a multi-step demo running past one
+# unavailable resource and prints why. Narrowing to the specific exception set
+# of each SDK call would make the examples longer than the feature they show.
+dotnet_diagnostic.CA1031.severity = none
+
+# CA5394 — do not use insecure randomness. The sites are JokeSkillDemo picking
+# a random joke and LlmParamsDemo picking a random sample prompt. Neither is a
+# security context; swapping in RandomNumberGenerator would teach a reader that
+# choosing a demo string needs cryptographic randomness, which is wrong.
+dotnet_diagnostic.CA5394.severity = none
+
+# CA1861 — prefer static readonly fields over constant array arguments. Every
+# site is a one-shot literal in a top-level program (`Contexts = new[]
+# { "default" }`, `requireArgs: new[] { "action" }`) evaluated exactly ONCE, so
+# the perf premise of the rule does not hold. Hoisting them into static fields
+# above a 15-line quickstart is pure ceremony.
+dotnet_diagnostic.CA1861.severity = none
+
+# CA1308 — normalize strings to uppercase. The examples lower-case a
+# query-string value before comparing it to lower-case ASCII literals ("vip",
+# "es", "sales"). CA1308's concern is round-tripping/security identity
+# comparisons; here ToLowerInvariant is the readable, correct form and flipping
+# every literal to upper-case for the analyzer would obscure the comparison.
+# (CA1304/CA1311 — the culture-implicit ToLower()/ToUpper() overloads — remain
+# ON and were fixed in code by moving to the Invariant forms.)
+dotnet_diagnostic.CA1308.severity = none

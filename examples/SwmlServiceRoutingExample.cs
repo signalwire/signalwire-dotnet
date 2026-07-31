@@ -1,21 +1,20 @@
 // SWML Service Routing Example
 //
-// Demonstrates using multiple SWMLService instances with different
+// Demonstrates using multiple SignalWire.SWML.Service instances with different
 // routes for call routing scenarios.
 
 using SignalWire.SWML;
-using SignalWire.Server;
 
 // --- Sales route ---
-var sales = new SWMLService(name: "sales", route: "/sales");
-sales.AddAnswerVerb();
+var sales = new Service(new ServiceOptions { Name = "sales", Route = "/sales" });
+sales.AddVerb("answer", new Dictionary<string, object>());
 sales.AddVerb("play", new Dictionary<string, object>
 {
     ["url"] = "say:Welcome to the sales department. A representative will be with you shortly.",
 });
 sales.AddVerb("connect", new Dictionary<string, object>
 {
-    ["to"]      = "+15551112222",
+    ["to"] = "+15551112222",
     ["timeout"] = 30,
 });
 sales.AddVerb("play", new Dictionary<string, object>
@@ -25,22 +24,22 @@ sales.AddVerb("play", new Dictionary<string, object>
 sales.AddVerb("hangup", new Dictionary<string, object>());
 
 // --- Support route ---
-var support = new SWMLService(name: "support", route: "/support");
-support.AddAnswerVerb();
+var support = new Service(new ServiceOptions { Name = "support", Route = "/support" });
+support.AddVerb("answer", new Dictionary<string, object>());
 support.AddVerb("play", new Dictionary<string, object>
 {
     ["url"] = "say:Welcome to technical support. Your call is important to us.",
 });
 support.AddVerb("connect", new Dictionary<string, object>
 {
-    ["to"]      = "+15553334444",
+    ["to"] = "+15553334444",
     ["timeout"] = 30,
 });
 support.AddVerb("hangup", new Dictionary<string, object>());
 
 // --- After-hours route ---
-var afterHours = new SWMLService(name: "after-hours", route: "/after-hours");
-afterHours.AddAnswerVerb();
+var afterHours = new Service(new ServiceOptions { Name = "after-hours", Route = "/after-hours" });
+afterHours.AddVerb("answer", new Dictionary<string, object>());
 afterHours.AddVerb("play", new Dictionary<string, object>
 {
     ["url"] = "say:Thank you for calling. Our office is currently closed. "
@@ -49,9 +48,9 @@ afterHours.AddVerb("play", new Dictionary<string, object>
 });
 afterHours.AddVerb("record", new Dictionary<string, object>
 {
-    ["format"]      = "mp3",
-    ["beep"]        = true,
-    ["max_length"]  = 120,
+    ["format"] = "mp3",
+    ["beep"] = true,
+    ["max_length"] = 120,
     ["terminators"] = "#",
 });
 afterHours.AddVerb("play", new Dictionary<string, object>
