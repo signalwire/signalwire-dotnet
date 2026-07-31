@@ -1552,37 +1552,72 @@ public class Service
         }
     }
 
+    /// <summary>
+    /// Start an <see cref="HttpListener"/> on <paramref name="prefix"/>, falling
+    /// back to an explicit <c>localhost</c> prefix when a wildcard bind is
+    /// refused.
+    /// </summary>
+    /// <remarks>
+    /// A FAILED <see cref="HttpListener.Start"/> DISPOSES the listener. The
+    /// fallback therefore has to build a SECOND listener — reusing the first one
+    /// (calling <c>Prefixes.Clear()</c> on it) throws
+    /// <see cref="ObjectDisposedException"/> and the retry never happens, which
+    /// turned every bind failure into an opaque "Cannot access a disposed
+    /// object: System.Net.HttpListener" crash instead of the localhost retry or
+    /// the actionable message below.
+    /// </remarks>
+    private static HttpListener BindListener(string prefix)
+    {
+        var listener = new HttpListener();
+        listener.Prefixes.Add(prefix);
+        try
+        {
+            listener.Start();
+            return listener;
+        }
+        catch (HttpListenerException ex)
+        {
+            listener.Close();
+
+            // On Linux, "+" requires elevated privileges. Fall back to an
+            // explicit localhost prefix so the example still runs in CI / dev
+            // containers. A fresh listener — the one above is disposed.
+            if (prefix.StartsWith("http://+:", StringComparison.Ordinal))
+            {
+                var fallback = new HttpListener();
+                fallback.Prefixes.Add(prefix.Replace("http://+:", "http://localhost:", StringComparison.Ordinal));
+                try
+                {
+                    fallback.Start();
+                    return fallback;
+                }
+                catch (HttpListenerException fallbackEx)
+                {
+                    fallback.Close();
+                    throw new InvalidOperationException(
+                        $"failed to bind {prefix} and its localhost fallback: {fallbackEx.Message}. " +
+                        "Another process may already be listening on this port; on Linux, binding " +
+                        "0.0.0.0 may require root or `setcap CAP_NET_BIND_SERVICE+ep` on the dotnet " +
+                        "binary. Rebind to a free port (ServiceOptions.Port) or stop the other listener.",
+                        fallbackEx);
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"failed to bind {prefix}: {ex.Message}. Another process may already be " +
+                "listening on this port; on Linux, binding 0.0.0.0 may require root or " +
+                "`setcap CAP_NET_BIND_SERVICE+ep` on the dotnet binary; rebind to localhost " +
+                "or use a port >= 1024.",
+                ex);
+        }
+    }
+
     /// <summary>Plain-HTTP server backed by the BCL HttpListener.</summary>
     [SuppressMessage("Design", "CA1031", Justification = "Per-request handler boundary and best-effort cleanup: a single failed request (or its error/close path) must not crash the blocking server loop.")]
     private void RunHttp(CancellationToken cancellationToken)
     {
         var prefix = $"http://{(Host == "0.0.0.0" ? "+" : Host)}:{Port}/";
-        using var listener = new HttpListener();
-        listener.Prefixes.Add(prefix);
-        try
-        {
-            listener.Start();
-        }
-        catch (HttpListenerException ex)
-        {
-            // On Linux, "+" requires elevated privileges. Fall back to
-            // explicit 0.0.0.0 → localhost so the example still runs in
-            // CI / dev containers.
-            if (Host == "0.0.0.0")
-            {
-                listener.Prefixes.Clear();
-                listener.Prefixes.Add($"http://localhost:{Port}/");
-                listener.Start();
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    $"failed to bind {prefix}: {ex.Message}. On Linux, binding " +
-                    "0.0.0.0 may require root or `setcap CAP_NET_BIND_SERVICE+ep` " +
-                    "on the dotnet binary; rebind to localhost or use a port >= 1024.",
-                    ex);
-            }
-        }
+        using var listener = BindListener(prefix);
 
         // Publish the listener so Stop() can unblock the GetContext() loop, and
         // clear any stale shutdown request from a prior run.
