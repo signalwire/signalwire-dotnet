@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ b45296575ba0947cad706d64890260ec41483f87",
+  "generated_from": "signalwire-dotnet @ d850268554522bdf99c0efd3bd12a96adb5e0d3b",
   "native_names": [
     "AI",
     "AIAction",
@@ -2101,6 +2101,7 @@
     "Suppressed",
     "SurveyAgent",
     "SurveyName",
+    "SwaigAction",
     "SwaigAllowSettings",
     "SwaigAllowSwml",
     "SwaigArgument",
@@ -2109,6 +2110,7 @@
     "SwaigPostSwmlVars",
     "SwaigRequest",
     "SwaigRequestData",
+    "SwaigResponse",
     "SwaigSetGlobalData",
     "Switch",
     "SwitchConfig",

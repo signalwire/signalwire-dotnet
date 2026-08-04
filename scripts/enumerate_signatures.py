@@ -777,16 +777,39 @@ def _merge_overload_return_union(existing: dict, sig: dict, ref_return) -> None:
 
 # The generated-type oracle MODULES whose classes the reference's SIGNATURE
 # oracle (griffe) records WITH per-field accessors: only the read-side SWML-verbs
-# + SWAIG payload modules. The REST ``<ns>_types_generated`` wire-type modules,
-# the RELAY ``protocol_types_generated`` module, and ``swaig_actions_generated``
-# are ABSENT from the signature oracle entirely (griffe records their TypedDicts
-# method-less / not at all), so a port that emits field accessors for them
-# produces phantom ``missing-reference`` drift. Emit those modules METHOD-LESS on
-# the signature side (surface still carries the type names via enumerate_surface).
+# + SWAIG payload modules. The REST ``<ns>_types_generated`` wire-type modules and
+# the RELAY ``protocol_types_generated`` module are ABSENT from the signature
+# oracle entirely (griffe records their TypedDicts method-less / not at all), so a
+# port that emits field accessors for them produces phantom ``missing-reference``
+# drift. Emit those modules METHOD-LESS on the signature side (surface still
+# carries the type names via enumerate_surface).
 _SIG_ACCESSOR_MODULES = {
     "signalwire.core.swml_verbs_generated",
     "signalwire.core.post_prompt_generated",
     "signalwire.core.swaig_request_generated",
+    # swaig_actions_generated is a SPLIT module and was previously listed as
+    # wholly absent — that stopped being true when porting-sdk 4ddda70 taught the
+    # reference generator to emit the SwaigAction/SwaigResponse ENVELOPES. The
+    # oracle now records accessors on those two classes (SwaigAction's four
+    # class-typed action fields + SwaigResponse.action) while the four per-verb
+    # <Verb>Action VALUE classes stay method-less. _ORACLE_GATED_SIG_MODULES below
+    # is what keeps the two halves apart.
+    "signalwire.core.swaig_actions_generated",
+}
+
+# Accessor modules whose per-class accessor emission is GATED on the SIGNATURE
+# oracle's own recorded member set for that class — the module carries BOTH
+# accessor-bearing and genuinely method-less classes, so a blanket per-module rule
+# would give the method-less half phantom accessors. Same oracle-gating mechanism
+# the relay Event / AI-Chat DTO / SWMLService allowlists use (``_oracle_class_members``).
+#
+# For swaig_actions_generated the split is exact: the reference emits the 4
+# <Verb>Action classes as bare TypedDicts of SCALAR fields (griffe records them
+# method-less), while SwaigAction/SwaigResponse carry precisely their CLASS-TYPED
+# fields as accessors. Gating on the oracle reproduces that without hand-listing
+# member names here.
+_ORACLE_GATED_SIG_MODULES = {
+    "signalwire.core.swaig_actions_generated",
 }
 
 
@@ -806,18 +829,30 @@ def _collect_generated_type(
     property returns a primitive the signature diff excuses as a port-side state
     accessor.
 
-    For the REST wire-type / RELAY-proto / swaig-actions modules (ABSENT from the
-    signature oracle): emit the class METHOD-LESS — no accessors — matching the
-    reference (which records no signature entry for these TypedDicts)."""
+    For the REST wire-type / RELAY-proto modules (ABSENT from the signature
+    oracle): emit the class METHOD-LESS — no accessors — matching the reference
+    (which records no signature entry for these TypedDicts).
+
+    For a module in ``_ORACLE_GATED_SIG_MODULES`` (swaig-actions), the accessor set
+    is intersected with the oracle's OWN recorded member set for that class: the
+    module holds both accessor-bearing envelopes and method-less value classes, and
+    the oracle is the arbiter of which is which."""
     if target_module not in _SIG_ACCESSOR_MODULES:
         # Method-less on the signature side (the reference records no accessors).
         out_modules.setdefault(target_module, {"classes": {}})
         out_modules[target_module]["classes"].setdefault(name, {"methods": {}})
         return
+    gate: set[str] | None = None
+    if target_module in _ORACLE_GATED_SIG_MODULES:
+        gate = _oracle_class_members(target_module, name)
     methods_out: dict = {}
     for p in type_entry.get("properties", []):
         pname = p.get("name", "")
         if not pname or pname.startswith("_"):
+            continue
+        if gate is not None and pname not in gate:
+            # ORACLE-GATED: the reference records no accessor for this field
+            # (a scalar/open action value, or a class the oracle keeps method-less).
             continue
         # Wire key VERBATIM — the reference records the field name unchanged
         # (``SWAIG``/``call_log``/``allOf`` stay as-is; no snake-fold).

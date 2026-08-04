@@ -13,19 +13,30 @@ Source: the vendored porting-sdk ``swaig-specs/*.yaml`` (from mod_openai):
   * ``post-prompt.yaml``    -> signalwire.core.post_prompt_generated    (14 classes)
         one class per components/schemas OBJECT schema; the oneOf alias
         ``PostPromptCallLogEntry`` is NOT surfaced (15 schemas - 1 alias = 14).
-  * ``swaig-response.yaml`` -> signalwire.core.swaig_actions_generated  (4 classes)
+  * ``swaig-response.yaml`` -> signalwire.core.swaig_actions_generated  (6 classes)
         one ``<Verb>Action`` class per action key whose value is an object-with-
-        properties (a bare object OR the object variant of a oneOf).
+        properties (a bare object OR the object variant of a oneOf) — 4 of these —
+        PLUS the two response ENVELOPE schemas the spec declares in its own right:
+        ``SwaigAction`` (the action object) and ``SwaigResponse`` (the
+        {response, action, post_process} body a handler returns). post-prompt.yaml
+        cross-file-$refs SwaigResponse, so this module is what makes that ref
+        resolvable.
 
-  2 + 14 + 4 = 20 classes == the surface oracle EXACTLY (0 missing / 0 extra).
+  2 + 14 + 6 = 22 classes == the surface oracle EXACTLY (0 missing / 0 extra).
 
 post-prompt + swaig-request classes are in the SIGNATURE oracle WITH a zero-arg
 accessor per CLASS-TYPED field (folded to gen-payload). The .NET properties are
 typed (a $ref field -> the sibling generated class, so the signature enumerator
 records it as a ``class:`` accessor that matches the reference; a scalar field ->
-a primitive, excused by the diff as a port-side state accessor). swaig-actions
-classes are NOT in the sig oracle — their properties are all scalar, so they
-surface method-less on both sides.
+a primitive, excused by the diff as a port-side state accessor).
+
+The four ``<Verb>Action`` VALUE classes are NOT in the sig oracle — their
+properties are all scalar, so they surface method-less on both sides. The two
+ENVELOPE classes ARE: the oracle records ``SwaigAction.{context_switch, hold,
+playback_bg, transfer}`` and ``SwaigResponse.action``, i.e. exactly its
+class-typed fields. They are therefore emitted wire-key-verbatim (NOT
+pascal_props) and the signature enumerator gates their accessor emission on the
+oracle's own member set, so the 4 value classes stay method-less.
 
 Output: one class per file under a per-module subdir
   src/SignalWire/REST/Namespaces/Generated/GenTypes/PostPrompt/<snake>.cs
@@ -189,12 +200,24 @@ def _build_swaig_actions(psdk: Path) -> dict:
 
     outs: dict = {}
     emitted: set = set()
+    # ref_names for the ENVELOPE emit: leaf <Verb>Action -> its fully-qualified C#
+    # type, so a synthetic $ref to a lifted class types the envelope property as
+    # that class (a class-typed accessor the oracle records).
+    env_ref_names: dict = {}
+    # One entry per action verb for the SwaigAction ENVELOPE, in the SAME order the
+    # per-verb lift walks them.
+    env_props: dict = {}
     for verb in sorted(actions):
         schema = actions[verb]
         if not isinstance(schema, dict):
             continue
         branches = schema.get("oneOf") or ([schema] if _is_obj(schema) else [])
         obj_i = 0
+        # The FIRST lifted class for this verb, if any — the envelope field points
+        # at it (mirroring the reference, whose recorded accessor return is
+        # ``union<…,class:….<Verb>Action>``: the class arm is what makes it an
+        # accessor at all).
+        lifted: str | None = None
         for b in branches:
             if not _is_obj(b):
                 continue
@@ -202,11 +225,14 @@ def _build_swaig_actions(psdk: Path) -> dict:
             cs_name = GR.type_name(
                 _pascal_verb(verb) + "Action" + ("" if obj_i == 1 else str(obj_i))
             )
+            if lifted is None:
+                lifted = cs_name
             if cs_name in emitted:
                 continue
             emitted.add(cs_name)
-            # swaig-actions are NOT in the sig oracle -> method-less both sides;
-            # PascalCase props (DOTNET-2) — wire preserved by [JsonPropertyName].
+            # The per-verb <Verb>Action VALUE classes are NOT in the sig oracle ->
+            # method-less both sides; PascalCase props (DOTNET-2) — wire preserved
+            # by [JsonPropertyName].
             fn, src = _emit(
                 SA_NS,
                 SA_SUBDIR,
@@ -217,6 +243,61 @@ def _build_swaig_actions(psdk: Path) -> dict:
                 pascal_props=True,
             )
             outs[fn] = src
+            env_ref_names[cs_name] = f"{SA_NS}.{cs_name}"
+        if lifted is not None:
+            # Swap the verb's schema for a $ref to its lifted class so the ENVELOPE
+            # property is class-typed. The reference records exactly these four
+            # (context_switch/hold/playback_bg/transfer) as class-typed accessors on
+            # SwaigAction; every other verb is scalar/array/open-object and the
+            # reference records NO accessor for it.
+            env_props[verb] = {"$ref": f"#/components/schemas/{lifted}"}
+        else:
+            env_props[verb] = schema
+    # The response ENVELOPE types. SwaigAction is the action OBJECT (one or more
+    # action keys set at once — the engine dispatches every recognized key), and
+    # SwaigResponse is the {response, action, post_process} body a handler returns.
+    # They live in THIS module because it is the one that owns swaig-response.yaml,
+    # which is what makes ``swaig-response.yaml#/components/schemas/SwaigResponse``
+    # resolvable from post-prompt.yaml. Mirrors porting-sdk's
+    # generate_swaig_actions (4ddda70), go's EmitSwaigActions (41a012c) and ts's
+    # SwaigActions.generated.ts (ca0dd9f).
+    #
+    # pascal_props=False: unlike the per-verb value classes, these two ARE in the
+    # signature oracle WITH accessors, and it records the field name WIRE-KEY
+    # VERBATIM (``context_switch``, ``post_process``) — PascalCasing them would
+    # drift.
+    #
+    # The envelope field types are built from the SAME per-verb schemas the
+    # <Verb>Action lift consumed, with each lifted object swapped for a $ref to its
+    # class, so the envelope and its members cannot drift.
+    fn, src = _emit(
+        SA_NS,
+        SA_SUBDIR,
+        "SwaigAction",
+        env_props,
+        "swaig-response `SwaigAction` action-object envelope",
+        env_ref_names,
+    )
+    outs[fn] = src
+    resp_schema = spec["components"]["schemas"]["SwaigResponse"]
+    # SwaigResponse.action is ``oneOf: [$ref SwaigAction, array of $ref SwaigAction]``
+    # — a multi-member combinator that _wire_field_cs_type widens to the open
+    # Dictionary, which would NOT be a class-typed accessor. The reference records
+    # ``union<class:…SwaigAction,list<class:…SwaigAction>>``; C# has no sum type, so
+    # take the SwaigAction arm — the same choice go made (goType widens to `any`
+    # while the canonical tag stays precise) — which keeps the accessor class-typed.
+    resp_props = dict(resp_schema.get("properties") or {})
+    if "action" in resp_props:
+        resp_props["action"] = {"$ref": "#/components/schemas/SwaigAction"}
+    fn, src = _emit(
+        SA_NS,
+        SA_SUBDIR,
+        "SwaigResponse",
+        resp_props,
+        "swaig-response `SwaigResponse` handler-return envelope",
+        {**env_ref_names, "SwaigAction": f"{SA_NS}.SwaigAction"},
+    )
+    outs[fn] = src
     return outs
 
 

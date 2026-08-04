@@ -216,7 +216,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ 316ebad7e406814a3bf377d0ce36507d602eb843",
+  "generated_from": "signalwire-dotnet @ d850268554522bdf99c0efd3bd12a96adb5e0d3b",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -930,6 +930,8 @@
         "ContextSwitchAction": [],
         "HoldAction": [],
         "PlaybackBgAction": [],
+        "SwaigAction": [],
+        "SwaigResponse": [],
         "TransferAction": []
       },
       "functions": []
