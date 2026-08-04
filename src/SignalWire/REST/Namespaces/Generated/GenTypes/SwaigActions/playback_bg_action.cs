@@ -22,7 +22,7 @@ public class PlaybackBgAction
 {
     /// <summary>Wire field <c>file</c>.</summary>
     [JsonPropertyName("file")]
-    public object? File { get; set; }
+    public string? File { get; set; }
 
     /// <summary>Wire field <c>wait</c>.</summary>
     [JsonPropertyName("wait")]

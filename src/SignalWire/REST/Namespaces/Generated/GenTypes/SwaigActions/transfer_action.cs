@@ -22,7 +22,7 @@ public class TransferAction
 {
     /// <summary>Wire field <c>dest</c>.</summary>
     [JsonPropertyName("dest")]
-    public object? Dest { get; set; }
+    public string? Dest { get; set; }
 
     /// <summary>Wire field <c>summarize</c>.</summary>
     [JsonPropertyName("summarize")]
