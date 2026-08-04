@@ -641,14 +641,35 @@ public static class MockTest
     /// depend on one platform's phrasing. Note the mock prints a reassuring
     /// "listening on ..." line BEFORE the bind is attempted, so the presence of
     /// that line proves nothing — only this error does.
+    /// <para>
+    /// WINDOWS matters here, and was MISSING. Winsock does not use the POSIX
+    /// errno or phrase: the mock reports
+    /// <c>[Errno 10048] error while attempting to bind on address ('127.0.0.1',
+    /// 61395): [winerror 10048] only one usage of each socket address
+    /// (protocol/network address/port) is normally permitted</c>
+    /// — no "address already in use", no errno 48/98, no EADDRINUSE. So on Windows
+    /// this returned FALSE for a plain lost bind, which is not a cosmetic
+    /// classification bug: EnsureServer treats "not address-in-use" as a FATAL
+    /// startup error instead of retrying on a fresh port, so a single benign port
+    /// collision fails every mock-backed test in the run with connection-refused.
+    /// Caught by the multi-OS nightly (run 30908589549, windows-latest, net8.0 and
+    /// net9.0 alike); a linux-only PR tier cannot reach this branch.
+    /// </para>
     /// </summary>
     internal static bool IsAddressInUse(string stdout, string stderr)
     {
         var combined = stdout + "\n" + stderr;
         return combined.Contains("address already in use", StringComparison.OrdinalIgnoreCase)
-            || combined.Contains("errno 48", StringComparison.OrdinalIgnoreCase)
-            || combined.Contains("errno 98", StringComparison.OrdinalIgnoreCase)
-            || combined.Contains("EADDRINUSE", StringComparison.OrdinalIgnoreCase);
+            || combined.Contains("errno 48", StringComparison.OrdinalIgnoreCase)   // macOS/BSD
+            || combined.Contains("errno 98", StringComparison.OrdinalIgnoreCase)   // Linux
+            || combined.Contains("EADDRINUSE", StringComparison.OrdinalIgnoreCase)
+            // Windows / Winsock WSAEADDRINUSE. Both spellings appear in the one
+            // message (`[Errno 10048]` and `[winerror 10048]`), and the prose form is
+            // matched too so a future message that drops the numeric code still
+            // classifies.
+            || combined.Contains("10048", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("WSAEADDRINUSE", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("only one usage of each socket address", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string Truncate(string s)

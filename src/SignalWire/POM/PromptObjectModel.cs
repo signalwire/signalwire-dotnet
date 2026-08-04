@@ -335,6 +335,33 @@ public class PromptObjectModel
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
+    /// <summary>
+    /// Force LF line endings on serialized output, whatever the host OS.
+    /// </summary>
+    /// <remarks>
+    /// <para>POM JSON/YAML is WIRE OUTPUT, and the reference emits LF on every
+    /// platform: Python's <c>json.dumps(indent=2)</c> and
+    /// <c>yaml.dump(default_flow_style=False)</c> both hardcode <c>"\n"</c> and
+    /// never consult the platform. System.Text.Json's indent newline (before
+    /// .NET 9's <c>JsonSerializerOptions.NewLine</c>) and YamlDotNet's serializer
+    /// both default to <see cref="Environment.NewLine"/>, so on Windows this type
+    /// emitted CRLF — a real divergence in the bytes we send, not a test
+    /// artifact.</para>
+    /// <para>Normalizing here rather than via
+    /// <c>JsonSerializerOptions.NewLine</c> keeps ONE code path across the
+    /// net8.0/net9.0/net10.0 matrix (that property does not exist on net8.0) and
+    /// covers YamlDotNet with the same call. CR is only ever a line ending in this
+    /// output — the serializers escape any CR inside a string value (<c>\r</c> in
+    /// JSON, quoted in YAML) — so stripping bare CR cannot corrupt content.</para>
+    /// <para>Caught by the multi-OS nightly (run 30908589549, windows-latest):
+    /// <c>ToJson_ExactShape</c> / <c>ToYaml_ExactShape</c> both differed from the
+    /// expected LF text at the first newline. A linux-only PR tier cannot see
+    /// this.</para>
+    /// </remarks>
+    private static string LfOnly(string s) =>
+        s.Replace("\r\n", "\n", StringComparison.Ordinal)
+         .Replace("\r", "\n", StringComparison.Ordinal);
+
     private readonly List<Section> _sections;
     public bool Debug { get; set; }
 
@@ -465,7 +492,7 @@ public class PromptObjectModel
         if (_sections.Count == 0) return "[]";
         // System.Text.Json indents with 2 spaces by default in .NET 9+.
         var dicts = ToDict();
-        return JsonSerializer.Serialize(dicts, JsonOptions);
+        return LfOnly(JsonSerializer.Serialize(dicts, JsonOptions));
     }
 
     /// <summary>Serialize to YAML string. Matches PyYAML's
@@ -479,7 +506,7 @@ public class PromptObjectModel
             .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.NullNamingConvention.Instance)
             .DisableAliases()
             .Build();
-        return serializer.Serialize(sectionDicts);
+        return LfOnly(serializer.Serialize(sectionDicts));
     }
 
     /// <summary>Construct a PromptObjectModel from YAML string.</summary>

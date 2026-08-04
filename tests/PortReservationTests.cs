@@ -302,11 +302,22 @@ public class PortReservationTests
     /// detector must key on the ERROR, not on the absence of that line.
     /// (Verified against the real mock: it exits 3 with
     /// "[Errno 48] error while attempting to bind on address ...: address already in use".)
+    /// <para>
+    /// The WINDOWS row is not hypothetical and the table lacked it: Winsock's message
+    /// carries neither the POSIX errno nor the phrase "address already in use", so the
+    /// detector returned false and the harness treated a benign lost bind as a FATAL
+    /// startup error — failing every mock-backed test in the run rather than retrying
+    /// on a fresh port. The string below is verbatim from the multi-OS nightly (run
+    /// 30908589549, windows-latest). Asserting it as DATA means the case is covered
+    /// from any host, not only when the suite happens to run on Windows.
+    /// </para>
     /// </summary>
     [Theory]
     [InlineData("[Errno 48] error while attempting to bind on address ('127.0.0.1', 8784): [errno 48] address already in use", true)]
     [InlineData("[Errno 98] address already in use", true)]
     [InlineData("EADDRINUSE", true)]
+    [InlineData("[Errno 10048] error while attempting to bind on address ('127.0.0.1', 61395): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted", true)]
+    [InlineData("WSAEADDRINUSE", true)]
     [InlineData("mock-signalwire: 14/13 specs loaded, listening on http://127.0.0.1:8784", false)]
     [InlineData("ModuleNotFoundError: No module named 'mock_signalwire'", false)]
     public void AddressInUseDetector_MatchesRealBindFailures_NotTheListeningBanner(string output, bool expected)

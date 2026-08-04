@@ -280,6 +280,36 @@ public class PromptObjectModelTest
         Assert.Equal(expected, pom.ToYaml());
     }
 
+    /// <summary>
+    /// POM serialization is WIRE OUTPUT and must be LF-only on every platform, as
+    /// the reference is: Python's json.dumps / yaml.dump hardcode "\n". Both
+    /// System.Text.Json's indent newline (pre-.NET-9) and YamlDotNet default to
+    /// Environment.NewLine, so this shipped CRLF on Windows.
+    ///
+    /// The ExactShape tests above already encode LF, but they can only catch this
+    /// when the suite RUNS on Windows — which only the multi-OS nightly does (run
+    /// 30908589549 caught it there). This one names the invariant directly so the
+    /// intent survives, and it fails on a CRLF-emitting build from any host that
+    /// sets Environment.NewLine to CRLF.
+    /// </summary>
+    [Fact]
+    public void Serialization_IsLfOnly_OnEveryPlatform()
+    {
+        var pom = new PromptObjectModel();
+        var s = pom.AddSection("A", body: "ab");
+        s.AddSubsection("A1", body: "a1b", bullets: new List<string> { "x" });
+
+        var json = pom.ToJson();
+        var yaml = pom.ToYaml();
+
+        Assert.DoesNotContain("\r", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("\r", yaml, StringComparison.Ordinal);
+        // And the newlines are really there — a no-CR assertion on single-line
+        // output would pass vacuously.
+        Assert.Contains("\n", json, StringComparison.Ordinal);
+        Assert.Contains("\n", yaml, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void FromJson_RoundTripPreservesStructure()
     {
