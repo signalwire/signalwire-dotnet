@@ -51,6 +51,7 @@ Microsoft.AspNetCore.Http.HttpResponse#WriteAsync: Microsoft.AspNetCore.Http.Htt
 System.String#Replace: System.Text.RegularExpressions.Regex.Replace / System.String.Replace
 System.Environment#SetEnvironmentVariable: System.Environment.SetEnvironmentVariable
 System.String#ToUpperInvariant: System.String.ToUpperInvariant
+System.String#ToLowerInvariant: System.String.ToLowerInvariant — the culture-invariant twin of the already-ledgered ToLower/ToUpper/ToUpperInvariant; every hit is `<expr>.ToString().ToLowerInvariant()` on a BCL string (.NET stdlib)
 System.String#TrimEnd: System.String.TrimEnd
 System.Uri#TryCreate: System.Uri.TryCreate
 System.Text.Json.JsonElement#EnumerateObject: System.Text.Json.JsonElement.EnumerateObject

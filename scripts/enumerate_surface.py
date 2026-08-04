@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -2027,23 +2028,92 @@ def _load_generate_rest():
         # dependency. That cost a full CI investigation on 2026-07-26 precisely because
         # a dev box has PyYAML and the CI interpreter did not.
         #
-        # Kept non-fatal (the caller's pre-fold fallback is a real, if degraded, mode)
-        # but now LOUD on stderr, so the cause is in the log the first time it happens.
-        print(
-            f"enumerate_surface: WARNING — could not load generate_rest.py "
-            f"({type(exc).__name__}: {exc}). The reference oracle will NOT be consulted, "
-            f"so oracle-gated @dataclass/B2 fields will not emit and the surface diff "
-            f"will report them as missing from the port. If this is ModuleNotFoundError "
-            f"for 'yaml', install PyYAML (pip install pyyaml).",
-            file=sys.stderr,
+        # WARNING-and-continue was NOT enough: it still emits a SHORT-but-valid
+        # port_surface.json and exits 0, so the artifact looks fine and the blame lands
+        # on the port. Measured 2026-08-04 on an interpreter without PyYAML: 1291
+        # methods emitted instead of 1578 — 287 silently gone, a 460-line phantom diff,
+        # exit code 0. A parity artifact that is wrong must not be produced at all.
+        # Now FATAL. Set SW_ENUM_ALLOW_NO_ORACLE=1 to opt into the degraded mode
+        # deliberately (it still warns); nothing in CI does.
+        msg = (
+            f"could not load generate_rest.py ({type(exc).__name__}: {exc}). The "
+            f"reference oracle will NOT be consulted, so oracle-gated @dataclass/B2 "
+            f"fields will not emit and the surface diff will report them as missing "
+            f"from the port. If this is ModuleNotFoundError for 'yaml', install "
+            f"PyYAML (pip install pyyaml)."
         )
-        return None
+        if os.environ.get("SW_ENUM_ALLOW_NO_ORACLE") == "1":
+            print(
+                f"enumerate_surface: WARNING — {msg} Continuing because "
+                f"SW_ENUM_ALLOW_NO_ORACLE=1; the emitted surface is INCOMPLETE.",
+                file=sys.stderr,
+            )
+            return None
+        raise SystemExit(f"enumerate_surface: FATAL — {msg}") from exc
     return mod
 
 
-def _local_ref(node: object) -> bool:
+# Spec FILES a cross-file ``$ref`` may target, mirroring
+# ``porting-sdk/scripts/generate_python_rest_types.py``'s ``CROSS_FILE_MODULES``.
+# A ref into a file that is NOT registered here is an ERROR, not a silent
+# "not a composition member" — adding a new cross-file link is a deliberate act
+# and must not degrade quietly (see ``_class_ref`` below).
+CROSS_FILE_SPEC_FILES: frozenset[str] = frozenset(
+    {
+        "swaig-request.yaml",
+        "swaig-response.yaml",
+    }
+)
+
+# Fragment-less ``$ref``s that resolve to a schema's own ``$id`` ROOT rather than to a
+# ``#/...`` definition. ``porting-sdk/schema.json`` declares ``"$id": "SWMLObject.json"``
+# and refs it as a bare ``"SWMLObject.json"`` (execute.SWML -> the whole SWML document).
+# That is valid JSON-Schema ``$id`` resolution, not a malformed ref, but it names the
+# ROOT object — which is not one of the generated model CLASSES this enumerator emits
+# members for — so it is a class-ref MISS, not an error. Registered explicitly so the
+# distinction is recorded rather than inferred from a silent ``startswith`` test.
+SELF_ID_ROOT_REFS: frozenset[str] = frozenset({"SWMLObject.json"})
+
+
+def _class_ref(node: object) -> bool:
+    """True iff ``node`` is a ``$ref`` to a MODEL CLASS — same-file (``#/...``) or
+    cross-file (``swaig-response.yaml#/components/schemas/SwaigResponse``).
+
+    Cross-file refs are class refs too. Treating them as non-refs silently DROPPED
+    surface: porting-sdk re-vendor 99fd429 rewrote ``PostPromptSwaigLogEntry``'s
+    ``post_data`` / ``post_response`` / ``delayed_post_response`` from same-file
+    ``#/components/schemas/...`` to cross-file ``swaig-{request,response}.yaml#/...``,
+    and the old ``startswith("#/")`` test made all three vanish from the emitted
+    surface while the oracle still records them — the enumerator blaming the port for
+    an omission it never had. Raises on a ref into an UNREGISTERED file so a future
+    re-vendor that adds a new cross-file link fails LOUD instead of shrinking the
+    surface (the doctrine ``generate_python_rest_types.py`` already states)."""
     ref = node.get("$ref") if isinstance(node, dict) else None
-    return isinstance(ref, str) and ref.startswith("#/")
+    if not isinstance(ref, str) or not ref:
+        return False
+    if ref.startswith("#/"):
+        return True
+    if ref in SELF_ID_ROOT_REFS:
+        # Resolves to the schema ROOT object, not to a generated model class.
+        return False
+    file_part, sep, _frag = ref.partition("#")
+    if not sep or not file_part:
+        raise ValueError(
+            f"enumerate_surface: unrecognised $ref form {ref!r} — expected a "
+            f"same-file '#/...' ref or a '<spec>.yaml#/...' cross-file ref"
+        )
+    if file_part not in CROSS_FILE_SPEC_FILES:
+        raise ValueError(
+            f"enumerate_surface: cross-file $ref {ref!r} targets unregistered spec "
+            f"file {file_part!r}. Add it to CROSS_FILE_SPEC_FILES (and confirm the "
+            f"reference oracle records the members) — a cross-file link must never "
+            f"degrade into a silently-dropped surface member."
+        )
+    return True
+
+
+# Back-compat alias: the predicate is no longer "local"-only.
+_local_ref = _class_ref
 
 
 def _items_reference_local(node: object) -> bool:
@@ -2060,10 +2130,11 @@ def _items_reference_local(node: object) -> bool:
 
 
 def _schema_field_is_composition(psc: object) -> bool:
-    """A schema property is a composition member iff its type is a local class-ref:
-    a bare ``$ref`` to a local model, or an array whose ``items`` reference one
-    (directly or via a nested anyOf/oneOf/allOf). A TOP-LEVEL anyOf/oneOf/allOf is
-    a union<...> return and is EXCLUDED (verb-setter idiom)."""
+    """A schema property is a composition member iff its type is a class-ref:
+    a bare ``$ref`` to a model (same-file OR cross-file — see ``_class_ref``), or an
+    array whose ``items`` reference one (directly or via a nested anyOf/oneOf/allOf).
+    A TOP-LEVEL anyOf/oneOf/allOf is a union<...> return and is EXCLUDED
+    (verb-setter idiom)."""
     if not isinstance(psc, dict):
         return False
     if _local_ref(psc):
@@ -2717,8 +2788,17 @@ def build_native_names(repo: Path, src_dir: Path) -> dict:
         try:
             findings = parse_cs_file(path)
         except Exception as e:  # pragma: no cover
-            print(f"warning: failed to parse {path}: {e}", file=sys.stderr)
-            continue
+            # FAIL LOUD. A warn-and-continue here emitted a SHORT-but-valid
+            # port_surface_native.json and exited 0, so DOC-AUDIT could not resolve
+            # the native members of whatever file failed to parse and blamed the DOCS
+            # for a phantom-API reference — the "enumerator fails successfully"
+            # pattern (a wrong parity artifact is worse than none).
+            raise SystemExit(
+                f"enumerate_surface: FATAL — failed to parse {path}: "
+                f"{type(e).__name__}: {e}. The native-names sidecar would be "
+                f"INCOMPLETE, so DOC-AUDIT would report this file's real members as "
+                f"unresolved doc references. Fix the parse, do not ignore it."
+            ) from e
         for _namespace, class_name, methods in findings:
             names.add(class_name)
             for m in methods:

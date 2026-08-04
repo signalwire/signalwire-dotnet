@@ -64,8 +64,20 @@ jobs:
 
       - name: Audit doc / example references
         working-directory: signalwire-dotnet
+        # --native-names is NOT optional. port_surface.json holds the CANONICAL
+        # (python-oracle, snake_case, Async-stripped) surface so SURFACE-DIFF compares
+        # equal to the reference; the docs and examples reference the REAL C# members
+        # (`call.AnswerAsync()`, `map.ForEach(...)`), which only the native sidecar the
+        # enumerator emits alongside can resolve. Omitting the flag made every folded
+        # member unresolvable and blamed the DOCS for the enumerator's own translation:
+        # measured 2026-08-04, `ForEach` (a genuine public DataMap method, present in
+        # the sidecar) failed the gate as a phantom API, plus 258 report-only refs. With
+        # the flag: 0 report-only, and only true externals remain. This is the same
+        # check-bug class audit_docs.py's own load_native_names() docstring records for
+        # java on 2026-07-25 (4 members present in its sidecar the whole time).
         run: |
           python3 ${{ github.workspace }}/porting-sdk/scripts/audit_docs.py \
               --root . \
               --surface port_surface.json \
+              --native-names port_surface_native.json \
               --ignore DOC_AUDIT_IGNORE.md

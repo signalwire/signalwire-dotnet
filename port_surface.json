@@ -216,7 +216,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ c11e64e2a1cb074797d9759dfee6764f686b973a",
+  "generated_from": "signalwire-dotnet @ 316ebad7e406814a3bf377d0ce36507d602eb843",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -798,7 +798,9 @@
         "PostPromptEot": [],
         "PostPromptStampsUs": [],
         "PostPromptSwaigLogEntry": [
-          "post_data"
+          "delayed_post_response",
+          "post_data",
+          "post_response"
         ],
         "PostPromptSystemEntry": [],
         "PostPromptSystemLogEntry": [],
