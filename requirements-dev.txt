@@ -10,4 +10,13 @@
 #
 # Install: python3 -m pip install -r requirements-dev.txt
 
-ruff>=0.15
+# PINNED EXACT, not `>=0.15`. An open ceiling lets CI install a NEWER ruff than the
+# developer has, and ruff adds rules and adjusts format heuristics between releases,
+# so the FMT/LINT gates would red on code that never changed — with no local run
+# able to reproduce it. (Measured on the way in: moving 0.14.2 -> 0.15.21 surfaced
+# S603/S607 on scripts/generate_example_projects.py, a site the repo had already
+# ruled correct for its three siblings; the finding was real, the trigger was the
+# version.) 0.15.21 is the fleet-wide ruff — signalwire-python/perl/php/typescript/
+# java/cpp/rust pin the same. Bump every port together, with the resulting fixes in
+# the same commit.
+ruff==0.15.21

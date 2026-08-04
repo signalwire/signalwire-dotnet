@@ -1,0 +1,28 @@
+{
+  "$comment": [
+    "SDK PIN — the second half of the analyzer-stability guarantee.",
+    "",
+    "Directory.Build.props sets AnalysisMode=All with TreatWarningsAsErrors=true, so",
+    "every analyzer rule the SDK enables is a BUILD ERROR. Without a global.json,",
+    "each machine and each CI runner uses whatever SDK it happens to have, and a new",
+    "SDK can enable new CA rules with no package release and no commit of ours — the",
+    "LINT gate then reds on unchanged source and no local run reproduces it. Pinning",
+    "AnalysisLevel to a number fixes the rule SET; pinning the SDK here fixes the",
+    "toolchain that supplies the analyzers, the code-style rules and the compiler.",
+    "",
+    "rollForward=latestPatch: this exact feature band (10.0.1xx), newest patch. Patch",
+    "releases do not add analyzer rules, so builds keep working on a slightly newer",
+    "runner image while a FEATURE-band or major bump stays deliberate. allowPrerelease",
+    "is false so a preview SDK installed for something else is never silently used.",
+    "",
+    "The library still multi-targets net8.0/net9.0/net10.0 — TargetFrameworks in the",
+    "csproj is what we SHIP for; this is only the SDK that BUILDS it. Bump this and",
+    "AnalysisLevel in Directory.Build.props together, with whatever new findings the",
+    "new level reports fixed in the same commit."
+  ],
+  "sdk": {
+    "version": "10.0.100",
+    "rollForward": "latestPatch",
+    "allowPrerelease": false
+  }
+}
