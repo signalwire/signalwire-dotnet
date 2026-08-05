@@ -38,7 +38,7 @@ public class SwaigAction
 
     /// <summary>Wire field <c>clear_dynamic_hints</c>.</summary>
     [JsonPropertyName("clear_dynamic_hints")]
-    public object? clear_dynamic_hints { get; set; }
+    public bool? clear_dynamic_hints { get; set; }
 
     /// <summary>Wire field <c>context_switch</c>.</summary>
     [JsonPropertyName("context_switch")]
@@ -58,7 +58,7 @@ public class SwaigAction
 
     /// <summary>Wire field <c>hangup</c>.</summary>
     [JsonPropertyName("hangup")]
-    public object? hangup { get; set; }
+    public bool? hangup { get; set; }
 
     /// <summary>Wire field <c>hold</c>.</summary>
     [JsonPropertyName("hold")]
@@ -94,11 +94,11 @@ public class SwaigAction
 
     /// <summary>Wire field <c>stop</c>.</summary>
     [JsonPropertyName("stop")]
-    public object? stop { get; set; }
+    public bool? stop { get; set; }
 
     /// <summary>Wire field <c>stop_playback_bg</c>.</summary>
     [JsonPropertyName("stop_playback_bg")]
-    public object? stop_playback_bg { get; set; }
+    public bool? stop_playback_bg { get; set; }
 
     /// <summary>Wire field <c>toggle_functions</c>.</summary>
     [JsonPropertyName("toggle_functions")]

@@ -30,7 +30,7 @@ public class ContextSwitchAction
 
     /// <summary>Wire field <c>system_pom</c>.</summary>
     [JsonPropertyName("system_pom")]
-    public object? SystemPom { get; set; }
+    public Dictionary<string, object?>? SystemPom { get; set; }
 
     /// <summary>Wire field <c>system_prompt</c>.</summary>
     [JsonPropertyName("system_prompt")]
@@ -38,7 +38,7 @@ public class ContextSwitchAction
 
     /// <summary>Wire field <c>user_pom</c>.</summary>
     [JsonPropertyName("user_pom")]
-    public object? UserPom { get; set; }
+    public Dictionary<string, object?>? UserPom { get; set; }
 
     /// <summary>Wire field <c>user_prompt</c>.</summary>
     [JsonPropertyName("user_prompt")]
