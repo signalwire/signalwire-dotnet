@@ -118,3 +118,66 @@ dotnet_require_projects() {
     fi
     echo "$n"
 }
+
+# ---------------------------------------------------------------------------
+# THE ALL-PROJECTS SOLUTION — the same scope as dotnet_all_projects, in ONE
+# MSBuild-loadable unit.
+#
+# WHY: FMT and LINT both used to loop over the enumeration and spawn a SEPARATE
+# `dotnet` process per project. At 86 projects that is 86 MSBuild workspace
+# loads, and the workspace load — not the actual formatting or analysis — is
+# what dominates. Measured on one machine, one session:
+#
+#     FMT   86x `dotnet format whitespace <proj>`  199.4s  ->  batched  11.7s
+#     LINT  86x `dotnet build <proj>`              155.5s  ->  batched  75.0s
+#
+# Batching changes NOTHING about what is checked: identical project set,
+# identical analyzers, identical -m:1 serialization. It only stops paying the
+# per-process startup 86 times.
+#
+# SCOPE IS VERIFIED, NOT ASSUMED. `dotnet sln add` silently DROPS a project
+# whose basename collides with one already in the solution — this tree has two
+# distinct `RelayAnswerAndWelcome.csproj` (examples/ and relay/examples/), and a
+# naive batch quietly linted 85 of 86. So each project is added under its own
+# solution folder (disambiguating the basename), and the resulting solution is
+# COUNTED against the enumeration; a mismatch is fatal. A gate that silently
+# checks less than it claims is worse than a slow one.
+#
+# The solution is a generated build artifact under .tmp/ (gitignored scratch,
+# itself excluded from the enumeration above), rebuilt from scratch on every
+# run so it can never go stale relative to what is on disk.
+#
+# Echoes the path of the generated solution.
+dotnet_all_projects_solution() {
+    local dn slndir sln n_expected n_actual
+    dn="$(dotnet_cmd)"
+    slndir="$REPO/.tmp/allprojects-sln"
+    sln="$slndir/AllProjects.slnx"
+
+    n_expected="$(dotnet_all_projects | grep -c . || true)"
+
+    rm -rf "$slndir"
+    mkdir -p "$slndir"
+    # shellcheck disable=SC2086
+    $dn new sln -n AllProjects -o "$slndir" >/dev/null
+
+    # One solution folder per project, named from the project's repo-relative
+    # directory, so two same-named .csproj in different dirs cannot collide.
+    local proj rel folder
+    while IFS= read -r proj; do
+        rel="${proj#"$REPO"/}"
+        folder="$(dirname "$rel")"
+        # shellcheck disable=SC2086
+        $dn sln "$sln" add --solution-folder "$folder" "$proj" >/dev/null
+    done < <(dotnet_all_projects)
+
+    n_actual="$(grep -c 'Path=' "$sln" || true)"
+    if [ "$n_actual" -ne "$n_expected" ]; then
+        echo "FATAL: all-projects solution holds $n_actual projects but the" >&2
+        echo "       enumeration found $n_expected — refusing to run a gate over" >&2
+        echo "       a SILENTLY REDUCED scope (duplicate .csproj basename?)." >&2
+        exit 1
+    fi
+
+    echo "$sln"
+}

@@ -27,3 +27,9 @@ __pycache__/
 
 # sw-verify repo-local scratch
 .sw-tmp/
+
+# repo-local scratch; holds the generated all-projects solution the FMT/LINT
+# gates build (scripts/_env.sh dotnet_all_projects_solution). Generated fresh
+# every run — never committed, and excluded from the project enumeration so it
+# cannot feed itself back in.
+.tmp/

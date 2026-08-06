@@ -54,24 +54,27 @@ fi
 RC=0
 NPROJ="$(dotnet_require_projects)"
 
+# ONE MSBuild workspace load for all $NPROJ projects instead of one per project.
+# Same scope (the solution is generated from the same enumeration and its project
+# count is ASSERTED against it — see dotnet_all_projects_solution), same
+# formatting bar; batching only stops paying the workspace-load cost $NPROJ
+# times. Measured on one machine, one session: 199.4s looped -> 11.7s batched.
+SLN_ALL="$(dotnet_all_projects_solution)"
+
 if [ "$MODE" = "check" ]; then
     echo "==> ruff format --check (whole tree; VERIFY-ONLY)"
     ruff format --check "$REPO" || RC=1
 
     echo "==> dotnet format whitespace --verify-no-changes x$NPROJ projects (VERIFY-ONLY)"
-    while IFS= read -r proj; do
-        # shellcheck disable=SC2086
-        $DN format whitespace "$proj" --verify-no-changes || RC=1
-    done < <(dotnet_all_projects)
+    # shellcheck disable=SC2086
+    $DN format whitespace "$SLN_ALL" --verify-no-changes || RC=1
 else
     echo "==> ruff format (whole tree; APPLY)"
     ruff format "$REPO" || RC=1
 
     echo "==> dotnet format whitespace x$NPROJ projects (APPLY)"
-    while IFS= read -r proj; do
-        # shellcheck disable=SC2086
-        $DN format whitespace "$proj" || RC=1
-    done < <(dotnet_all_projects)
+    # shellcheck disable=SC2086
+    $DN format whitespace "$SLN_ALL" || RC=1
 
     if ! git -C "$REPO" diff --quiet 2>/dev/null; then
         echo "    (FMT auto-applied formatting — review & stage)"
