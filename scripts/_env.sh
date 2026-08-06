@@ -98,10 +98,17 @@ export SLN
 # findings reported as repo findings.
 #
 # Prints one project path per line, sorted (stable ordering across machines).
+# `.claude/worktrees/` is excluded for the same reason as the scratch dirs, and
+# it is not hypothetical: an agent worktree is a FULL SECOND CHECKOUT of this
+# repo living under the repo root, so without this the enumeration returned 172
+# projects in an 86-project tree — every project twice, once from the real tree
+# and once from the worktree. That silently doubled both gates' work and made
+# them report findings against a copy nobody edits.
 dotnet_all_projects() {
     find "$REPO" -name '*.csproj' \
         -not -path '*/obj/*' -not -path '*/bin/*' -not -path '*/.git/*' \
         -not -path '*/.sw-tmp/*' -not -path '*/.tmp/*' \
+        -not -path "$REPO/.claude/worktrees/*" \
         | LC_ALL=C sort
 }
 
