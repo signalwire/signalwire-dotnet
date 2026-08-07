@@ -20,6 +20,10 @@ namespace SignalWire.Core.SwaigActionsGenerated;
 /// </summary>
 public class SwaigAction
 {
+    /// <summary>Wire field <c>SWML</c>.</summary>
+    [JsonPropertyName("SWML")]
+    public Dictionary<string, object?>? SWML { get; set; }
+
     /// <summary>Wire field <c>add_dynamic_hints</c>.</summary>
     [JsonPropertyName("add_dynamic_hints")]
     public List<object?>? add_dynamic_hints { get; set; }
