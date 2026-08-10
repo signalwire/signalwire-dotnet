@@ -333,7 +333,8 @@ public sealed class Schema
     /// prompt.pom for a promptless agent, SWAIG defaults/functions[].web_hook_url
     /// / __token), so the handler owns the deep shape and only stray top-level
     /// keys (e.g. ``temperatur`` / ``zzz``) are caught here. A no-op when the
-    /// verb has no enumerable closed key-set.
+    /// verb genuinely has no enumerable closed key-set (an open object such as
+    /// ``set``, or a union with no object branch such as ``unset``).
     /// </summary>
     public (bool Valid, List<string> Errors) ValidateVerbTopLevelKeys(
         string verbName, Dictionary<string, object?> verbConfig)
@@ -363,9 +364,10 @@ public sealed class Schema
     }
 
     /// <summary>Resolve the set of KNOWN top-level property names for a verb's
-    /// config object, following a single ``$ref`` (e.g. ai -> AIObject). Returns
-    /// null when the verb's config schema is not a CLOSED object-with-properties
-    /// (no enumerable known-key set, so no shallow check applies).
+    /// config object, following a single ``$ref`` (e.g. ai -> AIObject) and
+    /// UNIONING the branches of an ``anyOf``/``oneOf`` union. Returns null only
+    /// when there is genuinely no enumerable closed key-set (so no shallow check
+    /// applies).
     /// </summary>
     private HashSet<string>? VerbTopLevelPropertyNames(string verbName)
     {
@@ -379,8 +381,46 @@ public sealed class Schema
             return null;
         }
 
-        // Follow a single $ref (ai -> AIObject) to the object that declares the
-        // verb config's own properties.
+        return ClosedKeySet(body, 0);
+    }
+
+    /// <summary>Bounds ``$ref``/union following so a self-referential ``$ref``
+    /// cannot spin the resolver. Eight is well past anything the SWML schema
+    /// needs (verb body -&gt; $ref -&gt; union branch -&gt; $ref).</summary>
+    private const int MaxSchemaResolveDepth = 8;
+
+    /// <summary>Resolve ONE schema node to the set of top-level property names it
+    /// closes over, or null when it has no such enumerable closed key-set.
+    ///
+    /// <para>Three node shapes are handled, and the union case is the one that
+    /// matters:</para>
+    /// <list type="bullet">
+    /// <item><c>$ref</c> — followed into <c>$defs</c> and resolved recursively
+    /// (ai -&gt; AIObject).</item>
+    /// <item><c>anyOf</c>/<c>oneOf</c> — resolved BRANCH BY BRANCH and UNIONED.
+    /// Without this the resolver bailed on the first <c>type != "object"</c>
+    /// test, because a union node carries no <c>type</c> of its own. That bail
+    /// silently DISENGAGED the closed-key check: ValidateVerbTopLevelKeys reads
+    /// null as "nothing to enforce" and reports Valid for any key whatsoever.
+    /// Five verbs in the shipped schema are union-shaped — connect, play,
+    /// send_sms, sleep, unset — so the check was doing nothing for all of them.
+    /// A union's known-key set is the union of its object branches' keys: a
+    /// config satisfying the union satisfies SOME branch, so a key belonging to
+    /// no branch belongs to no valid document. Non-object branches (sleep's bare
+    /// <c>integer</c>, SWMLVar) contribute no keys and are skipped — they
+    /// constrain the config to not be an object at all, a different question
+    /// from which keys an object config may carry.</item>
+    /// <item>a plain closed object — its own <c>properties</c>.</item>
+    /// </list>
+    /// </summary>
+    private HashSet<string>? ClosedKeySet(JsonElement body, int depth)
+    {
+        if (body.ValueKind != JsonValueKind.Object || depth > MaxSchemaResolveDepth)
+        {
+            return null;
+        }
+
+        // Follow a $ref (ai -> AIObject) to the node that declares the properties.
         if (body.TryGetProperty("$ref", out var refProp) && refProp.ValueKind == JsonValueKind.String)
         {
             var refValue = refProp.GetString()!;
@@ -392,9 +432,39 @@ public sealed class Schema
                 return null;
             }
             // Re-read the resolved def as a JsonElement for uniform handling.
+            // Clone() detaches it from refDoc, which is disposed on return.
             var refJson = refBody.ToJsonString();
             using var refDoc = JsonDocument.Parse(refJson);
-            body = refDoc.RootElement.Clone();
+            return ClosedKeySet(refDoc.RootElement.Clone(), depth + 1);
+        }
+
+        // A union node: resolve every branch and union the ones that yield a set.
+        JsonElement? union0 = null;
+        if (body.TryGetProperty("anyOf", out var anyOfEl) && anyOfEl.ValueKind == JsonValueKind.Array)
+        {
+            union0 = anyOfEl;
+        }
+        else if (body.TryGetProperty("oneOf", out var oneOfEl) && oneOfEl.ValueKind == JsonValueKind.Array)
+        {
+            union0 = oneOfEl;
+        }
+        if (union0 is JsonElement branches)
+        {
+            var union = new HashSet<string>();
+            var found = false;
+            foreach (var branch in branches.EnumerateArray())
+            {
+                var keys = ClosedKeySet(branch, depth + 1);
+                if (keys is null)
+                {
+                    continue;
+                }
+                found = true;
+                union.UnionWith(keys);
+            }
+            // No branch is a closed object (e.g. unset: string | array-of-string).
+            // There is no key-set to enforce; the deep validator owns this shape.
+            return found ? union : null;
         }
 
         if (!body.TryGetProperty("type", out var typeProp)
