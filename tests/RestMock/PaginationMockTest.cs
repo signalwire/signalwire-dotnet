@@ -104,7 +104,7 @@ public class PaginationMockTest : IClassFixture<MockServerFixture>
         var it = new PaginatedIterator(http, FabricAddressesPath, dataKey: "data");
 
         var collected = new List<Dictionary<string, object?>>();
-        await foreach (var item in it)
+        await foreach (var item in it.ConfigureAwait(false))
         {
             collected.Add(item);
         }
@@ -120,7 +120,7 @@ public class PaginationMockTest : IClassFixture<MockServerFixture>
         // Second fetch carries the page_token parsed from page 1's next link.
         Assert.NotNull(gets[1].QueryParams);
         Assert.True(gets[1].QueryParams!.ContainsKey("page_token"));
-        Assert.Equal(new List<string> { "PA_page2" }, gets[1].QueryParams["page_token"]);
+        Assert.Equal(new List<string> { "PA_page2" }, gets[1].QueryParams!["page_token"]);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class PaginationMockTest : IClassFixture<MockServerFixture>
         // Exhausted.
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
-            await it.NextAsync();
+            await it.NextAsync().ConfigureAwait(false);
         });
     }
 }

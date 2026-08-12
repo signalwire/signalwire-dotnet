@@ -43,7 +43,7 @@ public class ReconnectTeardownMockTest : IClassFixture<RelayMockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_relay unreachable");
+        MockServerFixture.SkipNote("[SKIP] mock_relay unreachable");
         return true;
     }
 
@@ -53,16 +53,40 @@ public class ReconnectTeardownMockTest : IClassFixture<RelayMockServerFixture>
         if (Skipped()) return;
 
         var faults = new List<Exception>();
+
+        // TaskScheduler.UnobservedTaskException is PROCESS-GLOBAL, and this class
+        // carries no [Collection] so it runs concurrently with the other RelayMock
+        // classes. An unfiltered handler therefore collects THEIR faults too and
+        // blames them on this test's reconnect path — observed live: a
+        // `RELAY error -32602: params validation: 'params' is a required property
+        // at /tap` from ActionsMockTest failed this assertion, while this test
+        // passes in isolation.
+        //
+        // The race under test produces ObjectDisposedException (the reconnect
+        // touching a disposed _sendLock/_cts) or a cancellation from the disposed
+        // token. Anything else is another class's business, so it is observed to
+        // keep the finalizer quiet but NOT counted against this assertion.
+        static bool IsThisRace(Exception ex) => ex switch
+        {
+            AggregateException agg => agg.InnerExceptions.Any(IsThisRace),
+            ObjectDisposedException => true,
+            OperationCanceledException => true,
+            _ => false,
+        };
+
         void Handler(object? s, UnobservedTaskExceptionEventArgs e)
         {
-            faults.Add(e.Exception);
+            if (IsThisRace(e.Exception))
+            {
+                faults.Add(e.Exception);
+            }
             e.SetObserved();
         }
 
         TaskScheduler.UnobservedTaskException += Handler;
         try
         {
-            var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+            using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
             var client = bound.Client;
             await client.ConnectAsync();
 

@@ -8,7 +8,7 @@ using SignalWire.Agent;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name       = "Simple Customer Service Agent (Dynamic)",
+    Name = "Simple Customer Service Agent (Dynamic)",
     AutoAnswer = true,
     RecordCall = true,
 });
@@ -22,9 +22,9 @@ agent.SetDynamicConfigCallback((queryParams, bodyParams, headers, agentClone) =>
     // AI parameters
     agentClone.SetParams(new Dictionary<string, object>
     {
-        ["ai_model"]               = "gpt-4.1-nano",
-        ["end_of_speech_timeout"]  = 500,
-        ["attention_timeout"]      = 15000,
+        ["ai_model"] = "gpt-4.1-nano",
+        ["end_of_speech_timeout"] = 500,
+        ["attention_timeout"] = 15000,
         ["background_file_volume"] = -20,
     });
 
@@ -34,13 +34,13 @@ agent.SetDynamicConfigCallback((queryParams, bodyParams, headers, agentClone) =>
     // Global data
     agentClone.SetGlobalData(new Dictionary<string, object>
     {
-        ["agent_type"]       = "customer_service",
-        ["service_level"]    = "standard",
+        ["agent_type"] = "customer_service",
+        ["service_level"] = "standard",
         ["features_enabled"] = new List<string> { "basic_conversation", "help_desk" },
-        ["session_info"]     = new Dictionary<string, object>
+        ["session_info"] = new Dictionary<string, object>
         {
             ["environment"] = "production",
-            ["version"]     = "1.0",
+            ["version"] = "1.0",
         },
     });
 

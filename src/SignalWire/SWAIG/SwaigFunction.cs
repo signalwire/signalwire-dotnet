@@ -25,8 +25,6 @@ namespace SignalWire.SWAIG;
 /// OpenAI / Anthropic tool calling. It wraps a name/description/parameters and a
 /// handler, executes the handler, validates arguments against the parameter
 /// schema, and renders <see cref="ToSwaig"/> (the SWAIG function JSON for SWML).
-/// Mirrors the Python reference <c>SWAIGFunction</c> and the Ruby
-/// <c>SignalWire::Swaig::SWAIGFunction</c>.
 /// </remarks>
 public class SwaigFunction
 {
@@ -90,7 +88,7 @@ public class SwaigFunction
     public bool IsExternal { get; }
 
     /// <summary>
-    /// Initialize a new SWAIG function. (equivalent to Python's <c>__init__</c>.)
+    /// Initialize a new SWAIG function.
     /// </summary>
     /// <param name="name">Function name (the <c>name</c> field in the tool schema).</param>
     /// <param name="handler">Callable invoked when the model calls this tool.</param>
@@ -152,8 +150,7 @@ public class SwaigFunction
     /// <summary>
     /// Execute the function with the given arguments. Everything is coerced into a
     /// FunctionResult dictionary. On any error a generic, non-leaking message is
-    /// returned (details are logged, not exposed to the AI). (equivalent to Python's
-    /// <c>execute</c>.)
+    /// returned (details are logged, not exposed to the AI).
     /// </summary>
     /// <param name="args">Parsed arguments for the function.</param>
     /// <param name="rawData">Optional raw request data.</param>
@@ -181,7 +178,6 @@ public class SwaigFunction
     /// <c>required</c> list and each declared property's JSON <c>type</c>. When the
     /// schema has no properties, validation is skipped and success is returned
     /// (matches the Python reference, which skips when no validator is available).
-    /// (equivalent to Python's <c>validate_args</c>.)
     /// </summary>
     /// <param name="args">Arguments to validate.</param>
     /// <returns>A tuple of (isValid, errors).</returns>
@@ -209,7 +205,6 @@ public class SwaigFunction
 
     /// <summary>
     /// Convert this function to a SWAIG-compatible dictionary for SWML.
-    /// (equivalent to Python's <c>to_swaig</c>.)
     /// </summary>
     /// <param name="baseUrl">Base URL for the webhook.</param>
     /// <param name="token">Optional auth token to include.</param>

@@ -4,7 +4,7 @@ using SignalWire.SWML;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class SWMLSchemaTests : IDisposable
+public sealed class SWMLSchemaTests : IDisposable
 {
     public SWMLSchemaTests()
     {

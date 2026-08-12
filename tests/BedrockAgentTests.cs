@@ -12,8 +12,10 @@ namespace SignalWire.Tests;
 /// opts into the serial global-state collection and resets state per test.
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class BedrockAgentTests : IDisposable
+public sealed class BedrockAgentTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] SWAIGPostPromptArray = new[] { "SWAIG", "post_prompt", "post_prompt_url", "prompt" };
     public BedrockAgentTests()
     {
         Logger.Reset();
@@ -122,7 +124,7 @@ public class BedrockAgentTests : IDisposable
         var ab = BedrockVerb(agent);
 
         var keys = ab.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray();
-        Assert.Equal(new[] { "SWAIG", "post_prompt", "post_prompt_url", "prompt" }, keys);
+        Assert.Equal(SWAIGPostPromptArray, keys);
     }
 
     [Fact]
@@ -134,6 +136,41 @@ public class BedrockAgentTests : IDisposable
 
         // No post_prompt set -> key must be absent (null-dropped), not null-valued.
         Assert.False(ab.ContainsKey("post_prompt"));
+    }
+
+    /// <summary>
+    /// The bedrock transform rebuilds the verb from a FIXED six-key allowlist
+    /// (prompt, SWAIG, params, global_data, post_prompt, post_prompt_url), so
+    /// any key the emitting side adds outside that set is silently dropped with
+    /// no error. Those six are correct — they are exactly what the engine's own
+    /// allowlist accepts (mod_infrastructure/swml_schema.c:1748
+    /// <c>SWML_CHECK_METHOD(amazon_bedrock, "prompt,SWAIG,params,global_data,post_prompt,post_prompt_url")</c>)
+    /// and exactly $defs/AmazonBedrockObject's closed property set.
+    ///
+    /// <para>Debug-event config therefore survives ONLY because it is nested
+    /// under <c>params</c> rather than emitted at the ai top level. This pins
+    /// that: a sibling port lost both keys to this exact transform by emitting
+    /// them top-level, leaving debug events unreachable on every Bedrock
+    /// agent.</para>
+    /// </summary>
+    [Fact]
+    public void DebugEventsSurviveTheBedrockTransform()
+    {
+        var agent = MakeAgent();
+        agent.SetPromptText("Hi");
+        agent.EnableDebugEvents(2);
+
+        var ab = BedrockVerb(agent);
+        Assert.True(ab.ContainsKey("params"));
+        var bedrockParams = (Dictionary<string, object>)ab["params"];
+        Assert.Equal(2, bedrockParams["debug_webhook_level"]);
+
+        // Nothing outside the engine's six-key allowlist may appear.
+        var permitted = new HashSet<string>
+        {
+            "prompt", "SWAIG", "params", "global_data", "post_prompt", "post_prompt_url",
+        };
+        Assert.All(ab.Keys, k => Assert.Contains(k, permitted));
     }
 
     [Fact]

@@ -29,39 +29,32 @@ public sealed class AgentOptions
 
     /// <summary>
     /// Seconds until a session token expires. Forwarded to the agent's
-    /// <see cref="SessionManager"/>. (equivalent to Python's
-    /// <c>AgentBase.__init__(token_expiry_secs=...)</c>, which passes it to
-    /// <c>SessionManager(token_expiry_secs=...)</c>.)
+    /// <see cref="SessionManager"/>.
     /// </summary>
     public int TokenExpirySecs { get; init; } = 3600;
 
     /// <summary>
     /// Optional default <c>web_hook_url</c> applied to every SWAIG function
-    /// that does not specify its own. (equivalent to Python's
-    /// <c>AgentBase.__init__(default_webhook_url=...)</c>.)
+    /// that does not specify its own.
     /// </summary>
     [SuppressMessage("Usage", "CA1056", Justification = "URL is a wire string emitted verbatim as the SWAIG web_hook_url / used as a config value.")]
     public string? DefaultWebhookUrl { get; init; }
 
     /// <summary>
     /// Optional unique ID for this agent. A GUID is generated when not
-    /// supplied. (equivalent to Python's
-    /// <c>AgentBase.__init__(agent_id=...)</c>.)
+    /// supplied.
     /// </summary>
     public string? AgentId { get; init; }
 
     /// <summary>
     /// Optional list of native SWAIG function names to include in the rendered
-    /// <c>ai.SWAIG.native_functions</c> array. (equivalent to Python's
-    /// <c>AgentBase.__init__(native_functions=...)</c>.)
+    /// <c>ai.SWAIG.native_functions</c> array.
     /// </summary>
     public IReadOnlyList<string>? NativeFunctions { get; init; }
 
     /// <summary>
     /// Optional path to the SWML schema file, forwarded to the SWML service
-    /// base. (equivalent to Python's
-    /// <c>AgentBase.__init__(schema_path=...)</c>, forwarded to
-    /// <c>super().__init__(schema_path=...)</c>.)
+    /// base.
     /// </summary>
     public string? SchemaPath { get; init; }
 
@@ -69,36 +62,28 @@ public sealed class AgentOptions
     /// Optional path to a JSON configuration file, forwarded to the SWML
     /// service base. Its <c>service</c> section supplies name/route/host/port
     /// defaults that explicit options override, and it feeds the unified
-    /// security configuration. (equivalent to Python's
-    /// <c>AgentBase.__init__(config_file=...)</c>, used by
-    /// <c>_load_service_config</c> and forwarded to
-    /// <c>super().__init__(config_file=...)</c>.)
+    /// security configuration.
     /// </summary>
     public string? ConfigFile { get; init; }
 
     /// <summary>
     /// Enable SWML schema validation. Default true. Also disableable via the
-    /// <c>SWML_SKIP_SCHEMA_VALIDATION</c> env var. (equivalent to Python's
-    /// <c>AgentBase.__init__(schema_validation=...)</c>, forwarded to
-    /// <c>super().__init__(schema_validation=...)</c>.)
+    /// <c>SWML_SKIP_SCHEMA_VALIDATION</c> env var.
     /// </summary>
     public bool SchemaValidation { get; init; } = true;
 
     /// <summary>
-    /// Suppress the SDK's structured per-request logs. (equivalent to Python's
-    /// <c>AgentBase.__init__(suppress_logs=...)</c>.)
+    /// Suppress the SDK's structured per-request logs.
     /// </summary>
     public bool SuppressLogs { get; init; }
 
     /// <summary>
-    /// Whether to enable post-prompt override. (equivalent to Python's
-    /// <c>AgentBase.__init__(enable_post_prompt_override=...)</c>.)
+    /// Whether to enable post-prompt override.
     /// </summary>
     public bool EnablePostPromptOverride { get; init; }
 
     /// <summary>
-    /// Whether to enable check-for-input override. (equivalent to Python's
-    /// <c>AgentBase.__init__(check_for_input_override=...)</c>.)
+    /// Whether to enable check-for-input override.
     /// </summary>
     public bool CheckForInputOverride { get; init; }
 
@@ -107,8 +92,7 @@ public sealed class AgentOptions
     /// When set, webhook signature validation is enforced on POST /, /swaig,
     /// /post_prompt — unsigned or invalidly-signed requests get a 403. Falls
     /// back to the <c>SIGNALWIRE_SIGNING_KEY</c> env var if not passed. See
-    /// the webhook signature validation reference for the contract. (equivalent to Python's
-    /// <c>AgentBase.__init__(signing_key=...)</c>.)
+    /// the webhook signature validation reference for the contract.
     /// </summary>
     public string? SigningKey { get; init; }
 
@@ -116,8 +100,7 @@ public sealed class AgentOptions
     /// If true, honor <c>X-Forwarded-Proto</c> / <c>X-Forwarded-Host</c>
     /// headers when reconstructing the URL for signature validation. Default
     /// false because proxy headers are spoofable; opt in only when you
-    /// control the proxy chain. (equivalent to Python's
-    /// <c>AgentBase.__init__(trust_proxy_for_signature=...)</c>.)
+    /// control the proxy chain.
     /// </summary>
     public bool TrustProxyForSignature { get; init; }
 }
@@ -181,7 +164,8 @@ public class AgentBase : Service
     // -- Native functions / fillers / debug --
     private List<string> _nativeFunctions;
     private List<string> _internalFillers;
-    private string? _debugEventsLevel;
+    private bool _debugEventsEnabled;
+    private int _debugEventsLevel = 1;
 
     // -- LLM params --
     private Dictionary<string, object> _promptLlmParams;
@@ -200,8 +184,7 @@ public class AgentBase : Service
 
     /// <summary>
     /// This agent's unique ID — the supplied <see cref="AgentOptions.AgentId"/>
-    /// or a generated GUID. (equivalent to Python's <c>agent_id</c>,
-    /// agent_base.py:229.)
+    /// or a generated GUID.
     /// </summary>
     // Was `internal` on the premise that the surface oracle does not record
     // plain `__init__` attributes on non-dataclass classes. The oracle DOES
@@ -214,8 +197,7 @@ public class AgentBase : Service
     /// The native SWAIG function names rendered into
     /// <c>ai.SWAIG.native_functions</c>. Set via
     /// <see cref="AgentOptions.NativeFunctions"/> or
-    /// <see cref="SetNativeFunctions"/>. (equivalent to Python's
-    /// <c>native_functions</c>.)
+    /// <see cref="SetNativeFunctions"/>.
     /// </summary>
     public IReadOnlyList<string> NativeFunctions => _nativeFunctions;
 
@@ -264,13 +246,13 @@ public class AgentBase : Service
     /// <summary>The configured Signing Key, or null when validation is
     /// disabled. Read-only — the resolution order
     /// (constructor arg → <c>SIGNALWIRE_SIGNING_KEY</c> env) is fixed at
-    /// construction time. (equivalent to Python's <c>agent.signing_key</c>.)</summary>
+    /// construction time.</summary>
     public string? SigningKey => _signingKey;
 
     /// <summary>True iff signature validation is enabled — i.e. either the
     /// <c>SigningKey</c> option or <c>SIGNALWIRE_SIGNING_KEY</c> env var
-    /// was set at construction time. (equivalent to Python's
-    /// <c>bool(agent.signing_key)</c>.)</summary>
+    /// was set at construction time.
+    /// </summary>
     public bool IsWebhookSignatureValidationEnabled => _signingKey is not null;
 
     // ======================================================================
@@ -280,10 +262,7 @@ public class AgentBase : Service
     /// <summary>
     /// Build the base <see cref="ServiceOptions"/>, applying the config file's
     /// <c>service</c> section with the explicit options taking precedence.
-    /// Mirrors Python's <c>AgentBase.__init__</c>, which calls
-    /// <c>_load_service_config(config_file, name)</c> and then computes
-    /// <c>final_route</c> / <c>final_host</c> / <c>final_port</c> /
-    /// <c>final_name</c> before forwarding to <c>super().__init__</c>: a value
+    /// A value
     /// still at its default yields to the config file, an explicit value wins.
     /// <c>name</c> is the exception — the reference lets the config file
     /// override it unconditionally (<c>service_config.get("name", name)</c>).
@@ -310,8 +289,7 @@ public class AgentBase : Service
     /// <summary>
     /// Load the <c>service</c> section of the config file, discovering one by
     /// service name when no explicit path is given. Returns an empty map when
-    /// no config file exists or it has no <c>service</c> section. (equivalent
-    /// to Python's <c>AgentBase._load_service_config</c>.)
+    /// no config file exists or it has no <c>service</c> section.
     /// </summary>
     private static Dictionary<string, object?> LoadServiceConfig(string? configFile, string serviceName)
     {
@@ -379,7 +357,8 @@ public class AgentBase : Service
         // Native functions / fillers / debug
         _nativeFunctions = options.NativeFunctions is null ? [] : [.. options.NativeFunctions];
         _internalFillers = [];
-        _debugEventsLevel = null;
+        _debugEventsEnabled = false;
+        _debugEventsLevel = 1;
 
         // LLM params
         _promptLlmParams = [];
@@ -467,7 +446,7 @@ public class AgentBase : Service
     }
 
     /// <summary>Add a top-level POM section with an optional body, bullets,
-    /// numbering, and subsections. (equivalent to Python's ``prompt_add_section``.)</summary>
+    /// numbering, and subsections.</summary>
     public AgentBase PromptAddSection(
         string title,
         string body = "",
@@ -502,8 +481,7 @@ public class AgentBase : Service
         return this;
     }
 
-    /// <summary>Add a subsection nested under an existing parent section.
-    /// (equivalent to Python's ``prompt_add_subsection(parent_title, title, body, bullets)``.)</summary>
+    /// <summary>Add a subsection nested under an existing parent section.</summary>
     public AgentBase PromptAddSubsection(
         string parentTitle,
         string title,
@@ -542,8 +520,8 @@ public class AgentBase : Service
     }
 
     /// <summary>Append body text, a single bullet, and/or bullets list to an
-    /// existing section. (equivalent to Python's
-    /// ``prompt_add_to_section(title, body, bullet, bullets)``.)</summary>
+    /// existing section.
+    /// </summary>
     public AgentBase PromptAddToSection(
         string title,
         string? body = null,
@@ -613,22 +591,19 @@ public class AgentBase : Service
         return $"You are {Name}, a helpful AI assistant.";
     }
 
-    /// <summary>Return the raw prompt text if set, else null.
-    /// (equivalent to Python's ``PromptManager.get_raw_prompt``.)</summary>
+    /// <summary>Return the raw prompt text if set, else null.</summary>
     public string? GetRawPrompt() => string.IsNullOrEmpty(_promptText) ? null : _promptText;
 
-    /// <summary>Return the post-prompt text if set, else null.
-    /// (equivalent to Python's ``PromptManager.get_post_prompt``.)</summary>
+    /// <summary>Return the post-prompt text if set, else null.</summary>
     public string? GetPostPrompt() => string.IsNullOrEmpty(_postPrompt) ? null : _postPrompt;
 
-    /// <summary>Return the contexts configuration if defined, else null.
-    /// (equivalent to Python's ``PromptManager.get_contexts``.)</summary>
+    /// <summary>Return the contexts configuration if defined, else null.</summary>
     public Dictionary<string, object>? GetContexts() =>
         _contextBuilder is null ? null : _contextBuilder.ToDict();
 
     /// <summary>Set the prompt as a list-of-section dicts (POM form).
-    /// Throws when ``UsePom`` is false. (equivalent to Python's
-    /// ``PromptManager.set_prompt_pom``.)</summary>
+    /// Throws when ``UsePom`` is false.
+    /// </summary>
     public AgentBase SetPromptPom(IReadOnlyList<Dictionary<string, object>> pom)
     {
         if (!_usePom)
@@ -641,7 +616,7 @@ public class AgentBase : Service
     }
 
     /// <summary>The prompt as a <see cref="POM.PromptObjectModel"/>
-    /// instance (equivalent to Python's ``agent.pom``). Returns null when
+    /// instance. Returns null when
     /// <c>UsePom</c> is false. Materialised on each access from the
     /// internal list-of-dicts so mutations stay round-trip-safe. To
     /// inspect raw section dicts, use <see cref="GetPromptSections"/>.</summary>
@@ -673,7 +648,7 @@ public class AgentBase : Service
     public IReadOnlyList<Dictionary<string, object>> GetPromptSections() => _pomSections;
 
     /// <summary>Create a per-call SWAIG-function token. Returns empty
-    /// string on failure. (equivalent to Python's ``StateMixin._create_tool_token``.)</summary>
+    /// string on failure.</summary>
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort token creation; any failure returns an empty string to match the Python reference's swallow-and-fallback behavior.")]
     public string CreateToolToken(string toolName, string callId)
     {
@@ -689,8 +664,8 @@ public class AgentBase : Service
 
     /// <summary>Validate a per-call SWAIG-function token. Rejects
     /// when the function is not registered, when the SessionManager
-    /// rejects the token, or on any error. (equivalent to Python's
-    /// ``StateMixin.validate_tool_token``.)</summary>
+    /// rejects the token, or on any error.
+    /// </summary>
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort token validation; any failure is treated as an invalid token (returns false) to match the Python reference's swallow-and-reject behavior.")]
     public bool ValidateToolToken(string functionName, string token, string callId)
     {
@@ -784,11 +759,11 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase AddLanguage(string name, string code, string voice)
-    {
-        return AddLanguage(name, code, voice, null, null, null, null, null);
-    }
-
+    /// <summary>Convenience overload carrying ONLY the per-language engine
+    /// params dict, skipping the filler/engine/model slots. The plain
+    /// <c>AddLanguage(name, code, voice)</c> call binds the full overload below
+    /// by defaulting its five trailing parameters, matching the reference
+    /// <c>AIConfigMixin.add_language</c>.</summary>
     public AgentBase AddLanguage(
         string name,
         string code,
@@ -825,11 +800,11 @@ public class AgentBase : Service
         string name,
         string code,
         string voice,
-        IReadOnlyList<string>? speechFillers,
-        IReadOnlyList<string>? functionFillers,
-        string? engine,
-        string? model,
-        Dictionary<string, object?>? languageParams)
+        IReadOnlyList<string>? speechFillers = null,
+        IReadOnlyList<string>? functionFillers = null,
+        string? engine = null,
+        string? model = null,
+        Dictionary<string, object?>? languageParams = null)
     {
         ArgumentNullException.ThrowIfNull(voice);
 
@@ -903,7 +878,7 @@ public class AgentBase : Service
     /// <summary>
     /// Set (or replace) the per-language <c>params</c> dict on an
     /// already-added language. Useful when language entries are built
-    /// up via <see cref="AddLanguage(string, string, string)"/> first and
+    /// up via <see cref="AddLanguage(string, string, string, IReadOnlyList{string}, IReadOnlyList{string}, string, string, Dictionary{string, object})"/> first and
     /// engine-specific tuning is added later (e.g., from a config loader).
     /// Empty dict removes the key. No-op if <paramref name="code"/> isn't
     /// found — matches Python's silent-skip behavior.
@@ -1036,8 +1011,8 @@ public class AgentBase : Service
     }
 
     /// <summary>
-    /// Add a pronunciation rule. Mirrors Python
-    /// <c>add_pronunciation(replace, with_text, ignore_case=False)</c>: the SWML
+    /// Add a pronunciation rule.
+    /// The SWML
     /// wire keys are <c>replace</c>, <c>with</c>, and <c>ignore_case</c> (a bool,
     /// emitted only when true — matches signalwire-agents schema.json
     /// <c>Pronounce</c>).
@@ -1236,8 +1211,17 @@ public class AgentBase : Service
         return this;
     }
 
-    public AgentBase EnableDebugEvents(string level = "all")
+    /// <summary>
+    /// Enable the debug-event webhook for this agent. Mirrors the reference
+    /// <c>AIConfigMixin.enable_debug_events(level: int = 1)</c>: level 1 is the
+    /// high-level event set (barge, errors, session start/end, step changes);
+    /// 2+ adds the high-volume events (every LLM request/response,
+    /// conversation_add). The level is emitted on the wire as
+    /// <c>ai.params.debug_webhook_level</c>.
+    /// </summary>
+    public AgentBase EnableDebugEvents(int level = 1)
     {
+        _debugEventsEnabled = true;
         _debugEventsLevel = level;
         return this;
     }
@@ -1353,9 +1337,9 @@ public class AgentBase : Service
     /// <summary>Append config to the post-answer ``answer`` verb. Matches
     /// Python's ``add_answer_verb(self, config)`` shape where the verb name
     /// is implicit.</summary>
-    public AgentBase AddAnswerVerb(Dictionary<string, object> config)
+    public AgentBase AddAnswerVerb(Dictionary<string, object>? config = null)
     {
-        return AddPostAnswerVerb("answer", config);
+        return AddPostAnswerVerb("answer", config ?? []);
     }
 
     public AgentBase AddPostAiVerb(string verb, Dictionary<string, object> config)
@@ -1436,11 +1420,11 @@ public class AgentBase : Service
         return _skillManager;
     }
 
-    /// <summary>Skill manager (equivalent to Python's ``agent.skill_manager``).</summary>
+    /// <summary>Skill manager.</summary>
     [SuppressMessage("Naming", "CA1721", Justification = "The SkillManager property and GetSkillManager() both intentionally exist to mirror the Python reference surface (skill_manager + get_skill_manager()).")]
     public SkillManager SkillManager => GetSkillManager();
 
-    /// <summary>Return the agent name (equivalent to Python's ``agent.get_name()``).</summary>
+    /// <summary>Return the agent name.</summary>
     [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface (Python agent.get_name()).")]
     [SuppressMessage("Naming", "CA1721", Justification = "GetName() and the inherited Name property both intentionally exist to mirror the Python reference surface (get_name() + name).")]
     public string GetName() => Name;
@@ -1450,7 +1434,7 @@ public class AgentBase : Service
     // Python's ``agent.get_full_url(include_auth=False)``.
 
     /// <summary>Enable auto-mapping of SIP usernames to this agent's
-    /// route (equivalent to Python's ``agent.auto_map_sip_usernames()``).
+    /// route.
     /// Chainable.</summary>
     public AgentBase AutoMapSipUsernames()
     {
@@ -1608,7 +1592,7 @@ public class AgentBase : Service
     /// auto-mapping behaviour (sip_username = agent name); ``path`` lets
     /// the caller pin a specific SIP route prefix.
     /// </summary>
-    public AgentBase EnableSipRouting(bool autoMap = false, string path = "")
+    public AgentBase EnableSipRouting(bool autoMap = true, string path = "/sip")
     {
         SetParam("sip_routing", true);
         if (autoMap) SetParam("sip_routing_auto_map", true);
@@ -1798,9 +1782,11 @@ public class AgentBase : Service
         {
             mergedParams["internal_fillers"] = _internalFillers;
         }
-        if (_debugEventsLevel is not null)
+        if (_debugEventsEnabled)
         {
-            mergedParams["debug_events"] = _debugEventsLevel;
+            // Reference wire key + type: ai.params.debug_webhook_level, an int
+            // (agent_base.py: _params["debug_webhook_level"] = _debug_events_level).
+            mergedParams["debug_webhook_level"] = _debugEventsLevel;
         }
         if (mergedParams.Count > 0)
         {
@@ -1850,13 +1836,26 @@ public class AgentBase : Service
             ai["global_data"] = _globalData;
         }
 
-        // -- Context switch --
+        // -- Contexts --
+        // These belong INSIDE prompt, not at the ai top level. $defs/AIObject is
+        // CLOSED (unevaluatedProperties: {"not": {}}) over exactly nine keys —
+        // SWAIG, global_data, hints, languages, params, post_prompt,
+        // post_prompt_url, prompt, pronounce — so any other key makes the
+        // document schema-invalid. `contexts` is declared on $defs/AIPromptText
+        // and $defs/AIPromptPom, and the reference writes it there too
+        // (swml_handler.py:191 `prompt_config["contexts"] = contexts`, fed by
+        // agent_base.py's `build_config(..., contexts=contexts_dict)`).
+        //
+        // This previously emitted a TOP-LEVEL `ai.context_switch`, which is
+        // neither an AIObject key nor anything the reference emits —
+        // `context_switch` is a standalone VERB ($defs/ContextSwitchAction), not
+        // an ai field. Every document produced with contexts defined was invalid.
         if (_contextBuilder is not null && _contextBuilder.HasContexts())
         {
             var contextArray = _contextBuilder.ToDict();
             if (contextArray.Count > 0)
             {
-                ai["context_switch"] = contextArray;
+                prompt["contexts"] = contextArray;
             }
         }
 
@@ -1883,15 +1882,15 @@ public class AgentBase : Service
     /// non-signed route): delegates to <see cref="Service.HandleRequest"/>.
     /// </para>
     ///
-    /// <para>(equivalent to Python's <c>web_mixin._register_routes</c> wraps the
-    /// signed POST routes in a FastAPI <c>Depends(sig_dep)</c> dependency
-    /// when <c>signing_key</c> is set; this is the .NET equivalent.)</para>
+    /// <para>
+    /// </para>
     /// </summary>
     public override (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
         string method,
         string path,
         Dictionary<string, string> headers,
-        string? body)
+        string? body,
+        string? queryString = null)
     {
         ArgumentNullException.ThrowIfNull(path);
 
@@ -1899,7 +1898,7 @@ public class AgentBase : Service
         // base dispatch handles the request as before.
         if (_webhookValidationMiddleware is null)
         {
-            return base.HandleRequest(method, path, headers, body);
+            return base.HandleRequest(method, path, headers, body, queryString);
         }
 
         // We only gate POST requests to the signed routes. GET requests
@@ -1908,7 +1907,7 @@ public class AgentBase : Service
         // SDK's GET handler returns SWML / health JSON.
         if (!IsSignedPostRoute(method, path))
         {
-            return base.HandleRequest(method, path, headers, body);
+            return base.HandleRequest(method, path, headers, body, queryString);
         }
 
         var rejected = _webhookValidationMiddleware.Validate(
@@ -1921,7 +1920,7 @@ public class AgentBase : Service
 
         // Valid — dispatch as normal. The base does its own body-parse,
         // and `body` is the raw bytes the validator already verified.
-        return base.HandleRequest(method, path, headers, body);
+        return base.HandleRequest(method, path, headers, body, queryString);
     }
 
     /// <summary>
@@ -2000,6 +1999,112 @@ public class AgentBase : Service
 
     // HandleSwaigRequest is now provided by Service (parent). The lifted
     // version handles GET (renders SWML) and POST (dispatches via OnFunctionCall).
+
+    /// <summary>
+    /// Enforce the <c>secure: true</c> contract for one SWAIG call,
+    /// independently of the transport that carried it.
+    ///
+    /// <para>A tool registered <c>secure: true</c> REQUIRES a valid per-call
+    /// token. An ABSENT token is refused exactly like a forged one — omitting
+    /// the credential must never be weaker than presenting a wrong one, or
+    /// <c>secure</c> would be a flag that permits anonymous calls. An absent
+    /// <paramref name="callId"/> is refused for the same reason: a token can
+    /// only be checked against a call_id, so having none means nothing was
+    /// validated.</para>
+    ///
+    /// <para>The refusal shape is a <b>200 + FunctionResult body</b>, NOT an
+    /// HTTP error status: the engine has no handling for a SWAIG refusal
+    /// status, so the tool reports that it cannot execute and the model relays
+    /// that.</para>
+    ///
+    /// <para>Three nullable strings in, a nullable result out — no framework
+    /// types, so every transport (HTTP, Lambda, Azure, GCF, CGI) shares this
+    /// one decision instead of each re-deriving it.</para>
+    /// </summary>
+    /// <returns>Null to proceed with dispatch, or the refusal body to return
+    /// in its place.</returns>
+    internal Dictionary<string, object>? SwaigValidateToken(
+        string functionName, string? token, string? callId)
+    {
+        // Not one of our registered tools — not this check's business; the
+        // dispatcher will 404 it.
+        if (!HasFunction(functionName))
+        {
+            return null;
+        }
+
+        // A token is only meaningful against a call_id. Without one there is
+        // nothing to validate against, so it counts as unvalidated.
+        var isValid = !string.IsNullOrEmpty(token)
+            && callId is not null
+            && ValidateToolToken(functionName, token!, callId);
+
+        if (isValid)
+        {
+            return null;
+        }
+
+        // Invalid/absent — but an INSECURE tool was never gated, so it runs.
+        var def = GetFunction(functionName);
+        var isSecure = def is null
+            || !def.TryGetValue("_secure", out var s)
+            || s is not bool b
+            || b;
+        if (!isSecure)
+        {
+            return null;
+        }
+
+        _agentLogger.Warn(
+            $"secure_function_refused: function={functionName} token_present={!string.IsNullOrEmpty(token)}");
+
+        return new FunctionResult(
+            "I'm sorry, the security token for this function is invalid "
+            + "or expired. I cannot execute this action.").ToDict();
+    }
+
+    /// <summary>
+    /// Extract the credential from the request's query string, then hand the
+    /// decision to <see cref="SwaigValidateToken"/>. On success, fall through
+    /// to the base hook's dynamic-config ephemeral-copy behaviour.
+    /// </summary>
+    protected override (Service Target, Dictionary<string, object>? ShortCircuit) SwaigPreDispatch(
+        Dictionary<string, object?> requestData,
+        Dictionary<string, string> headers,
+        string functionName,
+        string? queryString)
+    {
+        ArgumentNullException.ThrowIfNull(requestData);
+
+        var token = TokenFromQueryString(queryString);
+        var callId = CallIdFromBody(requestData);
+
+        var refusal = SwaigValidateToken(functionName, token, callId);
+        if (refusal is not null)
+        {
+            return (this, refusal);
+        }
+
+        return base.SwaigPreDispatch(requestData, headers, functionName, queryString);
+    }
+
+    /// <summary>Read the <c>call_id</c> out of the parsed POST body — the half
+    /// of the credential pair that does NOT ride the query string.</summary>
+    private static string? CallIdFromBody(Dictionary<string, object?> requestData)
+    {
+        if (!requestData.TryGetValue("call_id", out var raw) || raw is null)
+        {
+            return null;
+        }
+        var value = raw switch
+        {
+            string s => s,
+            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.String } je
+                => je.GetString(),
+            _ => raw.ToString(),
+        };
+        return string.IsNullOrEmpty(value) ? null : value;
+    }
 
     /// <summary>Handle the post-prompt callback.</summary>
     protected override (int, Dictionary<string, string>, string) HandlePostPrompt(
@@ -2144,9 +2249,17 @@ public class AgentBase : Service
             // :1038-1099): a SECURE tool (the default) rendered WITH a call_id gets
             // a per-tool `__token=<hmac>` appended to its webhook URL — the wire
             // manifestation of `secure`. The platform validates that token on the
-            // callback. An insecure tool (`secure=False`) gets NO token. A
-            // caller-supplied `_webhookUrl` override wins verbatim (matches
-            // python's `func.webhook_url` external-URL branch).
+            // callback. An insecure tool (`secure=False`) gets NO token — and
+            // therefore gets NO per-tool `web_hook_url` AT ALL: it falls back to
+            // the shared SWAIG defaults endpoint. Emitting a per-tool URL without
+            // a token would put an unauthenticated, function-specific callback on
+            // the wire. A caller-supplied `_webhookUrl` override wins verbatim
+            // (matches python's `func.webhook_url` external-URL branch).
+            //
+            // The three-way branch mirrors python agent_base.py:1084-1099 exactly:
+            //   external URL          -> emit it verbatim
+            //   token OR query params -> build the local /swaig URL
+            //   neither               -> emit no `web_hook_url` key whatsoever
             if (tool.ContainsKey("_handler"))
             {
                 var isSecure = tool.TryGetValue("_secure", out var s) && s is bool b && b;
@@ -2164,7 +2277,7 @@ public class AgentBase : Service
                 {
                     funcDef["web_hook_url"] = _webhookUrl;
                 }
-                else
+                else if (!string.IsNullOrEmpty(token) || _swaigQueryParams.Count > 0)
                 {
                     funcDef["web_hook_url"] = BuildSwaigWebhookUrl(headers, token);
                 }
@@ -2175,6 +2288,24 @@ public class AgentBase : Service
         if (functions.Count > 0)
         {
             swaig["functions"] = functions;
+
+            // The shared SWAIG callback endpoint, emitted WHENEVER functions exist
+            // (python agent_base.py:1108-1113). This is the fallback every tool
+            // WITHOUT its own per-tool `web_hook_url` relies on — notably an
+            // insecure (tokenless) tool, which by contract gets no per-tool key.
+            // Without this block such a tool would render with NO reachable
+            // callback at all, so the two belong together.
+            //
+            // The default carries the configured SWAIG query params but NO token
+            // (it is not function-specific); a caller-supplied `_webhookUrl`
+            // override wins verbatim, matching python's `_web_hook_url_override`.
+            if (!swaig.ContainsKey("defaults"))
+            {
+                swaig["defaults"] = new Dictionary<string, object>
+                {
+                    ["web_hook_url"] = _webhookUrl ?? BuildSwaigWebhookUrl(headers),
+                };
+            }
         }
 
         // Native functions

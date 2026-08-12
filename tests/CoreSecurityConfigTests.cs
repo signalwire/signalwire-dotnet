@@ -13,7 +13,7 @@ using Xunit;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class CoreSecurityConfigTests : IDisposable
+public sealed class CoreSecurityConfigTests : IDisposable
 {
     private static readonly string[] EnvKeys =
     {

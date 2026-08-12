@@ -126,7 +126,7 @@ public class DataMapTests
     public void Expression_AddsToExpressionsList()
     {
         var dm = new DM("fn");
-        dm.Expression("${args.color}", "/^red$/", new Dictionary<string, object> { ["response"] = "Red detected" });
+        dm.Expression("${args.color}", "/^red$/", new FunctionResult("Red detected"));
         var result = dm.ToSwaigFunction();
 
         Assert.True(result.ContainsKey("data_map"));
@@ -142,18 +142,25 @@ public class DataMapTests
     public void Expression_WithNomatchOutput()
     {
         var dm = new DM("fn");
-        dm.Expression("${args.x}", "/yes/", "matched", "not matched");
+        dm.Expression("${args.x}", "/yes/", new FunctionResult("matched"), new FunctionResult("not matched"));
         var result = dm.ToSwaigFunction();
         var expressions = (List<Dictionary<string, object>>)((Dictionary<string, object>)result["data_map"])["expressions"];
-        Assert.Equal("not matched", expressions[0]["nomatch_output"]);
+        // HYPHENATED key, and the value is the FunctionResult's dict — both per the
+        // reference (data_map.py:202). An underscored key is one the server ignores,
+        // so the no-match branch would never fire.
+        Assert.False(expressions[0].ContainsKey("nomatch_output"));
+        var nomatch = (Dictionary<string, object>)expressions[0]["nomatch-output"];
+        Assert.Equal("not matched", nomatch["response"]);
+        var matched = (Dictionary<string, object>)expressions[0]["output"];
+        Assert.Equal("matched", matched["response"]);
     }
 
     [Fact]
     public void MultipleExpressions_Accumulate()
     {
         var dm = new DM("fn");
-        dm.Expression("${a}", "/1/", "one");
-        dm.Expression("${b}", "/2/", "two");
+        dm.Expression("${a}", "/1/", new FunctionResult("one"));
+        dm.Expression("${b}", "/2/", new FunctionResult("two"));
         var dataMap = (Dictionary<string, object>)dm.ToSwaigFunction()["data_map"];
         var expressions = (List<Dictionary<string, object>>)dataMap["expressions"];
         Assert.Equal(2, expressions.Count);
@@ -204,6 +211,29 @@ public class DataMapTests
         Assert.False(wh.ContainsKey("require_args"));
     }
 
+    /// <summary>
+    /// The reference upper-cases the method on the wire (core/data_map.py:230,
+    /// <c>"method": method.upper()</c>), so a caller writing a lower-case method must still
+    /// produce byte-identical SWML across languages.
+    /// </summary>
+    [Fact]
+    public void Webhook_UpperCasesMethodOnTheWire()
+    {
+        var dm = new DM("case_fn");
+        dm.Webhook("get", "https://api.example.com");
+        dm.Webhook("post", "https://api2.example.com");
+        var webhooks = (List<Dictionary<string, object>>)((Dictionary<string, object>)dm.ToSwaigFunction()["data_map"])["webhooks"];
+
+        Assert.Equal("GET", webhooks[0]["method"]);
+        Assert.Equal("POST", webhooks[1]["method"]);
+
+        // An already-upper-case method is left unchanged (no double transform).
+        var dm2 = new DM("case_fn2");
+        dm2.Webhook("DELETE", "https://api3.example.com");
+        var webhooks2 = (List<Dictionary<string, object>>)((Dictionary<string, object>)dm2.ToSwaigFunction()["data_map"])["webhooks"];
+        Assert.Equal("DELETE", webhooks2[0]["method"]);
+    }
+
     // =================================================================
     //  Webhook modifiers
     // =================================================================
@@ -231,23 +261,25 @@ public class DataMapTests
         Assert.False(result.ContainsKey("data_map"));
     }
 
+    /// <summary>
+    /// A data_map webhook must never carry a <c>body</c> key. schema.json's
+    /// <c>$defs/Webhook</c> declares ten permitted properties under
+    /// <c>unevaluatedProperties: {"not": {}}</c> and <c>body</c> is not one of
+    /// them, so the document is invalid and the engine — which reads
+    /// <c>params</c> and <c>headers</c> only — never sees the payload. Request
+    /// data goes on <c>params</c>; the builder has no <c>Body</c> method.
+    /// (Replaces the pair of tests that asserted the removed builder.)
+    /// </summary>
     [Fact]
-    public void Body_ModifiesLastWebhook()
+    public void Webhook_NeverCarriesABodyKey()
     {
         var dm = new DM("fn");
         dm.Webhook("POST", "https://a.com");
-        dm.Body(new Dictionary<string, object> { ["key"] = "${args.val}" });
+        dm.Params(new Dictionary<string, object> { ["key"] = "${args.val}" });
         var wh = ((List<Dictionary<string, object>>)((Dictionary<string, object>)dm.ToSwaigFunction()["data_map"])["webhooks"])[0];
-        var body = (Dictionary<string, object>)wh["body"];
-        Assert.Equal("${args.val}", body["key"]);
-    }
 
-    [Fact]
-    public void Body_IgnoredWithNoWebhooks()
-    {
-        var dm = new DM("fn");
-        dm.Body(new Dictionary<string, object> { ["k"] = "v" });
-        Assert.False(dm.ToSwaigFunction().ContainsKey("data_map"));
+        Assert.False(wh.ContainsKey("body"));
+        Assert.Equal("${args.val}", ((Dictionary<string, object>)wh["params"])["key"]);
     }
 
     [Fact]
@@ -292,26 +324,7 @@ public class DataMapTests
     //  Output
     // =================================================================
 
-    [Fact]
-    public void Output_OnWebhookWithDict()
-    {
-        var dm = new DM("fn");
-        dm.Webhook("GET", "https://a.com");
-        dm.Output(new Dictionary<string, object> { ["response"] = "Done: ${response}" });
-        var wh = ((List<Dictionary<string, object>>)((Dictionary<string, object>)dm.ToSwaigFunction()["data_map"])["webhooks"])[0];
-        var output = (Dictionary<string, object>)wh["output"];
-        Assert.Equal("Done: ${response}", output["response"]);
-    }
 
-    [Fact]
-    public void Output_OnWebhookWithString()
-    {
-        var dm = new DM("fn");
-        dm.Webhook("GET", "https://a.com");
-        dm.Output("plain string");
-        var wh = ((List<Dictionary<string, object>>)((Dictionary<string, object>)dm.ToSwaigFunction()["data_map"])["webhooks"])[0];
-        Assert.Equal("plain string", wh["output"]);
-    }
 
     [Fact]
     public void Output_OnWebhookWithFunctionResult()
@@ -335,7 +348,7 @@ public class DataMapTests
     public void Output_IgnoredWithNoWebhooks()
     {
         var dm = new DM("fn");
-        dm.Output("ignored");
+        dm.Output(new FunctionResult("ignored"));
         Assert.False(dm.ToSwaigFunction().ContainsKey("data_map"));
     }
 
@@ -343,15 +356,6 @@ public class DataMapTests
     //  FallbackOutput
     // =================================================================
 
-    [Fact]
-    public void FallbackOutput_SetsGlobalOutput()
-    {
-        var dm = new DM("fn");
-        dm.FallbackOutput(new Dictionary<string, object> { ["response"] = "Fallback" });
-        var dataMap = (Dictionary<string, object>)dm.ToSwaigFunction()["data_map"];
-        var output = (Dictionary<string, object>)dataMap["output"];
-        Assert.Equal("Fallback", output["response"]);
-    }
 
     [Fact]
     public void FallbackOutput_WithFunctionResult()
@@ -364,14 +368,6 @@ public class DataMapTests
         Assert.Equal("Error occurred", output["response"]);
     }
 
-    [Fact]
-    public void FallbackOutput_WithString()
-    {
-        var dm = new DM("fn");
-        dm.FallbackOutput("simple fallback");
-        var dataMap = (Dictionary<string, object>)dm.ToSwaigFunction()["data_map"];
-        Assert.Equal("simple fallback", dataMap["output"]);
-    }
 
     // =================================================================
     //  ErrorKeys
@@ -415,10 +411,10 @@ public class DataMapTests
         dm.Purpose("Get the weather for a city")
           .Parameter("city", "string", "City name", true)
           .Parameter("unit", "string", "Unit", false, ["celsius", "fahrenheit"])
-          .Expression("${args.city}", "/^test$/", new Dictionary<string, object> { ["response"] = "Test mode" })
+          .Expression("${args.city}", "/^test$/", new FunctionResult("Test mode"))
           .Webhook("GET", "https://api.weather.com", new Dictionary<string, string> { ["X-Key"] = "abc" })
-          .Output(new Dictionary<string, object> { ["response"] = "Weather: ${temp}" })
-          .FallbackOutput(new Dictionary<string, object> { ["response"] = "Unable to retrieve weather" })
+          .Output(new FunctionResult("Weather: ${temp}"))
+          .FallbackOutput(new FunctionResult("Unable to retrieve weather"))
           .GlobalErrorKeys(["error"]);
 
         var result = dm.ToSwaigFunction();
@@ -451,7 +447,7 @@ public class DataMapTests
                 new Dictionary<string, object> { ["name"] = "format", ["type"] = "string", ["description"] = "Format", ["enum"] = new List<string> { "json", "xml" } },
             ],
             "GET", "https://api.example.com/users",
-            new Dictionary<string, object> { ["response"] = "User: ${name}" },
+            new FunctionResult("User: ${name}"),
             new Dictionary<string, string> { ["Authorization"] = "Bearer secret" });
 
         Assert.Equal("lookup_user", result["function"]);
@@ -463,7 +459,7 @@ public class DataMapTests
     [Fact]
     public void CreateSimpleApiTool_WithoutHeaders()
     {
-        var result = DM.CreateSimpleApiTool("simple", "Simple tool", [], "GET", "https://example.com", "done");
+        var result = DM.CreateSimpleApiTool("simple", "Simple tool", [], "GET", "https://example.com", new FunctionResult("done"));
         Assert.Equal("simple", result["function"]);
         Assert.False(result.ContainsKey("argument"));
     }
@@ -475,8 +471,8 @@ public class DataMapTests
             "route_call", "Route the call based on department",
             [new Dictionary<string, object> { ["name"] = "dept", ["type"] = "string", ["description"] = "Department", ["required"] = true }],
             [
-                new Dictionary<string, object> { ["string"] = "${args.dept}", ["pattern"] = "/sales/", ["output"] = new Dictionary<string, object> { ["response"] = "Routing to sales" } },
-                new Dictionary<string, object> { ["string"] = "${args.dept}", ["pattern"] = "/support/", ["output"] = new Dictionary<string, object> { ["response"] = "Routing to support" }, ["nomatch_output"] = new Dictionary<string, object> { ["response"] = "Unknown" } },
+                new Dictionary<string, object> { ["string"] = "${args.dept}", ["pattern"] = "/sales/", ["output"] = new FunctionResult("Routing to sales") },
+                new Dictionary<string, object> { ["string"] = "${args.dept}", ["pattern"] = "/support/", ["output"] = new FunctionResult("Routing to support"), ["nomatch_output"] = new FunctionResult("Unknown") },
             ]);
 
         Assert.Equal("route_call", result["function"]);
@@ -484,15 +480,19 @@ public class DataMapTests
         var dataMap = (Dictionary<string, object>)result["data_map"];
         var expressions = (List<Dictionary<string, object>>)dataMap["expressions"];
         Assert.Equal(2, expressions.Count);
-        Assert.False(expressions[0].ContainsKey("nomatch_output"));
-        Assert.True(expressions[1].ContainsKey("nomatch_output"));
+        // The factory accepts either input spelling, but always EMITS the reference's
+        // hyphenated key.
+        Assert.False(expressions[0].ContainsKey("nomatch-output"));
+        Assert.False(expressions[1].ContainsKey("nomatch_output"));
+        var nomatch = (Dictionary<string, object>)expressions[1]["nomatch-output"];
+        Assert.Equal("Unknown", nomatch["response"]);
     }
 
     [Fact]
     public void CreateExpressionTool_NoParams()
     {
         var result = DM.CreateExpressionTool("test", "Test", [],
-            [new Dictionary<string, object> { ["string"] = "x", ["pattern"] = "/y/", ["output"] = "z" }]);
+            [new Dictionary<string, object> { ["string"] = "x", ["pattern"] = "/y/", ["output"] = new FunctionResult("z") }]);
         Assert.False(result.ContainsKey("argument"));
         var expressions = (List<Dictionary<string, object>>)((Dictionary<string, object>)result["data_map"])["expressions"];
         Assert.Single(expressions);
@@ -510,14 +510,13 @@ public class DataMapTests
         Assert.Same(dm, dm.Purpose("test"));
         Assert.Same(dm, dm.Description("test2"));
         Assert.Same(dm, dm.Parameter("p", "string", "d"));
-        Assert.Same(dm, dm.Expression("s", "p", "o"));
+        Assert.Same(dm, dm.Expression("s", "p", new FunctionResult("o")));
         Assert.Same(dm, dm.Webhook("GET", "https://x.com"));
         Assert.Same(dm, dm.WebhookExpressions([]));
-        Assert.Same(dm, dm.Body(new Dictionary<string, object>()));
         Assert.Same(dm, dm.Params(new Dictionary<string, object>()));
         Assert.Same(dm, dm.ForEach(new Dictionary<string, object> { ["input_key"] = "a", ["output_key"] = "b" }));
-        Assert.Same(dm, dm.Output("x"));
-        Assert.Same(dm, dm.FallbackOutput("x"));
+        Assert.Same(dm, dm.Output(new FunctionResult("x")));
+        Assert.Same(dm, dm.FallbackOutput(new FunctionResult("x")));
         Assert.Same(dm, dm.ErrorKeys([]));
         Assert.Same(dm, dm.GlobalErrorKeys([]));
     }
@@ -529,8 +528,8 @@ public class DataMapTests
             .Purpose("Test API")
             .Parameter("q", "string", "Query", true)
             .Webhook("POST", "https://api.test.com")
-            .Body(new Dictionary<string, object> { ["query"] = "${args.q}" })
-            .Output(new Dictionary<string, object> { ["response"] = "${result}" })
+            .Params(new Dictionary<string, object> { ["query"] = "${args.q}" })
+            .Output(new FunctionResult("${result}"))
             .GlobalErrorKeys(["err"])
             .ToSwaigFunction();
 
@@ -552,21 +551,21 @@ public class DataMapTests
         var dm = new DM("fn");
         dm.Webhook("GET", "https://first.com");
         dm.Webhook("POST", "https://second.com");
-        dm.Output(new Dictionary<string, object> { ["response"] = "from second" });
-        dm.Body(new Dictionary<string, object> { ["key"] = "val" });
+        dm.Output(new FunctionResult("from second"));
         dm.Params(new Dictionary<string, object> { ["p"] = "v" });
+        dm.ForEach(new Dictionary<string, object> { ["input_key"] = "a", ["output_key"] = "b" });
         dm.ErrorKeys(["err"]);
 
         var webhooks = (List<Dictionary<string, object>>)((Dictionary<string, object>)dm.ToSwaigFunction()["data_map"])["webhooks"];
 
         Assert.False(webhooks[0].ContainsKey("output"));
-        Assert.False(webhooks[0].ContainsKey("body"));
         Assert.False(webhooks[0].ContainsKey("params"));
+        Assert.False(webhooks[0].ContainsKey("foreach"));
         Assert.False(webhooks[0].ContainsKey("error_keys"));
 
         Assert.True(webhooks[1].ContainsKey("output"));
-        Assert.True(webhooks[1].ContainsKey("body"));
         Assert.True(webhooks[1].ContainsKey("params"));
+        Assert.True(webhooks[1].ContainsKey("foreach"));
         Assert.True(webhooks[1].ContainsKey("error_keys"));
     }
 }

@@ -10,16 +10,18 @@
 
 using SignalWire.REST;
 
-var client = new RestClient(
+using var client = new RestClient(
     projectId: Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    token:     Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    token: Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    space:     Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
+    space: Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-async Task<T?> Safe<T>(string label, Func<Task<T>> fn) where T : class
+// Every typed REST verb returns `T?`, so the helper is written over `T?` and
+// hands back `default` on failure rather than constraining T to a class.
+async Task<T?> Safe<T>(string label, Func<Task<T?>> fn)
 {
     try
     {
@@ -27,10 +29,10 @@ async Task<T?> Safe<T>(string label, Func<Task<T>> fn) where T : class
         Console.WriteLine($"  {label}: OK");
         return result;
     }
-    catch (Exception ex)
+    catch (SignalWireRestError ex)
     {
         Console.WriteLine($"  {label}: failed ({ex.Message})");
-        return null;
+        return default;
     }
 }
 
@@ -38,22 +40,22 @@ async Task<T?> Safe<T>(string label, Func<Task<T>> fn) where T : class
 Console.WriteLine("Registering 10DLC brand...");
 var brand = await Safe("Create brand", () => client.Registry.Brands.CreateAsync(new Dictionary<string, object?>
 {
-    ["name"]         = "Acme Corp",
-    ["entity_type"]  = "PRIVATE_PROFIT",
-    ["ein"]          = "12-3456789",
-    ["phone"]        = "+15551234567",
-    ["street"]       = "123 Main St",
-    ["city"]         = "Austin",
-    ["state"]        = "TX",
-    ["postal_code"]  = "78701",
-    ["country"]      = "US",
-    ["vertical"]     = "TECHNOLOGY",
-    ["website"]      = "https://acme.example.com",
+    ["name"] = "Acme Corp",
+    ["entity_type"] = "PRIVATE_PROFIT",
+    ["ein"] = "12-3456789",
+    ["phone"] = "+15551234567",
+    ["street"] = "123 Main St",
+    ["city"] = "Austin",
+    ["state"] = "TX",
+    ["postal_code"] = "78701",
+    ["country"] = "US",
+    ["vertical"] = "TECHNOLOGY",
+    ["website"] = "https://acme.example.com",
 }));
 
 if (brand != null)
 {
-    var brandId = brand.GetValueOrDefault("id")?.ToString() ?? "";
+    var brandId = brand.Id ?? "";
     Console.WriteLine($"  Brand ID: {brandId}");
     // Campaigns are provisioned against a brand via a 10DLC order
     // (client.Registry.Campaigns.CreateOrderAsync / client.Registry.Orders).
@@ -64,13 +66,9 @@ Console.WriteLine("\nListing registered brands...");
 await Safe("List brands", async () =>
 {
     var brands = await client.Registry.Brands.ListAsync();
-    var data = brands.GetValueOrDefault("data") as List<object> ?? new();
-    foreach (var item in data.Take(5))
+    foreach (var b in (brands?.Data ?? []).Take(5))
     {
-        if (item is Dictionary<string, object?> b)
-        {
-            Console.WriteLine($"    - {b.GetValueOrDefault("id")}: {b.GetValueOrDefault("name")}");
-        }
+        Console.WriteLine($"    - {b.Id}: {b.Name} [{b.State}]");
     }
     return brands;
 });

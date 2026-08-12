@@ -15,8 +15,8 @@ using SignalWire.Server;
 
 var healthcare = new AgentBase(new AgentOptions
 {
-    Name       = "Healthcare AI Assistant",
-    Route      = "/healthcare",
+    Name = "Healthcare AI Assistant",
+    Route = "/healthcare",
     AutoAnswer = true,
     RecordCall = true,
 });
@@ -40,7 +40,7 @@ healthcare.PromptAddSection(
 
 healthcare.SetDynamicConfigCallback((qp, bp, headers, a) =>
 {
-    var urgency = (qp?.GetValueOrDefault("urgency")?.ToString() ?? "normal").ToLower();
+    var urgency = (qp?.GetValueOrDefault("urgency")?.ToString() ?? "normal").ToLowerInvariant();
 
     if (urgency == "high")
     {
@@ -55,11 +55,11 @@ healthcare.SetDynamicConfigCallback((qp, bp, headers, a) =>
 
     a.SetGlobalData(new Dictionary<string, object>
     {
-        ["customer_id"]      = qp?.GetValueOrDefault("customer_id")?.ToString() ?? "",
-        ["urgency_level"]    = urgency,
-        ["department"]       = qp?.GetValueOrDefault("department")?.ToString() ?? "general",
+        ["customer_id"] = qp?.GetValueOrDefault("customer_id")?.ToString() ?? "",
+        ["urgency_level"] = urgency,
+        ["department"] = qp?.GetValueOrDefault("department")?.ToString() ?? "general",
         ["compliance_level"] = "hipaa",
-        ["session_type"]     = "healthcare",
+        ["session_type"] = "healthcare",
     });
 });
 
@@ -67,8 +67,8 @@ healthcare.SetDynamicConfigCallback((qp, bp, headers, a) =>
 
 var finance = new AgentBase(new AgentOptions
 {
-    Name       = "Financial Services AI",
-    Route      = "/finance",
+    Name = "Financial Services AI",
+    Route = "/finance",
     AutoAnswer = true,
     RecordCall = true,
 });
@@ -92,7 +92,7 @@ finance.PromptAddSection(
 
 finance.SetDynamicConfigCallback((qp, bp, headers, a) =>
 {
-    var accountType = (qp?.GetValueOrDefault("account_type")?.ToString() ?? "standard").ToLower();
+    var accountType = (qp?.GetValueOrDefault("account_type")?.ToString() ?? "standard").ToLowerInvariant();
 
     if (accountType == "premium")
     {
@@ -107,11 +107,11 @@ finance.SetDynamicConfigCallback((qp, bp, headers, a) =>
 
     a.SetGlobalData(new Dictionary<string, object>
     {
-        ["customer_id"]      = qp?.GetValueOrDefault("customer_id")?.ToString() ?? "",
-        ["account_type"]     = accountType,
-        ["service_area"]     = qp?.GetValueOrDefault("service")?.ToString() ?? "general",
+        ["customer_id"] = qp?.GetValueOrDefault("customer_id")?.ToString() ?? "",
+        ["account_type"] = accountType,
+        ["service_area"] = qp?.GetValueOrDefault("service")?.ToString() ?? "general",
         ["compliance_level"] = "financial",
-        ["session_type"]     = "finance",
+        ["session_type"] = "finance",
     });
 });
 
@@ -119,8 +119,8 @@ finance.SetDynamicConfigCallback((qp, bp, headers, a) =>
 
 var retail = new AgentBase(new AgentOptions
 {
-    Name       = "Retail Customer Service AI",
-    Route      = "/retail",
+    Name = "Retail Customer Service AI",
+    Route = "/retail",
     AutoAnswer = true,
     RecordCall = true,
 });
@@ -144,7 +144,7 @@ retail.PromptAddSection(
 
 retail.SetDynamicConfigCallback((qp, bp, headers, a) =>
 {
-    var tier = (qp?.GetValueOrDefault("customer_tier")?.ToString() ?? "standard").ToLower();
+    var tier = (qp?.GetValueOrDefault("customer_tier")?.ToString() ?? "standard").ToLowerInvariant();
 
     if (tier == "vip")
     {
@@ -159,10 +159,10 @@ retail.SetDynamicConfigCallback((qp, bp, headers, a) =>
 
     a.SetGlobalData(new Dictionary<string, object>
     {
-        ["customer_id"]   = qp?.GetValueOrDefault("customer_id")?.ToString() ?? "",
-        ["department"]    = qp?.GetValueOrDefault("department")?.ToString() ?? "general",
+        ["customer_id"] = qp?.GetValueOrDefault("customer_id")?.ToString() ?? "",
+        ["department"] = qp?.GetValueOrDefault("department")?.ToString() ?? "general",
         ["customer_tier"] = tier,
-        ["session_type"]  = "retail",
+        ["session_type"] = "retail",
     });
 });
 

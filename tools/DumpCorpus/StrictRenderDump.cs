@@ -50,10 +50,14 @@ internal static class StrictRenderDump
             build();
             return "ok";
         }
+#pragma warning disable CA1031 // The catch-all IS the observation: this dump records
+        // WHETHER a build raised, for any reason, so narrowing it would silently
+        // reclassify some rejections as "ok" and corrupt the cross-port compare.
         catch (Exception)
         {
             return "raised";
         }
+#pragma warning restore CA1031
     }
 
     public static Dictionary<string, object?> Build()

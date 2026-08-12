@@ -36,6 +36,7 @@ Usage:
     python3 scripts/generate_swml_verbs.py --check    # GEN-FRESH: fail if stale
     python3 scripts/generate_swml_verbs.py --out DIR  # scratch: emit into DIR
 """
+
 from __future__ import annotations
 
 import argparse
@@ -48,7 +49,9 @@ from pathlib import Path
 
 def _load_rest_generator():
     here = Path(__file__).resolve().parent
-    spec = importlib.util.spec_from_file_location("generate_rest", here / "generate_rest.py")
+    spec = importlib.util.spec_from_file_location(
+        "generate_rest", here / "generate_rest.py"
+    )
     if spec is None or spec.loader is None:  # pragma: no cover
         raise SystemExit("generate_swml_verbs.py: cannot load generate_rest.py")
     mod = importlib.util.module_from_spec(spec)
@@ -133,22 +136,34 @@ def build_outputs(psdk: Path) -> dict:
         if isinstance(node, dict) and GR.is_object_schema(node)
     }
 
-    def emit(cs_name: str, props: dict, desc: str, schema_name: str | None = None) -> None:
+    def emit(
+        cs_name: str, props: dict, desc: str, schema_name: str | None = None
+    ) -> None:
         if cs_name in emitted_names:
             return
         emitted_names.add(cs_name)
         fn = "/".join(SWML_VERBS_SUBDIR) + f"/{GR.snake(cs_name)}.cs"
         # schema_name = the SPEC $defs key (NOT cs_name) so the SDK-surface overlay
         # matches by the spec schema name, e.g. `scope: AIParams`.
-        outs[fn] = GR.emit_methodless_class(SWML_VERBS_CS_NS, cs_name, props, desc,
-                                            ref_names=ref_names, schema_name=schema_name)
+        outs[fn] = GR.emit_methodless_class(
+            SWML_VERBS_CS_NS,
+            cs_name,
+            props,
+            desc,
+            ref_names=ref_names,
+            schema_name=schema_name,
+        )
 
     # 1. One data class per OBJECT $defs schema.
     for raw_name, node in defs.items():
         if not isinstance(node, dict) or not GR.is_object_schema(node):
             continue
-        emit(GR.type_name(raw_name), node.get("properties") or {},
-             f"schema.json $defs schema {raw_name!r}", schema_name=raw_name)
+        emit(
+            GR.type_name(raw_name),
+            node.get("properties") or {},
+            f"schema.json $defs schema {raw_name!r}",
+            schema_name=raw_name,
+        )
 
     # 2. One <Verb>Config class per flattenable SWMLMethod.anyOf verb.
     sm = defs.get("SWMLMethod")
@@ -170,15 +185,20 @@ def build_outputs(psdk: Path) -> dict:
             props = _flatten_union(defs, inner)
             if not props:
                 continue
-            emit(GR.type_name(_pascal(verb) + "Config"), props,
-                 f"flattened SWMLMethod verb {verb!r} config")
+            emit(
+                GR.type_name(_pascal(verb) + "Config"),
+                props,
+                f"flattened SWMLMethod verb {verb!r} config",
+            )
 
     return outs
 
 
 def main(argv: list) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--check", action="store_true", help="GEN-FRESH: exit non-zero if stale")
+    ap.add_argument(
+        "--check", action="store_true", help="GEN-FRESH: exit non-zero if stale"
+    )
     ap.add_argument("--out", default="", help="scratch: emit into this dir")
     args = ap.parse_args(argv)
 
@@ -188,7 +208,9 @@ def main(argv: list) -> int:
     if args.out:
         out_dir = Path(args.out)
     else:
-        out_dir = repo_root() / "src" / "SignalWire" / "REST" / "Namespaces" / "Generated"
+        out_dir = (
+            repo_root() / "src" / "SignalWire" / "REST" / "Namespaces" / "Generated"
+        )
 
     if args.check:
         stale: list = []
@@ -204,11 +226,15 @@ def main(argv: list) -> int:
                 if rel not in expected:
                     stale.append(f"{p} (leftover — not in generator output)")
         if stale:
-            sys.stderr.write("GEN-FRESH FAIL: %d generated SWML-verb file(s) stale:\n" % len(stale))
+            sys.stderr.write(
+                f"GEN-FRESH FAIL: {len(stale)} generated SWML-verb file(s) stale:\n"
+            )
             for s in stale:
-                sys.stderr.write("  - %s\n" % s)
+                sys.stderr.write(f"  - {s}\n")
             return 1
-        print("GEN-FRESH: generated SWML-verb files match porting-sdk/schema.json ($defs).")
+        print(
+            "GEN-FRESH: generated SWML-verb files match porting-sdk/schema.json ($defs)."
+        )
         return 0
 
     for fn, src in outs.items():

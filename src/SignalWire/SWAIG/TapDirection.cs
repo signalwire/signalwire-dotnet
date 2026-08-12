@@ -1,7 +1,7 @@
 namespace SignalWire.SWAIG;
 
 /// <summary>
-/// Audio direction for <see cref="FunctionResult.Tap(string, string, TapDirection, Codec, int, string?)"/>, as a typed,
+/// Audio direction for <see cref="FunctionResult.Tap(string, string?, TapDirection, Codec, int, string?)"/>, as a typed,
 /// compile-time-checked closed set.
 /// </summary>
 /// <remarks>
@@ -18,7 +18,7 @@ namespace SignalWire.SWAIG;
 /// against separate lists, so they are modelled as two separate enums rather than
 /// a single shared one — sharing one would silently accept the wrong vocabulary on
 /// one of the two verbs.
-/// <see cref="FunctionResult.Tap(string, string, TapDirection, Codec, int, string?)"/>
+/// <see cref="FunctionResult.Tap(string, string?, TapDirection, Codec, int, string?)"/>
 /// accepts this enum OR a string: the enum gives editor autocompletion and turns
 /// a typo into a compile error, while the string overload also accepts
 /// the plain wire string (which is all the Python API takes).

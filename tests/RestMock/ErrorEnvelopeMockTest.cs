@@ -54,7 +54,7 @@ public class ErrorEnvelopeMockTest : IClassFixture<MockServerFixture>
     public async Task Error_Url_IsFullAbsoluteUrl()
     {
         if (Skipped()) return;
-        using var http = _fixture.NewHttp();
+        var http = _fixture.NewHttp();
         _fixture.Harness.Scenarios.Set(AddressesEndpoint, 404, Errors("not_found"));
 
         var ex = await Assert.ThrowsAsync<SignalWireRestError>(
@@ -69,7 +69,7 @@ public class ErrorEnvelopeMockTest : IClassFixture<MockServerFixture>
     public async Task Error_Url_PreservesQueryString()
     {
         if (Skipped()) return;
-        using var http = _fixture.NewHttp();
+        var http = _fixture.NewHttp();
         _fixture.Harness.Scenarios.Set(AddressesEndpoint, 404, Errors("not_found"));
 
         var ex = await Assert.ThrowsAsync<SignalWireRestError>(
@@ -89,7 +89,7 @@ public class ErrorEnvelopeMockTest : IClassFixture<MockServerFixture>
         // Bind :0, read the port, release it — nothing listens there, so the
         // connect refuses deterministically (no mock needed: the whole point
         // is the request never reaches any server).
-        var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
         int dead;
         try
@@ -116,7 +116,7 @@ public class ErrorEnvelopeMockTest : IClassFixture<MockServerFixture>
     public async Task Error_CapturesResponseHeaders_AndRequestId()
     {
         if (Skipped()) return;
-        using var http = _fixture.NewHttp();
+        var http = _fixture.NewHttp();
         _fixture.Harness.Scenarios.SetRaw(AddressesEndpoint, new Dictionary<string, object?>
         {
             ["status"] = 404,
@@ -136,7 +136,7 @@ public class ErrorEnvelopeMockTest : IClassFixture<MockServerFixture>
     [Fact]
     public async Task TransportError_HeadersAndRequestId_AreNull()
     {
-        var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
         int dead;
         try

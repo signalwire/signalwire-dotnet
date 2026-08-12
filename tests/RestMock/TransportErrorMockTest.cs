@@ -28,7 +28,7 @@ public class TransportErrorMockTest
     /// it — nothing listens there afterward, so a connection to it refuses.</summary>
     private static int DeadPort()
     {
-        var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
         try
         {
@@ -44,7 +44,7 @@ public class TransportErrorMockTest
     public async Task ConnectionRefused_ThrowsTypedTransportError_NotBareHttpRequestException()
     {
         var dead = DeadPort();
-        var http = new HttpClient("test_proj", "test_tok", $"http://127.0.0.1:{dead}");
+        using var http = new HttpClient("test_proj", "test_tok", $"http://127.0.0.1:{dead}");
 
         var ex = await Assert.ThrowsAsync<SignalWireRestTransportError>(
             () => http.GetAsync("/api/fabric/addresses"));

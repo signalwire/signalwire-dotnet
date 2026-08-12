@@ -32,13 +32,14 @@ internal static class DocWire
         var portRaw = Environment.GetEnvironmentVariable("MOCK_SIGNALWIRE_PORT");
         if (string.IsNullOrEmpty(portRaw))
         {
-            Console.Error.WriteLine("doc_wire (dotnet): MOCK_SIGNALWIRE_PORT not set");
+            await Console.Error.WriteLineAsync("doc_wire (dotnet): MOCK_SIGNALWIRE_PORT not set")
+                .ConfigureAwait(false);
             return 2;
         }
         var host = Environment.GetEnvironmentVariable("MOCK_SIGNALWIRE_HOST") ?? "127.0.0.1";
         var url = $"http://{host}:{portRaw}";
 
-        var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", url);
+        using var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", url);
         var tree = new ResourceTree(http);
 
         const string callId = "call-doc-wire";
@@ -48,13 +49,13 @@ internal static class DocWire
         {
             ["name"] = "Support Bot",
             ["prompt"] = new Dictionary<string, object?> { ["text"] = "You are helpful." },
-        });
-        await tree.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacode"] = "512" });
-        await tree.Datasphere.Documents.SearchAsync("billing policy");
+        }).ConfigureAwait(false);
+        await tree.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacode"] = "512" }).ConfigureAwait(false);
+        await tree.Datasphere.Documents.SearchAsync("billing policy").ConfigureAwait(false);
 
         // --- rest/docs/namespaces.md phone-number search (areacode + number_type)
         await tree.PhoneNumbers.SearchAsync(
-            new Dictionary<string, string> { ["areacode"] = "512", ["number_type"] = "local" });
+            new Dictionary<string, string> { ["areacode"] = "512", ["number_type"] = "local" }).ConfigureAwait(false);
 
         // --- rest/docs/calling.md play (nested ["params"]={["text"]}, volume) ---
         await tree.Calling.PlayAsync(
@@ -67,13 +68,13 @@ internal static class DocWire
                     ["params"] = new Dictionary<string, object?> { ["text"] = "Hello!" },
                 },
             },
-            volume: 5.0);
+            volume: 5.0).ConfigureAwait(false);
 
         // --- rest/docs/namespaces.md datasphere search (tags + count) ----------
         await tree.Datasphere.Documents.SearchAsync(
             "How do I reset my password?",
             tags: new List<object?> { "support" },
-            count: 5);
+            count: 5).ConfigureAwait(false);
 
         return 0;
     }

@@ -8,16 +8,27 @@ namespace SignalWire.Tests;
 /// </summary>
 public class ToolRegistryTests
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] ABArray = new[] { "a", "b" };
     private readonly ToolRegistry _registry = new();
+
+    // The reference requires BOTH `parameters` and `handler`
+    // (registry.py:36). These stand in where a test exercises some OTHER
+    // aspect of DefineTool and does not care about the schema or the body.
+    private static Dictionary<string, object> NoParams() => new();
+
+    private static object? NoopHandler(
+        Dictionary<string, object?> args, Dictionary<string, object?> raw) => null;
 
     [Fact]
     public void DefineToolAndGet()
     {
         _registry.DefineTool("greet", "Say hi",
-            parameters: new Dictionary<string, object>
+            new Dictionary<string, object>
             {
                 ["name"] = new Dictionary<string, object> { ["type"] = "string" },
-            });
+            },
+            NoopHandler);
         var fn = _registry.GetFunction("greet");
 
         Assert.NotNull(fn);
@@ -28,7 +39,7 @@ public class ToolRegistryTests
     [Fact]
     public void HasFunction()
     {
-        _registry.DefineTool("a", "d");
+        _registry.DefineTool("a", "d", NoParams(), NoopHandler);
 
         Assert.True(_registry.HasFunction("a"));
         Assert.False(_registry.HasFunction("missing"));
@@ -44,10 +55,11 @@ public class ToolRegistryTests
     public void DefineToolNormalisesParametersIntoObjectSchema()
     {
         _registry.DefineTool("t", "d",
-            parameters: new Dictionary<string, object>
+            new Dictionary<string, object>
             {
                 ["city"] = new Dictionary<string, object> { ["type"] = "string" },
-            });
+            },
+            NoopHandler);
         var schema = Assert.IsType<Dictionary<string, object>>(_registry.GetFunction("t")!["parameters"]);
 
         Assert.Equal("object", schema["type"]);
@@ -59,10 +71,11 @@ public class ToolRegistryTests
     public void DefineToolInjectsRequired()
     {
         _registry.DefineTool("t", "d",
-            parameters: new Dictionary<string, object>
+            new Dictionary<string, object>
             {
                 ["city"] = new Dictionary<string, object> { ["type"] = "string" },
             },
+            NoopHandler,
             required: ["city"]);
         var schema = Assert.IsType<Dictionary<string, object>>(_registry.GetFunction("t")!["parameters"]);
 
@@ -73,7 +86,7 @@ public class ToolRegistryTests
     [Fact]
     public void DefineToolOptionalFields()
     {
-        _registry.DefineTool("t", "d",
+        _registry.DefineTool("t", "d", NoParams(), NoopHandler,
             waitFile: "https://x/w.mp3", waitFileLoops: 2,
             webhookUrl: "https://x/hook",
             fillers: new Dictionary<string, object>
@@ -91,7 +104,7 @@ public class ToolRegistryTests
     [Fact]
     public void DefineToolSwaigFieldsMerged()
     {
-        _registry.DefineTool("t", "d",
+        _registry.DefineTool("t", "d", NoParams(), NoopHandler,
             swaigFields: new Dictionary<string, object>
             {
                 ["meta_data"] = new Dictionary<string, object> { ["k"] = "v" },
@@ -104,9 +117,9 @@ public class ToolRegistryTests
     [Fact]
     public void DefineToolDuplicateThrows()
     {
-        _registry.DefineTool("dup", "d");
+        _registry.DefineTool("dup", "d", NoParams(), NoopHandler);
 
-        Assert.Throws<ArgumentException>(() => _registry.DefineTool("dup", "d2"));
+        Assert.Throws<ArgumentException>(() => _registry.DefineTool("dup", "d2", NoParams(), NoopHandler));
     }
 
     [Fact]
@@ -144,11 +157,11 @@ public class ToolRegistryTests
     [Fact]
     public void GetAllFunctionsReturnsCopy()
     {
-        _registry.DefineTool("a", "d");
+        _registry.DefineTool("a", "d", NoParams(), NoopHandler);
         _registry.RegisterSwaigFunction(new Dictionary<string, object> { ["function"] = "b" });
         var all = _registry.GetAllFunctions();
 
-        Assert.Equal(new[] { "a", "b" }, all.Keys.OrderBy(k => k, StringComparer.Ordinal));
+        Assert.Equal(ABArray, all.Keys.OrderBy(k => k, StringComparer.Ordinal));
 
         // Mutating the returned dictionary must not affect the registry.
         all.Remove("a");
@@ -158,7 +171,7 @@ public class ToolRegistryTests
     [Fact]
     public void RemoveFunction()
     {
-        _registry.DefineTool("a", "d");
+        _registry.DefineTool("a", "d", NoParams(), NoopHandler);
 
         Assert.True(_registry.RemoveFunction("a"));
         Assert.False(_registry.HasFunction("a"));

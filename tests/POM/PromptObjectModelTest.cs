@@ -17,6 +17,10 @@ namespace SignalWire.Tests.POM;
 [Trait("Category", "POM")]
 public class PromptObjectModelTest
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] GuestAGuestBArray = new[] { "GuestA", "GuestB" };
+    private static readonly string[] OneTwoThreeArray = new[] { "one", "two", "three" };
+    private static readonly string[] TitleBodyArray = new[] { "title", "body" };
     // ----------------------------------------------------------------
     // Empty POM
     // ----------------------------------------------------------------
@@ -276,6 +280,36 @@ public class PromptObjectModelTest
         Assert.Equal(expected, pom.ToYaml());
     }
 
+    /// <summary>
+    /// POM serialization is WIRE OUTPUT and must be LF-only on every platform, as
+    /// the reference is: Python's json.dumps / yaml.dump hardcode "\n". Both
+    /// System.Text.Json's indent newline (pre-.NET-9) and YamlDotNet default to
+    /// Environment.NewLine, so this shipped CRLF on Windows.
+    ///
+    /// The ExactShape tests above already encode LF, but they can only catch this
+    /// when the suite RUNS on Windows — which only the multi-OS nightly does (run
+    /// 30908589549 caught it there). This one names the invariant directly so the
+    /// intent survives, and it fails on a CRLF-emitting build from any host that
+    /// sets Environment.NewLine to CRLF.
+    /// </summary>
+    [Fact]
+    public void Serialization_IsLfOnly_OnEveryPlatform()
+    {
+        var pom = new PromptObjectModel();
+        var s = pom.AddSection("A", body: "ab");
+        s.AddSubsection("A1", body: "a1b", bullets: new List<string> { "x" });
+
+        var json = pom.ToJson();
+        var yaml = pom.ToYaml();
+
+        Assert.DoesNotContain("\r", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("\r", yaml, StringComparison.Ordinal);
+        // And the newlines are really there — a no-CR assertion on single-line
+        // output would pass vacuously.
+        Assert.Contains("\n", json, StringComparison.Ordinal);
+        Assert.Contains("\n", yaml, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void FromJson_RoundTripPreservesStructure()
     {
@@ -364,7 +398,7 @@ public class PromptObjectModelTest
         guest.AddSection("GuestB", body: "bb");
 
         host.AddPomAsSubsection(target, guest);
-        Assert.Equal(new[] { "GuestA", "GuestB" },
+        Assert.Equal(GuestAGuestBArray,
             target.Subsections.Select(s => s.Title).ToArray());
     }
 
@@ -397,7 +431,7 @@ public class PromptObjectModelTest
         var s = new Section("X");
         s.AddBullets(new List<string> { "one" });
         s.AddBullets(new List<string> { "two", "three" });
-        Assert.Equal(new[] { "one", "two", "three" }, s.Bullets.ToArray());
+        Assert.Equal(OneTwoThreeArray, s.Bullets.ToArray());
     }
 
     [Fact]
@@ -416,7 +450,10 @@ public class PromptObjectModelTest
     {
         var parent = new Section("P");
         Assert.Throws<System.ArgumentException>(() =>
-            parent.AddSubsection(title: null));
+#pragma warning disable CS8625 // passing null IS the assertion: this proves
+        // AddSubsection rejects a null title with ArgumentException.
+            parent.AddSubsection(title: null!));
+#pragma warning restore CS8625
     }
 
     // ----------------------------------------------------------------
@@ -448,7 +485,7 @@ public class PromptObjectModelTest
         var keys = dicts[0].Keys.ToList();
         // Section with only title + body emits exactly those two keys
         // in that order — no empty bullets/subsections/numbered.
-        Assert.Equal(new[] { "title", "body" }, keys.ToArray());
+        Assert.Equal(TitleBodyArray, keys.ToArray());
     }
 
     [Fact]

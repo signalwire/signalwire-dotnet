@@ -11,7 +11,7 @@ using SignalWire.Agent;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "Multi-Skill Assistant",
+    Name = "Multi-Skill Assistant",
     Route = "/assistant",
 });
 
@@ -50,7 +50,7 @@ catch (Exception e)
 
 try
 {
-    var apiKey   = Environment.GetEnvironmentVariable("GOOGLE_SEARCH_API_KEY");
+    var apiKey = Environment.GetEnvironmentVariable("GOOGLE_SEARCH_API_KEY");
     var engineId = Environment.GetEnvironmentVariable("GOOGLE_SEARCH_ENGINE_ID");
 
     if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(engineId))
@@ -60,10 +60,10 @@ try
 
     agent.AddSkill("web_search", new Dictionary<string, object>
     {
-        ["api_key"]          = apiKey,
+        ["api_key"] = apiKey,
         ["search_engine_id"] = engineId,
-        ["num_results"]      = 1,
-        ["delay"]            = 0,
+        ["num_results"] = 1,
+        ["delay"] = 0,
     });
     Console.WriteLine("Added web_search skill");
 }

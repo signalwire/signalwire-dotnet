@@ -54,10 +54,10 @@ agent.AddLanguage("English", "en-US", "inworld.Mark");
 agent.PromptAddSection("Role", "You are a helpful assistant.");
 
 agent.DefineTool(
-    name:        "get_time",
+    name: "get_time",
     description: "Get the current time",
-    parameters:  new Dictionary<string, object>(),
-    handler:     (args, rawData) => new FunctionResult($"The time is {DateTime.Now:HH:mm:ss}"));
+    parameters: new Dictionary<string, object>(),
+    handler: (args, rawData) => new FunctionResult($"The time is {DateTime.Now:HH:mm:ss}"));
 
 agent.Run();
 ```
@@ -114,15 +114,15 @@ Real-time call control and messaging over WebSocket. The RELAY client connects t
 ```csharp
 using SignalWire.Relay;
 
-var client = new Client(new ClientOptions
+await using var client = new Client(new ClientOptions
 {
-    Project  = "your-project-id",
-    Token    = "your-token",
-    Host     = "example.signalwire.com",
+    Project = "your-project-id",
+    Token = "your-token",
+    Host = "example.signalwire.com",
     Contexts = new[] { "default" },
 });
 
-client.OnCall(async (call, evt) =>
+client.OnCall(async call =>
 {
     await call.AnswerAsync();
     var action = call.PlayTts("Welcome to SignalWire!");
@@ -151,11 +151,11 @@ Async REST client (`Task`-based) for managing SignalWire resources and controlli
 ```csharp
 using SignalWire.REST;
 
-var client = new RestClient("project-id", "token", "example.signalwire.com");
+using var client = new RestClient("project-id", "token", "example.signalwire.com");
 
 await client.Fabric.AiAgents.CreateAsync(new Dictionary<string, object?>
 {
-    ["name"]   = "Support Bot",
+    ["name"] = "Support Bot",
     ["prompt"] = new Dictionary<string, object?> { ["text"] = "You are helpful." },
 });
 await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacode"] = "512" });

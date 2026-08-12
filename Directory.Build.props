@@ -13,16 +13,43 @@
   -->
 
   <!--
-    The analyzer bar applies ONLY to the shipped library (SignalWire.csproj) —
-    that is the public surface the LINT gate polices. Test/example/tool projects
-    (tests/, examples/, tools/, scripts/) carry intentionally loose code (audit
-    harnesses, corpus dumps) and would only fight the gate, so they are left at
-    the SDK defaults. Keyed off the project file name so the scoping is robust
-    regardless of path-separator quirks.
+    SCOPE: EVERY project in this repo — the shipped library, the tests, the
+    examples, the tools and the scripts' helper projects — carries the SAME
+    analyzer bar. There is no looser tier for harness code (owner ruling
+    2026-07-30: "all the full directories should be linted and formatted
+    including tests examples and all ... examples and tests are shipping code
+    too"). This PropertyGroup is deliberately UNCONDITIONAL: any condition
+    scoping it to a subset of projects is the carve-out the ruling removes.
+    Nothing in this tree is third-party vendored code, so nothing is excluded.
   -->
-  <PropertyGroup Condition="'$(MSBuildProjectFile)' == 'SignalWire.csproj'">
+  <!--
+    ANALYSIS LEVEL IS PINNED, NOT `latest`.
+
+    `AnalysisLevel=latest` + `AnalysisMode=All` + `TreatWarningsAsErrors=true` is a
+    SELF-UPDATING RULE SET: `latest` means "every rule this SDK knows about", `All`
+    enables them at their default severity, and warnings-as-errors makes each one a
+    build failure. So a new .NET SDK — a PATCH bump on a CI runner, no package
+    release and no commit of ours involved — can enable new CA rules that instantly
+    break the build. The LINT gate's verdict then depends on WHICH SDK the runner
+    happened to install rather than on our source: red in CI on a commit that was
+    green locally, with nothing in the diff to explain it and no local run able to
+    reproduce it.
+
+    This is the same hazard as an unpinned linter in every other port; .NET just
+    ships the analyzers inside the SDK, which makes it easier to miss.
+
+    Pinning the NUMBERED level (10.0) instead of `latest` means the rule SET is
+    fixed by this file: a newer SDK still builds, but it does not silently switch on
+    rules we have not burned down. global.json pins the SDK band itself as the
+    second half of the guarantee (rollForward there keeps patch updates working).
+
+    Raising this is a deliberate act: bump the number, build, and fix whatever new
+    rules fire — that burndown is the POINT (per the governing principle above), and
+    it happens when we choose rather than when Microsoft ships.
+  -->
+  <PropertyGroup>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisLevel>10.0</AnalysisLevel>
     <AnalysisMode>All</AnalysisMode>
     <!-- A lint violation fails the build → the LINT gate. -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

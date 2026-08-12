@@ -10,8 +10,16 @@ namespace SignalWire.Security;
 /// </summary>
 public sealed class SessionManager
 {
-    /// <summary>Default token lifetime in seconds.</summary>
-    public const int DefaultExpiry = 3600;
+    /// <summary>Default token lifetime in seconds (15 minutes).</summary>
+    /// <remarks>
+    /// Mirrors the reference's <c>SessionManager(token_expiry_secs: int = 900)</c>
+    /// (session_manager.py:30, "Seconds until tokens expire (default: 15 minutes)").
+    /// Note this is DISTINCT from <c>AgentBase</c>'s own <c>token_expiry_secs</c>
+    /// default of 3600 (agent_base.py:130) — an agent passes its configured value
+    /// down explicitly, so the two defaults do not have to agree and the reference's
+    /// do not.
+    /// </remarks>
+    public const int DefaultExpiry = 900;
 
     private readonly int _tokenExpirySecs;
 
@@ -39,13 +47,11 @@ public sealed class SessionManager
 
     /// <summary>
     /// The HMAC signing key. Either the value supplied at construction or the
-    /// generated 64-character hex default. (equivalent to Python's
-    /// <c>secret_key</c>.)
+    /// generated 64-character hex default.
     /// </summary>
     public string SecretKey { get; }
 
-    /// <summary>Get the configured token expiry duration in seconds.
-    /// (equivalent to Python's <c>token_expiry_secs</c>.)</summary>
+    /// <summary>Get the configured token expiry duration in seconds.</summary>
     public int TokenExpirySecs => _tokenExpirySecs;
 
     /// <summary>
@@ -151,9 +157,7 @@ public sealed class SessionManager
     // Tool-token aliases + legacy session lifecycle (SessionManager parity)
     // ------------------------------------------------------------------
 
-    /// <summary>Alias of the token generator, kept for API consistency.
-    /// (equivalent to Python's ``generate_token`` == C# ``CreateToken``; also exposed as
-    /// ``create_tool_token``.)</summary>
+    /// <summary>Alias of the token generator, kept for API consistency.</summary>
     public string CreateToolToken(string functionName, string callId)
         => CreateToken(functionName, callId);
 
@@ -178,7 +182,7 @@ public sealed class SessionManager
     public bool SetSessionMetadata(string callId, string key, object value) => true;
 
     /// <summary>Decode a token into its components WITHOUT validating it (for
-    /// debugging). (equivalent to Python's ``debug_token``.)</summary>
+    /// debugging).</summary>
     [SuppressMessage("Performance", "CA1822", Justification = "Instance method matches the cross-port SessionManager surface.")]
     public Dictionary<string, object> DebugToken(string token)
     {
@@ -234,14 +238,24 @@ public sealed class SessionManager
         return Convert.ToHexString(buffer).ToLowerInvariant();
     }
 
-    /// <summary>Base64url-encode (RFC 4648 without padding).</summary>
+    /// <summary>
+    /// Base64url-encode, PADDING INTACT.
+    /// </summary>
+    /// <remarks>
+    /// The reference mints with <c>base64.urlsafe_b64encode</c>, which KEEPS the '=' padding,
+    /// and validates with <c>base64.urlsafe_b64decode</c>, which RAISES on a stripped '='.
+    /// The previous <c>.TrimEnd('=')</c> therefore made every token this port minted unusable
+    /// to the reference and to any port that decodes strictly, even though the message and the
+    /// HMAC were correct. Our own <see cref="Base64UrlDecode"/> still accepted them because it
+    /// re-pads before decoding — that asymmetry is why round-tripping against ourselves could
+    /// not catch it, and why the TOKEN-INTEROP gate validates against the REFERENCE decoder.
+    /// </remarks>
     private static string Base64UrlEncode(string data)
     {
         var bytes = Encoding.UTF8.GetBytes(data);
         return Convert.ToBase64String(bytes)
             .Replace('+', '-')
-            .Replace('/', '_')
-            .TrimEnd('=');
+            .Replace('/', '_');
     }
 
     /// <summary>Base64url-decode (RFC 4648 without padding).</summary>

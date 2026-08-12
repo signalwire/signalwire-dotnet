@@ -73,13 +73,11 @@ public partial class AgentServer
 
     /// <summary>
     /// The configured logging level (<c>debug</c>, <c>info</c>, <c>warning</c>,
-    /// <c>error</c>, <c>critical</c>), lower-cased. (equivalent to Python's
-    /// <c>log_level</c>.)
+    /// <c>error</c>, <c>critical</c>), lower-cased.
     /// </summary>
     public string LogLevel { get; }
 
-    /// <summary>The agent_server logger. (equivalent to Python's
-    /// ``AgentServer.logger`` instance attribute.)</summary>
+    /// <summary>The agent_server logger.</summary>
     public Logger Logger => _logger;
 
     // ==================================================================
@@ -153,8 +151,7 @@ public partial class AgentServer
     /// <summary>
     /// Enable SIP routing on this server. ``route`` lets the caller pin
     /// a non-default SIP route prefix; ``autoMap`` opts agents into
-    /// auto-mapped sip_username = agent name. Matches Python's
-    /// ``setup_sip_routing(self, route='/sip', auto_map=True)``.
+    /// auto-mapped sip_username = agent name.
     /// </summary>
     public AgentServer SetupSipRouting(string route = "/sip", bool autoMap = true)
     {
@@ -211,7 +208,7 @@ public partial class AgentServer
             AutoMapAgentSipUsernames(agent, agentRoute);
         }
 
-        agent.RegisterRoutingCallback(_sipRoute, (body, headers) =>
+        agent.RegisterRoutingCallback((body, headers) =>
         {
             var sipUsername = SWML.Service.ExtractSipUsername(body);
             if (!string.IsNullOrEmpty(sipUsername))
@@ -226,12 +223,11 @@ public partial class AgentServer
                 _logger.Warn($"No route found for SIP username: {sipUsername}");
             }
             return null;
-        });
+        }, path: _sipRoute);
     }
 
     /// <summary>Auto-map an agent's derived SIP username(s) to its route
-    /// (equivalent to Python's ``_auto_map_agent_sip_usernames``: clean name + clean
-    /// route segment).</summary>
+    /// .</summary>
     [SuppressMessage("Globalization", "CA1308", Justification = "lowercase is the normalized SIP-username mapping-key form (matches Python's cleaned .lower() name/route).")]
     private void AutoMapAgentSipUsernames(AgentBase agent, string agentRoute)
     {
@@ -290,28 +286,75 @@ public partial class AgentServer
     // ==================================================================
 
     /// <summary>
+    /// Start an <see cref="System.Net.HttpListener"/> on <paramref name="prefix"/>,
+    /// falling back to an explicit <c>localhost</c> prefix when a wildcard bind is
+    /// refused.
+    /// </summary>
+    /// <remarks>
+    /// A FAILED <see cref="System.Net.HttpListener.Start"/> DISPOSES the listener,
+    /// so the fallback must build a SECOND listener — calling
+    /// <c>Prefixes.Clear()</c> on the first throws
+    /// <see cref="ObjectDisposedException"/> and the retry never happens. Same
+    /// defect and same fix as <c>SignalWire.SWML.Service.BindListener</c>; both
+    /// copies of this bind-with-fallback existed and both were wrong.
+    /// </remarks>
+    private static System.Net.HttpListener BindListener(string prefix)
+    {
+        var listener = new System.Net.HttpListener();
+        listener.Prefixes.Add(prefix);
+        try
+        {
+            listener.Start();
+            return listener;
+        }
+        catch (System.Net.HttpListenerException ex)
+        {
+            listener.Close();
+
+            // Fall back to loopback when the wildcard binding is not permitted.
+            // A FRESH listener — the one above is disposed.
+            if (prefix.StartsWith("http://+:", StringComparison.Ordinal))
+            {
+                var fallback = new System.Net.HttpListener();
+                fallback.Prefixes.Add(prefix.Replace("http://+:", "http://localhost:", StringComparison.Ordinal));
+                try
+                {
+                    fallback.Start();
+                    return fallback;
+                }
+                catch (System.Net.HttpListenerException fallbackEx)
+                {
+                    fallback.Close();
+                    throw new InvalidOperationException(
+                        $"failed to bind {prefix} and its localhost fallback: {fallbackEx.Message}. " +
+                        "Another process may already be listening on this port; on Linux, binding " +
+                        "0.0.0.0 may require root or `setcap CAP_NET_BIND_SERVICE+ep` on the dotnet " +
+                        "binary. Rebind to a free port or stop the other listener.",
+                        fallbackEx);
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"failed to bind {prefix}: {ex.Message}. Another process may already be " +
+                "listening on this port; on Linux, binding 0.0.0.0 may require root or " +
+                "`setcap CAP_NET_BIND_SERVICE+ep` on the dotnet binary; rebind to localhost " +
+                "or use a port >= 1024.",
+                ex);
+        }
+    }
+
+    /// <summary>
     /// Run the multi-agent HTTP server. Binds an <see cref="System.Net.HttpListener"/>
     /// on the given host/port (defaulting to the <c>PORT</c> env var or 3000) and
-    /// dispatches each request through <see cref="HandleRequest"/> until the
+    /// dispatches each request through
+    /// <see cref="HandleRequest(string, string, Dictionary{string, string}, string)"/> until the
     /// process is interrupted. Mirrors ``AgentServer.run``.
     /// </summary>
     public void Run(string host = "0.0.0.0", int? port = null)
     {
         var boundPort = port ?? ParsePortFromEnv() ?? 3000;
-        using var listener = new System.Net.HttpListener();
         var bindHost = host is "0.0.0.0" or "" ? "+" : host;
-        try
-        {
-            listener.Prefixes.Add($"http://{bindHost}:{boundPort}/");
-            listener.Start();
-        }
-        catch (System.Net.HttpListenerException)
-        {
-            // Fall back to loopback when the wildcard binding is not permitted.
-            listener.Prefixes.Clear();
-            listener.Prefixes.Add($"http://localhost:{boundPort}/");
-            listener.Start();
-        }
+        using var listener = BindListener($"http://{bindHost}:{boundPort}/");
 
         while (listener.IsListening)
         {
@@ -332,7 +375,8 @@ public partial class AgentServer
             }
 
             var (status, respHeaders, body) = HandleRequest(
-                ctx.Request.HttpMethod, ctx.Request.Url?.AbsolutePath ?? "/", reqHeaders, reqBody);
+                ctx.Request.HttpMethod, ctx.Request.Url?.AbsolutePath ?? "/", reqHeaders, reqBody,
+                ctx.Request.Url?.Query);
 
             ctx.Response.StatusCode = status;
             foreach (var (k, v) in respHeaders)
@@ -360,6 +404,22 @@ public partial class AgentServer
     /// <summary>Handle an HTTP request. Returns (status, headers, body).</summary>
     public (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
         string method, string path, Dictionary<string, string>? headers = null, string? body = null)
+        => HandleRequest(method, path, headers, body, queryString: null);
+
+    /// <summary>
+    /// The query-string-carrying form. Kept INTERNAL rather than widening the
+    /// public overload above: the reference has no counterpart for this method,
+    /// so a new public parameter here would be port-invented surface. The
+    /// built-in HttpListener loop and the test suite reach it directly; an
+    /// external host calling the public overload simply has no query string to
+    /// forward.
+    /// </summary>
+    /// <param name="queryString">The raw query string. Forwarded to the matched
+    /// agent because a per-call SWAIG <c>__token</c> rides it; dropping it here
+    /// would make every hosted agent's secure tools unvalidatable.</param>
+    internal (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
+        string method, string path, Dictionary<string, string>? headers, string? body,
+        string? queryString)
     {
         ArgumentNullException.ThrowIfNull(path);
         headers ??= [];
@@ -397,7 +457,7 @@ public partial class AgentServer
         if (matchedRoute is not null)
         {
             var agent = _agents[matchedRoute];
-            return agent.HandleRequest(method, path, headers, body);
+            return agent.HandleRequest(method, path, headers, body, queryString);
         }
 
         return JsonResponse(404, new Dictionary<string, object> { ["error"] = "Not Found" });

@@ -35,8 +35,7 @@ public class SignalWireRestError : Exception
 
     /// <summary>
     /// §6.6 error observability: the response header map, or <c>null</c> for a
-    /// transport error that produced no response. Mirrors Python's
-    /// <c>SignalWireRestError.headers</c>.
+    /// transport error that produced no response.
     /// </summary>
     public IReadOnlyDictionary<string, string>? Headers { get; }
 
@@ -45,8 +44,7 @@ public class SignalWireRestError : Exception
     /// <c>x-request-id</c>, <c>x-signalwire-request-id</c>, <c>request-id</c>,
     /// <c>x-amzn-requestid</c>; case-insensitive), or <c>null</c> when absent —
     /// client-side observability with no wire-contract change. Also appended to
-    /// <see cref="Exception.Message"/> so it reaches logs verbatim. Mirrors
-    /// Python's <c>SignalWireRestError.request_id</c>.
+    /// <see cref="Exception.Message"/> so it reaches logs verbatim.
     /// </summary>
     public string? RequestId { get; }
 
@@ -114,8 +112,7 @@ public class SignalWireRestError : Exception
     /// The full-envelope constructor: carries every field a caller may branch on
     /// — the HTTP <paramref name="statusCode"/>, the server's <paramref name="responseBody"/>
     /// (``body``), the request <paramref name="url"/>, and the request
-    /// <paramref name="method"/>. Mirrors Python's
-    /// ``SignalWireRestError(status_code, body, url, method)``.
+    /// <paramref name="method"/>.
     /// </summary>
     [SuppressMessage("Usage", "CA1054", Justification = "url is a wire string carried verbatim from the request path.")]
     public SignalWireRestError(string message, int statusCode, string responseBody, string url, string method)

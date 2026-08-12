@@ -13,7 +13,7 @@ using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "Wikipedia Assistant",
+    Name = "Wikipedia Assistant",
     Route = "/wikipedia",
 });
 
@@ -41,13 +41,13 @@ var wikiSearch = new DataMap("search_wikipedia")
         {
             ["Accept"] = "application/json",
         })
-    .Params(new Dictionary<string, string>
+    .Params(new Dictionary<string, object>
     {
-        ["action"]   = "query",
-        ["list"]     = "search",
+        ["action"] = "query",
+        ["list"] = "search",
         ["srsearch"] = "${args.query}",
-        ["format"]   = "json",
-        ["srlimit"]  = "3",
+        ["format"] = "json",
+        ["srlimit"] = "3",
     })
     .Output(new FunctionResult(
         "Wikipedia results for '${args.query}': ${response.query.search[0].title} - ${response.query.search[0].snippet}"
@@ -58,17 +58,17 @@ agent.RegisterSwaigFunction(wikiSearch.ToSwaigFunction());
 // Also add a direct lookup tool that fetches the article extract from
 // Wikipedia's REST API. Runs in-process when the platform dispatches
 // this SWAIG function back to the agent's /swaig endpoint.
-var wikiHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+using var wikiHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
 wikiHttp.DefaultRequestHeaders.UserAgent.ParseAdd("signalwire-dotnet-wikipedia-demo/1.0");
 
 agent.DefineTool(
-    name:        "get_wiki_summary",
+    name: "get_wiki_summary",
     description: "Get a brief summary of a Wikipedia article by title",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["title"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Wikipedia article title",
         },
     },
@@ -81,7 +81,7 @@ agent.DefineTool(
 
         try
         {
-            using var resp = wikiHttp.GetAsync(url).GetAwaiter().GetResult();
+            using var resp = wikiHttp.GetAsync(new Uri(url)).GetAwaiter().GetResult();
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             using var doc = JsonDocument.Parse(body);
             if (doc.RootElement.TryGetProperty("query", out var q)

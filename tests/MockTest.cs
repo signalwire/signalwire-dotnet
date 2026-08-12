@@ -76,7 +76,7 @@ public static class MockTest
     /// Convenience that returns both the bound <see cref="SignalWire.REST.HttpClient"/>
     /// and the <see cref="Harness"/>. Resets journal/scenarios on the way out.
     /// </summary>
-    public static Bound NewClient()
+    internal static Bound NewClient()
     {
         var h = EnsureServer();
         h.Reset();
@@ -84,7 +84,7 @@ public static class MockTest
     }
 
     /// <summary>Returns the shared harness, ensuring the server is running.</summary>
-    public static Harness GetHarness()
+    internal static Harness GetHarness()
     {
         var h = EnsureServer();
         h.Reset();
@@ -92,14 +92,14 @@ public static class MockTest
     }
 
     /// <summary>Returns the shared harness without resetting (for assertions across tests).</summary>
-    public static Harness GetHarnessNoReset() => EnsureServer();
+    internal static Harness GetHarnessNoReset() => EnsureServer();
 
     /// <summary>True iff adjacency walk finds a usable porting-sdk on disk.</summary>
     public static bool IsAdjacencyAvailable()
         => DiscoverPortingSdkPackage("mock_signalwire") is not null;
 
     /// <summary>Tuple of HttpClient + Harness bound to the same mock.</summary>
-    public sealed class Bound
+    internal sealed class Bound
     {
         public SignalWire.REST.HttpClient Http { get; }
         public Harness Harness { get; }
@@ -136,21 +136,21 @@ public static class MockTest
         {
             anchors.Add(AppContext.BaseDirectory);
         }
-        catch { /* best effort */ }
+        catch (InvalidOperationException) { /* no base dir in this host */ }
         try
         {
             var asm = Assembly.GetExecutingAssembly().Location;
             if (!string.IsNullOrEmpty(asm))
                 anchors.Add(System.IO.Path.GetDirectoryName(asm) ?? "");
         }
-        catch { /* best effort */ }
+        catch (NotSupportedException) { /* dynamic assembly has no location */ }
         anchors.Add(Environment.CurrentDirectory);
 
         foreach (var anchor in anchors)
         {
             if (string.IsNullOrEmpty(anchor)) continue;
             var dir = new DirectoryInfo(System.IO.Path.GetFullPath(anchor));
-            while (dir != null)
+            while (true)
             {
                 var parent = dir.Parent;
                 if (parent == null) break;
@@ -171,7 +171,14 @@ public static class MockTest
     /// Live mock-server handle. Exposes the HTTP control plane:
     /// journal access, scenario overrides, reset.
     /// </summary>
-    public sealed class Harness
+    // CA1001: this type holds an HttpClient but is deliberately NOT IDisposable.
+    // A Harness is a VIEW onto the PROCESS-WIDE shared mock server; callers borrow
+    // it, they never own it. Making it disposable was tried and made things worse —
+    // the finding count went UP (98 -> 100) because every borrower then looked like
+    // an owner (CA2213 on each field holding one, CA2000 at each site producing
+    // one). The client lives for the whole test run and is released at process exit.
+#pragma warning disable CA1001
+    internal sealed class Harness
     {
         public string Url { get; }
         public string Host { get; }
@@ -224,11 +231,12 @@ public static class MockTest
             Scenarios.Reset();
         }
     }
+#pragma warning restore CA1001
 
     /// <summary>
     /// Wrapper around <c>/__mock__/journal</c> + <c>/__mock__/journal/reset</c>.
     /// </summary>
-    public sealed class JournalApi
+    internal sealed class JournalApi
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
@@ -260,7 +268,7 @@ public static class MockTest
             {
                 try
                 {
-                    resp = _http.GetAsync(_baseUrl + "/__mock__/journal")
+                    resp = _http.GetAsync(new Uri(_baseUrl + "/__mock__/journal"))
                         .GetAwaiter().GetResult();
                     break;
                 }
@@ -301,8 +309,9 @@ public static class MockTest
 
         public void Reset()
         {
+#pragma warning disable CA2025 // the request is BLOCKED on below
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/journal/reset", content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/journal/reset"), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -315,7 +324,7 @@ public static class MockTest
     /// <summary>
     /// Wrapper around <c>/__mock__/scenarios/&lt;id&gt;</c> + reset.
     /// </summary>
-    public sealed class ScenariosApi
+    internal sealed class ScenariosApi
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
@@ -352,7 +361,7 @@ public static class MockTest
             };
             var json = JsonSerializer.Serialize(payload);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + endpointId + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/" + endpointId + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -373,7 +382,7 @@ public static class MockTest
         {
             var json = JsonSerializer.Serialize(payload);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + endpointId + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/" + endpointId + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -386,8 +395,9 @@ public static class MockTest
         /// or all of them when unscoped.</summary>
         public void Reset()
         {
+#pragma warning disable CA2025 // the request is BLOCKED on below
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/reset" + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/reset" + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -401,7 +411,9 @@ public static class MockTest
     /// Lightweight view of a request the mock server recorded. Mirrors the
     /// dataclass in <c>mock_signalwire.journal.JournalEntry</c>.
     /// </summary>
-    public sealed class JournalEntry
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812",
+        Justification = "Deserialization target — constructed reflectively by System.Text.Json.")]
+    internal sealed class JournalEntry
     {
         [JsonPropertyName("timestamp")]
         public double Timestamp { get; set; }
@@ -458,13 +470,49 @@ public static class MockTest
                     $"MockTest: previous startup failed: {_startupFailure.Message}", _startupFailure);
             }
 
-            var (host, port) = ResolveHostPort();
+            var (host, port, portFromEnv) = ResolveHostPort();
             var url = $"http://{host}:{port}";
 
             using var probeClient = new System.Net.Http.HttpClient
             {
                 Timeout = TimeSpan.FromSeconds(2)
             };
+
+            // When the port was given EXPLICITLY (MOCK_SIGNALWIRE_PORT in the
+            // environment), a mock is PROMISED there — run-ci.sh picks the port,
+            // spawns the mock, waits for health, and exports the port for the
+            // whole TEST gate. A single 2s probe is too tight under CI load: one
+            // slow first connect would fall through to the self-spawn below,
+            // which then tries to bind the gate's ALREADY-OCCUPIED port. The
+            // child dies with `[Errno 48] address already in use` (exit 3) — but
+            // only AFTER printing a reassuring "listening on ..." line — and
+            // every REST test in the run then fails with connection-refused.
+            // That failure is non-deterministic and test-count-sensitive, so it
+            // reads like a flake; it is not. So: poll the promised endpoint until
+            // StartupTimeout, then FAIL LOUD. Never self-spawn onto a port the
+            // gate is already serving. Mirrors RelayMockTest's identical guard.
+            if (portFromEnv)
+            {
+                var reuseDeadline = DateTime.UtcNow + StartupTimeout;
+                while (DateTime.UtcNow < reuseDeadline)
+                {
+                    if (ProbeHealth(probeClient, url))
+                    {
+                        var reused = new Harness(url, host, port);
+                        _sharedHarness = reused;
+                        return reused;
+                    }
+                    Thread.Sleep(150);
+                }
+                _startupFailure = new InvalidOperationException(
+                    $"MockTest: MOCK_SIGNALWIRE_PORT was set (promising a pre-running " +
+                    $"mock_signalwire on {url}), but its health endpoint never became reachable " +
+                    $"within {StartupTimeout}. Refusing to self-spawn onto that port — it is the " +
+                    $"gate's, and binding it would fail with EADDRINUSE and cascade " +
+                    $"connection-refused across every REST test. The gate must keep that mock " +
+                    $"alive for the whole TEST run.");
+                throw _startupFailure;
+            }
 
             // Step 1: probe — reuse a host-spawned mock if one is already up.
             if (ProbeHealth(probeClient, url))
@@ -474,31 +522,88 @@ public static class MockTest
                 return hr;
             }
 
-            // Step 2: try to spawn. If python is unavailable (e.g., we're
-            // inside the .NET docker container) this will fail, and we
-            // surface a clear error pointing the user at the host-spawn
-            // path.
-            try
+            // Step 2: spawn our own. The port we picked is only free until
+            // someone else takes it, so we do NOT trust a single pick: each
+            // attempt HOLDS a fresh port open until the instant before the child
+            // starts, and if the child still loses the bind (EADDRINUSE) we
+            // discard that port and retry on another. A port is therefore never
+            // silently swapped out from under us — the failure is either a
+            // working mock or a loud error, never a live mock on a port our
+            // clients aren't talking to.
+            Exception? lastSpawnError = null;
+            for (var attempt = 1; attempt <= SpawnAttempts; attempt++)
             {
-                var process = SpawnMockServer(host, port);
+                int attemptPort;
+                using var reservation = ReservePort(out attemptPort);
+                var attemptUrl = $"http://{host}:{attemptPort}";
+
+                Process process;
+                try
+                {
+                    // Release only here: the child binds immediately after, so
+                    // the unowned window is as small as the API permits.
+                    reservation.Stop();
+#pragma warning disable CA2000 // ownership TRANSFERS to the returned handle,
+                    // which owns teardown; disposing here would tear the mock down early.
+                    process = SpawnMockServer(host, attemptPort);
+#pragma warning restore CA2000
+                }
+                catch (Exception ex)
+                {
+                    try { reservation.Stop(); }
+                    catch (ObjectDisposedException) { /* already stopped */ }
+                    catch (System.Net.Sockets.SocketException) { /* best effort */ }
+                    _startupFailure = new InvalidOperationException(
+                        $"MockTest: failed to spawn `python -m mock_signalwire` on {attemptUrl}: {ex.Message} " +
+                        $"(set MOCK_SIGNALWIRE_HOST / MOCK_SIGNALWIRE_PORT to use a pre-running instance, " +
+                        $"or run inside an environment with python3 + porting-sdk available)", ex);
+                    throw _startupFailure;
+                }
+
                 _mockProcess = process;
                 var deadline = DateTime.UtcNow + StartupTimeout;
+                var lostTheBind = false;
+
                 while (DateTime.UtcNow < deadline)
                 {
-                    if (ProbeHealth(probeClient, url))
+                    if (ProbeHealth(probeClient, attemptUrl))
                     {
                         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
                         {
-                            try { if (!process.HasExited) process.Kill(true); } catch { /* best effort */ }
+                            try { if (!process.HasExited) process.Kill(true); }
+                            catch (InvalidOperationException) { /* already exited */ }
+                            catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         };
-                        var hr = new Harness(url, host, port);
+                        var hr = new Harness(attemptUrl, host, attemptPort);
                         _sharedHarness = hr;
                         return hr;
                     }
                     if (process.HasExited)
                     {
+                        // Drain first: the async output handlers can still be
+                        // mid-delivery when HasExited flips, and the bind error
+                        // is written AFTER the "listening on" banner. Classifying
+                        // before the tail arrives would misread a lost bind as a
+                        // fatal startup error and skip the retry.
+                        // WaitForExit() with NO timeout is the overload that also
+                        // waits for the async stdout/stderr handlers to finish;
+                        // the (int) overload does not. The process has already
+                        // exited, so this returns promptly.
+                        try { process.WaitForExit(); }
+                        catch (InvalidOperationException) { /* already exited */ }
+                        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         var stderr = _mockStderr?.ToString() ?? "";
                         var stdout = _mockStdout?.ToString() ?? "";
+                        // Someone else took the port inside the release window.
+                        // That is retryable on a fresh port — anything else is not.
+                        if (IsAddressInUse(stdout, stderr))
+                        {
+                            lostTheBind = true;
+                            lastSpawnError = new InvalidOperationException(
+                                $"mock_signalwire lost the bind on {attemptUrl} (address already in use); " +
+                                $"retrying on a fresh port (attempt {attempt}/{SpawnAttempts}).");
+                            break;
+                        }
                         _startupFailure = new InvalidOperationException(
                             $"mock_signalwire process exited before becoming ready (exit {process.ExitCode}). " +
                             $"stdout={Truncate(stdout)} stderr={Truncate(stderr)}");
@@ -506,21 +611,65 @@ public static class MockTest
                     }
                     Thread.Sleep(150);
                 }
-                try { process.Kill(true); } catch { /* best effort */ }
+
+                if (lostTheBind) continue;
+
+                try { process.Kill(true); }
+                catch (InvalidOperationException) { /* already exited */ }
+                catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                 _startupFailure = new InvalidOperationException(
-                    $"MockTest: `python -m mock_signalwire` did not become ready within {StartupTimeout} on {url}. " +
+                    $"MockTest: `python -m mock_signalwire` did not become ready within {StartupTimeout} on {attemptUrl}. " +
                     $"Either start it manually on host before running tests, or clone porting-sdk next to signalwire-dotnet.");
                 throw _startupFailure;
             }
-            catch (Exception ex) when (ex is not InvalidOperationException)
-            {
-                _startupFailure = new InvalidOperationException(
-                    $"MockTest: failed to spawn `python -m mock_signalwire` on {url}: {ex.Message} " +
-                    $"(set MOCK_SIGNALWIRE_HOST / MOCK_SIGNALWIRE_PORT to use a pre-running instance, " +
-                    $"or run inside an environment with python3 + porting-sdk available)", ex);
-                throw _startupFailure;
-            }
+
+            _startupFailure = new InvalidOperationException(
+                $"MockTest: `python -m mock_signalwire` lost the port bind on {SpawnAttempts} " +
+                $"consecutive freshly-picked ports. Last: {lastSpawnError?.Message}", lastSpawnError);
+            throw _startupFailure;
         }
+    }
+
+    /// <summary>Number of fresh ports to try before giving up on the self-spawn
+    /// path. Each retry re-picks; losing several consecutive ports means
+    /// something is systematically wrong, not a transient collision.</summary>
+    private const int SpawnAttempts = 5;
+
+    /// <summary>
+    /// True when the mock's output says it could not bind because the address
+    /// was taken. Matched on the errno and its text form so the check does not
+    /// depend on one platform's phrasing. Note the mock prints a reassuring
+    /// "listening on ..." line BEFORE the bind is attempted, so the presence of
+    /// that line proves nothing — only this error does.
+    /// <para>
+    /// WINDOWS matters here, and was MISSING. Winsock does not use the POSIX
+    /// errno or phrase: the mock reports
+    /// <c>[Errno 10048] error while attempting to bind on address ('127.0.0.1',
+    /// 61395): [winerror 10048] only one usage of each socket address
+    /// (protocol/network address/port) is normally permitted</c>
+    /// — no "address already in use", no errno 48/98, no EADDRINUSE. So on Windows
+    /// this returned FALSE for a plain lost bind, which is not a cosmetic
+    /// classification bug: EnsureServer treats "not address-in-use" as a FATAL
+    /// startup error instead of retrying on a fresh port, so a single benign port
+    /// collision fails every mock-backed test in the run with connection-refused.
+    /// Caught by the multi-OS nightly (run 30908589549, windows-latest, net8.0 and
+    /// net9.0 alike); a linux-only PR tier cannot reach this branch.
+    /// </para>
+    /// </summary>
+    internal static bool IsAddressInUse(string stdout, string stderr)
+    {
+        var combined = stdout + "\n" + stderr;
+        return combined.Contains("address already in use", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("errno 48", StringComparison.OrdinalIgnoreCase)   // macOS/BSD
+            || combined.Contains("errno 98", StringComparison.OrdinalIgnoreCase)   // Linux
+            || combined.Contains("EADDRINUSE", StringComparison.OrdinalIgnoreCase)
+            // Windows / Winsock WSAEADDRINUSE. Both spellings appear in the one
+            // message (`[Errno 10048]` and `[winerror 10048]`), and the prose form is
+            // matched too so a future message that drops the numeric code still
+            // classifies.
+            || combined.Contains("10048", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("WSAEADDRINUSE", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("only one usage of each socket address", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string Truncate(string s)
@@ -529,7 +678,7 @@ public static class MockTest
         return s.Length > 400 ? s[..400] + "..." : s;
     }
 
-    private static (string Host, int Port) ResolveHostPort()
+    private static (string Host, int Port, bool FromEnv) ResolveHostPort()
     {
         var host = Environment.GetEnvironmentVariable("MOCK_SIGNALWIRE_HOST");
         if (string.IsNullOrWhiteSpace(host)) host = "127.0.0.1";
@@ -537,17 +686,26 @@ public static class MockTest
         var portRaw = Environment.GetEnvironmentVariable("MOCK_SIGNALWIRE_PORT");
         if (!string.IsNullOrWhiteSpace(portRaw) && int.TryParse(portRaw.Trim(), out var p) && p > 0)
         {
-            return (host, p);
+            // An explicit port PROMISES a pre-running mock; EnsureServer polls
+            // and fails loud rather than self-spawning onto it.
+            return (host, p, true);
         }
         // No env override: pick a FREE port (bind :0) rather than the hardcoded
         // default that collides with a stale/concurrent mock and hangs the suite.
-        return (host, PickFreePort());
+        return (host, PickFreePort(), false);
     }
 
-    /// <summary>Ask the OS for a free loopback TCP port (bind :0, read it, release).</summary>
+    /// <summary>
+    /// Ask the OS for a free loopback TCP port.
+    /// <para>A port is inherently unowned between the moment we read it and the
+    /// moment the spawned mock binds it, so this MUST NOT be treated as a
+    /// reservation. The caller closes that window by verifying the port is still
+    /// takeable and retrying on a fresh one — see
+    /// <see cref="ReservePort"/> / <see cref="EnsureServer"/>.</para>
+    /// </summary>
     private static int PickFreePort()
     {
-        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
         try
         {
@@ -557,6 +715,22 @@ public static class MockTest
         {
             listener.Stop();
         }
+    }
+
+    /// <summary>
+    /// Hold a free loopback port OPEN and hand back both the port and the
+    /// listener holding it. The port stays owned by this process until the
+    /// caller disposes the listener, so nothing else can be handed the same port
+    /// in the meantime. The caller releases it immediately before the child
+    /// binds — the only remaining window — and retries a fresh port if the child
+    /// loses that bind.
+    /// </summary>
+    internal static System.Net.Sockets.TcpListener ReservePort(out int port)
+    {
+        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        return listener;
     }
 
     private static Process SpawnMockServer(string host, int port)
@@ -575,7 +749,7 @@ public static class MockTest
         psi.ArgumentList.Add("--host");
         psi.ArgumentList.Add(host);
         psi.ArgumentList.Add("--port");
-        psi.ArgumentList.Add(port.ToString());
+        psi.ArgumentList.Add(port.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--log-level");
         psi.ArgumentList.Add("error");
 
@@ -612,16 +786,18 @@ public static class MockTest
     {
         try
         {
-            var resp = client.GetAsync(baseUrl + "/__mock__/health")
+            var resp = client.GetAsync(new Uri(baseUrl + "/__mock__/health"))
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode) return false;
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             // The health endpoint always emits a JSON object containing
             // "specs_loaded"; treat any other shape as a probe failure.
-            return body.Contains("\"specs_loaded\"");
+            return body.Contains("\"specs_loaded\"", StringComparison.Ordinal);
         }
-        catch
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
+                                      or OperationCanceledException or System.Net.Sockets.SocketException)
         {
+            // Not up yet (connection refused / timeout) — exactly what this probe asks.
             return false;
         }
     }
@@ -649,7 +825,7 @@ public sealed class MockServerFixture : IDisposable
     /// TypeScript port's per-test <c>newMockClient()</c>.</para>
     /// Falls back to an unscoped harness when the mock is unavailable.
     /// </summary>
-    public MockTest.Harness Harness { get; private set; }
+    internal MockTest.Harness Harness { get; private set; }
     public bool Available { get; }
 
     /// <summary>The unique random project the CURRENT test's clients
@@ -674,12 +850,16 @@ public sealed class MockServerFixture : IDisposable
             _shared = MockTest.GetHarnessNoReset();
             Available = true;
         }
+#pragma warning disable CA1031 // A fixture ctor must not throw: any failure to
+        // reach the mock has to become "Available = false" so every test in the
+        // class skips cleanly instead of the whole class erroring out.
         catch (Exception)
         {
             // Defer the failure: tests check Available and skip cleanly when
             // adjacency walk + spawn both failed.
             _shared = null;
         }
+#pragma warning restore CA1031
         // Mint the first per-test scope. Reset() re-mints before each test.
         Project = NewProject();
         AuthHeader = BasicAuth(Project);
@@ -687,7 +867,7 @@ public sealed class MockServerFixture : IDisposable
     }
 
     private static string NewProject()
-        => "test_proj_" + Guid.NewGuid().ToString("N").Substring(0, 12);
+        => string.Concat("test_proj_", Guid.NewGuid().ToString("N").AsSpan(0, 12));
 
     private static string BasicAuth(string project)
         => "Basic " + Convert.ToBase64String(
@@ -705,11 +885,32 @@ public sealed class MockServerFixture : IDisposable
         };
     }
 
+    /// <summary>Emit a "this test was skipped and why" note to the test console.
+    ///
+    /// Goes through this helper rather than Console.WriteLine at each call site so
+    /// the diagnostic text is not handed straight to a localizable BCL API
+    /// (CA1303): a skip note is developer-facing terminal output, never a product
+    /// string, and there is nothing to put in a resource table.</summary>
+    public static void SkipNote(string reason) => Console.Out.WriteLine(reason);
+
+    /// <summary>Clients handed out by <see cref="NewHttp"/>. The FIXTURE owns
+    /// them, not the individual test: they share a transport, so disposing one
+    /// inside a test breaks every sibling test in the class. Disposed together
+    /// when xUnit tears the fixture down.</summary>
+    private readonly List<SignalWire.REST.HttpClient> _issued = [];
+
     /// <summary>Build an SDK <see cref="SignalWire.REST.HttpClient"/> bound to
     /// the mock and authenticating with this fixture's scoped project, so its
-    /// requests are filterable in <see cref="Harness"/>'s journal.</summary>
+    /// requests are filterable in <see cref="Harness"/>'s journal.
+    ///
+    /// The returned client is OWNED BY THIS FIXTURE — do not dispose it in a
+    /// test (see <see cref="_issued"/>).</summary>
     public SignalWire.REST.HttpClient NewHttp()
-        => new(Project, Token, Harness.Url);
+    {
+        var http = new SignalWire.REST.HttpClient(Project, Token, Harness.Url);
+        lock (_issued) { _issued.Add(http); }
+        return http;
+    }
 
     /// <summary>
     /// Re-mint this fixture's per-test scope: a brand-new random project =&gt;
@@ -727,5 +928,14 @@ public sealed class MockServerFixture : IDisposable
         Harness = BuildScopedHarness(Project, AuthHeader);
     }
 
-    public void Dispose() { /* shared mock lives for whole test run */ }
+    /// <summary>The shared mock lives for the whole test run, but the clients
+    /// this fixture issued are its own and are released here.</summary>
+    public void Dispose()
+    {
+        lock (_issued)
+        {
+            foreach (var http in _issued) http.Dispose();
+            _issued.Clear();
+        }
+    }
 }

@@ -29,6 +29,9 @@ namespace SignalWire.Tests;
 [Collection(GlobalStateCollection.Name)]
 public class StructuralParityTests
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] ABArray = new[] { "A", "B" };
+    private static readonly string[] XYArray = new[] { "x", "y" };
     // -------------------------------------------------------------------
     // AgentBase.AddAnswerVerb / AddPostAnswerVerb — Python takes only
     // (config); the verb name is implicit. Provide a 1-arg overload
@@ -318,7 +321,7 @@ public class StructuralParityTests
     //     test_on_swml_request_called
     // -------------------------------------------------------------------
 
-    private class CustomSwmlAgent : AgentBase
+    private sealed class CustomSwmlAgent : AgentBase
     {
         public CustomSwmlAgent(AgentOptions opts) : base(opts) { }
         public Dictionary<string, object>? CustomReturn { get; set; }
@@ -695,10 +698,14 @@ public class StructuralParityTests
     public void SwmlRenderer_RenderFunctionResponseSwml_WithActions()
     {
         var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        // Both values here were schema-INVALID and shipped anyway on the raw
+        // Document path: a bare "test.mp3" fails play's url pattern (which
+        // requires an http(s)/ring/say/silence scheme), and "completed" is not
+        // one of hangup.reason's three permitted values.
         var actions = new List<Dictionary<string, object>>
         {
-            new() { ["play"] = new Dictionary<string, object> { ["url"] = "test.mp3" } },
-            new() { ["hangup"] = new Dictionary<string, object> { ["reason"] = "completed" } }
+            new() { ["play"] = new Dictionary<string, object> { ["url"] = "https://example.com/test.mp3" } },
+            new() { ["hangup"] = new Dictionary<string, object> { ["reason"] = "busy" } }
         };
         var json = SignalWire.SWML.SwmlRenderer.RenderFunctionResponseSwml(
             responseText: "Response complete",
@@ -751,13 +758,16 @@ public class StructuralParityTests
     {
         var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
         var builder = new SignalWire.SWML.SWMLBuilder(svc);
-        builder.Hangup(reason: "completed");
+        // "completed" is NOT a valid reason: $defs/Hangup.reason is a closed enum
+        // (hangup|busy|decline). This fixture carried the invalid value while it
+        // rode the raw Document path, which never consulted the schema.
+        builder.Hangup(reason: "busy");
         var doc = builder.Build();
         var sections = (Dictionary<string, List<Dictionary<string, object?>>>)doc["sections"];
         var main = sections["main"];
         var hangup = main.First(v => v.ContainsKey("hangup"));
         var config = (Dictionary<string, object>)hangup["hangup"]!;
-        Assert.Equal("completed", config["reason"]);
+        Assert.Equal("busy", config["reason"]);
     }
 
     [Fact]
@@ -789,6 +799,89 @@ public class StructuralParityTests
         var play = main.First(v => v.ContainsKey("play"));
         var config = (Dictionary<string, object>)play["play"]!;
         Assert.Equal("https://example.com/intro.mp3", config["url"]);
+    }
+
+    /// <summary>
+    /// There is no <c>say</c> verb in SWML. The builder previously emitted a
+    /// literal <c>say</c> verb with <c>{text, voice, language}</c> straight onto
+    /// the Document, bypassing the Service-level validator — so the schema never
+    /// got a chance to reject it and the invalid document shipped silently.
+    /// Text-to-speech is a <c>play</c> whose url uses the <c>say:</c> scheme.
+    /// </summary>
+    [Fact]
+    public void SWMLBuilder_SayEmitsPlayWithSayUrl_NotASayVerb()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var builder = new SignalWire.SWML.SWMLBuilder(svc);
+        builder.Say("Hello there", voice: "en-US-Neural2-A", language: "en-US", gender: "female");
+
+        var doc = builder.Build();
+        var sections = (Dictionary<string, List<Dictionary<string, object?>>>)doc["sections"];
+        var main = sections["main"];
+
+        Assert.DoesNotContain(main, v => v.ContainsKey("say"));
+        var play = Assert.Single(main, v => v.ContainsKey("play"));
+        var config = (Dictionary<string, object>)play["play"]!;
+        Assert.Equal("say:Hello there", config["url"]);
+        Assert.Equal("en-US-Neural2-A", config["say_voice"]);
+        Assert.Equal("en-US", config["say_language"]);
+        Assert.Equal("female", config["say_gender"]);
+    }
+
+    /// <summary>
+    /// Every builder verb goes through <c>Service.AddVerb</c>, which validates
+    /// the config against the schema. Asserting THROUGH the validator (rather
+    /// than against a hand-written expected blob) is what catches the next wrong
+    /// key: a shape the schema forbids must throw here, not render.
+    /// </summary>
+    [Fact]
+    public void SWMLBuilder_RoutesThroughTheValidatingEntryPoint()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+        var builder = new SignalWire.SWML.SWMLBuilder(svc);
+
+        // A schema-forbidden key on a builder-emitted verb must be REJECTED.
+        // (play's config is PlayWithURL/PlayWithURLS; there is no `text` key.)
+        Assert.Throws<SignalWire.SWML.SchemaValidationError>(() =>
+            svc.AddVerb("play", new Dictionary<string, object> { ["text"] = "nope" }));
+
+        // hangup.reason is NOT closed: the schema marks it open-valued, so the
+        // listed values are a hint and the platform accepts any string. This
+        // previously asserted a rejection, which is what made the SDK refuse
+        // real platform reasons like `no_answer`. What must still be rejected
+        // is the wrong BASE TYPE. Done on a throwaway service so the accepted
+        // verb does not land in the section counted below.
+        var scratch = new SignalWire.SWML.Service(
+            new SignalWire.SWML.ServiceOptions { Name = "t2", Route = "/r2" });
+        scratch.AddVerb("hangup", new Dictionary<string, object> { ["reason"] = "done" });
+        Assert.Throws<SignalWire.SWML.SchemaValidationError>(() =>
+            scratch.AddVerb("hangup", new Dictionary<string, object> { ["reason"] = 42 }));
+
+        // The builder's own emissions all survive that same path.
+        builder.Answer().Play(url: "https://example.com/a.mp3").Say("bye").Hangup(reason: "hangup");
+        var sections = (Dictionary<string, List<Dictionary<string, object?>>>)builder.Build()["sections"];
+        Assert.Equal(4, sections["main"].Count);
+    }
+
+    /// <summary>
+    /// <c>Service.Verb</c> and <c>Service.Sleep</c> validated only the verb NAME
+    /// and wrote the config through unchecked — the softer form of the raw-path
+    /// bypass. Both now run the same config validation as <c>AddVerb</c>.
+    /// </summary>
+    [Fact]
+    public void Service_VerbAndSleep_ValidateTheConfigNotJustTheName()
+    {
+        var svc = new SignalWire.SWML.Service(new SignalWire.SWML.ServiceOptions { Name = "t", Route = "/r" });
+
+        Assert.Throws<SignalWire.SWML.SchemaValidationError>(() =>
+            svc.Verb("play", new Dictionary<string, object> { ["text"] = "nope" }));
+        Assert.Throws<SignalWire.SWML.SchemaValidationError>(() =>
+            svc.Verb("hangup", "main", new Dictionary<string, object> { ["nonsense_key"] = 1 }));
+
+        // sleep is a valid direct-value (bare integer) verb and still works.
+        svc.Sleep(1500);
+        var sections = (Dictionary<string, List<Dictionary<string, object?>>>)svc.Document.ToDict()["sections"];
+        Assert.Equal(1500, sections["main"].Single()["sleep"]);
     }
 
     [Fact]
@@ -900,7 +993,7 @@ public class StructuralParityTests
         pom.AddSection("A");
         pom.AddSection("B");
         var titles = pom.Sections.Select(s => s.Title).ToList();
-        Assert.Equal(new[] { "A", "B" }, titles);
+        Assert.Equal(ABArray, titles);
     }
 
     [Fact]
@@ -968,7 +1061,7 @@ public class StructuralParityTests
         var y = pom.ToYaml();
         var restored = SignalWire.POM.PromptObjectModel.FromYaml(y);
         Assert.NotNull(restored.FindSection("A"));
-        Assert.Equal(new[] { "x", "y" }, restored.FindSection("A")!.Bullets);
+        Assert.Equal(XYArray, restored.FindSection("A")!.Bullets);
     }
 
     [Fact]
@@ -1122,7 +1215,7 @@ public class StructuralParityTests
     [Fact]
     public void Fabric_PythonParitySubResources_Exposed()
     {
-        var http = new SignalWire.REST.HttpClient("p", "t", "https://test.com");
+        using var http = new SignalWire.REST.HttpClient("p", "t", "https://test.com");
         var fabric = new SignalWire.REST.Namespaces.Generated.FabricNamespace(http);
         // 9 sub-resources Python exposes, now served by the generated tree.
         Assert.Equal("/api/fabric/resources/cxml_applications", fabric.CxmlApplications.BasePath);

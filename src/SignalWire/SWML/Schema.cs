@@ -15,8 +15,8 @@ namespace SignalWire.SWML;
 public sealed record VerbInfo(string Name, string SchemaName, JsonElement Definition);
 
 /// <summary>Validation error raised by SchemaUtils.ValidateVerb when a
-/// verb config violates its schema. (equivalent to Python's
-/// ``signalwire.utils.schema_utils.SchemaValidationError``.)</summary>
+/// verb config violates its schema.
+/// </summary>
 [SuppressMessage("Naming", "CA1710", Justification = "Type name matches the cross-port surface (Python SchemaValidationError); renaming to *Exception would break parity.")]
 public class SchemaValidationError : Exception
 {
@@ -141,14 +141,13 @@ public sealed class Schema
     /// <summary>Number of verbs defined in the schema.</summary>
     public int VerbCount => _verbs.Count;
 
-    /// <summary>Alias of <see cref="GetVerbNames"/>. (equivalent to Python's
-    /// ``SchemaUtils.get_all_verb_names``.)</summary>
+    /// <summary>Alias of <see cref="GetVerbNames"/>.</summary>
     public IReadOnlyList<string> GetAllVerbNames() => GetVerbNames();
 
     /// <summary>Public load-schema accessor. Returns the embedded SWML
     /// schema as a Dictionary&lt;string, JsonElement&gt;. Empty dict
-    /// when the schema can't be loaded. (equivalent to Python's
-    /// ``SchemaUtils.load_schema``.)</summary>
+    /// when the schema can't be loaded.
+    /// </summary>
     [SuppressMessage("Performance", "CA1822", Justification = "Instance accessor matching the cross-port surface (Python SchemaUtils.load_schema); kept non-static so callers reach it via Schema.Instance.")]
     public Dictionary<string, JsonElement> LoadSchemaPublic()
     {
@@ -166,8 +165,8 @@ public sealed class Schema
 
     /// <summary>Get the parameter (property) definitions for a verb.
     /// Returns an empty dict when the verb is unknown or has no
-    /// ``properties``. (equivalent to Python's
-    /// ``SchemaUtils.get_verb_parameters(verb_name)``.)</summary>
+    /// ``properties``.
+    /// </summary>
     public Dictionary<string, JsonElement> GetVerbParameters(string verbName)
     {
         var verb = GetVerb(verbName);
@@ -189,8 +188,7 @@ public sealed class Schema
     /// Returns ``(true, [])`` on success or ``(false, [errors...])`` on
     /// failure. Lightweight verb-presence check — full JSON-Schema
     /// validation is out of scope for the bundled SDK.
-    /// (equivalent to Python's
-    /// ``SchemaUtils.validate_document(document) -> (bool, list)``.)</summary>
+    /// </summary>
     public (bool Valid, List<string> Errors) ValidateDocument(Dictionary<string, object> document)
     {
         var errors = new List<string>();
@@ -227,17 +225,16 @@ public sealed class Schema
     // ------------------------------------------------------------------
 
     /// <summary>True when the full JSON-Schema validator is wired up (the
-    /// embedded schema compiled). (equivalent to Python's
-    /// ``SchemaUtils.full_validation_available``.)</summary>
+    /// embedded schema compiled).
+    /// </summary>
     public bool FullValidationAvailable() => _fullValidator is not null;
 
     /// <summary>Get the ``properties`` object for a verb (its parameter
-    /// definitions). (equivalent to Python's ``get_verb_properties``.)</summary>
+    /// definitions).</summary>
     public Dictionary<string, JsonElement> GetVerbProperties(string verbName)
         => GetVerbParameters(verbName);
 
-    /// <summary>Get the list of required property names for a verb.
-    /// (equivalent to Python's ``get_verb_required_properties``.)</summary>
+    /// <summary>Get the list of required property names for a verb.</summary>
     public IReadOnlyList<string> GetVerbRequiredProperties(string verbName)
     {
         var verb = GetVerb(verbName);
@@ -259,7 +256,7 @@ public sealed class Schema
     /// rejected, not silently dropped (the STRICT-RENDER contract). Falls back
     /// to a lightweight required-property check when the validator failed to
     /// compile. Returns ``(true, [])`` on success else ``(false, [errors...])``.
-    /// (equivalent to Python's ``validate_verb``.)</summary>
+    /// </summary>
     public (bool Valid, List<string> Errors) ValidateVerb(
         string verbName, Dictionary<string, object?> verbConfig)
     {
@@ -336,8 +333,9 @@ public sealed class Schema
     /// prompt.pom for a promptless agent, SWAIG defaults/functions[].web_hook_url
     /// / __token), so the handler owns the deep shape and only stray top-level
     /// keys (e.g. ``temperatur`` / ``zzz``) are caught here. A no-op when the
-    /// verb has no enumerable closed key-set. (equivalent to Python's
-    /// ``validate_verb_top_level_keys``.)</summary>
+    /// verb genuinely has no enumerable closed key-set (an open object such as
+    /// ``set``, or a union with no object branch such as ``unset``).
+    /// </summary>
     public (bool Valid, List<string> Errors) ValidateVerbTopLevelKeys(
         string verbName, Dictionary<string, object?> verbConfig)
     {
@@ -366,10 +364,11 @@ public sealed class Schema
     }
 
     /// <summary>Resolve the set of KNOWN top-level property names for a verb's
-    /// config object, following a single ``$ref`` (e.g. ai -> AIObject). Returns
-    /// null when the verb's config schema is not a CLOSED object-with-properties
-    /// (no enumerable known-key set, so no shallow check applies). Mirrors
-    /// Python's ``_verb_top_level_property_names``.</summary>
+    /// config object, following a single ``$ref`` (e.g. ai -> AIObject) and
+    /// UNIONING the branches of an ``anyOf``/``oneOf`` union. Returns null only
+    /// when there is genuinely no enumerable closed key-set (so no shallow check
+    /// applies).
+    /// </summary>
     private HashSet<string>? VerbTopLevelPropertyNames(string verbName)
     {
         var verb = GetVerb(verbName);
@@ -382,8 +381,46 @@ public sealed class Schema
             return null;
         }
 
-        // Follow a single $ref (ai -> AIObject) to the object that declares the
-        // verb config's own properties.
+        return ClosedKeySet(body, 0);
+    }
+
+    /// <summary>Bounds ``$ref``/union following so a self-referential ``$ref``
+    /// cannot spin the resolver. Eight is well past anything the SWML schema
+    /// needs (verb body -&gt; $ref -&gt; union branch -&gt; $ref).</summary>
+    private const int MaxSchemaResolveDepth = 8;
+
+    /// <summary>Resolve ONE schema node to the set of top-level property names it
+    /// closes over, or null when it has no such enumerable closed key-set.
+    ///
+    /// <para>Three node shapes are handled, and the union case is the one that
+    /// matters:</para>
+    /// <list type="bullet">
+    /// <item><c>$ref</c> — followed into <c>$defs</c> and resolved recursively
+    /// (ai -&gt; AIObject).</item>
+    /// <item><c>anyOf</c>/<c>oneOf</c> — resolved BRANCH BY BRANCH and UNIONED.
+    /// Without this the resolver bailed on the first <c>type != "object"</c>
+    /// test, because a union node carries no <c>type</c> of its own. That bail
+    /// silently DISENGAGED the closed-key check: ValidateVerbTopLevelKeys reads
+    /// null as "nothing to enforce" and reports Valid for any key whatsoever.
+    /// Five verbs in the shipped schema are union-shaped — connect, play,
+    /// send_sms, sleep, unset — so the check was doing nothing for all of them.
+    /// A union's known-key set is the union of its object branches' keys: a
+    /// config satisfying the union satisfies SOME branch, so a key belonging to
+    /// no branch belongs to no valid document. Non-object branches (sleep's bare
+    /// <c>integer</c>, SWMLVar) contribute no keys and are skipped — they
+    /// constrain the config to not be an object at all, a different question
+    /// from which keys an object config may carry.</item>
+    /// <item>a plain closed object — its own <c>properties</c>.</item>
+    /// </list>
+    /// </summary>
+    private HashSet<string>? ClosedKeySet(JsonElement body, int depth)
+    {
+        if (body.ValueKind != JsonValueKind.Object || depth > MaxSchemaResolveDepth)
+        {
+            return null;
+        }
+
+        // Follow a $ref (ai -> AIObject) to the node that declares the properties.
         if (body.TryGetProperty("$ref", out var refProp) && refProp.ValueKind == JsonValueKind.String)
         {
             var refValue = refProp.GetString()!;
@@ -395,9 +432,39 @@ public sealed class Schema
                 return null;
             }
             // Re-read the resolved def as a JsonElement for uniform handling.
+            // Clone() detaches it from refDoc, which is disposed on return.
             var refJson = refBody.ToJsonString();
             using var refDoc = JsonDocument.Parse(refJson);
-            body = refDoc.RootElement.Clone();
+            return ClosedKeySet(refDoc.RootElement.Clone(), depth + 1);
+        }
+
+        // A union node: resolve every branch and union the ones that yield a set.
+        JsonElement? union0 = null;
+        if (body.TryGetProperty("anyOf", out var anyOfEl) && anyOfEl.ValueKind == JsonValueKind.Array)
+        {
+            union0 = anyOfEl;
+        }
+        else if (body.TryGetProperty("oneOf", out var oneOfEl) && oneOfEl.ValueKind == JsonValueKind.Array)
+        {
+            union0 = oneOfEl;
+        }
+        if (union0 is JsonElement branches)
+        {
+            var union = new HashSet<string>();
+            var found = false;
+            foreach (var branch in branches.EnumerateArray())
+            {
+                var keys = ClosedKeySet(branch, depth + 1);
+                if (keys is null)
+                {
+                    continue;
+                }
+                found = true;
+                union.UnionWith(keys);
+            }
+            // No branch is a closed object (e.g. unset: string | array-of-string).
+            // There is no key-set to enforce; the deep validator owns this shape.
+            return found ? union : null;
         }
 
         if (!body.TryGetProperty("type", out var typeProp)
@@ -465,7 +532,15 @@ public sealed class Schema
             using var reader = new StreamReader(stream);
             var text = reader.ReadToEnd();
             _schemaRoot = JsonNode.Parse(text);
-            return JsonSchema.FromText(text);
+
+            // Relax every x-sdk-widen-marked field BEFORE compiling, so the
+            // validator is built already-widened. Doing it here (rather than
+            // per-validation) means every consumer of _fullValidator gets the
+            // same relaxed contract, and it costs nothing per request.
+            var widened = JsonNode.Parse(text);
+            var relaxed = ApplySdkWiden(widened);
+            return JsonSchema.FromText(
+                (relaxed > 0 ? widened : JsonNode.Parse(text))!.ToJsonString());
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or IOException)
         {
@@ -473,8 +548,121 @@ public sealed class Schema
         }
     }
 
+    /// <summary>
+    /// The schema-extension key marking a field whose const-union/enum is a
+    /// HINT, not a closed set. Held as a constant so the literal never has to
+    /// appear in a doc comment (where it would read as internal jargon).
+    /// </summary>
+    private const string WidenKey = "x-sdk-widen";
+
+    /// <summary>
+    /// Relax every field the schema marks as open-valued, in place.
+    ///
+    /// <para>The marked field lists a few known values as a convenience, but the
+    /// platform accepts ANY value of the underlying base type. Enforcing the
+    /// listed set would reject documents the platform happily runs — the
+    /// failure direction nobody looks for, because a too-strict validator looks
+    /// like a working validator until a legitimate value shows up.</para>
+    ///
+    /// <para>Widening drops the value-constraining keywords
+    /// (<c>anyOf</c>/<c>oneOf</c>/<c>enum</c>/<c>const</c>) and <b>sets</b> the
+    /// base type recovered from the branches it removed. Recovering the type is
+    /// load-bearing, not cosmetic: the one marked field today declares no
+    /// <c>type</c> of its own, so simply deleting its branches would leave a
+    /// schema that accepts a number or an object where only a string belongs.
+    /// The <c>type</c> keyword is never stripped.</para>
+    /// </summary>
+    /// <returns>How many fields were relaxed.</returns>
+    private static int ApplySdkWiden(JsonNode? node)
+    {
+        var count = 0;
+        switch (node)
+        {
+            case JsonArray arr:
+                foreach (var item in arr)
+                {
+                    count += ApplySdkWiden(item);
+                }
+                break;
+
+            case JsonObject obj:
+                if (obj.TryGetPropertyValue(WidenKey, out var marker)
+                    && marker is JsonValue mv
+                    && mv.TryGetValue<bool>(out var on)
+                    && on)
+                {
+                    var baseType = RecoverBaseType(obj);
+                    foreach (var key in new[] { "anyOf", "oneOf", "enum", "const" })
+                    {
+                        obj.Remove(key);
+                    }
+                    if (baseType is not null && !obj.ContainsKey("type"))
+                    {
+                        obj["type"] = baseType;
+                    }
+                    count++;
+                }
+
+                // Recurse into whatever survives (nested marked fields, and the
+                // rest of the tree).
+                foreach (var key in obj.Select(kvp => kvp.Key).ToList())
+                {
+                    count += ApplySdkWiden(obj[key]);
+                }
+                break;
+
+            default:
+                break;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// Recover the base type a widened field's removed branches all shared —
+    /// an own <c>type</c> if it has one, else the single <c>type</c> every
+    /// <c>anyOf</c>/<c>oneOf</c> branch agreed on. Returns null when the
+    /// branches disagree (nothing safe to assert) so the field is left
+    /// unconstrained rather than wrongly narrowed.
+    /// </summary>
+    private static string? RecoverBaseType(JsonObject obj)
+    {
+        if (obj.TryGetPropertyValue("type", out var own)
+            && own is JsonValue ov && ov.TryGetValue<string>(out var ownType))
+        {
+            return ownType;
+        }
+
+        string? recovered = null;
+        foreach (var key in new[] { "anyOf", "oneOf" })
+        {
+            if (!obj.TryGetPropertyValue(key, out var branches) || branches is not JsonArray list)
+            {
+                continue;
+            }
+            foreach (var branch in list)
+            {
+                if (branch is not JsonObject bo
+                    || !bo.TryGetPropertyValue("type", out var bt)
+                    || bt is not JsonValue bv
+                    || !bv.TryGetValue<string>(out var branchType))
+                {
+                    return null;
+                }
+                if (recovered is null)
+                {
+                    recovered = branchType;
+                }
+                else if (recovered != branchType)
+                {
+                    return null;
+                }
+            }
+        }
+        return recovered;
+    }
+
     /// <summary>Generate a C#/pseudocode method signature for a verb (used by
-    /// codegen/tooling). (equivalent to Python's ``generate_method_signature``.)</summary>
+    /// codegen/tooling).</summary>
     public string GenerateMethodSignature(string verbName)
     {
         var parameters = string.Join(", ",
@@ -482,8 +670,7 @@ public sealed class Schema
         return $"public void {verbName}({parameters})";
     }
 
-    /// <summary>Generate a method-body stub that adds the verb to the document.
-    /// (equivalent to Python's ``generate_method_body``.)</summary>
+    /// <summary>Generate a method-body stub that adds the verb to the document.</summary>
     public string GenerateMethodBody(string verbName)
     {
         var keys = GetVerbParameters(verbName).Keys.ToList();

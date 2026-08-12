@@ -58,6 +58,26 @@ internal static class HistoryModes
 
 // -- GatherQuestion --
 
+/// <summary>
+/// One question in a step's <c>gather_info</c> block — the unit the runtime
+/// asks the caller, then records under <see cref="Key"/>.
+///
+/// <para>Constructed from an options dictionary rather than positional
+/// parameters, matching the reference's keyword-argument shape.
+/// <c>key</c> and <c>question</c> are required and throw if absent;
+/// <c>type</c>, <c>confirm</c>, <c>prompt</c>, <c>functions</c>, and
+/// <c>isolated</c> are optional.</para>
+///
+/// <para><b>Wire shape:</b> <see cref="ToDict"/> emits only the keys that
+/// carry information — <c>type</c> is omitted when it is the default
+/// <c>"string"</c>, <c>confirm</c> only when true, empty
+/// <c>functions</c> is dropped. <c>isolated</c> is the exception: it is
+/// emitted whenever set, <b>including when false</b>, because false is
+/// the only way a question can opt out of an isolated gather's
+/// default.</para>
+///
+/// <para>Instances are immutable once constructed.</para>
+/// </summary>
 public class GatherQuestion
 {
     private readonly string _key;
@@ -83,28 +103,22 @@ public class GatherQuestion
 
     public string Key => _key;
 
-    /// <summary>The question text put to the caller.
-    /// (equivalent to Python's <c>question</c>.)</summary>
+    /// <summary>The question text put to the caller.</summary>
     public string Question => _question;
 
-    /// <summary>The answer's expected type, defaulting to <c>"string"</c>.
-    /// (equivalent to Python's <c>type</c>.)</summary>
+    /// <summary>The answer's expected type, defaulting to <c>"string"</c>.</summary>
     public string Type => _type;
 
-    /// <summary>Whether the answer must be confirmed back to the caller.
-    /// (equivalent to Python's <c>confirm</c>.)</summary>
+    /// <summary>Whether the answer must be confirmed back to the caller.</summary>
     public bool Confirm => _confirm;
 
-    /// <summary>An optional prompt override for this question.
-    /// (equivalent to Python's <c>prompt</c>.)</summary>
+    /// <summary>An optional prompt override for this question.</summary>
     public string? Prompt => _prompt;
 
-    /// <summary>The SWAIG functions reachable while answering this question.
-    /// (equivalent to Python's <c>functions</c>.)</summary>
+    /// <summary>The SWAIG functions reachable while answering this question.</summary>
     public IReadOnlyList<string>? Functions => _functions;
 
-    /// <summary>Tri-state isolation: null inherits the gather_info default.
-    /// (equivalent to Python's <c>isolated</c>.)</summary>
+    /// <summary>Tri-state isolation: null inherits the gather_info default.</summary>
     public bool? Isolated => _isolated;
 
     public Dictionary<string, object> ToDict()
@@ -126,6 +140,27 @@ public class GatherQuestion
 
 // -- GatherInfo --
 
+/// <summary>
+/// A step's <c>gather_info</c> block — an ordered list of
+/// <see cref="GatherQuestion"/>s the runtime works through one at a time,
+/// plus the settings that govern the gather as a whole.
+///
+/// <para><c>outputKey</c> names where the collected answers are stored,
+/// <c>completionAction</c> is what the runtime does once every question is
+/// answered, and <c>prompt</c> overrides the instructions injected while
+/// gathering. <c>isolated</c> is the <b>default</b> for the questions in
+/// this gather — when true a question is asked with its sibling Q&amp;A
+/// hidden from the model, forcing it to ask rather than infer; a
+/// question's own <c>isolated</c> overrides it.</para>
+///
+/// <para>While a gather is active the runtime deactivates the step's other
+/// functions — see <see cref="Step.AddGatherQuestion"/> for the full
+/// tool-access consequences.</para>
+///
+/// <para><b>Wire shape:</b> <see cref="ToDict"/> always emits
+/// <c>questions</c> (possibly empty) and omits every optional setting that
+/// is unset; <c>isolated</c> is emitted only when true.</para>
+/// </summary>
 public class GatherInfo
 {
     private readonly List<GatherQuestion> _questions = [];
@@ -167,6 +202,32 @@ public class GatherInfo
 
 // -- Step --
 
+/// <summary>
+/// One step of a <see cref="Context"/>'s flow: the instructions injected
+/// while the step is active, the criteria for moving on, which tools and
+/// destinations are reachable from it, and any information to gather.
+///
+/// <para>Every setter returns <c>this</c> for fluent chaining. Steps are
+/// created through <see cref="Context.AddStep"/>, which owns their ordering.</para>
+///
+/// <para><b>Text is exclusive-or POM sections.</b> A step's instructions
+/// come either from <see cref="SetText"/> or from
+/// <see cref="AddSection"/>/<see cref="AddBullets"/>, never both — mixing
+/// them throws <see cref="InvalidOperationException"/>. Use
+/// <see cref="ClearSections"/> to drop both and start over. A step with
+/// neither throws when it is serialized, not when it is built.</para>
+///
+/// <para><b>Two behaviours that surprise people</b> are documented on the
+/// members themselves: <see cref="SetFunctions(IReadOnlyList{string})"/> —
+/// an unset function list is <i>inherited</i> from the previous step rather
+/// than reset — and <see cref="SetEnd"/>, which exits step mode without
+/// ending the call.</para>
+///
+/// <para><b>Wire shape:</b> <see cref="ToDict"/> always emits <c>name</c>
+/// and the rendered <c>text</c>; boolean flags appear only when true; the
+/// four <c>reset*</c> settings are folded into a single nested
+/// <c>reset</c> object that is omitted entirely when empty.</para>
+/// </summary>
 public class Step
 {
     private readonly string _name;
@@ -235,9 +296,9 @@ public class Step
     /// server-side runtime only resets the active set when a step
     /// explicitly declares its <c>functions</c> field. This is the most
     /// common source of bugs in multi-step agents: forgetting
-    /// <see cref="SetFunctions"/> on a later step lets the previous step's
+    /// <see cref="SetFunctions(IReadOnlyList{string})"/> on a later step lets the previous step's
     /// tools leak through. Best practice is to call
-    /// <see cref="SetFunctions"/> explicitly on every step that should
+    /// <see cref="SetFunctions(IReadOnlyList{string})"/> explicitly on every step that should
     /// differ from the previous one.</para>
     ///
     /// <para>Keep the per-step active set small: LLM tool selection
@@ -262,7 +323,22 @@ public class Step
     /// <item>The string <c>"none"</c> — synonym for the empty list.</item>
     /// </list>
     /// </param>
-    public Step SetFunctions(object functions) { _functions = functions; return this; }
+    public Step SetFunctions(IReadOnlyList<string> functions)
+    {
+        ArgumentNullException.ThrowIfNull(functions);
+        _functions = functions;
+        return this;
+    }
+
+    /// <inheritdoc cref="SetFunctions(IReadOnlyList{string})"/>
+    /// <remarks>The string arm of the reference's <c>str | list[str]</c>; the only
+    /// meaningful value is <c>"none"</c>, a synonym for the empty list.</remarks>
+    public Step SetFunctions(string functions)
+    {
+        ArgumentNullException.ThrowIfNull(functions);
+        _functions = functions;
+        return this;
+    }
 
     public Step SetValidSteps(IReadOnlyList<string> steps) { _validSteps = steps; return this; }
     public Step SetValidContexts(IReadOnlyList<string> contexts) { _validContexts = contexts; return this; }
@@ -432,6 +508,41 @@ public class Step
 
 // -- Context --
 
+/// <summary>
+/// A named phase of an agent workflow: an ordered set of
+/// <see cref="Step"/>s plus the prompts, reset behaviour, and navigation
+/// rules that apply while the context is active. Contexts are created
+/// through <see cref="ContextBuilder"/>; only one is active at a time.
+///
+/// <para>Every setter returns <c>this</c> for fluent chaining.</para>
+///
+/// <para><b>Step management.</b> <see cref="AddStep"/> appends a step and
+/// returns it for further configuration; it throws on a duplicate name and
+/// enforces a cap of 100 steps per context. <see cref="RemoveStep"/> is a
+/// no-op for an unknown name, whereas <see cref="MoveStep"/> throws.
+/// Ordering is tracked separately from the step map, so
+/// <see cref="GetStepOrder"/> — not <see cref="GetSteps"/> — is what
+/// determines execution order and serialization order.</para>
+///
+/// <para><b>Text is exclusive-or POM sections</b>, independently for each
+/// of the two prompts: <see cref="SetPrompt"/> conflicts with
+/// <see cref="AddSection"/>/<see cref="AddBullets"/>, and
+/// <see cref="SetSystemPrompt"/> conflicts with
+/// <see cref="AddSystemSection"/>/<see cref="AddSystemBullets"/>. Mixing
+/// either pair throws <see cref="InvalidOperationException"/>. When
+/// sections are present they are rendered to a markdown string, so both
+/// forms reach the wire as a plain string under the same key.</para>
+///
+/// <para><b>Context-level defaults.</b> <see cref="SetHistory"/> sets the
+/// default visibility mode for this context's steps, which a step's own
+/// <see cref="Step.SetHistory"/> overrides. <see cref="SetIsolated"/>
+/// wipes conversation history on entry — but is superseded by a reset
+/// configuration; see that member for the exception.</para>
+///
+/// <para><b>Wire shape:</b> <see cref="ToDict"/> always emits
+/// <c>steps</c> (in <see cref="GetStepOrder"/> order); every other key is
+/// omitted when unset, and the booleans appear only when true.</para>
+/// </summary>
 public class Context
 {
     private const int MaxStepsPerContext = 100;
@@ -475,7 +586,13 @@ public class Context
         {
             if (opts.TryGetValue("text", out var t)) step.SetText((string)t);
             if (opts.TryGetValue("step_criteria", out var sc)) step.SetStepCriteria((string)sc);
-            if (opts.TryGetValue("functions", out var f)) step.SetFunctions(f);
+            if (opts.TryGetValue("functions", out var f))
+            {
+                // The reference's `str | list[str]` union: dispatch to the matching
+                // overload rather than erasing both arms back to `object`.
+                if (f is string fs) step.SetFunctions(fs);
+                else step.SetFunctions((IReadOnlyList<string>)f);
+            }
             if (opts.TryGetValue("valid_steps", out var vs)) step.SetValidSteps((List<string>)vs);
             if (opts.TryGetValue("valid_contexts", out var vc)) step.SetValidContexts((List<string>)vc);
         }
@@ -719,11 +836,11 @@ public class Context
 /// agent that defines a SWAIG tool with one of them. See
 /// <see cref="ReservedToolNames.Reserved"/>.</para>
 ///
-/// <para><b>Function whitelisting (<see cref="Step.SetFunctions"/>):</b>
+/// <para><b>Function whitelisting (<see cref="Step.SetFunctions(IReadOnlyList{string})"/>):</b>
 /// Each step may declare a functions whitelist. The whitelist is applied
 /// in-memory at the start of each LLM turn. CRITICALLY: if a step does
 /// NOT declare a functions field, it INHERITS the previous step's active
-/// set. See <see cref="Step.SetFunctions"/> for details and examples.</para>
+/// set. See <see cref="Step.SetFunctions(IReadOnlyList{string})"/> for details and examples.</para>
 /// </summary>
 public class ContextBuilder
 {
@@ -1009,7 +1126,7 @@ public class ContextBuilder
         return result;
     }
 
-    public static ContextBuilder CreateSimpleContext(string name)
+    public static ContextBuilder CreateSimpleContext(string name = "default")
     {
         var builder = new ContextBuilder();
         builder.AddContext(name);

@@ -70,7 +70,7 @@ public class DependencyInjectionTests
     [Fact]
     public async Task AddSignalWire_TransportComesFromIHttpClientFactory()
     {
-        var handler = new CannedHandler();
+        using var handler = new CannedHandler();
         var services = new ServiceCollection();
         services.AddSignalWire(o =>
         {
@@ -97,7 +97,7 @@ public class DependencyInjectionTests
     [Fact]
     public async Task RestClient_CtorOverload_UsesInjectedHttpClient()
     {
-        var handler = new CannedHandler();
+        using var handler = new CannedHandler();
         using var injected = new System.Net.Http.HttpClient(handler);
 
         using var client = new RestClient(
@@ -114,7 +114,7 @@ public class DependencyInjectionTests
     [Fact]
     public void RestClient_Dispose_LeavesInjectedHttpClientUsable()
     {
-        var handler = new CannedHandler();
+        using var handler = new CannedHandler();
         using var injected = new System.Net.Http.HttpClient(handler);
 
         var client = new RestClient("proj", "tok", "space.signalwire.com", injected);

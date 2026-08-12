@@ -156,7 +156,7 @@ public class SwmlHandlerTests
         });
 
         Assert.False(valid);
-        Assert.Contains(errors, e => e.Contains("mutually exclusive"));
+        Assert.Contains(errors, e => e.Contains("mutually exclusive", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -219,7 +219,7 @@ public class SwmlVerbHandlerRegistryTests
         public override string GetVerbName() => "custom";
         public override (bool IsValid, List<string> Errors) ValidateConfig(
             Dictionary<string, object?> config) => (true, new List<string>());
-        public override Dictionary<string, object?> BuildConfig(Dictionary<string, object?> kwargs) =>
+        public override Dictionary<string, object?> BuildConfig(Dictionary<string, object?>? kwargs = null) =>
             new();
     }
 }

@@ -44,6 +44,7 @@ Usage:
     python3 scripts/generate_rest_tests.py           # (re)write the test files
     python3 scripts/generate_rest_tests.py --check   # GEN-FRESH: fail if stale
 """
+
 from __future__ import annotations
 
 import argparse
@@ -64,6 +65,7 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------------------
 # Resolution.
 # ---------------------------------------------------------------------------
+
 
 def resolve_porting_sdk() -> Path:
     env = os.environ.get("PORTING_SDK")
@@ -88,6 +90,7 @@ def repo_root() -> Path:
 #    rest-test-plan.sh: per-route call plan (chain, member, typed args) +
 #    captured (method, path_template) off the GENERATED ResourceTree.
 # ---------------------------------------------------------------------------
+
 
 def load_plan() -> list[dict]:
     proc = subprocess.run(
@@ -115,7 +118,8 @@ def load_plan() -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# 2. The join — plan routes × spec operationIds by (method, normalized-path).
+# 2. The join — the cross product of plan routes and spec operationIds,
+#    keyed by (method, normalized-path).
 # ---------------------------------------------------------------------------
 
 _BRACE = re.compile(r"\{[^}]+\}")
@@ -135,28 +139,28 @@ def wire_key(p: str) -> str:
 def spec_prefix(doc: dict) -> str:
     url = ((doc.get("servers") or [{}])[0]).get("url", "")
     i = url.find("signalwire.com")
-    return url[i + len("signalwire.com"):] if i >= 0 else ""
+    return url[i + len("signalwire.com") :] if i >= 0 else ""
 
 
 def spec_dirs_with_openapi(psdk: Path) -> list[str]:
     root = psdk / "rest-apis"
     out = [
-        d.name
-        for d in root.iterdir()
-        if d.is_dir() and (d / "openapi.yaml").is_file()
+        d.name for d in root.iterdir() if d.is_dir() and (d / "openapi.yaml").is_file()
     ]
     return sorted(out)
 
 
-def build_join(plan: list[dict], psdk: Path, spec_dirs: list[str]) -> tuple[list[dict], list[str]]:
+def build_join(
+    plan: list[dict], psdk: Path, spec_dirs: list[str]
+) -> tuple[list[dict], list[str]]:
     """Return (rows, unmatched). One row per plan entry that has a spec op.
 
     Row: {method, path, op_id (<spec>.<operationId>), spec, chain, member, args}.
     The op_id is the longest-template collision winner the mock actually
     journals (RULES §7).
     """
-    op_by: dict[str, str] = {}          # "METHOD normPath" -> <spec>.<operationId>
-    wire_winner: dict[str, tuple[int, str]] = {}   # "METHOD wireKey" -> (len, route)
+    op_by: dict[str, str] = {}  # "METHOD normPath" -> <spec>.<operationId>
+    wire_winner: dict[str, tuple[int, str]] = {}  # "METHOD wireKey" -> (len, route)
     verbs = ("get", "post", "put", "patch", "delete")
 
     for spec in spec_dirs:
@@ -195,15 +199,17 @@ def build_join(plan: list[dict], psdk: Path, spec_dirs: list[str]) -> tuple[list
             continue
         op_id = winner[1]
         spec = op_id[: op_id.index(".")]
-        rows.append({
-            "method": method,
-            "path": np,
-            "op_id": op_id,
-            "spec": spec,
-            "chain": r["chain"],
-            "member": r["member"],
-            "args": r["args"],
-        })
+        rows.append(
+            {
+                "method": method,
+                "path": np,
+                "op_id": op_id,
+                "spec": spec,
+                "chain": r["chain"],
+                "member": r["member"],
+                "args": r["args"],
+            }
+        )
     return rows, unmatched
 
 
@@ -211,9 +217,12 @@ def build_join(plan: list[dict], psdk: Path, spec_dirs: list[str]) -> tuple[list
 # 3. Emit — one tests/RestMock/Generated/<Spec>GeneratedTest.cs per spec ns.
 # ---------------------------------------------------------------------------
 
+
 def pascal_spec(spec: str) -> str:
     """spec dir name → PascalCase class-name fragment (relay-rest → RelayRest)."""
-    return "".join(part[:1].upper() + part[1:] for part in re.split(r"[-_]", spec) if part)
+    return "".join(
+        part[:1].upper() + part[1:] for part in re.split(r"[-_]", spec) if part
+    )
 
 
 def method_ident(chain: list[str], member: str) -> str:
@@ -317,6 +326,7 @@ def emit_spec_file(spec: str, rows: list[dict]) -> str:
 # Driver.
 # ---------------------------------------------------------------------------
 
+
 def build_outputs(psdk: Path) -> tuple[dict[str, str], list[str], int]:
     """Return ({filename: source}, unmatched, n_routes_covered)."""
     plan = load_plan()
@@ -349,14 +359,20 @@ def build_outputs(psdk: Path) -> tuple[dict[str, str], list[str], int]:
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--check", action="store_true", help="GEN-FRESH: exit non-zero if stale")
+    ap.add_argument(
+        "--check", action="store_true", help="GEN-FRESH: exit non-zero if stale"
+    )
     ap.add_argument("--out", default="", help="scratch: emit into this dir")
     args = ap.parse_args(argv)
 
     psdk = resolve_porting_sdk()
     outs, unmatched, n_covered = build_outputs(psdk)
 
-    out_dir = Path(args.out) if args.out else (repo_root() / "tests" / "RestMock" / "Generated")
+    out_dir = (
+        Path(args.out)
+        if args.out
+        else (repo_root() / "tests" / "RestMock" / "Generated")
+    )
 
     if unmatched:
         sys.stderr.write(
@@ -373,11 +389,15 @@ def main(argv: list[str]) -> int:
                 stale.append(str(p))
         expected = set(outs.keys())
         if out_dir.is_dir():
-            for p in sorted(out_dir.glob("*.cs")):
-                if p.name not in expected:
-                    stale.append(f"{p} (leftover — not in generator output)")
+            stale.extend(
+                f"{p} (leftover — not in generator output)"
+                for p in sorted(out_dir.glob("*.cs"))
+                if p.name not in expected
+            )
         if stale:
-            sys.stderr.write("GEN-FRESH FAIL: %d generated REST test file(s) stale:\n" % len(stale))
+            sys.stderr.write(
+                f"GEN-FRESH FAIL: {len(stale)} generated REST test file(s) stale:\n"
+            )
             for s in stale:
                 sys.stderr.write(f"  - {s}\n")
             return 1

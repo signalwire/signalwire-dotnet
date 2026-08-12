@@ -1,19 +1,20 @@
 // SWML Service Example
 //
-// Demonstrates the SWMLService class for building and serving
+// Demonstrates the SignalWire.SWML.Service class for building and serving
 // raw SWML documents without an AI agent.
 
 using SignalWire.SWML;
 
-var service = new SWMLService(
-    name:  "simple-swml",
-    route: "/simple",
-    host:  "0.0.0.0",
-    port:  3000
-);
+var service = new Service(new ServiceOptions
+{
+    Name = "simple-swml",
+    Route = "/simple",
+    Host = "0.0.0.0",
+    Port = 3000,
+});
 
 // Build a simple SWML document
-service.AddAnswerVerb();
+service.AddVerb("answer", new Dictionary<string, object>());
 
 service.AddVerb("play", new Dictionary<string, object>
 {
@@ -22,10 +23,10 @@ service.AddVerb("play", new Dictionary<string, object>
 
 service.AddVerb("prompt", new Dictionary<string, object>
 {
-    ["play"]           = "say:Press 1 for hours, 2 for directions, or 3 to speak with someone.",
-    ["max_digits"]     = 1,
-    ["terminators"]    = "#",
-    ["digit_timeout"]  = 5.0,
+    ["play"] = "say:Press 1 for hours, 2 for directions, or 3 to speak with someone.",
+    ["max_digits"] = 1,
+    ["terminators"] = "#",
+    ["digit_timeout"] = 5.0,
 });
 
 service.AddVerb("switch", new Dictionary<string, object>

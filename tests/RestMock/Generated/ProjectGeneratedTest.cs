@@ -49,7 +49,7 @@ public class ProjectGeneratedTest : CoverageBase
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Project.Tokens.CreateAsync("x", new List<object>());
+        var body = await tree.Project.Tokens.CreateAsync("x", new List<object?>());
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
@@ -62,7 +62,7 @@ public class ProjectGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("project.create_token", 500,
-            () => tree.Project.Tokens.CreateAsync("x", new List<object>()));
+            () => tree.Project.Tokens.CreateAsync("x", new List<object?>()));
         Assert.Equal(500, status);
     }
 

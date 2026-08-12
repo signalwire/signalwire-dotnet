@@ -20,8 +20,11 @@ namespace SignalWire.Tests;
 /// capability gap these tests pin.</para>
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class AgentConstructionForwardingTests : IDisposable
+public sealed class AgentConstructionForwardingTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] ExampleTestArray = new[] { "example.test" };
+    private static readonly string[] CheckTimeWaitArray = new[] { "check_time", "wait_seconds" };
     private readonly string _tempDir;
 
     public AgentConstructionForwardingTests()
@@ -209,7 +212,7 @@ public class AgentConstructionForwardingTests : IDisposable
     {
         var path = WriteConfig(new
         {
-            security = new { allowed_hosts = new[] { "example.test" } },
+            security = new { allowed_hosts = ExampleTestArray },
         });
         var agent = new AgentBase(new AgentOptions { Name = "sec", ConfigFile = path });
         Assert.Contains("example.test", agent.Security.AllowedHosts);
@@ -266,12 +269,12 @@ public class AgentConstructionForwardingTests : IDisposable
         var agent = new AgentBase(new AgentOptions
         {
             Name = "nf",
-            NativeFunctions = new[] { "check_time", "wait_seconds" },
+            NativeFunctions = CheckTimeWaitArray,
         });
         agent.SetPromptText("hi");
 
         var native = RenderedNativeFunctions(agent);
-        Assert.Equal(new[] { "check_time", "wait_seconds" }, native);
+        Assert.Equal(CheckTimeWaitArray, native);
     }
 
     [Fact]

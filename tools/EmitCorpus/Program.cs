@@ -326,14 +326,20 @@ foreach (var (id, build) in corpus)
     output[id] = build().ToDict();
 }
 
-var jsonOptions = new JsonSerializerOptions
+Console.WriteLine(JsonSerializer.Serialize(output, EmitCorpusJson.Options));
+return 0;
+
+
+/// <summary>Serializer options, cached in a static so they are allocated once
+/// (CA1869) rather than per invocation.</summary>
+internal static class EmitCorpusJson
 {
     // Keep '+' / '&' / '<' / '>' literal so the JSON matches Python's json.dumps
     // output character-for-character (the differ parses both sides anyway, but
     // this avoids surprising \uXXXX escapes in the dump for human inspection).
-    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    WriteIndented = false,
-};
-
-Console.WriteLine(JsonSerializer.Serialize(output, jsonOptions));
-return 0;
+    public static readonly JsonSerializerOptions Options = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        WriteIndented = false,
+    };
+}

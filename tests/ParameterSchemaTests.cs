@@ -22,8 +22,10 @@ namespace SignalWire.Tests;
 ///       function's <c>argument.properties</c>; the function also dispatches.
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class ParameterSchemaTests : IDisposable
+public sealed class ParameterSchemaTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] ServiceDateArray = new[] { "service", "date" };
     public ParameterSchemaTests()
     {
         Logger.Reset();
@@ -61,12 +63,12 @@ public class ParameterSchemaTests : IDisposable
         if (main is List<Dictionary<string, object?>> typedList)
         {
             foreach (var verb in typedList)
-                if (verb.ContainsKey("ai")) return (Dictionary<string, object>)verb["ai"]!;
+                if (verb.TryGetValue("ai", out var aiVal)) return (Dictionary<string, object>)aiVal!;
         }
         else if (main is List<Dictionary<string, object>> untypedList)
         {
             foreach (var verb in untypedList)
-                if (verb.ContainsKey("ai")) return (Dictionary<string, object>)verb["ai"];
+                if (verb.TryGetValue("ai", out var aiVal)) return (Dictionary<string, object>)aiVal!;
         }
         throw new InvalidOperationException("AI verb not found in rendered SWML");
     }
@@ -92,7 +94,8 @@ public class ParameterSchemaTests : IDisposable
                     sb.Append("null");
                     break;
                 case string s:
-                    sb.Append('"').Append(s.Replace("\\", "\\\\").Replace("\"", "\\\"")).Append('"');
+                    sb.Append('"').Append(s.Replace("\\", "\\\\", StringComparison.Ordinal)
+                        .Replace("\"", "\\\"", StringComparison.Ordinal)).Append('"');
                     break;
                 case bool b:
                     sb.Append(b ? "true" : "false");
@@ -233,7 +236,7 @@ public class ParameterSchemaTests : IDisposable
         Assert.False(((Dictionary<string, object>)built["count"]).ContainsKey("required"));
 
         // And the top-level required-array form is available for DataMap-style callers.
-        Assert.Equal(new[] { "service", "date" }, ParameterSchema.Create()
+        Assert.Equal(ServiceDateArray, ParameterSchema.Create()
             .String("service", "The service")
             .Integer("count", "How many")
             .Number("ratio", "A ratio", defaultValue: 1.5)

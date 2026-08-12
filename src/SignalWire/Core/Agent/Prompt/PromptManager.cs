@@ -15,8 +15,7 @@ namespace SignalWire.Core.Agent.Prompt;
 /// Manages prompt building and configuration for an agent.
 /// </summary>
 /// <remarks>
-/// Mirrors the Python reference <c>signalwire.core.agent.prompt.manager.PromptManager</c>
-/// and the Ruby <c>SignalWire::Core::Agent::Prompt::PromptManager</c>. It manages a
+/// Manages a
 /// POM-backed prompt (via <see cref="PromptObjectModel"/>), an optional raw prompt
 /// text, a post-prompt, and a contexts configuration (via <see cref="ContextBuilder"/>).
 /// <para>
@@ -31,11 +30,11 @@ public class PromptManager
     private string? _postPromptText;
     private Dictionary<string, object>? _contexts;
 
-    /// <summary>The backing Prompt Object Model. (equivalent to Python's <c>manager.pom</c>.)</summary>
+    /// <summary>The backing Prompt Object Model.</summary>
     internal PromptObjectModel Pom { get; private set; }
 
     /// <summary>
-    /// Create a prompt manager. (equivalent to Python's <c>__init__(agent=None)</c>.)
+    /// Create a prompt manager.
     /// </summary>
     /// <param name="agent">Optional parent AgentBase instance, kept as a
     /// back-reference for consistency with the Python/Ruby managers; may be null for
@@ -54,11 +53,11 @@ public class PromptManager
     }
 
     /// <summary>The parent agent this manager belongs to, or null when built
-    /// standalone. (equivalent to Python's <c>agent</c>.)</summary>
+    /// standalone.</summary>
     public object? Agent { get; }
 
     /// <summary>
-    /// Set the agent's prompt as raw text. (equivalent to Python's <c>set_prompt_text</c>.)
+    /// Set the agent's prompt as raw text.
     /// </summary>
     /// <exception cref="InvalidOperationException">If POM sections are already in use.</exception>
     public PromptManager SetPromptText(string text)
@@ -68,7 +67,7 @@ public class PromptManager
         return this;
     }
 
-    /// <summary>Set the post-prompt text. (equivalent to Python's <c>set_post_prompt</c>.)</summary>
+    /// <summary>Set the post-prompt text.</summary>
     public PromptManager SetPostPrompt(string text)
     {
         _postPromptText = text;
@@ -77,7 +76,6 @@ public class PromptManager
 
     /// <summary>
     /// Set the prompt from a POM array (list of section dictionaries).
-    /// (equivalent to Python's <c>set_prompt_pom</c>.)
     /// </summary>
     public PromptManager SetPromptPom(IReadOnlyList<Dictionary<string, object>> pom)
     {
@@ -88,7 +86,7 @@ public class PromptManager
     }
 
     /// <summary>
-    /// Add a section to the prompt. (equivalent to Python's <c>prompt_add_section</c>.)
+    /// Add a section to the prompt.
     /// </summary>
     /// <exception cref="InvalidOperationException">If raw prompt text is already in use.</exception>
     public PromptManager PromptAddSection(
@@ -109,7 +107,6 @@ public class PromptManager
 
     /// <summary>
     /// Add content to an existing section (creating it if needed).
-    /// (equivalent to Python's <c>prompt_add_to_section</c>.)
     /// </summary>
     public PromptManager PromptAddToSection(
         string title,
@@ -125,7 +122,6 @@ public class PromptManager
 
     /// <summary>
     /// Add a subsection to an existing section (creating the parent if needed).
-    /// (equivalent to Python's <c>prompt_add_subsection</c>.)
     /// </summary>
     public PromptManager PromptAddSubsection(
         string parentTitle,
@@ -140,7 +136,6 @@ public class PromptManager
 
     /// <summary>
     /// Check whether a section exists in the prompt.
-    /// (equivalent to Python's <c>prompt_has_section</c>.)
     /// </summary>
     public bool PromptHasSection(string title)
     {
@@ -150,7 +145,6 @@ public class PromptManager
     /// <summary>
     /// Define contexts for the agent. Accepts a <see cref="ContextBuilder"/>
     /// (materialised via <c>ToDict</c>) or a raw dictionary.
-    /// (equivalent to Python's <c>define_contexts</c>.)
     /// </summary>
     /// <exception cref="ArgumentException">If not a ContextBuilder or dictionary.</exception>
     public PromptManager DefineContexts(object contexts)
@@ -168,7 +162,7 @@ public class PromptManager
     /// <summary>
     /// Get the prompt configuration. Contexts take precedence (return null — they
     /// render their own sections); otherwise raw text if set, else the POM section
-    /// array, else null. (equivalent to Python's <c>get_prompt</c>.)
+    /// array, else null.
     /// </summary>
     /// <returns>A string, a list of section dictionaries, or null.</returns>
     public object? GetPrompt()
@@ -185,15 +179,15 @@ public class PromptManager
         return sections.Count == 0 ? null : sections;
     }
 
-    /// <summary>Get the raw prompt text if set. (equivalent to Python's <c>get_raw_prompt</c>.)</summary>
+    /// <summary>Get the raw prompt text if set.</summary>
     [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface.")]
     public string? GetRawPrompt() => _promptText;
 
-    /// <summary>Get the post-prompt text. (equivalent to Python's <c>get_post_prompt</c>.)</summary>
+    /// <summary>Get the post-prompt text.</summary>
     [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface.")]
     public string? GetPostPrompt() => _postPromptText;
 
-    /// <summary>Get the contexts configuration. (equivalent to Python's <c>get_contexts</c>.)</summary>
+    /// <summary>Get the contexts configuration.</summary>
     [SuppressMessage("Design", "CA1024", Justification = "get_* accessor matches the cross-port surface.")]
     public Dictionary<string, object>? GetContexts() => _contexts;
 

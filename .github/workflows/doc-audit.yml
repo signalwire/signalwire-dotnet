@@ -64,8 +64,48 @@ jobs:
 
       - name: Audit doc / example references
         working-directory: signalwire-dotnet
+        # --native-names is NOT optional. port_surface.json holds the CANONICAL
+        # (python-oracle, snake_case, Async-stripped) surface so SURFACE-DIFF compares
+        # equal to the reference; the docs and examples reference the REAL C# members
+        # (`call.AnswerAsync()`, `map.ForEach(...)`), which only the native sidecar the
+        # enumerator emits alongside can resolve. Omitting the flag made every folded
+        # member unresolvable and blamed the DOCS for the enumerator's own translation:
+        # measured 2026-08-04, `ForEach` (a genuine public DataMap method, present in
+        # the sidecar) failed the gate as a phantom API, plus 258 report-only refs. With
+        # the flag: 0 report-only, and only true externals remain. This is the same
+        # check-bug class audit_docs.py's own load_native_names() docstring records for
+        # java on 2026-07-25 (4 members present in its sidecar the whole time).
+        #
+        # CORRECTION to the FLEET FINDING in commit 2e78d71's message: that message
+        # claimed go, java, perl, ruby and typescript "omit --native-names" and would
+        # therefore mis-blame their docs. THAT CLAIM IS FALSE. It was derived by
+        # GREPPING the other ports' workflows for the flag instead of RUNNING their
+        # gate. Re-measured 2026-08-04 by invoking audit_docs.py with each port's own
+        # workflow arguments: all five exit 0, with 0 blocking and 0 report-only.
+        #
+        # The flag is not a fleet-wide requirement — it is the remedy for ONE of two
+        # architectures, and which architecture a port has is decided by WHICH SURFACE
+        # FILE its workflow feeds the audit, not by whether a sidecar file exists:
+        #
+        #   two-surface (canonical --surface + native --native-names):
+        #       dotnet, php, rust, cpp, python
+        #     The --surface file is canonicalised (snake_case, Async-stripped) for
+        #     SURFACE-DIFF, so the docs' real member names resolve only via the sidecar.
+        #     These ports NEED the flag; dotnet's omission was a genuine bug.
+        #
+        #   one native surface (--surface is ALREADY native):
+        #       go, java, perl, ruby, typescript
+        #     Their docs' spelling IS their surface's spelling, so there is nothing to
+        #     translate and no sidecar is needed. The flag would be a no-op.
+        #
+        # java is the case that makes "does it ship a sidecar?" the WRONG test: it DOES
+        # ship port_surface_native.json and DOES omit --native-names, yet is correct,
+        # because it passes that native file directly as `--surface`. Go likewise passes
+        # a natively-spelled port_surface_go.json. Judge by the surface argument, and
+        # confirm by running the gate — a grep for the flag cannot tell these apart.
         run: |
           python3 ${{ github.workspace }}/porting-sdk/scripts/audit_docs.py \
               --root . \
               --surface port_surface.json \
+              --native-names port_surface_native.json \
               --ignore DOC_AUDIT_IGNORE.md

@@ -34,7 +34,6 @@ public class Action
     /// <see cref="CallId"/>, so the call is resolved through the client's live
     /// call registry rather than a second stored reference that could dangle
     /// after the call ends. Null only if the call is no longer registered.
-    /// (equivalent to Python's <c>call</c>.)
     /// </summary>
     public Call? Call =>
         Client is Client c && c.Calls.TryGetValue(CallId, out var call) ? call : null;
@@ -59,12 +58,21 @@ public class Action
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Await until the action completes or the timeout elapses.
-    /// Returns the resolved result, or null on timeout.
+    /// Await until the action completes, or until <paramref name="timeout"/>
+    /// seconds elapse. Mirrors the reference
+    /// <c>Action.wait(timeout: float | None = None)</c>: with no timeout the
+    /// wait is unbounded and resolves with the terminal event; with a timeout a
+    /// timed-out wait returns null WITHOUT poisoning the action, so a later
+    /// wait still returns the terminal result once it arrives.
     /// </summary>
-    public async Task<object?> WaitAsync(int timeoutSeconds = 30)
+    public async Task<object?> WaitAsync(double? timeout = null)
     {
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+        if (timeout is null)
+        {
+            return await _tcs.Task.ConfigureAwait(false);
+        }
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout.Value));
 
         try
         {
@@ -362,8 +370,8 @@ public class CollectAction : Action
 
 /// <summary>
 /// Handle for standalone calling.collect operations (a collect without an
-/// accompanying play prompt). Mirrors the Python reference
-/// <c>StandaloneCollectAction</c> in <c>signalwire.relay.call</c>: same shape as
+/// accompanying play prompt).
+/// Same shape as
 /// <see cref="CollectAction"/> but always uses the plain <c>collect</c> command
 /// prefix (never <c>play_and_collect</c>).
 /// </summary>

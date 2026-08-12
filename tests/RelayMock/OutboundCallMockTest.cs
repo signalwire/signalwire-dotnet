@@ -22,6 +22,8 @@ namespace SignalWire.Tests.RelayMock;
 [Trait("Category", "RelayMock")]
 public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] CreatedRingingAnsweredArray = new[] { "created", "ringing", "answered" };
     private readonly RelayMockServerFixture _fixture;
 
     public OutboundCallMockTest(RelayMockServerFixture fixture)
@@ -33,7 +35,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
+        MockServerFixture.SkipNote("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
         return true;
     }
 
@@ -53,7 +55,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
             },
         };
 
-    private void ArmDial(
+    private static void ArmDial(
         RelayMockTest.Bound bound,
         string tag,
         string winnerCallId,
@@ -79,10 +81,10 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         bound.Harness.Scenarios.ArmDial(body);
     }
 
-    private async Task<RelayMockTest.Bound> ConnectedClient()
+    private static async Task<RelayMockTest.Bound> ConnectedClient()
     {
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
-        await bound.Client.ConnectAsync();
+        var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
+        await bound.Client.ConnectAsync().ConfigureAwait(false);
         return bound;
     }
 
@@ -98,7 +100,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             ArmDial(bound, tag: "t-happy", winnerCallId: "winner-1",
-                states: new[] { "created", "ringing", "answered" });
+                states: CreatedRingingAnsweredArray);
 
             var call = await bound.Client.DialAsync(new()
             {
@@ -131,7 +133,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             ArmDial(bound, tag: "t-typed-state", winnerCallId: "typed-winner",
-                states: new[] { "created", "ringing", "answered" });
+                states: CreatedRingingAnsweredArray);
 
             var call = await bound.Client.DialAsync(new()
             {
@@ -164,7 +166,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-typed-dev", "typed-dev-winner", new[] { "created", "answered" });
+            ArmDial(bound, "t-typed-dev", "typed-dev-winner", RelayMockTest.CreatedAnswered);
 
             var device = new Device("phone", new Dictionary<string, object?>
             {
@@ -200,7 +202,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-frame", "winner-frame", new[] { "created", "answered" });
+            ArmDial(bound, "t-frame", "winner-frame", RelayMockTest.CreatedAnswered);
 
             await bound.Client.DialAsync(new()
             {
@@ -228,7 +230,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-md", "winner-md", new[] { "created", "answered" });
+            ArmDial(bound, "t-md", "winner-md", RelayMockTest.CreatedAnswered);
 
             await bound.Client.DialAsync(new()
             {
@@ -269,7 +271,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
                             seenTag = t.GetString();
                         break;
                     }
-                    await Task.Delay(10);
+                    await Task.Delay(10).ConfigureAwait(false);
                 }
                 if (seenTag is null) return;
                 bound.Harness.Push(new Dictionary<string, object?>
@@ -333,7 +335,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
                 for (int i = 0; i < 200; i++)
                 {
                     if (bound.Harness.Journal.Recv("calling.dial").Count > 0) break;
-                    await Task.Delay(10);
+                    await Task.Delay(10).ConfigureAwait(false);
                 }
                 bound.Harness.Push(new Dictionary<string, object?>
                 {
@@ -400,18 +402,18 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-winner", "WIN-ID", new[] { "created", "answered" },
+            ArmDial(bound, "t-winner", "WIN-ID", RelayMockTest.CreatedAnswered,
                 losers: new List<Dictionary<string, object?>>
                 {
                     new()
                     {
                         ["call_id"] = "LOSE-A",
-                        ["states"] = new[] { "created", "ended" }.ToList(),
+                        ["states"] = RelayMockTest.CreatedEnded.ToList(),
                     },
                     new()
                     {
                         ["call_id"] = "LOSE-B",
-                        ["states"] = new[] { "created", "ended" }.ToList(),
+                        ["states"] = RelayMockTest.CreatedEnded.ToList(),
                     },
                 });
             var call = await bound.Client.DialAsync(new()
@@ -456,13 +458,13 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-losers", "WIN-2", new[] { "created", "answered" },
+            ArmDial(bound, "t-losers", "WIN-2", RelayMockTest.CreatedAnswered,
                 losers: new List<Dictionary<string, object?>>
                 {
                     new()
                     {
                         ["call_id"] = "L1",
-                        ["states"] = new[] { "created", "ended" }.ToList(),
+                        ["states"] = RelayMockTest.CreatedEnded.ToList(),
                     },
                 });
             await bound.Client.DialAsync(new()
@@ -499,13 +501,13 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-cleanup", "WIN-CL", new[] { "created", "answered" },
+            ArmDial(bound, "t-cleanup", "WIN-CL", RelayMockTest.CreatedAnswered,
                 losers: new List<Dictionary<string, object?>>
                 {
                     new()
                     {
                         ["call_id"] = "LOSE-CL",
-                        ["states"] = new[] { "created", "ended" }.ToList(),
+                        ["states"] = RelayMockTest.CreatedEnded.ToList(),
                     },
                 });
             var call = await bound.Client.DialAsync(new()
@@ -534,7 +536,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-serial", "WIN-SER", new[] { "created", "answered" });
+            ArmDial(bound, "t-serial", "WIN-SER", RelayMockTest.CreatedAnswered);
             var devs = new List<List<Dictionary<string, object?>>>
             {
                 new()
@@ -568,7 +570,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-par", "WIN-PAR", new[] { "created", "answered" });
+            ArmDial(bound, "t-par", "WIN-PAR", RelayMockTest.CreatedAnswered);
             var devs = new List<List<Dictionary<string, object?>>>
             {
                 new() { PhoneDevice(to: "+15551110001") },
@@ -599,7 +601,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             ArmDial(bound, "t-prog", "WIN-PROG",
-                new[] { "created", "ringing", "answered" });
+                CreatedRingingAnsweredArray);
             var call = await bound.Client.DialAsync(new()
             {
                 ["devices"] = new List<List<Dictionary<string, object?>>>
@@ -641,7 +643,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-after", "WIN-AFTER", new[] { "created", "answered" });
+            ArmDial(bound, "t-after", "WIN-AFTER", RelayMockTest.CreatedAnswered);
             var call = await bound.Client.DialAsync(new()
             {
                 ["devices"] = new List<List<Dictionary<string, object?>>>
@@ -667,7 +669,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-play", "WIN-PLAY", new[] { "created", "answered" });
+            ArmDial(bound, "t-play", "WIN-PLAY", RelayMockTest.CreatedAnswered);
             var call = await bound.Client.DialAsync(new()
             {
                 ["devices"] = new List<List<Dictionary<string, object?>>>
@@ -708,7 +710,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "my-very-explicit-tag-99", "WIN-T", new[] { "created", "answered" });
+            ArmDial(bound, "my-very-explicit-tag-99", "WIN-T", RelayMockTest.CreatedAnswered);
             var call = await bound.Client.DialAsync(new()
             {
                 ["devices"] = new List<List<Dictionary<string, object?>>>
@@ -732,7 +734,7 @@ public class OutboundCallMockTest : IClassFixture<RelayMockServerFixture>
         using var bound = await ConnectedClient();
         try
         {
-            ArmDial(bound, "t-rpc", "W", new[] { "created", "answered" }, nodeId: "n");
+            ArmDial(bound, "t-rpc", "W", RelayMockTest.CreatedAnswered, nodeId: "n");
             await bound.Client.DialAsync(new()
             {
                 ["devices"] = new List<List<Dictionary<string, object?>>>

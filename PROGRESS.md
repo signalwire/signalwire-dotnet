@@ -52,7 +52,7 @@ The purpose of tests, examples, and docs is to **prove** complete implementation
 - [x] HMAC-SHA256 token creation (functionName:callID:expiry, signed, base64)
 - [x] Token validation (timing-safe comparison, expiry check)
 - [x] Random 32-byte secret per manager — fail hard if entropy unavailable
-- [x] Default expiry: 3600 seconds
+- [x] Default expiry: 900 seconds (15 minutes, matching the reference)
 - [x] Tests: token round-trip, wrong function/callID rejected, expired rejected, tampered rejected
 
 ### DataMap

@@ -48,7 +48,7 @@ public static class TlsHarness
     /// </summary>
     public static int FreeTcpPort()
     {
-        var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
         l.Start();
         try
         {
@@ -94,10 +94,14 @@ public static class TlsHarness
                 proc.WaitForExit(30_000);
                 if (proc.ExitCode != 0) return null;
             }
+#pragma warning disable CA1031 // A spawn helper returns null on ANY failure so the
+            // TLS tests skip cleanly when the mock cannot start; narrowing it would let an
+            // unexpected failure abort the class instead.
             catch
             {
                 return null;
             }
+#pragma warning restore CA1031
 
             var certs = Path.Combine(tlsDir, "certs");
             if (!File.Exists(Path.Combine(certs, "ca.crt"))
@@ -154,12 +158,14 @@ public static class TlsHarness
     /// <see cref="System.Net.Http.HttpClientHandler.ServerCertificateCustomValidationCallback"/>
     /// and <see cref="System.Net.WebSockets.ClientWebSocketOptions.RemoteCertificateValidationCallback"/>.
     /// </summary>
-    public sealed class ChainValidator
+    internal sealed class ChainValidator
     {
         private readonly X509Certificate2 _ca;
         public ChainValidator(X509Certificate2 ca) => _ca = ca;
 
         /// <summary>RemoteCertificateValidationCallback-shaped delegate.</summary>
+#pragma warning disable CA1822 // bound as a DELEGATE TARGET on an instance; static
+        // breaks the call sites (proven: CS0176).
         public bool Validate(object sender, X509Certificate? cert, X509Chain? chain, SslPolicyErrors errors)
             => Validate(cert);
 
@@ -190,7 +196,7 @@ public static class TlsHarness
     }
 
     /// <summary>Build a <see cref="ChainValidator"/> trusting the test CA.</summary>
-    public static ChainValidator Validator() => new(LoadCa());
+    internal static ChainValidator Validator() => new(LoadCa());
 
     /// <summary>
     /// A validator anchored on an EMPTY custom trust store. Every server cert is
@@ -200,7 +206,7 @@ public static class TlsHarness
     /// <c>ServerCertificateCustomValidationCallback</c>-shaped, matching
     /// <see cref="ChainValidator"/>.
     /// </summary>
-    public sealed class RejectingValidator
+    internal sealed class RejectingValidator
     {
         /// <summary>RemoteCertificateValidationCallback-shaped delegate.</summary>
         public bool Validate(object sender, X509Certificate? cert, X509Chain? chain, SslPolicyErrors errors)
@@ -225,7 +231,7 @@ public static class TlsHarness
     }
 
     /// <summary>A validator that rejects every server cert (empty trust store).</summary>
-    public static RejectingValidator UntrustedValidator() => new();
+    internal static RejectingValidator UntrustedValidator() => new();
 
     private static X509Certificate2 LoadFromRaw(byte[] raw)
     {
@@ -241,7 +247,7 @@ public static class TlsHarness
     // =====================================================================
 
     /// <summary>A running <c>mock_signalwire --tls</c> (HTTPS) on a dedicated port.</summary>
-    public sealed class TlsMockSignalwire : IDisposable
+    internal sealed class TlsMockSignalwire : IDisposable
     {
         public int Port { get; }
         public string BaseUrl { get; }
@@ -254,12 +260,14 @@ public static class TlsHarness
         }
         public void Dispose()
         {
-            try { if (!_proc.HasExited) _proc.Kill(true); } catch { /* best effort */ }
+            try { if (!_proc.HasExited) _proc.Kill(true); }
+            catch (InvalidOperationException) { /* already exited */ }
+            catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         }
     }
 
     /// <summary>A running <c>mock_relay --tls</c> (WSS) on dedicated ports.</summary>
-    public sealed class TlsMockRelay : IDisposable
+    internal sealed class TlsMockRelay : IDisposable
     {
         public int WsPort { get; }
         public int HttpPort { get; }
@@ -277,7 +285,9 @@ public static class TlsHarness
         }
         public void Dispose()
         {
-            try { if (!_proc.HasExited) _proc.Kill(true); } catch { /* best effort */ }
+            try { if (!_proc.HasExited) _proc.Kill(true); }
+            catch (InvalidOperationException) { /* already exited */ }
+            catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         }
     }
 
@@ -287,14 +297,17 @@ public static class TlsHarness
     /// bind-release port-steal race the RELAY overload guards against (see its
     /// remarks). Returns the bound port via <paramref name="port"/>.
     /// </summary>
-    public static TlsMockSignalwire? StartTlsMockSignalwire(
+    internal static TlsMockSignalwire? StartTlsMockSignalwire(
         System.Net.Http.HttpClient trustingClient, out int port, int attempts = 4)
     {
         port = 0;
         for (var i = 0; i < attempts; i++)
         {
             var p = FreeTcpPort();
+            // Ownership TRANSFERS to the caller / the returned handle, which owns teardown.
+#pragma warning disable CA2000
             var mock = StartTlsMockSignalwire(p, trustingClient);
+#pragma warning restore CA2000
             if (mock is not null)
             {
                 port = p;
@@ -312,7 +325,7 @@ public static class TlsHarness
     /// the retrying <see cref="StartTlsMockSignalwire(System.Net.Http.HttpClient, out int, int)"/>
     /// overload for tests.
     /// </summary>
-    public static TlsMockSignalwire? StartTlsMockSignalwire(int port, System.Net.Http.HttpClient trustingClient)
+    internal static TlsMockSignalwire? StartTlsMockSignalwire(int port, System.Net.Http.HttpClient trustingClient)
     {
         var pkgDir = MockTest.DiscoverPortingSdkPackage("mock_signalwire");
         if (pkgDir is null) return null;
@@ -324,13 +337,16 @@ public static class TlsHarness
         psi.ArgumentList.Add("--host");
         psi.ArgumentList.Add("127.0.0.1");
         psi.ArgumentList.Add("--port");
-        psi.ArgumentList.Add(port.ToString());
+        psi.ArgumentList.Add(port.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--tls");
         psi.ArgumentList.Add("--log-level");
         psi.ArgumentList.Add("error");
         psi.Environment["SIGNALWIRE_MOCK_TLS"] = "1";
 
+        // Ownership TRANSFERS to the caller / the returned handle, which owns teardown.
+#pragma warning disable CA2000
         var proc = StartDrained(psi);
+#pragma warning restore CA2000
         if (proc is null) return null;
 
         // mock_signalwire has a ~15s cold start (loads 13 OpenAPI specs).
@@ -340,17 +356,20 @@ public static class TlsHarness
             if (proc.HasExited) return null;
             try
             {
-                var resp = trustingClient.GetAsync(baseUrl + "/__mock__/health")
+                var resp = trustingClient.GetAsync(new Uri(baseUrl + "/__mock__/health"))
                     .GetAwaiter().GetResult();
                 if (resp.IsSuccessStatusCode)
                 {
                     return new TlsMockSignalwire(port, baseUrl, proc);
                 }
             }
-            catch { /* not ready / handshake racing startup */ }
+            catch (System.Net.Http.HttpRequestException) { /* not ready / handshake racing startup */ }
+            catch (TaskCanceledException) { /* probe timeout */ }
             Thread.Sleep(250);
         }
-        try { proc.Kill(true); } catch { }
+        try { proc.Kill(true); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         return null;
     }
 
@@ -374,7 +393,7 @@ public static class TlsHarness
     /// </summary>
     /// <param name="wsPort">bound WS port of the started mock (out)</param>
     /// <param name="httpPort">bound HTTP control-plane port (out)</param>
-    public static TlsMockRelay? StartTlsMockRelay(out int wsPort, out int httpPort, int attempts = 4)
+    internal static TlsMockRelay? StartTlsMockRelay(out int wsPort, out int httpPort, int attempts = 4)
     {
         wsPort = 0;
         httpPort = 0;
@@ -382,7 +401,10 @@ public static class TlsHarness
         {
             var ws = FreeTcpPort();
             var http = FreeTcpPort();
+            // Ownership TRANSFERS to the caller / the returned handle, which owns teardown.
+#pragma warning disable CA2000
             var mock = StartTlsMockRelay(ws, http);
+#pragma warning restore CA2000
             if (mock is not null)
             {
                 wsPort = ws;
@@ -402,7 +424,7 @@ public static class TlsHarness
     /// Prefer the retrying <see cref="StartTlsMockRelay(out int, out int, int)"/>
     /// overload for tests — it removes the port-steal race.
     /// </summary>
-    public static TlsMockRelay? StartTlsMockRelay(int wsPort, int httpPort)
+    internal static TlsMockRelay? StartTlsMockRelay(int wsPort, int httpPort)
     {
         var pkgDir = MockTest.DiscoverPortingSdkPackage("mock_relay");
         if (pkgDir is null) return null;
@@ -414,15 +436,18 @@ public static class TlsHarness
         psi.ArgumentList.Add("--host");
         psi.ArgumentList.Add("127.0.0.1");
         psi.ArgumentList.Add("--ws-port");
-        psi.ArgumentList.Add(wsPort.ToString());
+        psi.ArgumentList.Add(wsPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--http-port");
-        psi.ArgumentList.Add(httpPort.ToString());
+        psi.ArgumentList.Add(httpPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--tls");
         psi.ArgumentList.Add("--log-level");
         psi.ArgumentList.Add("error");
         psi.Environment["SIGNALWIRE_MOCK_TLS"] = "1";
 
+        // Ownership TRANSFERS to the caller / the returned handle, which owns teardown.
+#pragma warning disable CA2000
         var proc = StartDrained(psi);
+#pragma warning restore CA2000
         if (proc is null) return null;
 
         using var probe = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(2) };
@@ -432,16 +457,20 @@ public static class TlsHarness
             if (proc.HasExited) return null;
             try
             {
-                var resp = probe.GetAsync(httpUrl + "/__mock__/health").GetAwaiter().GetResult();
+                var resp = probe.GetAsync(new Uri(httpUrl + "/__mock__/health")).GetAwaiter().GetResult();
                 if (resp.IsSuccessStatusCode)
                 {
                     return new TlsMockRelay(wsPort, httpPort, httpUrl, proc);
                 }
             }
-            catch { /* not ready */ }
+            catch (System.Net.WebSockets.WebSocketException) { /* not ready */ }
+            catch (System.Net.Http.HttpRequestException) { /* not ready */ }
+            catch (TaskCanceledException) { /* probe timeout */ }
             Thread.Sleep(200);
         }
-        try { proc.Kill(true); } catch { }
+        try { proc.Kill(true); }
+        catch (InvalidOperationException) { /* already exited */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         return null;
     }
 
@@ -480,23 +509,28 @@ public static class TlsHarness
             proc.BeginErrorReadLine();
             return proc;
         }
+#pragma warning disable CA1031 // A spawn helper returns null on ANY failure so the
+        // TLS tests skip cleanly when the mock cannot start; narrowing it would let an
+        // unexpected failure abort the class instead.
         catch
         {
             return null;
         }
+#pragma warning restore CA1031
     }
 
     private static string? DiscoverTlsDir()
     {
         var anchors = new List<string>();
-        try { anchors.Add(AppContext.BaseDirectory); } catch { }
+        try { anchors.Add(AppContext.BaseDirectory); }
+        catch (InvalidOperationException) { /* no base dir in this host */ }
         anchors.Add(Environment.CurrentDirectory);
 
         foreach (var anchor in anchors)
         {
             if (string.IsNullOrEmpty(anchor)) continue;
             var dir = new DirectoryInfo(Path.GetFullPath(anchor));
-            while (dir is not null)
+            while (true)
             {
                 var parent = dir.Parent;
                 if (parent is null) break;

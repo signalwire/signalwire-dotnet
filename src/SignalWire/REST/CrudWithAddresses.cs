@@ -21,9 +21,7 @@ public class CrudWithAddresses<TList, TItem> : CrudResource<TList, TItem>
     public CrudWithAddresses(HttpClient http, string basePath)
         : base(http, basePath) { }
 
-    /// <summary>List the addresses sub-collection for a given resource.
-    /// (equivalent to Python's
-    /// ``CrudWithAddresses.list_addresses(resource_id, **params)``.)</summary>
+    /// <summary>List the addresses sub-collection for a given resource.</summary>
     public virtual Task<Dictionary<string, object?>> ListAddressesAsync(
         string resourceId,
         Dictionary<string, string>? queryParams = null)

@@ -25,6 +25,8 @@ namespace SignalWire.Tests.RelayMock;
 [Trait("Category", "RelayMock")]
 public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] C1Array = new[] { "c1" };
     private readonly RelayMockServerFixture _fixture;
 
     public DisposeAsyncMockTest(RelayMockServerFixture fixture)
@@ -36,7 +38,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
+        MockServerFixture.SkipNote("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
         return true;
     }
 
@@ -49,7 +51,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
     {
         if (Skipped()) return;
 
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         var client = bound.Client;
 
         await client.ConnectAsync();
@@ -90,9 +92,10 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
 
         // Keep the Bound (not just .Client) — it carries the session scope the assertions
         // below need. `await using` still drives DisposeAsync on the client itself.
-        var bound = RelayMockTest.NewClient(contexts: new[] { "c1" });
+        using var bound = RelayMockTest.NewClient(contexts: C1Array);
         HashSet<string> mine;
-        await using (var client = bound.Client)
+        var client = bound.Client;
+        await using (client.ConfigureAwait(false))
         {
             await client.ConnectAsync();
             Assert.True(client.Connected);
@@ -116,6 +119,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         if (Skipped()) return;
 
         var client = RelayMockTest.NewClient().Client;
+        await using var clientScope = client.ConfigureAwait(false);
         await client.ConnectAsync();
 
         // Before dispose: the internal WS and CTS are allocated.
@@ -139,6 +143,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         if (Skipped()) return;
 
         var client = RelayMockTest.NewClient().Client;
+        await using var clientScope = client.ConfigureAwait(false);
         await client.ConnectAsync();
 
         await client.DisposeAsync();
@@ -193,7 +198,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         {
             var now = SessionIds(bound);
             if (now.Count > 0) return now;
-            await Task.Delay(100);
+            await Task.Delay(100).ConfigureAwait(false);
         }
         return SessionIds(bound);
     }
@@ -213,7 +218,7 @@ public class DisposeAsyncMockTest : IClassFixture<RelayMockServerFixture>
         while (DateTime.UtcNow < deadline)
         {
             if (condition()) return true;
-            await Task.Delay(100);
+            await Task.Delay(100).ConfigureAwait(false);
         }
         return condition();
     }

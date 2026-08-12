@@ -33,12 +33,12 @@ var token = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN") ?? "";
 
 if (operation.Length == 0 || fixtureUrl.Length == 0)
 {
-    await Console.Error.WriteLineAsync("RestAuditHarness: REST_OPERATION and REST_FIXTURE_URL required.");
+    await Console.Error.WriteLineAsync("RestAuditHarness: REST_OPERATION and REST_FIXTURE_URL required.").ConfigureAwait(false);
     return 1;
 }
 if (projectId.Length == 0 || token.Length == 0)
 {
-    await Console.Error.WriteLineAsync("RestAuditHarness: SIGNALWIRE_PROJECT_ID and SIGNALWIRE_API_TOKEN required.");
+    await Console.Error.WriteLineAsync("RestAuditHarness: SIGNALWIRE_PROJECT_ID and SIGNALWIRE_API_TOKEN required.").ConfigureAwait(false);
     return 1;
 }
 
@@ -49,7 +49,7 @@ try
 }
 catch (JsonException)
 {
-    await Console.Error.WriteLineAsync("RestAuditHarness: REST_OPERATION_ARGS is not a JSON object.");
+    await Console.Error.WriteLineAsync("RestAuditHarness: REST_OPERATION_ARGS is not a JSON object.").ConfigureAwait(false);
     return 1;
 }
 
@@ -57,36 +57,43 @@ catch (JsonException)
 // don't want when pointing at a loopback fixture URL. Build the
 // HttpClient directly with the explicit fixture URL, then construct
 // CrudResource instances against it.
-SignalWire.REST.HttpClient http;
+SignalWire.REST.HttpClient? http = null;
 try
 {
     http = new SignalWire.REST.HttpClient(projectId, token, fixtureUrl);
 }
+#pragma warning disable CA1031 // A harness must report ANY construction failure as an
+// exit code + diagnostic, not an unhandled-exception dump.
 catch (Exception ex)
 {
-    await Console.Error.WriteLineAsync($"RestAuditHarness: client construction failed: {ex.Message}");
+    http?.Dispose();
+    await Console.Error.WriteLineAsync($"RestAuditHarness: client construction failed: {ex.Message}").ConfigureAwait(false);
     return 1;
 }
+#pragma warning restore CA1031
+using var httpScope = http;
 
 object? result;
 try
 {
     result = operation switch
     {
-        "phone_numbers.list"        => await new SignalWire.REST.CrudResource(http, "/api/relay/rest/phone_numbers").ListAsync(StringQuery(handlerArgs)),
-        "fabric.subscribers.list"   => await new SignalWire.REST.CrudResource(http, "/api/fabric/resources/subscribers").ListAsync(StringQuery(handlerArgs)),
+        "phone_numbers.list" => await new SignalWire.REST.CrudResource(http, "/api/relay/rest/phone_numbers").ListAsync(StringQuery(handlerArgs)).ConfigureAwait(false),
+        "fabric.subscribers.list" => await new SignalWire.REST.CrudResource(http, "/api/fabric/resources/subscribers").ListAsync(StringQuery(handlerArgs)).ConfigureAwait(false),
         _ => null,
     };
 }
+#pragma warning disable CA1031 // Same: the harness reports the failure and exits 1.
 catch (Exception ex)
 {
-    await Console.Error.WriteLineAsync($"RestAuditHarness: operation failed: {ex.Message}");
+    await Console.Error.WriteLineAsync($"RestAuditHarness: operation failed: {ex.Message}").ConfigureAwait(false);
     return 1;
 }
+#pragma warning restore CA1031
 
 if (result is null)
 {
-    await Console.Error.WriteLineAsync($"RestAuditHarness: unsupported operation '{operation}'");
+    await Console.Error.WriteLineAsync($"RestAuditHarness: unsupported operation '{operation}'").ConfigureAwait(false);
     return 2;
 }
 
@@ -104,15 +111,15 @@ static Dictionary<string, string> StringQuery(Dictionary<string, object?> args)
     {
         if (v is null) continue;
         if (v is string s) { q[k] = s; continue; }
-        if (v is bool b)   { q[k] = b ? "true" : "false"; continue; }
+        if (v is bool b) { q[k] = b ? "true" : "false"; continue; }
         if (v is JsonElement je)
         {
             q[k] = je.ValueKind switch
             {
                 JsonValueKind.String => je.GetString() ?? "",
                 JsonValueKind.Number => je.GetRawText(),
-                JsonValueKind.True   => "true",
-                JsonValueKind.False  => "false",
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
                 _ => je.GetRawText(),
             };
             continue;

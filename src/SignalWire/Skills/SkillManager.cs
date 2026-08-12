@@ -21,12 +21,11 @@ public sealed class SkillManager
         _logger = Logger.GetLogger("skill_manager");
     }
 
-    /// <summary>The agent whose skills this manager loads.
-    /// (equivalent to Python's <c>agent</c>, skill_manager.py:22.)</summary>
+    /// <summary>The agent whose skills this manager loads.</summary>
     public AgentBase Agent => _agent;
 
-    /// <summary>The skill_manager logger (equivalent to Python's
-    /// ``SkillManager.logger`` instance attribute).</summary>
+    /// <summary>The skill_manager logger
+    /// .</summary>
     public Logger Logger => _logger;
 
     /// <summary>

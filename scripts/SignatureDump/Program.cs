@@ -53,7 +53,7 @@ var asm = marker;
 
 var types = new JsonArray();
 foreach (var t in asm.GetExportedTypes()
-                     .Where(t => (t.Namespace ?? "").StartsWith("SignalWire"))
+                     .Where(t => (t.Namespace ?? "").StartsWith("SignalWire", StringComparison.Ordinal))
                      .OrderBy(t => t.FullName))
 {
     var typeObj = DumpType(t);
@@ -78,7 +78,7 @@ static JsonObject? DumpType(Type t)
         : "class";
 
     // Skip compiler-generated and obvious non-API types
-    if (t.Name.StartsWith("<") || t.Name.Contains("AnonymousType")) return null;
+    if (t.Name.StartsWith('<') || t.Name.Contains("AnonymousType", StringComparison.Ordinal)) return null;
 
     var typeObj = new JsonObject
     {
@@ -94,7 +94,7 @@ static JsonObject? DumpType(Type t)
     // `new CallStateEvent { EventType = …, CallState = … }` is legal, and
     // EventType is declared on the RelayEvent base. build_construction walks
     // this chain so a subclass's construction set includes what it inherits.
-    if (t.BaseType is { } bt && (bt.Namespace ?? "").StartsWith("SignalWire"))
+    if (t.BaseType is { } bt && (bt.Namespace ?? "").StartsWith("SignalWire", StringComparison.Ordinal))
     {
         typeObj["base_type"] = new JsonObject
         {
@@ -178,7 +178,21 @@ static JsonObject DumpMethod(MethodBase m, bool isCtor)
             ["is_optional"] = p.IsOptional,
             ["nullable"] = NullabilityOf(p),
         };
-        if (p.HasDefaultValue)
+        // C# CS1763 forbids a non-null compile-time default on a reference-typed
+        // parameter other than string, so a reference slot the Python reference
+        // types as a union with a non-null default (e.g.
+        // ``postal_code: bool | str = True``) MUST be declared ``object? x = null``
+        // and resolved inside the body (``x ??= true``). The semantic default is
+        // then declared with the BCL's [DefaultValue] attribute — the standard
+        // .NET mechanism for exactly this — and it is what the caller observes,
+        // so it is what the signature oracle records.
+        var semantic = p.GetCustomAttribute<System.ComponentModel.DefaultValueAttribute>();
+        if (semantic is not null)
+        {
+            paramObj["has_default"] = true;
+            paramObj["default"] = DefaultValueToJson(semantic.Value);
+        }
+        else if (p.HasDefaultValue)
         {
             paramObj["default"] = DefaultValueToJson(p.DefaultValue);
         }
@@ -207,8 +221,8 @@ static JsonObject DumpMethod(MethodBase m, bool isCtor)
 
 static string StripGenericArity(string name)
 {
-    var tick = name.IndexOf('`');
-    return tick < 0 ? name : name.Substring(0, tick);
+    var tick = name.IndexOf('`', StringComparison.Ordinal);
+    return tick < 0 ? name : name[..tick];
 }
 
 // Render a Type as a stable string name preserving generics in a form the

@@ -196,6 +196,9 @@ internal static class EnvelopeDump
                         artifact["status_code"] = e.StatusCode == 0 ? null : e.StatusCode;
                         artifact["body_error_code"] = DecodeBodyErrorCode(e.ResponseBody);
                     }
+#pragma warning disable CA1031 // The catch-all IS the assertion: this dump must
+                    // OBSERVE a leaked non-family exception in order to record it, so
+                    // narrowing the catch would delete the finding the gate looks for.
                     catch (Exception e)
                     {
                         // A leaked, non-family exception — the contract
@@ -203,6 +206,7 @@ internal static class EnvelopeDump
                         artifact["raised"] = true;
                         artifact["error_kind"] = "bare:" + e.GetType().Name;
                     }
+#pragma warning restore CA1031
                 }
 
                 artifact["request_count"] = await CountJournalHitsAsync(control, mockUrl, authHeader)
@@ -214,7 +218,10 @@ internal static class EnvelopeDump
         {
             if (ownProcess is not null)
             {
-                try { if (!ownProcess.HasExited) ownProcess.Kill(true); } catch { /* best effort */ }
+                try { if (!ownProcess.HasExited) ownProcess.Kill(true); }
+                catch (InvalidOperationException) { /* already gone */ }
+                catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+                ownProcess.Dispose();
             }
         }
 
@@ -228,7 +235,8 @@ internal static class EnvelopeDump
     private static async Task<long> CountJournalHitsAsync(
         System.Net.Http.HttpClient http, string mockUrl, string authHeader)
     {
-        var resp = await http.GetAsync(mockUrl + "/__mock__/journal").ConfigureAwait(false);
+        using var resp = await http.GetAsync(new Uri(mockUrl + "/__mock__/journal"))
+            .ConfigureAwait(false);
         var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var doc = JsonDocument.Parse(body);
         long count = 0;
@@ -283,7 +291,7 @@ internal static class EnvelopeDump
     /// — nothing listens there afterward (a real connection-refused).</summary>
     private static int DeadPort()
     {
-        var listener = new TcpListener(IPAddress.Loopback, 0);
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         try
         {

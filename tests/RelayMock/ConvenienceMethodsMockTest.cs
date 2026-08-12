@@ -37,7 +37,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
+        MockServerFixture.SkipNote("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
         return true;
     }
 
@@ -46,18 +46,18 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     // ------------------------------------------------------------------
 
     /// <summary>Spin up a client, take an inbound call, answer it, return bound.</summary>
-    private async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId)
+    private static async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId)
     {
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
-        await bound.Client.ConnectAsync();
-        await bound.Client.ReceiveAsync(new[] { "default" });
+        var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
+        await bound.Client.ConnectAsync().ConfigureAwait(false);
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts).ConfigureAwait(false);
 
         Call? captured = null;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        bound.Client.OnCall(async (call, evt) =>
+        bound.Client.OnCall(async call =>
         {
             captured = call;
-            await call.AnswerAsync();
+            await call.AnswerAsync().ConfigureAwait(false);
             done.TrySetResult();
         });
 
@@ -66,7 +66,7 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
             CallId = callId,
             AutoStates = new() { "created" },
         });
-        await done.Task.WaitAsync(RelayMockTest.EventTimeout);
+        await done.Task.WaitAsync(RelayMockTest.EventTimeout).ConfigureAwait(false);
         captured!.State = "answered";
         return bound;
     }
@@ -389,15 +389,15 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     public async Task WaitForAnswered_ResolvesWhenStateArrives()
     {
         if (Skipped()) return;
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         try
         {
             await bound.Client.ConnectAsync();
-            await bound.Client.ReceiveAsync(new[] { "default" });
+            await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
 
             Call? captured = null;
             var got = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall((call, evt) => { captured = call; got.TrySetResult(); return Task.CompletedTask; });
+            bound.Client.OnCall(call => { captured = call; got.TrySetResult(); return Task.CompletedTask; });
             bound.Harness.InboundCall(new RelayMockTest.InboundCallSpec
             {
                 CallId = "conv-wait-ans",
@@ -458,15 +458,15 @@ public class ConvenienceMethodsMockTest : IClassFixture<RelayMockServerFixture>
     public async Task WaitForEnding_ResolvesWhenEndingStateArrives()
     {
         if (Skipped()) return;
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
         try
         {
             await bound.Client.ConnectAsync();
-            await bound.Client.ReceiveAsync(new[] { "default" });
+            await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
 
             Call? captured = null;
             var got = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnCall((call, evt) => { captured = call; got.TrySetResult(); return Task.CompletedTask; });
+            bound.Client.OnCall(call => { captured = call; got.TrySetResult(); return Task.CompletedTask; });
             bound.Harness.InboundCall(new RelayMockTest.InboundCallSpec
             {
                 CallId = "conv-wait-end",

@@ -14,27 +14,24 @@ public class SurveyAgent : AgentBase
     private readonly string _surveyName;
     private readonly IReadOnlyList<Dictionary<string, object>> _surveyQuestions;
 
-    /// <summary>The survey's name. (equivalent to Python's <c>survey_name</c>.)</summary>
+    /// <summary>The survey's name.</summary>
     [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface: the property is the reference attribute (readback), the Get* method the pre-existing cross-port accessor.")]
     public string SurveyName => _surveyName;
 
-    /// <summary>The survey questions. (equivalent to Python's <c>questions</c>.)</summary>
+    /// <summary>The survey questions.</summary>
     public IReadOnlyList<Dictionary<string, object>> Questions => _surveyQuestions;
 
     /// <summary>The brand the survey agent represents, defaulting to
-    /// <c>"Our Company"</c>. (equivalent to Python's <c>brand_name</c>.)</summary>
+    /// <c>"Our Company"</c>.</summary>
     public string BrandName { get; }
 
-    /// <summary>How many times an invalid response may be retried.
-    /// (equivalent to Python's <c>max_retries</c>.)</summary>
+    /// <summary>How many times an invalid response may be retried.</summary>
     public int MaxRetries { get; }
 
-    /// <summary>The opening the agent is instructed to begin with.
-    /// (equivalent to Python's <c>introduction</c>.)</summary>
+    /// <summary>The opening the agent is instructed to begin with.</summary>
     public string Introduction { get; }
 
-    /// <summary>The closing the agent is instructed to end with.
-    /// (equivalent to Python's <c>conclusion</c>.)</summary>
+    /// <summary>The closing the agent is instructed to end with.</summary>
     public string Conclusion { get; }
 
     public SurveyAgent(
@@ -121,8 +118,7 @@ public class SurveyAgent : AgentBase
             LogResponse);
     }
 
-    /// <summary>SWAIG tool handler for the ``validate_response`` tool.
-    /// (equivalent to Python's ``SurveyAgent.validate_response``.)</summary>
+    /// <summary>SWAIG tool handler for the ``validate_response`` tool.</summary>
     [SuppressMessage("Globalization", "CA1308", Justification = "normalized lowercase preserves the existing yes/no response value verbatim")]
     public FunctionResult ValidateResponse(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
@@ -175,8 +171,7 @@ public class SurveyAgent : AgentBase
         }
     }
 
-    /// <summary>SWAIG tool handler for the ``log_response`` tool.
-    /// (equivalent to Python's ``SurveyAgent.log_response``.)</summary>
+    /// <summary>SWAIG tool handler for the ``log_response`` tool.</summary>
     [SuppressMessage("Performance", "CA1822", Justification = "instance method matches the cross-port SWAIG tool-handler surface")]
     public FunctionResult LogResponse(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {

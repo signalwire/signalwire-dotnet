@@ -114,15 +114,8 @@ public sealed class WebService : IDisposable
     /// </summary>
     public int Start(string host = "127.0.0.1", int? port = null)
     {
-        var bindPort = port ?? Port;
-        if (bindPort == 0)
-        {
-            bindPort = FreePort(host);
-        }
-
-        var listener = new HttpListener();
-        listener.Prefixes.Add($"http://{host}:{bindPort}/");
-        listener.Start();
+        var requestedPort = port ?? Port;
+        var listener = BindListener(host, requestedPort, out var bindPort);
 
         _listener = listener;
         Port = bindPort;
@@ -482,6 +475,11 @@ public sealed class WebService : IDisposable
         route.StartsWith('/') ? route : "/" + route;
 
     // Bind the loopback ephemeral port, read the OS-assigned port, release it.
+    //
+    // The port is UNOWNED between the release here and the HttpListener bind in
+    // BindListener, so this must never be treated as a reservation — another
+    // process can legitimately be handed the same port in that window.
+    // BindListener closes the loop by retrying on a fresh port when it loses.
     private static int FreePort(string host)
     {
         var address = IPAddress.TryParse(host, out var parsed) ? parsed : IPAddress.Loopback;
@@ -490,6 +488,48 @@ public sealed class WebService : IDisposable
         var port = ((IPEndPoint)tcp.LocalEndpoint).Port;
         tcp.Stop();
         return port;
+    }
+
+    /// <summary>Fresh ephemeral ports to try before giving up. Only applies when
+    /// the caller asked for an OS-assigned port (0); an EXPLICIT port is the
+    /// caller's choice and a conflict there is reported, never silently moved.</summary>
+    private const int EphemeralBindAttempts = 5;
+
+    /// <summary>
+    /// Bind an <see cref="HttpListener"/>, resolving port 0 to an OS-assigned
+    /// ephemeral port. Because a picked-then-released port can be taken by
+    /// another process before we bind it, an ephemeral bind that loses the race
+    /// is retried on a fresh port rather than surfacing an opaque
+    /// "address already in use" to the caller.
+    /// </summary>
+    private static HttpListener BindListener(string host, int requestedPort, out int boundPort)
+    {
+        var attempts = requestedPort == 0 ? EphemeralBindAttempts : 1;
+        HttpListenerException? last = null;
+
+        for (var i = 0; i < attempts; i++)
+        {
+            var candidate = requestedPort == 0 ? FreePort(host) : requestedPort;
+            var listener = new HttpListener();
+            listener.Prefixes.Add($"http://{host}:{candidate}/");
+            try
+            {
+                listener.Start();
+                boundPort = candidate;
+                return listener;
+            }
+            catch (HttpListenerException ex)
+            {
+                ((IDisposable)listener).Dispose();
+                // An explicit port is the caller's; report it as-is.
+                if (requestedPort != 0) throw;
+                last = ex;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"WebService could not bind an ephemeral port on {host} after {attempts} attempts; " +
+            $"each freshly-picked port was taken before it could be bound.", last);
     }
 
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort response cleanup; any failure closing the response is surfaced to the caller as an in-band error (swallowed so cleanup never throws).")]

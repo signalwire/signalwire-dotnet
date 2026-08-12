@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -51,7 +52,6 @@ from pathlib import Path
 CLASS_MODULE_MAP: dict[str, str] = {
     # -- agent ------------------------------------------------------------
     "AgentBase": "signalwire.core.agent_base",
-
     # -- ai_chat ----------------------------------------------------------
     # The reference consolidates the whole AI-Chat surface into ONE module,
     # ``signalwire.ai_chat.client``; .NET splits the client, its response
@@ -72,13 +72,18 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "RateLimitError": "signalwire.ai_chat.client",
     "ChatInProgressError": "signalwire.ai_chat.client",
     "SummaryError": "signalwire.ai_chat.client",
-
     # -- item-I implemented subsystems (H/I turn) -------------------------
     # New hand classes routed to their reference core modules (class name
     # matches the reference leaf verbatim).
     "ConfigLoader": "signalwire.core.config_loader",
     "SecurityConfig": "signalwire.core.security_config",
     "AuthHandler": "signalwire.core.auth_handler",
+    # Credential carriers for AuthHandler.VerifyBasicAuth / VerifyBearerToken.
+    # The reference records both as real classes on this module (oracle dcff742
+    # resolved them out of FastAPI into signalwire.core.auth_handler); .NET
+    # expresses them as positional records in the same C# file.
+    "BasicCredentials": "signalwire.core.auth_handler",
+    "BearerCredentials": "signalwire.core.auth_handler",
     "WebService": "signalwire.web.web_service",
     "SwaigFunction": "signalwire.core.swaig_function",
     "BedrockAgent": "signalwire.agents.bedrock",
@@ -89,28 +94,22 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "SWMLVerbHandler": "signalwire.core.swml_handler",
     "AIVerbHandler": "signalwire.core.swml_handler",
     "VerbHandlerRegistry": "signalwire.core.swml_handler",
-
     # -- contexts ---------------------------------------------------------
     "Context": "signalwire.core.contexts",
     "ContextBuilder": "signalwire.core.contexts",
     "GatherInfo": "signalwire.core.contexts",
     "GatherQuestion": "signalwire.core.contexts",
     "Step": "signalwire.core.contexts",
-
     # -- datamap ----------------------------------------------------------
     "DataMap": "signalwire.core.data_map",
-
     # -- swaig ------------------------------------------------------------
     "FunctionResult": "signalwire.core.function_result",
-
     # -- skills -----------------------------------------------------------
     "SkillBase": "signalwire.core.skill_base",
     "SkillManager": "signalwire.core.skill_manager",
     "SkillRegistry": "signalwire.skills.registry",
-
     # -- server -----------------------------------------------------------
     "AgentServer": "signalwire.agent_server",
-
     # -- security ---------------------------------------------------------
     "SessionManager": "signalwire.core.security.session_manager",
     # WebhookValidator is a static helper class in C# whose methods are
@@ -128,11 +127,9 @@ CLASS_MODULE_MAP: dict[str, str] = {
     # in PORT_ADDITIONS.md and place the .NET class under the parallel
     # ``signalwire.core.security.webhook_middleware`` path.
     "WebhookValidationMiddleware": "signalwire.core.security.webhook_middleware",
-
     # -- swml -------------------------------------------------------------
     # ``Service`` in SignalWire.SWML == Python's ``SWMLService``.
     # Renamed via CLASS_RENAME_MAP, mapped here.
-
     # -- pom --------------------------------------------------------------
     "PromptObjectModel": "signalwire.pom.pom",
     "Section": "signalwire.pom.pom",
@@ -155,7 +152,6 @@ CLASS_MODULE_MAP: dict[str, str] = {
     # lives in the reference's signalwire.rest._request_options module (.NET's
     # auto-derived signalwire.rest.request_options drops the leading underscore).
     "RequestOptions": "signalwire.rest._request_options",
-
     # -- relay ------------------------------------------------------------
     "Call": "signalwire.relay.call",
     "Message": "signalwire.relay.message",
@@ -182,7 +178,6 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "EchoAction": "signalwire.relay.call",
     "QueueAction": "signalwire.relay.call",
     "PromptAction": "signalwire.relay.call",
-    "StandaloneCollectAction": "signalwire.relay.call",
     "Event": "signalwire.relay.event",
     # -- relay events (item H/I) -----------------------------------------
     # The reference signalwire.relay.event module declares one typed event
@@ -214,14 +209,12 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "TranscribeEvent": "signalwire.relay.event",
     # RelayError lives alongside RelayClient in the reference module.
     "RelayError": "signalwire.relay.client",
-
     # -- prefabs ----------------------------------------------------------
     "ConciergeAgent": "signalwire.prefabs.concierge",
     "FAQBotAgent": "signalwire.prefabs.faq_bot",
     "InfoGathererAgent": "signalwire.prefabs.info_gatherer",
     "ReceptionistAgent": "signalwire.prefabs.receptionist",
     "SurveyAgent": "signalwire.prefabs.survey",
-
     # -- skills (one canonical Python module per skill) -------------------
     "ApiNinjasTriviaSkill": "signalwire.skills.api_ninjas_trivia.skill",
     "ClaudeSkillsSkill": "signalwire.skills.claude_skills.skill",
@@ -255,13 +248,15 @@ CLASS_MODULE_MAP: dict[str, str] = {
 # The C# namespace hosting the whole AI-Chat surface.
 AICHAT_NAMESPACE = "SignalWire.AIChat"
 
-AICHAT_OPTIONS_CLASSES: frozenset[str] = frozenset({
-    "AIChatClientOptions",
-    "ConversationTurnOptions",
-    "CreateConversationOptions",
-    "ChatOptions",
-    "SummarizeOptions",
-})
+AICHAT_OPTIONS_CLASSES: frozenset[str] = frozenset(
+    {
+        "AIChatClientOptions",
+        "ConversationTurnOptions",
+        "CreateConversationOptions",
+        "ChatOptions",
+        "SummarizeOptions",
+    }
+)
 
 # CONSTRUCTION options classes — the same options-object↔kwargs idiom as the
 # AI-Chat set above, applied to the CONSTRUCTORS. The reference writes
@@ -282,45 +277,51 @@ AICHAT_OPTIONS_CLASSES: frozenset[str] = frozenset({
 # This is the AGENT_RULES §2 / ALLOWLIST_DISCIPLINE §0 idiom fold — folded at the
 # emitter, NOT ledgered. Dropping them here is what keeps a newly-wired
 # construction parameter from surfacing as a phantom port-only addition.
-CONSTRUCTION_OPTIONS_CLASSES: frozenset[str] = frozenset({
-    "AgentOptions",
-    "ServiceOptions",
-    # ClientOptions carries what the reference passes as kwargs to
-    # ``RelayClient.__init__(project, token, jwt_token, host, contexts,
-    # max_active_calls)`` — the reference has no ``ClientOptions`` class, so the
-    # spelling exists only because .NET needs a home for those keywords. It is
-    # the SAME idiom as AgentOptions/ServiceOptions and was previously carried as
-    # seven PORT_ADDITIONS whose own rationale said "Python uses kwargs to
-    # RelayClient.__init__" — self-declared idiom, so it folds here (§0/§0b) and
-    # those entries are deleted. Its properties reconcile in the construction
-    # contract; every one is also readable off the Client itself.
-    "ClientOptions",
-})
+CONSTRUCTION_OPTIONS_CLASSES: frozenset[str] = frozenset(
+    {
+        "AgentOptions",
+        "ServiceOptions",
+        # ClientOptions carries what the reference passes as kwargs to
+        # ``RelayClient.__init__(project, token, jwt_token, host, contexts,
+        # max_active_calls)`` — the reference has no ``ClientOptions`` class, so the
+        # spelling exists only because .NET needs a home for those keywords. It is
+        # the SAME idiom as AgentOptions/ServiceOptions and was previously carried as
+        # seven PORT_ADDITIONS whose own rationale said "Python uses kwargs to
+        # RelayClient.__init__" — self-declared idiom, so it folds here (§0/§0b) and
+        # those entries are deleted. Its properties reconcile in the construction
+        # contract; every one is also readable off the Client itself.
+        "ClientOptions",
+    }
+)
 
 
 # (source_namespace, source_class) -> (target_module, target_class) for
 # classes that get a Python-canonical rename.
 CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ("SignalWire.SWML", "Service"): (
-        "signalwire.core.swml_service", "SWMLService",
+        "signalwire.core.swml_service",
+        "SWMLService",
     ),
     # AI-Chat base error: .NET names it ``AIChatException`` (the CLR convention
     # is an ``Exception`` suffix); the reference names the same base
     # ``AIChatError``. Rename onto the reference name in its consolidated module
     # so the error family compares equal.
     ("SignalWire.AIChat", "AIChatException"): (
-        "signalwire.ai_chat.client", "AIChatError",
+        "signalwire.ai_chat.client",
+        "AIChatError",
     ),
     # SignalWire.Relay's ``Client`` is Python's ``RelayClient``.
     ("SignalWire.Relay", "Client"): (
-        "signalwire.relay.client", "RelayClient",
+        "signalwire.relay.client",
+        "RelayClient",
     ),
     # SignalWire.REST's ``RestClient`` is Python's
     # ``signalwire.rest.client.RestClient``. .NET's auto-derived module
     # ``signalwire.rest.rest_client`` doesn't match Python's canonical
     # path ``signalwire.rest.client``.
     ("SignalWire.REST", "RestClient"): (
-        "signalwire.rest.client", "RestClient",
+        "signalwire.rest.client",
+        "RestClient",
     ),
     # EffectiveRequestOptions is the .NET realization of the reference's
     # PRIVATE signalwire.rest._request_options._EffectiveOptions (the resolved
@@ -328,186 +329,241 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     # status_is_retryable's opts param) compares exact; the class itself is
     # dropped from the emitted surface (the oracle records no public class).
     ("SignalWire.REST", "EffectiveRequestOptions"): (
-        "signalwire.rest._request_options", "_EffectiveOptions",
+        "signalwire.rest._request_options",
+        "_EffectiveOptions",
     ),
     # SignalWire.SWML.Schema is the .NET-idiomatic singleton wrapper
     # around the SWML JSON schema; Python keeps an instantiable
     # SchemaUtils helper at signalwire.utils.schema_utils. Rename so
     # the cross-language audit lines up.
     ("SignalWire.SWML", "Schema"): (
-        "signalwire.utils.schema_utils", "SchemaUtils",
+        "signalwire.utils.schema_utils",
+        "SchemaUtils",
     ),
     ("SignalWire.SWML", "SchemaValidationError"): (
-        "signalwire.utils.schema_utils", "SchemaValidationError",
+        "signalwire.utils.schema_utils",
+        "SchemaValidationError",
     ),
     # .NET's REST namespace classes (in namespace ``SignalWire.REST.Namespaces``)
     # are named after the namespace (``Calling``, ``Fabric``); Python
     # places each in its own submodule and suffixes the class with
     # ``Namespace``.
     ("SignalWire.REST.Namespaces", "Calling"): (
-        "signalwire.rest.namespaces.calling", "CallingNamespace",
+        "signalwire.rest.namespaces.calling",
+        "CallingNamespace",
     ),
     ("SignalWire.REST.Namespaces", "Fabric"): (
-        "signalwire.rest.namespaces.fabric", "FabricNamespace",
+        "signalwire.rest.namespaces.fabric",
+        "FabricNamespace",
     ),
     ("SignalWire.REST.Namespaces", "Datasphere"): (
-        "signalwire.rest.namespaces.datasphere", "DatasphereNamespace",
+        "signalwire.rest.namespaces.datasphere",
+        "DatasphereNamespace",
     ),
     ("SignalWire.REST.Namespaces", "Logs"): (
-        "signalwire.rest.namespaces.logs", "LogsNamespace",
+        "signalwire.rest.namespaces.logs",
+        "LogsNamespace",
     ),
     ("SignalWire.REST.Namespaces", "Project"): (
-        "signalwire.rest.namespaces.project", "ProjectNamespace",
+        "signalwire.rest.namespaces.project",
+        "ProjectNamespace",
     ),
     ("SignalWire.REST.Namespaces", "Registry"): (
-        "signalwire.rest.namespaces.registry", "RegistryNamespace",
+        "signalwire.rest.namespaces.registry",
+        "RegistryNamespace",
     ),
     ("SignalWire.REST.Namespaces", "Video"): (
-        "signalwire.rest.namespaces.video", "VideoNamespace",
+        "signalwire.rest.namespaces.video",
+        "VideoNamespace",
     ),
     # ----- Video sub-resources (Python video.py) -----
     ("SignalWire.REST.Namespaces", "VideoRooms"): (
-        "signalwire.rest.namespaces.video", "VideoRooms",
+        "signalwire.rest.namespaces.video",
+        "VideoRooms",
     ),
     ("SignalWire.REST.Namespaces", "VideoRoomTokens"): (
-        "signalwire.rest.namespaces.video", "VideoRoomTokens",
+        "signalwire.rest.namespaces.video",
+        "VideoRoomTokens",
     ),
     ("SignalWire.REST.Namespaces", "VideoRoomSessions"): (
-        "signalwire.rest.namespaces.video", "VideoRoomSessions",
+        "signalwire.rest.namespaces.video",
+        "VideoRoomSessions",
     ),
     ("SignalWire.REST.Namespaces", "VideoRoomRecordings"): (
-        "signalwire.rest.namespaces.video", "VideoRoomRecordings",
+        "signalwire.rest.namespaces.video",
+        "VideoRoomRecordings",
     ),
     ("SignalWire.REST.Namespaces", "VideoConferences"): (
-        "signalwire.rest.namespaces.video", "VideoConferences",
+        "signalwire.rest.namespaces.video",
+        "VideoConferences",
     ),
     ("SignalWire.REST.Namespaces", "VideoConferenceTokens"): (
-        "signalwire.rest.namespaces.video", "VideoConferenceTokens",
+        "signalwire.rest.namespaces.video",
+        "VideoConferenceTokens",
     ),
     ("SignalWire.REST.Namespaces", "VideoStreams"): (
-        "signalwire.rest.namespaces.video", "VideoStreams",
+        "signalwire.rest.namespaces.video",
+        "VideoStreams",
     ),
     # ----- Logs sub-resources (Python logs.py) -----
     ("SignalWire.REST.Namespaces", "MessageLogs"): (
-        "signalwire.rest.namespaces.logs", "MessageLogs",
+        "signalwire.rest.namespaces.logs",
+        "MessageLogs",
     ),
     ("SignalWire.REST.Namespaces", "VoiceLogs"): (
-        "signalwire.rest.namespaces.logs", "VoiceLogs",
+        "signalwire.rest.namespaces.logs",
+        "VoiceLogs",
     ),
     ("SignalWire.REST.Namespaces", "FaxLogs"): (
-        "signalwire.rest.namespaces.logs", "FaxLogs",
+        "signalwire.rest.namespaces.logs",
+        "FaxLogs",
     ),
     ("SignalWire.REST.Namespaces", "ConferenceLogs"): (
-        "signalwire.rest.namespaces.logs", "ConferenceLogs",
+        "signalwire.rest.namespaces.logs",
+        "ConferenceLogs",
     ),
     # ----- Registry sub-resources (Python registry.py) -----
     ("SignalWire.REST.Namespaces", "RegistryBrands"): (
-        "signalwire.rest.namespaces.registry", "RegistryBrands",
+        "signalwire.rest.namespaces.registry",
+        "RegistryBrands",
     ),
     ("SignalWire.REST.Namespaces", "RegistryCampaigns"): (
-        "signalwire.rest.namespaces.registry", "RegistryCampaigns",
+        "signalwire.rest.namespaces.registry",
+        "RegistryCampaigns",
     ),
     ("SignalWire.REST.Namespaces", "RegistryOrders"): (
-        "signalwire.rest.namespaces.registry", "RegistryOrders",
+        "signalwire.rest.namespaces.registry",
+        "RegistryOrders",
     ),
     ("SignalWire.REST.Namespaces", "RegistryNumbers"): (
-        "signalwire.rest.namespaces.registry", "RegistryNumbers",
+        "signalwire.rest.namespaces.registry",
+        "RegistryNumbers",
     ),
     # ----- Fabric extras (helpers I added in C# for parity) -----
     # The three CrudWithAddresses subtypes mirror Python's PATCH/PUT/webhook
     # fabric resource base classes (fabric.py: FabricResource [PATCH update],
     # FabricResourcePUT [PUT update], AutoMaterializedWebhook).
     ("SignalWire.REST.Namespaces", "FabricResourcePatch"): (
-        "signalwire.rest.namespaces.fabric", "FabricResource",
+        "signalwire.rest.namespaces.fabric",
+        "FabricResource",
     ),
     ("SignalWire.REST.Namespaces", "FabricResourcePut"): (
-        "signalwire.rest.namespaces.fabric", "FabricResourcePUT",
+        "signalwire.rest.namespaces.fabric",
+        "FabricResourcePUT",
     ),
     ("SignalWire.REST.Namespaces", "AutoMaterializedWebhookResource"): (
-        "signalwire.rest.namespaces.fabric", "AutoMaterializedWebhook",
+        "signalwire.rest.namespaces.fabric",
+        "AutoMaterializedWebhook",
     ),
     ("SignalWire.REST.Namespaces", "FabricAddresses"): (
-        "signalwire.rest.namespaces.fabric", "FabricAddresses",
+        "signalwire.rest.namespaces.fabric",
+        "FabricAddresses",
     ),
     ("SignalWire.REST.Namespaces", "FabricResources"): (
-        "signalwire.rest.namespaces.fabric", "GenericResources",
+        "signalwire.rest.namespaces.fabric",
+        "GenericResources",
     ),
     ("SignalWire.REST.Namespaces", "FabricTokens"): (
-        "signalwire.rest.namespaces.fabric", "FabricTokens",
+        "signalwire.rest.namespaces.fabric",
+        "FabricTokens",
     ),
     ("SignalWire.REST.Namespaces", "SubscribersHelper"): (
-        "signalwire.rest.namespaces.fabric", "SubscribersResource",
+        "signalwire.rest.namespaces.fabric",
+        "SubscribersResource",
     ),
     ("SignalWire.REST.Namespaces", "CallFlowsHelper"): (
-        "signalwire.rest.namespaces.fabric", "CallFlowsResource",
+        "signalwire.rest.namespaces.fabric",
+        "CallFlowsResource",
     ),
     ("SignalWire.REST.Namespaces", "ConferenceRoomsHelper"): (
-        "signalwire.rest.namespaces.fabric", "ConferenceRoomsResource",
+        "signalwire.rest.namespaces.fabric",
+        "ConferenceRoomsResource",
     ),
     ("SignalWire.REST.Namespaces", "CxmlApplicationsHelper"): (
-        "signalwire.rest.namespaces.fabric", "CxmlApplicationsResource",
+        "signalwire.rest.namespaces.fabric",
+        "CxmlApplicationsResource",
     ),
     ("SignalWire.REST.Namespaces", "FabricCallFlowsResource"): (
-        "signalwire.rest.namespaces.fabric", "CallFlowsResource",
+        "signalwire.rest.namespaces.fabric",
+        "CallFlowsResource",
     ),
     ("SignalWire.REST.Namespaces", "FabricConferenceRoomsResource"): (
-        "signalwire.rest.namespaces.fabric", "ConferenceRoomsResource",
+        "signalwire.rest.namespaces.fabric",
+        "ConferenceRoomsResource",
     ),
     ("SignalWire.REST.Namespaces", "FabricCxmlApplicationsResource"): (
-        "signalwire.rest.namespaces.fabric", "CxmlApplicationsResource",
+        "signalwire.rest.namespaces.fabric",
+        "CxmlApplicationsResource",
     ),
     # ----- Small namespaces (Python files name them with "Resource" suffix) -----
     ("SignalWire.REST.Namespaces", "Mfa"): (
-        "signalwire.rest.namespaces.mfa", "MfaResource",
+        "signalwire.rest.namespaces.mfa",
+        "MfaResource",
     ),
     ("SignalWire.REST.Namespaces", "LookupResource"): (
-        "signalwire.rest.namespaces.lookup", "LookupResource",
+        "signalwire.rest.namespaces.lookup",
+        "LookupResource",
     ),
     ("SignalWire.REST.Namespaces", "PhoneNumbers"): (
-        "signalwire.rest.namespaces.phone_numbers", "PhoneNumbersResource",
+        "signalwire.rest.namespaces.phone_numbers",
+        "PhoneNumbersResource",
     ),
     ("SignalWire.REST.Namespaces", "SipProfile"): (
-        "signalwire.rest.namespaces.sip_profile", "SipProfileResource",
+        "signalwire.rest.namespaces.sip_profile",
+        "SipProfileResource",
     ),
     ("SignalWire.REST.Namespaces", "ShortCodes"): (
-        "signalwire.rest.namespaces.short_codes", "ShortCodesResource",
+        "signalwire.rest.namespaces.short_codes",
+        "ShortCodesResource",
     ),
     ("SignalWire.REST.Namespaces", "NumberGroups"): (
-        "signalwire.rest.namespaces.number_groups", "NumberGroupsResource",
+        "signalwire.rest.namespaces.number_groups",
+        "NumberGroupsResource",
     ),
     ("SignalWire.REST.Namespaces", "ImportedNumbers"): (
-        "signalwire.rest.namespaces.imported_numbers", "ImportedNumbersResource",
+        "signalwire.rest.namespaces.imported_numbers",
+        "ImportedNumbersResource",
     ),
     ("SignalWire.REST.Namespaces", "ProjectTokens"): (
-        "signalwire.rest.namespaces.project", "ProjectTokens",
+        "signalwire.rest.namespaces.project",
+        "ProjectTokens",
     ),
     ("SignalWire.REST.Namespaces", "DatasphereNs"): (
-        "signalwire.rest.namespaces.datasphere", "DatasphereNamespace",
+        "signalwire.rest.namespaces.datasphere",
+        "DatasphereNamespace",
     ),
     ("SignalWire.REST.Namespaces", "DatasphereDocuments"): (
-        "signalwire.rest.namespaces.datasphere", "DatasphereDocuments",
+        "signalwire.rest.namespaces.datasphere",
+        "DatasphereDocuments",
     ),
     ("SignalWire.REST.Namespaces", "Addresses"): (
-        "signalwire.rest.namespaces.addresses", "AddressesResource",
+        "signalwire.rest.namespaces.addresses",
+        "AddressesResource",
     ),
     ("SignalWire.REST.Namespaces", "Recordings"): (
-        "signalwire.rest.namespaces.recordings", "RecordingsResource",
+        "signalwire.rest.namespaces.recordings",
+        "RecordingsResource",
     ),
     ("SignalWire.REST.Namespaces", "Queues"): (
-        "signalwire.rest.namespaces.queues", "QueuesResource",
+        "signalwire.rest.namespaces.queues",
+        "QueuesResource",
     ),
     ("SignalWire.REST.Namespaces", "VerifiedCallers"): (
-        "signalwire.rest.namespaces.verified_callers", "VerifiedCallersResource",
+        "signalwire.rest.namespaces.verified_callers",
+        "VerifiedCallersResource",
     ),
     ("SignalWire.REST.Namespaces", "ChatResource"): (
-        "signalwire.rest.namespaces.chat", "ChatResource",
+        "signalwire.rest.namespaces.chat",
+        "ChatResource",
     ),
     ("SignalWire.REST.Namespaces", "PubSubResource"): (
-        "signalwire.rest.namespaces.pubsub", "PubSubResource",
+        "signalwire.rest.namespaces.pubsub",
+        "PubSubResource",
     ),
     # ----- PaginatedIterator (Python lives at _pagination, not paginated_iterator) -----
     ("SignalWire.REST", "PaginatedIterator"): (
-        "signalwire.rest._pagination", "PaginatedIterator",
+        "signalwire.rest._pagination",
+        "PaginatedIterator",
     ),
 }
 
@@ -538,7 +594,10 @@ SKILL_RENAMES: dict[str, str] = {
 # subclass's surface (they read as additions otherwise; identical idiom to the
 # WebService/event data-property drop).
 _SKILL_PROPERTY_EXTRAS = {
-    "name", "description", "supports_multiple_instances", "version",
+    "name",
+    "description",
+    "supports_multiple_instances",
+    "version",
 }
 
 # SkillBase-provided methods every skill genuinely INHERITS (real, callable
@@ -548,21 +607,41 @@ _SKILL_PROPERTY_EXTRAS = {
 # methods that ACTUALLY exist on SkillBase (never invent surface). Keyed by the
 # reference (post-rename) class name.
 _SKILLBASE_INHERITABLE = {
-    "cleanup", "get_global_data", "get_hints", "get_instance_key",
-    "get_parameter_schema", "get_prompt_sections", "register_tools", "setup",
+    "cleanup",
+    "get_global_data",
+    "get_hints",
+    "get_instance_key",
+    "get_parameter_schema",
+    "get_prompt_sections",
+    "register_tools",
+    "setup",
 }
 SKILL_INHERITED_PROJECTIONS: dict[str, list[str]] = {
     "ApiNinjasTriviaSkill": ["get_instance_key", "get_parameter_schema"],
     "ClaudeSkillsSkill": ["get_parameter_schema"],
-    "DataSphereSkill": ["cleanup", "get_hints", "get_instance_key", "get_parameter_schema"],
-    "DataSphereServerlessSkill": ["get_hints", "get_instance_key", "get_parameter_schema"],
+    "DataSphereSkill": [
+        "cleanup",
+        "get_hints",
+        "get_instance_key",
+        "get_parameter_schema",
+    ],
+    "DataSphereServerlessSkill": [
+        "get_hints",
+        "get_instance_key",
+        "get_parameter_schema",
+    ],
     "DateTimeSkill": ["get_hints", "get_parameter_schema"],
     "GoogleMapsSkill": ["get_parameter_schema"],
     "InfoGathererSkill": ["get_instance_key", "get_parameter_schema"],
     "JokeSkill": ["get_hints", "get_parameter_schema"],
     "MathSkill": ["get_hints", "get_parameter_schema"],
-    "NativeVectorSearchSkill": ["cleanup", "get_global_data", "get_instance_key",
-                                 "get_parameter_schema", "get_prompt_sections"],
+    "NativeVectorSearchSkill": [
+        "cleanup",
+        "get_global_data",
+        "get_instance_key",
+        "get_parameter_schema",
+        "get_prompt_sections",
+    ],
     "PlayBackgroundFileSkill": ["get_instance_key", "get_parameter_schema"],
     "SpiderSkill": ["cleanup", "get_instance_key", "get_parameter_schema"],
     "SWMLTransferSkill": ["get_instance_key", "get_parameter_schema"],
@@ -587,12 +666,32 @@ METHOD_RENAMES: dict[str, str] = {
 # Methods we never emit. .NET's IDisposable/object overrides aren't part of
 # the SDK contract.
 SKIP_METHOD_NAMES: set[str] = {
-    "Dispose", "DisposeAsync", "ToString", "GetHashCode", "Equals", "Finalize",
+    "Dispose",
+    "DisposeAsync",
+    "ToString",
+    "GetHashCode",
+    "Equals",
+    "Finalize",
     "MemberwiseClone",
     # C# constructs that can superficially look like methods
-    "operator", "using", "typedef", "friend", "template", "return",
-    "if", "else", "for", "while", "do", "switch", "case", "lock",
-    "try", "catch", "finally", "throw",
+    "operator",
+    "using",
+    "typedef",
+    "friend",
+    "template",
+    "return",
+    "if",
+    "else",
+    "for",
+    "while",
+    "do",
+    "switch",
+    "case",
+    "lock",
+    "try",
+    "catch",
+    "finally",
+    "throw",
 }
 
 
@@ -600,27 +699,51 @@ SKIP_METHOD_NAMES: set[str] = {
 # flattened onto AgentBase. Mirrors enumerate_surface.py from the C++ port.
 MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     ("signalwire.core.mixins.ai_config_mixin", "AIConfigMixin"): [
-        "add_function_include", "add_hint", "add_hints", "add_internal_filler",
-        "add_language", "add_mcp_server", "add_pattern_hint", "add_pronunciation",
-        "enable_debug_events", "enable_mcp_server",
+        "add_function_include",
+        "add_hint",
+        "add_hints",
+        "add_internal_filler",
+        "add_language",
+        "add_mcp_server",
+        "add_pattern_hint",
+        "add_pronunciation",
+        "enable_debug_events",
+        "enable_mcp_server",
         "get_language_params",
-        "set_function_includes", "set_global_data", "set_internal_fillers",
-        "set_language_params", "set_languages", "set_multilingual",
+        "set_function_includes",
+        "set_global_data",
+        "set_internal_fillers",
+        "set_language_params",
+        "set_languages",
+        "set_multilingual",
         "set_native_functions",
-        "set_param", "set_params",
-        "set_post_prompt_llm_params", "set_prompt_llm_params",
-        "set_pronunciations", "update_global_data",
+        "set_param",
+        "set_params",
+        "set_post_prompt_llm_params",
+        "set_prompt_llm_params",
+        "set_pronunciations",
+        "update_global_data",
     ],
     ("signalwire.core.mixins.auth_mixin", "AuthMixin"): [
-        "get_basic_auth_credentials", "validate_basic_auth",
+        "get_basic_auth_credentials",
+        "validate_basic_auth",
     ],
     ("signalwire.core.mixins.mcp_server_mixin", "MCPServerMixin"): [],
     ("signalwire.core.mixins.prompt_mixin", "PromptMixin"): [
-        "contexts", "define_contexts", "get_contexts", "get_post_prompt",
-        "get_prompt", "get_raw_prompt",
-        "prompt_add_section", "prompt_add_subsection", "prompt_add_to_section",
-        "prompt_has_section", "reset_contexts", "set_post_prompt",
-        "set_prompt_pom", "set_prompt_text",
+        "contexts",
+        "define_contexts",
+        "get_contexts",
+        "get_post_prompt",
+        "get_prompt",
+        "get_raw_prompt",
+        "prompt_add_section",
+        "prompt_add_subsection",
+        "prompt_add_to_section",
+        "prompt_has_section",
+        "reset_contexts",
+        "set_post_prompt",
+        "set_prompt_pom",
+        "set_prompt_text",
     ],
     # Python additionally extracted a ``PromptManager`` class that
     # PromptMixin delegates to. Most of the same methods exist there too
@@ -632,10 +755,17 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     # here or it would be pulled from AgentBase's ctor and stripped off
     # AgentBase.
     ("signalwire.core.agent.prompt.manager", "PromptManager"): [
-        "define_contexts", "get_contexts", "get_post_prompt",
-        "get_prompt", "get_raw_prompt",
-        "prompt_add_section", "prompt_add_subsection", "prompt_add_to_section",
-        "prompt_has_section", "set_post_prompt", "set_prompt_pom",
+        "define_contexts",
+        "get_contexts",
+        "get_post_prompt",
+        "get_prompt",
+        "get_raw_prompt",
+        "prompt_add_section",
+        "prompt_add_subsection",
+        "prompt_add_to_section",
+        "prompt_has_section",
+        "set_post_prompt",
+        "set_prompt_pom",
         "set_prompt_text",
     ],
     # Also project to PromptMixin since PromptManager-equivalent
@@ -647,13 +777,18 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
         "handle_serverless_request",
     ],
     ("signalwire.core.mixins.skill_mixin", "SkillMixin"): [
-        "add_skill", "has_skill", "list_skills", "remove_skill",
+        "add_skill",
+        "has_skill",
+        "list_skills",
+        "remove_skill",
     ],
     ("signalwire.core.mixins.state_mixin", "StateMixin"): [
         "validate_tool_token",
     ],
     ("signalwire.core.mixins.tool_mixin", "ToolMixin"): [
-        "define_tool", "define_tools", "on_function_call",
+        "define_tool",
+        "define_tools",
+        "on_function_call",
         "register_swaig_function",
     ],
     # Python additionally extracted a ``ToolRegistry`` class that the
@@ -661,14 +796,24 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
     # the ToolRegistry path so the cross-language audit treats methods
     # on .NET's Service (which inherits to AgentBase) as covering both.
     ("signalwire.core.agent.tools.registry", "ToolRegistry"): [
-        "define_tool", "register_swaig_function",
-        "has_function", "get_function", "get_all_functions",
+        "define_tool",
+        "register_swaig_function",
+        "has_function",
+        "get_function",
+        "get_all_functions",
         "remove_function",
     ],
     ("signalwire.core.mixins.web_mixin", "WebMixin"): [
-        "as_router", "enable_debug_routes", "manual_set_proxy_url", "on_request",
-        "on_swml_request", "register_routing_callback", "run", "serve",
-        "set_dynamic_config_callback", "setup_graceful_shutdown",
+        "as_router",
+        "enable_debug_routes",
+        "manual_set_proxy_url",
+        "on_request",
+        "on_swml_request",
+        "register_routing_callback",
+        "run",
+        "serve",
+        "set_dynamic_config_callback",
+        "setup_graceful_shutdown",
     ],
 }
 
@@ -752,12 +897,57 @@ SURFACE_METHOD_INJECTIONS: dict[tuple[str, str], list[str]] = {
     # The enumerator SKIPs Dispose (a language-required override), so inject the
     # three reference names — the capability is real, only the idiom differs.
     ("signalwire.ai_chat.client", "AIChatClient"): [
-        "__aenter__", "__aexit__", "close",
+        "__aenter__",
+        "__aexit__",
+        "close",
     ],
     # SkillRegistry is a singleton (private ctor) but the reference records
     # ``__init__``; the object is constructed (via Instance) so the capability
     # exists — the C# ctor is simply private.
     ("signalwire.skills.registry", "SkillRegistry"): ["__init__"],
+    # ---- @dataclass constructors the reference SYNTHESIZES (porting-sdk 8828dd2)
+    # Every class below is a Python `@dataclass`: python_surface.json records an
+    # `__init__` that exists only because the decorator generates it — the reference
+    # source has no `def __init__` either. C# expresses the same construction two
+    # ways this text-based enumerator cannot see as a "constructor":
+    #   * object-initializer classes — `public sealed class CallReceiveEvent {
+    #     public string CallState { get; init; } = ""; ... }` has an IMPLICIT
+    #     parameterless ctor; `grep "public CallReceiveEvent("` returns ZERO.
+    #   * positional records — `public sealed record ChatLog(...)` / BasicCredentials
+    #     / BearerCredentials, whose canonical ctor is generated from the header.
+    # 8828dd2 made emitting `__init__` mandatory fleet-wide, so all 30 went red at
+    # once. Fixed by EMISSION, not omission (RULES.md §2 — fold at the emitter).
+    # Verified real, not assumed: every one resolves to a `class`/`record` in src/.
+    ("signalwire.ai_chat.client", "ChatLog"): ["__init__"],
+    ("signalwire.ai_chat.client", "ChatResponse"): ["__init__"],
+    ("signalwire.ai_chat.client", "ConversationInfo"): ["__init__"],
+    ("signalwire.core.auth_handler", "BasicCredentials"): ["__init__"],
+    ("signalwire.core.auth_handler", "BearerCredentials"): ["__init__"],
+    ("signalwire.relay.event", "CallReceiveEvent"): ["__init__"],
+    ("signalwire.relay.event", "CallStateEvent"): ["__init__"],
+    ("signalwire.relay.event", "CallingErrorEvent"): ["__init__"],
+    ("signalwire.relay.event", "CollectEvent"): ["__init__"],
+    ("signalwire.relay.event", "ConferenceEvent"): ["__init__"],
+    ("signalwire.relay.event", "ConnectEvent"): ["__init__"],
+    ("signalwire.relay.event", "DenoiseEvent"): ["__init__"],
+    ("signalwire.relay.event", "DetectEvent"): ["__init__"],
+    ("signalwire.relay.event", "DialEvent"): ["__init__"],
+    ("signalwire.relay.event", "EchoEvent"): ["__init__"],
+    ("signalwire.relay.event", "FaxEvent"): ["__init__"],
+    ("signalwire.relay.event", "HoldEvent"): ["__init__"],
+    ("signalwire.relay.event", "MessageReceiveEvent"): ["__init__"],
+    ("signalwire.relay.event", "MessageStateEvent"): ["__init__"],
+    ("signalwire.relay.event", "PayEvent"): ["__init__"],
+    ("signalwire.relay.event", "PlayEvent"): ["__init__"],
+    ("signalwire.relay.event", "QueueEvent"): ["__init__"],
+    ("signalwire.relay.event", "RecordEvent"): ["__init__"],
+    ("signalwire.relay.event", "ReferEvent"): ["__init__"],
+    ("signalwire.relay.event", "RelayEvent"): ["__init__"],
+    ("signalwire.relay.event", "SendDigitsEvent"): ["__init__"],
+    ("signalwire.relay.event", "StreamEvent"): ["__init__"],
+    ("signalwire.relay.event", "TapEvent"): ["__init__"],
+    ("signalwire.relay.event", "TranscribeEvent"): ["__init__"],
+    ("signalwire.rest._request_options", "RequestOptions"): ["__init__"],
     # C# Schema is a singleton (private ctor) surfaced as SchemaUtils; the
     # object is constructed via Instance so ``__init__`` capability is real.
     ("signalwire.utils.schema_utils", "SchemaUtils"): ["__init__"],
@@ -787,7 +977,9 @@ SURFACE_METHOD_INJECTIONS: dict[tuple[str, str], list[str]] = {
     # via ``new X()`` in the SkillRegistry factories, so the ctor capability is
     # real (the implicit C# ctor just isn't visible to the regex enumerator).
     ("signalwire.skills.api_ninjas_trivia.skill", "ApiNinjasTriviaSkill"): ["__init__"],
-    ("signalwire.skills.play_background_file.skill", "PlayBackgroundFileSkill"): ["__init__"],
+    ("signalwire.skills.play_background_file.skill", "PlayBackgroundFileSkill"): [
+        "__init__"
+    ],
     ("signalwire.skills.spider.skill", "SpiderSkill"): ["__init__"],
     ("signalwire.skills.weather_api.skill", "WeatherApiSkill"): ["__init__"],
     # RequestOptions (plan 4.2): the reference's SURFACE lists ONLY merge() — the
@@ -881,8 +1073,10 @@ FREE_FUNCTION_CLASSES: dict[str, dict] = {
 FREE_FUNCTION_PROJECTIONS: dict[str, tuple[str, list[str]]] = {
     # DataMap.create_expression_tool / create_simple_api_tool are module-level
     # in the reference (signalwire.core.data_map free functions).
-    "DataMap": ("signalwire.core.data_map",
-                ["create_expression_tool", "create_simple_api_tool"]),
+    "DataMap": (
+        "signalwire.core.data_map",
+        ["create_expression_tool", "create_simple_api_tool"],
+    ),
     # ContextBuilder.CreateSimpleContext -> the module-level
     # signalwire.core.contexts.create_simple_context free function.
     "ContextBuilder": ("signalwire.core.contexts", ["create_simple_context"]),
@@ -931,8 +1125,16 @@ SURFACE_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
     #     ``close`` are injected below (the .NET ``using``/``Dispose`` idiom
     #     expresses the same scoped-lifetime capability).
     ("signalwire.ai_chat.client", "AIChatClient"): {
-        "__aenter__", "__aexit__", "__init__", "chat", "close",
-        "create_conversation", "delete", "end", "log", "summarize",
+        "__aenter__",
+        "__aexit__",
+        "__init__",
+        "chat",
+        "close",
+        "create_conversation",
+        "delete",
+        "end",
+        "log",
+        "summarize",
     },
     #   AIChatError — the reference records only __init__; ``Code`` /
     #     ``ServerMessage`` are data attributes and ``FromCode`` is an internal
@@ -952,30 +1154,58 @@ SURFACE_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
     ("signalwire.ai_chat.client", "ConversationInfo"): set(),
     ("signalwire.ai_chat.client", "ChatResponse"): set(),
     ("signalwire.ai_chat.client", "ChatLog"): set(),
+    #   Credential carriers — same shape: the reference records ONLY the two
+    #     fields (BasicCredentials -> username/password, BearerCredentials ->
+    #     scheme/credentials), not ``__init__`` (they are pydantic models whose
+    #     ctor is generated, exactly like a @dataclass). C# must declare an
+    #     explicit ctor to construct one, so drop it from the SURFACE projection;
+    #     the construction contract still compares in SIGNATURES. Self-retiring:
+    #     if the oracle ever records __init__ on these, the union keeps it.
+    ("signalwire.core.auth_handler", "BasicCredentials"): {"password", "username"},
+    ("signalwire.core.auth_handler", "BearerCredentials"): {"credentials", "scheme"},
     # RequestOptions (plan 4.2): the reference records exactly __init__ +
     # abort_signal + merge; the .NET record's per-field property accessors
     # (timeout/retries/...) are the dataclass fields Python sets in __init__,
     # not separate surface — drop them so the surface set matches the oracle.
-    ("signalwire.rest._request_options", "RequestOptions"):
-        {"__init__", "abort_signal", "merge"},
+    ("signalwire.rest._request_options", "RequestOptions"): {
+        "__init__",
+        "abort_signal",
+        "merge",
+    },
     ("signalwire.core.swaig_function", "SWAIGFunction"): {
-        "__call__", "__init__", "execute", "to_swaig", "validate_args",
+        "__call__",
+        "__init__",
+        "execute",
+        "to_swaig",
+        "validate_args",
     },
     ("signalwire.web.web_service", "WebService"): {
-        "__init__", "add_directory", "remove_directory", "start", "stop",
+        "__init__",
+        "add_directory",
+        "remove_directory",
+        "start",
+        "stop",
     },
     ("signalwire.relay.call", "StandaloneCollectAction"): {
-        "__init__", "start_input_timers",
+        "__init__",
+        "start_input_timers",
     },
     # REST base layer — restrict each consolidated base to its reference own
     # surface (the C# unified CrudResource carries read+write+config helpers that
     # the reference splits across BaseResource/ReadResource/CrudResource; the
     # read/base methods are recorded on those reference bases, projected below).
     ("signalwire.rest._base", "CrudResource"): {
-        "create", "delete", "update",
+        "create",
+        "delete",
+        "update",
     },
     ("signalwire.rest._base", "HttpClient"): {
-        "__init__", "delete", "get", "patch", "post", "put",
+        "__init__",
+        "delete",
+        "get",
+        "patch",
+        "post",
+        "put",
     },
     ("signalwire.rest._base", "SignalWireRestError"): {
         "__init__",
@@ -983,10 +1213,17 @@ SURFACE_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
     # C# Schema -> reference SchemaUtils: keep exactly the reference own-surface
     # (the C# helper carries extra convenience accessors recorded as additions).
     ("signalwire.utils.schema_utils", "SchemaUtils"): {
-        "__init__", "full_validation_available", "generate_method_body",
-        "generate_method_signature", "get_all_verb_names", "get_verb_parameters",
-        "get_verb_properties", "get_verb_required_properties", "load_schema",
-        "validate_document", "validate_verb",
+        "__init__",
+        "full_validation_available",
+        "generate_method_body",
+        "generate_method_signature",
+        "get_all_verb_names",
+        "get_verb_parameters",
+        "get_verb_properties",
+        "get_verb_required_properties",
+        "load_schema",
+        "validate_document",
+        "validate_verb",
     },
 }
 # SWMLService is allowlisted SEPARATELY, in post-processing AFTER the mixin
@@ -995,11 +1232,25 @@ SURFACE_METHOD_ALLOWLIST: dict[tuple[str, str], set[str]] = {
 # the reference SWMLService's own surface. Restricting inline would starve the
 # mixin pool. The reference SWMLService's exact own-surface set:
 _SWML_SERVICE_ALLOW = {
-    "__getattr__", "__init__", "add_section", "add_verb", "add_verb_to_section",
-    "as_router", "extract_sip_username", "full_validation_enabled",
-    "get_basic_auth_credentials", "get_document", "handle_request",
-    "manual_set_proxy_url", "on_request", "register_routing_callback",
-    "register_verb_handler", "render_document", "reset_document", "serve", "stop",
+    "__getattr__",
+    "__init__",
+    "add_section",
+    "add_verb",
+    "add_verb_to_section",
+    "as_router",
+    "extract_sip_username",
+    "full_validation_enabled",
+    "get_basic_auth_credentials",
+    "get_document",
+    "handle_request",
+    "manual_set_proxy_url",
+    "on_request",
+    "register_routing_callback",
+    "register_verb_handler",
+    "render_document",
+    "reset_document",
+    "serve",
+    "stop",
 }
 # Every reference class in signalwire.relay.event exposes ``from_payload`` PLUS —
 # since the porting-sdk fold-branch oracle (HEAD 7693802) now emits @dataclass
@@ -1016,18 +1267,20 @@ _RELAY_EVENT_ONLY = {"from_payload"}
 # RequestOptions) whose public FIELDS the fold-branch oracle now records as
 # surface. dotnet exposes them as positional-record params (AI-Chat DTOs) or
 # block-bodied properties (RequestOptions); emit the oracle field set for each.
-_DATACLASS_FIELD_CLASSES: frozenset[tuple[str, str]] = frozenset({
-    ("signalwire.ai_chat.client", "ConversationInfo"),
-    ("signalwire.ai_chat.client", "ChatResponse"),
-    ("signalwire.ai_chat.client", "ChatLog"),
-    ("signalwire.rest._request_options", "RequestOptions"),
-})
+_DATACLASS_FIELD_CLASSES: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("signalwire.ai_chat.client", "ConversationInfo"),
+        ("signalwire.ai_chat.client", "ChatResponse"),
+        ("signalwire.ai_chat.client", "ChatLog"),
+        ("signalwire.rest._request_options", "RequestOptions"),
+    }
+)
 
 
-_ORACLE_SURFACE_CACHE: "dict[str, dict[str, set[str]]] | None" = None
+_ORACLE_SURFACE_CACHE: dict[str, dict[str, set[str]]] | None = None
 
 
-def _oracle_surface_members() -> "dict[str, dict[str, set[str]]]":
+def _oracle_surface_members() -> dict[str, dict[str, set[str]]]:
     """Load ``python_surface.json`` (the fold-branch oracle) as
     ``{module: {Class: set(members)}}``. Cached; empty on any resolution failure
     (the caller then falls back to the pre-fold restriction). Used to gate the
@@ -1036,7 +1289,7 @@ def _oracle_surface_members() -> "dict[str, dict[str, set[str]]]":
     global _ORACLE_SURFACE_CACHE
     if _ORACLE_SURFACE_CACHE is not None:
         return _ORACLE_SURFACE_CACHE
-    out: "dict[str, dict[str, set[str]]]" = {}
+    out: dict[str, dict[str, set[str]]] = {}
     GR = _load_generate_rest()
     if GR is not None:
         try:
@@ -1062,15 +1315,42 @@ def _oracle_surface_members() -> "dict[str, dict[str, set[str]]]":
     return out
 
 
-def oracle_class_members(module: str, cls: str) -> "set[str]":
+def oracle_class_members(module: str, cls: str) -> set[str]:
     """The oracle's own-surface member set for ``module.cls`` (empty if the
     oracle records no such class or could not be loaded)."""
     return _oracle_surface_members().get(module, {}).get(cls, set())
 
 
+def _skillbase_final_surface_members() -> set[str]:
+    """The ``_SKILLBASE_INHERITABLE`` members the reference exposes on
+    ``SkillBase`` ONLY — i.e. FINAL template methods no skill subclass overrides
+    publicly. Derived from the live surface oracle, never hand-listed.
+
+    ``get_prompt_sections`` is the live case: the reference made it a final
+    template method applying the ``skip_prompt`` guard and delegating to a
+    PROTECTED ``_get_prompt_sections()`` hook, so the oracle now records the
+    public member on the base alone while every subclass overrides the protected
+    one. See ``_project_builtin_skills``' caller for why the "no subclass records
+    it" test (rather than a plain per-class intersection) is the correct gate.
+
+    Empty — i.e. gate disabled — if the oracle cannot be resolved or records
+    nothing for ``SkillBase``.
+    """
+    oracle = _oracle_surface_members()
+    base = oracle.get("signalwire.core.skill_base", {}).get("SkillBase", set())
+    if not base:
+        return set()
+    subclass_members: set[str] = set()
+    for mod, classes in oracle.items():
+        if mod.startswith("signalwire.skills.") and mod.endswith(".skill"):
+            for members in classes.values():
+                subclass_members |= members
+    return (_SKILLBASE_INHERITABLE & base) - subclass_members
+
+
 def apply_member_allowlist(
-    members: "set[str]", allow: "set[str]", module: str, cls: str
-) -> "set[str]":
+    members: set[str], allow: set[str], module: str, cls: str
+) -> set[str]:
     """Intersect ``members`` with a hand-written allowlist that is ORACLE-GATED.
 
     The hand-written sets in ``SURFACE_METHOD_ALLOWLIST`` / ``_SIG_METHOD_ALLOWLIST``
@@ -1186,11 +1466,11 @@ def strip_block_comments(text: str) -> str:
     i = 0
     n = len(text)
     while i < n:
-        if text[i:i + 2] == "/*":
+        if text[i : i + 2] == "/*":
             end = text.find("*/", i + 2)
             if end == -1:
                 break
-            block = text[i:end + 2]
+            block = text[i : end + 2]
             out.append("\n" * block.count("\n"))
             i = end + 2
         else:
@@ -1213,14 +1493,14 @@ def strip_line_comments(line: str) -> str:
         if escape:
             escape = False
             continue
-        if c == '\\':
+        if c == "\\":
             escape = True
             continue
         if not in_char and c == '"':
             in_str = not in_str
         elif not in_str and c == "'":
             in_char = not in_char
-        elif not in_str and not in_char and line[i:i + 2] == "//":
+        elif not in_str and not in_char and line[i : i + 2] == "//":
             return line[:i]
     return line
 
@@ -1228,6 +1508,7 @@ def strip_line_comments(line: str) -> str:
 # ---------------------------------------------------------------------------
 # Per-file parser
 # ---------------------------------------------------------------------------
+
 
 def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
     """Return list of (namespace, class_name, public_member_names).
@@ -1297,9 +1578,11 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
             # classes, so they MUST appear; elsewhere the historical parser
             # behavior (dropping bodyless positional records) is preserved to keep
             # this change contained to the ai_chat surface.
-            if (namespace == AICHAT_NAMESPACE
-                    and "record" in line.split("(")[0]
-                    and line.rstrip().endswith(";")):
+            if (
+                namespace == AICHAT_NAMESPACE
+                and "record" in line.split("(")[0]
+                and line.rstrip().endswith(";")
+            ):
                 rec_name = cls_m.group(1)
                 opened_classes.append(rec_name)
                 members.setdefault(rec_name, [])
@@ -1318,9 +1601,13 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
         # ``{`` body follows. Flush it as a method-less class (oracle records these
         # response models with no surface members) so it isn't swallowed by the
         # next class's ``{``. SCOPED to the AI-Chat namespace (see above).
-        if (pending_class is not None and namespace == AICHAT_NAMESPACE
-                and "{" not in line
-                and ")" in line and line.rstrip().endswith(";")):
+        if (
+            pending_class is not None
+            and namespace == AICHAT_NAMESPACE
+            and "{" not in line
+            and ")" in line
+            and line.rstrip().endswith(";")
+        ):
             members.setdefault(pending_class, [])
             pending_class = None
             continue
@@ -1386,10 +1673,48 @@ def parse_cs_file(path: Path) -> list[tuple[str, str, list[str]]]:
     # PascalCase name group — and these types are recorded method-less anyway).
     # Scoped to the generated-type namespaces so hand classes are untouched.
     if generated_type_module(namespace) is not None:
-        for cls in opened_classes:
-            if cls not in members:
-                findings.append((namespace, cls, []))
+        findings.extend(
+            (namespace, cls, []) for cls in opened_classes if cls not in members
+        )
     return findings
+
+
+_CLASS_BASE_RE = re.compile(
+    r"^\s*public\s+(?:sealed\s+|abstract\s+|static\s+|partial\s+)*"
+    r"(?:class|struct|interface|record)\s+([A-Z][A-Za-z0-9_]*)\s*:\s*([^{]+)"
+)
+
+
+def scan_class_bases(path: Path) -> dict[str, list[str]]:
+    """Return ``{ClassName: [base-clause entries]}`` for the classes declared in
+    ``path``.
+
+    ``parse_cs_file`` deliberately ignores the base clause (it enumerates
+    DECLARED members, which is right for the surface). This scanner recovers it
+    for the ONE case where an inherited member is genuinely the caller's surface
+    and is declared nowhere else — see ``_wired_base_surface``. Kept separate so
+    the member parser's shape and its two call sites are untouched.
+    """
+    out: dict[str, list[str]] = {}
+    # An unreadable source file must ABORT, not return an empty base map: an
+    # empty map silently drops this class's inherited surface members from
+    # port_surface_native.json, which SURFACE-DIFF then reports as the port
+    # omitting them. A false omission is worse than a hard failure.
+    try:
+        text = strip_block_comments(path.read_text(encoding="utf-8", errors="replace"))
+    except OSError as exc:
+        raise SystemExit(f"enumerate_surface.py: cannot read {path}: {exc}") from exc
+    for raw_line in text.splitlines():
+        line = strip_line_comments(raw_line)
+        m = _CLASS_BASE_RE.match(line)
+        if not m:
+            continue
+        bases = [b.strip() for b in m.group(2).split(",") if b.strip()]
+        # Strip the C# namespace qualification and any generic arity:
+        # ``Namespaces.Generated.ResourceTree`` -> ``ResourceTree``.
+        leafs = [b.split("<", 1)[0].rsplit(".", 1)[-1].strip() for b in bases]
+        out.setdefault(m.group(1), []).extend([b for b in leafs if b])
+    return out
 
 
 def _class_body_depth(scope_stack: list[tuple[str, str, int]]) -> int:
@@ -1403,6 +1728,7 @@ def _class_body_depth(scope_stack: list[tuple[str, str, int]]) -> int:
 # ---------------------------------------------------------------------------
 # PascalCase -> snake_case translation
 # ---------------------------------------------------------------------------
+
 
 # Acronyms preserved as single units: HTTP -> http, LLM -> llm, SIP -> sip,
 # SWML -> swml, SMS -> sms, TTS -> tts, SWAIG -> swaig, AI -> ai, MCP -> mcp,
@@ -1425,6 +1751,7 @@ def pascal_to_snake(name: str) -> str:
 # ---------------------------------------------------------------------------
 # Module mapping
 # ---------------------------------------------------------------------------
+
 
 def native_namespace_to_module(namespace: str) -> str:
     """``SignalWire.Rest.Namespaces`` -> ``signalwire.rest.namespaces``."""
@@ -1477,7 +1804,12 @@ _REST_MODULE_PREFIX = "signalwire.rest.namespaces"
 
 _REST_SIDECAR_PATH = (
     Path(__file__).resolve().parent.parent
-    / "src" / "SignalWire" / "REST" / "Namespaces" / "Generated" / "rest_signatures.json"
+    / "src"
+    / "SignalWire"
+    / "REST"
+    / "Namespaces"
+    / "Generated"
+    / "rest_signatures.json"
 )
 
 
@@ -1486,8 +1818,14 @@ def load_rest_manifest() -> dict:
     Returns empty dicts when absent so the enumerator degrades gracefully
     pre-generation."""
     if not _REST_SIDECAR_PATH.is_file():
-        return {"class_module": {}, "containers": {}, "surface": {}, "methods": {},
-                "returns": {}, "crud_bases": {}}
+        return {
+            "class_module": {},
+            "containers": {},
+            "surface": {},
+            "methods": {},
+            "returns": {},
+            "crud_bases": {},
+        }
     data = json.loads(_REST_SIDECAR_PATH.read_text(encoding="utf-8"))
     return {
         "class_module": data.get("class_module", {}),
@@ -1506,7 +1844,9 @@ def generated_rest_projection(class_name: str, manifest: dict):
     cm = manifest["class_module"]
     containers = manifest["containers"]
     if class_name in cm:
-        return f"{_REST_MODULE_PREFIX}.{cm[class_name]}", manifest["surface"].get(class_name, [])
+        return f"{_REST_MODULE_PREFIX}.{cm[class_name]}", manifest["surface"].get(
+            class_name, []
+        )
     if class_name in containers:
         return f"{_REST_MODULE_PREFIX}.{containers[class_name]}", ["__init__"]
     return None
@@ -1539,12 +1879,21 @@ _GENERATED_TYPE_NS_FIXED = {
 _GENERATED_REST_TYPES_NS = "SignalWire.REST.Namespaces.Generated.Types"
 # C# Types sub-namespace segment -> oracle <ns>_types_generated leaf.
 _REST_TYPES_NS_LEAF = {
-    "RelayRest": "relay_rest", "Fabric": "fabric", "Calling": "calling",
-    "Video": "video", "Datasphere": "datasphere", "Logs": "logs",
-    "Message": "message", "Messages": "messages", "Voice": "voice",
-    "Fax": "fax", "Project": "project",
+    "RelayRest": "relay_rest",
+    "Fabric": "fabric",
+    "Calling": "calling",
+    "Video": "video",
+    "Datasphere": "datasphere",
+    "Logs": "logs",
+    "Message": "message",
+    "Messages": "messages",
+    "Voice": "voice",
+    "Fax": "fax",
+    "Project": "project",
     "Projects": "projects",
-    "Chat": "chat", "PubSub": "pubsub", "SwmlWebhooks": "swml_webhooks",
+    "Chat": "chat",
+    "PubSub": "pubsub",
+    "SwmlWebhooks": "swml_webhooks",
 }
 
 
@@ -1554,7 +1903,7 @@ def generated_type_module(namespace: str):
     if namespace in _GENERATED_TYPE_NS_FIXED:
         return _GENERATED_TYPE_NS_FIXED[namespace]
     if namespace.startswith(_GENERATED_REST_TYPES_NS + "."):
-        ns_mod = namespace[len(_GENERATED_REST_TYPES_NS) + 1:].split(".", 1)[0]
+        ns_mod = namespace[len(_GENERATED_REST_TYPES_NS) + 1 :].split(".", 1)[0]
         leaf = _REST_TYPES_NS_LEAF.get(ns_mod)
         if leaf:
             return f"{_REST_MODULE_PREFIX}.{leaf}_types_generated"
@@ -1565,12 +1914,17 @@ def generated_type_module(namespace: str):
 # Top-level
 # ---------------------------------------------------------------------------
 
+
 def git_sha(repo: Path) -> str:
     try:
-        return subprocess.check_output(
-            ["git", "-C", str(repo), "rev-parse", "HEAD"],
-            stderr=subprocess.DEVNULL,
-        ).decode().strip()
+        return (
+            subprocess.check_output(
+                ["git", "-C", str(repo), "rev-parse", "HEAD"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
     except Exception:
         return "N/A"
 
@@ -1609,6 +1963,7 @@ def merge_module_functions(modules: dict, target_mod: str, fns: list[str]) -> No
 #      unions and python-reserved-keyword field names -- reproducing the oracle's
 #      set for these modules EXACTLY.
 
+
 def _is_composition_return(ret: object) -> bool:
     """Self-only member returning an SDK class -- bare/optional/list<...class...>,
     but NOT a top-level ``union<...>``. Mirrors enumerate_python."""
@@ -1619,7 +1974,9 @@ def _is_composition_return(ret: object) -> bool:
     return "class:signalwire." in ret
 
 
-def _enrich_composition_attributes(modules: "dict[str, dict]", signatures_path: Path) -> None:
+def _enrich_composition_attributes(
+    modules: dict[str, dict], signatures_path: Path
+) -> None:
     """Import self-only class-returning members from the .NET signature oracle into
     the surface (in-place). Idempotent; no-op if the signature oracle is absent."""
     if not signatures_path.is_file():
@@ -1634,7 +1991,8 @@ def _enrich_composition_attributes(modules: "dict[str, dict]", signatures_path: 
             if not isinstance(smethods, dict):
                 continue
             comp = [
-                m for m, msig in smethods.items()
+                m
+                for m, msig in smethods.items()
                 if isinstance(msig, dict)
                 and [p for p in msig.get("params", []) if p.get("kind") != "self"] == []
                 and _is_composition_return(msig.get("returns"))
@@ -1651,8 +2009,11 @@ def _enrich_composition_attributes(modules: "dict[str, dict]", signatures_path: 
 
 def _load_generate_rest():
     import importlib.util
+
     here = Path(__file__).resolve().parent
-    spec = importlib.util.spec_from_file_location("generate_rest", here / "generate_rest.py")
+    spec = importlib.util.spec_from_file_location(
+        "generate_rest", here / "generate_rest.py"
+    )
     if spec is None or spec.loader is None:
         return None
     mod = importlib.util.module_from_spec(spec)
@@ -1667,23 +2028,92 @@ def _load_generate_rest():
         # dependency. That cost a full CI investigation on 2026-07-26 precisely because
         # a dev box has PyYAML and the CI interpreter did not.
         #
-        # Kept non-fatal (the caller's pre-fold fallback is a real, if degraded, mode)
-        # but now LOUD on stderr, so the cause is in the log the first time it happens.
-        print(
-            f"enumerate_surface: WARNING — could not load generate_rest.py "
-            f"({type(exc).__name__}: {exc}). The reference oracle will NOT be consulted, "
-            f"so oracle-gated @dataclass/B2 fields will not emit and the surface diff "
-            f"will report them as missing from the port. If this is ModuleNotFoundError "
-            f"for 'yaml', install PyYAML (pip install pyyaml).",
-            file=sys.stderr,
+        # WARNING-and-continue was NOT enough: it still emits a SHORT-but-valid
+        # port_surface.json and exits 0, so the artifact looks fine and the blame lands
+        # on the port. Measured 2026-08-04 on an interpreter without PyYAML: 1291
+        # methods emitted instead of 1578 — 287 silently gone, a 460-line phantom diff,
+        # exit code 0. A parity artifact that is wrong must not be produced at all.
+        # Now FATAL. Set SW_ENUM_ALLOW_NO_ORACLE=1 to opt into the degraded mode
+        # deliberately (it still warns); nothing in CI does.
+        msg = (
+            f"could not load generate_rest.py ({type(exc).__name__}: {exc}). The "
+            f"reference oracle will NOT be consulted, so oracle-gated @dataclass/B2 "
+            f"fields will not emit and the surface diff will report them as missing "
+            f"from the port. If this is ModuleNotFoundError for 'yaml', install "
+            f"PyYAML (pip install pyyaml)."
         )
-        return None
+        if os.environ.get("SW_ENUM_ALLOW_NO_ORACLE") == "1":
+            print(
+                f"enumerate_surface: WARNING — {msg} Continuing because "
+                f"SW_ENUM_ALLOW_NO_ORACLE=1; the emitted surface is INCOMPLETE.",
+                file=sys.stderr,
+            )
+            return None
+        raise SystemExit(f"enumerate_surface: FATAL — {msg}") from exc
     return mod
 
 
-def _local_ref(node: object) -> bool:
+# Spec FILES a cross-file ``$ref`` may target, mirroring
+# ``porting-sdk/scripts/generate_python_rest_types.py``'s ``CROSS_FILE_MODULES``.
+# A ref into a file that is NOT registered here is an ERROR, not a silent
+# "not a composition member" — adding a new cross-file link is a deliberate act
+# and must not degrade quietly (see ``_class_ref`` below).
+CROSS_FILE_SPEC_FILES: frozenset[str] = frozenset(
+    {
+        "swaig-request.yaml",
+        "swaig-response.yaml",
+    }
+)
+
+# Fragment-less ``$ref``s that resolve to a schema's own ``$id`` ROOT rather than to a
+# ``#/...`` definition. ``porting-sdk/schema.json`` declares ``"$id": "SWMLObject.json"``
+# and refs it as a bare ``"SWMLObject.json"`` (execute.SWML -> the whole SWML document).
+# That is valid JSON-Schema ``$id`` resolution, not a malformed ref, but it names the
+# ROOT object — which is not one of the generated model CLASSES this enumerator emits
+# members for — so it is a class-ref MISS, not an error. Registered explicitly so the
+# distinction is recorded rather than inferred from a silent ``startswith`` test.
+SELF_ID_ROOT_REFS: frozenset[str] = frozenset({"SWMLObject.json"})
+
+
+def _class_ref(node: object) -> bool:
+    """True iff ``node`` is a ``$ref`` to a MODEL CLASS — same-file (``#/...``) or
+    cross-file (``swaig-response.yaml#/components/schemas/SwaigResponse``).
+
+    Cross-file refs are class refs too. Treating them as non-refs silently DROPPED
+    surface: porting-sdk re-vendor 99fd429 rewrote ``PostPromptSwaigLogEntry``'s
+    ``post_data`` / ``post_response`` / ``delayed_post_response`` from same-file
+    ``#/components/schemas/...`` to cross-file ``swaig-{request,response}.yaml#/...``,
+    and the old ``startswith("#/")`` test made all three vanish from the emitted
+    surface while the oracle still records them — the enumerator blaming the port for
+    an omission it never had. Raises on a ref into an UNREGISTERED file so a future
+    re-vendor that adds a new cross-file link fails LOUD instead of shrinking the
+    surface (the doctrine ``generate_python_rest_types.py`` already states)."""
     ref = node.get("$ref") if isinstance(node, dict) else None
-    return isinstance(ref, str) and ref.startswith("#/")
+    if not isinstance(ref, str) or not ref:
+        return False
+    if ref.startswith("#/"):
+        return True
+    if ref in SELF_ID_ROOT_REFS:
+        # Resolves to the schema ROOT object, not to a generated model class.
+        return False
+    file_part, sep, _frag = ref.partition("#")
+    if not sep or not file_part:
+        raise ValueError(
+            f"enumerate_surface: unrecognised $ref form {ref!r} — expected a "
+            f"same-file '#/...' ref or a '<spec>.yaml#/...' cross-file ref"
+        )
+    if file_part not in CROSS_FILE_SPEC_FILES:
+        raise ValueError(
+            f"enumerate_surface: cross-file $ref {ref!r} targets unregistered spec "
+            f"file {file_part!r}. Add it to CROSS_FILE_SPEC_FILES (and confirm the "
+            f"reference oracle records the members) — a cross-file link must never "
+            f"degrade into a silently-dropped surface member."
+        )
+    return True
+
+
+# Back-compat alias: the predicate is no longer "local"-only.
+_local_ref = _class_ref
 
 
 def _items_reference_local(node: object) -> bool:
@@ -1700,10 +2130,11 @@ def _items_reference_local(node: object) -> bool:
 
 
 def _schema_field_is_composition(psc: object) -> bool:
-    """A schema property is a composition member iff its type is a local class-ref:
-    a bare ``$ref`` to a local model, or an array whose ``items`` reference one
-    (directly or via a nested anyOf/oneOf/allOf). A TOP-LEVEL anyOf/oneOf/allOf is
-    a union<...> return and is EXCLUDED (verb-setter idiom)."""
+    """A schema property is a composition member iff its type is a class-ref:
+    a bare ``$ref`` to a model (same-file OR cross-file — see ``_class_ref``), or an
+    array whose ``items`` reference one (directly or via a nested anyOf/oneOf/allOf).
+    A TOP-LEVEL anyOf/oneOf/allOf is a union<...> return and is EXCLUDED
+    (verb-setter idiom)."""
     if not isinstance(psc, dict):
         return False
     if _local_ref(psc):
@@ -1712,22 +2143,24 @@ def _schema_field_is_composition(psc: object) -> bool:
     return isinstance(items, dict) and _items_reference_local(items)
 
 
-def _comp_members_from_props(props) -> "set[str]":
+def _comp_members_from_props(props) -> set[str]:
     import keyword
+
     return {
-        name for name, psc in (props or {}).items()
+        name
+        for name, psc in (props or {}).items()
         if _schema_field_is_composition(psc) and not keyword.iskeyword(name)
     }
 
 
-def _generated_model_composition_members(psdk: Path, GR) -> "dict[str, dict]":
+def _generated_model_composition_members(psdk: Path, GR) -> dict[str, dict]:
     """Compute ``{oracle_module: {ClassName: [composition members]}}`` for the three
     generated data-model modules whose C# properties are lowercase/wire-verbatim (so
     the PascalCase parser cannot see them). Derived from the SAME schemas the
     generators read -- schema.json ($defs) for SWML verbs, and the vendored
     swaig-specs yaml for post-prompt / swaig-request -- so the set reproduces the
     reference oracle EXACTLY. Returns empty on any missing input."""
-    out: "dict[str, dict]" = {}
+    out: dict[str, dict] = {}
     if GR is None:
         return out
 
@@ -1745,8 +2178,11 @@ def _generated_model_composition_members(psdk: Path, GR) -> "dict[str, dict]":
         SW_MOD = "signalwire.core.swml_verbs_generated"
         for raw, node in defs.items():
             if isinstance(node, dict) and GR.is_object_schema(node):
-                _add(SW_MOD, GR.type_name(raw),
-                     _comp_members_from_props(node.get("properties")))
+                _add(
+                    SW_MOD,
+                    GR.type_name(raw),
+                    _comp_members_from_props(node.get("properties")),
+                )
         hand = {"answer", "hangup", "ai", "play", "say"}
         sm = defs.get("SWMLMethod")
         if isinstance(sm, dict):
@@ -1763,7 +2199,9 @@ def _generated_model_composition_members(psdk: Path, GR) -> "dict[str, dict]":
                     continue
                 if inner.get("type") == "string" or inner.get("$ref"):
                     continue
-                has_inline = inner.get("type") == "object" and bool(inner.get("properties"))
+                has_inline = inner.get("type") == "object" and bool(
+                    inner.get("properties")
+                )
                 if not inner.get("oneOf") and not has_inline:
                     continue
                 props: dict = {}
@@ -1771,15 +2209,24 @@ def _generated_model_composition_members(psdk: Path, GR) -> "dict[str, dict]":
                     for b in inner["oneOf"]:
                         if isinstance(b, dict) and b.get("$ref"):
                             d = defs.get(b["$ref"].rsplit("/", 1)[-1], {})
-                            props.update((d.get("properties") if isinstance(d, dict) else {}) or {})
+                            props.update(
+                                (d.get("properties") if isinstance(d, dict) else {})
+                                or {}
+                            )
                         elif isinstance(b, dict):
                             props.update(b.get("properties") or {})
                 else:
                     props.update(inner.get("properties") or {})
                 if not props:
                     continue
-                pascal = "".join(w[:1].upper() + w[1:] for w in re.split(r"[._\-\s]", verb) if w)
-                _add(SW_MOD, GR.type_name(pascal + "Config"), _comp_members_from_props(props))
+                pascal = "".join(
+                    w[:1].upper() + w[1:] for w in re.split(r"[._\-\s]", verb) if w
+                )
+                _add(
+                    SW_MOD,
+                    GR.type_name(pascal + "Config"),
+                    _comp_members_from_props(props),
+                )
 
     # --- 2. post-prompt + swaig-request: vendored swaig-specs yaml -----------
     try:
@@ -1788,6 +2235,7 @@ def _generated_model_composition_members(psdk: Path, GR) -> "dict[str, dict]":
         yaml = None
     specs = psdk / "swaig-specs"
     if yaml is not None and specs.is_dir():
+
         def _schemas(fn: str) -> dict:
             p = specs / fn
             if not p.is_file():
@@ -1797,8 +2245,11 @@ def _generated_model_composition_members(psdk: Path, GR) -> "dict[str, dict]":
 
         for raw, node in _schemas("post-prompt.yaml").items():
             if isinstance(node, dict) and GR.is_object_schema(node):
-                _add("signalwire.core.post_prompt_generated", GR.type_name(raw),
-                     _comp_members_from_props(node.get("properties")))
+                _add(
+                    "signalwire.core.post_prompt_generated",
+                    GR.type_name(raw),
+                    _comp_members_from_props(node.get("properties")),
+                )
         sr = _schemas("swaig-request.yaml").get("SwaigRequest")
         if isinstance(sr, dict):
             SR_MOD = "signalwire.core.swaig_request_generated"
@@ -1806,12 +2257,16 @@ def _generated_model_composition_members(psdk: Path, GR) -> "dict[str, dict]":
             arg = props.get("argument")
             if isinstance(arg, dict) and arg.get("properties"):
                 props["argument"] = {"$ref": "#/components/schemas/SwaigArgument"}
-                _add(SR_MOD, "SwaigArgument", _comp_members_from_props(arg.get("properties")))
+                _add(
+                    SR_MOD,
+                    "SwaigArgument",
+                    _comp_members_from_props(arg.get("properties")),
+                )
             _add(SR_MOD, "SwaigRequest", _comp_members_from_props(props))
     return out
 
 
-def _emit_generated_model_members(modules: "dict[str, dict]", psdk: Path, GR) -> None:
+def _emit_generated_model_members(modules: dict[str, dict], psdk: Path, GR) -> None:
     """Merge the schema-driven composition members onto the (currently method-less)
     generated-model surface classes, in-place."""
     for mod, classes in _generated_model_composition_members(psdk, GR).items():
@@ -1821,13 +2276,13 @@ def _emit_generated_model_members(modules: "dict[str, dict]", psdk: Path, GR) ->
             surf_mod["classes"][cls] = sorted(set(existing) | set(members))
 
 
-def _emit_crud_bases(manifest: dict) -> "dict[str, dict]":
+def _emit_crud_bases(manifest: dict) -> dict[str, dict]:
     """Top-level ``crud_bases`` map ({"module.Class": {base, bind:[...]}}) for the
     spec-driven REST parity fold -- re-keyed from the generator manifest's bare
     class names to the oracle's ``<module>.<Class>`` form via ``class_module``."""
     cb = manifest.get("crud_bases") or {}
     class_module = manifest.get("class_module") or {}
-    out: "dict[str, dict]" = {}
+    out: dict[str, dict] = {}
     for cls, binding in cb.items():
         mod = class_module.get(cls)
         if not mod:
@@ -1836,11 +2291,92 @@ def _emit_crud_bases(manifest: dict) -> "dict[str, dict]":
     return out
 
 
+def _wired_base_surface(cs_files, rest_manifest) -> dict[str, list[str]]:
+    """Return ``{ClassName: [inherited surface member names]}`` for classes that
+    reach their surface through a NON-EMITTED generated base.
+
+    This is the SURFACE-axis analogue of ``enumerate_signatures``'s
+    ``_wired_base_accessors``, and of the reference enumerator's
+    ``_wired_base_attributes``
+    (porting-sdk/scripts/enumerate_python_signatures.py).
+
+    ``RestClient`` reaches its 22 namespace accessors — ``client.Calling``,
+    ``client.Fabric``, ``client.Video``, … — by inheriting
+    ``SignalWire.REST.Namespaces.Generated.ResourceTree``, exactly as the
+    reference's ``RestClient`` inherits the private ``_GeneratedResourceTree``.
+    ``ResourceTree`` is a .NET-only composition helper that is NOT in the
+    generator manifest, so the generated-REST branch skips it and its members are
+    emitted nowhere. Without this lift those 22 accessors — real, caller-reachable,
+    and covered end-to-end by ``tests/RestMock/RestClientTreeAccessorMockTest.cs``
+    — read as ``missing-port`` surface drift against a reference that has them.
+
+    Scoped structurally, matching the signature side:
+      * only bases under ``GENERATED_REST_NAMESPACE`` that the manifest does NOT
+        emit as their own oracle class (an emitted base is its own surface symbol
+        whose members are enumerated there — lifting them would duplicate real
+        inheritance);
+      * the base's own declared public members, minus its constructor.
+
+    The caller UNIONs these in, so a locally declared member is unaffected.
+    """
+    emitted = set(rest_manifest.get("class_module", {})) | set(
+        rest_manifest.get("containers", {})
+    )
+
+    # Declared members of every generated class the manifest does NOT emit.
+    unemitted_members: dict[str, list[str]] = {}
+    # ClassName -> its base-clause leaf names, across all files.
+    bases: dict[str, list[str]] = {}
+    for path in cs_files:
+        # A parse failure here SILENTLY DROPS a generated class's inherited
+        # members from the surface artifact SURFACE-DIFF compares — i.e. it
+        # manufactures a false "the port omits this member". Fail loud instead
+        # (repo convention: an unresolvable input aborts, it never degrades).
+        try:
+            for cls, blist in scan_class_bases(path).items():
+                bases.setdefault(cls, []).extend(blist)
+        except Exception as exc:
+            raise SystemExit(
+                f"enumerate_surface.py: scan_class_bases failed on {path}: {exc}"
+            ) from exc
+        try:
+            findings = parse_cs_file(path)
+        except Exception as exc:
+            raise SystemExit(
+                f"enumerate_surface.py: parse_cs_file failed on {path}: {exc}"
+            ) from exc
+        for namespace, class_name, methods in findings:
+            if namespace != GENERATED_REST_NAMESPACE or class_name in emitted:
+                continue
+            unemitted_members.setdefault(class_name, []).extend(
+                m for m in methods if m != "__init__"
+            )
+
+    out: dict[str, list[str]] = {}
+    for cls, blist in bases.items():
+        lifted: list[str] = []
+        for b in blist:
+            lifted.extend(unemitted_members.get(b, []))
+        if lifted:
+            out[cls] = sorted(set(lifted))
+    return out
+
+
 def build_snapshot(repo: Path, src_dir: Path) -> dict:
     modules: dict[str, dict] = {}
     rest_manifest = load_rest_manifest()
 
     cs_files = sorted(src_dir.rglob("*.cs"))
+    cs_files = [
+        p
+        for p in cs_files
+        if "/obj/" not in p.relative_to(repo).as_posix()
+        and "/bin/" not in p.relative_to(repo).as_posix()
+    ]
+
+    # Surface members reachable only through a non-emitted generated base
+    # (RestClient : ResourceTree). See _wired_base_surface.
+    wired_base_surface = _wired_base_surface(cs_files, rest_manifest)
 
     for path in cs_files:
         # Skip build artifacts
@@ -1855,6 +2391,11 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             continue
 
         for namespace, class_name, methods in findings:
+            # Members this class reaches ONLY through a non-emitted generated
+            # base (RestClient : ResourceTree) — declared nowhere else, so they
+            # must be lifted or the caller-reachable accessors are invisible.
+            if class_name in wired_base_surface:
+                methods = sorted(set(methods) | set(wired_base_surface[class_name]))
             # EffectiveRequestOptions is scaffolding for the private
             # _EffectiveOptions type-ref (plan 4.2) — never a public class in the
             # oracle. Skip emitting it as a class (it survives only as a type ref
@@ -1902,7 +2443,9 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             # surface; the gen-type leaf fold collapses cross-module duplicates).
             gen_type_mod = generated_type_module(namespace)
             if gen_type_mod is not None:
-                entry = modules.setdefault(gen_type_mod, {"classes": {}, "functions": []})
+                entry = modules.setdefault(
+                    gen_type_mod, {"classes": {}, "functions": []}
+                )
                 entry["classes"].setdefault(class_name, [])
                 continue
 
@@ -1984,13 +2527,17 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             _oracle_mods = _oracle_surface_members()
             _oracle_cls_members = _oracle_mods.get(target_mod, {}).get(target_class)
             allow = SURFACE_METHOD_ALLOWLIST.get((target_mod, target_class))
-            if (target_mod == "signalwire.relay.event"
-                    and _oracle_cls_members is not None):
+            if (
+                target_mod == "signalwire.relay.event"
+                and _oracle_cls_members is not None
+            ):
                 # Intersect parsed members with the oracle set (drops port-only
                 # helpers, keeps the @dataclass fields + from_payload).
                 translated &= _oracle_cls_members
-            elif (target_mod, target_class) in _DATACLASS_FIELD_CLASSES \
-                    and _oracle_cls_members is not None:
+            elif (
+                target_mod,
+                target_class,
+            ) in _DATACLASS_FIELD_CLASSES and _oracle_cls_members is not None:
                 # AI-Chat DTOs (positional records → params not parsed) + the
                 # RequestOptions record: the oracle surface member set IS the exact
                 # field contract (e.g. RequestOptions -> {abort_signal, merge,
@@ -2040,19 +2587,21 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     if "signalwire.core.agent_base" in modules:
         ab_classes = modules["signalwire.core.agent_base"].get("classes", {})
         if "AgentBase" in ab_classes:
-            ab_classes["AgentBase"] = sorted(
-                set(ab_classes["AgentBase"]) - projected
-            )
+            ab_classes["AgentBase"] = sorted(set(ab_classes["AgentBase"]) - projected)
 
     # Now restrict SWMLService to its reference own-surface set (mixin pooling
     # already consumed its full method list above).
     if "signalwire.core.swml_service" in modules:
         swml_classes = modules["signalwire.core.swml_service"]["classes"]
         if "SWMLService" in swml_classes:
-            swml_classes["SWMLService"] = sorted(apply_member_allowlist(
-                set(swml_classes["SWMLService"]), _SWML_SERVICE_ALLOW,
-                "signalwire.core.swml_service", "SWMLService",
-            ))
+            swml_classes["SWMLService"] = sorted(
+                apply_member_allowlist(
+                    set(swml_classes["SWMLService"]),
+                    _SWML_SERVICE_ALLOW,
+                    "signalwire.core.swml_service",
+                    "SWMLService",
+                )
+            )
 
     # Relay Action control surface: the oracle projects stop/pause/resume/volume
     # directly onto each concrete action. `stop` lives on the shared C# Action
@@ -2093,7 +2642,9 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     # list / __init__ ARE present). Emit the reference base names in _base so the
     # consolidated hierarchy compares equal — the capability is real on the C#
     # CrudResource; only the base-class SPLIT is a language idiom.
-    base_mod = modules.setdefault("signalwire.rest._base", {"classes": {}, "functions": []})
+    base_mod = modules.setdefault(
+        "signalwire.rest._base", {"classes": {}, "functions": []}
+    )
     base_mod["classes"].setdefault("BaseResource", ["__init__"])
     base_mod["classes"].setdefault("ReadResource", ["get", "list", "paginate"])
     base_mod["classes"].setdefault("FabricResource", [])
@@ -2102,15 +2653,57 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
     # Skill subclasses: drop the data-carrying property extras (name /
     # description / …) and project the SkillBase-inherited methods each skill's
     # reference records (real, callable via C# inheritance — see the tables).
+    #
+    # ORACLE-GATED, not list-gated. Both the ``_SKILLBASE_INHERITABLE`` set and
+    # ``SKILL_INHERITED_PROJECTIONS``' per-class lists are HAND-KEPT, so they go
+    # stale the moment the reference moves a lifecycle member — and the C#
+    # subclass overrides this loop KEEPS are parsed from source, so a reference
+    # move leaves them emitted with no hand list involved at all.
+    #
+    # It moved: the reference made ``SkillBase.get_prompt_sections()`` a FINAL
+    # template method that applies the ``skip_prompt`` guard and delegates to a
+    # PROTECTED ``_get_prompt_sections()`` hook (signalwire-python
+    # core/skill_base.py:88-97). Every subclass now overrides the protected hook,
+    # so the oracle records the public member on the BASE ONLY. .NET has no
+    # template-method split here — each of the 12 C# skills overrides the public
+    # ``GetPromptSections`` and re-applies the guard itself via the ``SkipPrompt``
+    # helper (behaviourally identical; verified on all 12) — so the C# override IS
+    # this port's spelling of the protected hook, and its public name must not be
+    # emitted as subclass surface the reference does not expose.
+    #
+    # So the lifecycle member set is gated on what the surface oracle LIVE
+    # records, and the gate is derived rather than hand-listed: a
+    # ``_SKILLBASE_INHERITABLE`` member the oracle records on ``SkillBase`` but on
+    # NO skill subclass is a FINAL template method, and is stripped from every
+    # subclass. A reference move of this shape now self-corrects on the next
+    # regen with no hand edit.
+    #
+    # The "no subclass records it" test is what keeps this from over-reaching. A
+    # member the oracle records on SOME subclass is a normally-overridable hook,
+    # so a subclass the oracle omits it from is ORACLE UNDER-ENUMERATION, not a
+    # reference move — the griffe oracle demonstrably misses members the reference
+    # SOURCE declares (ApiNinjasTrivia/PlayBackgroundFile/Spider/WeatherApi/
+    # WikipediaSearch setup/register_tools/get_instance_key/get_parameter_schema/
+    # get_hints/cleanup are all present in signalwire-python and absent from the
+    # oracle). Those .NET implementations are REAL and must stay emitted for the
+    # ledger to adjudicate; deleting them would hide port surface behind an oracle
+    # bug. Only ``get_prompt_sections`` currently meets the base-only test.
+    #
+    # Fail-safe: an unresolvable oracle, or one recording nothing for SkillBase,
+    # falls back to the hand tables rather than stripping every lifecycle member.
+    _skill_final_members = _skillbase_final_surface_members()
     for mod_name, entry in modules.items():
-        if not (mod_name.startswith("signalwire.skills.")
-                and mod_name.endswith(".skill")):
+        if not (
+            mod_name.startswith("signalwire.skills.") and mod_name.endswith(".skill")
+        ):
             continue
         for cls_name, meths in list(entry["classes"].items()):
             kept = [m for m in meths if m not in _SKILL_PROPERTY_EXTRAS]
             for inj in SKILL_INHERITED_PROJECTIONS.get(cls_name, []):
                 if inj in _SKILLBASE_INHERITABLE and inj not in kept:
                     kept.append(inj)
+            if _skill_final_members:
+                kept = [m for m in kept if m not in _skill_final_members]
             entry["classes"][cls_name] = sorted(set(kept))
 
     # Top-level ``signalwire`` module function names that are class re-exports
@@ -2157,8 +2750,7 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
 
     # Drop empty modules
     sorted_modules = {
-        k: v for k, v in sorted_modules.items()
-        if v["classes"] or v["functions"]
+        k: v for k, v in sorted_modules.items() if v["classes"] or v["functions"]
     }
 
     snapshot = {
@@ -2196,8 +2788,17 @@ def build_native_names(repo: Path, src_dir: Path) -> dict:
         try:
             findings = parse_cs_file(path)
         except Exception as e:  # pragma: no cover
-            print(f"warning: failed to parse {path}: {e}", file=sys.stderr)
-            continue
+            # FAIL LOUD. A warn-and-continue here emitted a SHORT-but-valid
+            # port_surface_native.json and exited 0, so DOC-AUDIT could not resolve
+            # the native members of whatever file failed to parse and blamed the DOCS
+            # for a phantom-API reference — the "enumerator fails successfully"
+            # pattern (a wrong parity artifact is worse than none).
+            raise SystemExit(
+                f"enumerate_surface: FATAL — failed to parse {path}: "
+                f"{type(e).__name__}: {e}. The native-names sidecar would be "
+                f"INCOMPLETE, so DOC-AUDIT would report this file's real members as "
+                f"unresolved doc references. Fix the parse, do not ignore it."
+            ) from e
         for _namespace, class_name, methods in findings:
             names.add(class_name)
             for m in methods:
@@ -2218,19 +2819,25 @@ def main(argv: list[str]) -> int:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--src-dir", type=Path, default=default_src,
+        "--src-dir",
+        type=Path,
+        default=default_src,
         help=f"Source root to walk (default: {default_src})",
     )
     parser.add_argument(
-        "--output", type=Path, default=default_output,
+        "--output",
+        type=Path,
+        default=default_output,
         help=f"Where to write JSON (default: {default_output})",
     )
     parser.add_argument(
-        "--stdout", action="store_true",
+        "--stdout",
+        action="store_true",
         help="Print JSON to stdout instead of writing --output",
     )
     parser.add_argument(
-        "--check", action="store_true",
+        "--check",
+        action="store_true",
         help="Compare against the file at --output; exit 1 on drift",
     )
     args = parser.parse_args(argv)
@@ -2267,7 +2874,9 @@ def main(argv: list[str]) -> int:
         if not native_output.is_file():
             print(f"error: {native_output} does not exist", file=sys.stderr)
             return 1
-        if strip_meta(native_rendered) != strip_meta(native_output.read_text(encoding="utf-8")):
+        if strip_meta(native_rendered) != strip_meta(
+            native_output.read_text(encoding="utf-8")
+        ):
             print(
                 "DRIFT: port_surface_native.json is stale relative to source.\n"
                 "  Regenerate:\n"

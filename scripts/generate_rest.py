@@ -42,6 +42,7 @@ Usage:
     python3 scripts/generate_rest.py --check         # GEN-FRESH: fail if stale
     python3 scripts/generate_rest.py --out DIR       # scratch: emit flat into DIR
 """
+
 from __future__ import annotations
 
 import argparse
@@ -87,9 +88,21 @@ except ImportError:  # pragma: no cover
 # a new resource spec dir is picked up automatically and only needs an order
 # placement.
 _NS_ORDER = (
-    "relay-rest", "fabric", "calling", "video", "datasphere",
-    "logs", "message", "messages", "voice", "fax", "project", "projects", "chat",
-    "pubsub", "swml-webhooks",
+    "relay-rest",
+    "fabric",
+    "calling",
+    "video",
+    "datasphere",
+    "logs",
+    "message",
+    "messages",
+    "voice",
+    "fax",
+    "project",
+    "projects",
+    "chat",
+    "pubsub",
+    "swml-webhooks",
 )
 
 # PascalCase Types sub-namespace overrides where the mechanical PascalCase of the
@@ -113,7 +126,7 @@ def _spec_docs(psdk: Path) -> dict[str, dict]:
 
 
 def _has_resource(doc: dict) -> bool:
-    for _path, item in (doc.get("paths") or {}).items():
+    for item in (doc.get("paths") or {}).values():
         if not isinstance(item, dict):
             continue
         r = item.get("x-sdk-resource")
@@ -155,29 +168,97 @@ def discover_type_ns(psdk: Path) -> list[tuple[str, str, str]]:
             out.append((ns, sub, ns_key))
     return sorted(out, key=lambda t: _order_key(t[0]))
 
+
 # C# reserved keywords (contextual keywords like `value`/`async` are legal as
 # identifiers and are NOT escaped — only true reserved words). A field whose
 # param identifier collides is @-escaped (a verbatim identifier) — the .NET
 # analog of PHP's `_` suffix / Python's `from` -> `from_`. The wire key is
 # unchanged; only the C# identifier gets `@`.
 CSHARP_KEYWORDS = {
-    "abstract", "as", "base", "bool", "break", "byte", "case", "catch",
-    "char", "checked", "class", "const", "continue", "decimal", "default",
-    "delegate", "do", "double", "else", "enum", "event", "explicit", "extern",
-    "false", "finally", "fixed", "float", "for", "foreach", "goto", "if",
-    "implicit", "in", "int", "interface", "internal", "is", "lock", "long",
-    "namespace", "new", "null", "object", "operator", "out", "override",
-    "params", "private", "protected", "public", "readonly", "ref", "return",
-    "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string",
-    "struct", "switch", "this", "throw", "true", "try", "typeof", "uint",
-    "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void",
-    "volatile", "while",
+    "abstract",
+    "as",
+    "base",
+    "bool",
+    "break",
+    "byte",
+    "case",
+    "catch",
+    "char",
+    "checked",
+    "class",
+    "const",
+    "continue",
+    "decimal",
+    "default",
+    "delegate",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "event",
+    "explicit",
+    "extern",
+    "false",
+    "finally",
+    "fixed",
+    "float",
+    "for",
+    "foreach",
+    "goto",
+    "if",
+    "implicit",
+    "in",
+    "int",
+    "interface",
+    "internal",
+    "is",
+    "lock",
+    "long",
+    "namespace",
+    "new",
+    "null",
+    "object",
+    "operator",
+    "out",
+    "override",
+    "params",
+    "private",
+    "protected",
+    "public",
+    "readonly",
+    "ref",
+    "return",
+    "sbyte",
+    "sealed",
+    "short",
+    "sizeof",
+    "stackalloc",
+    "static",
+    "string",
+    "struct",
+    "switch",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "typeof",
+    "uint",
+    "ulong",
+    "unchecked",
+    "unsafe",
+    "ushort",
+    "using",
+    "virtual",
+    "void",
+    "volatile",
+    "while",
 }
 
 
 # ---------------------------------------------------------------------------
 # Resolution.
 # ---------------------------------------------------------------------------
+
 
 def resolve_porting_sdk() -> Path:
     env = os.environ.get("PORTING_SDK")
@@ -188,7 +269,9 @@ def resolve_porting_sdk() -> Path:
         cand = parent.parent / "porting-sdk"
         if (cand / "rest-apis").is_dir():
             return cand.resolve()
-    raise SystemExit("generate_rest.py: porting-sdk not found (set $PORTING_SDK or clone adjacent)")
+    raise SystemExit(
+        "generate_rest.py: porting-sdk not found (set $PORTING_SDK or clone adjacent)"
+    )
 
 
 def repo_root() -> Path:
@@ -225,11 +308,16 @@ def _load_overlay() -> dict[str, set[tuple[str, str | None]]]:
         data = {}
         if path.is_file():
             data = yaml.safe_load(path.read_text()) or {}
-        _overlay_cache = {"hidden": rules("hidden", data), "deprecated": rules("deprecated", data)}
+        _overlay_cache = {
+            "hidden": rules("hidden", data),
+            "deprecated": rules("deprecated", data),
+        }
     return _overlay_cache
 
 
-def _overlay_match(rules: set[tuple[str, str | None]], field: str, schema_name: str | None) -> bool:
+def _overlay_match(
+    rules: set[tuple[str, str | None]], field: str, schema_name: str | None
+) -> bool:
     # A rule matches when its field equals `field` AND (it is unscoped OR its scope
     # equals the containing SPEC schema name). An unscoped rule matches everywhere;
     # a scoped rule only inside the schema whose spec name equals its scope.
@@ -251,12 +339,13 @@ def _overlay_deprecated(field: str, schema_name: str | None = None) -> bool:
 # Base loading (x-sdk-bases; §2).
 # ---------------------------------------------------------------------------
 
+
 def load_bases(psdk: Path) -> dict[str, list[str]]:
     raw = yaml.safe_load((psdk / "rest-apis" / "x-sdk-bases.yaml").read_text())
     bases = dict(raw.get("x-sdk-bases") or {})
     fab = psdk / "rest-apis" / "fabric" / "x-sdk-bases.yaml"
     if fab.is_file():
-        bases.update((yaml.safe_load(fab.read_text()).get("x-sdk-bases") or {}))
+        bases.update(yaml.safe_load(fab.read_text()).get("x-sdk-bases") or {})
 
     def resolve(name: str, seen: set[str]) -> list[str]:
         if name in seen:
@@ -278,32 +367,52 @@ def load_bases(psdk: Path) -> dict[str, list[str]]:
 # Spec model.
 # ---------------------------------------------------------------------------
 
+
 class Spec:
     def __init__(self, name: str, doc: dict):
         self.name = name
         self.doc = doc
         self.server_path = _url_path(doc["servers"][0]["url"])
         if self.server_path != "/" and self.server_path.endswith("/"):
-            raise SystemExit(f"{name}: servers[0].url path {self.server_path!r} has a trailing slash")
+            raise SystemExit(
+                f"{name}: servers[0].url path {self.server_path!r} has a trailing slash"
+            )
         self.namespace_attr = (doc.get("x-sdk-namespace") or {}).get("attr") or ""
         self.ops: dict[str, tuple[str, str, bool]] = {}
-        self.op_body: dict[str, dict] = {}  # operationId -> requestBody JSON schema (or {})
+        self.op_body: dict[
+            str, dict
+        ] = {}  # operationId -> requestBody JSON schema (or {})
         # operationId -> 200/201/2XX JSON response schema (for the typed-return flip).
         self.op_response: dict[str, dict] = {}
         for path, item in (doc.get("paths") or {}).items():
             for verb in ("get", "post", "put", "patch", "delete"):
                 o = item.get(verb)
                 if o and o.get("operationId"):
-                    self.ops[o["operationId"]] = (verb, path, bool(o.get("requestBody")))
+                    self.ops[o["operationId"]] = (
+                        verb,
+                        path,
+                        bool(o.get("requestBody")),
+                    )
                     body = o.get("requestBody") or {}
                     content = body.get("content") or {}
-                    media = content.get("application/json") or (next(iter(content.values())) if content else {})
+                    media = content.get("application/json") or (
+                        next(iter(content.values())) if content else {}
+                    )
                     self.op_body[o["operationId"]] = (media or {}).get("schema") or {}
                     responses = o.get("responses") or {}
-                    ok = responses.get("200") or responses.get("201") or responses.get("2XX") or {}
-                    rc = (ok.get("content") or {})
-                    rmedia = rc.get("application/json") or (next(iter(rc.values())) if rc else {})
-                    self.op_response[o["operationId"]] = (rmedia or {}).get("schema") or {}
+                    ok = (
+                        responses.get("200")
+                        or responses.get("201")
+                        or responses.get("2XX")
+                        or {}
+                    )
+                    rc = ok.get("content") or {}
+                    rmedia = rc.get("application/json") or (
+                        next(iter(rc.values())) if rc else {}
+                    )
+                    self.op_response[o["operationId"]] = (rmedia or {}).get(
+                        "schema"
+                    ) or {}
         self.schemas = ((doc.get("components") or {}).get("schemas")) or {}
 
     def resources(self) -> list[tuple[str, dict]]:
@@ -323,12 +432,15 @@ def _url_path(url: str) -> str:
 
 
 def load_spec(psdk: Path, ns: str) -> Spec:
-    return Spec(ns, yaml.safe_load((psdk / "rest-apis" / ns / "openapi.yaml").read_text()))
+    return Spec(
+        ns, yaml.safe_load((psdk / "rest-apis" / ns / "openapi.yaml").read_text())
+    )
 
 
 # ---------------------------------------------------------------------------
 # Path composition (§4).
 # ---------------------------------------------------------------------------
+
 
 def join_path(a: str, b: str) -> str:
     if not b:
@@ -355,7 +467,7 @@ def relative_tail(spec: Spec, anchor: str, markup: dict, op_path: str):
     full = join_path(spec.server_path, coll)
     absp = join_path(spec.server_path, op_path)
     if coll and absp.startswith(full + "/"):
-        return ([s for s in absp[len(full) + 1:].split("/") if s], False)
+        return ([s for s in absp[len(full) + 1 :].split("/") if s], False)
     if coll and absp == full:
         return ([], False)
     return ([s for s in absp.lstrip("/").split("/") if s], True)
@@ -364,6 +476,7 @@ def relative_tail(spec: Spec, anchor: str, markup: dict, op_path: str):
 # ---------------------------------------------------------------------------
 # Naming.
 # ---------------------------------------------------------------------------
+
 
 def snake_to_pascal(snake: str) -> str:
     parts = [p for p in snake.replace("-", "_").replace(".", "_").split("_") if p]
@@ -385,11 +498,20 @@ def escape_param(field: str) -> str:
 
 
 PARAM_ARG_NAME = {
-    "id": "id", "queue_id": "queueId", "NumberGroupId": "groupId",
-    "documentId": "documentId", "chunkId": "chunkId", "mfa_request_id": "requestId",
-    "e164_number": "e164", "fabric_subscriber_id": "subscriberId",
-    "ai_agent_id": "id", "cxml_webhook_id": "id", "swml_webhook_id": "id",
-    "token_id": "tokenId", "room_id": "roomId", "resource_id": "resourceId",
+    "id": "id",
+    "queue_id": "queueId",
+    "NumberGroupId": "groupId",
+    "documentId": "documentId",
+    "chunkId": "chunkId",
+    "mfa_request_id": "requestId",
+    "e164_number": "e164",
+    "fabric_subscriber_id": "subscriberId",
+    "ai_agent_id": "id",
+    "cxml_webhook_id": "id",
+    "swml_webhook_id": "id",
+    "token_id": "tokenId",
+    "room_id": "roomId",
+    "resource_id": "resourceId",
     "sip_endpoint_id": "sipEndpointId",
 }
 
@@ -419,6 +541,7 @@ BASE_PROVIDES = {
 # Command-dispatch (§6).
 # ---------------------------------------------------------------------------
 
+
 def command_method_name(cmd: str) -> str:
     s = cmd
     if s.startswith("calling."):
@@ -430,10 +553,14 @@ def command_method_name(cmd: str) -> str:
 def discriminator_mapping(spec: Spec, schema_name: str) -> list[str]:
     sch = spec.schemas.get(schema_name)
     if sch is None:
-        raise SystemExit(f"command-dispatch request {schema_name!r} not in components.schemas")
+        raise SystemExit(
+            f"command-dispatch request {schema_name!r} not in components.schemas"
+        )
     mapping = (sch.get("discriminator") or {}).get("mapping")
     if not mapping:
-        raise SystemExit(f"command-dispatch request {schema_name!r} has no discriminator.mapping")
+        raise SystemExit(
+            f"command-dispatch request {schema_name!r} has no discriminator.mapping"
+        )
     return list(mapping.keys())
 
 
@@ -475,7 +602,12 @@ def resolve_schema(spec: Spec, schema: dict | None, seen=None) -> dict:
         seen.add(leaf)
         return resolve_schema(spec, spec.schemas.get(leaf), seen)
     allof = schema.get("allOf")
-    if allof and len(allof) == 1 and not schema.get("properties") and not schema.get("type"):
+    if (
+        allof
+        and len(allof) == 1
+        and not schema.get("properties")
+        and not schema.get("type")
+    ):
         return resolve_schema(spec, allof[0], seen)
     return schema
 
@@ -486,7 +618,12 @@ def _is_named_ref(schema: dict) -> bool:
     if schema.get("$ref"):
         return True
     allof = schema.get("allOf")
-    if allof and len(allof) == 1 and not schema.get("properties") and not schema.get("type"):
+    if (
+        allof
+        and len(allof) == 1
+        and not schema.get("properties")
+        and not schema.get("type")
+    ):
         return _is_named_ref(allof[0])
     return False
 
@@ -499,8 +636,18 @@ def _json_type(schema: dict) -> str | None:
     return t
 
 
-_SCALAR_CS = {"string": "string", "integer": "int", "number": "double", "boolean": "bool"}
-_SCALAR_CANON = {"string": "string", "integer": "int", "number": "float", "boolean": "bool"}
+_SCALAR_CS = {
+    "string": "string",
+    "integer": "int",
+    "number": "double",
+    "boolean": "bool",
+}
+_SCALAR_CANON = {
+    "string": "string",
+    "integer": "int",
+    "number": "float",
+    "boolean": "bool",
+}
 
 
 def cs_param_type(spec: Spec, schema: dict, required: bool) -> str:
@@ -553,7 +700,9 @@ def object_body_fields(spec: Spec, body_schema: dict) -> list[tuple[str, dict, b
     return [(name, psc, name in required) for name, psc in props.items()]
 
 
-def command_param_fields(spec: Spec, command_schema: dict) -> tuple[list[tuple[str, dict, bool]], bool]:
+def command_param_fields(
+    spec: Spec, command_schema: dict
+) -> tuple[list[tuple[str, dict, bool]], bool]:
     """§6 union-flatten: return ([(wire_name, schema, required)], has_id)."""
     cs = resolve_schema(spec, command_schema)
     has_id = "id" in (cs.get("properties") or {})
@@ -591,7 +740,9 @@ def is_object_body(spec: Spec, body_schema: dict) -> bool:
     return _json_type(resolved) == "object"
 
 
-def ordered_fields(fields: list[tuple[str, dict, bool]]) -> list[tuple[str, dict, bool]]:
+def ordered_fields(
+    fields: list[tuple[str, dict, bool]],
+) -> list[tuple[str, dict, bool]]:
     req = [f for f in fields if f[2]]
     opt = [f for f in fields if not f[2]]
     return req + opt
@@ -639,7 +790,9 @@ def _typed_return(ret_cs: str, call_line: str) -> tuple[str, str]:
     if not m:
         raise SystemExit(f"typed-return: unrecognised call line {call_line!r}")
     indent, expr = m.group(1), m.group(2)
-    wrapped = f"{indent}return SignalWire.REST.ResponseProjection.AsAsync<{ret_cs}>({expr});"
+    wrapped = (
+        f"{indent}return SignalWire.REST.ResponseProjection.AsAsync<{ret_cs}>({expr});"
+    )
     return f"Task<{ret_cs}?>", wrapped
 
 
@@ -655,9 +808,14 @@ def _dedupe_param(ident: str, used: set[str]) -> str:
     return ident
 
 
-def body_params(spec: Spec, cls: str, cs_method: str,
-                fields: list[tuple[str, dict, bool]],
-                leading: list[dict], used: set[str]) -> tuple[list[str], list[str], list[str]]:
+def body_params(
+    spec: Spec,
+    cls: str,
+    cs_method: str,
+    fields: list[tuple[str, dict, bool]],
+    leading: list[dict],
+    used: set[str],
+) -> tuple[list[str], list[str], list[str]]:
     """Build named C# params + body-assembly C# + xml-doc lines for a set of
     body fields. ``leading`` is the already-built sidecar records for positional
     id/call_id args. Returns (cs_params_for_fields, body_build_lines, doc_lines)."""
@@ -675,8 +833,15 @@ def body_params(spec: Spec, cls: str, cs_method: str,
         pt = cs_param_type(spec, schema, required)
         ct = canonical_type(spec, schema, required)
         raw = ident[1:] if ident.startswith("@") else ident
-        doc.append(f"    /// <param name=\"{raw}\">Wire field <c>{wire_name}</c>.</param>")
-        rec: dict = {"name": wire_name, "kind": "keyword", "type": ct, "required": required}
+        doc.append(
+            f'    /// <param name="{raw}">Wire field <c>{wire_name}</c>.</param>'
+        )
+        rec: dict = {
+            "name": wire_name,
+            "kind": "keyword",
+            "type": ct,
+            "required": required,
+        }
         if required:
             cs_params.append(f"{pt} {ident}")
             build.append(f"        _reqBody[{cs_str(wire_name)}] = {ident};")
@@ -691,11 +856,18 @@ def body_params(spec: Spec, cls: str, cs_method: str,
     # trailing forward-compat door — the oracle's keyword ``extras``.
     extras_id = _dedupe_param("extras", used)
     cs_params.append(f"Dictionary<string, object?>? {extras_id} = null")
-    doc.append(f"    /// <param name=\"{extras_id}\">Forward-compat body fields merged onto the request.</param>")
-    records.append({
-        "name": "extras", "kind": "keyword",
-        "type": "optional<dict<string,any>>", "required": False, "default": None,
-    })
+    doc.append(
+        f'    /// <param name="{extras_id}">Forward-compat body fields merged onto the request.</param>'
+    )
+    records.append(
+        {
+            "name": "extras",
+            "kind": "keyword",
+            "type": "optional<dict<string,any>>",
+            "required": False,
+            "default": None,
+        }
+    )
     build.append(f"        if ({extras_id} is not null)")
     build.append("        {")
     build.append(f"            foreach (var kv in {extras_id})")
@@ -706,11 +878,15 @@ def body_params(spec: Spec, cls: str, cs_method: str,
     # request_options (plan 4.2): the keyword-only per-call envelope, recorded
     # AFTER extras to match the oracle param order (…fields, extras,
     # request_options). The C# param + threading are appended in emit_method.
-    records.append({
-        "name": "request_options", "kind": "keyword",
-        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
-        "required": False, "default": None,
-    })
+    records.append(
+        {
+            "name": "request_options",
+            "kind": "keyword",
+            "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+            "required": False,
+            "default": None,
+        }
+    )
     _register_sidecar(cls, cs_method, records)
     return cs_params, build, doc
 
@@ -836,7 +1012,7 @@ def _response_raw_leaf(schema: dict) -> str:
     return ref.rsplit("/", 1)[-1]
 
 
-def response_ref_leaf(spec: "Spec", schema: dict) -> str:
+def response_ref_leaf(spec: Spec, schema: dict) -> str:
     """The sanitised C# class leaf for a 200/201 response schema's ``$ref``
     (array-unwrapped) — but ONLY when that schema is actually EMITTED as an object
     DTO (``emit_types`` emits a class for ``is_object_schema`` object schemas). A
@@ -852,7 +1028,7 @@ def response_ref_leaf(spec: "Spec", schema: dict) -> str:
     return type_name(raw)
 
 
-def response_cs_type(spec: "Spec", op_id: str) -> str:
+def response_cs_type(spec: Spec, op_id: str) -> str:
     """The fully-qualified C# response type for an operation: the generated response
     DTO class (``Types.<Sub>.<Name>``) when the op has a named OBJECT response
     schema, else ``Dictionary<string, object?>``."""
@@ -862,12 +1038,16 @@ def response_cs_type(spec: "Spec", op_id: str) -> str:
     return f"{TYPES_CS_NS_BASE}.{_types_subpackage(spec.name)}.{leaf}"
 
 
-def item_cs_type(spec: "Spec", anchor: str, markup: dict) -> str:
+def item_cs_type(spec: Spec, anchor: str, markup: dict) -> str:
     """The resource's item response DTO (the GET-by-id 200 response) — the return
     type of create/update/get and the set_* helpers. Falls back to Dictionary."""
     coll = collection_segment(anchor, markup)
     for path, item in (spec.doc.get("paths") or {}).items():
-        if path.startswith(coll + "/{") and path.count("/{") == 1 and path.endswith("}"):
+        if (
+            path.startswith(coll + "/{")
+            and path.count("/{") == 1
+            and path.endswith("}")
+        ):
             op = item.get("get")
             if op and op.get("operationId"):
                 return response_cs_type(spec, op["operationId"])
@@ -887,7 +1067,7 @@ def item_cs_type(spec: "Spec", anchor: str, markup: dict) -> str:
 _CRUD_BASES: dict[str, dict] = {}
 
 
-def _crud_response_bind_leaf(spec: "Spec", op_id: str) -> str:
+def _crud_response_bind_leaf(spec: Spec, op_id: str) -> str:
     """The RAW schema leaf for a crud_base RESPONSE bind (array-unwrapped),
     matching the reference's ``leaf(res_ref)`` — NOT object-gated (a structural
     type token compared by leaf, not an emitted return type)."""
@@ -906,13 +1086,17 @@ def _request_ref_leaf(schema: dict) -> str:
     return type_name(ref.rsplit("/", 1)[-1])
 
 
-def _collection_roles(spec: "Spec", anchor: str, markup: dict) -> dict[str, dict]:
+def _collection_roles(spec: Spec, anchor: str, markup: dict) -> dict[str, dict]:
     """role -> {verb, op} for the resource's collection + item ops (list/create on
     the collection, get/update/delete on the item), mirroring the reference roles."""
     coll = collection_segment(anchor, markup)
     roles: dict[str, dict] = {}
     for path, item in (spec.doc.get("paths") or {}).items():
-        is_item = path.startswith(coll + "/{") and path.count("/{") == 1 and path.endswith("}")
+        is_item = (
+            path.startswith(coll + "/{")
+            and path.count("/{") == 1
+            and path.endswith("}")
+        )
         is_coll = path == coll
         if not (is_item or is_coll):
             continue
@@ -932,7 +1116,7 @@ def _collection_roles(spec: "Spec", anchor: str, markup: dict) -> dict[str, dict
     return roles
 
 
-def _crud_bind(spec: "Spec", anchor: str, markup: dict, base: str) -> list[str]:
+def _crud_bind(spec: Spec, anchor: str, markup: dict, base: str) -> list[str]:
     """The crud_base bind token list (``class:<Leaf>``) for a resource, in the
     reference's order. Returns [] when the base takes no bind."""
     roles = _collection_roles(spec, anchor, markup)
@@ -942,13 +1126,17 @@ def _crud_bind(spec: "Spec", anchor: str, markup: dict, base: str) -> list[str]:
     if base == "ReadResource":
         binds = [list_leaf or item_leaf, item_leaf]
     elif base in ("CrudResource", "FabricResource"):
-        create_leaf = _request_ref_leaf(spec.op_body.get((roles.get("create") or {}).get("op", ""), {}) or {})
-        update_leaf = _request_ref_leaf(spec.op_body.get((roles.get("update") or {}).get("op", ""), {}) or {})
+        create_leaf = _request_ref_leaf(
+            spec.op_body.get((roles.get("create") or {}).get("op", ""), {}) or {}
+        )
+        update_leaf = _request_ref_leaf(
+            spec.op_body.get((roles.get("update") or {}).get("op", ""), {}) or {}
+        )
         binds = [list_leaf or item_leaf, item_leaf, create_leaf, update_leaf]
     return [f"class:{b}" if b else "any" for b in binds]
 
 
-def _crud_generic_args(spec: "Spec", anchor: str, markup: dict) -> tuple[str, str]:
+def _crud_generic_args(spec: Spec, anchor: str, markup: dict) -> tuple[str, str]:
     """The C# (TList, TItem) generic type-argument DTOs for a CRUD/Fabric resource's
     generic base binding — the list-response and item-response DTO C# types, each
     falling back to ``Dictionary<string, object?>`` when absent/non-object."""
@@ -960,7 +1148,7 @@ def _crud_generic_args(spec: "Spec", anchor: str, markup: dict) -> tuple[str, st
     return list_cs, item_cs
 
 
-def _read_list_get_cs(spec: "Spec", anchor: str, markup: dict) -> tuple[str, str]:
+def _read_list_get_cs(spec: Spec, anchor: str, markup: dict) -> tuple[str, str]:
     """The (list-response, item-response) C# DTO types for a ReadResource — the
     GET-on-collection 200 response and the GET-on-item (``<collection>/{id}``) 200
     response. Each falls back to Dictionary when absent/non-object."""
@@ -973,7 +1161,11 @@ def _read_list_get_cs(spec: "Spec", anchor: str, markup: dict) -> tuple[str, str
             continue
         if path == coll:
             list_cs = response_cs_type(spec, op["operationId"])
-        elif path.startswith(coll + "/{") and path.count("/{") == 1 and path.endswith("}"):
+        elif (
+            path.startswith(coll + "/{")
+            and path.count("/{") == 1
+            and path.endswith("}")
+        ):
             get_cs = response_cs_type(spec, op["operationId"])
     return list_cs, get_cs
 
@@ -992,7 +1184,7 @@ def _returns_canonical(cs_type: str) -> str:
     # Types.<Sub>.<Leaf> -> class:signalwire.rest.namespaces.<ns>_types_generated.<Leaf>
     ns_prefix = TYPES_CS_NS_BASE + "."
     if cs_type.startswith(ns_prefix):
-        rest = cs_type[len(ns_prefix):]
+        rest = cs_type[len(ns_prefix) :]
         sub, _, leaf = rest.partition(".")
         ns_leaf = _REST_TYPES_NS_LEAF.get(sub)
         if ns_leaf:
@@ -1004,11 +1196,21 @@ def _returns_canonical(cs_type: str) -> str:
 # enumerator's _REST_TYPES_NS_LEAF; kept here so the generator can emit the sidecar
 # ``returns`` canonical token without importing the enumerator).
 _REST_TYPES_NS_LEAF = {
-    "RelayRest": "relay_rest", "Fabric": "fabric", "Calling": "calling",
-    "Video": "video", "Datasphere": "datasphere", "Logs": "logs",
-    "Message": "message", "Messages": "messages", "Voice": "voice",
-    "Fax": "fax", "Project": "project", "Projects": "projects",
-    "Chat": "chat", "PubSub": "pubsub", "SwmlWebhooks": "swml_webhooks",
+    "RelayRest": "relay_rest",
+    "Fabric": "fabric",
+    "Calling": "calling",
+    "Video": "video",
+    "Datasphere": "datasphere",
+    "Logs": "logs",
+    "Message": "message",
+    "Messages": "messages",
+    "Voice": "voice",
+    "Fax": "fax",
+    "Project": "project",
+    "Projects": "projects",
+    "Chat": "chat",
+    "PubSub": "pubsub",
+    "SwmlWebhooks": "swml_webhooks",
 }
 
 
@@ -1019,7 +1221,11 @@ def is_object_schema(node: dict) -> bool:
         return False
     props = node.get("properties")
     t = _type_schema_type(node)
-    return (t == "object" or (t is None and props)) and isinstance(props, dict) and len(props) > 0
+    return (
+        (t == "object" or (t is None and props))
+        and isinstance(props, dict)
+        and len(props) > 0
+    )
 
 
 # JSON scalar -> C# nullable primitive for a method-less TYPE property. A field
@@ -1103,8 +1309,9 @@ def _wire_field_cs_type(psc: dict, ref_names: dict, schemas: dict | None = None)
     for comb in ("anyOf", "oneOf"):
         variants = psc.get(comb)
         if variants:
-            non_null = [v for v in variants
-                        if isinstance(v, dict) and v.get("type") != "null"]
+            non_null = [
+                v for v in variants if isinstance(v, dict) and v.get("type") != "null"
+            ]
             if len(non_null) == 1:
                 return _wire_field_cs_type(non_null[0], ref_names, schemas)
     # Single-member ``allOf: [<X>]`` — the OpenAPI idiom for "X plus annotations"
@@ -1113,7 +1320,11 @@ def _wire_field_cs_type(psc: dict, ref_names: dict, schemas: dict | None = None)
     # sibling class. Only for the DESERIALIZED REST DTOs (schemas supplied) — the
     # accessor-bearing payload modules keep their historical typing untouched.
     all_of = psc.get("allOf")
-    if schemas is not None and all_of and len([v for v in all_of if isinstance(v, dict)]) == 1:
+    if (
+        schemas is not None
+        and all_of
+        and len([v for v in all_of if isinstance(v, dict)]) == 1
+    ):
         return _wire_field_cs_type(all_of[0], ref_names, schemas)
     if any(k in psc for k in ("allOf", "oneOf", "anyOf")):
         # A genuine multi-member combinator. For a DESERIALIZED REST response DTO
@@ -1168,10 +1379,8 @@ def _cs_property_name(wire_key: str, pascal: bool = False) -> str:
         parts = [p for p in re.split(r"[^A-Za-z0-9]+", wire_key) if p]
         if not parts:
             return "Field"
-        segs = []
-        for p in parts:
-            # keep an all-caps token as-is (SWAIG, URL); otherwise upper-first.
-            segs.append(p if p.isupper() else (p[0].upper() + p[1:]))
+        # keep an all-caps token as-is (SWAIG, URL); otherwise upper-first.
+        segs = [p if p.isupper() else (p[0].upper() + p[1:]) for p in parts]
         s = "".join(segs)
         if s[0].isdigit():
             s = "Field" + s
@@ -1184,9 +1393,16 @@ def _cs_property_name(wire_key: str, pascal: bool = False) -> str:
     return "@" + s if s in CSHARP_KEYWORDS else s
 
 
-def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: str,
-                          ref_names: dict | None = None, schema_name: str | None = None,
-                          pascal_props: bool = False, schemas: dict | None = None) -> str:
+def emit_methodless_class(
+    ns: str,
+    cs_name: str,
+    properties: dict,
+    source_desc: str,
+    ref_names: dict | None = None,
+    schema_name: str | None = None,
+    pascal_props: bool = False,
+    schemas: dict | None = None,
+) -> str:
     """Emit one method-less C# data class in namespace ``ns``: a public property
     per wire field (``[JsonPropertyName("<wire key>")]``), typed per
     ``_wire_field_cs_type``. No methods, no constructor. Shared by the REST
@@ -1216,7 +1432,9 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
     lines.append(f"/// {cs_name} — data type for {source_desc}.")
     lines.append("///")
     lines.append("/// A plain data object with one public property per JSON field")
-    lines.append("/// (mapped via <see cref=\"System.Text.Json.Serialization.JsonPropertyNameAttribute\"/>).")
+    lines.append(
+        '/// (mapped via <see cref="System.Text.Json.Serialization.JsonPropertyNameAttribute"/>).'
+    )
     lines.append("/// Used to deserialize responses from and serialize requests to the")
     lines.append("/// SignalWire REST API.")
     lines.append("/// </summary>")
@@ -1243,15 +1461,19 @@ def emit_methodless_class(ns: str, cs_name: str, properties: dict, source_desc: 
         while prop.lstrip("@") in used:
             prop = prop + "_"
         used.add(prop.lstrip("@"))
-        cs_type = _wire_field_cs_type(psc if isinstance(psc, dict) else {}, ref_names, schemas)
+        cs_type = _wire_field_cs_type(
+            psc if isinstance(psc, dict) else {}, ref_names, schemas
+        )
         if not first:
             lines.append("")
         first = False
-        lines.append(f'    /// <summary>Wire field <c>{wire_key}</c>.</summary>')
+        lines.append(f"    /// <summary>Wire field <c>{wire_key}</c>.</summary>")
         if _overlay_deprecated(wire_key, schema_name):
             # deprecated: still emitted (back-compat), flagged with [Obsolete].
-            lines.append(f'    [System.Obsolete("Deprecated wire field {wire_key!r}.")]')
-        lines.append(f'    [JsonPropertyName({cs_str(wire_key)})]')
+            lines.append(
+                f'    [System.Obsolete("Deprecated wire field {wire_key!r}.")]'
+            )
+        lines.append(f"    [JsonPropertyName({cs_str(wire_key)})]")
         lines.append(f"    public {cs_type} {prop} {{ get; set; }}")
     lines.append("}")
     return TYPES_HEADER.format(desc=source_desc, ns=ns) + "\n" + "\n".join(lines) + "\n"
@@ -1274,7 +1496,9 @@ def emit_type_enum(ns: str, enum_name: str, values: list, source_desc: str) -> s
     lines: list[str] = []
     lines.append("/// <summary>")
     lines.append(f"/// {enum_name} — the set of accepted string values for this field.")
-    lines.append("/// Each public <c>const string</c> member is one of the values the API")
+    lines.append(
+        "/// Each public <c>const string</c> member is one of the values the API"
+    )
     lines.append("/// accepts; the member's value is the literal wire string to send.")
     lines.append("/// </summary>")
     lines.append(f"public static class {enum_name}")
@@ -1355,8 +1579,9 @@ def abs_cs_path(full: str, id_args: list[str]) -> str:
     return " + ".join(out) if out else '""'
 
 
-def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
-                method_snake: str, op_id: str) -> str:
+def emit_method(
+    spec: Spec, anchor: str, markup: dict, base: str, method_snake: str, op_id: str
+) -> str:
     if op_id not in spec.ops:
         raise SystemExit(f"{markup['name']}.{method_snake}: op {op_id!r} not in spec")
     verb, op_path, has_body = spec.ops[op_id]
@@ -1365,11 +1590,20 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
     cls = markup["name"]
 
     used: set[str] = set(id_args)
-    id_records = [{"name": a.lstrip("@"), "kind": "positional", "type": "string", "required": True}
-                  for a in id_args]
+    id_records = [
+        {
+            "name": a.lstrip("@"),
+            "kind": "positional",
+            "type": "string",
+            "required": True,
+        }
+        for a in id_args
+    ]
     id_params = ["string " + a for a in id_args]
     doc = ["    /// <summary>"]
-    doc.append(f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path}).")
+    doc.append(
+        f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path})."
+    )
     doc.append("    /// </summary>")
     body_ml: list[str] = []
     write_verb = verb in ("post", "put", "patch")
@@ -1381,7 +1615,7 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
     # ``RequestOptions? requestOptions``). The C# param + its sidecar record are
     # appended uniformly below so the surface + the signature oracle both see it.
     ro_param = "RequestOptions? requestOptions = null"
-    ro_doc = "    /// <param name=\"requestOptions\">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>"
+    ro_doc = '    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>'
     ro_record = {
         "name": "request_options",
         "kind": "keyword",
@@ -1394,27 +1628,44 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
         body_schema = spec.op_body.get(op_id) or {}
         if is_object_body(spec, body_schema):
             fields = object_body_fields(spec, body_schema)
-            field_cs, build, field_doc = body_params(spec, cls, name, fields, id_records, used)
-            params = id_params + field_cs
+            field_cs, build, field_doc = body_params(
+                spec, cls, name, fields, id_records, used
+            )
+            params = [*id_params, *field_cs]
             body_ml = build
-            doc[2:2] = field_doc  # insert param docs before </summary>? keep after — simpler:
-            doc = ["    /// <summary>",
-                   f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path}).",
-                   "    /// </summary>"] + field_doc
+            doc[2:2] = (
+                field_doc  # insert param docs before </summary>? keep after — simpler:
+            )
+            doc = [
+                "    /// <summary>",
+                f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path}).",
+                "    /// </summary>",
+                *field_doc,
+            ]
             call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);"
         else:
             # §5.2 union body → a single ``Dictionary<string,object?> body`` param.
             body_id = _dedupe_param("body", used)
-            params = id_params + [f"Dictionary<string, object?> {body_id}"]
-            _register_sidecar(cls, name, id_records + [
-                {"name": "body", "kind": "positional", "type": "dict<string,any>", "required": True},
-                dict(ro_record),
-            ])
-            doc.append(f"    /// <param name=\"{body_id}\">JSON request body.</param>")
+            params = [*id_params, f"Dictionary<string, object?> {body_id}"]
+            _register_sidecar(
+                cls,
+                name,
+                [
+                    *id_records,
+                    {
+                        "name": "body",
+                        "kind": "positional",
+                        "type": "dict<string,any>",
+                        "required": True,
+                    },
+                    dict(ro_record),
+                ],
+            )
+            doc.append(f'    /// <param name="{body_id}">JSON request body.</param>')
             call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
     elif write_verb:
         params = id_params
-        _register_sidecar(cls, name, id_records + [dict(ro_record)])
+        _register_sidecar(cls, name, [*id_records, dict(ro_record)])
         call_line = f"        return Client.{verb_fn}({path_expr}, null, requestOptions: requestOptions, cancellationToken: cancellationToken);"
     elif verb == "get":
         # §5.3 GET query door — a trailing query-params map. The C# convenience
@@ -1425,17 +1676,17 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
         # var_keyword would be a phantom param the oracle never carries, driving
         # drift. (The convenience param stays on the C# surface for callers.)
         qp_id = _dedupe_param("queryParams", used)
-        params = id_params + [f"Dictionary<string, string>? {qp_id} = null"]
-        _register_sidecar(cls, name, id_records + [dict(ro_record)])
-        doc.append(f"    /// <param name=\"{qp_id}\">Query-string parameters.</param>")
+        params = [*id_params, f"Dictionary<string, string>? {qp_id} = null"]
+        _register_sidecar(cls, name, [*id_records, dict(ro_record)])
+        doc.append(f'    /// <param name="{qp_id}">Query-string parameters.</param>')
         call_line = f"        return Client.GetAsync({path_expr}, {qp_id}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
     else:  # delete
         params = id_params
-        _register_sidecar(cls, name, id_records + [dict(ro_record)])
+        _register_sidecar(cls, name, [*id_records, dict(ro_record)])
         call_line = f"        return Client.DeleteAsync({path_expr}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
 
     doc.append(ro_doc)
-    params = params + [ro_param, "CancellationToken cancellationToken = default"]
+    params = [*params, ro_param, "CancellationToken cancellationToken = default"]
     sig = ", ".join(params)
     # DOTNET-1 typed returns: the operation's 200/201 response DTO, or Dictionary
     # when the response is a delete/union/non-object (mirroring dict[str, Any]).
@@ -1450,9 +1701,15 @@ def emit_method(spec: Spec, anchor: str, markup: dict, base: str,
     return lines
 
 
-def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
-                    update_schema_fields: set[str], field_schemas: dict[str, dict],
-                    anchor: str = "") -> str:
+def emit_set_method(
+    spec: Spec,
+    markup: dict,
+    sm_name: str,
+    sm: dict,
+    update_schema_fields: set[str],
+    field_schemas: dict[str, dict],
+    anchor: str = "",
+) -> str:
     handler = sm.get("handler")
     if not handler:
         raise SystemExit(f"{markup['name']}.{sm_name}: set_method missing handler")
@@ -1462,7 +1719,12 @@ def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
     used: set[str] = {"resourceId"}
     params = ["string resourceId"]
     records: list[dict] = [
-        {"name": "resource_id", "kind": "positional", "type": "string", "required": True},
+        {
+            "name": "resource_id",
+            "kind": "positional",
+            "type": "string",
+            "required": True,
+        },
     ]
     required_lines = []
     optional_lines = []
@@ -1470,7 +1732,9 @@ def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
     for arg_name, arg in args.items():
         field = arg.get("field")
         if not field:
-            raise SystemExit(f"{markup['name']}.{sm_name}: arg {arg_name!r} missing field")
+            raise SystemExit(
+                f"{markup['name']}.{sm_name}: arg {arg_name!r} missing field"
+            )
         if field not in update_schema_fields:
             raise SystemExit(
                 f"{markup['name']}.{sm_name}: arg field {field!r} not in update request schema"
@@ -1481,9 +1745,16 @@ def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
         pt = cs_param_type(spec, fschema, required)
         ct = canonical_type(spec, fschema, required)
         raw = ident.lstrip("@")
-        arg_doc.append(f"    /// <param name=\"{raw}\">Bound update field <c>{field}</c>.</param>")
+        arg_doc.append(
+            f'    /// <param name="{raw}">Bound update field <c>{field}</c>.</param>'
+        )
         # set_method args are POSITIONAL in the oracle (they wrap update()).
-        rec: dict = {"name": arg_name, "kind": "positional", "type": ct, "required": required}
+        rec: dict = {
+            "name": arg_name,
+            "kind": "positional",
+            "type": ct,
+            "required": required,
+        }
         if required:
             params.append(f"{pt} {ident}")
             required_lines.append(f"            [{cs_str(field)}] = {ident},")
@@ -1494,19 +1765,27 @@ def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
         records.append(rec)
     extra_id = _dedupe_param("extra", used)
     params.append(f"Dictionary<string, object?>? {extra_id} = null")
-    arg_doc.append(f"    /// <param name=\"{extra_id}\">Forward-compat update fields.</param>")
+    arg_doc.append(
+        f'    /// <param name="{extra_id}">Forward-compat update fields.</param>'
+    )
     # ``extra`` is a var_keyword the griffe oracle drops (it records zero
     # var_keyword params) — do NOT record it in the sidecar. request_options is the
     # keyword-only per-call envelope the oracle DOES record (after the bound args),
     # threaded into UpdateAsync.
     ro_arg = "RequestOptions? requestOptions = null"
     params.append(ro_arg)
-    arg_doc.append("    /// <param name=\"requestOptions\">Per-call request options overriding the client defaults.</param>")
-    records.append({
-        "name": "request_options", "kind": "keyword",
-        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
-        "required": False, "default": None,
-    })
+    arg_doc.append(
+        '    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>'
+    )
+    records.append(
+        {
+            "name": "request_options",
+            "kind": "keyword",
+            "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+            "required": False,
+            "default": None,
+        }
+    )
     _register_sidecar(cls, name, records)
     sig = ", ".join(params)
 
@@ -1516,21 +1795,29 @@ def emit_set_method(spec: Spec, markup: dict, sm_name: str, sm: dict,
     # returns the typed Task<TItem?> (the generic base / typed PATCH override) — so
     # the delegate is returned directly, NOT re-projected (double-projection would be
     # a type error). Falls back to the raw update return when the item is untyped.
-    item_cs = item_cs_type(spec, anchor, markup) if anchor else "Dictionary<string, object?>"
+    item_cs = (
+        item_cs_type(spec, anchor, markup) if anchor else "Dictionary<string, object?>"
+    )
     _register_sidecar_return(cls, name, item_cs)
-    ret_task = "Task<Dictionary<string, object?>>" if _is_dict_cs_type(item_cs) else f"Task<{item_cs}?>"
+    ret_task = (
+        "Task<Dictionary<string, object?>>"
+        if _is_dict_cs_type(item_cs)
+        else f"Task<{item_cs}?>"
+    )
     ret_stmt = "        return UpdateAsync(resourceId, body);"
 
     body = []
     body.append("    /// <summary>")
-    body.append(f"    /// Declarative binding helper — sets <c>call_handler={handler}</c> via UpdateAsync.")
+    body.append(
+        f"    /// Declarative binding helper — sets <c>call_handler={handler}</c> via UpdateAsync."
+    )
     body.append("    /// </summary>")
     body.extend(arg_doc)
     body.append(f"    public {ret_task} {name}({sig})")
     body.append("    {")
     body.append("        var body = new Dictionary<string, object?>")
     body.append("        {")
-    body.append(f"            [\"call_handler\"] = {cs_str(handler)},")
+    body.append(f'            ["call_handler"] = {cs_str(handler)},')
     body.extend(required_lines)
     body.append("        };")
     for ident, field in optional_lines:
@@ -1622,10 +1909,7 @@ def update_field_schemas(spec: Spec, anchor: str, markup: dict) -> dict[str, dic
         for media in content.values():
             sch = media.get("schema")
             if sch:
-                out: dict[str, dict] = {}
-                for name, psc, _ in object_body_fields(spec, sch):
-                    out[name] = psc
-                return out
+                return {name: psc for name, psc, _ in object_body_fields(spec, sch)}
     return {}
 
 
@@ -1645,10 +1929,10 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
     cmd_ret_cs = response_cs_type(spec, "call-commands")
 
     lines = []
-    lines.append(f"/// <summary>")
+    lines.append("/// <summary>")
     lines.append(f"/// {name} — command-dispatch resource ({spec.name} spec).")
     lines.append(f"/// Each method POSTs {{command, params, id?}} to {base}.")
-    lines.append(f"/// </summary>")
+    lines.append("/// </summary>")
     lines.append(f"public class {name}")
     lines.append("{")
     lines.append("    private readonly SignalWire.REST.HttpClient _http;")
@@ -1664,22 +1948,28 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
     lines.append("    public string BasePath => BasePathConst;")
     lines.append("")
     lines.append("    private Task<Dictionary<string, object?>> ExecuteAsync(")
-    lines.append("        string command, string? callId, Dictionary<string, object?> parms,")
+    lines.append(
+        "        string command, string? callId, Dictionary<string, object?> parms,"
+    )
     lines.append("        RequestOptions? requestOptions = null,")
     lines.append("        CancellationToken cancellationToken = default)")
     lines.append("    {")
     lines.append("        var body = new Dictionary<string, object?>")
     lines.append("        {")
-    lines.append("            [\"command\"] = command,")
-    lines.append("            [\"params\"] = parms,")
+    lines.append('            ["command"] = command,')
+    lines.append('            ["params"] = parms,')
     lines.append("        };")
     lines.append("        if (callId is not null)")
     lines.append("        {")
-    lines.append("            body[\"id\"] = callId;")
+    lines.append('            body["id"] = callId;')
     lines.append("        }")
-    lines.append("        return _http.PostAsync(BasePathConst, body, requestOptions: requestOptions, cancellationToken: cancellationToken);")
+    lines.append(
+        "        return _http.PostAsync(BasePathConst, body, requestOptions: requestOptions, cancellationToken: cancellationToken);"
+    )
     lines.append("    }")
-    mapping = (spec.schemas.get(request).get("discriminator") or {}).get("mapping") or {}
+    mapping = (spec.schemas.get(request).get("discriminator") or {}).get(
+        "mapping"
+    ) or {}
     for cmd in commands:
         mname = command_method_name(cmd) + "Async"
         cmd_schema_ref = mapping.get(cmd) or {}
@@ -1693,8 +1983,14 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         if with_id:
             used.add("callId")
             id_cs.append("string callId")
-            records.append({"name": "call_id", "kind": "positional",
-                            "type": "string", "required": True})
+            records.append(
+                {
+                    "name": "call_id",
+                    "kind": "positional",
+                    "type": "string",
+                    "required": True,
+                }
+            )
         field_cs: list[str] = []
         field_doc: list[str] = []
         build: list[str] = ["        var parms = new Dictionary<string, object?>();"]
@@ -1703,8 +1999,15 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
             pt = cs_param_type(spec, schema, required)
             ct = canonical_type(spec, schema, required)
             raw = ident.lstrip("@")
-            field_doc.append(f"    /// <param name=\"{raw}\">Wire param <c>{wire_name}</c>.</param>")
-            rec: dict = {"name": wire_name, "kind": "keyword", "type": ct, "required": required}
+            field_doc.append(
+                f'    /// <param name="{raw}">Wire param <c>{wire_name}</c>.</param>'
+            )
+            rec: dict = {
+                "name": wire_name,
+                "kind": "keyword",
+                "type": ct,
+                "required": required,
+            }
             if required:
                 field_cs.append(f"{pt} {ident}")
                 build.append(f"        parms[{cs_str(wire_name)}] = {ident};")
@@ -1718,9 +2021,18 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
             records.append(rec)
         extras_id = _dedupe_param("extras", used)
         field_cs.append(f"Dictionary<string, object?>? {extras_id} = null")
-        field_doc.append(f"    /// <param name=\"{extras_id}\">Forward-compat command params.</param>")
-        records.append({"name": "extras", "kind": "keyword",
-                        "type": "optional<dict<string,any>>", "required": False, "default": None})
+        field_doc.append(
+            f'    /// <param name="{extras_id}">Forward-compat command params.</param>'
+        )
+        records.append(
+            {
+                "name": "extras",
+                "kind": "keyword",
+                "type": "optional<dict<string,any>>",
+                "required": False,
+                "default": None,
+            }
+        )
         build.append(f"        if ({extras_id} is not null)")
         build.append("        {")
         build.append(f"            foreach (var kv in {extras_id})")
@@ -1731,12 +2043,18 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         # request_options (plan 4.2): the keyword-only per-call envelope, recorded
         # AFTER extras to match the oracle order (…fields, extras, request_options).
         field_cs.append("RequestOptions? requestOptions = null")
-        field_doc.append("    /// <param name=\"requestOptions\">Per-call request options overriding the client defaults.</param>")
-        records.append({
-            "name": "request_options", "kind": "keyword",
-            "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
-            "required": False, "default": None,
-        })
+        field_doc.append(
+            '    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>'
+        )
+        records.append(
+            {
+                "name": "request_options",
+                "kind": "keyword",
+                "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                "required": False,
+                "default": None,
+            }
+        )
         _register_sidecar(name, mname, records)
 
         # CancellationToken is a C#-async idiom param (not a wire param): it is
@@ -1759,7 +2077,14 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         lines.append(ret_stmt)
         lines.append("    }")
     lines.append("}")
-    return GEN_HEADER.format(desc=f"Generated command-dispatch resource for the {spec.name!r} namespace.") + "\n" + "\n".join(lines) + "\n"
+    return (
+        GEN_HEADER.format(
+            desc=f"Generated command-dispatch resource for the {spec.name!r} namespace."
+        )
+        + "\n"
+        + "\n".join(lines)
+        + "\n"
+    )
 
 
 def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) -> str:
@@ -1779,9 +2104,9 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
         if binds:
             _CRUD_BASES[name] = {"base": base, "bind": binds}
     lines = []
-    lines.append(f"/// <summary>")
+    lines.append("/// <summary>")
     lines.append(f"/// {name} — REST resource for the {spec.name} API.")
-    lines.append(f"/// </summary>")
+    lines.append("/// </summary>")
     lines.append(f"public class {name}")
     lines.append("{")
     lines.append("    private readonly SignalWire.REST.HttpClient _client;")
@@ -1796,16 +2121,22 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
     lines.append("        _client = http;")
     lines.append("    }")
     lines.append("")
-    lines.append("    /// <summary>The HTTP client this resource dispatches through.</summary>")
+    lines.append(
+        "    /// <summary>The HTTP client this resource dispatches through.</summary>"
+    )
     lines.append("    protected SignalWire.REST.HttpClient Client => _client;")
     lines.append("")
     lines.append("    /// <summary>The resource's base API path.</summary>")
     lines.append(f"    public string BasePath => {cs_str(bp)};")
     lines.append("")
-    lines.append("    /// <summary>Build a full path by appending segments to the base path.</summary>")
+    lines.append(
+        "    /// <summary>Build a full path by appending segments to the base path.</summary>"
+    )
     lines.append("    protected string Path(params string[] parts)")
     lines.append("    {")
-    lines.append("        return parts is null || parts.Length == 0 ? BasePath : BasePath + \"/\" + string.Join(\"/\", parts);")
+    lines.append(
+        '        return parts is null || parts.Length == 0 ? BasePath : BasePath + "/" + string.Join("/", parts);'
+    )
     lines.append("    }")
 
     if base == "ReadResource":
@@ -1816,9 +2147,13 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
         _register_sidecar_return(name, "ListAsync", list_cs)
         _register_sidecar_return(name, "GetAsync", get_cs)
         list_task, list_ret = _typed_return(
-            list_cs, "        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);")
+            list_cs,
+            "        return Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken);",
+        )
         get_task, get_ret = _typed_return(
-            get_cs, "        return Client.GetAsync(Path(id), cancellationToken: cancellationToken);")
+            get_cs,
+            "        return Client.GetAsync(Path(id), cancellationToken: cancellationToken);",
+        )
         lines.append("")
         lines.append("    /// <summary>List resources (GET BasePath).</summary>")
         lines.append(f"    public {list_task} ListAsync(")
@@ -1828,67 +2163,110 @@ def emit_read_or_base_class(spec: Spec, anchor: str, markup: dict, base: str) ->
         lines.append(list_ret)
         lines.append("    }")
         lines.append("")
-        lines.append("    /// <summary>Retrieve a single resource by id (GET BasePath/{id}).</summary>")
+        lines.append(
+            "    /// <summary>Retrieve a single resource by id (GET BasePath/{id}).</summary>"
+        )
         lines.append(f"    public {get_task} GetAsync(")
-        lines.append("        string id, CancellationToken cancellationToken = default)")
+        lines.append(
+            "        string id, CancellationToken cancellationToken = default)"
+        )
         lines.append("    {")
         lines.append(get_ret)
         lines.append("    }")
         lines.append("")
-        lines.append("    /// <summary>Iterate every item across all pages of this resource's")
-        lines.append("    /// list endpoint, following ``links.next`` cursors (lazy — no request")
-        lines.append("    /// fires until iteration). Mirrors Python ``ReadResource.paginate``.</summary>")
-        lines.append("    /// <param name=\"queryParams\">Query-string parameters.</param>")
-        lines.append("    /// <param name=\"requestOptions\">Per-call request options overriding the client defaults.</param>")
+        lines.append(
+            "    /// <summary>Iterate every item across all pages of this resource's"
+        )
+        lines.append(
+            "    /// list endpoint, following ``links.next`` cursors (lazy — no request"
+        )
+        lines.append(
+            "    /// fires until iteration). Mirrors Python ``ReadResource.paginate``.</summary>"
+        )
+        lines.append(
+            '    /// <param name="queryParams">Query-string parameters.</param>'
+        )
+        lines.append(
+            '    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>'
+        )
         lines.append("    public SignalWire.REST.PaginatedIterator Paginate(")
         lines.append("        Dictionary<string, string>? queryParams = null,")
         lines.append("        RequestOptions? requestOptions = null)")
         lines.append("    {")
-        lines.append("        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: \"data\", requestOptions: requestOptions);")
+        lines.append(
+            '        return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data", requestOptions: requestOptions);'
+        )
         lines.append("    }")
         # paginate's oracle signature is (self, request_options); python's
         # ``**params`` var_keyword is dropped by griffe, and queryParams is the
         # port-idiom convenience. Record just request_options so the enumerator
         # matches the oracle (else reflection records the queryParams door as a
         # phantom positional param the oracle never carries).
-        _register_sidecar(name, "Paginate", [{
-            "name": "request_options", "kind": "keyword",
-            "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
-            "required": False, "default": None,
-        }])
+        _register_sidecar(
+            name,
+            "Paginate",
+            [
+                {
+                    "name": "request_options",
+                    "kind": "keyword",
+                    "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+                    "required": False,
+                    "default": None,
+                }
+            ],
+        )
 
     _emit_declared_and_sets(spec, anchor, markup, base, lines)
     lines.append("}")
-    return GEN_HEADER.format(desc=f"Generated REST resource for the {spec.name!r} namespace.") + "\n" + "\n".join(lines) + "\n"
+    return (
+        GEN_HEADER.format(
+            desc=f"Generated REST resource for the {spec.name!r} namespace."
+        )
+        + "\n"
+        + "\n".join(lines)
+        + "\n"
+    )
 
 
-def _emit_declared_and_sets(spec: Spec, anchor: str, markup: dict, base: str, lines: list[str]) -> None:
+def _emit_declared_and_sets(
+    spec: Spec, anchor: str, markup: dict, base: str, lines: list[str]
+) -> None:
     provided = BASE_PROVIDES[base]
     declared = markup.get("methods") or {}
     for method_snake, spec_ref in declared.items():
         op_id = spec_ref.get("op")
         if not op_id:
-            raise SystemExit(f"{markup['name']}.{method_snake}: method markup missing op")
+            raise SystemExit(
+                f"{markup['name']}.{method_snake}: method markup missing op"
+            )
         if method_snake in provided:
             if method_snake == "list_addresses":
-                verb, op_path, _ = spec.ops[op_id]
+                _verb, op_path, _ = spec.ops[op_id]
                 _, sibling = relative_tail(spec, anchor, markup, op_path)
                 if not sibling:
                     continue
             else:
                 continue
         lines.append("")
-        lines.append(emit_method(spec, anchor, markup, base, method_snake, op_id).rstrip("\n"))
+        lines.append(
+            emit_method(spec, anchor, markup, base, method_snake, op_id).rstrip("\n")
+        )
 
     set_methods = markup.get("set_methods") or {}
     if set_methods:
         if base not in ("CrudResource", "FabricResource"):
-            raise SystemExit(f"{markup['name']}: set_methods require a CRUD base, got {base}")
+            raise SystemExit(
+                f"{markup['name']}: set_methods require a CRUD base, got {base}"
+            )
         upd_fields = update_request_fields(spec, anchor, markup)
         upd_field_schemas = update_field_schemas(spec, anchor, markup)
         for sm_name, sm in set_methods.items():
             lines.append("")
-            lines.append(emit_set_method(spec, markup, sm_name, sm, upd_fields, upd_field_schemas, anchor).rstrip("\n"))
+            lines.append(
+                emit_set_method(
+                    spec, markup, sm_name, sm, upd_fields, upd_field_schemas, anchor
+                ).rstrip("\n")
+            )
 
 
 def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
@@ -1931,9 +2309,9 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
         _SIDECAR_RETURNS[(name, "update")] = item_tok
 
     lines = []
-    lines.append(f"/// <summary>")
+    lines.append("/// <summary>")
     lines.append(f"/// {name} — REST resource for the {spec.name} API.")
-    lines.append(f"/// </summary>")
+    lines.append("/// </summary>")
     lines.append(f"public class {name} : SignalWire.REST.{parent}{generic}")
     lines.append("{")
     # `http` not `client` — see the note on the standalone-resource ctor above.
@@ -1947,9 +2325,12 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
     if upd == "PATCH":
         upd_task, upd_ret = _typed_return(
             item_cs,
-            "        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);")
+            "        return Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken);",
+        )
         lines.append("")
-        lines.append("    /// <summary>Update this resource via an HTTP PATCH request.</summary>")
+        lines.append(
+            "    /// <summary>Update this resource via an HTTP PATCH request.</summary>"
+        )
         lines.append(f"    public override {upd_task} UpdateAsync(")
         lines.append("        string id, Dictionary<string, object?> data,")
         lines.append("        RequestOptions? requestOptions = null,")
@@ -1960,7 +2341,14 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
 
     _emit_declared_and_sets(spec, anchor, markup, base, lines)
     lines.append("}")
-    return GEN_HEADER.format(desc=f"Generated REST resource for the {spec.name!r} namespace.") + "\n" + "\n".join(lines) + "\n"
+    return (
+        GEN_HEADER.format(
+            desc=f"Generated REST resource for the {spec.name!r} namespace."
+        )
+        + "\n"
+        + "\n".join(lines)
+        + "\n"
+    )
 
 
 # Surface manifest accumulator: ClassName -> sorted list of the canonical
@@ -1974,7 +2362,9 @@ def emit_crud_resource(spec: Spec, anchor: str, markup: dict, base: str) -> str:
 _SURFACE: dict[str, list[str]] = {}
 
 
-def _declared_surface_names(spec: Spec, anchor: str, markup: dict, base: str) -> set[str]:
+def _declared_surface_names(
+    spec: Spec, anchor: str, markup: dict, base: str
+) -> set[str]:
     """The canonical method names the resource declares on its OWN body,
     matching what the python generated subclass records (and thus the oracle):
 
@@ -2000,13 +2390,13 @@ def _declared_surface_names(spec: Spec, anchor: str, markup: dict, base: str) ->
             # methods stay on the base.
             if method_snake == "list_addresses":
                 op_id = spec_ref.get("op")
-                verb, op_path, _ = spec.ops[op_id]
+                _verb, op_path, _ = spec.ops[op_id]
                 _, sibling = relative_tail(spec, anchor, markup, op_path)
                 if sibling:
                     names.add("list_addresses")
             continue
         names.add(method_snake)
-    for sm_name in (markup.get("set_methods") or {}).keys():
+    for sm_name in markup.get("set_methods") or {}:
         names.add(sm_name)
     if base in ("CrudResource", "FabricResource"):
         names.update({"create", "update"})
@@ -2070,10 +2460,15 @@ CONTAINERS = {
 # ``_ATTR_OVERRIDE`` table. Values are the canonical snake_case accessor; the
 # C# accessor name is PascalCase of it.
 ATTR_OVERRIDE = {
-    "GenericResources": "resources", "FabricAddresses": "addresses",
-    "FabricTokens": "tokens", "DatasphereDocuments": "documents",
-    "ProjectTokens": "tokens", "PubSub": "pubsub",
-    "MessageLogs": "messages", "VoiceLogs": "voice", "FaxLogs": "fax",
+    "GenericResources": "resources",
+    "FabricAddresses": "addresses",
+    "FabricTokens": "tokens",
+    "DatasphereDocuments": "documents",
+    "ProjectTokens": "tokens",
+    "PubSub": "pubsub",
+    "MessageLogs": "messages",
+    "VoiceLogs": "voice",
+    "FaxLogs": "fax",
     "ConferenceLogs": "conferences",
 }
 
@@ -2084,7 +2479,7 @@ def container_accessor(markup: dict, name: str, container: str) -> str:
     if name in ATTR_OVERRIDE:
         return snake_to_pascal(ATTR_OVERRIDE[name])
     lead = container[:1].upper() + container[1:]
-    stem = name[len(lead):] if name.startswith(lead) else name
+    stem = name[len(lead) :] if name.startswith(lead) else name
     return stem[:1].upper() + stem[1:] if stem else name
 
 
@@ -2100,14 +2495,18 @@ def resolve_placement(specs: list[Spec]):
 def emit_container(container: str, members: list[tuple[str, str]]) -> str:
     cls, _ = CONTAINERS[container]
     lines = []
-    lines.append(f"/// <summary>")
-    lines.append(f"/// {cls} — generated container grouping the {container} namespace resources (§8).")
-    lines.append(f"/// </summary>")
+    lines.append("/// <summary>")
+    lines.append(
+        f"/// {cls} — generated container grouping the {container} namespace resources (§8)."
+    )
+    lines.append("/// </summary>")
     lines.append(f"public class {cls}")
     lines.append("{")
     lines.append("    private readonly SignalWire.REST.HttpClient _http;")
     for accessor, class_name in members:
-        lines.append(f"    private {class_name}? _{accessor[:1].lower() + accessor[1:]};")
+        lines.append(
+            f"    private {class_name}? _{accessor[:1].lower() + accessor[1:]};"
+        )
     lines.append("")
     lines.append(f"    public {cls}(SignalWire.REST.HttpClient http)")
     lines.append("    {")
@@ -2117,9 +2516,18 @@ def emit_container(container: str, members: list[tuple[str, str]]) -> str:
         field = "_" + accessor[:1].lower() + accessor[1:]
         lines.append("")
         lines.append(f"    /// <summary>The {class_name} resource.</summary>")
-        lines.append(f"    public {class_name} {accessor} => {field} ??= new {class_name}(_http);")
+        lines.append(
+            f"    public {class_name} {accessor} => {field} ??= new {class_name}(_http);"
+        )
     lines.append("}")
-    return GEN_HEADER.format(desc=f"Generated REST client container for the {container} namespace (§8).") + "\n" + "\n".join(lines) + "\n"
+    return (
+        GEN_HEADER.format(
+            desc=f"Generated REST client container for the {container} namespace (§8)."
+        )
+        + "\n"
+        + "\n".join(lines)
+        + "\n"
+    )
 
 
 def flat_accessor(name: str) -> str:
@@ -2131,10 +2539,10 @@ def flat_accessor(name: str) -> str:
 def emit_resource_tree(placed) -> str:
     """Emit ResourceTree: a partial class the hand RestClient composes,
     providing a lazy accessor per FLAT resource + per CONTAINER (§8)."""
-    flats = []           # (accessor, class)
+    flats = []  # (accessor, class)
     containers_seen = []  # ordered container attrs
     seen_c = set()
-    for spec, anchor, markup, container in placed:
+    for _spec, _anchor, markup, container in placed:
         name = markup["name"]
         if not container:
             flats.append((flat_accessor(name), name))
@@ -2146,7 +2554,9 @@ def emit_resource_tree(placed) -> str:
     lines = []
     lines.append("/// <summary>")
     lines.append("/// ResourceTree — lazy accessors for every REST resource and")
-    lines.append("/// namespace container. <see cref=\"SignalWire.REST.RestClient\"/> inherits")
+    lines.append(
+        '/// namespace container. <see cref="SignalWire.REST.RestClient"/> inherits'
+    )
     lines.append("/// this tree, so every resource is reachable directly from an")
     lines.append("/// authenticated client.")
     lines.append("/// </summary>")
@@ -2164,23 +2574,40 @@ def emit_resource_tree(placed) -> str:
     lines.append("        _generatedHttp = http;")
     lines.append("    }")
     lines.append("")
-    lines.append("    /// <summary>The authenticated transport this tree dispatches through")
-    lines.append("    /// (exposed to the inheriting RestClient for disposal; protected so it")
+    lines.append(
+        "    /// <summary>The authenticated transport this tree dispatches through"
+    )
+    lines.append(
+        "    /// (exposed to the inheriting RestClient for disposal; protected so it"
+    )
     lines.append("    /// is not public route/surface).</summary>")
-    lines.append("    protected SignalWire.REST.HttpClient GeneratedHttp => _generatedHttp;")
+    lines.append(
+        "    protected SignalWire.REST.HttpClient GeneratedHttp => _generatedHttp;"
+    )
     for accessor, cls in flats:
         field = "_" + accessor[:1].lower() + accessor[1:]
         lines.append("")
         lines.append(f"    /// <summary>The {cls} resource.</summary>")
-        lines.append(f"    public {cls} {accessor} => {field} ??= new {cls}(_generatedHttp);")
+        lines.append(
+            f"    public {cls} {accessor} => {field} ??= new {cls}(_generatedHttp);"
+        )
     for c in containers_seen:
         clsname, acc = CONTAINERS[c]
         field = "_" + acc[:1].lower() + acc[1:]
         lines.append("")
         lines.append(f"    /// <summary>The {clsname} container.</summary>")
-        lines.append(f"    public {clsname} {acc} => {field} ??= new {clsname}(_generatedHttp);")
+        lines.append(
+            f"    public {clsname} {acc} => {field} ??= new {clsname}(_generatedHttp);"
+        )
     lines.append("}")
-    return GEN_HEADER.format(desc="Generated REST resource tree the hand RestClient composes (§8).") + "\n" + "\n".join(lines) + "\n"
+    return (
+        GEN_HEADER.format(
+            desc="Generated REST resource tree the hand RestClient composes (§8)."
+        )
+        + "\n"
+        + "\n".join(lines)
+        + "\n"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -2228,24 +2655,32 @@ def emit_types(psdk: Path, outs: dict) -> None:
                 fn = f"Types/{ns_mod}/{snake(enum_name)}.cs"
                 if fn not in outs:
                     outs[fn] = emit_type_enum(
-                        cs_ns, enum_name, list(node.get("enum") or []),
-                        f"x-sdk-enum on components/schemas {raw_name!r}, {ns_key!r} spec")
+                        cs_ns,
+                        enum_name,
+                        list(node.get("enum") or []),
+                        f"x-sdk-enum on components/schemas {raw_name!r}, {ns_key!r} spec",
+                    )
                 continue
             if is_object_schema(node):
                 cs_name = type_name(raw_name)
                 fn = f"Types/{ns_mod}/{snake(cs_name)}.cs"
                 if fn not in outs:
                     outs[fn] = emit_methodless_class(
-                        cs_ns, cs_name, node.get("properties") or {},
+                        cs_ns,
+                        cs_name,
+                        node.get("properties") or {},
                         f"{ns_key!r} spec components/schemas {raw_name!r}",
-                        ref_names=ref_names, schema_name=raw_name,
+                        ref_names=ref_names,
+                        schema_name=raw_name,
                         pascal_props=True,  # DOTNET-2: REST DTOs are method-less (surface [] / no sig accessors)
-                        schemas=schemas)  # DOTNET-1: resolve scalar-alias refs so deserialized fields don't throw
+                        schemas=schemas,
+                    )  # DOTNET-1: resolve scalar-alias refs so deserialized fields don't throw
 
 
 # ---------------------------------------------------------------------------
 # Driver.
 # ---------------------------------------------------------------------------
+
 
 def build_outputs(psdk: Path) -> dict[str, str]:
     load_bases(psdk)  # validate x-sdk-bases (fail loud); not otherwise needed
@@ -2268,7 +2703,7 @@ def build_outputs(psdk: Path) -> dict[str, str]:
     placed = resolve_placement(specs)
     by_container: dict[str, list[tuple[str, str]]] = {}
     order: list[str] = []
-    for spec, anchor, markup, container in placed:
+    for _spec, _anchor, markup, container in placed:
         if not container:
             continue
         if container not in by_container:
@@ -2278,7 +2713,9 @@ def build_outputs(psdk: Path) -> dict[str, str]:
         by_container[container].append((acc, markup["name"]))
     for container in order:
         if container not in CONTAINERS:
-            raise SystemExit(f"container attr {container!r} has no C# container class (add to CONTAINERS)")
+            raise SystemExit(
+                f"container attr {container!r} has no C# container class (add to CONTAINERS)"
+            )
         cls, _ = CONTAINERS[container]
         outs[cls + ".cs"] = emit_container(container, by_container[container])
     outs["ResourceTree.cs"] = emit_resource_tree(placed)
@@ -2286,7 +2723,7 @@ def build_outputs(psdk: Path) -> dict[str, str]:
     # Sidecar (§5): the canonical typed-param records the signature enumerator
     # UNFOLDS onto the reflected C# methods. Keyed "<ClassName>::<csMethod>".
     sidecar: dict[str, list[dict]] = {}
-    for (cls, cs_method) in sorted(_SIDECAR.keys()):
+    for cls, cs_method in sorted(_SIDECAR.keys()):
         sidecar[f"{cls}::{cs_method}"] = _SIDECAR[(cls, cs_method)]
     # DOTNET-1 typed returns: "<ClassName>::<canonical>" -> canonical return token.
     # The signature enumerator reads this to record each generated method's ACTUAL
@@ -2295,7 +2732,7 @@ def build_outputs(psdk: Path) -> dict[str, str]:
     # returns are recorded — a Dictionary return omits the entry (the enumerator's
     # default is already dict<string,any>).
     returns_map: dict[str, str] = {}
-    for (cls, canon) in sorted(_SIDECAR_RETURNS.keys()):
+    for cls, canon in sorted(_SIDECAR_RETURNS.keys()):
         tok = _SIDECAR_RETURNS[(cls, canon)]
         if tok != "dict<string,any>":
             returns_map[f"{cls}::{canon}"] = tok
@@ -2309,24 +2746,28 @@ def build_outputs(psdk: Path) -> dict[str, str]:
     # as ``self.x = ...`` in __init__), so the surface records ONLY ``__init__``.
     containers = {cls: "_client_tree_generated" for (cls, _acc) in CONTAINERS.values()}
 
-    outs["rest_signatures.json"] = json.dumps(
-        {
-            "_comment": "Code generated by scripts/generate_rest.py; DO NOT EDIT. "
-                        "Canonical typed-param records for generated REST operation/"
-                        "command/set methods; consumed by scripts/enumerate_signatures.py "
-                        "to unfold the reflected C# params onto the Python oracle shape. "
-                        "The class_module/surface/containers manifests drive the surface + "
-                        "signature enumerators' <ns>_resources_generated / _client_tree_generated "
-                        "projection.",
-            "class_module": dict(sorted(class_module.items())),
-            "containers": dict(sorted(containers.items())),
-            "surface": dict(sorted(_SURFACE.items())),
-            "methods": sidecar,
-            "returns": returns_map,
-            "crud_bases": crud_bases,
-        },
-        indent=2, sort_keys=False,
-    ) + "\n"
+    outs["rest_signatures.json"] = (
+        json.dumps(
+            {
+                "_comment": "Code generated by scripts/generate_rest.py; DO NOT EDIT. "
+                "Canonical typed-param records for generated REST operation/"
+                "command/set methods; consumed by scripts/enumerate_signatures.py "
+                "to unfold the reflected C# params onto the Python oracle shape. "
+                "The class_module/surface/containers manifests drive the surface + "
+                "signature enumerators' <ns>_resources_generated / _client_tree_generated "
+                "projection.",
+                "class_module": dict(sorted(class_module.items())),
+                "containers": dict(sorted(containers.items())),
+                "surface": dict(sorted(_SURFACE.items())),
+                "methods": sidecar,
+                "returns": returns_map,
+                "crud_bases": crud_bases,
+            },
+            indent=2,
+            sort_keys=False,
+        )
+        + "\n"
+    )
 
     # Wire types (item A/H): one method-less C# data class / closed-set per
     # components/schemas object across all 13 REST namespaces, under Types/<NsMod>/.
@@ -2336,7 +2777,9 @@ def build_outputs(psdk: Path) -> dict[str, str]:
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--check", action="store_true", help="GEN-FRESH: exit non-zero if stale")
+    ap.add_argument(
+        "--check", action="store_true", help="GEN-FRESH: exit non-zero if stale"
+    )
     ap.add_argument("--out", default="", help="scratch: emit flat into this dir")
     args = ap.parse_args(argv)
 
@@ -2346,7 +2789,9 @@ def main(argv: list[str]) -> int:
     if args.out:
         out_dir = Path(args.out)
     else:
-        out_dir = repo_root() / "src" / "SignalWire" / "REST" / "Namespaces" / "Generated"
+        out_dir = (
+            repo_root() / "src" / "SignalWire" / "REST" / "Namespaces" / "Generated"
+        )
 
     if args.check:
         stale = []
@@ -2365,9 +2810,11 @@ def main(argv: list[str]) -> int:
             if rel not in expected:
                 stale.append(f"{p} (leftover — not in generator output)")
         if stale:
-            sys.stderr.write("GEN-FRESH FAIL: %d generated REST file(s) stale:\n" % len(stale))
+            sys.stderr.write(
+                f"GEN-FRESH FAIL: {len(stale)} generated REST file(s) stale:\n"
+            )
             for s in stale:
-                sys.stderr.write("  - %s\n" % s)
+                sys.stderr.write(f"  - {s}\n")
             return 1
         print("GEN-FRESH: generated REST files match the canonical specs.")
         return 0

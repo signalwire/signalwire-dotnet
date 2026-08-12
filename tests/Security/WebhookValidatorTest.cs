@@ -77,7 +77,7 @@ public class WebhookValidatorTest
     public void SchemeA_NegativeTamperedBody()
     {
         // Same key/url, body changed → returns false.
-        var tampered = VectorARawBody.Replace("answered", "ringing");
+        var tampered = VectorARawBody.Replace("answered", "ringing", StringComparison.Ordinal);
         Assert.False(WebhookValidator.ValidateWebhookSignature(
             VectorASigningKey, VectorAExpected, VectorAUrl, tampered));
     }
@@ -138,7 +138,11 @@ public class WebhookValidatorTest
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
         var dataBytes = Encoding.UTF8.GetBytes(data);
+#pragma warning disable CA5350 // HMAC-SHA1 is the SERVER'S webhook signature
+        // algorithm (see src/SignalWire/Security/WebhookValidator.cs); the test must
+        // reproduce it byte-for-byte or it is not testing the contract.
         var hash = HMACSHA1.HashData(keyBytes, dataBytes);
+#pragma warning restore CA5350
         return Convert.ToBase64String(hash);
     }
 

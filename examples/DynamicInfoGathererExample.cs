@@ -8,6 +8,7 @@
 //   /contact?set=support  (customer support)
 //   /contact?set=medical  (medical intake)
 
+using SignalWire.Agent;
 using SignalWire.Prefabs;
 
 var questionSets = new Dictionary<string, List<Dictionary<string, object>>>
@@ -35,11 +36,11 @@ var questionSets = new Dictionary<string, List<Dictionary<string, object>>>
 };
 
 var agent = new InfoGathererAgent(
-    name:      "contact-form",
+    name: "contact-form",
     questions: questionSets["default"],
     options: new AgentOptions
     {
-        Name  = "contact-form",
+        Name = "contact-form",
         Route = "/contact",
     }
 );

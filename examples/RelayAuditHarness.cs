@@ -30,7 +30,8 @@ if (Environment.GetEnvironmentVariable("SIGNALWIRE_LOG_MODE") is null)
 var host = Environment.GetEnvironmentVariable("SIGNALWIRE_RELAY_HOST");
 if (string.IsNullOrEmpty(host))
 {
-    await Console.Error.WriteLineAsync("RelayAuditHarness: SIGNALWIRE_RELAY_HOST is required.");
+    await Console.Error.WriteLineAsync("RelayAuditHarness: SIGNALWIRE_RELAY_HOST is required.")
+        .ConfigureAwait(false);
     return 2;
 }
 
@@ -47,12 +48,13 @@ var contexts = contextsEnv
 
 var client = new Client(new()
 {
-    Project  = project,
-    Token    = token,
-    Host     = host,
-    Scheme   = scheme,
+    Project = project,
+    Token = token,
+    Host = host,
+    Scheme = scheme,
     Contexts = contexts,
 });
+await using var clientScope = client.ConfigureAwait(false);
 
 // Track whether a real inbound signalwire.event was dispatched. The
 // callback flips the flag AND emits a frame with method="signalwire.event"
@@ -63,6 +65,9 @@ var eventDispatched = false;
 client.OnEventHandler = (evt, parms) =>
 {
     eventDispatched = true;
+#pragma warning disable CA1849 // OnEventHandler is a NON-async delegate (it returns
+    // Task.CompletedTask); there is no await context here, so the async writer cannot
+    // be used and the sync one is correct.
     Console.Error.WriteLine($"[harness] dispatched event: {evt.EventType}");
 
     try
@@ -70,25 +75,30 @@ client.OnEventHandler = (evt, parms) =>
         client.Send(new Dictionary<string, object?>
         {
             ["jsonrpc"] = "2.0",
-            ["method"]  = "signalwire.event",
-            ["id"]      = $"harness-dispatch-{Guid.NewGuid():N}",
-            ["params"]  = new Dictionary<string, object?>
+            ["method"] = "signalwire.event",
+            ["id"] = $"harness-dispatch-{Guid.NewGuid():N}",
+            ["params"] = new Dictionary<string, object?>
             {
                 ["event_type"] = "harness.dispatched",
-                ["params"]     = new Dictionary<string, object?> { ["from"] = "dotnet-harness" },
+                ["params"] = new Dictionary<string, object?> { ["from"] = "dotnet-harness" },
             },
         });
     }
+#pragma warning disable CA1031 // A harness callback must never let a send failure
+    // escape into the SDK's reader loop; it reports and continues so the run still
+    // produces a verdict.
     catch (Exception ex)
     {
         Console.Error.WriteLine($"[harness] post-dispatch frame failed: {ex.Message}");
     }
+#pragma warning restore CA1031
+#pragma warning restore CA1849
     return Task.CompletedTask;
 };
 
 try
 {
-    await client.ConnectAsync();
+    await client.ConnectAsync().ConfigureAwait(false);
 
     // The audit fixture watches for `signalwire.subscribe`; .NET / Python
     // production use `signalwire.receive`. Send both so the harness works
@@ -98,7 +108,7 @@ try
     {
         ["contexts"] = contexts,
     });
-    await client.ReceiveAsync(contexts);
+    await client.ReceiveAsync(contexts).ConfigureAwait(false);
 
     // Drive the event loop for up to 5 seconds. We can't use RunAsync()
     // because that blocks until disconnect — we want to exit as soon as
@@ -108,28 +118,33 @@ try
     {
         // The reader loop on Client pumps frames into HandleMessage
         // automatically; just sleep briefly.
-        await Task.Delay(50);
+        await Task.Delay(50).ConfigureAwait(false);
     }
 
     // Brief flush window so the dispatch frame we sent inside the callback
     // lands before we tear down the socket.
     if (eventDispatched)
     {
-        await Task.Delay(300);
+        await Task.Delay(300).ConfigureAwait(false);
     }
 
     client.Disconnect();
 
     if (!eventDispatched)
     {
-        await Console.Error.WriteLineAsync("[harness] no inbound signalwire.event arrived within 5s");
+        await Console.Error.WriteLineAsync("[harness] no inbound signalwire.event arrived within 5s")
+            .ConfigureAwait(false);
         return 1;
     }
-    Console.WriteLine("[harness] ok");
+    await Console.Out.WriteLineAsync("[harness] ok").ConfigureAwait(false);
     return 0;
 }
+#pragma warning disable CA1031 // A harness entry point must convert ANY failure into a
+// non-zero exit + a diagnostic line, not an unhandled-exception dump.
 catch (Exception ex)
 {
-    await Console.Error.WriteLineAsync($"[harness] fatal: {ex.GetType().Name}: {ex.Message}");
+    await Console.Error.WriteLineAsync($"[harness] fatal: {ex.GetType().Name}: {ex.Message}")
+        .ConfigureAwait(false);
     return 1;
 }
+#pragma warning restore CA1031

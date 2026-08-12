@@ -59,7 +59,6 @@ public class CrudResource<TList, TItem>
     /// </code>
     /// Wires the resource layer to the tested <see cref="PaginatedIterator"/>
     /// (which walks <c>resp["data"]</c> and follows <c>resp["links"]["next"]</c>).
-    /// Mirrors Python ``ReadResource.paginate(**params) -> PaginatedIterator``.
     /// Construction is lazy: no request fires until iteration begins.
     /// </summary>
     public virtual PaginatedIterator Paginate(

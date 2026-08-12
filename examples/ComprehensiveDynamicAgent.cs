@@ -10,19 +10,19 @@ using SignalWire.Agent;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name       = "Comprehensive Dynamic Agent",
-    Route      = "/dynamic",
+    Name = "Comprehensive Dynamic Agent",
+    Route = "/dynamic",
     AutoAnswer = true,
     RecordCall = true,
 });
 
 agent.SetDynamicConfigCallback((qp, bp, headers, a) =>
 {
-    var tier     = (qp?.GetValueOrDefault("tier")?.ToString()     ?? "standard").ToLower();
-    var industry = (qp?.GetValueOrDefault("industry")?.ToString() ?? "general").ToLower();
-    var voice    = qp?.GetValueOrDefault("voice")?.ToString()     ?? "inworld.Mark";
-    var language = (qp?.GetValueOrDefault("language")?.ToString() ?? "en").ToLower();
-    var testGroup = (qp?.GetValueOrDefault("test_group")?.ToString() ?? "A").ToUpper();
+    var tier = (qp?.GetValueOrDefault("tier")?.ToString() ?? "standard").ToLowerInvariant();
+    var industry = (qp?.GetValueOrDefault("industry")?.ToString() ?? "general").ToLowerInvariant();
+    var voice = qp?.GetValueOrDefault("voice")?.ToString() ?? "inworld.Mark";
+    var language = (qp?.GetValueOrDefault("language")?.ToString() ?? "en").ToLowerInvariant();
+    var testGroup = (qp?.GetValueOrDefault("test_group")?.ToString() ?? "A").ToUpperInvariant();
 
     // --- Voice & Language ---
     if (language == "es")
@@ -38,17 +38,17 @@ agent.SetDynamicConfigCallback((qp, bp, headers, a) =>
     if (tier == "enterprise")
     {
         aiParams["end_of_speech_timeout"] = 800;
-        aiParams["attention_timeout"]     = 25000;
+        aiParams["attention_timeout"] = 25000;
     }
     else if (tier == "premium")
     {
         aiParams["end_of_speech_timeout"] = 600;
-        aiParams["attention_timeout"]     = 20000;
+        aiParams["attention_timeout"] = 20000;
     }
     else
     {
         aiParams["end_of_speech_timeout"] = 400;
-        aiParams["attention_timeout"]     = 15000;
+        aiParams["attention_timeout"] = 15000;
     }
 
     // A/B test variation
@@ -120,9 +120,9 @@ agent.SetDynamicConfigCallback((qp, bp, headers, a) =>
     a.SetGlobalData(new Dictionary<string, object>
     {
         ["customer_id"] = qp?.GetValueOrDefault("customer_id")?.ToString() ?? "",
-        ["tier"]        = tier,
-        ["industry"]    = industry,
-        ["test_group"]  = testGroup,
+        ["tier"] = tier,
+        ["industry"] = industry,
+        ["test_group"] = testGroup,
         ["session_type"] = "dynamic",
     });
 });

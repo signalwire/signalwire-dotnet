@@ -31,14 +31,14 @@ public class MessagingMockTest : IClassFixture<RelayMockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
+        MockServerFixture.SkipNote("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
         return true;
     }
 
-    private async Task<RelayMockTest.Bound> ConnectedClient()
+    private static async Task<RelayMockTest.Bound> ConnectedClient()
     {
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
-        await bound.Client.ConnectAsync();
+        var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
+        await bound.Client.ConnectAsync().ConfigureAwait(false);
         return bound;
     }
 
@@ -323,7 +323,7 @@ public class MessagingMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var done = new TaskCompletionSource<Message>(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnMessage((msg, evt) =>
+            bound.Client.OnMessage(msg =>
             {
                 done.TrySetResult(msg);
                 return Task.CompletedTask;

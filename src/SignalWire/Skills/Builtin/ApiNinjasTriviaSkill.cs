@@ -32,7 +32,7 @@ public sealed class ApiNinjasTriviaSkill : SkillBase
     }
 
     /// <summary>Build and return the SWAIG tool definition(s) this skill
-    /// provides. (equivalent to Python's ``get_tools``.)</summary>
+    /// provides.</summary>
     [SuppressMessage("Design", "CA1002", Justification = "Cross-port surface returns the tool-definition list verbatim.")]
     public List<Dictionary<string, object>> GetTools()
     {

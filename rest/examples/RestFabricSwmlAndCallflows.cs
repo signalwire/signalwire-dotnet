@@ -9,12 +9,12 @@
 
 using SignalWire.REST;
 
-var client = new RestClient(
+using var client = new RestClient(
     projectId: Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    token:     Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    token: Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    space:     Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
+    space: Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
@@ -28,12 +28,12 @@ async Task Safe(string label, Func<Task> fn)
 Console.WriteLine("Creating SWML script...");
 await Safe("Create SWML script", async () =>
 {
-    var script = await client.Fabric.SwmlScripts.CreateAsync(new Dictionary<string, object>
+    var script = await client.Fabric.SwmlScripts.CreateAsync(new Dictionary<string, object?>
     {
-        ["name"]    = "greeting-script",
+        ["name"] = "greeting-script",
         ["content"] = new Dictionary<string, object>
         {
-            ["version"]  = "1.0.0",
+            ["version"] = "1.0.0",
             ["sections"] = new Dictionary<string, object>
             {
                 ["main"] = new List<Dictionary<string, object>>
@@ -46,19 +46,19 @@ await Safe("Create SWML script", async () =>
             },
         },
     });
-    Console.WriteLine($"    Script ID: {script.GetValueOrDefault("id")}");
+    Console.WriteLine($"    Script ID: {script?.Id} ({script?.DisplayName})");
 });
 
 // 2. Create a call flow with AI
 Console.WriteLine("\nCreating AI call flow...");
 await Safe("Create call flow", async () =>
 {
-    var flow = await client.Fabric.CallFlows.CreateAsync(new Dictionary<string, object>
+    var flow = await client.Fabric.CallFlows.CreateAsync(new Dictionary<string, object?>
     {
-        ["name"]    = "ai-support-flow",
+        ["name"] = "ai-support-flow",
         ["content"] = new Dictionary<string, object>
         {
-            ["version"]  = "1.0.0",
+            ["version"] = "1.0.0",
             ["sections"] = new Dictionary<string, object>
             {
                 ["main"] = new List<Dictionary<string, object>>
@@ -80,7 +80,7 @@ await Safe("Create call flow", async () =>
             },
         },
     });
-    Console.WriteLine($"    Call flow ID: {flow.GetValueOrDefault("id")}");
+    Console.WriteLine($"    Call flow ID: {flow?.Id} ({flow?.DisplayName})");
 });
 
 // 3. List SWML scripts
@@ -88,13 +88,10 @@ Console.WriteLine("\nListing SWML scripts...");
 await Safe("List scripts", async () =>
 {
     var scripts = await client.Fabric.SwmlScripts.ListAsync();
-    var data = scripts.GetValueOrDefault("data") as List<object> ?? new();
-    foreach (var item in data.Take(5))
+
+    foreach (var s in (scripts?.Data ?? []).Take(5))
     {
-        if (item is Dictionary<string, object?> s)
-        {
-            Console.WriteLine($"    - {s.GetValueOrDefault("id")}: {s.GetValueOrDefault("name")}");
-        }
+        Console.WriteLine($"    - {s.Id}: {s.DisplayName}");
     }
 });
 
@@ -103,13 +100,10 @@ Console.WriteLine("\nListing call flows...");
 await Safe("List call flows", async () =>
 {
     var flows = await client.Fabric.CallFlows.ListAsync();
-    var data = flows.GetValueOrDefault("data") as List<object> ?? new();
-    foreach (var item in data.Take(5))
+
+    foreach (var f in (flows?.Data ?? []).Take(5))
     {
-        if (item is Dictionary<string, object?> f)
-        {
-            Console.WriteLine($"    - {f.GetValueOrDefault("id")}: {f.GetValueOrDefault("name")}");
-        }
+        Console.WriteLine($"    - {f.Id}: {f.DisplayName}");
     }
 });
 

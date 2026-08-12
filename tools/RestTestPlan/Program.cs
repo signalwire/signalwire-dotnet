@@ -49,19 +49,22 @@ internal static class Program
     // normalised back to "{id}" in the captured template.
     private const string Sentinel = "__ID__";
 
+    /// <summary>Cached so the options object is allocated once (CA1869).</summary>
+    private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
+
     private static int Main()
     {
-        var recorder = new Recorder();
+        using var recorder = new Recorder();
 
         // Real transport swapped for a recording one (identical technique to
         // tools/RouteRegistry): the ResourceTree drives its resources through
         // this SignalWire.REST.HttpClient, whose System.Net.Http transport is
         // the recorder.
-        var recordingHttp = new System.Net.Http.HttpClient(recorder)
+        using var recordingHttp = new System.Net.Http.HttpClient(recorder)
         {
             BaseAddress = new Uri("http://127.0.0.1:0"),
         };
-        var swHttp = new SignalWire.REST.HttpClient(Sentinel, "t", "http://127.0.0.1:0", recordingHttp);
+        using var swHttp = new SignalWire.REST.HttpClient(Sentinel, "t", "http://127.0.0.1:0", recordingHttp);
         var tree = new ResourceTree(swHttp);
 
         var plan = new List<PlanRec>();
@@ -98,8 +101,7 @@ internal static class Program
             ["plan"] = plan,
             ["errors"] = errors,
         };
-        Console.WriteLine(JsonSerializer.Serialize(payload,
-            new JsonSerializerOptions { WriteIndented = true }));
+        Console.WriteLine(JsonSerializer.Serialize(payload, IndentedJson));
 
         if (errors.Count > 0)
         {
@@ -144,19 +146,25 @@ internal static class Program
             {
                 result = m.Invoke(resource, callArgs);
             }
+#pragma warning disable CA1031 // This walks the generated surface REFLECTIVELY;
+            // any member may throw anything, and the whole point is to RECORD that
+            // and keep going so one bad route cannot abort the plan.
             catch (Exception ex)
             {
                 errors.Add(new ErrRec(key, $"invoke threw: {Unwrap(ex).Message}"));
                 continue;
             }
+#pragma warning restore CA1031
             if (result is Task task)
             {
                 try { task.GetAwaiter().GetResult(); }
+#pragma warning disable CA1031 // Same: record whatever the awaited route threw.
                 catch (Exception ex)
                 {
                     errors.Add(new ErrRec(key, $"awaited task threw: {Unwrap(ex).Message}"));
                     continue;
                 }
+#pragma warning restore CA1031
             }
             var calls = recorder.Snapshot();
             if (calls.Count == 0)
@@ -183,8 +191,10 @@ internal static class Program
             if (p.GetIndexParameters().Length > 0) continue;
             if (!p.CanRead) continue;
             object? v;
+#pragma warning disable CA1031 // A reflective property read may throw anything; skip it.
             try { v = p.GetValue(obj); }
             catch { continue; }
+#pragma warning restore CA1031
             if (v is null) continue;
             var t = v.GetType();
             var ns = t.Namespace ?? "";
@@ -291,7 +301,7 @@ internal static class Program
                 : (optional ? null : Activator.CreateInstance(u));
             if (optional) { literal = null; return true; }
             var elem = u.GetGenericArguments()[0];
-            literal = $"new List<{FriendlyType(elem)}>()";
+            literal = $"new List<{FriendlyElem(elem)}>()";
             if (value is null) value = Activator.CreateInstance(u);
             return true;
         }
@@ -330,6 +340,18 @@ internal static class Program
         return t.Name;
     }
 
+    /// <summary>Element type for a generated List&lt;T&gt; literal.
+    ///
+    /// The .NET generated bodies declare list params as List&lt;object?&gt;, but a
+    /// C# nullable-reference annotation is NOT part of the runtime Type — reflection
+    /// reports plain `object`. Emitting `new List&lt;object&gt;()` therefore produced a
+    /// literal the compiler rejects against the real signature (CS8620, "Argument of
+    /// type List&lt;object&gt; cannot be used for parameter of type List&lt;object?&gt;").
+    /// Same reasoning FriendlyDict already applied to the dictionary VALUE type; the
+    /// list branch simply never got it.</summary>
+    private static string FriendlyElem(Type t) =>
+        t == typeof(object) ? "object?" : FriendlyType(t);
+
     private static string FriendlyDict(Type[] gargs)
     {
         // The .NET generated bodies always use Dictionary<string, object?> or
@@ -350,7 +372,10 @@ internal static class Program
             return info.WriteState == NullabilityState.Nullable
                 || info.ReadState == NullabilityState.Nullable;
         }
+#pragma warning disable CA1031 // NullabilityInfoContext throws on exotic metadata;
+        // "not provably nullable" is the safe answer.
         catch { return false; }
+#pragma warning restore CA1031
     }
 
     private static Exception Unwrap(Exception ex) =>

@@ -7,17 +7,17 @@
 
 using SignalWire.Relay;
 
-var client = new Client(new ClientOptions
+await using var client = new Client(new ClientOptions
 {
-    Project  = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
+    Project = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    Token    = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    Token = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    Host     = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "relay.signalwire.com",
+    Host = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "relay.signalwire.com",
     Contexts = new[] { "default" },
 });
 
-client.OnCall(async (call, evt) =>
+client.OnCall(async call =>
 {
     Console.WriteLine($"Incoming call: {call.CallId}");
     await call.AnswerAsync();

@@ -90,10 +90,14 @@ public class TlsServerHttpsTest
                 }
                 try
                 {
-                    resp = await client.GetAsync(baseUrl + "/health");
+                    resp = await client.GetAsync(new Uri(baseUrl + "/health"));
                     break;
                 }
+#pragma warning disable CA1031 // a readiness poll: it RECORDS whatever the attempt
+                // threw in lastErr and retries; the recorded error is reported if the
+                // server never comes up, so nothing is swallowed.
                 catch (Exception ex) { lastErr = ex; await Task.Delay(150); }
+#pragma warning restore CA1031
             }
             Assert.True(resp is not null,
                 "server /health never became reachable over https: " + (lastErr?.Message ?? "timeout"));
@@ -110,7 +114,7 @@ public class TlsServerHttpsTest
             using var untrusted = BuildHttp(rejecting.Validate);
             var ex2 = await Assert.ThrowsAnyAsync<Exception>(async () =>
             {
-                await untrusted.GetAsync(baseUrl + "/health");
+                await untrusted.GetAsync(new Uri(baseUrl + "/health")).ConfigureAwait(false);
             });
             // The untrusted client must NOT obtain a healthy response — the
             // positive control above already proved the server presents a cert a
@@ -133,7 +137,7 @@ public class TlsServerHttpsTest
         }
         finally
         {
-            cts.Cancel();
+            await cts.CancelAsync();
             // Await the server task's shutdown (bounded), rather than a blocking
             // .Wait() — keeps the whole test off blocking task ops (xUnit1031) so
             // it can't deadlock the sync context.
@@ -143,7 +147,8 @@ public class TlsServerHttpsTest
                 {
                     await Task.WhenAny(serverTask, Task.Delay(TimeSpan.FromSeconds(5)));
                 }
-                catch { /* shutdown race */ }
+                catch (ObjectDisposedException) { /* shutdown race */ }
+                catch (OperationCanceledException) { /* shutting down */ }
             }
             Environment.SetEnvironmentVariable("SWML_SSL_ENABLED", prevEnabled);
             Environment.SetEnvironmentVariable("SWML_SSL_CERT_PATH", prevCert);
@@ -159,6 +164,10 @@ public class TlsServerHttpsTest
         {
             ServerCertificateCustomValidationCallback = validate,
         };
+#pragma warning disable CA5399, CA5400 // Loopback test client against a mock
+        // with a self-signed cert: there is no revocation endpoint to check, and
+        // enabling the check makes the test depend on outbound network access.
         return new System.Net.Http.HttpClient(handler) { Timeout = TimeSpan.FromSeconds(6) };
+#pragma warning restore CA5399, CA5400
     }
 }

@@ -40,7 +40,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_signalwire unreachable on http://127.0.0.1:8784");
+        MockServerFixture.SkipNote("[SKIP] mock_signalwire unreachable on http://127.0.0.1:8784");
         return true;
     }
 
@@ -55,7 +55,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         var http = _fixture.NewHttp();
 
         using var cts = new CancellationTokenSource();
-        cts.Cancel(); // cancel BEFORE issuing the call
+        await cts.CancelAsync(); // cancel BEFORE issuing the call
 
         // The token is honoured all the way down to System.Net.Http.HttpClient,
         // so the call aborts with OperationCanceledException — NOT a wrapped
@@ -75,7 +75,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         var http = _fixture.NewHttp();
 
         using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => http.PostAsync("/api/relay/rest/phone_numbers",
@@ -93,7 +93,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         var crud = new CrudResource(http, "/api/relay/rest/phone_numbers");
 
         using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync();
 
         // The token threads from the CrudResource surface through to transport.
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
@@ -110,7 +110,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         var calling = new Calling(_fixture.NewHttp());
 
         using var cts = new CancellationTokenSource();
-        cts.Cancel(); // cancel BEFORE issuing the command
+        await cts.CancelAsync(); // cancel BEFORE issuing the command
 
         // The command-dispatch surface now threads CancellationToken from the
         // generated method through ExecuteAsync to the HttpClient POST — the same
@@ -150,7 +150,7 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
         // A real TCP listener that ACCEPTS the connection but never writes a
         // response — a genuine slow/hung endpoint, not a transport mock. The
         // SDK uses a real System.Net.Http.HttpClient against it.
-        var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
         var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
 
@@ -162,11 +162,12 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
             {
                 while (true)
                 {
-                    var c = await listener.AcceptTcpClientAsync();
+                    var c = await listener.AcceptTcpClientAsync().ConfigureAwait(false);
                     lock (accepted) accepted.Add(c);
                 }
             }
-            catch { /* listener stopped */ }
+            catch (ObjectDisposedException) { /* already stopped */ }
+            catch (System.Net.Sockets.SocketException) { /* listener stopped */ }
         });
 
         try
@@ -194,9 +195,12 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
             listener.Stop();
             lock (accepted)
             {
-                foreach (var c in accepted) { try { c.Dispose(); } catch { } }
+                foreach (var c in accepted) { try { c.Dispose(); } catch (ObjectDisposedException) { /* already disposed */ } }
             }
-            try { await acceptLoop; } catch { /* best effort */ }
+            try { await acceptLoop; }
+            catch (ObjectDisposedException) { /* listener already gone */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            catch (OperationCanceledException) { /* cancelled by the test */ }
         }
     }
 

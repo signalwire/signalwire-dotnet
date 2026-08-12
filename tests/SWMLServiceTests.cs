@@ -6,7 +6,7 @@ using SignalWire.Logging;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class SWMLServiceTests : IDisposable
+public sealed class SWMLServiceTests : IDisposable
 {
     public SWMLServiceTests()
     {
@@ -195,6 +195,72 @@ public class SWMLServiceTests : IDisposable
         Assert.Same(svc, result);
     }
 
+    /// <summary>
+    /// Minimal schema-VALID configs for the verbs whose <c>$defs</c> entry
+    /// declares required fields. Every other verb accepts an empty object.
+    /// </summary>
+    /// <summary>
+    /// Verbs whose schema config is NOT an object (an array, a string, or a
+    /// scalar). The validating entry point takes <c>dict | int</c> and
+    /// special-cases only <c>sleep</c>'s bare integer — exactly as the reference
+    /// does (<c>swml_service.py:534</c> <c>add_verb(verb_name, config: dict | int)</c>,
+    /// which rejects any other non-dict). So these verbs are not reachable
+    /// through the validating path in EITHER implementation; they are excluded
+    /// from the name-callability sweep rather than papered over with a config
+    /// the schema would reject anyway.
+    /// </summary>
+    private static readonly HashSet<string> NonObjectConfigVerbs =
+    [
+        "cond", "unset", "label", "change_context", "change_step",
+        "toggle_functions", "user_input", "say",
+    ];
+
+    private static readonly Dictionary<string, Dictionary<string, object>> MinimalValidConfigs = new()
+    {
+        ["ai"] = new() { ["prompt"] = new Dictionary<string, object> { ["text"] = "hi" } },
+        ["ai_sidecar"] = new() { ["prompt"] = "hi", ["lang"] = "en-US" },
+        ["amazon_bedrock"] = new() { ["prompt"] = new Dictionary<string, object> { ["text"] = "hi" } },
+        ["connect"] = new() { ["to"] = "sip:someone@example.com" },
+        ["context_switch"] = new() { ["system_prompt"] = "hi" },
+        ["enter_queue"] = new() { ["queue_name"] = "q1", ["transfer_after_bridge"] = "main" },
+        ["join_conference"] = new() { ["name"] = "conf1" },
+        ["play"] = new() { ["url"] = "say:hello" },
+        ["send_sms"] = new()
+        {
+            ["to_number"] = "+15550001111",
+            ["from_number"] = "+15550002222",
+            ["body"] = "hi",
+        },
+        ["execute"] = new() { ["dest"] = "other_section" },
+        ["goto"] = new() { ["label"] = "top" },
+        ["inject"] = new() { ["direction"] = "remote-caller", ["message"] = "hi" },
+        ["join_room"] = new() { ["name"] = "room1" },
+        ["live_transcribe"] = new() { ["action"] = "stop" },
+        ["live_translate"] = new() { ["action"] = "stop" },
+        ["pay"] = new() { ["payment_connector_url"] = "https://example.com/pay" },
+        ["playback_bg"] = new() { ["file"] = "https://example.com/bg.mp3" },
+        ["prompt"] = new() { ["play"] = "say:pick one" },
+        ["request"] = new() { ["method"] = "GET", ["url"] = "https://example.com/x" },
+        ["send_digits"] = new() { ["digits"] = "123" },
+        ["send_fax"] = new() { ["document"] = "https://example.com/f.pdf" },
+        ["sip_refer"] = new() { ["to_uri"] = "sip:someone@example.com" },
+        ["start"] = new()
+        {
+            ["direction"] = "remote-caller",
+            ["lang"] = "en-US",
+            ["from_lang"] = "en-US",
+            ["to_lang"] = "es-ES",
+        },
+        ["switch"] = new()
+        {
+            ["variable"] = "digits",
+            ["case"] = new Dictionary<string, object>(),
+        },
+        ["tap"] = new() { ["uri"] = "wss://example.com/tap" },
+        ["transfer"] = new() { ["dest"] = "sip:someone@example.com" },
+        ["user_event"] = new() { ["event"] = new Dictionary<string, object>() },
+    };
+
     [Fact]
     public void AllSchemaVerbs_Callable()
     {
@@ -208,6 +274,17 @@ public class SWMLServiceTests : IDisposable
             {
                 svc.Sleep(1000);
             }
+            else if (NonObjectConfigVerbs.Contains(verb))
+            {
+                continue;
+            }
+            else if (MinimalValidConfigs.TryGetValue(verb, out var minimal))
+            {
+                // Verb() now validates the CONFIG, not just the verb name, so
+                // the verbs whose schema declares required fields need those
+                // fields supplied. An empty config is legitimately rejected.
+                svc.Verb(verb, minimal);
+            }
             else
             {
                 svc.Verb(verb, new Dictionary<string, object>());
@@ -215,7 +292,9 @@ public class SWMLServiceTests : IDisposable
         }
 
         var verbs = svc.Document.GetVerbs("main");
-        Assert.Equal(names.Count, verbs.Count);
+        var expected = names.Count(n => !NonObjectConfigVerbs.Contains(n));
+        Assert.Equal(expected, verbs.Count);
+        Assert.True(expected > 0);
     }
 
     [Fact]
@@ -278,11 +357,11 @@ public class SWMLServiceTests : IDisposable
         var responseStream = new MemoryStream();
         ctx.Response.Body = responseStream;
 
-        await router(ctx);
+        await router(ctx).ConfigureAwait(false);
 
         responseStream.Position = 0;
         using var reader = new StreamReader(responseStream, Encoding.UTF8);
-        var text = await reader.ReadToEndAsync();
+        var text = await reader.ReadToEndAsync().ConfigureAwait(false);
         return (ctx.Response.StatusCode, text, ctx);
     }
 
@@ -519,9 +598,9 @@ public class SWMLServiceTests : IDisposable
     [Fact]
     public void ExtractSipUsername_ValidUri()
     {
-        var body = new Dictionary<string, object>
+        var body = new Dictionary<string, object?>
         {
-            ["call"] = new Dictionary<string, object> { ["to"] = "sip:agent1@example.com" },
+            ["call"] = new Dictionary<string, object?> { ["to"] = "sip:agent1@example.com" },
         };
         Assert.Equal("agent1", Service.ExtractSipUsername(body));
     }
@@ -529,14 +608,14 @@ public class SWMLServiceTests : IDisposable
     [Fact]
     public void ExtractSipUsername_FromTopLevelTo()
     {
-        var body = new Dictionary<string, object> { ["to"] = "sip:myuser@host.com" };
+        var body = new Dictionary<string, object?> { ["to"] = "sip:myuser@host.com" };
         Assert.Equal("myuser", Service.ExtractSipUsername(body));
     }
 
     [Fact]
     public void ExtractSipUsername_ValidChars()
     {
-        var body = new Dictionary<string, object> { ["to"] = "sip:user.name-test_1@host.com" };
+        var body = new Dictionary<string, object?> { ["to"] = "sip:user.name-test_1@host.com" };
         Assert.Equal("user.name-test_1", Service.ExtractSipUsername(body));
     }
 
@@ -547,7 +626,7 @@ public class SWMLServiceTests : IDisposable
     [Fact]
     public void ExtractSipUsername_UnusualChars_ReturnedVerbatim()
     {
-        var body = new Dictionary<string, object> { ["to"] = "sip:user;drop@host.com" };
+        var body = new Dictionary<string, object?> { ["to"] = "sip:user;drop@host.com" };
         Assert.Equal("user;drop", Service.ExtractSipUsername(body));
     }
 
@@ -555,16 +634,16 @@ public class SWMLServiceTests : IDisposable
     public void ExtractSipUsername_LongName_ReturnedVerbatim()
     {
         var longName = new string('a', 65);
-        var body = new Dictionary<string, object> { ["to"] = $"sip:{longName}@host.com" };
+        var body = new Dictionary<string, object?> { ["to"] = $"sip:{longName}@host.com" };
         Assert.Equal(longName, Service.ExtractSipUsername(body));
     }
 
     [Fact]
     public void ExtractSipUsername_TelUri_ReturnsNumber()
     {
-        var body = new Dictionary<string, object>
+        var body = new Dictionary<string, object?>
         {
-            ["call"] = new Dictionary<string, object> { ["to"] = "tel:+15551234567" },
+            ["call"] = new Dictionary<string, object?> { ["to"] = "tel:+15551234567" },
         };
         Assert.Equal("+15551234567", Service.ExtractSipUsername(body));
     }
@@ -578,7 +657,7 @@ public class SWMLServiceTests : IDisposable
     [Fact]
     public void ExtractSipUsername_EmptyBody_ReturnsNull()
     {
-        Assert.Null(Service.ExtractSipUsername(new Dictionary<string, object>()));
+        Assert.Null(Service.ExtractSipUsername(new Dictionary<string, object?>()));
     }
 
     // ------------------------------------------------------------------
@@ -632,15 +711,131 @@ public class SWMLServiceTests : IDisposable
     {
         var svc = MakeService();
         var called = false;
-        svc.RegisterRoutingCallback("/custom", (data, headers) =>
+        svc.RegisterRoutingCallback((data, headers) =>
         {
             called = true;
             return new Dictionary<string, object> { ["custom"] = "response" };
-        });
+        }, path: "/custom");
 
         var (status, _, body) = svc.HandleRequest("POST", "/custom", AuthHeader(), "{}");
         Assert.True(called);
         Assert.Equal(200, status);
         Assert.Contains("response", body);
+    }
+
+    // ==================================================================
+    //  SWMLService TLS derived attributes (porting-sdk d7c859d)
+    //  The reference hoists four values off `self.security` in __init__:
+    //    self.ssl_enabled / self.domain / self.ssl_cert_path / self.ssl_key_path
+    //  Prove the .NET properties carry the SAME resolved values, including
+    //  the CONFIG-FILE source (which the old env-only serve path ignored).
+    // ==================================================================
+
+    /// <summary>Repo-local scratch dir (never a machine-wide temp).</summary>
+    private static string MakeScratchDir()
+    {
+        var root = AppContext.BaseDirectory;
+        var dir = Path.Combine(root, ".sw-tmp", "swmlservice_tls_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        return dir;
+    }
+
+    [Fact]
+    public void SslPropertiesDefaultToSecurityDefaults()
+    {
+        var svc = MakeService();
+        Assert.False(svc.SslEnabled);
+        Assert.Null(svc.SslCertPath);
+        Assert.Null(svc.SslKeyPath);
+        Assert.Null(svc.Domain);
+        // They mirror `security`, exactly as the reference's __init__ does.
+        Assert.Equal(svc.Security.SslEnabled, svc.SslEnabled);
+        Assert.Equal(svc.Security.SslCertPath, svc.SslCertPath);
+        Assert.Equal(svc.Security.SslKeyPath, svc.SslKeyPath);
+        Assert.Equal(svc.Security.Domain, svc.Domain);
+    }
+
+    [Fact]
+    public void SslPropertiesAreHoistedFromEnvironment()
+    {
+        try
+        {
+            Environment.SetEnvironmentVariable("SWML_SSL_ENABLED", "true");
+            Environment.SetEnvironmentVariable("SWML_SSL_CERT_PATH", "/etc/ssl/env-cert.pem");
+            Environment.SetEnvironmentVariable("SWML_SSL_KEY_PATH", "/etc/ssl/env-key.pem");
+            Environment.SetEnvironmentVariable("SWML_DOMAIN", "env.example.com");
+
+            var svc = MakeService();
+
+            Assert.True(svc.SslEnabled);
+            Assert.Equal("/etc/ssl/env-cert.pem", svc.SslCertPath);
+            Assert.Equal("/etc/ssl/env-key.pem", svc.SslKeyPath);
+            Assert.Equal("env.example.com", svc.Domain);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SWML_SSL_ENABLED", null);
+            Environment.SetEnvironmentVariable("SWML_SSL_CERT_PATH", null);
+            Environment.SetEnvironmentVariable("SWML_SSL_KEY_PATH", null);
+            Environment.SetEnvironmentVariable("SWML_DOMAIN", null);
+        }
+    }
+
+    [Fact]
+    public void SslPropertiesAreHoistedFromTheConfigFile()
+    {
+        var dir = MakeScratchDir();
+        try
+        {
+            var configPath = Path.Combine(dir, "svc_config.json");
+            File.WriteAllText(configPath,
+                "{\"security\":{"
+                + "\"ssl_enabled\":true,"
+                + "\"ssl_cert_path\":\"/etc/ssl/file-cert.pem\","
+                + "\"ssl_key_path\":\"/etc/ssl/file-key.pem\","
+                + "\"domain\":\"file.example.com\""
+                + "}}");
+
+            var svc = new Service(new ServiceOptions
+            {
+                Name = "tls-config-service",
+                BasicAuthUser = "testuser",
+                BasicAuthPassword = "testpass",
+                ConfigFile = configPath,
+            });
+
+            // The config file is the highest-priority source; these values are
+            // what the serve path must use. Reading the environment directly
+            // (as the old SslSettings.FromEnvironment did) would see none of them.
+            Assert.True(svc.SslEnabled);
+            Assert.Equal("/etc/ssl/file-cert.pem", svc.SslCertPath);
+            Assert.Equal("/etc/ssl/file-key.pem", svc.SslKeyPath);
+            Assert.Equal("file.example.com", svc.Domain);
+        }
+        finally
+        {
+            try { Directory.Delete(dir, recursive: true); }
+            catch (IOException) { /* still in use */ }
+            catch (UnauthorizedAccessException) { /* best effort */ }
+        }
+    }
+
+    [Fact]
+    public void SslPropertiesAreCallerOverridableBeforeServing()
+    {
+        // Mirrors the reference's serve(ssl_enabled=…, domain=…) overrides,
+        // which assign onto self.ssl_enabled / self.domain.
+        var svc = MakeService();
+        Assert.False(svc.SslEnabled);
+
+        svc.SslEnabled = true;
+        svc.SslCertPath = "/etc/ssl/override-cert.pem";
+        svc.SslKeyPath = "/etc/ssl/override-key.pem";
+        svc.Domain = "override.example.com";
+
+        Assert.True(svc.SslEnabled);
+        Assert.Equal("/etc/ssl/override-cert.pem", svc.SslCertPath);
+        Assert.Equal("/etc/ssl/override-key.pem", svc.SslKeyPath);
+        Assert.Equal("override.example.com", svc.Domain);
     }
 }

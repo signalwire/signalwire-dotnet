@@ -45,14 +45,20 @@
 // so each is its own collection and they all stay parallel. No fixture is shared
 // — this definition exists only to pin every global-state class to one
 // non-parallel group. Members opt in with [Collection(GlobalStateCollection.Name)].
-[Xunit.CollectionDefinition(SignalWire.Tests.GlobalStateCollection.Name)]
-public sealed class GlobalStateCollectionDefinition;
-
 namespace SignalWire.Tests
 {
+    /// <summary>xUnit's collection-definition anchor. Must be public
+    /// (xUnit1027) and lives in the namespace with the collection it names.</summary>
+    [Xunit.CollectionDefinition(GlobalStateCollection.Name)]
+    public sealed class GlobalStateCollectionDefinition;
+
     /// <summary>Name of the xUnit collection that serializes the non-mock test
     /// classes which mutate process-global state (env vars, the Logger / Schema /
     /// SkillRegistry singletons). See AssemblyInfo.cs for the rationale.</summary>
+    // CA1711: the "Collection" suffix is xUnit's own concept name for a test
+    // collection, not a System.Collections type. Renaming would break the
+    // [Collection(...)] wiring that serializes these classes.
+#pragma warning disable CA1711
     public static class GlobalStateCollection
     {
         public const string Name = "global-state (serial: env vars + Logger/Schema/SkillRegistry singletons)";

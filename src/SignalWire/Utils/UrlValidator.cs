@@ -13,6 +13,37 @@ using System.Net.Sockets;
 
 namespace SignalWire.Utils;
 
+/// <summary>
+/// SSRF-prevention gate for caller-supplied URLs the SDK or the SignalWire
+/// platform may fetch (webhook targets, media URLs, POM/prompt sources).
+///
+/// <para>A URL is rejected unless it is an absolute <c>http</c> or
+/// <c>https</c> URI with a non-empty host whose every resolved address is
+/// public. Blocked ranges are IPv4 <c>10/8</c>, <c>172.16/12</c>,
+/// <c>192.168/16</c>, <c>127/8</c>, <c>169.254/16</c> (link-local, and the
+/// cloud instance-metadata endpoint) and <c>0/8</c>; IPv6 loopback,
+/// link-local, site-local, and the <c>fc00::/7</c> unique-local block.</para>
+///
+/// <para><b>Every</b> address the hostname resolves to must pass — a host
+/// with one public and one private A record is rejected, so a
+/// multi-answer DNS response cannot smuggle an internal target through.
+/// A hostname that fails to resolve is likewise rejected (fail closed).</para>
+///
+/// <para><b>Bypass:</b> passing <c>allowPrivate: true</c>, or setting
+/// <c>SWML_ALLOW_PRIVATE_URLS</c> to <c>1</c>/<c>true</c>/<c>yes</c>
+/// (case-insensitive), skips the address check entirely — the scheme and
+/// host checks still apply. The env bypass is process-wide and is intended
+/// for local development against a private-network endpoint; enabling it in
+/// production re-opens the SSRF hole this class exists to close.</para>
+///
+/// <para><b>Not a TOCTOU-proof control.</b> Validation resolves the name and
+/// then the caller connects separately, so a hostile authoritative server
+/// can answer differently for the second lookup (DNS rebinding). Treat this
+/// as defence in depth, not as a substitute for network-level egress
+/// restrictions.</para>
+///
+/// <para></para>
+/// </summary>
 public static class UrlValidator
 {
     private static readonly string[] TruthyEnvValues = { "1", "true", "yes" };
@@ -24,8 +55,8 @@ public static class UrlValidator
 
     /// <summary>Validate that a URL is safe to fetch (not pointing to
     /// private/internal resources). Returns true when safe, false when
-    /// rejected. (equivalent to Python's
-    /// ``signalwire.utils.url_validator.validate_url(url, allow_private)``.)</summary>
+    /// rejected.
+    /// </summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API and validated as text; converting churns call sites.")]
     public static bool ValidateUrl(string url, bool allowPrivate = false)
     {

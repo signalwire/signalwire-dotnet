@@ -22,8 +22,10 @@ namespace SignalWire.Tests;
 ///      lacks a `dotnet` SDK to build a separate example DLL.
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
-public class CliAssemblyLoaderTests : IDisposable
+public sealed class CliAssemblyLoaderTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] FirstSecondThirdArray = new[] { "first", "second", "third" };
     public CliAssemblyLoaderTests()
     {
         Schema.Reset();
@@ -90,7 +92,7 @@ public class CliAssemblyLoaderTests : IDisposable
             (a, r) => new FunctionResult());
 
         var names = svc.Tools.Select(t => (string)t["function"]).ToArray();
-        Assert.Equal(new[] { "first", "second", "third" }, names);
+        Assert.Equal(FirstSecondThirdArray, names);
     }
 
     [Fact]
@@ -216,7 +218,7 @@ public class CliAssemblyLoaderTests : IDisposable
     /// pattern users will follow when wrapping SwmlServiceSwaigStandalone
     /// or SwmlServiceAiSidecar in a class for in-process introspection.
     /// </summary>
-    public class LoaderTestService : Service
+    internal sealed class LoaderTestService : Service
     {
         public LoaderTestService() : base(new ServiceOptions
         {

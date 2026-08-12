@@ -75,7 +75,7 @@ public class RequestOptionsMockTest : IClassFixture<MockServerFixture>
     public async Task Get_Retries503_ThenSucceeds()
     {
         if (Skipped()) return;
-        using var http = _fixture.NewHttp();
+        var http = _fixture.NewHttp();
         Arm(AddressesEndpoint, 503, Errors("X"));
 
         var result = await http.GetAsync(AddressesPath,
@@ -89,7 +89,7 @@ public class RequestOptionsMockTest : IClassFixture<MockServerFixture>
     public async Task NoRetriesByDefault_RaisesOnFirstFailure()
     {
         if (Skipped()) return;
-        using var http = _fixture.NewHttp();
+        var http = _fixture.NewHttp();
         Arm(AddressesEndpoint, 503, Errors("X"));
 
         var ex = await Assert.ThrowsAsync<SignalWireRestError>(
@@ -103,7 +103,7 @@ public class RequestOptionsMockTest : IClassFixture<MockServerFixture>
     public async Task RetriesExhausted_RaisesLastError()
     {
         if (Skipped()) return;
-        using var http = _fixture.NewHttp();
+        var http = _fixture.NewHttp();
         Arm(AddressesEndpoint, 503, Errors("X"), repeat: 2);
 
         var ex = await Assert.ThrowsAsync<SignalWireRestError>(
@@ -120,7 +120,7 @@ public class RequestOptionsMockTest : IClassFixture<MockServerFixture>
     public async Task Post_DoesNotRetry500()
     {
         if (Skipped()) return;
-        using var http = _fixture.NewHttp();
+        var http = _fixture.NewHttp();
         Arm(CreateAddressEndpoint, 500, Errors("SERVER_ERROR"));
 
         var ex = await Assert.ThrowsAsync<SignalWireRestError>(
@@ -136,7 +136,7 @@ public class RequestOptionsMockTest : IClassFixture<MockServerFixture>
     public async Task Post_DoesRetry503()
     {
         if (Skipped()) return;
-        using var http = _fixture.NewHttp();
+        var http = _fixture.NewHttp();
         Arm(CreateAddressEndpoint, 503, Errors("UNAVAILABLE"));
 
         await http.PostAsync(CreateAddressPath,
@@ -152,7 +152,7 @@ public class RequestOptionsMockTest : IClassFixture<MockServerFixture>
     public async Task SlowResponse_TimesOut()
     {
         if (Skipped()) return;
-        using var http = _fixture.NewHttp();
+        var http = _fixture.NewHttp();
         // Arm a 200 delayed 400ms (delay_ms is a scenario-level field, not a body
         // field); a 100ms timeout must fire -> transport error.
         _fixture.Harness.Scenarios.SetRaw(AddressesEndpoint, new Dictionary<string, object?>
@@ -182,10 +182,10 @@ public class RequestOptionsMockTest : IClassFixture<MockServerFixture>
     public async Task PresetAbort_RaisesOperationCanceled_AndDoesNotReachWire()
     {
         if (Skipped()) return;
-        using var http = _fixture.NewHttp();
+        var http = _fixture.NewHttp();
 
         using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync();
 
         // The abort_signal is the native CancellationToken; a pre-set token
         // surfaces OperationCanceledException before the send (deeper than a

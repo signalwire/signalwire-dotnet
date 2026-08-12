@@ -59,21 +59,25 @@ internal static class AIChatDump
         var url = Environment.GetEnvironmentVariable("MOCK_AI_CHAT_URL");
         if (string.IsNullOrWhiteSpace(url))
         {
-            Console.Error.WriteLine("MOCK_AI_CHAT_URL not set");
+            await Console.Error.WriteLineAsync("MOCK_AI_CHAT_URL not set").ConfigureAwait(false);
             return 2;
         }
 
         try
         {
             var outObj = await RunAsync(url).ConfigureAwait(false);
-            Console.WriteLine(JsonSerializer.Serialize(outObj, JsonOpts));
+            await Console.Out.WriteLineAsync(JsonSerializer.Serialize(outObj, JsonOpts))
+                .ConfigureAwait(false);
             return 0;
         }
+#pragma warning disable CA1031 // A CLI entry point must turn ANY failure into a
+        // non-zero exit + a diagnostic line the calling gate can parse.
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"ai-chat-dump: {ex}");
+            await Console.Error.WriteLineAsync($"ai-chat-dump: {ex}").ConfigureAwait(false);
             return 1;
         }
+#pragma warning restore CA1031
     }
 
     private static async Task<Dictionary<string, object?>> RunAsync(string url)

@@ -291,14 +291,25 @@ sched_gate TEST defer=1 res=msbuild desc="docker dotnet test (net8/net9/net10 se
 sched_gate SURFACE res=surface desc="surface parity suite (SIGNATURES/DRIFT/SURFACE-FRESH/SURFACE-DIFF/SEMVER-DIFF/GEN-TYPE-DEGENERACY/ROUTE-COLLISION/GEN-IDIOM)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/surface.py" --port dotnet --repo "$PORT_ROOT"
 
+# SIGNATURES-FRESH: nothing previously guarded port_signatures.json's freshness —
+# SURFACE-FRESH covers only port_surface.json. That artifact is DRIFT's INPUT, so a
+# stale one makes the parity gate compare against a fiction and report clean.
+# A STANDALONE sched_gate, deliberately NOT a _surface_commands.py table entry: only
+# 8 of the 10 run-ci scripts read that table (rust and python never do), so a table
+# entry would be silently skipped for them. res=surface keeps it off the SURFACE
+# suite's in-place regenerate/restore of the artifacts it reads.
+sched_gate SIGNATURES-FRESH res=surface desc="committed port_signatures.json matches a fresh regen" \
+    -- python3 "$PORTING_SDK_DIR/scripts/suites/_signatures_fresh.py" \
+        --port dotnet --repo "$PORT_ROOT" --porting-sdk "$PORTING_SDK_DIR"
+
 # TYPE-EROSION: a port may not erase a type the reference DECLARES. compare_param treats
 # `any` on EITHER side as matching anything, so a port emitting `any` silently satisfies
 # every reference declaration — an unlimited opt-out. ConciergeAgent.hours_of_operation is
 # declared optional<dict<string,string>> and go still shipped a bare string, with no gate
 # red. RATCHET, not a hard gate: dynamic languages cannot always express a type, so this
 # banks the current count and fails only on REGRESSION. Drive the number DOWN; never up.
-sched_gate TYPE-EROSION res=surface desc="port did not erase a reference-declared param type (ratchet 19)" \
-    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_type_erosion.py" --port dotnet --repo "$PORT_ROOT" --max 19
+sched_gate TYPE-EROSION res=surface desc="port did not erase a reference-declared param type (ratchet 9)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_type_erosion.py" --port dotnet --repo "$PORT_ROOT" --max 9
 
 # GEN (regen-from-specs family): the 5 GEN-FRESH rules (all pure-python --check;
 # cheap wave, per-PR).
@@ -320,6 +331,21 @@ sched_gate BEHAVIORAL defer=1 res=msbuild desc="behavioral suite (REST-COVERAGE/
 sched_gate BEHAVIORAL-NIGHTLY tier=nightly defer=1 res=msbuild desc="behavioral suite, nightly rules (WAIT-LIVENESS/SECRET-SCRUB-LIVE)" \
     -- python3 "$PORTING_SDK_DIR/scripts/suites/behavioral.py" --port dotnet --repo "$PORT_ROOT" \
         --rules WAIT-LIVENESS,SECRET-SCRUB-LIVE
+
+# TOKEN-INTEROP — property 3 of the SWAIG tool-token contract: a token this port MINTS
+# must validate under the REFERENCE's own decoder. SECURE-DEFAULT proves a token is
+# minted and the fleet keying check proves the HMAC key; NEITHER sees the base64
+# ENVELOPE, so a port can ship correct-key correct-HMAC tokens that no other
+# implementation accepts — in production every secure tool call then fails auth. Six of
+# the ten ports shipped exactly that (an unpadded envelope), invisible to their own tests
+# because each port's DECODER tolerates missing padding while the reference's
+# urlsafe_b64decode RAISES on it — so round-tripping against ourselves could never catch
+# it. One mint + a pure-python validation → cheap, per-PR (a security property must not
+# wait for nightly). Its OWN line rather than a member of the BEHAVIORAL suite line,
+# which is defer=1 (heavy wave).
+sched_gate TOKEN-INTEROP res=msbuild desc="a token this port mints validates under the reference's decoder (padded urlsafe base64, ':'-signed / '.'-enveloped, hex HMAC keyed by the secret_key string)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/diff_port_token_interop.py" --port dotnet \
+        --mint-cmd "bash $PORT_ROOT/scripts/token-interop-mint.sh"
 
 # DOC-TRUTH (one markdown walk): DOC-AUDIT/DOC-LINKS/DOC-LANG-PURITY/DOC-ENV/
 # COUNT-CLAIM/ACCESSOR-TRUTH/STATUS-CLAIM/README-INCLUDE. res=surface: DOC-AUDIT +
@@ -415,11 +441,29 @@ sched_gate SNIPPET-COMPILE tier=nightly defer=1 res=msbuild desc="documented C# 
 sched_gate DOC-CLI desc="documented swaig-test invocations parse (line-detected; dotnet CLI not built here)" \
     -- python3 "$PORTING_SDK_DIR/scripts/doc_cli.py" --port dotnet --repo "$PORT_ROOT"
 
-# EXAMPLES-RUN + SNIPPET-RUN self-skip for dotnet (compiled port; examples have no
-# dotnet-run target, and snippet_run is dynamic-ports only) — they exit 0 with a
-# note. STRICT-MOCKS (MOCK_RELAY_STRICT=1) is set for parity so the moment a run
-# target is added, a wrong-wire example fails LOUD against the strict mock.
-sched_gate EXAMPLES-RUN tier=nightly defer=1 desc="shipped examples load/start (dotnet: SKIPPED-WITH-NOTE, no run target; STRICT-MOCKS: MOCK_RELAY_STRICT=1)" \
+# EXAMPLES-PROJECTS — every tracked example must have its own .csproj, across all
+# three roots the EXAMPLES-RUN gate globs (examples/, rest/examples/,
+# relay/examples/).
+#
+# This closes the hole task #204 found: of 71 tracked examples, only FOUR had a
+# project. The other 67 were in no solution, invisible to run-lint.sh's *.csproj
+# enumeration, and compiled by NOTHING — 16 under examples/ and all 14 under
+# rest/+relay/examples/ had rotted into non-compiling state without a single gate
+# noticing. With a project each they fall inside the existing LINT gate's
+# analyzer build automatically (that gate `find`s every .csproj on disk), so THIS
+# check only has to assert the projects exist and match the generator; LINT does
+# the compiling.
+# Cheap (a file listing + string compare) → not deferred, no resource class.
+sched_gate EXAMPLES-PROJECTS desc="every shipped example has a .csproj (else it is compiled by nothing; LINT then builds them)" \
+    -- python3 "$PORT_ROOT/scripts/generate_example_projects.py" --check
+
+# EXAMPLES-RUN really RUNS dotnet's examples now: each examples/<Stem>.csproj is a
+# `dotnet run` target, so examples_run.py drives dotnet through the same
+# compiled-runnable path as java's gradle runExample. STRICT-MOCKS
+# (MOCK_RELAY_STRICT=1) means a wrong-wire example fails LOUD against the strict
+# mock rather than being tolerantly journaled. SNIPPET-RUN still self-skips
+# (snippet_run is dynamic-ports only).
+sched_gate EXAMPLES-RUN tier=nightly defer=1 res=msbuild desc="shipped examples build+run against the mock (STRICT-MOCKS: MOCK_RELAY_STRICT=1)" \
     -- env MOCK_RELAY_STRICT=1 python3 "$PORTING_SDK_DIR/scripts/examples_run.py" --port dotnet --repo "$PORT_ROOT"
 
 sched_gate SNIPPET-RUN tier=nightly defer=1 desc="dynamic-port doc snippets run to zero exit (dotnet: self-skips, compiled port; STRICT-MOCKS: MOCK_RELAY_STRICT=1)" \
@@ -443,6 +487,14 @@ sched_gate PUBLIC-JARGON res=dayone desc="no internal porting jargon leaked into
 # plain main it skip-passes until the branch merges.
 sched_gate AI-CHAT desc="AIChatClient speaks the AI Chat protocol per the vendored spec (mock_ai_chat wire-behavioral)" \
     -- bash -c 'if [ -f "$1/scripts/diff_port_ai_chat.py" ]; then python3 "$1/scripts/diff_port_ai_chat.py" --port dotnet --dump-cmd "bash $2/scripts/ai-chat-dump.sh"; else echo "[ai-chat] diff_port_ai_chat.py not on porting-sdk main yet — skip-pass (coordinated-branch dep: porting-sdk ai-chat-client)"; fi' _ "$PORTING_SDK_DIR" "$PORT_ROOT"
+
+# DOC-SURFACE — XML doc-comment coverage floor on the public type surface. The floor is
+# pinned in .doc_surface_floor and ratchets up via --write-floor. BLOCKING and pinned at
+# 100.0 as of the 2026-07-29 burn: every public class/interface/record/enum/struct carries
+# a /// <summary>, so a new undocumented one is a real regression, not a note. Cheap (a
+# pure text scan, no build), so per-PR rather than nightly.
+sched_gate DOC-SURFACE desc="public XML doc-comment coverage floor (.doc_surface_floor ratchet; 100% — blocking)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/doc_surface.py" --port dotnet --repo "$PORT_ROOT"
 
 # ---- summary ----------------------------------------------------------------
 

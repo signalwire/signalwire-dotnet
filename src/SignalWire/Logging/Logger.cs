@@ -2,6 +2,15 @@ using System.Globalization;
 
 namespace SignalWire.Logging;
 
+/// <summary>
+/// Severity threshold for <see cref="Logger"/>. Ordered least- to
+/// most-severe; a logger emits a record only when its level is
+/// <c>&gt;=</c> the logger's configured <see cref="Logger.Level"/>.
+///
+/// <para>The names double as the accepted (case-insensitive) values of
+/// the <c>SIGNALWIRE_LOG_LEVEL</c> environment variable; an unrecognized
+/// value is ignored and the logger falls back to <see cref="Info"/>.</para>
+/// </summary>
 public enum LogLevel
 {
     Debug = 0,
@@ -10,6 +19,32 @@ public enum LogLevel
     Error = 3,
 }
 
+/// <summary>
+/// The SDK's named, process-wide logger. Instances are interned by name
+/// via <see cref="GetLogger"/> — the constructor is private, so a given
+/// name always yields the same object and level changes are shared by
+/// every caller holding that name.
+///
+/// <para>Records are written to <b>standard error</b> (never stdout, so a
+/// serverless/CGI handler writing a response body to stdout is not
+/// corrupted) as
+/// <c>[yyyy-MM-dd HH:mm:ss] [LEVEL] [name] message</c>, with the timestamp
+/// formatted in the invariant culture.</para>
+///
+/// <para><b>Security:</b> every message is passed through the shared
+/// control-character scrubber before it reaches the stream. That is the
+/// log-injection defence — without it a caller-supplied NUL or
+/// <c>ESC-[</c> sequence would reach the terminal verbatim and could
+/// forge log lines. Callers must not bypass <see cref="Debug"/> /
+/// <see cref="Info"/> / <see cref="Warn"/> / <see cref="Error"/> and
+/// write to stderr themselves.</para>
+///
+/// <para><b>Environment:</b> a new instance reads <c>SIGNALWIRE_LOG_LEVEL</c>
+/// for its initial <see cref="Level"/> and treats
+/// <c>SIGNALWIRE_LOG_MODE=off</c> (case-insensitive) as
+/// <see cref="Suppressed"/>. Both are read once at construction; later
+/// changes to the environment do not affect an already-interned logger.</para>
+/// </summary>
 public sealed class Logger
 {
     private static readonly Dictionary<string, Logger> Instances = new();
@@ -62,7 +97,13 @@ public sealed class Logger
 
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
         var upper = level.ToString().ToUpperInvariant();
-        Console.Error.WriteLine($"[{timestamp}] [{upper}] [{Name}] {message}");
+        // Scrub control characters BEFORE emitting — log-injection defence, and the
+        // reason the reference registers strip_control_chars in both of its structlog
+        // processor chains. A port that merely EXPOSES the scrub without putting it on
+        // the emission path offers no protection at all: a caller-supplied NUL or an
+        // ESC-[ escape reaches the terminal verbatim and can forge log lines.
+        var safe = Core.LoggingConfig.StripControlCharsValue(message);
+        Console.Error.WriteLine($"[{timestamp}] [{upper}] [{Name}] {safe}");
     }
 
     private static LogLevel? ParseLevel(string? value)

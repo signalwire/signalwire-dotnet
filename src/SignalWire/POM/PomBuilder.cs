@@ -10,6 +10,40 @@ using System.Text.Json;
 
 namespace SignalWire.POM;
 
+/// <summary>
+/// Fluent, title-addressed front end over <see cref="PromptObjectModel"/>.
+/// Where the model requires you to hold a <see cref="Section"/> reference to
+/// extend it, this builder keeps a title-to-section index so content can be
+/// added by name in any order.
+///
+/// <para><b>Auto-vivification is the point:</b>
+/// <see cref="AddToSection"/> and <see cref="AddSubsection"/> create the
+/// named (parent) section when it does not yet exist instead of throwing,
+/// so a prompt can be assembled by several independent pieces of code
+/// without any of them owning the ordering. Sections appear in the rendered
+/// output in creation order.</para>
+///
+/// <para><b>Body appends, it does not replace.</b> Successive
+/// <see cref="AddToSection"/> calls that pass a body join the fragments
+/// with a blank line — unlike <see cref="Section.AddBody"/>, which
+/// overwrites. Bullets always append.</para>
+///
+/// <para><b>Duplicate titles collapse.</b> The index is keyed by title, so
+/// adding a second section with an existing title leaves both in the
+/// underlying model's section list but points <see cref="HasSection"/> /
+/// <see cref="GetSection"/> — and therefore all subsequent
+/// <see cref="AddToSection"/> calls — at the most recently added one.
+/// Untitled sections are not indexed at all and can only be reached
+/// through <see cref="Pom"/>.</para>
+///
+/// <para>Rendering and serialization pass straight through to
+/// <see cref="Pom"/>, so the exact output is defined by the underlying model
+/// (see <see cref="PromptObjectModel"/>). <see cref="FromSections"/>
+/// rebuilds a builder — index included — from previously serialized
+/// section dicts.</para>
+///
+/// <para></para>
+/// </summary>
 public class PomBuilder
 {
     public PromptObjectModel Pom { get; private set; }
@@ -21,8 +55,7 @@ public class PomBuilder
         _sections = new Dictionary<string, Section>();
     }
 
-    /// <summary>Add a new section. (equivalent to Python's
-    /// ``PomBuilder.add_section``.)</summary>
+    /// <summary>Add a new section.</summary>
     public PomBuilder AddSection(
         string title,
         string body = "",
@@ -49,7 +82,7 @@ public class PomBuilder
     }
 
     /// <summary>Add content to an existing section (auto-vivifies if
-    /// missing). (equivalent to Python's ``PomBuilder.add_to_section``.)</summary>
+    /// missing).</summary>
     public PomBuilder AddToSection(
         string title,
         string? body = null,
@@ -79,8 +112,8 @@ public class PomBuilder
     }
 
     /// <summary>Add a subsection under an existing section
-    /// (auto-vivifies parent if missing). (equivalent to Python's
-    /// ``PomBuilder.add_subsection``.)</summary>
+    /// (auto-vivifies parent if missing).
+    /// </summary>
     public PomBuilder AddSubsection(
         string parentTitle,
         string title,
@@ -95,12 +128,10 @@ public class PomBuilder
         return this;
     }
 
-    /// <summary>Check if a section with the given title exists.
-    /// (equivalent to Python's ``PomBuilder.has_section``.)</summary>
+    /// <summary>Check if a section with the given title exists.</summary>
     public bool HasSection(string title) => _sections.ContainsKey(title);
 
-    /// <summary>Get a section by title, or null if absent.
-    /// (equivalent to Python's ``PomBuilder.get_section``.)</summary>
+    /// <summary>Get a section by title, or null if absent.</summary>
     public Section? GetSection(string title) =>
         _sections.TryGetValue(title, out var s) ? s : null;
 
@@ -116,8 +147,7 @@ public class PomBuilder
     /// <summary>Serialize the POM to a JSON string.</summary>
     public string ToJson() => Pom.ToJson();
 
-    /// <summary>Build a PomBuilder from a list of section dicts.
-    /// (equivalent to Python's ``PomBuilder.from_sections`` classmethod.)</summary>
+    /// <summary>Build a PomBuilder from a list of section dicts.</summary>
     public static PomBuilder FromSections(IReadOnlyList<Dictionary<string, object>> sections)
     {
         var builder = new PomBuilder();

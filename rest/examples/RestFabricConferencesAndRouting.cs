@@ -9,12 +9,12 @@
 
 using SignalWire.REST;
 
-var client = new RestClient(
+using var client = new RestClient(
     projectId: Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    token:     Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    token: Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    space:     Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
+    space: Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
@@ -28,24 +28,24 @@ async Task Safe(string label, Func<Task> fn)
 Console.WriteLine("Creating cXML conference resource...");
 await Safe("Create cXML", async () =>
 {
-    var cxml = await client.Fabric.CxmlScripts.CreateAsync(new Dictionary<string, object>
+    var cxml = await client.Fabric.CxmlScripts.CreateAsync(new Dictionary<string, object?>
     {
         ["name"] = "team-conference",
         ["body"] = @"<Response><Dial><Conference>team-room</Conference></Dial></Response>",
     });
-    Console.WriteLine($"    Resource ID: {cxml.GetValueOrDefault("id")}");
+    Console.WriteLine($"    Resource ID: {cxml?.Id} ({cxml?.Name})");
 });
 
 // 2. Create a generic Fabric resource
 Console.WriteLine("\nCreating generic routing resource...");
 await Safe("Create resource", async () =>
 {
-    var resource = await client.Fabric.SwmlScripts.CreateAsync(new Dictionary<string, object>
+    var resource = await client.Fabric.SwmlScripts.CreateAsync(new Dictionary<string, object?>
     {
         ["name"] = "custom-router",
         ["type"] = "swml_script",
     });
-    Console.WriteLine($"    Resource ID: {resource.GetValueOrDefault("id")}");
+    Console.WriteLine($"    Resource ID: {resource?.Id} ({resource?.DisplayName})");
 });
 
 // 3. List addresses
@@ -53,13 +53,10 @@ Console.WriteLine("\nListing Fabric addresses...");
 await Safe("List addresses", async () =>
 {
     var addresses = await client.Fabric.Addresses.ListAsync();
-    var data = addresses.GetValueOrDefault("data") as List<object> ?? new();
-    foreach (var item in data.Take(5))
+
+    foreach (var a in (addresses?.Data ?? []).Take(5))
     {
-        if (item is Dictionary<string, object?> a)
-        {
-            Console.WriteLine($"    - {a.GetValueOrDefault("id")}: {a.GetValueOrDefault("name")}");
-        }
+        Console.WriteLine($"    - {a.Id}: {a.Name}");
     }
 });
 
@@ -69,7 +66,7 @@ await Safe("Create token", async () =>
 {
     var token = await client.Fabric.Tokens.CreateSubscriberTokenAsync(
         reference: "example-subscriber-id",
-        expireAt:  3600);
+        expireAt: 3600);
     Console.WriteLine($"    Token generated (expires in 1h)");
 });
 
@@ -78,7 +75,7 @@ Console.WriteLine("\nListing queues...");
 await Safe("List queues", async () =>
 {
     var queues = await client.Queues.ListAsync();
-    var data = queues.GetValueOrDefault("data") as List<object> ?? new();
+    var data = queues?.Data ?? [];
     Console.WriteLine($"    Found {data.Count} queues");
 });
 

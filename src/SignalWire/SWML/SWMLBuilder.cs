@@ -12,6 +12,47 @@ using System.Text.Json;
 
 namespace SignalWire.SWML;
 
+/// <summary>
+/// Fluent builder for a SWML document. Wraps a <see cref="Service"/> and
+/// appends verbs to its document; every verb method returns <c>this</c>, so
+/// a document reads as one chain:
+/// <c>builder.Answer().Ai(promptText: "…").Hangup()</c>.
+///
+/// <para>The builder holds no state of its own — verbs go straight onto
+/// <see cref="Service"/>'s document in call order, which is the order the
+/// engine executes them. <see cref="Reset"/> clears that document, so a
+/// long-lived <see cref="Service"/> can be reused across requests;
+/// forgetting it appends the new document onto the previous one.</para>
+///
+/// <para><b>Optional arguments are omitted, not defaulted.</b> Every verb
+/// method writes a key only when its argument is non-null (and, for
+/// strings, non-empty), leaving the engine's own default in force. A
+/// consequence is that an intentionally empty string is indistinguishable
+/// from an unset argument and will not reach the wire.</para>
+///
+/// <para><b>Wire contract for <see cref="Ai"/>:</b> the SWML <c>ai</c>
+/// verb requires <c>prompt</c> to be an <b>object</b> —
+/// <c>{"text": …}</c> or <c>{"pom": […]}</c> — never a bare string. The
+/// AI engine treats a non-object prompt as fatal and aborts the call, so
+/// <see cref="Ai"/> wraps whichever of <c>promptText</c>/<c>promptPom</c>
+/// was supplied (text wins when both are). <c>post_prompt</c> follows the
+/// same object contract. <c>swaig</c> is emitted under the upper-case key
+/// <c>SWAIG</c>, and <c>extraParams</c> entries are merged into the verb
+/// config last, so they can overwrite any key set above them.</para>
+///
+/// <para><see cref="Play"/> prefers <c>url</c> over <c>urls</c> when both
+/// are supplied — the two are mutually exclusive on the wire — and throws
+/// when neither is, matching the reference. <see cref="Say"/> is not a verb
+/// of its own: it delegates to <see cref="Play"/> with the <c>say:</c> URL
+/// scheme, because SWML has no <c>say</c> verb.</para>
+///
+/// <para><b>Every verb method emits through the validating
+/// <see cref="Service.AddVerb"/></b>, so a schema-forbidden key or a
+/// wrong-typed value throws instead of being written into the document
+/// unchecked.</para>
+///
+/// <para></para>
+/// </summary>
 public class SWMLBuilder
 {
     public Service Service { get; }
@@ -21,29 +62,26 @@ public class SWMLBuilder
         Service = service;
     }
 
-    /// <summary>Add an ``answer`` verb. (equivalent to Python's
-    /// ``SWMLBuilder.answer(max_duration, codecs)``.)</summary>
+    /// <summary>Add an ``answer`` verb.</summary>
     public SWMLBuilder Answer(int? maxDuration = null, string? codecs = null)
     {
         var config = new Dictionary<string, object>();
         if (maxDuration.HasValue) config["max_duration"] = maxDuration.Value;
         if (!string.IsNullOrEmpty(codecs)) config["codecs"] = codecs;
-        Service.Document.AddVerb("answer", config);
+        Service.AddVerb("answer", config);
         return this;
     }
 
-    /// <summary>Add a ``hangup`` verb. (equivalent to Python's
-    /// ``SWMLBuilder.hangup(reason)``.)</summary>
+    /// <summary>Add a ``hangup`` verb.</summary>
     public SWMLBuilder Hangup(string? reason = null)
     {
         var config = new Dictionary<string, object>();
         if (!string.IsNullOrEmpty(reason)) config["reason"] = reason;
-        Service.Document.AddVerb("hangup", config);
+        Service.AddVerb("hangup", config);
         return this;
     }
 
-    /// <summary>Add an ``ai`` verb. (equivalent to Python's
-    /// ``SWMLBuilder.ai(prompt_text, prompt_pom, post_prompt, post_prompt_url, swaig, ...)``.)</summary>
+    /// <summary>Add an ``ai`` verb.</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API as a SWML field value.")]
     public SWMLBuilder Ai(
         string? promptText = null,
@@ -73,61 +111,74 @@ public class SWMLBuilder
         {
             foreach (var kv in extraParams) config[kv.Key] = kv.Value;
         }
-        Service.Document.AddVerb("ai", config);
+        Service.AddVerb("ai", config);
         return this;
     }
 
-    /// <summary>Add a ``play`` verb. (equivalent to Python's
-    /// ``SWMLBuilder.play(url, urls, volume, say_text, say_voice, say_language)``.)</summary>
+    /// <summary>Add a ``play`` verb.</summary>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API as a SWML field value.")]
     public SWMLBuilder Play(
         string? url = null,
         IReadOnlyList<string>? urls = null,
         double? volume = null,
-        string? sayText = null,
         string? sayVoice = null,
-        string? sayLanguage = null)
+        string? sayLanguage = null,
+        string? sayGender = null,
+        bool? autoAnswer = null)
     {
         var config = new Dictionary<string, object>();
-        if (urls is not null && urls.Count > 0) config["urls"] = urls;
-        else if (!string.IsNullOrEmpty(url)) config["url"] = url;
+        // url wins over urls, matching the reference's if/elif; the two are
+        // mutually exclusive on the wire (schema $defs PlayWithURL / PlayWithURLS).
+        if (!string.IsNullOrEmpty(url)) config["url"] = url;
+        else if (urls is not null) config["urls"] = urls;
+        else throw new ArgumentException("Either url or urls must be provided", nameof(url));
         if (volume.HasValue) config["volume"] = volume.Value;
-        if (!string.IsNullOrEmpty(sayText)) config["say_text"] = sayText;
         if (!string.IsNullOrEmpty(sayVoice)) config["say_voice"] = sayVoice;
         if (!string.IsNullOrEmpty(sayLanguage)) config["say_language"] = sayLanguage;
-        Service.Document.AddVerb("play", config);
+        if (!string.IsNullOrEmpty(sayGender)) config["say_gender"] = sayGender;
+        if (autoAnswer.HasValue) config["auto_answer"] = autoAnswer.Value;
+        Service.AddVerb("play", config);
         return this;
     }
 
-    /// <summary>Add a ``say`` verb (synthesized speech).
-    /// (equivalent to Python's ``SWMLBuilder.say(text, voice, language)``.)</summary>
-    public SWMLBuilder Say(string text, string? voice = null, string? language = null)
+    /// <summary>Add spoken text.
+    ///
+    /// <para>There is no <c>say</c> verb in SWML — text-to-speech is a
+    /// <c>play</c> whose <c>url</c> uses the <c>say:</c> scheme, so this
+    /// delegates to <see cref="Play"/> with <c>url = "say:&lt;text&gt;"</c>
+    /// exactly as the reference does. Emitting a literal <c>say</c> verb
+    /// produced a document the schema rejects and the engine never executes.</para>
+    ///
+    /// </summary>
+    public SWMLBuilder Say(
+        string text,
+        string? voice = null,
+        string? language = null,
+        string? gender = null,
+        double? volume = null)
     {
-        var config = new Dictionary<string, object> { ["text"] = text };
-        if (!string.IsNullOrEmpty(voice)) config["voice"] = voice;
-        if (!string.IsNullOrEmpty(language)) config["language"] = language;
-        Service.Document.AddVerb("say", config);
-        return this;
+        return Play(
+            url: $"say:{text}",
+            sayVoice: voice,
+            sayLanguage: language,
+            sayGender: gender,
+            volume: volume);
     }
 
-    /// <summary>Add a section to the underlying document.
-    /// (equivalent to Python's ``SWMLBuilder.add_section``.)</summary>
+    /// <summary>Add a section to the underlying document.</summary>
     public SWMLBuilder AddSection(string sectionName)
     {
         Service.Document.AddSection(sectionName);
         return this;
     }
 
-    /// <summary>Build the SWML document as a dict.
-    /// (equivalent to Python's ``SWMLBuilder.build``.)</summary>
+    /// <summary>Build the SWML document as a dict.</summary>
     public Dictionary<string, object> Build() => Service.Document.ToDict();
 
-    /// <summary>Render the SWML document as a JSON string.
-    /// (equivalent to Python's ``SWMLBuilder.render``.)</summary>
+    /// <summary>Render the SWML document as a JSON string.</summary>
     public string Render() => JsonSerializer.Serialize(Build());
 
-    /// <summary>Reset the underlying document.
-    /// (equivalent to Python's ``SWMLBuilder.reset``.)</summary>
+    /// <summary>Reset the underlying document.</summary>
     public SWMLBuilder Reset()
     {
         Service.Document.Reset();

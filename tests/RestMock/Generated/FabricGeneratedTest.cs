@@ -2095,7 +2095,7 @@ public class FabricGeneratedTest : CoverageBase
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Fabric.Tokens.CreateGuestTokenAsync(new List<object>());
+        var body = await tree.Fabric.Tokens.CreateGuestTokenAsync(new List<object?>());
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
@@ -2108,7 +2108,7 @@ public class FabricGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("fabric.create_subscriber_guest_token", 500,
-            () => tree.Fabric.Tokens.CreateGuestTokenAsync(new List<object>()));
+            () => tree.Fabric.Tokens.CreateGuestTokenAsync(new List<object?>()));
         Assert.Equal(500, status);
     }
 

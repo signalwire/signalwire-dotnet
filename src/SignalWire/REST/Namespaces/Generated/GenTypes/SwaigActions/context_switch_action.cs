@@ -20,22 +20,6 @@ namespace SignalWire.Core.SwaigActionsGenerated;
 /// </summary>
 public class ContextSwitchAction
 {
-    /// <summary>Wire field <c>system_prompt</c>.</summary>
-    [JsonPropertyName("system_prompt")]
-    public object? SystemPrompt { get; set; }
-
-    /// <summary>Wire field <c>user_prompt</c>.</summary>
-    [JsonPropertyName("user_prompt")]
-    public object? UserPrompt { get; set; }
-
-    /// <summary>Wire field <c>system_pom</c>.</summary>
-    [JsonPropertyName("system_pom")]
-    public object? SystemPom { get; set; }
-
-    /// <summary>Wire field <c>user_pom</c>.</summary>
-    [JsonPropertyName("user_pom")]
-    public object? UserPom { get; set; }
-
     /// <summary>Wire field <c>consolidate</c>.</summary>
     [JsonPropertyName("consolidate")]
     public bool? Consolidate { get; set; }
@@ -43,4 +27,20 @@ public class ContextSwitchAction
     /// <summary>Wire field <c>full_reset</c>.</summary>
     [JsonPropertyName("full_reset")]
     public bool? FullReset { get; set; }
+
+    /// <summary>Wire field <c>system_pom</c>.</summary>
+    [JsonPropertyName("system_pom")]
+    public Dictionary<string, object?>? SystemPom { get; set; }
+
+    /// <summary>Wire field <c>system_prompt</c>.</summary>
+    [JsonPropertyName("system_prompt")]
+    public string? SystemPrompt { get; set; }
+
+    /// <summary>Wire field <c>user_pom</c>.</summary>
+    [JsonPropertyName("user_pom")]
+    public Dictionary<string, object?>? UserPom { get; set; }
+
+    /// <summary>Wire field <c>user_prompt</c>.</summary>
+    [JsonPropertyName("user_prompt")]
+    public string? UserPrompt { get; set; }
 }

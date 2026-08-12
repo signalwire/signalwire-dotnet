@@ -106,23 +106,26 @@ internal static class Program
         return Run();
     }
 
+    /// <summary>Cached so the options object is allocated once (CA1869).</summary>
+    private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
+
     private static int Run()
     {
-        var recorder = new Recorder();
+        using var recorder = new Recorder();
 
         // Build the real client with throwaway creds; the project id (Sentinel)
         // becomes the compat {AccountSid} path segment and normalises to {id}.
-        var client = new RestClient(Sentinel, "t", "example.signalwire.com");
+        using var client = new RestClient(Sentinel, "t", "example.signalwire.com");
 
         // Reflect-replace the client's inner SignalWire.REST.HttpClient with one
         // whose System.Net.Http transport is our recording handler. RestClient
         // builds its own _http and exposes no transport injection, so this is the
         // recording-transport equivalent of go's SetBaseURL(httptest server).
-        var recordingHttp = new System.Net.Http.HttpClient(recorder)
+        using var recordingHttp = new System.Net.Http.HttpClient(recorder)
         {
             BaseAddress = new Uri("http://127.0.0.1:0"),
         };
-        var swHttp = new SignalWire.REST.HttpClient(Sentinel, "t", "http://127.0.0.1:0", recordingHttp);
+        using var swHttp = new SignalWire.REST.HttpClient(Sentinel, "t", "http://127.0.0.1:0", recordingHttp);
         // RestClient inherits the generated ResourceTree; the resources dispatch
         // through the tree's base `_generatedHttp` field, so swap THAT (RestClient's
         // own `_http` is only used for Dispose). Both are set before any resource is
@@ -181,8 +184,12 @@ internal static class Program
         {
             if (prop.GetIndexParameters().Length > 0) continue;
             object? nsObj;
+#pragma warning disable CA1031 // This walks the generated surface REFLECTIVELY;
+            // any member may throw anything, and the whole point is to RECORD it and
+            // keep going so one bad accessor cannot abort the registry.
             try { nsObj = prop.GetValue(client); }
             catch (Exception ex) { errors.Add(new ErrRec($"RestClient.{prop.Name}", $"accessor threw: {Unwrap(ex).Message}")); continue; }
+#pragma warning restore CA1031
             if (!IsResourceLike(nsObj)) continue;
             var nsName = nsObj!.GetType().Name;
 
@@ -208,7 +215,7 @@ internal static class Program
             ["skipped"] = skipped,
             ["errors"] = errors,
         };
-        var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(payload, IndentedJson);
         Console.WriteLine(json);
 
         if (errors.Count > 0)
@@ -263,8 +270,10 @@ internal static class Program
         {
             if (p.GetIndexParameters().Length > 0) continue;
             object? v;
+#pragma warning disable CA1031 // A reflective property read may throw anything; skip it.
             try { v = p.GetValue(ns); }
             catch { continue; }
+#pragma warning restore CA1031
             if (!IsResourceLike(v)) continue;
             // Don't recurse into the namespace's own parent-client reference.
             if (ReferenceEquals(v, ns)) continue;
@@ -315,17 +324,21 @@ internal static class Program
         {
             result = m.Info.Invoke(target, args);
         }
+#pragma warning disable CA1031 // Record whatever the reflectively-invoked route threw.
         catch (Exception ex)
         {
             return $"invoke threw: {Unwrap(ex).Message}";
         }
+#pragma warning restore CA1031
 
         // Await Task / Task<T> so the request fires. The recording handler never
         // throws, so a 200 stub always comes back and the await completes.
         if (result is Task task)
         {
+#pragma warning disable CA1031 // Same, for the awaited form.
             try { task.GetAwaiter().GetResult(); }
             catch (Exception ex) { return $"awaited task threw: {Unwrap(ex).Message}"; }
+#pragma warning restore CA1031
         }
         return null;
     }

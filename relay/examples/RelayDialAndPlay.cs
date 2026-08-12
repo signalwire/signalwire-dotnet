@@ -13,13 +13,13 @@ var fromNumber = Environment.GetEnvironmentVariable("RELAY_FROM_NUMBER")
 var toNumber = Environment.GetEnvironmentVariable("RELAY_TO_NUMBER")
                ?? throw new InvalidOperationException("Set RELAY_TO_NUMBER");
 
-var client = new Client(new ClientOptions
+await using var client = new Client(new ClientOptions
 {
     Project = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
               ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    Token   = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    Token = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
               ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    Host    = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "relay.signalwire.com",
+    Host = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "relay.signalwire.com",
 });
 
 await client.ConnectAsync();
@@ -62,7 +62,7 @@ Console.WriteLine("Call answered -- playing TTS");
 // Play TTS
 var playAction = call.PlayTts("Welcome to SignalWire");
 
-await playAction.WaitAsync(timeoutSeconds: 15);
+await playAction.WaitAsync(timeout: 15);
 Console.WriteLine("Playback finished -- hanging up");
 
 await call.HangupAsync();

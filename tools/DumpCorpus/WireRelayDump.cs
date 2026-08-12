@@ -73,6 +73,7 @@ internal static class WireRelayDump
     private static async Task CaptureFramesAsync(Dictionary<string, object?> outMap)
     {
         var client = new CapturingClient();
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(
             new Dictionary<string, object?> { ["call_id"] = CallId, ["node_id"] = Node },
             client);
@@ -370,8 +371,13 @@ internal static class WireRelayDump
             ["event_type"] = "calling.call.queue",
             ["params"] = new Dictionary<string, object?>
             {
-                ["call_id"] = CallId, ["control_id"] = Cid, ["status"] = "waiting",
-                ["id"] = "q-42", ["name"] = "support", ["position"] = 3, ["size"] = 10,
+                ["call_id"] = CallId,
+                ["control_id"] = Cid,
+                ["status"] = "waiting",
+                ["id"] = "q-42",
+                ["name"] = "support",
+                ["position"] = 3,
+                ["size"] = 10,
             },
         });
         outMap["relay_evt_queue"] = new Dictionary<string, object?>
@@ -390,10 +396,14 @@ internal static class WireRelayDump
             ["event_type"] = "calling.call.record",
             ["params"] = new Dictionary<string, object?>
             {
-                ["call_id"] = CallId, ["control_id"] = Cid, ["state"] = "finished",
+                ["call_id"] = CallId,
+                ["control_id"] = Cid,
+                ["state"] = "finished",
                 ["record"] = new Dictionary<string, object?>
                 {
-                    ["url"] = "https://x/rec.mp3", ["duration"] = 12.5, ["size"] = 4096,
+                    ["url"] = "https://x/rec.mp3",
+                    ["duration"] = 12.5,
+                    ["size"] = 4096,
                 },
             },
         });
@@ -412,8 +422,10 @@ internal static class WireRelayDump
             ["event_type"] = "calling.call.state",
             ["params"] = new Dictionary<string, object?>
             {
-                ["call_id"] = CallId, ["call_state"] = "answered",
-                ["direction"] = "inbound", ["end_reason"] = "",
+                ["call_id"] = CallId,
+                ["call_state"] = "answered",
+                ["direction"] = "inbound",
+                ["end_reason"] = "",
             },
         });
         var stateOut = new Dictionary<string, object?> { ["_class"] = obj?.GetType().Name };
@@ -431,7 +443,9 @@ internal static class WireRelayDump
             ["event_type"] = "calling.call.collect",
             ["params"] = new Dictionary<string, object?>
             {
-                ["call_id"] = CallId, ["control_id"] = Cid, ["state"] = "finished",
+                ["call_id"] = CallId,
+                ["control_id"] = Cid,
+                ["state"] = "finished",
                 ["result"] = new Dictionary<string, object?>
                 {
                     ["type"] = "digit",

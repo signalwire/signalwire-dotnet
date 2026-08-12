@@ -26,8 +26,7 @@ public class DataMap
         _functionName = functionName;
     }
 
-    /// <summary>The SWAIG function name this data map defines.
-    /// (equivalent to Python's <c>function_name</c>, data_map.py:72.)</summary>
+    /// <summary>The SWAIG function name this data map defines.</summary>
     public string FunctionName => _functionName;
 
     /// <summary>
@@ -115,19 +114,23 @@ public class DataMap
     public DataMap Expression(
         string testValue,
         string pattern,
-        object output,
-        object? nomatchOutput = null)
+        FunctionResult output,
+        FunctionResult? nomatchOutput = null)
     {
+        ArgumentNullException.ThrowIfNull(output);
         var expr = new Dictionary<string, object>
         {
             ["string"] = testValue,
             ["pattern"] = pattern,
-            ["output"] = output,
+            ["output"] = output.ToDict(),
         };
 
         if (nomatchOutput is not null)
         {
-            expr["nomatch_output"] = nomatchOutput;
+            // Wire key is HYPHENATED (`nomatch-output`), matching the reference
+            // (data_map.py:202) and the behavioral manifest. An underscore here is a
+            // key the server does not recognise, so the no-match branch never fires.
+            expr["nomatch-output"] = nomatchOutput.ToDict();
         }
 
         _expressions.Add(expr);
@@ -140,14 +143,19 @@ public class DataMap
         string method,
         string url,
         Dictionary<string, string>? headers = null,
-        string formParam = "",
+        string? formParam = null,
         bool inputArgsAsParams = false,
         IReadOnlyList<string>? requireArgs = null)
     {
-        ArgumentNullException.ThrowIfNull(formParam);
+        ArgumentNullException.ThrowIfNull(method);
         var wh = new Dictionary<string, object>
         {
-            ["method"] = method,
+            // The reference upper-cases the method on the wire (core/data_map.py:230,
+            // `"method": method.upper()`), so the same program emits byte-identical SWML in
+            // both languages. The engine itself compares case-insensitively. Invariant
+            // culture, not ToUpper(): a Turkish locale would map "i" to "İ" and produce a
+            // different wire value per machine.
+            ["method"] = method.ToUpperInvariant(),
             ["url"] = url,
         };
 
@@ -155,7 +163,7 @@ public class DataMap
         {
             wh["headers"] = headers;
         }
-        if (formParam.Length > 0)
+        if (!string.IsNullOrEmpty(formParam))
         {
             wh["form_param"] = formParam;
         }
@@ -179,12 +187,17 @@ public class DataMap
         return this;
     }
 
-    public DataMap Body(Dictionary<string, object> data)
-    {
-        if (_webhooks.Count > 0) _webhooks[^1]["body"] = data;
-        return this;
-    }
-
+    /// <summary>
+    /// Set request params for the last added webhook — the ONLY key that
+    /// carries request data on the wire.
+    ///
+    /// <para>There is deliberately no <c>Body</c> counterpart: schema.json's
+    /// <c>$defs/Webhook</c> lists ten permitted properties under
+    /// <c>unevaluatedProperties: {"not": {}}</c> and <c>body</c> is not among
+    /// them, so a <c>body</c> key makes the document invalid; the engine's
+    /// webhook readers look up <c>params</c> and never <c>body</c>. Use this
+    /// method for POST/PUT request data.</para>
+    /// </summary>
     public DataMap Params(Dictionary<string, object> data)
     {
         if (_webhooks.Count > 0) _webhooks[^1]["params"] = data;
@@ -197,15 +210,17 @@ public class DataMap
         return this;
     }
 
-    public DataMap Output(object result)
+    public DataMap Output(FunctionResult result)
     {
-        if (_webhooks.Count > 0) _webhooks[^1]["output"] = ResolveOutput(result);
+        ArgumentNullException.ThrowIfNull(result);
+        if (_webhooks.Count > 0) _webhooks[^1]["output"] = result.ToDict();
         return this;
     }
 
-    public DataMap FallbackOutput(object result)
+    public DataMap FallbackOutput(FunctionResult result)
     {
-        _globalOutput = ResolveOutput(result);
+        ArgumentNullException.ThrowIfNull(result);
+        _globalOutput = result.ToDict();
         _hasGlobalOutput = true;
         return this;
     }
@@ -257,7 +272,7 @@ public class DataMap
         Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public static Dictionary<string, object> CreateSimpleApiTool(
         string name, string purpose, IReadOnlyList<Dictionary<string, object>> parameters,
-        string method, string url, object output,
+        string method, string url, FunctionResult output,
         Dictionary<string, string>? headers = null)
     {
         ArgumentNullException.ThrowIfNull(parameters);
@@ -292,14 +307,16 @@ public class DataMap
         }
         foreach (var expr in expressions)
         {
-            expr.TryGetValue("nomatch_output", out var nomatch);
-            builder.Expression((string)expr["string"], (string)expr["pattern"], expr["output"], nomatch);
+            // Accept either wire spelling on INPUT (these dictionaries are caller-
+            // supplied), but Expression() always EMITS the hyphenated reference key.
+            if (!expr.TryGetValue("nomatch-output", out var nomatch))
+            {
+                expr.TryGetValue("nomatch_output", out nomatch);
+            }
+            builder.Expression(
+                (string)expr["string"], (string)expr["pattern"],
+                (FunctionResult)expr["output"], nomatch as FunctionResult);
         }
         return builder.ToSwaigFunction();
-    }
-
-    private static object ResolveOutput(object result)
-    {
-        return result is FunctionResult fr ? fr.ToDict() : result;
     }
 }

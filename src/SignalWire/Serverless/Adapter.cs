@@ -83,7 +83,17 @@ public static class Adapter
 
         var headers = ExtractHeaders(lambdaEvent);
 
-        var (status, responseHeaders, responseBody) = agent.HandleRequest(method, path, headers, body);
+        // The per-call SWAIG __token rides the query string. API Gateway
+        // supplies it under TWO different keys depending on the payload
+        // version: `queryStringParameters` (the parsed mapping, REST API v1 and
+        // HTTP API v2) and `rawQueryString` (HTTP API v2 only). Reading just one
+        // silently loses the credential on the other shape, so read the parsed
+        // map first and fall back to the raw string.
+        var queryString = QueryStringFromParams(lambdaEvent, "queryStringParameters")
+            ?? GetStr(lambdaEvent, "rawQueryString");
+
+        var (status, responseHeaders, responseBody) =
+            agent.HandleRequest(method, path, headers, body, queryString);
 
         return new Dictionary<string, object?>
         {
@@ -113,16 +123,28 @@ public static class Adapter
         var method = (GetStr(request, "method") ?? GetStr(request, "Method") ?? "GET").ToUpperInvariant();
         var url = GetStr(request, "url") ?? GetStr(request, "Url") ?? "/";
 
-        // Parse the URL to extract just the path
+        // Split the URL into path and query. The query is NOT decoration here:
+        // it carries the per-call SWAIG __token, and baking it into the path
+        // would both lose the credential and turn "/swaig?__token=x" into an
+        // unroutable path.
         string path;
+        string? queryString;
         if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
             path = uri.AbsolutePath;
+            queryString = uri.Query;
         }
         else
         {
-            path = url;
+            var q = url.IndexOf('?', StringComparison.Ordinal);
+            path = q < 0 ? url : url[..q];
+            queryString = q < 0 ? null : url[q..];
         }
+
+        // An explicit params mapping wins over whatever the URL happened to carry.
+        queryString = QueryStringFromParams(request, "params")
+            ?? QueryStringFromParams(request, "query")
+            ?? queryString;
 
         var body = GetStr(request, "body") ?? GetStr(request, "Body");
 
@@ -142,7 +164,8 @@ public static class Adapter
             }
         }
 
-        var (status, responseHeaders, responseBody) = agent.HandleRequest(method, path, headers, body);
+        var (status, responseHeaders, responseBody) =
+            agent.HandleRequest(method, path, headers, body, queryString);
 
         return new Dictionary<string, object?>
         {
@@ -162,8 +185,7 @@ public static class Adapter
     /// Extracts method, path, headers, and body from the GCF request
     /// dictionary (a normalized Flask-request shape), calls
     /// agent.HandleRequest(), and returns a response dictionary
-    /// (status, headers, body). Equivalent to Python's
-    /// ``_handle_google_cloud_function_request``.
+    /// (status, headers, body).
     /// </summary>
     public static Dictionary<string, object?> HandleGoogleCloudFunction(
         SWML.Service agent,
@@ -173,23 +195,40 @@ public static class Adapter
         ArgumentNullException.ThrowIfNull(request);
         var method = (GetStr(request, "method") ?? "GET").ToUpperInvariant();
 
-        // Prefer an explicit path; else derive it from the request url.
+        // Prefer an explicit path; else derive it from the request url. The
+        // query string is carried alongside, never folded into the path — it
+        // holds the per-call SWAIG __token.
+        string? queryString = null;
         var path = GetStr(request, "path");
         if (path is null)
         {
             var url = GetStr(request, "url");
-            path = url is not null && Uri.TryCreate(url, UriKind.Absolute, out var uri)
-                ? uri.AbsolutePath
-                : url ?? "/";
+            if (url is not null && Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                path = uri.AbsolutePath;
+                queryString = uri.Query;
+            }
+            else
+            {
+                path = url ?? "/";
+            }
         }
 
         if (string.IsNullOrEmpty(path)) { path = "/"; }
         else if (!path.StartsWith('/')) { path = "/" + path; }
 
+        // Flask's request exposes the raw query as `query_string` and the parsed
+        // mapping as `args`; accept either, and only fall back to whatever the
+        // url carried.
+        queryString = QueryStringFromParams(request, "args")
+            ?? GetStr(request, "query_string")
+            ?? queryString;
+
         var body = GetStr(request, "body");
         var headers = ExtractHeaders(request);
 
-        var (status, responseHeaders, responseBody) = agent.HandleRequest(method, path, headers, body);
+        var (status, responseHeaders, responseBody) =
+            agent.HandleRequest(method, path, headers, body, queryString);
 
         return new Dictionary<string, object?>
         {
@@ -227,6 +266,11 @@ public static class Adapter
         var pathInfo = Environment.GetEnvironmentVariable("PATH_INFO") ?? "";
         var path = pathInfo.StartsWith('/') ? pathInfo : "/" + pathInfo;
 
+        // QUERY_STRING was named in this method's own doc comment but never
+        // actually read, so the per-call SWAIG __token was dropped on this
+        // transport.
+        var queryString = Environment.GetEnvironmentVariable("QUERY_STRING");
+
         var headers = new Dictionary<string, string>();
         var contentType = Environment.GetEnvironmentVariable("CONTENT_TYPE");
         if (!string.IsNullOrEmpty(contentType)) { headers["Content-Type"] = contentType; }
@@ -246,7 +290,8 @@ public static class Adapter
             body = new string(buffer, 0, read);
         }
 
-        var (status, responseHeaders, responseBody) = agent.HandleRequest(method, path, headers, body);
+        var (status, responseHeaders, responseBody) =
+            agent.HandleRequest(method, path, headers, body, queryString);
 
         return new Dictionary<string, object?>
         {
@@ -322,6 +367,54 @@ public static class Adapter
 
     private static string? GetStr(Dictionary<string, object?> dict, string key)
         => dict.TryGetValue(key, out var v) ? v?.ToString() : null;
+
+    /// <summary>
+    /// Re-encode an already-PARSED query mapping (Lambda's
+    /// <c>queryStringParameters</c>, Flask's <c>args</c>, …) back into a raw
+    /// <c>a=b&amp;c=d</c> string, so every envelope hands the dispatch core the
+    /// same one shape. Returns null when the key is absent or holds no mapping,
+    /// so callers can fall back to a raw query string.
+    /// </summary>
+    private static string? QueryStringFromParams(Dictionary<string, object?> evt, string key)
+    {
+        if (!evt.TryGetValue(key, out var raw) || raw is null)
+        {
+            return null;
+        }
+
+        var pairs = new List<string>();
+        switch (raw)
+        {
+            case IDictionary<string, object?> map:
+                foreach (var kvp in map)
+                {
+                    if (kvp.Value is null) continue;
+                    pairs.Add(Uri.EscapeDataString(kvp.Key) + "="
+                        + Uri.EscapeDataString(kvp.Value.ToString() ?? ""));
+                }
+                break;
+            case IDictionary<string, string> smap:
+                foreach (var kvp in smap)
+                {
+                    pairs.Add(Uri.EscapeDataString(kvp.Key) + "=" + Uri.EscapeDataString(kvp.Value));
+                }
+                break;
+            case JsonElement { ValueKind: JsonValueKind.Object } je:
+                foreach (var prop in je.EnumerateObject())
+                {
+                    if (prop.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined) continue;
+                    var value = prop.Value.ValueKind == JsonValueKind.String
+                        ? prop.Value.GetString() ?? ""
+                        : prop.Value.ToString();
+                    pairs.Add(Uri.EscapeDataString(prop.Name) + "=" + Uri.EscapeDataString(value));
+                }
+                break;
+            default:
+                return null;
+        }
+
+        return pairs.Count == 0 ? null : string.Join("&", pairs);
+    }
 
     private static string? GetNestedStr(
         Dictionary<string, object?> dict, string key1, string key2, string key3)

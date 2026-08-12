@@ -30,8 +30,7 @@ public sealed class ServiceOptions
 
     /// <summary>
     /// Optional path to the SWML schema file. When null the service uses the
-    /// schema bundled with the assembly. (equivalent to Python's
-    /// <c>SWMLService.__init__(schema_path=...)</c>.)
+    /// schema bundled with the assembly.
     /// </summary>
     public string? SchemaPath { get; init; }
 
@@ -39,16 +38,14 @@ public sealed class ServiceOptions
     /// Optional path to a JSON configuration file. When null the service
     /// discovers one by service name via <see cref="Core.ConfigLoader.FindConfigFile"/>.
     /// Feeds the unified <see cref="Core.SecurityConfig"/> (SSL, basic-auth,
-    /// CORS, rate limits). (equivalent to Python's
-    /// <c>SWMLService.__init__(config_file=...)</c>.)
+    /// CORS, rate limits).
     /// </summary>
     public string? ConfigFile { get; init; }
 
     /// <summary>
     /// Enable SWML schema validation. Default true. Can also be disabled via
     /// the <c>SWML_SKIP_SCHEMA_VALIDATION=1</c> env var; an explicit false
-    /// here wins regardless of the env var. (equivalent to Python's
-    /// <c>SWMLService.__init__(schema_validation=...)</c>.)
+    /// here wins regardless of the env var.
     /// </summary>
     public bool SchemaValidation { get; init; } = true;
 }
@@ -103,8 +100,22 @@ public class Service
 
     /// <summary>Unified security configuration (SSL, basic auth, CORS, rate
     /// limits) loaded from defaults, environment, then the config file.
-    /// (equivalent to Python's <c>SWMLService.security</c>.)</summary>
+    /// </summary>
     public SecurityConfig Security { get; }
+
+    /// <summary>Whether TLS is enabled for this service. Read off
+    /// <see cref="Security"/> at construction, and overridable at serve time.
+    /// </summary>
+    public bool SslEnabled { get; set; }
+
+    /// <summary>Path to the server TLS certificate (PEM), or null.</summary>
+    public string? SslCertPath { get; set; }
+
+    /// <summary>Path to the server TLS private key (PEM), or null.</summary>
+    public string? SslKeyPath { get; set; }
+
+    /// <summary>Serving domain used for TLS/URL generation, or null.</summary>
+    public string? Domain { get; set; }
 
     // The resolved config-file path, the explicit schema path, and the
     // effective validation flag mirror attributes the reference keeps PRIVATE
@@ -118,8 +129,8 @@ public class Service
 
     /// <summary>True when SWML schema validation is enabled for this service.
     /// False when disabled via <c>SchemaValidation = false</c> or the
-    /// <c>SWML_SKIP_SCHEMA_VALIDATION</c> env var. (equivalent to Python's
-    /// private <c>SchemaUtils._validation_enabled</c>.)</summary>
+    /// <c>SWML_SKIP_SCHEMA_VALIDATION</c> env var.
+    /// </summary>
     internal bool SchemaValidationEnabled => _schemaValidation;
     [SuppressMessage("Naming", "CA1721", Justification = "get_document matches the cross-port SWMLService surface (distinct from the Document property).")]
     public Document Document { get; }
@@ -154,6 +165,15 @@ public class Service
         // service name (`<name>_config.json`, `.swml/config.json`, …).
         Security = new SecurityConfig(options.ConfigFile, options.Name);
         _configFile = options.ConfigFile ?? ConfigLoader.FindConfigFile(options.Name);
+
+        // Hoist the resolved TLS settings onto the service, mirroring the
+        // reference's `self.ssl_enabled = self.security.ssl_enabled` (and
+        // domain / cert / key) in `SWMLService.__init__`. These are the
+        // caller-observable values `Run()` consumes and `serve(...)` overrides.
+        SslEnabled = Security.SslEnabled;
+        Domain = Security.Domain;
+        SslCertPath = Security.SslCertPath;
+        SslKeyPath = Security.SslKeyPath;
 
         // Auth: explicit > config file / env (SecurityConfig applies env first,
         // then the config file at higher priority) > auto-generated.
@@ -209,7 +229,10 @@ public class Service
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Add a verb to the specified section. Validates the verb name against the schema.
+    /// Add a verb to the specified section. Validates the verb name AND its
+    /// config against the schema (the STRICT-RENDER contract) — an unknown verb,
+    /// an unknown/misspelled config key, or a wrong-typed value throws rather
+    /// than being written into the document unchecked.
     /// Returns this service for fluent chaining.
     /// </summary>
     public Service Verb(string verbName, string section, object? config)
@@ -220,12 +243,14 @@ public class Service
             throw new ArgumentException($"Unknown SWML verb: {verbName}", nameof(verbName));
         }
 
+        ValidateVerbConfig(verbName, config);
         Document.AddVerbToSection(section, verbName, config);
         return this;
     }
 
     /// <summary>
-    /// Add a verb to the main section. Validates the verb name against the schema.
+    /// Add a verb to the main section. Validated the same way as
+    /// <see cref="Verb(string, string, object)"/> (name AND config).
     /// Returns this service for fluent chaining.
     /// </summary>
     public Service Verb(string verbName, object? config)
@@ -235,6 +260,9 @@ public class Service
 
     /// <summary>
     /// Add a sleep verb with a duration in milliseconds to the specified section.
+    /// Validated through the same STRICT-RENDER path as every other verb;
+    /// <c>sleep</c> takes a bare integer, which the validator accepts as a
+    /// direct-value verb.
     /// </summary>
     public Service Sleep(int milliseconds, string section = "main")
     {
@@ -244,6 +272,7 @@ public class Service
             throw new InvalidOperationException("'sleep' verb not found in schema");
         }
 
+        ValidateVerbConfig("sleep", milliseconds);
         Document.AddVerbToSection(section, "sleep", milliseconds);
         return this;
     }
@@ -260,8 +289,8 @@ public class Service
     }
 
     /// <summary>Get the Basic Auth credentials plus the SOURCE of the
-    /// credentials (equivalent to Python's
-    /// ``get_basic_auth_credentials(include_source=True)``).
+    /// credentials
+    /// .
     /// Source is one of "provided", "environment", or "generated".</summary>
     public (string User, string Password, string Source) GetBasicAuthCredentialsWithSource()
     {
@@ -286,7 +315,7 @@ public class Service
 
     /// <summary>Validate provided basic-auth credentials against the
     /// configured ones (constant-time comparison)
-    /// (equivalent to Python's ``validate_basic_auth(username, password)``).</summary>
+    /// .</summary>
     public virtual bool ValidateBasicAuth(string username, string password)
     {
         if (_basicAuthUser is null || _basicAuthPassword is null) return false;
@@ -318,8 +347,8 @@ public class Service
     /// and a leading slash is added, so lookup is consistent regardless of the
     /// caller's spelling (<c>"/sip/"</c> and <c>"sip"</c> both key <c>"/sip"</c>).</summary>
     public void RegisterRoutingCallback(
-        string path,
-        Func<Dictionary<string, object?>?, Dictionary<string, string>, object?> callback)
+        Func<Dictionary<string, object?>?, Dictionary<string, string>, object?> callback,
+        string path = "/sip")
     {
         ArgumentNullException.ThrowIfNull(path);
         var normalized = path.TrimEnd('/');
@@ -359,7 +388,7 @@ public class Service
     /// The verb config is validated against the SWML schema (the STRICT-RENDER
     /// contract): an unknown verb, an unknown/misspelled config key, or a
     /// wrong-typed value throws <see cref="SchemaValidationError"/> rather than
-    /// being silently dropped. Mirrors Python's <c>SWMLService.add_verb</c>.</summary>
+    /// being silently dropped.</summary>
     public bool AddVerb(string verbName, object config)
     {
         ValidateVerbConfig(verbName, config);
@@ -481,8 +510,8 @@ public class Service
 
     /// <summary>Enable debug routes for testing/development. Debug routes are
     /// always registered by the request handler, so this method exists only for
-    /// backward compatibility and method chaining (equivalent to Python's
-    /// <c>enable_debug_routes</c> is likewise a no-op that returns self).</summary>
+    /// backward compatibility and method chaining
+    /// .</summary>
     public virtual Service EnableDebugRoutes()
     {
         return this;
@@ -554,7 +583,7 @@ public class Service
     /// typically override <see cref="OnSwmlRequest"/> instead of this
     /// method. Return null to use the default SWML rendering, or a
     /// dictionary of modifications to merge in.
-    /// (equivalent to Python's ``WebMixin.on_request``.)</summary>
+    /// </summary>
     public virtual Dictionary<string, object>? OnRequest(
         Dictionary<string, object?>? requestData = null,
         string? callbackPath = null)
@@ -564,8 +593,8 @@ public class Service
 
     /// <summary>Customization hook for subclasses to modify SWML based
     /// on request data. Return null to use default rendering, or a
-    /// dictionary of modifications. (equivalent to Python's
-    /// ``WebMixin.on_swml_request``.)</summary>
+    /// dictionary of modifications.
+    /// </summary>
     public virtual Dictionary<string, object>? OnSwmlRequest(
         Dictionary<string, object?>? requestData = null,
         string? callbackPath = null)
@@ -580,11 +609,27 @@ public class Service
     /// <summary>
     /// Handle an HTTP request. Returns a tuple of (status, headers, body).
     /// </summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="path">The request path, WITHOUT its query string.</param>
+    /// <param name="headers">The request headers.</param>
+    /// <param name="body">The raw request body, or null.</param>
+    /// <param name="queryString">
+    /// The raw <c>a=b&amp;c=d</c> query string (with or without a leading
+    /// <c>?</c>), or null when the request carried none.
+    ///
+    /// <para>This is <b>load-bearing for security</b>, not a convenience: a
+    /// per-call SWAIG <c>__token</c> rides the query string (the call_id rides
+    /// the POST body), so a transport that drops it makes a <c>secure: true</c>
+    /// tool unvalidatable and the dispatch would fail closed on every call.
+    /// Every adapter that calls into this core — the ASP.NET router, the
+    /// HttpListener loop, and each serverless envelope — must forward it.</para>
+    /// </param>
     public virtual (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
         string method,
         string path,
         Dictionary<string, string> headers,
-        string? body)
+        string? body,
+        string? queryString = null)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(headers);
@@ -660,7 +705,7 @@ public class Service
         }
         if (subPath == "/swaig")
         {
-            return HandleSwaigRequest(method, requestData, headers);
+            return HandleSwaigRequest(method, requestData, headers, queryString);
         }
         if (subPath == "/post_prompt")
         {
@@ -830,23 +875,22 @@ public class Service
     }
 
     /// <summary>Check if a SWAIG function is registered
-    /// (equivalent to Python's ``tool_registry.has_function(name)``).</summary>
+    /// .</summary>
     public virtual bool HasFunction(string name) => _tools.ContainsKey(name);
 
     /// <summary>Get a registered SWAIG function by name, or null
-    /// (equivalent to Python's ``tool_registry.get_function(name)``).</summary>
+    /// .</summary>
     public virtual Dictionary<string, object>? GetFunction(string name) =>
         _tools.TryGetValue(name, out var fn) ? fn : null;
 
     /// <summary>Get a snapshot of all registered SWAIG functions
-    /// (equivalent to Python's ``tool_registry.get_all_functions()`` — returns
-    /// a copy so subsequent registrations don't mutate the snapshot).</summary>
+    /// .</summary>
     public virtual Dictionary<string, Dictionary<string, object>> GetAllFunctions() =>
         new Dictionary<string, Dictionary<string, object>>(_tools);
 
     /// <summary>Remove a registered SWAIG function. Returns true if
-    /// removed, false if not found (equivalent to Python's
-    /// ``tool_registry.remove_function(name)``).</summary>
+    /// removed, false if not found
+    /// .</summary>
     public virtual bool RemoveFunction(string name)
     {
         if (!_tools.ContainsKey(name)) return false;
@@ -870,8 +914,9 @@ public class Service
     public virtual FunctionResult? OnFunctionCall(
         string name,
         Dictionary<string, object> args,
-        Dictionary<string, object?> rawData)
+        Dictionary<string, object?>? rawData = null)
     {
+        rawData ??= [];
         if (!_tools.TryGetValue(name, out var tool))
         {
             return null;
@@ -930,15 +975,61 @@ public class Service
     /// Extension point: invoked between argument parsing and function
     /// dispatch. Returns (target, shortCircuit). When shortCircuit is
     /// non-null, it's returned directly without calling OnFunctionCall.
-    /// AgentBase may override to add session-token validation or ephemeral
-    /// dynamic-config copies.
+    /// AgentBase overrides this to enforce the <c>secure: true</c> token
+    /// contract and to build ephemeral dynamic-config copies.
+    ///
+    /// <para><paramref name="queryString"/> is part of this signature because
+    /// the per-call SWAIG <c>__token</c> rides the query string. A hook that
+    /// received only the body would be structurally incapable of validating
+    /// the credential no matter how it was overridden.</para>
     /// </summary>
     protected virtual (Service Target, Dictionary<string, object>? ShortCircuit) SwaigPreDispatch(
         Dictionary<string, object?> requestData,
         Dictionary<string, string> headers,
-        string functionName)
+        string functionName,
+        string? queryString)
     {
         return (this, null);
+    }
+
+    /// <summary>
+    /// Pick the <c>__token</c> credential out of a raw <c>a=b&amp;c=d</c> query
+    /// string, falling back to a bare <c>token</c> — the same two spellings, in
+    /// the same order, the reference reads off its request's query params.
+    /// Returns null when neither is present or the value is empty.
+    /// </summary>
+    internal static string? TokenFromQueryString(string? queryString)
+    {
+        if (string.IsNullOrEmpty(queryString))
+        {
+            return null;
+        }
+        var q = queryString[0] == '?' ? queryString[1..] : queryString;
+
+        string? bare = null;
+        foreach (var pair in q.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = pair.IndexOf('=', StringComparison.Ordinal);
+            if (eq < 0)
+            {
+                continue;
+            }
+            var key = Uri.UnescapeDataString(pair[..eq]);
+            var value = Uri.UnescapeDataString(pair[(eq + 1)..]);
+            if (value.Length == 0)
+            {
+                continue;
+            }
+            if (key == "__token")
+            {
+                return value;
+            }
+            if (key == "token")
+            {
+                bare ??= value;
+            }
+        }
+        return bare;
     }
 
     /// <summary>
@@ -954,7 +1045,8 @@ public class Service
     protected virtual (int, Dictionary<string, string>, string) HandleSwaigRequest(
         string method,
         Dictionary<string, object?>? requestData,
-        Dictionary<string, string> headers)
+        Dictionary<string, string> headers,
+        string? queryString = null)
     {
         if (string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase))
         {
@@ -1046,7 +1138,7 @@ public class Service
             }
         }
 
-        var (target, shortCircuit) = SwaigPreDispatch(requestData, headers, functionName);
+        var (target, shortCircuit) = SwaigPreDispatch(requestData, headers, functionName, queryString);
         if (shortCircuit is not null)
         {
             return JsonResponse(200, shortCircuit);
@@ -1239,7 +1331,7 @@ public class Service
     /// Stamp the HTTP-layer headers (security headers + a default
     /// <c>Content-Type</c>) onto a bare decision-core triple's header map. The
     /// framework-free <see cref="HandleRequest"/> core returns bare headers
-    /// (equivalent to Python's <c>_handle_request_core</c> returns <c>(status, {}, body)</c>);
+    /// ;
     /// the security + Content-Type headers belong to the wire response and are
     /// applied only when actually serving over HTTP. Headers the core already
     /// set (e.g. <c>WWW-Authenticate</c>, <c>Location</c>) are preserved; a
@@ -1377,6 +1469,11 @@ public class Service
 
         var method = http.Request.Method;
         var path = http.Request.Path.HasValue ? http.Request.Path.Value! : "/";
+        // The query string carries the per-call SWAIG __token; dropping it here
+        // is what made a `secure: true` tool unvalidatable on this transport.
+        var queryString = http.Request.QueryString.HasValue
+            ? http.Request.QueryString.Value
+            : null;
         var headers = new Dictionary<string, string>();
         foreach (var h in http.Request.Headers)
         {
@@ -1393,7 +1490,7 @@ public class Service
         string responseBody;
         try
         {
-            (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
+            (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body, queryString);
         }
         catch (Exception ex)
         {
@@ -1444,7 +1541,7 @@ public class Service
     /// </summary>
     internal void RunForTest(CancellationToken cancellationToken)
     {
-        var ssl = SslSettings.FromEnvironment();
+        var ssl = SslSettings.FromService(this);
         if (ssl.Enabled)
         {
             RunHttps(ssl, cancellationToken);
@@ -1455,37 +1552,72 @@ public class Service
         }
     }
 
+    /// <summary>
+    /// Start an <see cref="HttpListener"/> on <paramref name="prefix"/>, falling
+    /// back to an explicit <c>localhost</c> prefix when a wildcard bind is
+    /// refused.
+    /// </summary>
+    /// <remarks>
+    /// A FAILED <see cref="HttpListener.Start"/> DISPOSES the listener. The
+    /// fallback therefore has to build a SECOND listener — reusing the first one
+    /// (calling <c>Prefixes.Clear()</c> on it) throws
+    /// <see cref="ObjectDisposedException"/> and the retry never happens, which
+    /// turned every bind failure into an opaque "Cannot access a disposed
+    /// object: System.Net.HttpListener" crash instead of the localhost retry or
+    /// the actionable message below.
+    /// </remarks>
+    private static HttpListener BindListener(string prefix)
+    {
+        var listener = new HttpListener();
+        listener.Prefixes.Add(prefix);
+        try
+        {
+            listener.Start();
+            return listener;
+        }
+        catch (HttpListenerException ex)
+        {
+            listener.Close();
+
+            // On Linux, "+" requires elevated privileges. Fall back to an
+            // explicit localhost prefix so the example still runs in CI / dev
+            // containers. A fresh listener — the one above is disposed.
+            if (prefix.StartsWith("http://+:", StringComparison.Ordinal))
+            {
+                var fallback = new HttpListener();
+                fallback.Prefixes.Add(prefix.Replace("http://+:", "http://localhost:", StringComparison.Ordinal));
+                try
+                {
+                    fallback.Start();
+                    return fallback;
+                }
+                catch (HttpListenerException fallbackEx)
+                {
+                    fallback.Close();
+                    throw new InvalidOperationException(
+                        $"failed to bind {prefix} and its localhost fallback: {fallbackEx.Message}. " +
+                        "Another process may already be listening on this port; on Linux, binding " +
+                        "0.0.0.0 may require root or `setcap CAP_NET_BIND_SERVICE+ep` on the dotnet " +
+                        "binary. Rebind to a free port (ServiceOptions.Port) or stop the other listener.",
+                        fallbackEx);
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"failed to bind {prefix}: {ex.Message}. Another process may already be " +
+                "listening on this port; on Linux, binding 0.0.0.0 may require root or " +
+                "`setcap CAP_NET_BIND_SERVICE+ep` on the dotnet binary; rebind to localhost " +
+                "or use a port >= 1024.",
+                ex);
+        }
+    }
+
     /// <summary>Plain-HTTP server backed by the BCL HttpListener.</summary>
     [SuppressMessage("Design", "CA1031", Justification = "Per-request handler boundary and best-effort cleanup: a single failed request (or its error/close path) must not crash the blocking server loop.")]
     private void RunHttp(CancellationToken cancellationToken)
     {
         var prefix = $"http://{(Host == "0.0.0.0" ? "+" : Host)}:{Port}/";
-        using var listener = new HttpListener();
-        listener.Prefixes.Add(prefix);
-        try
-        {
-            listener.Start();
-        }
-        catch (HttpListenerException ex)
-        {
-            // On Linux, "+" requires elevated privileges. Fall back to
-            // explicit 0.0.0.0 → localhost so the example still runs in
-            // CI / dev containers.
-            if (Host == "0.0.0.0")
-            {
-                listener.Prefixes.Clear();
-                listener.Prefixes.Add($"http://localhost:{Port}/");
-                listener.Start();
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    $"failed to bind {prefix}: {ex.Message}. On Linux, binding " +
-                    "0.0.0.0 may require root or `setcap CAP_NET_BIND_SERVICE+ep` " +
-                    "on the dotnet binary; rebind to localhost or use a port >= 1024.",
-                    ex);
-            }
-        }
+        using var listener = BindListener(prefix);
 
         // Publish the listener so Stop() can unblock the GetContext() loop, and
         // clear any stale shutdown request from a prior run.
@@ -1523,7 +1655,8 @@ public class Service
                         body = reader.ReadToEnd();
                     }
 
-                    var (status, responseHeaders, responseBody) = HandleRequest(method, path, headers, body);
+                    var (status, responseHeaders, responseBody) =
+                        HandleRequest(method, path, headers, body, ctx.Request.Url?.Query);
                     ctx.Response.StatusCode = status;
                     // Stamp HTTP-layer headers onto the bare decision-core triple.
                     foreach (var (k, v) in HttpLayerHeaders(status, responseHeaders, responseBody))
@@ -1635,18 +1768,25 @@ public class Service
         public string? CertPath { get; init; }
         public string? KeyPath { get; init; }
 
-        public static SslSettings FromEnvironment()
+        /// <summary>
+        /// Read the effective TLS settings off the service's own
+        /// <see cref="Service.SslEnabled"/> / <see cref="Service.SslCertPath"/> /
+        /// <see cref="Service.SslKeyPath"/>. Those are seeded from
+        /// <see cref="SecurityConfig"/> (defaults → env → config file) at
+        /// construction and may be overridden by the caller before serving —
+        /// mirroring the reference, which serves off <c>self.ssl_enabled</c> /
+        /// <c>self.ssl_cert_path</c> / <c>self.ssl_key_path</c> rather than
+        /// re-reading the environment. (Reading env here would have ignored an
+        /// SSL cert supplied by the config file.)
+        /// </summary>
+        public static SslSettings FromService(Service service)
         {
-            var flag = (Environment.GetEnvironmentVariable("SWML_SSL_ENABLED") ?? "").Trim();
-            var enabled = flag.Equals("true", StringComparison.OrdinalIgnoreCase)
-                || flag.Equals("1", StringComparison.Ordinal)
-                || flag.Equals("yes", StringComparison.OrdinalIgnoreCase);
-            var cert = Environment.GetEnvironmentVariable("SWML_SSL_CERT_PATH");
-            var key = Environment.GetEnvironmentVariable("SWML_SSL_KEY_PATH");
+            var cert = service.SslCertPath;
+            var key = service.SslKeyPath;
 
             // Match SecurityConfig.validate_ssl_config(): enabled-but-incomplete
             // degrades to HTTP rather than crashing.
-            var valid = enabled
+            var valid = service.SslEnabled
                 && !string.IsNullOrWhiteSpace(cert) && File.Exists(cert)
                 && !string.IsNullOrWhiteSpace(key) && File.Exists(key);
 

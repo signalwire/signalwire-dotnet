@@ -20,6 +20,14 @@ namespace SignalWire.Core.SwaigRequestGenerated;
 /// </summary>
 public class SwaigRequest
 {
+    /// <summary>Wire field <c>SWMLCall</c>.</summary>
+    [JsonPropertyName("SWMLCall")]
+    public Dictionary<string, object?>? SWMLCall { get; set; }
+
+    /// <summary>Wire field <c>SWMLVars</c>.</summary>
+    [JsonPropertyName("SWMLVars")]
+    public Dictionary<string, object?>? SWMLVars { get; set; }
+
     /// <summary>Wire field <c>ai_session_id</c>.</summary>
     [JsonPropertyName("ai_session_id")]
     public string? ai_session_id { get; set; }

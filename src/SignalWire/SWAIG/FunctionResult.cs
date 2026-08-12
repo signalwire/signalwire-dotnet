@@ -46,7 +46,7 @@ public class FunctionResult
     }
 
     /// <summary>Append an action with the given name and arbitrary data
-    /// payload. Matches Python's ``add_action(name, data)``.</summary>
+    /// payload.</summary>
     public FunctionResult AddAction(string name, object data)
     {
         _actions.Add(new Dictionary<string, object> { [name] = data });
@@ -75,7 +75,6 @@ public class FunctionResult
     /// Serialize to the JSON structure expected by SWAIG.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>to_dict()</c>:
     /// <list type="bullet">
     /// <item><c>response</c> is included ONLY when non-empty (an empty string is omitted).</item>
     /// <item><c>action</c> is included only when there is at least one action.</item>
@@ -152,8 +151,7 @@ public class FunctionResult
     /// completes and control returns to the agent.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>swml_transfer(dest, ai_response, final=True)</c>:
-    /// emits a two-verb SWML document — <c>{set: {ai_response: ...}}</c> then
+    /// Emits a two-verb SWML document — <c>{set: {ai_response: ...}}</c> then
     /// <c>{transfer: {dest: ...}}</c> — under the <c>SWML</c> action key, plus a
     /// top-level <c>"transfer": str(final).lower()</c> sibling marking the call
     /// (non-)final. <paramref name="final"/> defaults to <c>true</c> (permanent
@@ -300,7 +298,7 @@ public class FunctionResult
     /// Send a user event through SWML to update the client UI.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>swml_user_event(event_data)</c>: emits a
+    /// Emits a
     /// SWML document <c>{sections: {main: [{user_event: {event: &lt;data&gt;}}]}, version: "1.0.0"}</c>
     /// under the <c>SWML</c> action key (NOT a bare top-level <c>user_event</c>).
     /// </remarks>
@@ -327,8 +325,7 @@ public class FunctionResult
     /// Force the conversation into a specific step in the current context.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>swml_change_step(step_name)</c>:
-    /// add_action("change_step", step_name) — the action key is "change_step" and
+    /// Add_action("change_step", step_name) — the action key is "change_step" and
     /// its value is the bare step-name string (not a context_switch dict).
     /// </remarks>
     public FunctionResult SwmlChangeStep(string stepName)
@@ -341,8 +338,7 @@ public class FunctionResult
     /// Force the conversation into a different context.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>swml_change_context(context_name)</c>:
-    /// add_action("change_context", context_name) — the action key is
+    /// Add_action("change_context", context_name) — the action key is
     /// "change_context" and its value is the bare context-name string.
     /// </remarks>
     public FunctionResult SwmlChangeContext(string contextName)
@@ -355,9 +351,7 @@ public class FunctionResult
     /// Change the agent's context/prompt during a conversation.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python
-    /// <c>switch_context(system_prompt=None, user_prompt=None, consolidate=False, full_reset=False)</c>:
-    /// when ONLY <paramref name="systemPrompt"/> is set (and the other three are
+    /// When ONLY <paramref name="systemPrompt"/> is set (and the other three are
     /// at their defaults) the <c>context_switch</c> value is the bare
     /// system-prompt string (simple form); any other combination emits the object
     /// form with each supplied field under its snake_case key. There is no
@@ -406,9 +400,9 @@ public class FunctionResult
     /// <summary>
     /// Replace conversation history. Accepts ``true`` (default) for the
     /// summary placeholder or a string for custom replacement text.
-    /// Matches Python's ``replace_in_history(text: Union[bool, str] = True)``.
     /// </summary>
-    public FunctionResult ReplaceInHistory(object? text = null)
+    public FunctionResult ReplaceInHistory(
+        [System.ComponentModel.DefaultValue(true)] object? text = null)
     {
         var value = text ?? true;
         _actions.Add(new Dictionary<string, object>
@@ -432,8 +426,7 @@ public class FunctionResult
     /// Play an audio or video file in the background.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>play_background_file(filename, wait=False)</c>:
-    /// the action key is "playback_bg". When <paramref name="wait"/> is false the
+    /// The action key is "playback_bg". When <paramref name="wait"/> is false the
     /// value is the bare filename string; when true it is a
     /// <c>{file: filename, wait: true}</c> object.
     /// </remarks>
@@ -479,7 +472,7 @@ public class FunctionResult
     /// sets {wav,mp3,mp4} / {speak,listen,both}; this overload surfaces those
     /// knowable sets as enums so a bad value is a compile error rather than a
     /// runtime <c>ValueError</c> (a same-arity bare-string overload preserves the
-    /// Python <c>str</c> path — see <see cref="RecordCall(string, bool, string, string, string?, bool, double, double?, double?, double?, string?)"/>).
+    /// Python <c>str</c> path — see <see cref="RecordCall(string?, bool, string, string, string?, bool, double, double?, double?, double?, string?)"/>).
     /// The <c>record_call</c> verb is wrapped in a SWML document
     /// (<c>{version, sections: {main: [{record_call: ...}]}}</c>) and emitted under
     /// the <c>SWML</c> action key — there is no bare top-level <c>record_call</c>
@@ -490,7 +483,7 @@ public class FunctionResult
     /// </remarks>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult RecordCall(
-        string controlId = "",
+        string? controlId = null,
         bool stereo = false,
         RecordFormat format = RecordFormat.Wav,
         RecordDirection direction = RecordDirection.Both,
@@ -515,7 +508,7 @@ public class FunctionResult
 
     /// <summary>
     /// String-typed convenience overload of
-    /// <see cref="RecordCall(string, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>:
+    /// <see cref="RecordCall(string?, bool, RecordFormat, RecordDirection, string?, bool, double, double?, double?, double?, string?)"/>:
     /// start background call recording with <paramref name="format"/> and
     /// <paramref name="direction"/> as bare strings, validated at runtime against
     /// the same closed sets ({wav,mp3,mp4} / {speak,listen,both}). This preserves
@@ -541,7 +534,7 @@ public class FunctionResult
     /// </exception>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult RecordCall(
-        string controlId = "",
+        string? controlId = null,
         bool stereo = false,
         string format = "wav",
         string direction = "both",
@@ -574,7 +567,7 @@ public class FunctionResult
     /// so the typed and string paths are byte-for-byte identical.
     /// </summary>
     private FunctionResult RecordCallCore(
-        string controlId,
+        string? controlId,
         bool stereo,
         string format,
         string direction,
@@ -611,8 +604,7 @@ public class FunctionResult
     /// Stop an active background call recording using SWML.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>stop_record_call(control_id=None)</c>:
-    /// the <c>stop_record_call</c> verb (params <c>{}</c>, plus <c>control_id</c>
+    /// The <c>stop_record_call</c> verb (params <c>{}</c>, plus <c>control_id</c>
     /// when set) is wrapped in a SWML document and emitted under the <c>SWML</c>
     /// action key.
     /// </remarks>
@@ -660,8 +652,7 @@ public class FunctionResult
     /// Enable/disable specific SWAIG functions.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>toggle_functions(function_toggles)</c>:
-    /// takes a list of toggle records (each a <c>{function, active}</c> dict) and
+    /// Takes a list of toggle records (each a <c>{function, active}</c> dict) and
     /// passes it through verbatim under the <c>toggle_functions</c> action key — no
     /// reshaping. (The previous <c>Dictionary&lt;string,bool&gt;</c> shape both
     /// changed the signature AND lost caller-controlled key ordering / extra keys.)
@@ -701,8 +692,7 @@ public class FunctionResult
     /// Execute SWML content with optional transfer behavior.
     /// </summary>
     /// <remarks>
-    /// Mirrors the Python reference <c>execute_swml(swml_content, transfer=False)</c>:
-    /// the content (a dict, or a JSON string parsed to a dict) is emitted verbatim
+    /// The content (a dict, or a JSON string parsed to a dict) is emitted verbatim
     /// under the <c>SWML</c> action key. When <paramref name="transfer"/> is true,
     /// a <c>"transfer": "true"</c> entry is added INSIDE that SWML dict (Python does
     /// <c>action["transfer"] = "true"</c> on the SWML payload itself — there is no
@@ -774,8 +764,7 @@ public class FunctionResult
 
     /// <summary>
     /// Join an ad-hoc audio conference (RELAY + CXML calls) using SWML.
-    /// Equivalent to the Python
-    /// <c>signalwire/core/function_result.py::join_conference</c>: the conference
+    /// The conference
     /// <paramref name="name"/> plus 18 optional parameters, each validated to the
     /// same closed sets / bounds as Python, and emitted under its snake_case wire
     /// key only when it differs from its default. When every parameter is at its
@@ -940,7 +929,7 @@ public class FunctionResult
     /// Join a RELAY room using SWML.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>join_room(name)</c>: the
+    /// The
     /// <c>join_room</c> verb (params <c>{name}</c>) is wrapped in a SWML document
     /// and emitted under the <c>SWML</c> action key.
     /// </remarks>
@@ -951,7 +940,7 @@ public class FunctionResult
     /// Send a SIP REFER to a SIP call using SWML.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>sip_refer(to_uri)</c>: the
+    /// The
     /// <c>sip_refer</c> verb (params <c>{to_uri}</c>) is wrapped in a SWML document
     /// and emitted under the <c>SWML</c> action key.
     /// </remarks>
@@ -988,7 +977,7 @@ public class FunctionResult
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult Tap(
         string uri,
-        string controlId = "",
+        string? controlId = null,
         TapDirection direction = TapDirection.Both,
         Codec codec = Codec.Pcmu,
         int rtpPtime = 20,
@@ -1005,7 +994,7 @@ public class FunctionResult
 
     /// <summary>
     /// String-typed convenience overload of
-    /// <see cref="Tap(string, string, TapDirection, Codec, int, string?)"/>: start
+    /// <see cref="Tap(string, string?, TapDirection, Codec, int, string?)"/>: start
     /// a background call tap with <paramref name="direction"/> and
     /// <paramref name="codec"/> as bare strings, validated at runtime against the
     /// same closed sets ({speak,hear,both} / {PCMU,PCMA}). This keeps consistency
@@ -1036,7 +1025,7 @@ public class FunctionResult
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public FunctionResult Tap(
         string uri,
-        string controlId = "",
+        string? controlId = null,
         string direction = "both",
         string codec = "PCMU",
         int rtpPtime = 20,
@@ -1067,7 +1056,7 @@ public class FunctionResult
     /// </summary>
     private FunctionResult TapCore(
         string uri,
-        string controlId,
+        string? controlId,
         string direction,
         string codec,
         int rtpPtime,
@@ -1088,7 +1077,7 @@ public class FunctionResult
     /// Stop an active tap stream using SWML.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>stop_tap(control_id=None)</c>: the
+    /// The
     /// <c>stop_tap</c> verb (params <c>{}</c>, plus <c>control_id</c> when set) is
     /// wrapped in a SWML document and emitted under the <c>SWML</c> action key.
     /// </remarks>
@@ -1103,8 +1092,6 @@ public class FunctionResult
     /// Send a text message to a PSTN phone number using SWML.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python
-    /// <c>send_sms(to_number, from_number, body=None, media=None, tags=None, region=None)</c>.
     /// Either <paramref name="body"/> or <paramref name="media"/> (or both) must be
     /// provided. The <c>send_sms</c> verb is wrapped in a SWML document and emitted
     /// under the <c>SWML</c> action key. <c>to_number</c>/<c>from_number</c> are
@@ -1145,13 +1132,7 @@ public class FunctionResult
     /// Process a payment using the SWML <c>pay</c> verb.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python
-    /// <c>pay(payment_connector_url, input_method="dtmf", status_url=None,
-    /// payment_method="credit-card", timeout=5, max_attempts=1, security_code=True,
-    /// postal_code=True, min_postal_code_length=0, token_type="reusable",
-    /// charge_amount=None, currency="usd", language="en-US", voice="woman",
-    /// description=None, valid_card_types="visa mastercard amex", parameters=None,
-    /// prompts=None, ai_response=…)</c>. The SWML document is a two-verb main
+    ///  The SWML document is a two-verb main
     /// section — a leading <c>{set: {ai_response: …}}</c> followed by
     /// <c>{pay: …}</c> — routed through <see cref="ExecuteSwml"/> under the
     /// <c>SWML</c> action key (NOT a bare top-level <c>pay</c>).
@@ -1179,7 +1160,7 @@ public class FunctionResult
         int timeout = 5,
         int maxAttempts = 1,
         bool securityCode = true,
-        object? postalCode = null,
+        [System.ComponentModel.DefaultValue(true)] object? postalCode = null,
         int minPostalCodeLength = 0,
         string tokenType = "reusable",
         string? chargeAmount = null,
@@ -1249,8 +1230,7 @@ public class FunctionResult
     /// Execute an RPC method on a call using SWML.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python
-    /// <c>execute_rpc(method, params=None, call_id=None, node_id=None)</c>: the
+    /// The
     /// rpc params dict is keyed <c>{method, call_id?, node_id?, params?}</c> —
     /// <c>call_id</c>/<c>node_id</c> are TOP-LEVEL siblings of <c>method</c>/<c>params</c>,
     /// NOT nested inside <c>params</c> — and the <c>{execute_rpc: …}</c> verb is
@@ -1277,9 +1257,7 @@ public class FunctionResult
     /// Dial out to a number with a destination SWML URL using <see cref="ExecuteRpc"/>.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python
-    /// <c>rpc_dial(to_number, from_number, dest_swml, device_type="phone")</c>:
-    /// emits <c>method="dial"</c> with
+    /// Emits <c>method="dial"</c> with
     /// <c>params={devices: {type: device_type, params: {to_number, from_number}}, dest_swml}</c>.
     /// <paramref name="deviceType"/> remains caller-overridable (defaults to
     /// <c>"phone"</c>), not hard-coded.
@@ -1309,8 +1287,7 @@ public class FunctionResult
     /// Inject a message into an AI agent on another call using <see cref="ExecuteRpc"/>.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python
-    /// <c>rpc_ai_message(call_id, message_text, role="system")</c>: emits
+    /// Emits
     /// <c>method="ai_message"</c>, <c>call_id</c> as a top-level sibling, and
     /// <c>params={role, message_text}</c>. <paramref name="role"/> remains
     /// caller-overridable (defaults to <c>"system"</c>), not hard-coded.
@@ -1328,7 +1305,7 @@ public class FunctionResult
     /// Unhold another call using <see cref="ExecuteRpc"/>.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>rpc_ai_unhold(call_id)</c>: emits
+    /// Emits
     /// <c>method="ai_unhold"</c>, <c>call_id</c> as a top-level sibling, and
     /// <c>params={}</c> (empty → omitted by <see cref="ExecuteRpc"/>).
     /// </remarks>
@@ -1341,7 +1318,7 @@ public class FunctionResult
     /// Queue simulated user input.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>simulate_user_input(text)</c>: the
+    /// The
     /// action key is <c>user_input</c> (NOT <c>simulate_user_input</c>), with the
     /// bare text string as its value.
     /// </remarks>
@@ -1359,9 +1336,7 @@ public class FunctionResult
     /// Create a payment-prompt structure for use with <see cref="Pay"/>.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python
-    /// <c>create_payment_prompt(for_situation, actions, card_type=None, error_type=None)</c>:
-    /// returns <c>{"for": forSituation, "actions": actions, "card_type"?, "error_type"?}</c>.
+    /// Returns <c>{"for": forSituation, "actions": actions, "card_type"?, "error_type"?}</c>.
     /// The situation string is keyed <c>for</c> (a C# keyword, hence the parameter
     /// is <paramref name="forSituation"/>); <c>card_type</c>/<c>error_type</c> are
     /// included only when supplied.
@@ -1389,8 +1364,7 @@ public class FunctionResult
     /// Create a payment action for use in payment prompts.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>create_payment_action(action_type, phrase)</c>:
-    /// returns <c>{"type": actionType, "phrase": phrase}</c>. <paramref name="actionType"/>
+    /// Returns <c>{"type": actionType, "phrase": phrase}</c>. <paramref name="actionType"/>
     /// is <c>"Say"</c> (text-to-speech) or <c>"Play"</c> (audio file URL).
     /// </remarks>
     public static Dictionary<string, string> CreatePaymentAction(string actionType, string phrase)
@@ -1406,8 +1380,7 @@ public class FunctionResult
     /// Create a payment parameter (name/value pair) for use with <see cref="Pay"/>.
     /// </summary>
     /// <remarks>
-    /// Equivalent to the Python <c>create_payment_parameter(name, value)</c>:
-    /// returns <c>{"name": name, "value": value}</c>.
+    /// Returns <c>{"name": name, "value": value}</c>.
     /// </remarks>
     public static Dictionary<string, string> CreatePaymentParameter(string name, string value)
     {
