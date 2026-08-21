@@ -845,15 +845,17 @@ public class StructuralParityTests
         Assert.Throws<SignalWire.SWML.SchemaValidationError>(() =>
             svc.AddVerb("play", new Dictionary<string, object> { ["text"] = "nope" }));
 
-        // hangup.reason is NOT closed: the schema marks it open-valued, so the
-        // listed values are a hint and the platform accepts any string. This
-        // previously asserted a rejection, which is what made the SDK refuse
-        // real platform reasons like `no_answer`. What must still be rejected
-        // is the wrong BASE TYPE. Done on a throwaway service so the accepted
-        // verb does not land in the section counted below.
+        // hangup.reason is the engine's closed six-value set
+        // (relay_apis.c:1105). `noAnswer` is one of the six and was absent from
+        // the schema's earlier three-const union; `done` is refused by the
+        // engine and must therefore be refused here; the wrong BASE TYPE is
+        // still rejected. Done on a throwaway service so the accepted verb does
+        // not land in the section counted below.
         var scratch = new SignalWire.SWML.Service(
             new SignalWire.SWML.ServiceOptions { Name = "t2", Route = "/r2" });
-        scratch.AddVerb("hangup", new Dictionary<string, object> { ["reason"] = "done" });
+        scratch.AddVerb("hangup", new Dictionary<string, object> { ["reason"] = "noAnswer" });
+        Assert.Throws<SignalWire.SWML.SchemaValidationError>(() =>
+            scratch.AddVerb("hangup", new Dictionary<string, object> { ["reason"] = "done" }));
         Assert.Throws<SignalWire.SWML.SchemaValidationError>(() =>
             scratch.AddVerb("hangup", new Dictionary<string, object> { ["reason"] = 42 }));
 
