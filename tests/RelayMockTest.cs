@@ -241,6 +241,7 @@ public static class RelayMockTest
                 ["context"] = spec.Context,
                 ["auto_states"] = spec.AutoStates,
                 ["delay_ms"] = spec.DelayMs,
+                ["redeliver_receive"] = spec.RedeliverReceive,
             };
             if (spec.CallId is not null) body["call_id"] = spec.CallId;
             // Target this harness's session by default so the inbound-call
@@ -503,6 +504,11 @@ public static class RelayMockTest
         public List<string> AutoStates { get; set; } = new() { "created" };
         public int DelayMs { get; set; } = 50;
         public string? SessionId { get; set; }
+
+        /// <summary>Replay the <c>calling.call.receive</c> frame this many EXTRA times
+        /// (byte-identical, before the state frames) to drive RELAY's at-least-once
+        /// delivery. See porting-sdk RELAY_IMPLEMENTATION_GUIDE.md.</summary>
+        public int RedeliverReceive { get; set; }
     }
 
     /// <summary>

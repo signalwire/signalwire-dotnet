@@ -690,6 +690,122 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
     }
 
     // ------------------------------------------------------------------
+    // Redelivered calling.call.receive (porting-sdk#141)
+    //
+    // RELAY delivers at least once: the same receive frame can arrive twice
+    // for one call. Receive must therefore be idempotent per call_id — see
+    // the "Event Redelivery" section of porting-sdk's
+    // RELAY_IMPLEMENTATION_GUIDE.md.
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Without the idempotency guard the second receive builds a second Call and
+    /// overwrites <c>Calls[callId]</c>. Routing only ever reads that map, so the first
+    /// Call — the one handed to the application — silently stops receiving events and
+    /// never reaches a terminal state.
+    /// </summary>
+    [Fact]
+    public async Task RedeliveredReceive_KeepsTheLiveCall()
+    {
+        if (Skipped()) return;
+        using var bound = await ConnectedClient();
+        try
+        {
+            var handlerCalls = new List<Call>();
+            var firstSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            bound.Client.OnCall((call, evt) =>
+            {
+                lock (handlerCalls) handlerCalls.Add(call);
+                firstSeen.TrySetResult();
+                return Task.CompletedTask;
+            });
+
+            bound.Harness.InboundCall(new RelayMockTest.InboundCallSpec
+            {
+                CallId = "c-redeliver",
+                AutoStates = new() { "ringing", "answered" },
+                DelayMs = 20,
+                RedeliverReceive = 1,
+            });
+            await firstSeen.Task.WaitAsync(RelayMockTest.EventTimeout);
+            // Let the redelivery and the trailing state frame drain.
+            await Task.Delay(600);
+
+            Call first;
+            lock (handlerCalls)
+            {
+                // 1. One call means one handler invocation.
+                Assert.Single(handlerCalls);
+                first = handlerCalls[0];
+            }
+
+            // 2. The live instance survives — the map still points at what the
+            //    application was handed, not at a replacement.
+            Assert.Same(first, bound.Client.Calls["c-redeliver"]);
+
+            // 3. And it is still the object events route to.
+            Assert.Equal("answered", first.State);
+
+            // The duplicate really was on the wire — otherwise this proves nothing.
+            var redelivered = bound.Harness.Journal.Send()
+                .Where(e => e.Frame.TryGetProperty("params", out var p)
+                            && p.TryGetProperty("event_type", out var et)
+                            && et.GetString() == "calling.call.receive"
+                            && p.TryGetProperty("params", out var inner)
+                            && inner.TryGetProperty("call_id", out var cid)
+                            && cid.GetString() == "c-redeliver")
+                .ToList();
+            Assert.Equal(2, redelivered.Count);
+        }
+        finally { bound.Client.Disconnect(); }
+    }
+
+    /// <summary>
+    /// The dedup is per call_id and must not swallow a genuinely new concurrent
+    /// inbound call.
+    /// </summary>
+    [Fact]
+    public async Task DistinctCallIds_StillCreateSeparateCalls()
+    {
+        if (Skipped()) return;
+        using var bound = await ConnectedClient();
+        try
+        {
+            var handlerCalls = new List<Call>();
+            var bothSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            bound.Client.OnCall((call, evt) =>
+            {
+                lock (handlerCalls)
+                {
+                    handlerCalls.Add(call);
+                    if (handlerCalls.Count == 2) bothSeen.TrySetResult();
+                }
+                return Task.CompletedTask;
+            });
+
+            bound.Harness.InboundCall(new RelayMockTest.InboundCallSpec
+            {
+                CallId = "c-first",
+                AutoStates = new() { "ringing" },
+            });
+            bound.Harness.InboundCall(new RelayMockTest.InboundCallSpec
+            {
+                CallId = "c-second",
+                AutoStates = new() { "ringing" },
+            });
+            await bothSeen.Task.WaitAsync(RelayMockTest.EventTimeout);
+
+            lock (handlerCalls)
+            {
+                var ids = handlerCalls.Select(c => c.CallId).OrderBy(s => s).ToList();
+                Assert.Equal(new List<string?> { "c-first", "c-second" }, ids);
+            }
+            Assert.NotSame(bound.Client.Calls["c-first"], bound.Client.Calls["c-second"]);
+        }
+        finally { bound.Client.Disconnect(); }
+    }
+
+    // ------------------------------------------------------------------
     // Inbound without a registered handler — does not crash
     // ------------------------------------------------------------------
 

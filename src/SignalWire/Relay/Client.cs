@@ -1311,11 +1311,28 @@ public class Client : IAsyncDisposable
             return;
         }
 
+        // RELAY delivers at least once, so calling.call.receive can arrive again
+        // for a call already in flight. Receive is idempotent per call_id: keep
+        // the live instance and do NOT re-enter the OnCall handler. Replacing
+        // the map entry would orphan the Call the application is holding —
+        // routing only ever reads Calls by call_id, so the original would
+        // silently stop receiving events and an awaited action on it would
+        // never complete, hanging to its timeout instead of returning at
+        // hangup. The event is ACKed by the read loop before this runs, so
+        // returning early still stops the server's retries.
+        if (Calls.ContainsKey(callId))
+        {
+            _logger.Debug(
+                $"Ignoring redelivered calling.call.receive for in-flight call {callId}");
+            return;
+        }
+
         // Bound the Calls map: if it is already at capacity, drop the inbound
         // call rather than growing without limit (r5 F5.4; parity with python
-        // relay/client.py _handle_inbound_call). A call already tracked under
-        // this id is an update, not a new entry, so it is exempt from the cap.
-        if (!Calls.ContainsKey(callId) && Calls.Count >= _maxActiveCalls)
+        // relay/client.py _handle_inbound_call). Checked AFTER the dedup above,
+        // which already returned for a call_id we track — so a redelivery is
+        // never counted against the cap or logged as a dropped call.
+        if (Calls.Count >= _maxActiveCalls)
         {
             _logger.Error(
                 $"Max active calls ({_maxActiveCalls}) reached, dropping inbound call {callId}");
