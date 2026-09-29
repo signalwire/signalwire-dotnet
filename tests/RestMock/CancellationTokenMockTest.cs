@@ -168,6 +168,9 @@ public class CancellationTokenMockTest : IClassFixture<MockServerFixture>
             }
             catch (ObjectDisposedException) { /* already stopped */ }
             catch (System.Net.Sockets.SocketException) { /* listener stopped */ }
+            // Task.Run can first reach Accept after the finally has called Stop()
+            // (the kernel backlog completes the connect without an Accept).
+            catch (InvalidOperationException) { /* listener stopped before Accept */ }
         });
 
         try
