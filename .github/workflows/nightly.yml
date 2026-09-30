@@ -44,10 +44,10 @@ jobs:
         with:
           sparse-checkout: |
             .github/coordinated-ref.sh
-            .porting-sdk-ref
-            .signalwire-python-ref
+            .github/porting-sdk-ref
+            .github/signalwire-python-ref
           sparse-checkout-cone-mode: false
-      - name: Resolve coordinated refs (branch-local .porting-sdk-ref pin; no pin = main)
+      - name: Resolve coordinated refs (branch-local .github/porting-sdk-ref pin; no pin = main)
         # See porting-sdk/COORDINATED_PASS.md.
         id: coord
         shell: bash
@@ -62,7 +62,7 @@ jobs:
           port_sha='${{ github.sha }}'
           # Fingerprint the porting-sdk + python-oracle refs that the checkouts below
           # actually use — the `coord` step's pin-file refs (main normally, a wave branch
-          # on a coordinated branch that commits .porting-sdk-ref). Was hardcoded to the
+          # on a coordinated branch that commits .github/porting-sdk-ref). Was hardcoded to the
           # dead `plan/a-bar-2026-07-18` branch (404'd → guard failed).
           coord_ref='${{ steps.coord.outputs.ref }}'
           coord_ref_python='${{ steps.coord.outputs.ref_python }}'
@@ -102,7 +102,7 @@ jobs:
         with:
           path: signalwire-dotnet
 
-      - name: Resolve coordinated refs (branch-local .porting-sdk-ref pin; no pin = main)
+      - name: Resolve coordinated refs (branch-local .github/porting-sdk-ref pin; no pin = main)
         # See porting-sdk/COORDINATED_PASS.md. Every foreign coordinated-set
         # checkout below takes its ref from this step's outputs.
         id: coord
@@ -114,7 +114,7 @@ jobs:
         with:
           repository: signalwire/porting-sdk
           # Coordinated-pass pin: resolved by the `coord` step from the branch-local
-          # .porting-sdk-ref pin file; main when the file is absent, so only a branch
+          # .github/porting-sdk-ref pin file; main when the file is absent, so only a branch
           # that commits the pin is affected (see porting-sdk/COORDINATED_PASS.md).
           ref: ${{ steps.coord.outputs.ref }}
           path: porting-sdk
