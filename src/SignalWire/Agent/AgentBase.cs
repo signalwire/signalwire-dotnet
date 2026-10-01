@@ -7,6 +7,7 @@ using SignalWire.Core;
 using SignalWire.Logging;
 using SignalWire.Security;
 using SignalWire.Skills;
+using Microsoft.AspNetCore.Http;
 using SignalWire.SWAIG;
 using SignalWire.SWML;
 
@@ -181,6 +182,8 @@ public class AgentBase : Service
     private Action<Dictionary<string, object?>?, Dictionary<string, object?>?, Dictionary<string, string>, AgentBase>? _dynamicConfigCallback;
     private Action<string, Dictionary<string, object?>?, Dictionary<string, string>>? _summaryCallback;
     private Action<Dictionary<string, object?>?, Dictionary<string, string>>? _debugEventHandler;
+    private Action<List<Dictionary<string, object?>>, Dictionary<string, object?>>[]? _callEndHandlers;
+    private (string Prefix, RequestDelegate App, string? Name)[] _mounts = [];
 
     /// <summary>
     /// This agent's unique ID — the supplied <see cref="AgentOptions.AgentId"/>
@@ -1528,6 +1531,148 @@ public class AgentBase : Service
     {
         _dynamicConfigCallback = callback;
         return this;
+    }
+
+    /// <summary>
+    /// Register a per-request configuration callback, keeping any already set.
+    /// Same signature and contract as <see cref="SetDynamicConfigCallback"/>,
+    /// except that callbacks accumulate instead of overwriting: they run in
+    /// registration order against the same per-request agent copy, so a later one
+    /// sees what an earlier one configured. The composable form — a base class and
+    /// a subclass, or an agent and a mixin, can each register what they own
+    /// without one silently dropping the other.
+    /// </summary>
+    /// <param name="callback">Takes (queryParams, bodyParams, headers, agent);
+    /// <c>agent</c> is the per-request COPY — configure that, never the master.</param>
+    public AgentBase AddPerCallConfig(
+        Action<Dictionary<string, object?>?, Dictionary<string, object?>?, Dictionary<string, string>, AgentBase> callback)
+    {
+        ArgumentNullException.ThrowIfNull(callback);
+        // A multicast delegate runs its targets in registration order; combining
+        // creates a NEW delegate, so a per-request copy holding the old one is
+        // never written into.
+        _dynamicConfigCallback = _dynamicConfigCallback is null ? callback : _dynamicConfigCallback + callback;
+        return this;
+    }
+
+    /// <summary>
+    /// Register a handler that runs when the call ends, with the transcript.
+    /// Handlers run in registration order and receive the call log (resolved from
+    /// whichever field carried it) and the complete SWAIG request (including
+    /// <c>global_data</c> and <c>call_id</c>).
+    /// </summary>
+    /// <remarks>
+    /// <para>This wraps the platform's reserved <c>hangup_hook</c> function: it fires
+    /// on hangup and is never offered to the model.</para>
+    /// <para>Registering a handler also turns on <c>swaig_post_conversation</c>:
+    /// <c>call_log</c> is a CONDITIONAL field on a SWAIG request, and without that
+    /// parameter the hook still fires but carries no transcript. An explicit
+    /// <c>false</c> is left alone, with a warning.</para>
+    /// <para>The return value is ignored, and a handler's exception is logged rather
+    /// than raised, so a failing teardown handler never stops the others or turns
+    /// into a failed hangup.</para>
+    /// </remarks>
+    /// <param name="handler">Takes (callLog, rawData).</param>
+    public AgentBase OnCallEnd(Action<List<Dictionary<string, object?>>, Dictionary<string, object?>> handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        if (_callEndHandlers is null)
+        {
+            _callEndHandlers = [handler];
+            EnsureCallEndHook();
+        }
+        else
+        {
+            _callEndHandlers = [.. _callEndHandlers, handler];
+        }
+        return this;
+    }
+
+    /// <summary>The fields a call log arrives under (both spellings are seen,
+    /// depending on engine).</summary>
+    private static readonly string[] CallLogKeys = ["call_log", "raw_call_log"];
+
+    /// <summary>Register the reserved hangup_hook once, and enable its payload.</summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Each call-end handler is isolated: one failure must not stop the others or fail the hangup; the failure is logged.")]
+    private void EnsureCallEndHook()
+    {
+        if (_params.TryGetValue("swaig_post_conversation", out var existing) && existing is false)
+        {
+            _agentLogger.Warn(
+                "[signalwire] on_call_end handlers are registered but swaig_post_conversation "
+                + "is explicitly False -- they will receive an empty call_log");
+        }
+        else if (!_params.ContainsKey("swaig_post_conversation"))
+        {
+            _params["swaig_post_conversation"] = true;
+        }
+
+        DefineTool("hangup_hook", "Internal: fires when the call ends.", [], (_, rawData) =>
+        {
+            var raw = rawData ?? [];
+            // Both spellings are seen in the wild depending on engine.
+            object? logValue = null;
+            foreach (var key in CallLogKeys)
+            {
+                if (raw.TryGetValue(key, out var candidate) && SignalWire.Core.JsonPlain.Truthy(SignalWire.Core.JsonPlain.From(candidate)))
+                {
+                    logValue = candidate;
+                    break;
+                }
+            }
+            var callLog = (SignalWire.Core.JsonPlain.From(logValue) as List<object?> ?? [])
+                .OfType<Dictionary<string, object?>>()
+                .ToList();
+            foreach (var callback in _callEndHandlers ?? [])
+            {
+                try
+                {
+                    callback(callLog, raw);
+                }
+                catch (Exception ex)
+                {
+                    _agentLogger.Error($"call_end_handler_failed: {ex.Message}");
+                }
+            }
+            return new FunctionResult("");
+        });
+    }
+
+    /// <summary>
+    /// Mount an extra ASP.NET Core app or router alongside this agent's own routes,
+    /// served by the agent's built-in server (and through <see cref="Service.AsRouter"/>).
+    /// The agent's own routes (its SWML route, <c>/swaig</c>, <c>/post_prompt</c>,
+    /// routing callbacks, <c>/health</c>, <c>/ready</c>) keep precedence; a request
+    /// under <paramref name="prefix"/> that is not one of them reaches
+    /// <paramref name="appOrRouter"/> with <c>PathBase</c> set to the prefix and
+    /// <c>Path</c> the remainder. Mounted apps do their own authentication (a
+    /// <c>ChatGateway</c> checks its publishable key), so the agent's basic auth
+    /// does not apply to them.
+    /// </summary>
+    /// <param name="appOrRouter">The app to mount (e.g. <c>gateway.Router()</c>).</param>
+    /// <param name="prefix">Absolute path prefix. No trailing slash.</param>
+    /// <param name="name">Optional mount name.</param>
+    public AgentBase Mount(RequestDelegate appOrRouter, string prefix = "", string? name = null)
+    {
+        ArgumentNullException.ThrowIfNull(appOrRouter);
+        var clean = (prefix ?? "").TrimEnd('/');
+        _mounts = [.. _mounts, (clean, appOrRouter, name)];
+        _agentLogger.Info($"agent_route_mounted prefix={(clean.Length == 0 ? "/" : clean)}");
+        return this;
+    }
+
+    /// <inheritdoc/>
+    protected override (string Prefix, RequestDelegate App)? FindMount(string path)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        foreach (var (prefix, app, _) in _mounts)
+        {
+            if (prefix.Length == 0 || path == prefix || path.StartsWith(prefix + "/", StringComparison.Ordinal))
+            {
+                return (prefix, app);
+            }
+        }
+        return null;
     }
 
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]

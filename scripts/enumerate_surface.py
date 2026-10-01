@@ -76,6 +76,12 @@ CLASS_MODULE_MAP: dict[str, str] = {
     # New hand classes routed to their reference core modules (class name
     # matches the reference leaf verbatim).
     "ConfigLoader": "signalwire.core.config_loader",
+    # Static helper classes whose methods are the reference module's free
+    # functions (FREE_FUNCTION_CLASSES), plus the post-prompt dataclass.
+    "Capabilities": "signalwire.core.capabilities",
+    "SyncHandlers": "signalwire.core._sync_handlers",
+    "PostPromptNormalizer": "signalwire.core.post_prompt",
+    "NormalizedPostPrompt": "signalwire.core.post_prompt",
     "SecurityConfig": "signalwire.core.security_config",
     "AuthHandler": "signalwire.core.auth_handler",
     # Credential carriers for AuthHandler.VerifyBasicAuth / VerifyBearerToken.
@@ -1003,6 +1009,18 @@ FREE_FUNCTION_CLASSES: dict[str, dict] = {
     },
     "WebhookValidator": {
         "module": "signalwire.core.security.webhook_validator",
+        "aliases": {},
+    },
+    "Capabilities": {
+        "module": "signalwire.core.capabilities",
+        "aliases": {},
+    },
+    "SyncHandlers": {
+        "module": "signalwire.core._sync_handlers",
+        "aliases": {},
+    },
+    "PostPromptNormalizer": {
+        "module": "signalwire.core.post_prompt",
         "aliases": {},
     },
     "UrlValidator": {

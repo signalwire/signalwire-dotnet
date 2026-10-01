@@ -1913,6 +1913,11 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         # ``signalwire.core.security.webhook_validator`` functions
         # (``validate_webhook_signature`` and ``validate_request``).
         ("signalwire.core.security.webhook_validator", "WebhookValidator"): None,
+        # Capabilities / SyncHandlers / PostPromptNormalizer: static helper
+        # classes whose methods are the reference modules' free functions.
+        ("signalwire.core.capabilities", "Capabilities"): None,
+        ("signalwire.core._sync_handlers", "SyncHandlers"): None,
+        ("signalwire.core.post_prompt", "PostPromptNormalizer"): None,
         # SecurityUtils's static methods mirror Python's module-level
         # ``signalwire.core.security.security_utils`` free functions
         # (``filter_sensitive_headers`` / ``redact_url`` / ``is_valid_hostname``).

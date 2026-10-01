@@ -365,7 +365,7 @@ public sealed class Schema
 
     /// <summary>Resolve the set of KNOWN top-level property names for a verb's
     /// config object, following ``$ref`` and taking the ONE closed-object branch
-    /// of an ``anyOf``/``oneOf`` union (the #223 contract). Returns null when
+    /// of an ``anyOf``/``oneOf`` union (the single-closed-arm rule). Returns null when
     /// there is no single enumerable closed key-set (so no shallow check
     /// applies).
     /// </summary>
@@ -398,7 +398,7 @@ public sealed class Schema
     /// <item><c>$ref</c> — followed into <c>$defs</c> and resolved recursively
     /// (ai -&gt; AIObject).</item>
     /// <item><c>anyOf</c>/<c>oneOf</c> — resolved BRANCH BY BRANCH under the
-    /// #223 contract (porting-sdk docs/legacy-census/DISC-g-d21.md §1.4/§4):
+    /// single-closed-arm rule:
     /// exactly ONE closed-object branch yields its key set; zero or several
     /// disengage (null). Without union handling the resolver bailed on the first
     /// <c>type != "object"</c> test, because a union node carries no <c>type</c>
@@ -448,7 +448,7 @@ public sealed class Schema
         }
         if (union0 is JsonElement branches)
         {
-            // The #223 contract: exactly ONE closed-object arm -> its key set;
+            // The single-closed-arm rule: exactly ONE closed-object arm -> its key set;
             // zero or several -> disengage. Several closed arms have no single key
             // set a config must stay inside (a config satisfies SOME arm), so the
             // shallow check steps aside and the deep validator owns the shape.

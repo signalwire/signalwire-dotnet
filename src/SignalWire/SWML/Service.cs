@@ -607,6 +607,88 @@ public class Service
     // ------------------------------------------------------------------
 
     /// <summary>
+    /// The mounted app (and its prefix) that serves <paramref name="path"/>, or
+    /// null. None by default; an agent that mounts apps overrides this.
+    /// </summary>
+    /// <param name="path">The absolute request path.</param>
+    protected virtual (string Prefix, RequestDelegate App)? FindMount(string path) => null;
+
+    /// <summary>
+    /// The mounted app for <paramref name="path"/> when the path is NOT one of this
+    /// service's own routes (own routes keep precedence over mounts).
+    /// </summary>
+    private (string Prefix, RequestDelegate App)? MountFor(string path)
+    {
+        if (path is "/health" or "/ready")
+        {
+            return null;
+        }
+        string? subPath = null;
+        if (Route == "/")
+        {
+            subPath = path;
+        }
+        else if (path == Route || path.StartsWith(Route + "/", StringComparison.Ordinal))
+        {
+            subPath = path[Route.Length..];
+            if (string.IsNullOrEmpty(subPath))
+            {
+                subPath = "/";
+            }
+        }
+        if (subPath is "/" or "" or "/swaig" or "/post_prompt"
+            || (subPath is not null && _routingCallbacks.ContainsKey(subPath)))
+        {
+            return null;
+        }
+        return FindMount(path);
+    }
+
+    /// <summary>Point an <see cref="HttpContext"/>'s request at a mounted app:
+    /// <c>PathBase</c> is the mount prefix, <c>Path</c> the remainder.</summary>
+    private static void ApplyMountPath(HttpRequest request, string prefix, string path)
+    {
+        var rest = prefix.Length == 0 ? path : path[prefix.Length..];
+        request.PathBase = new PathString(prefix);
+        request.Path = new PathString(string.IsNullOrEmpty(rest) ? "/" : rest);
+    }
+
+    /// <summary>Run a mounted app against an in-memory request and return the
+    /// buffered (status, headers, body) — the dispatch-core form of a mount.</summary>
+    private static (int Status, Dictionary<string, string> Headers, string Body) RunMountBuffered(
+        (string Prefix, RequestDelegate App) mount,
+        string method,
+        string path,
+        Dictionary<string, string> headers,
+        string? body,
+        string? queryString)
+    {
+        var ctx = new DefaultHttpContext();
+        ctx.Request.Method = method;
+        ApplyMountPath(ctx.Request, mount.Prefix, path);
+        if (!string.IsNullOrEmpty(queryString))
+        {
+            ctx.Request.QueryString = new QueryString(queryString.StartsWith('?') ? queryString : "?" + queryString);
+        }
+        foreach (var (k, v) in headers)
+        {
+            ctx.Request.Headers[k] = v;
+        }
+        var bodyBytes = Encoding.UTF8.GetBytes(body ?? "");
+        ctx.Request.Body = new MemoryStream(bodyBytes);
+        ctx.Request.ContentLength = bodyBytes.Length;
+        using var responseBody = new MemoryStream();
+        ctx.Response.Body = responseBody;
+        mount.App(ctx).GetAwaiter().GetResult();
+        var outHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var h in ctx.Response.Headers)
+        {
+            outHeaders[h.Key] = h.Value.ToString();
+        }
+        return (ctx.Response.StatusCode, outHeaders, Encoding.UTF8.GetString(responseBody.ToArray()));
+    }
+
+    /// <summary>
     /// Handle an HTTP request. Returns a tuple of (status, headers, body).
     /// </summary>
     /// <param name="method">The HTTP method.</param>
@@ -633,6 +715,13 @@ public class Service
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(headers);
+
+        // A mounted app serves its own prefix (after this service's own routes).
+        if (MountFor(path) is { } mount)
+        {
+            return RunMountBuffered(mount, method, path, headers, body, queryString);
+        }
+
 
         // Health/ready: no auth required
         if (path == "/health")
@@ -1469,6 +1558,14 @@ public class Service
 
         var method = http.Request.Method;
         var path = http.Request.Path.HasValue ? http.Request.Path.Value! : "/";
+
+        // A mounted app is handed the live request so it can stream its response.
+        if (MountFor(path) is { } mount)
+        {
+            ApplyMountPath(http.Request, mount.Prefix, path);
+            await mount.App(http).ConfigureAwait(false);
+            return;
+        }
         // The query string carries the per-call SWAIG __token; dropping it here
         // is what made a `secure: true` tool unvalidatable on this transport.
         var queryString = http.Request.QueryString.HasValue
@@ -1639,56 +1736,212 @@ public class Service
                 catch (HttpListenerException) { break; }
                 catch (ObjectDisposedException) { break; }
 
-                try
-                {
-                    var method = ctx.Request.HttpMethod;
-                    var path = ctx.Request.Url?.AbsolutePath ?? "/";
-                    var headers = new Dictionary<string, string>();
-                    foreach (var key in ctx.Request.Headers.AllKeys)
-                    {
-                        if (key is null) continue;
-                        headers[key] = ctx.Request.Headers[key] ?? "";
-                    }
-                    string body;
-                    using (var reader = new System.IO.StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
-                    {
-                        body = reader.ReadToEnd();
-                    }
-
-                    var (status, responseHeaders, responseBody) =
-                        HandleRequest(method, path, headers, body, ctx.Request.Url?.Query);
-                    ctx.Response.StatusCode = status;
-                    // Stamp HTTP-layer headers onto the bare decision-core triple.
-                    foreach (var (k, v) in HttpLayerHeaders(status, responseHeaders, responseBody))
-                    {
-                        // HttpListener handles a few headers specially; ignore set-failures.
-                        try { ctx.Response.Headers[k] = v; } catch (ArgumentException) { }
-                    }
-                    var buf = Encoding.UTF8.GetBytes(responseBody);
-                    ctx.Response.ContentLength64 = buf.Length;
-                    ctx.Response.OutputStream.Write(buf, 0, buf.Length);
-                }
-                catch (Exception ex)
-                {
-                    try
-                    {
-                        ctx.Response.StatusCode = 500;
-                        var buf = Encoding.UTF8.GetBytes($"{{\"error\":\"{ex.GetType().Name}\"}}");
-                        ctx.Response.ContentLength64 = buf.Length;
-                        ctx.Response.OutputStream.Write(buf, 0, buf.Length);
-                    }
-                    catch { /* swallow — already in error path */ }
-                }
-                finally
-                {
-                    try { ctx.Response.Close(); } catch { }
-                }
+                // Each request is served on a thread-pool worker so a blocking
+                // handler cannot hold up other requests (SWML_SYNC_HANDLERS_INLINE
+                // restores one-at-a-time serving).
+                var request = ctx;
+                SignalWire.Core.SyncHandlers.Dispatch(() => ServeHttpContext(request));
             }
         }
         finally
         {
             _runningListener = null;
         }
+    }
+
+    /// <summary>Serve one HttpListener request through <see cref="HandleRequest"/>.</summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Per-request handler boundary: a single failed request (or its error/close path) must not crash the server.")]
+    private void ServeHttpContext(HttpListenerContext ctx)
+    {
+        var mountPath = ctx.Request.Url?.AbsolutePath ?? "/";
+        if (MountFor(mountPath) is { } mount)
+        {
+            ServeMountedApp(ctx, mount, mountPath);
+            return;
+        }
+        try
+        {
+            var method = ctx.Request.HttpMethod;
+            var path = ctx.Request.Url?.AbsolutePath ?? "/";
+            var headers = new Dictionary<string, string>();
+            foreach (var key in ctx.Request.Headers.AllKeys)
+            {
+                if (key is null) continue;
+                headers[key] = ctx.Request.Headers[key] ?? "";
+            }
+            string body;
+            using (var reader = new System.IO.StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
+            {
+                body = reader.ReadToEnd();
+            }
+
+            var (status, responseHeaders, responseBody) =
+                HandleRequest(method, path, headers, body, ctx.Request.Url?.Query);
+            ctx.Response.StatusCode = status;
+            // Stamp HTTP-layer headers onto the bare decision-core triple.
+            foreach (var (k, v) in HttpLayerHeaders(status, responseHeaders, responseBody))
+            {
+                // HttpListener handles a few headers specially; ignore set-failures.
+                try { ctx.Response.Headers[k] = v; } catch (ArgumentException) { }
+            }
+            var buf = Encoding.UTF8.GetBytes(responseBody);
+            ctx.Response.ContentLength64 = buf.Length;
+            ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                ctx.Response.StatusCode = 500;
+                var buf = Encoding.UTF8.GetBytes($"{{\"error\":\"{ex.GetType().Name}\"}}");
+                ctx.Response.ContentLength64 = buf.Length;
+                ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+            }
+            catch { /* swallow — already in error path */ }
+        }
+        finally
+        {
+            try { ctx.Response.Close(); } catch { }
+        }
+    }
+
+    /// <summary>
+    /// Serve a mounted app over HttpListener with its response STREAMED: status and
+    /// headers commit on the first body write, and each write is flushed through,
+    /// so an app relaying a slow upstream body (keepalive padding included) is never
+    /// buffered.
+    /// </summary>
+    [SuppressMessage("Design", "CA1031", Justification = "Per-request handler boundary: a failed mounted request must not crash the server; it is answered 500 when nothing was sent yet.")]
+    private static void ServeMountedApp(HttpListenerContext ctx, (string Prefix, RequestDelegate App) mount, string path)
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Method = ctx.Request.HttpMethod;
+        ApplyMountPath(http.Request, mount.Prefix, path);
+        var query = ctx.Request.Url?.Query;
+        if (!string.IsNullOrEmpty(query))
+        {
+            http.Request.QueryString = new QueryString(query);
+        }
+        foreach (var key in ctx.Request.Headers.AllKeys)
+        {
+            if (key is null) continue;
+            http.Request.Headers[key] = ctx.Request.Headers[key] ?? "";
+        }
+        http.Request.Body = ctx.Request.InputStream;
+        if (ctx.Request.ContentLength64 >= 0)
+        {
+            http.Request.ContentLength = ctx.Request.ContentLength64;
+        }
+        using var output = new ListenerResponseStream(ctx.Response, http.Response);
+        http.Response.Body = output;
+        try
+        {
+            mount.App(http).GetAwaiter().GetResult();
+            output.Commit();
+        }
+        catch (Exception ex)
+        {
+            if (!output.Committed)
+            {
+                try
+                {
+                    ctx.Response.StatusCode = 500;
+                    var buf = Encoding.UTF8.GetBytes($"{{\"error\":\"{ex.GetType().Name}\"}}");
+                    ctx.Response.ContentLength64 = buf.Length;
+                    ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+                }
+                catch { /* swallow — already in error path */ }
+            }
+        }
+        finally
+        {
+            try { ctx.Response.Close(); } catch { }
+        }
+    }
+
+    /// <summary>A write-through response body for a mounted app on HttpListener:
+    /// commits the app's status code and headers to the listener response on the
+    /// first write (or flush), then forwards every write and flush.</summary>
+    private sealed class ListenerResponseStream(HttpListenerResponse target, HttpResponse source) : Stream
+    {
+        public bool Committed { get; private set; }
+
+        public override bool CanRead => false;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => true;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public void Commit()
+        {
+            if (Committed)
+            {
+                return;
+            }
+            Committed = true;
+            target.StatusCode = source.StatusCode;
+            target.SendChunked = true;
+            foreach (var h in source.Headers)
+            {
+                if (string.Equals(h.Key, "Content-Length", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                if (string.Equals(h.Key, "Content-Type", StringComparison.OrdinalIgnoreCase))
+                {
+                    target.ContentType = h.Value.ToString();
+                    continue;
+                }
+                try { target.Headers[h.Key] = h.Value.ToString(); } catch (ArgumentException) { }
+            }
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            Commit();
+            target.OutputStream.Write(buffer, offset, count);
+            target.OutputStream.Flush();
+        }
+
+        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            Commit();
+            await target.OutputStream.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).ConfigureAwait(false);
+            await target.OutputStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            Commit();
+            await target.OutputStream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+            await target.OutputStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        public override void Flush()
+        {
+            Commit();
+            target.OutputStream.Flush();
+        }
+
+        public override Task FlushAsync(CancellationToken cancellationToken)
+        {
+            Commit();
+            return target.OutputStream.FlushAsync(cancellationToken);
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
     }
 
     /// <summary>

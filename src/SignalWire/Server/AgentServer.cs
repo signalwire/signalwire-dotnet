@@ -363,6 +363,20 @@ public partial class AgentServer
             catch (System.Net.HttpListenerException) { break; }
             catch (InvalidOperationException) { break; }
 
+            // Each request is served on a thread-pool worker so a blocking handler
+            // cannot hold up other requests (SWML_SYNC_HANDLERS_INLINE restores
+            // one-at-a-time serving).
+            var request = ctx;
+            SignalWire.Core.SyncHandlers.Dispatch(() => ServeHttpContext(request));
+        }
+    }
+
+    /// <summary>Serve one HttpListener request through the request dispatcher.</summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031", Justification = "Per-request handler boundary: a single failed request must not crash the server.")]
+    private void ServeHttpContext(System.Net.HttpListenerContext ctx)
+    {
+        try
+        {
             var reqHeaders = new Dictionary<string, string>();
             foreach (string key in ctx.Request.Headers)
             {
@@ -394,6 +408,20 @@ public partial class AgentServer
             ctx.Response.ContentLength64 = buffer.Length;
             ctx.Response.OutputStream.Write(buffer, 0, buffer.Length);
             ctx.Response.OutputStream.Close();
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                ctx.Response.StatusCode = 500;
+                var buf = System.Text.Encoding.UTF8.GetBytes($"{{\"error\":\"{ex.GetType().Name}\"}}");
+                ctx.Response.ContentLength64 = buf.Length;
+                ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+                ctx.Response.OutputStream.Close();
+            }
+            catch (System.Net.HttpListenerException) { /* client went away */ }
+            catch (ObjectDisposedException) { /* already closed */ }
+            catch (InvalidOperationException) { /* response already started */ }
         }
     }
 

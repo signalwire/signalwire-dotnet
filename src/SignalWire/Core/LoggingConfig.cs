@@ -59,11 +59,23 @@ public static class LoggingConfig
     /// <summary>
     /// Strip control characters from every string value of a log event
     /// dictionary, preventing log injection. Returns the same dictionary with
-    /// string values sanitised (mirrors the Python structlog processor).
+    /// string values sanitised. Accepts the event dictionary alone, or a log
+    /// processor's <c>(logger, methodName, eventDict)</c> call: the LAST argument
+    /// is the event dictionary (mirrors the Python structlog processor).
     /// </summary>
-    public static Dictionary<string, object?> StripControlChars(Dictionary<string, object?> eventDict)
+    /// <exception cref="ArgumentException">No argument, or the last one is not
+    /// an event dictionary.</exception>
+    public static Dictionary<string, object?> StripControlChars(params object?[] args)
     {
-        ArgumentNullException.ThrowIfNull(eventDict);
+        ArgumentNullException.ThrowIfNull(args);
+        if (args.Length == 0)
+        {
+            throw new ArgumentException("StripControlChars requires the event dict", nameof(args));
+        }
+        if (args[^1] is not Dictionary<string, object?> eventDict)
+        {
+            throw new ArgumentException("the last argument must be the event dict", nameof(args));
+        }
         foreach (var key in new List<string>(eventDict.Keys))
         {
             if (eventDict[key] is string s)

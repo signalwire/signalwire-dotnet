@@ -360,4 +360,55 @@ public class WebhookValidatorTest
             $"Could not locate src/SignalWire/{string.Join("/", subPath)} from "
             + $"{AppContext.BaseDirectory}");
     }
+
+    // ---------------------------------------------------------------------------
+    // Scheme A / SHA-256 — hex(HMAC-SHA256(key, url + raw_body)), the
+    // X-SignalWire-Sha256-Signature header (python TestSchemeASha256).
+    // ---------------------------------------------------------------------------
+
+#pragma warning disable CA1308 // lowercase hex is the on-the-wire signature form
+    private static string Sha256Sign(string key, string url, string rawBody)
+        => Convert.ToHexString(HMACSHA256.HashData(
+            Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes(url + rawBody))).ToLowerInvariant();
+#pragma warning restore CA1308
+
+    [Fact]
+    public void Sha256_PositiveVector()
+    {
+        var sig = Sha256Sign(VectorASigningKey, VectorAUrl, VectorARawBody);
+        Assert.Equal(64, sig.Length);
+        Assert.True(WebhookValidator.ValidateWebhookSignatureSha256(
+            VectorASigningKey, sig, VectorAUrl, VectorARawBody));
+    }
+
+    [Fact]
+    public void Sha256_Sha1SignatureNotAccepted()
+    {
+        Assert.False(WebhookValidator.ValidateWebhookSignatureSha256(
+            VectorASigningKey, VectorAExpected, VectorAUrl, VectorARawBody));
+    }
+
+    [Fact]
+    public void Sha256_TamperedBodyRejected()
+    {
+        var sig = Sha256Sign(VectorASigningKey, VectorAUrl, VectorARawBody);
+        Assert.False(WebhookValidator.ValidateWebhookSignatureSha256(
+            VectorASigningKey, sig, VectorAUrl, VectorARawBody + " "));
+    }
+
+    [Fact]
+    public void Sha256_EmptySignatureIsFalse()
+    {
+        Assert.False(WebhookValidator.ValidateWebhookSignatureSha256(
+            VectorASigningKey, "", VectorAUrl, VectorARawBody));
+        Assert.False(WebhookValidator.ValidateWebhookSignatureSha256(
+            VectorASigningKey, null, VectorAUrl, VectorARawBody));
+    }
+
+    [Fact]
+    public void Sha256_MissingSigningKeyThrows()
+    {
+        Assert.Throws<ArgumentException>(() => WebhookValidator.ValidateWebhookSignatureSha256(
+            "", "x", VectorAUrl, VectorARawBody));
+    }
 }

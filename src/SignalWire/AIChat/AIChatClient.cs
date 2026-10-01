@@ -252,6 +252,44 @@ public sealed class AIChatClient : IDisposable
         }
     }
 
+    /// <summary>
+    /// Send one JSON-RPC call and return the response with its body UNREAD, for
+    /// proxies that must stream the body through rather than buffer it. The
+    /// service pads a slow response with keepalive whitespace so intermediaries do
+    /// not sever the connection mid-turn; a proxy that awaits the whole body
+    /// absorbs that padding and reintroduces the very timeout it exists to
+    /// prevent — read <see cref="HttpResponseMessage.Content"/> as a stream and
+    /// forward the chunks as they arrive.
+    /// </summary>
+    /// <remarks>The caller owns the returned response (dispose it) and owns
+    /// interpreting the result — including that a JSON-RPC error arrives under HTTP
+    /// 200. Prefer the typed methods unless you are genuinely relaying bytes.</remarks>
+    /// <param name="method">The JSON-RPC method.</param>
+    /// <param name="params">The JSON-RPC params object.</param>
+    /// <param name="cancellationToken">Cooperative cancellation.</param>
+    public async Task<HttpResponseMessage> RawPostAsync(
+        string method, IReadOnlyDictionary<string, object?> @params, CancellationToken cancellationToken = default)
+    {
+        var id = $"req-{Interlocked.Increment(ref _requestCounter)}";
+        var payload = new Dictionary<string, object?>
+        {
+            ["jsonrpc"] = "2.0",
+            ["method"] = method,
+            ["params"] = @params,
+            ["id"] = id,
+        };
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, Url)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(payload, JsonOpts), Encoding.UTF8, "application/json"),
+        };
+        request.Headers.TryAddWithoutValidation("Authorization", _authHeader);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        request.Headers.UserAgent.ParseAdd(UserAgent);
+        return await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     // ── API methods ──────────────────────────────────────────────────
 
     /// <summary>
