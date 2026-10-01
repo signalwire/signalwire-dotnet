@@ -153,8 +153,13 @@ public class RequestOptionsMockTest : IClassFixture<MockServerFixture>
     {
         if (Skipped()) return;
         var http = _fixture.NewHttp();
-        // Arm a 200 delayed 400ms (delay_ms is a scenario-level field, not a body
-        // field); a 100ms timeout must fire -> transport error.
+        // Arm a 200 delayed 3s (delay_ms is a scenario-level field, not a body
+        // field); a 100ms timeout must fire -> transport error. The timeout is a
+        // CancelAfter timer, whose callback runs on the thread pool: with the
+        // pool starved by the parallel suite it can fire hundreds of ms late, and
+        // a 400ms delay let the response win that race (net8 CI, 671ms run). The
+        // 3s margin matches the envelope corpus's slow-response case; the client
+        // still returns at the timeout, so the test does not wait 3s.
         _fixture.Harness.Scenarios.SetRaw(AddressesEndpoint, new Dictionary<string, object?>
         {
             ["status"] = 200,
@@ -163,7 +168,7 @@ public class RequestOptionsMockTest : IClassFixture<MockServerFixture>
                 ["data"] = new List<object?>(),
                 ["links"] = new Dictionary<string, object?>(),
             },
-            ["delay_ms"] = 400,
+            ["delay_ms"] = 3000,
         });
 
         // Transport-family error: the timeout surfaces the transport error type
