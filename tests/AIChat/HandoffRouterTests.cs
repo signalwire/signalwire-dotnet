@@ -99,7 +99,7 @@ public sealed class HandoffRouterTests : IDisposable
     [Fact]
     public async Task RedemptionEndsTheCallCapturesThenMintsAFreshDottedLeg()
     {
-        _handoff.Register("n1", "conv-root", "call-9");
+        _handoff.Register("n1", new NonceRegistrationOptions { ConversationId = "conv-root", CallId = "call-9" });
         var r = await Post("/handoff", new { nonce = "n1" });
         Assert.Equal(200, r.Status);
         Assert.Equal("conv-root.1", _gateway.ReadHandle((string)r.Json()["handle"]!));
@@ -116,7 +116,7 @@ public sealed class HandoffRouterTests : IDisposable
     [Fact]
     public async Task ANonceIsSingleUseAndASpentOneLooksUnknown()
     {
-        _handoff.Register("n1", "conv-root", "call-9");
+        _handoff.Register("n1", new NonceRegistrationOptions { ConversationId = "conv-root", CallId = "call-9" });
         Assert.Equal(200, (await Post("/handoff", new { nonce = "n1" })).Status);
         var spent = await Post("/handoff", new { nonce = "n1" });
         var unknown = await Post("/handoff", new { nonce = "never-existed" });
@@ -129,7 +129,7 @@ public sealed class HandoffRouterTests : IDisposable
     public async Task ExpiredNoncesAreNotRedeemable()
     {
         var expired = Router(ttl: -1);
-        expired.Register("n1", "conv-root", "call-9");
+        expired.Register("n1", new NonceRegistrationOptions { ConversationId = "conv-root", CallId = "call-9" });
         Assert.Null(await expired.RedeemAsync("n1"));
     }
 
@@ -140,11 +140,11 @@ public sealed class HandoffRouterTests : IDisposable
     {
         var registry = new Dictionary<string, NonceEntry>();
         var router = Router(Recording(), maxMessages: 1, registry: registry);
-        router.Register("n", "c", "call-1");
+        router.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         var first = registry["n"].IssuedAt;
         Assert.True(await router.SayAsync("n", "one"));
         Assert.False(await router.SayAsync("n", "two"));
-        router.Register("n", "c", "call-1");
+        router.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         Assert.False(await router.SayAsync("n", "three"));
         Assert.Equal(["say one"], _events);
         Assert.Equal(first, registry["n"].IssuedAt);
@@ -153,8 +153,8 @@ public sealed class HandoffRouterTests : IDisposable
     [Fact]
     public async Task ALiveNonceCannotBeMovedToAnotherCall()
     {
-        _handoff.Register("n", "conv-a", "call-a");
-        _handoff.Register("n", "conv-b", "call-b");
+        _handoff.Register("n", new NonceRegistrationOptions { ConversationId = "conv-a", CallId = "call-a" });
+        _handoff.Register("n", new NonceRegistrationOptions { ConversationId = "conv-b", CallId = "call-b" });
         Assert.Equal(200, (await Post("/say", new { nonce = "n", text = "hi" })).Status);
         Assert.Equal(["say call-a hi"], _events);
     }
@@ -162,9 +162,9 @@ public sealed class HandoffRouterTests : IDisposable
     [Fact]
     public async Task ARedeemedNonceCannotBeReRegisteredRedeemedOrTyped()
     {
-        _handoff.Register("n", "conv-root", "call-9");
+        _handoff.Register("n", new NonceRegistrationOptions { ConversationId = "conv-root", CallId = "call-9" });
         Assert.Equal(200, (await Post("/handoff", new { nonce = "n" })).Status);
-        _handoff.Register("n", "conv-root", "call-10");
+        _handoff.Register("n", new NonceRegistrationOptions { ConversationId = "conv-root", CallId = "call-10" });
         var again = await Post("/handoff", new { nonce = "n" });
         Assert.Equal(404, again.Status);
         Assert.Equal(new Dictionary<string, object?> { ["error"] = "not found" }, again.Json());
@@ -178,11 +178,11 @@ public sealed class HandoffRouterTests : IDisposable
     {
         var registry = new Dictionary<string, NonceEntry>();
         var router = Router(registry: registry);
-        router.Register("n", "conv-root", "call-9");
+        router.Register("n", new NonceRegistrationOptions { ConversationId = "conv-root", CallId = "call-9" });
         Assert.NotNull(await router.RedeemAsync("n"));
         Assert.True(registry["n"].Redeemed);
         registry["n"].IssuedAt -= router.NonceTtl + 1;
-        router.Register("n", "conv-new", "call-11");
+        router.Register("n", new NonceRegistrationOptions { ConversationId = "conv-new", CallId = "call-11" });
         Assert.False(registry["n"].Redeemed);
         Assert.Equal("conv-new", registry["n"].ConversationId);
     }
@@ -208,7 +208,7 @@ public sealed class HandoffRouterTests : IDisposable
     {
         var registry = new RecordingRegistry();
         var router = Router(registry: registry);
-        router.Register("n", "c", "call-1");
+        router.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         Assert.NotNull(await router.RedeemAsync("n"));
         Assert.Equal([("n", false), ("n", true)], registry.Assigned);
     }
@@ -241,16 +241,16 @@ public sealed class HandoffRouterTests : IDisposable
             attempts.Add(text);
             return attempts.Count == 1 ? throw new HttpRequestException("platform unavailable") : Task.FromResult(true);
         }, maxMessages: 1, registry: new CopyingRegistry());
-        router.Register("n", "c", "call-1");
+        router.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         Assert.False(await router.SayAsync("n", "first"));
         Assert.True(await router.SayAsync("n", "again"));
         Assert.False(await router.SayAsync("n", "over the cap"));
         Assert.Equal(["first", "again"], attempts);
 
         var redeeming = Router(registry: new CopyingRegistry());
-        redeeming.Register("n", "c", "call-1");
+        redeeming.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         Assert.NotNull(await redeeming.RedeemAsync("n"));
-        redeeming.Register("n", "c", "call-1");
+        redeeming.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         Assert.Null(await redeeming.RedeemAsync("n"));
     }
 
@@ -269,7 +269,7 @@ public sealed class HandoffRouterTests : IDisposable
             }
             return true;
         }, maxMessages: 1);
-        router.Register("n", "c", "call-1");
+        router.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         var results = await Task.WhenAll(Enumerable.Range(0, 3).Select(i => Task.Run(() => router.SayAsync("n", $"m{i}"))));
         Assert.Single(results, r => r);
         Assert.Single(delivered);
@@ -279,7 +279,7 @@ public sealed class HandoffRouterTests : IDisposable
     public async Task ConcurrentRedemptionsRedeemOnce()
     {
         var router = Router();
-        router.Register("n", "c", "call-1");
+        router.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         var handles = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => Task.Run(() => router.RedeemAsync("n"))));
         Assert.Single(handles, h => h is not null);
     }
@@ -301,7 +301,7 @@ public sealed class HandoffRouterTests : IDisposable
     [Fact]
     public async Task SayDeliversTrimmedTextRepeatably()
     {
-        _handoff.Register("n2", "conv-root", "call-9");
+        _handoff.Register("n2", new NonceRegistrationOptions { ConversationId = "conv-root", CallId = "call-9" });
         Assert.Equal(200, (await Post("/say", new { nonce = "n2", text = "  hello  " })).Status);
         Assert.Equal(["say call-9 hello"], _events);
         for (var i = 0; i < 3; i++)
@@ -316,13 +316,13 @@ public sealed class HandoffRouterTests : IDisposable
     public async Task SayIsCappedPerCallAndDisabledWithoutASender()
     {
         var router = Router(Recording(), maxMessages: 2);
-        router.Register("n", "c", "call-1");
+        router.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         Assert.True(await router.SayAsync("n", "one"));
         Assert.True(await router.SayAsync("n", "two"));
         Assert.False(await router.SayAsync("n", "three"));
 
         var silent = Router();
-        silent.Register("n", "c", "call-1");
+        silent.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         Assert.False(await silent.SayAsync("n", "hello"));
     }
 
@@ -330,7 +330,7 @@ public sealed class HandoffRouterTests : IDisposable
     public async Task TypingStopsWhenTheNonceIsRedeemed()
     {
         var router = Router(Recording());
-        router.Register("n", "c", "call-1");
+        router.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         Assert.True(await router.SayAsync("n", "before"));
         Assert.NotNull(await router.RedeemAsync("n"));
         Assert.False(await router.SayAsync("n", "after"));
@@ -342,7 +342,7 @@ public sealed class HandoffRouterTests : IDisposable
     [Fact]
     public async Task SayRefusesTextOverTheLimitBeforeTheLookup()
     {
-        _handoff.Register("n", "conv-root", "call-9");
+        _handoff.Register("n", new NonceRegistrationOptions { ConversationId = "conv-root", CallId = "call-9" });
         var over = new string('x', ChatGateway.MaxMessageBytes + 1);
         foreach (var nonce in new[] { "n", "never-existed" })
         {
@@ -370,7 +370,7 @@ public sealed class HandoffRouterTests : IDisposable
     [Fact]
     public async Task AnOversizedHandoffLeavesTheNonceRedeemable()
     {
-        _handoff.Register("n", "conv-root", "call-9");
+        _handoff.Register("n", new NonceRegistrationOptions { ConversationId = "conv-root", CallId = "call-9" });
         var padded = Encoding.UTF8.GetBytes("{\"nonce\": \"n\", \"pad\": \"" + new string('x', ChatGateway.MaxRequestBodyBytes) + "\"}");
         Assert.Equal(413, (await Http.Send(_handoff.Router(), "POST", "/handoff", padded)).Status);
         Assert.Equal(200, (await Post("/handoff", new { nonce = "n" })).Status);
@@ -402,11 +402,11 @@ public sealed class HandoffRouterTests : IDisposable
             await Task.Delay(10_000);
             return true;
         }, captureTimeout: 0.05);
-        slow.Register("n", "c", "call-1");
+        slow.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         Assert.Equal("c.1", _gateway.ReadHandle((await slow.RedeemAsync("n"))!));
 
         var boom = Router(capture: (_, _) => throw new InvalidOperationException("storage down"));
-        boom.Register("n", "c", "call-1");
+        boom.Register("n", new NonceRegistrationOptions { ConversationId = "c", CallId = "call-1" });
         Assert.Equal("c.1", _gateway.ReadHandle((await boom.RedeemAsync("n"))!));
     }
 

@@ -66,7 +66,7 @@ public class SpaceBillingStatements
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
     public Task<string> GetCsvAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
-        return Client.GetTextAsync(Path("billing_statement.csv"), queryParams, requestOptions: requestOptions, headers: new Dictionary<string, string> { ["Accept"] = "text/csv" }, cancellationToken: cancellationToken);
+        return Client.GetTextAsync(Path("billing_statement.csv"), queryParams, requestOptions: requestOptions, options: new SignalWire.REST.HeaderOptions { Headers = new Dictionary<string, string> { ["Accept"] = "text/csv" } }, cancellationToken: cancellationToken);
     }
 
     /// <summary>

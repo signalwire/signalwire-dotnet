@@ -47,8 +47,18 @@ public sealed class NonceEntry
     public bool Redeemed { get; set; }
 }
 
-/// <summary>Construction options for <see cref="HandoffRouter"/> (the reference's
-/// keyword arguments).</summary>
+/// <summary>Named arguments for <see cref="HandoffRouter.Register"/>: what a nonce
+/// is a capability for.</summary>
+public sealed class NonceRegistrationOptions
+{
+    /// <summary>The conversation the call belongs to.</summary>
+    public required string ConversationId { get; init; }
+
+    /// <summary>The call's id, read from the platform's request — never from the browser.</summary>
+    public string? CallId { get; init; }
+}
+
+/// <summary>Construction options for <see cref="HandoffRouter"/>.</summary>
 public sealed class HandoffRouterOptions
 {
     /// <summary>The gateway that owns the conversations: mints handles and checks
@@ -109,8 +119,8 @@ public sealed class HandoffRouterOptions
 /// router; with a shared <see cref="HandoffRouterOptions.Registry"/> across
 /// routers they are not.</para>
 /// <para>Mount at the SAME prefix as the gateway:
-/// <c>agent.Mount(gateway.Router(), "/chat")</c> and
-/// <c>agent.Mount(handoff.Router(), "/chat")</c>.</para>
+/// <c>agent.Mount(gateway.Router(), new MountOptions { Prefix = "/chat" })</c> and
+/// <c>agent.Mount(handoff.Router(), new MountOptions { Prefix = "/chat" })</c>.</para>
 /// </remarks>
 public sealed class HandoffRouter
 {
@@ -188,20 +198,23 @@ public sealed class HandoffRouter
 
     /// <summary>
     /// Record what a nonce is a capability for. Call it from the dynamic-config
-    /// callback of the dial that carried the nonce, reading <paramref name="callId"/>
+    /// callback of the dial that carried the nonce, reading <see cref="NonceRegistrationOptions.CallId"/>
     /// from the platform's request — never from the browser. The first registration
     /// stands: re-registering a live nonce changes nothing (a conflicting one is
     /// logged as a warning). Once its TTL passes, it can be registered again.
     /// </summary>
     /// <param name="nonce">The <c>handoff_nonce</c> from the dial's user variables.</param>
-    /// <param name="conversationId">The conversation the call belongs to.</param>
-    /// <param name="callId">The call's id, from the platform's request.</param>
-    public void Register(string nonce, string conversationId, string? callId = null)
+    /// <param name="registration">The conversation the call belongs to and the call's
+    /// id (from the platform's request).</param>
+    public void Register(string nonce, NonceRegistrationOptions registration)
     {
+        ArgumentNullException.ThrowIfNull(registration);
         if (string.IsNullOrEmpty(nonce))
         {
             return;
         }
+        var conversationId = registration.ConversationId;
+        var callId = registration.CallId;
         NonceEntry? existing;
         lock (_lock)
         {

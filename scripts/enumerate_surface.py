@@ -288,6 +288,22 @@ AICHAT_OPTIONS_CLASSES: frozenset[str] = frozenset(
 # This is the AGENT_RULES §2 / ALLOWLIST_DISCIPLINE §0 idiom fold — folded at the
 # emitter, NOT ledgered. Dropping them here is what keeps a newly-wired
 # construction parameter from surfacing as a phantom port-only addition.
+# KEYWORD options classes — C# has no keyword-only parameters, so a reference
+# method's keyword-only group (``prepare(body, *, origin, key)``) is one named
+# options-object parameter (``Prepare(body, new GatewayRequestOptions { Origin =
+# …, Key = … })``): the same named, not-positionally-passable binding the
+# reference has. enumerate_signatures unfolds the parameter into the class's
+# properties as ``keyword``-kind params; the class itself is not surface.
+KEYWORD_OPTIONS_CLASSES: frozenset[str] = frozenset(
+    {
+        "DialogueTurnsOptions",
+        "GatewayRequestOptions",
+        "HeaderOptions",
+        "MountOptions",
+        "NonceRegistrationOptions",
+    }
+)
+
 CONSTRUCTION_OPTIONS_CLASSES: frozenset[str] = frozenset(
     {
         "AgentOptions",
@@ -848,6 +864,12 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
 # two compare EQUAL (Rule 2 — reconcile idiom in the enumerator, not omissions).
 # Applied AFTER pascal_to_snake, per class.
 SURFACE_METHOD_ALIASES: dict[tuple[str, str], dict[str, str]] = {
+    # RestClient: ``SpaceAdmin`` IS the reference's ``space`` namespace attribute.
+    # .NET cannot reuse the name: ``RestClient.Space`` is the space-host string
+    # getter published in 1.1.2, which a rename would break.
+    ("signalwire.rest.client", "RestClient"): {
+        "space_admin": "space",
+    },
     # SkillBase: C# singular property/method names -> reference plural.
     ("signalwire.core.skill_base", "SkillBase"): {
         "get_hint": "get_hints",
@@ -2027,7 +2049,11 @@ def _enrich_composition_attributes(
         for cls, sce in sinv.get("classes", {}).items():
             # Options-object classes are construction idiom, never surface (their
             # class-typed properties would otherwise re-enter here).
-            if cls in CONSTRUCTION_OPTIONS_CLASSES or cls in AICHAT_OPTIONS_CLASSES:
+            if (
+                cls in CONSTRUCTION_OPTIONS_CLASSES
+                or cls in AICHAT_OPTIONS_CLASSES
+                or cls in KEYWORD_OPTIONS_CLASSES
+            ):
                 continue
             smethods = sce.get("methods", {})
             if not isinstance(smethods, dict):
@@ -2467,7 +2493,10 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
             # same idiom applied to constructors. Their properties reconcile in
             # the construction contract, not as surface symbols. See
             # CONSTRUCTION_OPTIONS_CLASSES.
-            if class_name in CONSTRUCTION_OPTIONS_CLASSES:
+            if (
+                class_name in CONSTRUCTION_OPTIONS_CLASSES
+                or class_name in KEYWORD_OPTIONS_CLASSES
+            ):
                 continue
             # Generated-REST projection (item A/B): the classes under
             # SignalWire.REST.Namespaces.Generated project onto the oracle's

@@ -226,6 +226,13 @@ public class FunctionResult
     }
 
     /// <summary>
+    /// Put the call on hold for <paramref name="timeout"/> seconds (clamped to
+    /// 0..900); the caller resumes where they were when the hold ends.
+    /// </summary>
+    /// <param name="timeout">Timeout in seconds (clamped to 0..900).</param>
+    public FunctionResult Hold(int timeout) => AddHold(null, timeout, null, null);
+
+    /// <summary>
     /// Put the call on hold, optionally announcing it and routing what happens
     /// next. During hold the agent does not respond, so anything the caller needs
     /// to hear must be said BEFORE the action lands: <paramref name="prompt"/>
@@ -233,39 +240,21 @@ public class FunctionResult
     /// <c>tool_prompt: prompt</c>) and switches on post_process, so the model
     /// speaks once more before the hold executes. <paramref name="step"/> /
     /// <paramref name="timeoutStep"/> land the caller in a chosen step when the
-    /// hold ends (taken off hold / timed out); with neither, the bare integer form
-    /// is emitted and the caller resumes where they were. An <see cref="int"/>
-    /// passed as <paramref name="prompt"/> is the timeout, so <c>Hold(120)</c>
-    /// keeps meaning a 120-second hold.
+    /// hold ends (taken off hold / timed out); with neither, the caller resumes
+    /// where they were.
     /// </summary>
-    /// <param name="prompt">The instruction to deliver before the hold (a
-    /// <see cref="string"/>), or the timeout in seconds (an <see cref="int"/>).</param>
+    /// <param name="prompt">The instruction to deliver before the hold, or null.</param>
     /// <param name="timeout">Timeout in seconds (clamped to 0..900).</param>
     /// <param name="step">Step to move to when the call is taken off hold.</param>
     /// <param name="timeoutStep">Step to move to when the hold times out.</param>
-    public FunctionResult Hold(object? prompt = null, int timeout = 300, string? step = null, string? timeoutStep = null)
-    {
-        // Back-compat: Hold(120) means Hold(timeout: 120). A bool is neither a
-        // prompt nor a timeout and is dropped (Python parity).
-        string? promptText = null;
-        switch (prompt)
-        {
-            case null:
-            case bool:
-                break;
-            case int seconds:
-                timeout = seconds;
-                break;
-            case string text:
-                promptText = text;
-                break;
-            default:
-                throw new ArgumentException("prompt must be a string (the instruction) or an int (the timeout)");
-        }
+    public FunctionResult Hold(string? prompt = null, int timeout = 300, string? step = null, string? timeoutStep = null)
+        => AddHold(prompt, timeout, step, timeoutStep);
 
-        if (promptText is not null)
+    private FunctionResult AddHold(string? prompt, int timeout, string? step, string? timeoutStep)
+    {
+        if (prompt is not null)
         {
-            SetToolResponse(toolResult: "status: on hold", toolPrompt: promptText);
+            SetToolResponse(toolResult: "status: on hold", toolPrompt: prompt);
             _postProcess = true;
         }
 
@@ -273,7 +262,7 @@ public class FunctionResult
         var clamped = Math.Max(0, Math.Min(900, timeout));
         if (step is null && timeoutStep is null)
         {
-            // Python parity: add_action("hold", timeout) — the bare integer.
+            // add_action("hold", timeout) — the bare integer.
             _actions.Add(new Dictionary<string, object> { ["hold"] = clamped });
             return this;
         }

@@ -68,6 +68,6 @@ public class SpaceBalance
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Space.BalanceAdjustment>(Client.PostAsync(Path("top_ups"), _reqBody, requestOptions: requestOptions, headers: new Dictionary<string, string> { ["Idempotency-Key"] = idempotencyKey }, cancellationToken: cancellationToken));
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Space.BalanceAdjustment>(Client.PostAsync(Path("top_ups"), _reqBody, requestOptions: requestOptions, queryParams: null, options: new SignalWire.REST.HeaderOptions { Headers = new Dictionary<string, string> { ["Idempotency-Key"] = idempotencyKey } }, cancellationToken: cancellationToken));
     }
 }

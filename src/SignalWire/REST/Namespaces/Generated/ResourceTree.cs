@@ -47,7 +47,7 @@ public partial class ResourceTree
     private LogsNamespace? _logs;
     private WhatsappNamespace? _whatsapp;
     private ProjectNamespace? _project;
-    private SpaceNamespace? _space;
+    private SpaceNamespace? _spaceAdmin;
 
     /// <summary>Wire every resource: <paramref name="http"/> carries the project
     /// token, <paramref name="patHttp"/> the Personal Access Token (the namespaces
@@ -139,5 +139,5 @@ public partial class ResourceTree
     public ProjectNamespace Project => _project ??= new ProjectNamespace(_generatedHttp);
 
     /// <summary>The SpaceNamespace container.</summary>
-    public SpaceNamespace Space => _space ??= new SpaceNamespace(_generatedPatHttp);
+    public SpaceNamespace SpaceAdmin => _spaceAdmin ??= new SpaceNamespace(_generatedPatHttp);
 }

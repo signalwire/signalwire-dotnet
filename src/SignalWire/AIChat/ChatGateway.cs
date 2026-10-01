@@ -61,8 +61,18 @@ public class GatewayRejection : Exception
     public string Reason { get; }
 }
 
-/// <summary>Construction options for <see cref="ChatGateway"/> (the reference's
-/// keyword arguments).</summary>
+/// <summary>Named arguments for <see cref="ChatGateway.Prepare"/>: what the browser
+/// request presented.</summary>
+public sealed class GatewayRequestOptions
+{
+    /// <summary>The request's <c>Origin</c> header, or null when absent.</summary>
+    public string? Origin { get; init; }
+
+    /// <summary>The publishable key from <c>Authorization: Bearer</c>, or null.</summary>
+    public string? Key { get; init; }
+}
+
+/// <summary>Construction options for <see cref="ChatGateway"/>.</summary>
 public sealed class ChatGatewayOptions
 {
     /// <summary>The agent config this key may talk to. Required, and never taken
@@ -123,7 +133,7 @@ public sealed class ChatGatewayOptions
 /// <see cref="MaxTurns"/> are the primary control. The origin allowlist is leak
 /// containment, not access control. Counters live in this process; behind several
 /// replicas the effective cap multiplies by replica count.</para>
-/// <para>Mount it on an agent: <c>agent.Mount(gateway.Router(), prefix: "/chat")</c>.</para>
+/// <para>Mount it on an agent: <c>agent.Mount(gateway.Router(), new MountOptions { Prefix = "/chat" })</c>.</para>
 /// </remarks>
 public sealed class ChatGateway : IDisposable
 {
@@ -453,15 +463,15 @@ public sealed class ChatGateway : IDisposable
     /// gateway's. The one forwarded field is <c>user_meta_data</c>.
     /// </summary>
     /// <param name="body">The request body.</param>
-    /// <param name="origin">The request's <c>Origin</c>.</param>
-    /// <param name="key">The presented publishable key.</param>
+    /// <param name="request">The request's <c>Origin</c> and presented publishable key.</param>
     /// <exception cref="GatewayRejection">The request is refused.</exception>
     public (string Method, Dictionary<string, object?> Params, string? MintedHandle) Prepare(
-        Dictionary<string, object?> body, string? origin, string? key)
+        Dictionary<string, object?> body, GatewayRequestOptions request)
     {
         ArgumentNullException.ThrowIfNull(body);
-        CheckKey(key);
-        CheckOrigin(origin);
+        ArgumentNullException.ThrowIfNull(request);
+        CheckKey(request.Key);
+        CheckOrigin(request.Origin);
 
         var method = body.TryGetValue("method", out var m) ? SignalWire.Core.JsonPlain.From(m) as string : "chat";
         if (method is null || !AllowedMethods.Contains(method))
@@ -557,7 +567,7 @@ public sealed class ChatGateway : IDisposable
 
     /// <summary>
     /// The gateway's routes, as an ASP.NET Core <see cref="RequestDelegate"/> to mount
-    /// (<c>agent.Mount(gateway.Router(), prefix: "/chat")</c>, or <c>app.Map</c>).
+    /// (<c>agent.Mount(gateway.Router(), new MountOptions { Prefix = "/chat" })</c>, or <c>app.Map</c>).
     /// <c>POST /</c> takes <c>{"method": "start"|"chat"|"log"|"end", "handle"?,
     /// "message"?, "user_meta_data"?}</c> with the key in
     /// <c>Authorization: Bearer</c>; <c>OPTIONS /</c> answers a CORS preflight. A
@@ -611,7 +621,7 @@ public sealed class ChatGateway : IDisposable
             {
                 throw new GatewayRejection(400, "body must be an object");
             }
-            (method, parameters, minted) = Prepare(dict, origin, key);
+            (method, parameters, minted) = Prepare(dict, new GatewayRequestOptions { Origin = origin, Key = key });
         }
         catch (GatewayRejection rej)
         {

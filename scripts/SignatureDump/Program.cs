@@ -136,11 +136,14 @@ static JsonObject? DumpType(Type t)
     var properties = new JsonArray();
     foreach (var p in t.GetProperties(
         BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static
-        | BindingFlags.DeclaredOnly).OrderBy(p => p.Name))
+        | BindingFlags.DeclaredOnly).OrderBy(p => p.MetadataToken))
     {
         properties.Add(new JsonObject
         {
             ["name"] = p.Name,
+            // Declaration order (MetadataToken): a keyword-options class's
+            // properties are a named parameter group, read in declared order.
+            ["nullable"] = NullabilityOfProperty(p),
             ["can_read"] = p.CanRead,
             ["can_write"] = p.CanWrite,
             ["type"] = TypeName(p.PropertyType),
@@ -292,6 +295,14 @@ static bool NullabilityOf(ParameterInfo p)
 {
     var ctx = new NullabilityInfoContext();
     var info = ctx.Create(p);
+    return info.WriteState == NullabilityState.Nullable
+        || info.ReadState == NullabilityState.Nullable;
+}
+
+static bool NullabilityOfProperty(PropertyInfo p)
+{
+    if (Nullable.GetUnderlyingType(p.PropertyType) is not null) return true;
+    var info = new NullabilityInfoContext().Create(p);
     return info.WriteState == NullabilityState.Nullable
         || info.ReadState == NullabilityState.Nullable;
 }

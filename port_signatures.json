@@ -1160,13 +1160,15 @@
                 },
                 {
                   "name": "origin",
+                  "kind": "keyword",
                   "type": "optional<string>",
-                  "required": true
+                  "required": false
                 },
                 {
                   "name": "key",
+                  "kind": "keyword",
                   "type": "optional<string>",
-                  "required": true
+                  "required": false
                 }
               ],
               "returns": "tuple<string,dict<string,any>,string>"
@@ -1394,14 +1396,15 @@
                 },
                 {
                   "name": "conversation_id",
+                  "kind": "keyword",
                   "type": "string",
                   "required": true
                 },
                 {
                   "name": "call_id",
+                  "kind": "keyword",
                   "type": "optional<string>",
-                  "required": false,
-                  "default": null
+                  "required": false
                 }
               ],
               "returns": "void"
@@ -4655,7 +4658,7 @@
                 },
                 {
                   "name": "prompt",
-                  "type": "optional<any>",
+                  "type": "optional<union<int,string>>",
                   "required": false,
                   "default": null
                 },
@@ -6679,15 +6682,15 @@
                 },
                 {
                   "name": "prefix",
+                  "kind": "keyword",
                   "type": "string",
-                  "required": false,
-                  "default": ""
+                  "required": false
                 },
                 {
                   "name": "name",
+                  "kind": "keyword",
                   "type": "optional<string>",
-                  "required": false,
-                  "default": null
+                  "required": false
                 }
               ],
               "returns": "class:signalwire.core.agent_base.AgentBase"
@@ -7122,15 +7125,15 @@
             },
             {
               "name": "roles",
-              "type": "optional<list<string>>",
-              "required": false,
-              "default": null
+              "kind": "keyword",
+              "type": "tuple<string,any>",
+              "required": false
             },
             {
               "name": "drop_echo",
+              "kind": "keyword",
               "type": "optional<string>",
-              "required": false,
-              "default": null
+              "required": false
             }
           ],
           "returns": "list<dict<string,string>>"
@@ -28380,12 +28383,6 @@
                   "default": null
                 },
                 {
-                  "name": "headers",
-                  "type": "optional<dict<string,string>>",
-                  "required": false,
-                  "default": null
-                },
-                {
                   "name": "cancellation_token",
                   "type": "any",
                   "required": false,
@@ -28451,9 +28448,9 @@
                 },
                 {
                   "name": "headers",
+                  "kind": "keyword",
                   "type": "optional<dict<string,string>>",
-                  "required": false,
-                  "default": null
+                  "required": false
                 },
                 {
                   "name": "cancellation_token",
@@ -28514,20 +28511,8 @@
                   "default": null
                 },
                 {
-                  "name": "query_params",
-                  "type": "optional<dict<string,string>>",
-                  "required": false,
-                  "default": null
-                },
-                {
                   "name": "request_options",
                   "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
-                  "required": false,
-                  "default": null
-                },
-                {
-                  "name": "headers",
-                  "type": "optional<dict<string,string>>",
                   "required": false,
                   "default": null
                 },
@@ -44096,6 +44081,18 @@
         }
       }
     },
+    "signalwire.agent.mount_options.MountOptions": {
+      "params": {
+        "name": {
+          "type": "string",
+          "required": false
+        },
+        "prefix": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
     "signalwire.agent_server.AgentServer": {
       "params": {
         "host": {
@@ -44432,6 +44429,18 @@
         }
       }
     },
+    "signalwire.aichat.gateway_request_options.GatewayRequestOptions": {
+      "params": {
+        "key": {
+          "type": "string",
+          "required": false
+        },
+        "origin": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
     "signalwire.aichat.handoff_router_options.HandoffRouterOptions": {
       "params": {
         "capture_leg": {
@@ -44469,6 +44478,18 @@
         "send_message": {
           "type": "callable<list<string,string>,bool>",
           "required": false
+        }
+      }
+    },
+    "signalwire.aichat.nonce_registration_options.NonceRegistrationOptions": {
+      "params": {
+        "call_id": {
+          "type": "string",
+          "required": false
+        },
+        "conversation_id": {
+          "type": "string",
+          "required": true
         }
       }
     },
@@ -44697,6 +44718,18 @@
         "function_name": {
           "type": "string",
           "required": true
+        }
+      }
+    },
+    "signalwire.core.dialogue_turns_options.DialogueTurnsOptions": {
+      "params": {
+        "drop_echo": {
+          "type": "string",
+          "required": false
+        },
+        "roles": {
+          "type": "tuple<string,any>",
+          "required": false
         }
       }
     },
@@ -46488,6 +46521,14 @@
         },
         "token": {
           "type": "string",
+          "required": false
+        }
+      }
+    },
+    "signalwire.rest.header_options.HeaderOptions": {
+      "params": {
+        "headers": {
+          "type": "dict<string,string>",
           "required": false
         }
       }

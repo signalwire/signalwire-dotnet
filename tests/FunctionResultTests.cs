@@ -227,6 +227,16 @@ public class FunctionResultTests
     }
 
     [Fact]
+    public void Hold_BareIntIsTheTimeoutNotAPrompt()
+    {
+        // The 1.1.2 form: an int binds the timeout overload, never the prompt.
+        var fr = new FunctionResult().Hold(60);
+        Assert.Equal(60, GetAction(fr, 0)["hold"]);
+        Assert.False(fr.ToDict().ContainsKey("post_process"));
+        Assert.Equal(30, GetAction(new FunctionResult().Hold(timeout: 30), 0)["hold"]);
+    }
+
+    [Fact]
     public void Hold_Default()
     {
         // Python parity: {"hold": 300} — bare int, not {timeout: N}.

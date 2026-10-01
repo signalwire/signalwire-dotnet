@@ -77,6 +77,7 @@ from enumerate_surface import (  # type: ignore
     SURFACE_METHOD_INJECTIONS,
     AICHAT_OPTIONS_CLASSES,
     CONSTRUCTION_OPTIONS_CLASSES,
+    KEYWORD_OPTIONS_CLASSES,
 )
 
 
@@ -287,6 +288,12 @@ def translate_dotnet_type(t: str, aliases: dict[str, str], context: str) -> str:
         "System.Collections.Concurrent.ConcurrentDictionary",
     ):
         return f"dict<{canon_args[0]},{canon_args[1]}>"
+    # An immutable homogeneous sequence is the reference's ``tuple[T, ...]``.
+    if head in (
+        "System.Collections.Immutable.ImmutableArray",
+        "System.Collections.Immutable.IImmutableList",
+    ):
+        return f"tuple<{canon_args[0]},any>"
     if head in (
         "System.Collections.Generic.HashSet",
         "System.Collections.Generic.ISet",
@@ -727,30 +734,43 @@ def _merge_overload_param_unions(
          union that happens to normalise clean.
 
     Only ``type`` is touched; ``required``/``default``/``kind`` still come from
-    whichever overload dedup selects. Arity mismatch means the two are not the same
-    call shape (a convenience wrapper, not a union sibling) — left alone.
+    whichever overload dedup selects. The overloads may differ in arity: the
+    reference's ``hold(prompt: str | int | None = None, timeout=300, ...)`` (an
+    int prompt IS the timeout) is ``Hold(int timeout)`` beside ``Hold(string?
+    prompt = null, int timeout = 300, ...)`` — only the positions both overloads
+    have are compared, and conditions 1-3 still gate every merge. An
+    ``optional<...>`` wrapper on either side is carried onto the union.
     """
     if not ref_types:
         return
+
+    def _strip_opt(t: str) -> tuple[str, bool]:
+        if t.startswith("optional<") and t.endswith(">"):
+            return t[len("optional<") : -1], True
+        return t, False
+
     pa, pb = existing.get("params", []), sig.get("params", [])
-    if len(pa) != len(pb):
-        return
-    for i, (x, y) in enumerate(zip(pa, pb, strict=True)):
+    for i, (x, y) in enumerate(zip(pa, pb, strict=False)):
         if x.get("kind") == "self" or y.get("kind") == "self":
             continue
         if i >= len(ref_types):
             break
-        ref_t = ref_types[i]
-        ref_members = set(_union_members(ref_t))
+        ref_inner, _ref_opt = _strip_opt(str(ref_types[i]))
+        ref_members = set(_union_members(ref_inner))
         if len(ref_members) < 2:
             continue  # (1) reference is not a union here
         xt, yt = x.get("type"), y.get("type")
         if not isinstance(xt, str) or not isinstance(yt, str) or xt == yt:
             continue  # (2) nothing to merge
-        merged = set(_union_members(xt)) | set(_union_members(yt))
+        (xi, xo), (yi, yo) = _strip_opt(xt), _strip_opt(yt)
+        merged = set(_union_members(xi)) | set(_union_members(yi))
         if not merged <= ref_members:
             continue  # (3) the port offers an arm the reference does not
+        if len(merged) < 2:
+            continue
         canon = "union<" + ",".join(sorted(merged)) + ">"
+        if xo or yo:
+            canon = f"optional<{canon}>"
         x["type"] = canon
         y["type"] = canon
 
@@ -1462,6 +1482,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
                 {
                     "type": ptype,
                     "required": bool(p.get("is_required", False)),
+                    "nullable": bool(p.get("nullable", False)),
                 },
             )
 
@@ -1555,7 +1576,16 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         alias_table = SURFACE_METHOD_ALIASES.get((target_module, target_class), {})
         if alias_table:
             for src, dst in alias_table.items():
-                if src in methods_out and dst not in methods_out:
+                if src not in methods_out:
+                    continue
+                if dst not in methods_out:
+                    methods_out[dst] = methods_out.pop(src)
+                elif str(methods_out[src].get("returns", "")).startswith(
+                    "class:"
+                ) and not str(methods_out[dst].get("returns", "")).startswith("class:"):
+                    # Two zero-arg accessors land on one reference attribute
+                    # (RestClient ``space`` host string vs ``space_admin``
+                    # namespace): the one returning the reference's class wins.
                     methods_out[dst] = methods_out.pop(src)
 
         # Reference-present dunders / inherited methods the class semantically
@@ -2115,6 +2145,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         if entry.get("functions"):
             sorted_modules[mod]["functions"] = dict(sorted(entry["functions"].items()))
 
+    _unfold_keyword_options(sorted_modules, settable_props)
     construction = build_construction(
         sorted_modules,
         settable_props,
@@ -2122,6 +2153,7 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         native_to_canonical,
     )
     # A construction options class (ChatGatewayOptions, HandoffRouterOptions, ...)
+    # or keyword options class (MountOptions, ...)
     # is the .NET home for the reference's keyword arguments: its properties ARE
     # the owning class's construction contract (unfolded above), not member
     # surface of their own. Drop the class from the member inventory once the
@@ -2129,7 +2161,11 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
     for entry in sorted_modules.values():
         classes = entry.get("classes")
         if isinstance(classes, dict):
-            for cls in [c for c in classes if c in CONSTRUCTION_OPTIONS_CLASSES]:
+            for cls in [
+                c
+                for c in classes
+                if c in CONSTRUCTION_OPTIONS_CLASSES or c in KEYWORD_OPTIONS_CLASSES
+            ]:
                 del classes[cls]
     sorted_modules = {
         m: e
@@ -2142,6 +2178,57 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         "modules": sorted_modules,
         "construction": construction,
     }, failures
+
+
+def _unfold_keyword_options(modules: dict, settable_props: dict) -> None:
+    """Unfold every KEYWORD options-object parameter into ``keyword`` params.
+
+    C# has no keyword-only parameters, so the reference's keyword-only group
+    (``mount(app, *, prefix="", name=None)``) is one named options parameter
+    (``Mount(app, new MountOptions { Prefix = … })``) — callable only by naming
+    each field, exactly the reference binding. Each settable property of the
+    options class becomes a ``keyword``-kind param in the options param's place;
+    ``required`` is the C# ``required`` modifier. Property initializers are not
+    visible to reflection, so no default is recorded (an unrecorded default is
+    coverage, not drift). In place.
+    """
+
+    def _unfold(sig: dict) -> None:
+        params = sig.get("params")
+        if not isinstance(params, list):
+            return
+        out: list = []
+        for p in params:
+            ref = _unwrap_class_ref(p.get("type", "")) if isinstance(p, dict) else None
+            if (
+                ref
+                and ref.rsplit(".", 1)[-1] in KEYWORD_OPTIONS_CLASSES
+                and ref in settable_props
+            ):
+                for pname, pspec in settable_props[ref].items():
+                    ptype = pspec.get("type", "any")
+                    if pspec.get("nullable") and not str(ptype).startswith("optional<"):
+                        ptype = f"optional<{ptype}>"
+                    out.append(
+                        {
+                            "name": pname,
+                            "kind": "keyword",
+                            "type": ptype,
+                            "required": bool(pspec.get("required", False)),
+                        }
+                    )
+                continue
+            out.append(p)
+        sig["params"] = out
+
+    for entry in modules.values():
+        for ce in (entry.get("classes") or {}).values():
+            for msig in (ce.get("methods") or {}).values():
+                if isinstance(msig, dict):
+                    _unfold(msig)
+        for fsig in (entry.get("functions") or {}).values():
+            if isinstance(fsig, dict):
+                _unfold(fsig)
 
 
 # ---------------------------------------------------------------------------

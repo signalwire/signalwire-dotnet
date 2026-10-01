@@ -180,7 +180,7 @@ public class AgentConsolidationTests
     public void Mount_MountedRouteIsReachable()
     {
         var a = Agent();
-        a.Mount(Router("/handoff"), prefix: "/myagent/chat");
+        a.Mount(Router("/handoff"), new MountOptions { Prefix = "/myagent/chat" });
         var (status, _, body) = a.HandleRequest("POST", "/myagent/chat/handoff", [], "");
         Assert.Equal(200, status);
         Assert.Equal("{\"ok\":true}", body);
@@ -191,7 +191,7 @@ public class AgentConsolidationTests
     {
         // 401 means the SWML endpoint is alive and merely demanding auth.
         var a = Agent();
-        a.Mount(Router("/x"), prefix: "/myagent/chat");
+        a.Mount(Router("/x"), new MountOptions { Prefix = "/myagent/chat" });
         var (status, _, _) = a.HandleRequest("POST", "/myagent", [], "");
         Assert.Equal(401, status);
         var (authed, _, _) = a.HandleRequest("POST", "/myagent", Auth(), "{}");
@@ -202,8 +202,8 @@ public class AgentConsolidationTests
     public void Mount_SeveralMountsAllStayReachable()
     {
         var a = Agent();
-        a.Mount(Router("/one"), prefix: "/myagent/a");
-        a.Mount(Router("/two"), prefix: "/myagent/b");
+        a.Mount(Router("/one"), new MountOptions { Prefix = "/myagent/a" });
+        a.Mount(Router("/two"), new MountOptions { Prefix = "/myagent/b" });
         Assert.Equal(200, a.HandleRequest("POST", "/myagent/a/one", [], "").Status);
         Assert.Equal(200, a.HandleRequest("POST", "/myagent/b/two", [], "").Status);
     }
@@ -212,7 +212,7 @@ public class AgentConsolidationTests
     public void Mount_HealthEndpointsSurvive()
     {
         var a = Agent();
-        a.Mount(Router("/x"), prefix: "/myagent/chat");
+        a.Mount(Router("/x"), new MountOptions { Prefix = "/myagent/chat" });
         Assert.Equal(200, a.HandleRequest("GET", "/health", [], null).Status);
     }
 
@@ -220,6 +220,6 @@ public class AgentConsolidationTests
     public void Mount_ReturnsSelfForChaining()
     {
         var a = Agent();
-        Assert.Same(a, a.Mount(Router("/x"), prefix: "/myagent/c"));
+        Assert.Same(a, a.Mount(Router("/x"), new MountOptions { Prefix = "/myagent/c" }));
     }
 }

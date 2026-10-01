@@ -159,6 +159,7 @@ public sealed class ChatGatewayTests : IDisposable
         ["Origin"] = Shop,
     };
 
+    private static readonly GatewayRequestOptions NoOrigin = new() { Key = Key };
     private static readonly string[] ToolCalls = ["call_1"];
     private static readonly string[] NotAnObject = ["not", "an", "object"];
 
@@ -210,7 +211,7 @@ public sealed class ChatGatewayTests : IDisposable
         });
 
     private (string Method, Dictionary<string, object?> Params, string? Minted) Prep(Dictionary<string, object?> body, string? origin = Shop)
-        => _gateway.Prepare(body, origin, Key);
+        => _gateway.Prepare(body, new GatewayRequestOptions { Origin = origin, Key = Key });
 
     private static Dictionary<string, object?> Body(params (string Key, object? Value)[] kv)
         => kv.ToDictionary(p => p.Key, p => p.Value);
@@ -359,9 +360,9 @@ public sealed class ChatGatewayTests : IDisposable
         using var gw = Make(maxNew: 3);
         for (var i = 0; i < 3; i++)
         {
-            gw.Prepare(Body(("message", "hi")), null, Key);
+            gw.Prepare(Body(("message", "hi")), NoOrigin);
         }
-        Assert.Equal(429, Status(() => gw.Prepare(Body(("message", "hi")), null, Key)));
+        Assert.Equal(429, Status(() => gw.Prepare(Body(("message", "hi")), NoOrigin)));
     }
 
     [Fact]
@@ -369,9 +370,9 @@ public sealed class ChatGatewayTests : IDisposable
     {
         using var gw = Make(maxTurns: 1);
         var (a, b) = (gw.MintHandle(), gw.MintHandle());
-        gw.Prepare(Body(("message", "hi"), ("handle", a)), null, Key);
-        gw.Prepare(Body(("message", "hi"), ("handle", b)), null, Key);
-        Assert.Equal(429, Status(() => gw.Prepare(Body(("message", "again"), ("handle", a)), null, Key)));
+        gw.Prepare(Body(("message", "hi"), ("handle", a)), NoOrigin);
+        gw.Prepare(Body(("message", "hi"), ("handle", b)), NoOrigin);
+        Assert.Equal(429, Status(() => gw.Prepare(Body(("message", "again"), ("handle", a)), NoOrigin)));
     }
 
     // ── start / log / transcript ─────────────────────────────────────
@@ -491,8 +492,8 @@ public sealed class ChatGatewayTests : IDisposable
         Assert.Equal(413, Status(() => Prep(Body(("method", "start"), ("user_meta_data", fat)))));
 
         using var gw = Make(maxNew: 1);
-        Assert.Throws<GatewayRejection>(() => gw.Prepare(Body(("method", "start"), ("user_meta_data", "nope")), null, Key));
-        Assert.NotNull(gw.Prepare(Body(("method", "start")), null, Key).MintedHandle);
+        Assert.Throws<GatewayRejection>(() => gw.Prepare(Body(("method", "start"), ("user_meta_data", "nope")), NoOrigin));
+        Assert.NotNull(gw.Prepare(Body(("method", "start")), NoOrigin).MintedHandle);
     }
 
     [Fact]
@@ -521,8 +522,8 @@ public sealed class ChatGatewayTests : IDisposable
     public void AnOversizedMessageMintsNothingAndChargesNoTurn()
     {
         using var gw = Make(maxNew: 1, maxTurns: 1);
-        Assert.Throws<GatewayRejection>(() => gw.Prepare(Body(("message", new string('x', ChatGateway.MaxMessageBytes + 1))), null, Key));
-        var (_, p, minted) = gw.Prepare(Body(("message", "hi")), null, Key);
+        Assert.Throws<GatewayRejection>(() => gw.Prepare(Body(("message", new string('x', ChatGateway.MaxMessageBytes + 1))), NoOrigin));
+        var (_, p, minted) = gw.Prepare(Body(("message", "hi")), NoOrigin);
         Assert.NotNull(minted);
         Assert.Equal("hi", p["message"]);
     }

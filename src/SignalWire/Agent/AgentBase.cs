@@ -1645,20 +1645,21 @@ public class AgentBase : Service
     /// served by the agent's built-in server (and through <see cref="Service.AsRouter"/>).
     /// The agent's own routes (its SWML route, <c>/swaig</c>, <c>/post_prompt</c>,
     /// routing callbacks, <c>/health</c>, <c>/ready</c>) keep precedence; a request
-    /// under <paramref name="prefix"/> that is not one of them reaches
+    /// under <see cref="MountOptions.Prefix"/> that is not one of them reaches
     /// <paramref name="appOrRouter"/> with <c>PathBase</c> set to the prefix and
     /// <c>Path</c> the remainder. Mounted apps do their own authentication (a
     /// <c>ChatGateway</c> checks its publishable key), so the agent's basic auth
     /// does not apply to them.
     /// </summary>
     /// <param name="appOrRouter">The app to mount (e.g. <c>gateway.Router()</c>).</param>
-    /// <param name="prefix">Absolute path prefix. No trailing slash.</param>
-    /// <param name="name">Optional mount name.</param>
-    public AgentBase Mount(RequestDelegate appOrRouter, string prefix = "", string? name = null)
+    /// <param name="options">Where to mount it (<see cref="MountOptions.Prefix"/>) and an
+    /// optional name; omit to mount at the root.</param>
+    public AgentBase Mount(RequestDelegate appOrRouter, MountOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(appOrRouter);
-        var clean = (prefix ?? "").TrimEnd('/');
-        _mounts = [.. _mounts, (clean, appOrRouter, name)];
+        options ??= new MountOptions();
+        var clean = (options.Prefix ?? "").TrimEnd('/');
+        _mounts = [.. _mounts, (clean, appOrRouter, options.Name)];
         _agentLogger.Info($"agent_route_mounted prefix={(clean.Length == 0 ? "/" : clean)}");
         return this;
     }
@@ -2579,4 +2580,14 @@ public class AgentBase : Service
         }
         return copy;
     }
+}
+
+/// <summary>Named arguments for <see cref="AgentBase.Mount"/>.</summary>
+public sealed class MountOptions
+{
+    /// <summary>Absolute path prefix (no trailing slash); empty mounts at the root.</summary>
+    public string Prefix { get; init; } = "";
+
+    /// <summary>Optional mount name.</summary>
+    public string? Name { get; init; }
 }

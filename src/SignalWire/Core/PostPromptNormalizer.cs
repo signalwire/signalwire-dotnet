@@ -73,11 +73,6 @@ public sealed class NormalizedPostPrompt
 /// </summary>
 public static partial class PostPromptNormalizer
 {
-    /// <summary>Roles that are actual dialogue. Everything else in a call log is
-    /// machinery (<c>system</c>, <c>system-log</c>, <c>tool</c>,
-    /// <c>assistant-manual</c> filler speech).</summary>
-    private static readonly string[] DialogueRoles = ["user", "assistant"];
-
     [GeneratedRegex(@"^```[a-zA-Z]*\s*")]
     private static partial Regex FenceOpen();
 
@@ -149,18 +144,20 @@ public static partial class PostPromptNormalizer
     /// <summary>
     /// The real dialogue from a call log: drops non-dialogue roles, entries
     /// carrying <c>tool_calls</c>, empty content, and — when
-    /// <paramref name="dropEcho"/> is given — the chat engine's summary echo (a
+    /// <see cref="DialogueTurnsOptions.DropEcho"/> is given — the chat engine's summary echo (a
     /// bare <c>role: assistant</c> turn byte-identical to
     /// <c>post_prompt_data.raw</c>). Never throws.
     /// </summary>
     /// <param name="callLog">The log (<c>call_log</c> / <c>raw_call_log</c> / <c>raw_messages</c>).</param>
-    /// <param name="roles">Roles to keep (default <c>user</c>, <c>assistant</c>).</param>
-    /// <param name="dropEcho">Exact content to treat as the summary echo and drop.</param>
+    /// <param name="options">Roles to keep and the summary echo to drop; omit for
+    /// the defaults (<c>user</c>/<c>assistant</c>, no echo).</param>
     [SuppressMessage("Design", "CA1002", Justification = "Cross-port surface returns the list verbatim (the reference returns a plain list).")]
     public static List<Dictionary<string, string>> DialogueTurns(
-        object? callLog, IReadOnlyList<string>? roles = null, string? dropEcho = null)
+        object? callLog, DialogueTurnsOptions? options = null)
     {
-        var keep = roles ?? DialogueRoles;
+        options ??= new DialogueTurnsOptions();
+        var keep = options.Roles.IsDefault ? DialogueTurnsOptions.DialogueRoles : options.Roles;
+        var dropEcho = options.DropEcho;
         var outList = new List<Dictionary<string, string>>();
         if (callLog is string || JsonPlain.From(callLog) is not List<object?> entries)
         {
@@ -234,7 +231,7 @@ public static partial class PostPromptNormalizer
             conversationId: dict.TryGetValue("conversation_id", out var cid) && JsonPlain.Truthy(cid)
                 ? JsonPlain.Str(cid) : null,
             summary: summary,
-            dialogue: DialogueTurns(log, dropEcho: rawSummary.Length > 0 ? rawSummary : null),
+            dialogue: DialogueTurns(log, new DialogueTurnsOptions { DropEcho = rawSummary.Length > 0 ? rawSummary : null }),
             callId: dict.TryGetValue("call_id", out var callId) && JsonPlain.Truthy(callId)
                 ? JsonPlain.Str(callId) : null,
             raw: body as Dictionary<string, object?> ?? dict);
@@ -265,4 +262,19 @@ public static partial class PostPromptNormalizer
         }
         return null;
     }
+}
+
+/// <summary>Named arguments for <see cref="PostPromptNormalizer.DialogueTurns"/>.</summary>
+public sealed class DialogueTurnsOptions
+{
+    /// <summary>Roles that are actual dialogue. Everything else in a call log is
+    /// machinery (<c>system</c>, <c>system-log</c>, <c>tool</c>,
+    /// <c>assistant-manual</c> filler speech).</summary>
+    internal static readonly System.Collections.Immutable.ImmutableArray<string> DialogueRoles = ["user", "assistant"];
+
+    /// <summary>Roles to keep (an immutable sequence); defaults to <c>user</c> and <c>assistant</c>.</summary>
+    public System.Collections.Immutable.ImmutableArray<string> Roles { get; init; } = DialogueRoles;
+
+    /// <summary>Exact content to treat as the chat engine's summary echo and drop.</summary>
+    public string? DropEcho { get; init; }
 }

@@ -132,7 +132,7 @@ public class PostPromptNormalizerTests
     {
         var log = Log();
         log.Add(Turn("assistant", Fenced));
-        var got = PostPromptNormalizer.DialogueTurns(log, dropEcho: Fenced);
+        var got = PostPromptNormalizer.DialogueTurns(log, new DialogueTurnsOptions { DropEcho = Fenced });
         Assert.DoesNotContain(got, t => t["content"] == Fenced);
     }
 
@@ -142,6 +142,14 @@ public class PostPromptNormalizerTests
         var log = Log();
         log.Add(Turn("assistant", Fenced));
         Assert.Equal(3, PostPromptNormalizer.DialogueTurns(log).Count);
+    }
+
+    [Fact]
+    public void Dialogue_KeepsOnlyTheRolesAsked()
+    {
+        var got = PostPromptNormalizer.DialogueTurns(Log(), new DialogueTurnsOptions { Roles = ["user"] });
+        Assert.Single(got);
+        Assert.Equal("user", got[0]["role"]);
     }
 
     public static TheoryData<object?> LogJunk() => new() { null, new List<object?>(), "nonsense", 42 };

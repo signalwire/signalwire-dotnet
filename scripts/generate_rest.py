@@ -1724,10 +1724,15 @@ def emit_method(
     if kind == "text":
         header_items.append(f"[{cs_str('Accept')}] = {cs_str(text_media)}")
     hdr_arg = (
-        ", headers: new Dictionary<string, string> { " + ", ".join(header_items) + " }"
+        ", options: new SignalWire.REST.HeaderOptions { Headers = new Dictionary<string, string> { "
+        + ", ".join(header_items)
+        + " } }"
         if header_items
         else ""
     )
+    # A body call that sends headers binds the HeaderOptions overload, whose
+    # query-string slot precedes the options group.
+    body_hdr_arg = ", queryParams: null" + hdr_arg if header_items else ""
     doc = ["    /// <summary>"]
     doc.append(
         f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path})."
@@ -1779,7 +1784,7 @@ def emit_method(
                 *header_doc,
                 *field_doc,
             ]
-            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, requestOptions: requestOptions{hdr_arg}, cancellationToken: cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, requestOptions: requestOptions{body_hdr_arg}, cancellationToken: cancellationToken);"
         else:
             # §5.2 union body → a single ``Dictionary<string,object?> body`` param.
             body_id = _dedupe_param("body", used)
@@ -1799,11 +1804,11 @@ def emit_method(
                 ],
             )
             doc.append(f'    /// <param name="{body_id}">JSON request body.</param>')
-            call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, requestOptions: requestOptions{hdr_arg}, cancellationToken: cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, requestOptions: requestOptions{body_hdr_arg}, cancellationToken: cancellationToken);"
     elif write_verb:
         params = id_params
         _register_sidecar(cls, name, [*id_records, dict(ro_record)])
-        call_line = f"        return Client.{verb_fn}({path_expr}, null, requestOptions: requestOptions{hdr_arg}, cancellationToken: cancellationToken);"
+        call_line = f"        return Client.{verb_fn}({path_expr}, null, requestOptions: requestOptions{body_hdr_arg}, cancellationToken: cancellationToken);"
     elif verb == "get":
         # §5.3 GET query door — a trailing query-params map. The C# convenience
         # ``queryParams`` param is a port idiom; the python reference expresses it
@@ -2675,7 +2680,11 @@ CONTAINERS = {
     "registry": ("RegistryNamespace", "Registry"),
     "project": ("ProjectNamespace", "Project"),
     "datasphere": ("DatasphereNamespace", "Datasphere"),
-    "space": ("SpaceNamespace", "Space"),
+    # ``SpaceAdmin``, not ``Space``: ``RestClient.Space`` is the space-host
+    # string getter published in 1.1.2, so the Space Administration container
+    # takes the next name (the enumerators fold ``space_admin`` onto the
+    # reference's ``space`` attribute).
+    "space": ("SpaceNamespace", "SpaceAdmin"),
     "whatsapp": ("WhatsappNamespace", "Whatsapp"),
 }
 

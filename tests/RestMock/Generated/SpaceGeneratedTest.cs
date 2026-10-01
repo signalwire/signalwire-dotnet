@@ -45,11 +45,11 @@ public class SpaceGeneratedTest : CoverageBase
     private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 
     [Fact]
-    public async Task SpaceBalance_CreateTopUp_Success()
+    public async Task SpaceAdminBalance_CreateTopUp_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Balance.CreateTopUpAsync("x", 1, "x");
+        var body = await tree.SpaceAdmin.Balance.CreateTopUpAsync("x", 1, "x");
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("POST", j.Method);
@@ -57,21 +57,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceBalance_CreateTopUp_Error()
+    public async Task SpaceAdminBalance_CreateTopUp_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.create_top_up", 500,
-            () => tree.Space.Balance.CreateTopUpAsync("x", 1, "x"));
+            () => tree.SpaceAdmin.Balance.CreateTopUpAsync("x", 1, "x"));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceBalance_Get_Success()
+    public async Task SpaceAdminBalance_Get_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Balance.GetAsync();
+        var body = await tree.SpaceAdmin.Balance.GetAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -79,21 +79,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceBalance_Get_Error()
+    public async Task SpaceAdminBalance_Get_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.get_balance", 500,
-            () => tree.Space.Balance.GetAsync());
+            () => tree.SpaceAdmin.Balance.GetAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceBillingProfile_Get_Success()
+    public async Task SpaceAdminBillingProfile_Get_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.BillingProfile.GetAsync();
+        var body = await tree.SpaceAdmin.BillingProfile.GetAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -101,21 +101,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceBillingProfile_Get_Error()
+    public async Task SpaceAdminBillingProfile_Get_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.get_billing_profile", 500,
-            () => tree.Space.BillingProfile.GetAsync());
+            () => tree.SpaceAdmin.BillingProfile.GetAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceBillingProfile_Update_Success()
+    public async Task SpaceAdminBillingProfile_Update_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.BillingProfile.UpdateAsync("x", "x", "x", "x", "x", "x", "x", new List<object?>(), "x");
+        var body = await tree.SpaceAdmin.BillingProfile.UpdateAsync("x", "x", "x", "x", "x", "x", "x", new List<object?>(), "x");
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("PUT", j.Method);
@@ -123,21 +123,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceBillingProfile_Update_Error()
+    public async Task SpaceAdminBillingProfile_Update_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.update_billing_profile", 500,
-            () => tree.Space.BillingProfile.UpdateAsync("x", "x", "x", "x", "x", "x", "x", new List<object?>(), "x"));
+            () => tree.SpaceAdmin.BillingProfile.UpdateAsync("x", "x", "x", "x", "x", "x", "x", new List<object?>(), "x"));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceBillingStatements_Get_Success()
+    public async Task SpaceAdminBillingStatements_Get_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.BillingStatements.GetAsync();
+        var body = await tree.SpaceAdmin.BillingStatements.GetAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -145,21 +145,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceBillingStatements_Get_Error()
+    public async Task SpaceAdminBillingStatements_Get_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.get_billing_statement", 500,
-            () => tree.Space.BillingStatements.GetAsync());
+            () => tree.SpaceAdmin.BillingStatements.GetAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceBillingStatements_GetCsv_Success()
+    public async Task SpaceAdminBillingStatements_GetCsv_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.BillingStatements.GetCsvAsync();
+        var body = await tree.SpaceAdmin.BillingStatements.GetCsvAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -167,21 +167,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceBillingStatements_GetCsv_Error()
+    public async Task SpaceAdminBillingStatements_GetCsv_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.get_billing_statement_csv", 500,
-            () => tree.Space.BillingStatements.GetCsvAsync());
+            () => tree.SpaceAdmin.BillingStatements.GetCsvAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceBillingStatements_GetPdf_Success()
+    public async Task SpaceAdminBillingStatements_GetPdf_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.BillingStatements.GetPdfAsync();
+        var body = await tree.SpaceAdmin.BillingStatements.GetPdfAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -189,21 +189,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceBillingStatements_GetPdf_Error()
+    public async Task SpaceAdminBillingStatements_GetPdf_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.get_billing_statement_pdf", 500,
-            () => tree.Space.BillingStatements.GetPdfAsync());
+            () => tree.SpaceAdmin.BillingStatements.GetPdfAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceBillingStatements_List_Success()
+    public async Task SpaceAdminBillingStatements_List_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.BillingStatements.ListAsync();
+        var body = await tree.SpaceAdmin.BillingStatements.ListAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -211,21 +211,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceBillingStatements_List_Error()
+    public async Task SpaceAdminBillingStatements_List_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.list_billing_statement_periods", 500,
-            () => tree.Space.BillingStatements.ListAsync());
+            () => tree.SpaceAdmin.BillingStatements.ListAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceGeographicPermissions_Get_Success()
+    public async Task SpaceAdminGeographicPermissions_Get_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.GeographicPermissions.GetAsync();
+        var body = await tree.SpaceAdmin.GeographicPermissions.GetAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -233,21 +233,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceGeographicPermissions_Get_Error()
+    public async Task SpaceAdminGeographicPermissions_Get_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.get_geographic_permissions", 500,
-            () => tree.Space.GeographicPermissions.GetAsync());
+            () => tree.SpaceAdmin.GeographicPermissions.GetAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceGeographicPermissions_Update_Success()
+    public async Task SpaceAdminGeographicPermissions_Update_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.GeographicPermissions.UpdateAsync(new List<object?>());
+        var body = await tree.SpaceAdmin.GeographicPermissions.UpdateAsync(new List<object?>());
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("PUT", j.Method);
@@ -255,21 +255,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceGeographicPermissions_Update_Error()
+    public async Task SpaceAdminGeographicPermissions_Update_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.update_geographic_permissions", 500,
-            () => tree.Space.GeographicPermissions.UpdateAsync(new List<object?>()));
+            () => tree.SpaceAdmin.GeographicPermissions.UpdateAsync(new List<object?>()));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceLowBalanceSetting_Get_Success()
+    public async Task SpaceAdminLowBalanceSetting_Get_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.LowBalanceSetting.GetAsync();
+        var body = await tree.SpaceAdmin.LowBalanceSetting.GetAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -277,21 +277,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceLowBalanceSetting_Get_Error()
+    public async Task SpaceAdminLowBalanceSetting_Get_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.get_low_balance_setting", 500,
-            () => tree.Space.LowBalanceSetting.GetAsync());
+            () => tree.SpaceAdmin.LowBalanceSetting.GetAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceLowBalanceSetting_Update_Success()
+    public async Task SpaceAdminLowBalanceSetting_Update_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.LowBalanceSetting.UpdateAsync();
+        var body = await tree.SpaceAdmin.LowBalanceSetting.UpdateAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("PUT", j.Method);
@@ -299,21 +299,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceLowBalanceSetting_Update_Error()
+    public async Task SpaceAdminLowBalanceSetting_Update_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.update_low_balance_setting", 500,
-            () => tree.Space.LowBalanceSetting.UpdateAsync());
+            () => tree.SpaceAdmin.LowBalanceSetting.UpdateAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceMembers_Create_Success()
+    public async Task SpaceAdminMembers_Create_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Members.CreateAsync(new Dictionary<string, object?>());
+        var body = await tree.SpaceAdmin.Members.CreateAsync(new Dictionary<string, object?>());
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("POST", j.Method);
@@ -321,21 +321,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceMembers_Create_Error()
+    public async Task SpaceAdminMembers_Create_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.create_member", 500,
-            () => tree.Space.Members.CreateAsync(new Dictionary<string, object?>()));
+            () => tree.SpaceAdmin.Members.CreateAsync(new Dictionary<string, object?>()));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceMembers_Delete_Success()
+    public async Task SpaceAdminMembers_Delete_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Members.DeleteAsync("x");
+        var body = await tree.SpaceAdmin.Members.DeleteAsync("x");
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
@@ -343,21 +343,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceMembers_Delete_Error()
+    public async Task SpaceAdminMembers_Delete_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.delete_member", 500,
-            () => tree.Space.Members.DeleteAsync("x"));
+            () => tree.SpaceAdmin.Members.DeleteAsync("x"));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceMembers_DisableProject_Success()
+    public async Task SpaceAdminMembers_DisableProject_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Members.DisableProjectAsync("x", "x");
+        var body = await tree.SpaceAdmin.Members.DisableProjectAsync("x", "x");
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
@@ -365,21 +365,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceMembers_DisableProject_Error()
+    public async Task SpaceAdminMembers_DisableProject_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.disable_member_project", 500,
-            () => tree.Space.Members.DisableProjectAsync("x", "x"));
+            () => tree.SpaceAdmin.Members.DisableProjectAsync("x", "x"));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceMembers_EnableProject_Success()
+    public async Task SpaceAdminMembers_EnableProject_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Members.EnableProjectAsync("x", "x");
+        var body = await tree.SpaceAdmin.Members.EnableProjectAsync("x", "x");
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("PUT", j.Method);
@@ -387,21 +387,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceMembers_EnableProject_Error()
+    public async Task SpaceAdminMembers_EnableProject_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.enable_member_project", 500,
-            () => tree.Space.Members.EnableProjectAsync("x", "x"));
+            () => tree.SpaceAdmin.Members.EnableProjectAsync("x", "x"));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceMembers_Get_Success()
+    public async Task SpaceAdminMembers_Get_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Members.GetAsync("x");
+        var body = await tree.SpaceAdmin.Members.GetAsync("x");
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -409,21 +409,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceMembers_Get_Error()
+    public async Task SpaceAdminMembers_Get_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.get_member", 500,
-            () => tree.Space.Members.GetAsync("x"));
+            () => tree.SpaceAdmin.Members.GetAsync("x"));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceMembers_List_Success()
+    public async Task SpaceAdminMembers_List_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Members.ListAsync();
+        var body = await tree.SpaceAdmin.Members.ListAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -431,21 +431,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceMembers_List_Error()
+    public async Task SpaceAdminMembers_List_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.list_members", 500,
-            () => tree.Space.Members.ListAsync());
+            () => tree.SpaceAdmin.Members.ListAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceMembers_ListProjects_Success()
+    public async Task SpaceAdminMembers_ListProjects_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Members.ListProjectsAsync("x");
+        var body = await tree.SpaceAdmin.Members.ListProjectsAsync("x");
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -453,21 +453,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceMembers_ListProjects_Error()
+    public async Task SpaceAdminMembers_ListProjects_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.list_member_projects", 500,
-            () => tree.Space.Members.ListProjectsAsync("x"));
+            () => tree.SpaceAdmin.Members.ListProjectsAsync("x"));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceMembers_Update_Success()
+    public async Task SpaceAdminMembers_Update_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Members.UpdateAsync("x", new Dictionary<string, object?>());
+        var body = await tree.SpaceAdmin.Members.UpdateAsync("x", new Dictionary<string, object?>());
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("PATCH", j.Method);
@@ -475,21 +475,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceMembers_Update_Error()
+    public async Task SpaceAdminMembers_Update_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.update_member", 500,
-            () => tree.Space.Members.UpdateAsync("x", new Dictionary<string, object?>()));
+            () => tree.SpaceAdmin.Members.UpdateAsync("x", new Dictionary<string, object?>()));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpacePaymentHistory_List_Success()
+    public async Task SpaceAdminPaymentHistory_List_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.PaymentHistory.ListAsync();
+        var body = await tree.SpaceAdmin.PaymentHistory.ListAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -497,21 +497,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpacePaymentHistory_List_Error()
+    public async Task SpaceAdminPaymentHistory_List_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.list_payment_history", 500,
-            () => tree.Space.PaymentHistory.ListAsync());
+            () => tree.SpaceAdmin.PaymentHistory.ListAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpacePaymentMethods_Delete_Success()
+    public async Task SpaceAdminPaymentMethods_Delete_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.PaymentMethods.DeleteAsync("x");
+        var body = await tree.SpaceAdmin.PaymentMethods.DeleteAsync("x");
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("DELETE", j.Method);
@@ -519,21 +519,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpacePaymentMethods_Delete_Error()
+    public async Task SpaceAdminPaymentMethods_Delete_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.delete_payment_method", 500,
-            () => tree.Space.PaymentMethods.DeleteAsync("x"));
+            () => tree.SpaceAdmin.PaymentMethods.DeleteAsync("x"));
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpacePaymentMethods_List_Success()
+    public async Task SpaceAdminPaymentMethods_List_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.PaymentMethods.ListAsync();
+        var body = await tree.SpaceAdmin.PaymentMethods.ListAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -541,21 +541,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpacePaymentMethods_List_Error()
+    public async Task SpaceAdminPaymentMethods_List_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.list_payment_methods", 500,
-            () => tree.Space.PaymentMethods.ListAsync());
+            () => tree.SpaceAdmin.PaymentMethods.ListAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceSettings_Get_Success()
+    public async Task SpaceAdminSettings_Get_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Settings.GetAsync();
+        var body = await tree.SpaceAdmin.Settings.GetAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -563,21 +563,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceSettings_Get_Error()
+    public async Task SpaceAdminSettings_Get_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.get_space", 500,
-            () => tree.Space.Settings.GetAsync());
+            () => tree.SpaceAdmin.Settings.GetAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceSettings_Update_Success()
+    public async Task SpaceAdminSettings_Update_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Settings.UpdateAsync();
+        var body = await tree.SpaceAdmin.Settings.UpdateAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("PUT", j.Method);
@@ -585,21 +585,21 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceSettings_Update_Error()
+    public async Task SpaceAdminSettings_Update_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.update_space", 500,
-            () => tree.Space.Settings.UpdateAsync());
+            () => tree.SpaceAdmin.Settings.UpdateAsync());
         Assert.Equal(500, status);
     }
 
     [Fact]
-    public async Task SpaceUsage_Get_Success()
+    public async Task SpaceAdminUsage_Get_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Space.Usage.GetAsync();
+        var body = await tree.SpaceAdmin.Usage.GetAsync();
         Assert.NotNull(body);
         var j = Fixture.PatHarness.Journal.Last();
         Assert.Equal("GET", j.Method);
@@ -607,12 +607,12 @@ public class SpaceGeneratedTest : CoverageBase
     }
 
     [Fact]
-    public async Task SpaceUsage_Get_Error()
+    public async Task SpaceAdminUsage_Get_Error()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertPatErrorAsync("space.get_usage", 500,
-            () => tree.Space.Usage.GetAsync());
+            () => tree.SpaceAdmin.Usage.GetAsync());
         Assert.Equal(500, status);
     }
 }

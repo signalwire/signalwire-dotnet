@@ -268,7 +268,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ f1a26cd5c8d5f478f7e4282a344471ef56e20a6e",
+  "generated_from": "signalwire-dotnet @ e11db2bf51fc4e1e7311b695fd8d7b003053d185",
   "modules": {
     "signalwire": {
       "classes": {},

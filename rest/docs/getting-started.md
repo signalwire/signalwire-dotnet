@@ -64,7 +64,7 @@ var client = new RestClient(
 var clientFromEnv = new RestClient();
 ```
 
-The Space Administration API (`client.Space`: members, billing, balance, space
+The Space Administration API (`client.SpaceAdmin`: members, billing, balance, space
 settings) is the exception: it authenticates with a user's **Personal Access Token**
 instead of a project token. Pass it as `personalAccessToken` (or set
 `SIGNALWIRE_PERSONAL_ACCESS_TOKEN`); a client may carry both credentials. Calling a
@@ -73,7 +73,7 @@ before anything is sent.
 
 | Parameter | Env Var | Description |
 |-----------|---------|-------------|
-| `personalAccessToken` | `SIGNALWIRE_PERSONAL_ACCESS_TOKEN` | A user's Personal Access Token (`pat_...`), used only by `client.Space` |
+| `personalAccessToken` | `SIGNALWIRE_PERSONAL_ACCESS_TOKEN` | A user's Personal Access Token (`pat_...`), used only by `client.SpaceAdmin` |
 
 ```csharp
 using System;
@@ -82,7 +82,7 @@ using SignalWire.REST;
 using var admin = new RestClient(
     space: Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")!,
     personalAccessToken: "pat_your-token");
-var members = await admin.Space.Members.ListAsync();
+var members = await admin.SpaceAdmin.Members.ListAsync();
 Console.WriteLine($"Found {members?.Data?.Count ?? 0} members");
 ```
 

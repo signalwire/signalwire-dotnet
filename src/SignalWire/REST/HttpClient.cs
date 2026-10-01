@@ -196,37 +196,48 @@ public class HttpClient : IDisposable
     /// <param name="path">Absolute API path, appended to the base URL.</param>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options over the client default.</param>
-    /// <param name="headers">Extra request headers for this call only.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
-    public virtual async Task<Dictionary<string, object?>> GetAsync(
+    public virtual Task<Dictionary<string, object?>> GetAsync(
         string path, Dictionary<string, string>? queryParams = null,
         RequestOptions? requestOptions = null,
-        IReadOnlyDictionary<string, string>? headers = null,
+        CancellationToken cancellationToken = default)
+        => GetAsync(path, queryParams, requestOptions, null, cancellationToken);
+
+    /// <summary>GET with optional query-string parameters and extra request headers.</summary>
+    /// <param name="path">Absolute API path, appended to the base URL.</param>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options over the client default.</param>
+    /// <param name="options">Extra request headers for this call only.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public virtual async Task<Dictionary<string, object?>> GetAsync(
+        string path, Dictionary<string, string>? queryParams,
+        RequestOptions? requestOptions,
+        HeaderOptions? options,
         CancellationToken cancellationToken = default)
     {
         return await RequestAsync("GET", path, queryParams,
                 cancellationToken: cancellationToken, requestOptions: requestOptions,
-                headers: headers)
+                headers: options?.Headers)
             .ConfigureAwait(false);
     }
 
     /// <summary>
     /// GET whose success body is NOT JSON (e.g. <c>text/csv</c>): returns the body
     /// as text. Pass the media type as the <c>Accept</c> header. Errors are raised
-    /// exactly as <see cref="GetAsync"/> raises them.
+    /// exactly as <c>GetAsync</c> raises them.
     /// </summary>
     /// <param name="path">Absolute API path, appended to the base URL.</param>
     /// <param name="queryParams">Query-string parameters.</param>
     /// <param name="requestOptions">Per-call request options over the client default.</param>
-    /// <param name="headers">Extra request headers for this call only (e.g. <c>Accept: text/csv</c>).</param>
+    /// <param name="options">Extra request headers for this call only (e.g. <c>Accept: text/csv</c>).</param>
     /// <param name="cancellationToken">Cancels the request.</param>
     public virtual async Task<string> GetTextAsync(
         string path, Dictionary<string, string>? queryParams = null,
         RequestOptions? requestOptions = null,
-        IReadOnlyDictionary<string, string>? headers = null,
+        HeaderOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await SendAsync("GET", path, queryParams, null, requestOptions, headers,
+        var result = await SendAsync("GET", path, queryParams, null, requestOptions, options?.Headers,
                 ResponseKind.Text, cancellationToken)
             .ConfigureAwait(false);
         return (string)result;
@@ -256,20 +267,31 @@ public class HttpClient : IDisposable
     /// <summary>POST with JSON body.</summary>
     /// <param name="path">Absolute API path, appended to the base URL.</param>
     /// <param name="data">Value serialised as the JSON request body; <c>null</c> sends no body.</param>
+    /// <param name="requestOptions">Per-call request options over the client default.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public virtual Task<Dictionary<string, object?>> PostAsync(
+        string path, Dictionary<string, object?>? data = null,
+        RequestOptions? requestOptions = null,
+        CancellationToken cancellationToken = default)
+        => PostAsync(path, data, null, requestOptions, null, cancellationToken);
+
+    /// <summary>POST with JSON body, query-string parameters and extra request headers.</summary>
+    /// <param name="path">Absolute API path, appended to the base URL.</param>
+    /// <param name="data">Value serialised as the JSON request body; <c>null</c> sends no body.</param>
     /// <param name="queryParams">Query-string parameters (some create endpoints take both).</param>
     /// <param name="requestOptions">Per-call request options over the client default.</param>
-    /// <param name="headers">Extra request headers for this call only (e.g. an <c>Idempotency-Key</c>).</param>
+    /// <param name="options">Extra request headers for this call only (e.g. an <c>Idempotency-Key</c>).</param>
     /// <param name="cancellationToken">Cancels the request.</param>
     public virtual async Task<Dictionary<string, object?>> PostAsync(
-        string path, Dictionary<string, object?>? data = null,
-        Dictionary<string, string>? queryParams = null,
-        RequestOptions? requestOptions = null,
-        IReadOnlyDictionary<string, string>? headers = null,
+        string path, Dictionary<string, object?>? data,
+        Dictionary<string, string>? queryParams,
+        RequestOptions? requestOptions,
+        HeaderOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         return await RequestAsync("POST", path, queryParams, body: data,
                 cancellationToken: cancellationToken, requestOptions: requestOptions,
-                headers: headers)
+                headers: options?.Headers)
             .ConfigureAwait(false);
     }
 
@@ -730,4 +752,12 @@ public class HttpClient : IDisposable
         }
         _disposed = true;
     }
+}
+
+/// <summary>Named arguments for an <see cref="HttpClient"/> call: extra request
+/// headers sent with that call only.</summary>
+public sealed class HeaderOptions
+{
+    /// <summary>Headers to add (e.g. <c>Accept: text/csv</c>, <c>Idempotency-Key</c>).</summary>
+    public IReadOnlyDictionary<string, string>? Headers { get; init; }
 }

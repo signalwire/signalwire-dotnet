@@ -35,6 +35,9 @@ public sealed class RestClientTests : IDisposable
         Assert.Equal("proj-1", client.ProjectId);
         Assert.Equal("tok-1", client.Token);
         Assert.Equal("https://test.signalwire.com", client.BaseUrl);
+        // The 1.1.2 space-host getter; Space Administration is SpaceAdmin.
+        Assert.Equal("test.signalwire.com", client.Space);
+        Assert.IsType<SignalWire.REST.Namespaces.Generated.SpaceNamespace>(client.SpaceAdmin);
     }
 
     [Fact]

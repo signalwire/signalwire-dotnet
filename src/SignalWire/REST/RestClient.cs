@@ -28,6 +28,7 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
 {
     private readonly string _projectId;
     private readonly string _token;
+    private readonly string _space;
     private readonly string _baseUrl;
     private readonly HttpClient _http;
     private readonly HttpClient _patHttp;
@@ -91,6 +92,7 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
     {
         _projectId = creds.ProjectId;
         _token = creds.Token;
+        _space = creds.Space;
         _baseUrl = BuildBaseUrl(creds.Space);
         // The transports the base already owns, so RestClient can dispose them.
         _http = GeneratedHttp;
@@ -206,6 +208,10 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
 
     public string ProjectId => _projectId;
     public string Token => _token;
+
+    /// <summary>The space host this client talks to (e.g. <c>example.signalwire.com</c>).
+    /// The Space Administration API is <see cref="Namespaces.Generated.ResourceTree.SpaceAdmin"/>.</summary>
+    public string Space => _space;
     [SuppressMessage("Usage", "CA1056", Justification = "BaseUrl is a wire string sent verbatim to the SignalWire API.")]
     public string BaseUrl => _baseUrl;
     public HttpClient Http => _http;
