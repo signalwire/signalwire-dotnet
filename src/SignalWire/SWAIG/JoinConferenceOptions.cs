@@ -19,7 +19,7 @@ namespace SignalWire.SWAIG;
 /// <para>
 /// This record is a .NET-idiomatic convenience (a single options object instead
 /// of 18 positional arguments). The flat, all-string
-/// <see cref="FunctionResult.JoinConference(string, bool, string, bool, bool, string?, int, string, string?, string, string?, string?, string?, string, string?, string, string, object?)"/>
+/// <see cref="FunctionResult.JoinConference(string, bool, string, bool, bool, string?, int?, string, string?, string, string?, string?, string?, string, string?, string, string, object?)"/>
 /// overload remains the primary signature matching the Python API;
 /// the convenience overload delegates straight to it via each enum's
 /// <c>ToWireName()</c>, so the emitted <c>join_conference</c> action is identical.
@@ -48,8 +48,8 @@ public sealed record JoinConferenceOptions
     [SuppressMessage("Usage", "CA1056", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
     public string? WaitUrl { get; init; }
 
-    /// <summary>Maximum participants (1..=250). Python default: <c>250</c>.</summary>
-    public int MaxParticipants { get; init; } = 250;
+    /// <summary>Maximum participants, 2 or more. Python default: <c>None</c> (left out, so the platform default applies).</summary>
+    public int? MaxParticipants { get; init; }
 
     /// <summary>Recording mode. Python default: <c>"do-not-record"</c>.</summary>
     public ConferenceRecord Record { get; init; } = ConferenceRecord.DoNotRecord;

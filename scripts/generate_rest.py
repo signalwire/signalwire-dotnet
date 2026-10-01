@@ -1044,6 +1044,20 @@ def response_ref_leaf(spec: Spec, schema: dict) -> str:
     return type_name(raw)
 
 
+def list_response_item_cs(spec: Spec, op_id: str) -> str:
+    """For an operation whose 200/201 response is a top-level ARRAY of a named
+    object schema, the fully-qualified C# item DTO; else ''."""
+    schema = spec.op_response.get(op_id) or {}
+    if not (isinstance(schema, dict) and schema.get("type") == "array"):
+        return ""
+    if "$ref" in schema:
+        return ""
+    leaf = response_ref_leaf(spec, schema)
+    if not leaf:
+        return ""
+    return f"{TYPES_CS_NS_BASE}.{_types_subpackage(spec.name)}.{leaf}"
+
+
 def response_cs_type(spec: Spec, op_id: str) -> str:
     """The fully-qualified C# response type for an operation: the generated response
     DTO class (``Types.<Sub>.<Name>``) when the op has a named OBJECT response
@@ -1199,6 +1213,8 @@ def _returns_canonical(cs_type: str) -> str:
         return "dict<string,any>"
     if cs_type == "string":
         return "string"
+    if cs_type.startswith("List<") and cs_type.endswith(">"):
+        return f"list<{_returns_canonical(cs_type[5:-1])}>"
     # Types.<Sub>.<Leaf> -> class:signalwire.rest.namespaces.<ns>_types_generated.<Leaf>
     ns_prefix = TYPES_CS_NS_BASE + "."
     if cs_type.startswith(ns_prefix):
@@ -1567,7 +1583,11 @@ def method_call_path(spec: Spec, anchor: str, markup: dict, op_path: str):
             pre, post = m.group(1), m.group(3)
             pieces.append(
                 " + ".join(
-                    [*([cs_str(pre)] if pre else []), arg, *([cs_str(post)] if post else [])]
+                    [
+                        *([cs_str(pre)] if pre else []),
+                        arg,
+                        *([cs_str(post)] if post else []),
+                    ]
                 )
             )
         else:
@@ -1607,7 +1627,6 @@ def abs_cs_path(full: str, id_args: list[str]) -> str:
     return " + ".join(out) if out else '""'
 
 
-
 def op_response_kind(spec: Spec, op_id: str) -> tuple[str, str | None]:
     """How an operation's success is read, mirroring the reference generator:
     ``json`` (the default); ``text`` when the success body is another media type
@@ -1623,7 +1642,9 @@ def op_response_kind(spec: Spec, op_id: str) -> tuple[str, str | None]:
         return "text", text_media
     if not ok:
         for code, r in sorted(responses.items()):
-            if str(code).startswith("3") and "Location" in ((r or {}).get("headers") or {}):
+            if str(code).startswith("3") and "Location" in (
+                (r or {}).get("headers") or {}
+            ):
                 return "redirect", None
     return "json", None
 
@@ -1715,9 +1736,7 @@ def emit_method(
         doc.append(
             "    /// Returns the URL this endpoint redirects to (the <c>Location</c> of its"
         )
-        doc.append(
-            "    /// redirect), without following it or downloading anything."
-        )
+        doc.append("    /// redirect), without following it or downloading anything.")
     elif kind == "text":
         doc.append(f"    /// Returns the <c>{text_media}</c> response body as text.")
     doc.append("    /// </summary>")
@@ -1811,7 +1830,20 @@ def emit_method(
     sig = ", ".join(params)
     # DOTNET-1 typed returns: the operation's 200/201 response DTO, or Dictionary
     # when the response is a delete/union/non-object (mirroring dict[str, Any]).
-    if kind == "json":
+    list_item = list_response_item_cs(spec, op_id) if kind == "json" else ""
+    if list_item:
+        # A top-level ARRAY response is a list of the item type, not one item
+        # (the server sends ``[...]``, which the HttpClient wraps under "data").
+        ret_cs = f"List<{list_item}>"
+        m = re.match(r"^(\s*)return (.*);\s*$", call_line)
+        if not m:
+            raise SystemExit(f"typed-return: unrecognised call line {call_line!r}")
+        call_line = (
+            f"{m.group(1)}return SignalWire.REST.ResponseProjection.AsListAsync<"
+            f"{list_item}>({m.group(2)});"
+        )
+        ret_task = f"Task<List<{list_item}>?>"
+    elif kind == "json":
         ret_cs = response_cs_type(spec, op_id)
         ret_task, call_line = _typed_return(ret_cs, call_line)
     else:
@@ -2125,9 +2157,7 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
                     f"command {cmd!r}: x-sdk-compat-kwargs.{carg}: {into!r} not found"
                 )
             compat_kw.append((carg, parts[0], parts[1], root_props[parts[1]]))
-            fields = [
-                (n, sc, False if n == parts[0] else r) for n, sc, r in fields
-            ]
+            fields = [(n, sc, False if n == parts[0] else r) for n, sc, r in fields]
         autofill_keys: list[str] = []
         for wire_name, schema, _r in fields:
             af = schema.get("x-sdk-autofill") if isinstance(schema, dict) else None
@@ -2787,15 +2817,13 @@ def emit_resource_tree(placed) -> str:
         lines.append(f"    private {clsname}? _{acc[:1].lower() + acc[1:]};")
     lines.append("")
     lines.append(
-        "    /// <summary>Wire every resource: <paramref name=\"http\"/> carries the project"
+        '    /// <summary>Wire every resource: <paramref name="http"/> carries the project'
     )
     lines.append(
-        "    /// token, <paramref name=\"patHttp\"/> the Personal Access Token (the namespaces"
+        '    /// token, <paramref name="patHttp"/> the Personal Access Token (the namespaces'
     )
     lines.append("    /// whose spec security requires it).</summary>")
-    lines.append(
-        '    /// <param name="http">The project-credential transport.</param>'
-    )
+    lines.append('    /// <param name="http">The project-credential transport.</param>')
     lines.append(
         '    /// <param name="patHttp">The Personal Access Token transport.</param>'
     )

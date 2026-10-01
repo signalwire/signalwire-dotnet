@@ -30,13 +30,11 @@ typed (a $ref field -> the sibling generated class, so the signature enumerator
 records it as a ``class:`` accessor that matches the reference; a scalar field ->
 a primitive, excused by the diff as a port-side state accessor).
 
-The four ``<Verb>Action`` VALUE classes are NOT in the sig oracle — their
-properties are all scalar, so they surface method-less on both sides. The two
-ENVELOPE classes ARE: the oracle records ``SwaigAction.{context_switch, hold,
-playback_bg, transfer}`` and ``SwaigResponse.action``, i.e. exactly its
-class-typed fields. They are therefore emitted wire-key-verbatim (NOT
-pascal_props) and the signature enumerator gates their accessor emission on the
-oracle's own member set, so the 4 value classes stay method-less.
+The ``<Verb>Action`` VALUE classes and the two ENVELOPE classes are all in the
+sig oracle with accessors named by the wire key (``HoldAction.timeout_step``,
+``SwaigAction.context_switch``, ``SwaigResponse.action``). They are therefore
+emitted wire-key-verbatim (NOT pascal_props) and the signature enumerator gates
+their accessor emission on the oracle's own member set.
 
 Output: one class per file under a per-module subdir
   src/SignalWire/REST/Namespaces/Generated/GenTypes/PostPrompt/<snake>.cs
@@ -230,9 +228,10 @@ def _build_swaig_actions(psdk: Path) -> dict:
             if cs_name in emitted:
                 continue
             emitted.add(cs_name)
-            # The per-verb <Verb>Action VALUE classes are NOT in the sig oracle ->
-            # method-less both sides; PascalCase props (DOTNET-2) — wire preserved
-            # by [JsonPropertyName].
+            # The per-verb <Verb>Action VALUE classes: the signature oracle records
+            # their fields as accessors, wire-key verbatim (``timeout_step``), so
+            # they are emitted wire-key-verbatim like the envelopes; the
+            # enumerator's oracle gate decides which fields are recorded.
             fn, src = _emit(
                 SA_NS,
                 SA_SUBDIR,
@@ -240,7 +239,7 @@ def _build_swaig_actions(psdk: Path) -> dict:
                 b.get("properties") or {},
                 f"swaig-response action {verb!r} value object",
                 {},
-                pascal_props=True,
+                pascal_props=False,
             )
             outs[fn] = src
             env_ref_names[cs_name] = f"{SA_NS}.{cs_name}"

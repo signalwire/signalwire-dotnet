@@ -22,5 +22,5 @@ public class ChangeVoiceAction
 {
     /// <summary>Wire field <c>voice</c>.</summary>
     [JsonPropertyName("voice")]
-    public object? Voice { get; set; }
+    public object? voice { get; set; }
 }

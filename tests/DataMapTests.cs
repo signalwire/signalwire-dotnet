@@ -267,8 +267,7 @@ public class DataMapTests
     /// <c>unevaluatedProperties: {"not": {}}</c> and <c>body</c> is not one of
     /// them, so the document is invalid and the engine — which reads
     /// <c>params</c> and <c>headers</c> only — never sees the payload. Request
-    /// data goes on <c>params</c>; the builder has no <c>Body</c> method.
-    /// (Replaces the pair of tests that asserted the removed builder.)
+    /// data goes on <c>params</c>.
     /// </summary>
     [Fact]
     public void Webhook_NeverCarriesABodyKey()
@@ -280,6 +279,23 @@ public class DataMapTests
 
         Assert.False(wh.ContainsKey("body"));
         Assert.Equal("${args.val}", ((Dictionary<string, object>)wh["params"])["key"]);
+    }
+
+    /// <summary>
+    /// <c>Body</c> is the same as <c>Params</c>: the platform reads a webhook's
+    /// body from <c>params</c>, so the document carries <c>params</c> and never a
+    /// <c>body</c> key.
+    /// </summary>
+    [Fact]
+    public void Body_IsSerializedAsParams()
+    {
+        var dm = new DM("search");
+        dm.Webhook("POST", "https://api.example.com/search");
+        dm.Body(new Dictionary<string, object> { ["q"] = "${args.query}" });
+        var wh = ((List<Dictionary<string, object>>)((Dictionary<string, object>)dm.ToSwaigFunction()["data_map"])["webhooks"])[0];
+
+        Assert.False(wh.ContainsKey("body"));
+        Assert.Equal("${args.query}", ((Dictionary<string, object>)wh["params"])["q"]);
     }
 
     [Fact]

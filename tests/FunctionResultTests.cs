@@ -848,17 +848,26 @@ public class FunctionResultTests
     }
 
     [Fact]
-    public void JoinConference_MaxParticipantsTooHigh_Throws()
+    public void JoinConference_MaxParticipants_HasNoUpperLimit()
     {
-        var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().JoinConference("conf", maxParticipants: 300));
-        Assert.Contains("max_participants must be a positive integer <= 250", ex.Message);
+        // Python parity (test_join_conference_max_participants_has_no_upper_limit):
+        // the platform sets no upper limit.
+        var fr = new FunctionResult();
+        fr.JoinConference("conf", maxParticipants: 100001);
+        var jc = MainVerb(GetAction(fr, 0), "join_conference");
+        Assert.Equal(100001, jc["max_participants"]);
     }
 
-    [Fact]
-    public void JoinConference_MaxParticipantsZero_Throws()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public void JoinConference_MaxParticipantsBelowTwo_Throws(int value)
     {
-        var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().JoinConference("conf", maxParticipants: 0));
-        Assert.Contains("max_participants must be a positive integer <= 250", ex.Message);
+        // Python parity (test_join_conference_max_participants_below_two): the
+        // conference refuses fewer than 2.
+        var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().JoinConference("conf", maxParticipants: value));
+        Assert.Contains("max_participants must be an integer of at least 2", ex.Message);
     }
 
     [Fact]

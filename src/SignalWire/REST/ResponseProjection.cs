@@ -39,6 +39,23 @@ internal static class ResponseProjection
         return As<T>(dict);
     }
 
+    /// <summary>
+    /// Project a top-level ARRAY response onto a list of generated item DTOs. The
+    /// <see cref="HttpClient"/> wraps a top-level JSON array under <c>"data"</c>;
+    /// this re-projects that list. A <c>null</c>/absent list yields <c>null</c>.
+    /// </summary>
+    public static async Task<List<T>?> AsListAsync<T>(Task<Dictionary<string, object?>> raw)
+        where T : class
+    {
+        var dict = await raw.ConfigureAwait(false);
+        if (dict is null || !dict.TryGetValue("data", out var data) || data is null)
+        {
+            return null;
+        }
+        var json = JsonSerializer.Serialize(data, Options);
+        return JsonSerializer.Deserialize<List<T>>(json, Options);
+    }
+
     /// <summary>Synchronous projection of an already-decoded dictionary.</summary>
     public static T? As<T>(Dictionary<string, object?>? raw)
         where T : class

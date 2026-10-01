@@ -784,7 +784,7 @@ public class FunctionResult
     /// If <paramref name="beep"/>, <paramref name="record"/>, <paramref name="trim"/>,
     /// <paramref name="statusCallbackMethod"/>, or
     /// <paramref name="recordingStatusCallbackMethod"/> is outside its closed set,
-    /// if <paramref name="maxParticipants"/> is not in 1..=250, or if
+    /// if <paramref name="maxParticipants"/> is less than 2, or if
     /// <paramref name="name"/> is empty/whitespace.
     /// </exception>
     [SuppressMessage("Usage", "CA1054", Justification = "URL is a wire string sent verbatim to the SignalWire API")]
@@ -795,7 +795,7 @@ public class FunctionResult
         bool startOnEnter = true,
         bool endOnExit = false,
         string? waitUrl = null,
-        int maxParticipants = 250,
+        int? maxParticipants = null,
         string record = "do-not-record",
         string? region = null,
         string trim = "trim-silence",
@@ -814,8 +814,12 @@ public class FunctionResult
         if (Array.IndexOf(validBeep, beep) < 0)
             throw new ArgumentException($"beep must be one of {PyList(validBeep)}");
 
-        if (maxParticipants <= 0 || maxParticipants > 250)
-            throw new ArgumentException("max_participants must be a positive integer <= 250");
+        // The platform requires a positive number, and its conference refuses
+        // fewer than 2; it sets no upper limit.
+        if (maxParticipants is { } mp && mp < 2)
+            throw new ArgumentException(
+                "max_participants must be an integer of at least 2, got "
+                + mp.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         string[] validRecord = ["do-not-record", "record-from-start"];
         if (Array.IndexOf(validRecord, record) < 0)
@@ -839,7 +843,7 @@ public class FunctionResult
         // is just the conference-name string.
         bool allDefaults =
             !muted && beep == "true" && startOnEnter && !endOnExit &&
-            waitUrl is null && maxParticipants == 250 && record == "do-not-record" &&
+            waitUrl is null && maxParticipants is null && record == "do-not-record" &&
             region is null && trim == "trim-silence" && coach is null &&
             statusCallbackEvent is null && statusCallback is null &&
             statusCallbackMethod == "POST" && recordingStatusCallback is null &&
@@ -861,7 +865,7 @@ public class FunctionResult
             if (!startOnEnter) p["start_on_enter"] = startOnEnter;
             if (endOnExit) p["end_on_exit"] = endOnExit;
             if (!string.IsNullOrEmpty(waitUrl)) p["wait_url"] = waitUrl;
-            if (maxParticipants != 250) p["max_participants"] = maxParticipants;
+            if (maxParticipants is { } maxP) p["max_participants"] = maxP;
             if (record != "do-not-record") p["record"] = record;
             if (!string.IsNullOrEmpty(region)) p["region"] = region;
             if (trim != "trim-silence") p["trim"] = trim;
@@ -884,7 +888,7 @@ public class FunctionResult
 
     /// <summary>
     /// Typed-options overload of
-    /// <see cref="JoinConference(string, bool, string, bool, bool, string?, int, string, string?, string, string?, string?, string?, string, string?, string, string, object?)"/>.
+    /// <see cref="JoinConference(string, bool, string, bool, bool, string?, int?, string, string?, string, string?, string?, string?, string, string?, string, string, object?)"/>.
     /// Accepts the conference <paramref name="name"/> plus a single
     /// <see cref="JoinConferenceOptions"/> bag whose four closed-set fields are the
     /// typed <see cref="ConferenceBeep"/> / <see cref="ConferenceRecord"/> /
