@@ -42,7 +42,7 @@ public class CallingGeneratedTest : CoverageBase
 {
     public CallingGeneratedTest(MockServerFixture fixture) : base(fixture) { }
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 
     [Fact]
     public async Task Calling_AiHold_Success()
@@ -89,11 +89,121 @@ public class CallingGeneratedTest : CoverageBase
     }
 
     [Fact]
+    public async Task Calling_AiSidecarAsk_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Calling.AiSidecarAskAsync("x", "x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("calling.call-commands", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task Calling_AiSidecarAsk_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("calling.call-commands", 500,
+            () => tree.Calling.AiSidecarAskAsync("x", "x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task Calling_AiSidecar_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Calling.AiSidecarAsync("x", "x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("calling.call-commands", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task Calling_AiSidecar_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("calling.call-commands", 500,
+            () => tree.Calling.AiSidecarAsync("x", "x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task Calling_AiSidecarPoke_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Calling.AiSidecarPokeAsync("x", "x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("calling.call-commands", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task Calling_AiSidecarPoke_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("calling.call-commands", 500,
+            () => tree.Calling.AiSidecarPokeAsync("x", "x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task Calling_AiSidecarStatus_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Calling.AiSidecarStatusAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("calling.call-commands", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task Calling_AiSidecarStatus_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("calling.call-commands", 500,
+            () => tree.Calling.AiSidecarStatusAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task Calling_AiSidecarStop_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Calling.AiSidecarStopAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("calling.call-commands", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task Calling_AiSidecarStop_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("calling.call-commands", 500,
+            () => tree.Calling.AiSidecarStopAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
     public async Task Calling_AiStop_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Calling.AiStopAsync("x", "x");
+        var body = await tree.Calling.AiStopAsync("x");
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
@@ -106,7 +216,7 @@ public class CallingGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("calling.call-commands", 500,
-            () => tree.Calling.AiStopAsync("x", "x"));
+            () => tree.Calling.AiStopAsync("x"));
         Assert.Equal(500, status);
     }
 
@@ -291,7 +401,7 @@ public class CallingGeneratedTest : CoverageBase
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Calling.DialAsync("x", "x");
+        var body = await tree.Calling.DialAsync("x");
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
@@ -304,7 +414,7 @@ public class CallingGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("calling.call-commands", 500,
-            () => tree.Calling.DialAsync("x", "x"));
+            () => tree.Calling.DialAsync("x"));
         Assert.Equal(500, status);
     }
 
@@ -401,7 +511,7 @@ public class CallingGeneratedTest : CoverageBase
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Calling.PlayAsync("x", new List<object>());
+        var body = await tree.Calling.PlayAsync("x", new List<object?>());
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
@@ -414,7 +524,7 @@ public class CallingGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("calling.call-commands", 500,
-            () => tree.Calling.PlayAsync("x", new List<object>()));
+            () => tree.Calling.PlayAsync("x", new List<object?>()));
         Assert.Equal(500, status);
     }
 

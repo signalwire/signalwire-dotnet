@@ -23,4 +23,12 @@ public class CallFlowCreateRequest
     /// <summary>Wire field <c>title</c>.</summary>
     [JsonPropertyName("title")]
     public string? Title { get; set; }
+
+    /// <summary>Wire field <c>flow_data</c>.</summary>
+    [JsonPropertyName("flow_data")]
+    public Dictionary<string, object?>? FlowData { get; set; }
+
+    /// <summary>Wire field <c>relayml</c>.</summary>
+    [JsonPropertyName("relayml")]
+    public Dictionary<string, object?>? Relayml { get; set; }
 }

@@ -20,6 +20,12 @@ namespace SignalWire.Tests;
 /// </summary>
 public class ConstructionReadbackTests
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] CheckTimeTransferArray = new[] { "check_time", "transfer" };
+    private static readonly string[] AJsonBArray = new[] { "a.json", "b.json" };
+    private static readonly string[] VerifyEmailArray = new[] { "verify_email" };
+    private static readonly string[] ValetSpaArray = new[] { "valet", "spa" };
+    private static readonly string[] GreetByNameArray = new[] { "Greet by name." };
     // -----------------------------------------------------------------
     //  AgentBase
     // -----------------------------------------------------------------
@@ -46,7 +52,7 @@ public class ConstructionReadbackTests
             Name = "rb-native",
             NativeFunctions = new List<string> { "check_time", "transfer" },
         });
-        Assert.Equal(new[] { "check_time", "transfer" }, agent.NativeFunctions);
+        Assert.Equal(CheckTimeTransferArray, agent.NativeFunctions);
     }
 
     // -----------------------------------------------------------------
@@ -116,16 +122,18 @@ public class ConstructionReadbackTests
     }
 
     [Fact]
-    public void Client_JwtTokenIsReadableBack()
+    public async Task Client_JwtTokenIsReadableBack()
     {
         var client = new Client(new ClientOptions { JwtToken = "jwt-abc" });
+        await using var clientScope = client.ConfigureAwait(false);
         Assert.Equal("jwt-abc", client.JwtToken);
     }
 
     [Fact]
-    public void Action_CallResolvesThroughTheClientRegistry()
+    public async Task Action_CallResolvesThroughTheClientRegistry()
     {
         var client = new Client();
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new Dictionary<string, object?> { ["call_id"] = "c-act" }, client);
         client.Calls["c-act"] = call;
 
@@ -136,7 +144,9 @@ public class ConstructionReadbackTests
     [Fact]
     public void Action_CallIsNullWhenTheCallIsNoLongerRegistered()
     {
+#pragma warning disable CA2000 // ownership transfers to the caller / enclosing scope
         var action = new SignalWire.Relay.Action("ctrl-2", "c-gone", "node-1", new Client());
+#pragma warning restore CA2000
         Assert.Null(action.Call);
     }
 
@@ -167,8 +177,8 @@ public class ConstructionReadbackTests
     [Fact]
     public void ConfigLoader_ConfigPathsAreReadableBack()
     {
-        var loader = new ConfigLoader(new[] { "a.json", "b.json" });
-        Assert.Equal(new[] { "a.json", "b.json" }, loader.ConfigPaths);
+        var loader = new ConfigLoader(AJsonBArray);
+        Assert.Equal(AJsonBArray, loader.ConfigPaths);
     }
 
     [Fact]
@@ -213,7 +223,7 @@ public class ConstructionReadbackTests
         Assert.Equal("email", q.Type);
         Assert.True(q.Confirm);
         Assert.Equal("Repeat it back.", q.Prompt);
-        Assert.Equal(new[] { "verify_email" }, q.Functions);
+        Assert.Equal(VerifyEmailArray, q.Functions);
         Assert.True(q.Isolated);
     }
 
@@ -322,9 +332,9 @@ public class ConstructionReadbackTests
         });
 
         Assert.Equal("Grand Hotel", agent.VenueName);
-        Assert.Equal(new[] { "valet", "spa" }, agent.Services);
+        Assert.Equal(ValetSpaArray, agent.Services);
         Assert.Equal("8-6", agent.HoursOfOperation["mon"]);
-        Assert.Equal(new[] { "Greet by name." }, agent.SpecialInstructions);
+        Assert.Equal(GreetByNameArray, agent.SpecialInstructions);
 
         var prompt = RenderPrompt(agent);
         Assert.Contains("Grand Hotel", prompt, System.StringComparison.Ordinal);

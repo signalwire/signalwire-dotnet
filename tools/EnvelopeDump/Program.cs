@@ -80,14 +80,19 @@ internal static class EnvelopeDump
             Console.WriteLine(JsonSerializer.Serialize(results));
             return 0;
         }
+#pragma warning disable CA1031 // A CLI entry point must turn ANY failure into a
+        // non-zero exit + a diagnostic line the calling gate can parse.
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"EnvelopeDump: {ex}");
+            await Console.Error.WriteLineAsync($"EnvelopeDump: {ex}").ConfigureAwait(false);
             return 1;
         }
+#pragma warning restore CA1031
         finally
         {
-            try { spawned?.Process.Kill(true); } catch { /* best effort */ }
+            try { spawned?.Process.Kill(true); }
+            catch (InvalidOperationException) { /* already gone */ }
+            catch (System.ComponentModel.Win32Exception) { /* best effort */ }
         }
     }
 
@@ -110,7 +115,7 @@ internal static class EnvelopeDump
         string Path = GetPath,
         Dictionary<string, object?>? Body = null);
 
-    private static object ErrorsBody(string code, string message) =>
+    private static Dictionary<string, object?> ErrorsBody(string code, string message) =>
         new Dictionary<string, object?>
         {
             ["errors"] = new List<object?>
@@ -153,8 +158,10 @@ internal static class EnvelopeDump
     {
         // Fresh journal + scenarios per case so request_count is exact — mirrors
         // the oracle (diff_port_envelope.build_oracle).
-        await control.PostAsync($"{baseUrl}/__mock__/journal/reset", null).ConfigureAwait(false);
-        await control.PostAsync($"{baseUrl}/__mock__/scenarios/reset", null).ConfigureAwait(false);
+        (await control.PostAsync(new Uri($"{baseUrl}/__mock__/journal/reset"), null)
+            .ConfigureAwait(false)).Dispose();
+        (await control.PostAsync(new Uri($"{baseUrl}/__mock__/scenarios/reset"), null)
+            .ConfigureAwait(false)).Dispose();
 
         if (!c.Transport && c.Status is not null)
         {
@@ -173,7 +180,7 @@ internal static class EnvelopeDump
                 using var content = new StringContent(
                     JsonSerializer.Serialize(scenario), Encoding.UTF8, "application/json");
                 var url = $"{baseUrl}/__mock__/scenarios/{c.Endpoint}?session_id={Uri.EscapeDataString(authHeader)}";
-                await control.PostAsync(url, content).ConfigureAwait(false);
+                (await control.PostAsync(new Uri(url), content).ConfigureAwait(false)).Dispose();
             }
         }
 
@@ -218,6 +225,9 @@ internal static class EnvelopeDump
             artifact["status_code"] = e.StatusCode == 0 ? (int?)null : e.StatusCode;
             artifact["body_error_code"] = DecodeBodyErrorCode(e.ResponseBody);
         }
+#pragma warning disable CA1031 // The catch-all IS the assertion: this dump must
+        // OBSERVE a leaked non-family exception to record it, so narrowing the catch
+        // would delete the very finding the differ looks for.
         catch (Exception e)
         {
             // A leaked, non-family exception -- the contract violation the differ
@@ -225,6 +235,7 @@ internal static class EnvelopeDump
             artifact["raised"] = true;
             artifact["error_kind"] = "bare:" + e.GetType().Name;
         }
+#pragma warning restore CA1031
 
         // Count how many times the mock actually saw this route (retry check),
         // scoped to this case's auth header.
@@ -241,7 +252,7 @@ internal static class EnvelopeDump
         string baseUrl, string authHeader, string path, System.Net.Http.HttpClient control)
     {
         var url = $"{baseUrl}/__mock__/journal?session_id={Uri.EscapeDataString(authHeader)}";
-        var resp = await control.GetAsync(url).ConfigureAwait(false);
+        using var resp = await control.GetAsync(new Uri(url)).ConfigureAwait(false);
         var text = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         // The journal endpoint returns either a bare array or {entries:[...]}.
@@ -259,11 +270,16 @@ internal static class EnvelopeDump
         return entries.Count(e => e.Path == path);
     }
 
+    // Instantiated by System.Text.Json, never by this code (CA1812).
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812",
+        Justification = "Deserialization target — constructed reflectively by System.Text.Json.")]
     private sealed class JournalWrapper
     {
         public List<JournalEntry>? Entries { get; set; }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812",
+        Justification = "Deserialization target — constructed reflectively by System.Text.Json.")]
     private sealed class JournalEntry
     {
         public string? Path { get; set; }
@@ -300,7 +316,7 @@ internal static class EnvelopeDump
     /// <summary>Bind then immediately release a loopback TCP port -- a DEAD port once released.</summary>
     private static int DeadPort()
     {
-        var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
+        using var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         try { return ((IPEndPoint)listener.LocalEndpoint).Port; }
         finally { listener.Stop(); }
@@ -331,7 +347,9 @@ internal static class EnvelopeDump
         // Otherwise pick a free port and spawn our own.
         var freePort = PickFreePort();
         var spawnUrl = $"http://{host}:{freePort}";
+#pragma warning disable CA2000 // ownership transfers to _spawned/MockProcess below
         var proc = SpawnMock(host, freePort);
+#pragma warning restore CA2000
         _spawned = new MockProcess(proc);
 
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
@@ -345,7 +363,10 @@ internal static class EnvelopeDump
             }
             await Task.Delay(150).ConfigureAwait(false);
         }
-        try { proc.Kill(true); } catch { /* best effort */ }
+        try { proc.Kill(true); }
+        catch (InvalidOperationException) { /* already gone */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+        proc.Dispose();
         throw new InvalidOperationException(
             $"mock_signalwire did not become ready within 30s on {spawnUrl}.");
     }
@@ -354,17 +375,23 @@ internal static class EnvelopeDump
     {
         try
         {
-            var resp = await client.GetAsync($"{baseUrl}/__mock__/health").ConfigureAwait(false);
+            using var resp = await client.GetAsync(new Uri($"{baseUrl}/__mock__/health"))
+                .ConfigureAwait(false);
             if (!resp.IsSuccessStatusCode) return false;
             var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
             return body.Contains("\"specs_loaded\"", StringComparison.Ordinal);
         }
-        catch { return false; }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
+                                      or OperationCanceledException)
+        {
+            // Not up yet (connection refused / timeout) — that is what this probe asks.
+            return false;
+        }
     }
 
     private static int PickFreePort()
     {
-        var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
+        using var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         try { return ((IPEndPoint)listener.LocalEndpoint).Port; }
         finally { listener.Stop(); }
@@ -385,7 +412,7 @@ internal static class EnvelopeDump
         psi.ArgumentList.Add("--host");
         psi.ArgumentList.Add(host);
         psi.ArgumentList.Add("--port");
-        psi.ArgumentList.Add(port.ToString());
+        psi.ArgumentList.Add(port.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--log-level");
         psi.ArgumentList.Add("error");
 
@@ -419,7 +446,7 @@ internal static class EnvelopeDump
         {
             if (string.IsNullOrEmpty(anchor)) continue;
             var dir = new DirectoryInfo(System.IO.Path.GetFullPath(anchor));
-            while (dir is not null)
+            while (true)
             {
                 var parent = dir.Parent;
                 if (parent is null) break;

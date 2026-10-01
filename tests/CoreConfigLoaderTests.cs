@@ -12,8 +12,13 @@ using Xunit;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class CoreConfigLoaderTests : IDisposable
+public sealed class CoreConfigLoaderTests : IDisposable
 {
+    // Hoisted so the literal is allocated once (CA1861).
+    private static readonly string[] HostAndStatic = ["${SW_HOST}", "static"];
+
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] NonexistentDefinitelyNotArray = new[] { "/nonexistent/definitely-not-here.json" };
     private readonly List<string> _tempDirs = new();
     private readonly List<string> _envKeys = new();
 
@@ -75,7 +80,7 @@ public class CoreConfigLoaderTests : IDisposable
     [Fact]
     public void NoConfigWhenMissing()
     {
-        var loader = new ConfigLoader(new[] { "/nonexistent/definitely-not-here.json" });
+        var loader = new ConfigLoader(NonexistentDefinitelyNotArray);
 
         Assert.False(loader.HasConfig());
         Assert.Null(loader.GetConfigFile());
@@ -136,7 +141,7 @@ public class CoreConfigLoaderTests : IDisposable
         SetEnv("SW_HOST", "example.com");
         var path = WriteConfig(new
         {
-            server = new { host = "${SW_HOST}", list = new[] { "${SW_HOST}", "static" } },
+            server = new { host = "${SW_HOST}", list = HostAndStatic },
         });
         var loader = new ConfigLoader(new[] { path });
 

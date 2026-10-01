@@ -52,7 +52,7 @@ The purpose of tests, examples, and docs is to **prove** complete implementation
 - [x] HMAC-SHA256 token creation (functionName:callID:expiry, signed, base64)
 - [x] Token validation (timing-safe comparison, expiry check)
 - [x] Random 32-byte secret per manager — fail hard if entropy unavailable
-- [x] Default expiry: 3600 seconds
+- [x] Default expiry: 900 seconds (15 minutes, matching the reference)
 - [x] Tests: token round-trip, wrong function/callID rejected, expired rejected, tampered rejected
 
 ### DataMap
@@ -275,7 +275,7 @@ Tests are proof of implementation. The port must test **everything the Python SD
 - [x] All 40+ SwaigFunctionResult action methods present (including payment helpers)
 - [x] All 38 SWML verb methods present and schema-validated
 - [x] RELAY client: 4 correlation mechanisms implemented
-- [x] REST client: all 22 namespaces initialized with correct paths
+- [x] REST client: all 24 namespaces initialized with correct paths
 - [x] Skills registry: all 18 built-in skills registered
 - [x] agent.AddSkill() one-liner integration works (not just manual SkillManager)
 - [x] SIP username extraction utility exists

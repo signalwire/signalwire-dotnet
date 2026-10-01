@@ -28,9 +28,9 @@ public class CXMLScriptResponse
     [JsonPropertyName("project_id")]
     public string? ProjectId { get; set; }
 
-    /// <summary>Wire field <c>name</c>.</summary>
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
+    /// <summary>Wire field <c>display_name</c>.</summary>
+    [JsonPropertyName("display_name")]
+    public string? DisplayName { get; set; }
 
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]

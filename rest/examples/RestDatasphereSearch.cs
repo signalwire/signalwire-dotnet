@@ -9,16 +9,18 @@
 
 using SignalWire.REST;
 
-var client = new RestClient(
+using var client = new RestClient(
     projectId: Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    token:     Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    token: Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    space:     Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
+    space: Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
-async Task<T?> Safe<T>(string label, Func<Task<T>> fn) where T : class
+// Every typed REST verb returns `T?`, so the helper is written over `T?` and
+// hands back `default` on failure rather than constraining T to a class.
+async Task<T?> Safe<T>(string label, Func<Task<T?>> fn)
 {
     try
     {
@@ -26,10 +28,10 @@ async Task<T?> Safe<T>(string label, Func<Task<T>> fn) where T : class
         Console.WriteLine($"  {label}: OK");
         return result;
     }
-    catch (Exception ex)
+    catch (SignalWireRestError ex)
     {
         Console.WriteLine($"  {label}: failed ({ex.Message})");
-        return null;
+        return default;
     }
 }
 
@@ -42,7 +44,7 @@ var doc = await Safe("Upload document", () => client.Datasphere.Documents.Create
 
 if (doc != null)
 {
-    var docId = doc.GetValueOrDefault("id")?.ToString() ?? "";
+    var docId = doc.Id ?? "";
     Console.WriteLine($"  Document ID: {docId}");
 
     // 2. Check document status
@@ -50,7 +52,7 @@ if (doc != null)
     await Safe("Get document", async () =>
     {
         var details = await client.Datasphere.Documents.GetAsync(docId);
-        Console.WriteLine($"    Status: {details.GetValueOrDefault("status")}");
+        Console.WriteLine($"    Status: {details?.Status}");
         return details;
     });
 }
@@ -60,13 +62,9 @@ Console.WriteLine("\nListing Datasphere documents...");
 await Safe("List documents", async () =>
 {
     var docs = await client.Datasphere.Documents.ListAsync();
-    var data = docs.GetValueOrDefault("data") as List<object> ?? new();
-    foreach (var item in data.Take(5))
+    foreach (var d in (docs?.Data ?? []).Take(5))
     {
-        if (item is Dictionary<string, object?> d)
-        {
-            Console.WriteLine($"    - {d.GetValueOrDefault("id")}: {d.GetValueOrDefault("status")}");
-        }
+        Console.WriteLine($"    - {d.Id}: {d.Status}");
     }
     return docs;
 });
@@ -78,7 +76,8 @@ await Safe("Search", async () =>
     var result = await client.Datasphere.Documents.SearchAsync(
         queryString: "How do I reset my password?",
         count: 5);
-    Console.WriteLine($"    Search returned results");
+    // The typed search response carries the matched chunks.
+    Console.WriteLine($"    Search returned {(result?.Chunks ?? []).Count} chunk(s)");
     return result;
 });
 

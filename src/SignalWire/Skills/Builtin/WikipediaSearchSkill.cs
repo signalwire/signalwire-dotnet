@@ -144,8 +144,7 @@ public sealed class WikipediaSearchSkill : SkillBase
 
     /// <summary>
     /// Search Wikipedia for <paramref name="query"/> and return the matching
-    /// article summary/summaries as a formatted string. Mirrors the Python
-    /// reference ``WikipediaSearchSkill.search_wiki``.
+    /// article summary/summaries as a formatted string.
     /// </summary>
     [SuppressMessage("Design", "CA1031", Justification = "Best-effort Wikipedia API call; any failure is surfaced to the caller as an in-band error string.")]
     public string SearchWiki(string query)

@@ -121,8 +121,7 @@ foreach (var entry in corpus.EnumerateArray())
     result[id] = contracts;
 }
 
-var opts = new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
-Console.WriteLine(JsonSerializer.Serialize(result, opts));
+Console.WriteLine(JsonSerializer.Serialize(result, EmitSkillsJson.Options));
 
 // Convert the corpus JSON config object into the Dictionary<string,object>
 // shape skills expect (recursively, matching how the platform hands config in).
@@ -159,4 +158,14 @@ static object JsonArrayToList(JsonElement el)
         return items.Cast<Dictionary<string, object>>().ToList();
     }
     return items;
+}
+
+
+/// <summary>Serializer options, cached in a static so they are allocated once (CA1869).</summary>
+internal static class EmitSkillsJson
+{
+    public static readonly JsonSerializerOptions Options = new()
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
 }

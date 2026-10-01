@@ -20,7 +20,119 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class UnsetMetaDataAction
 {
+    /// <summary>Wire field <c>SWML</c>.</summary>
+    [JsonPropertyName("SWML")]
+    public object? SWML { get; set; }
+
+    /// <summary>Wire field <c>add_dynamic_hints</c>.</summary>
+    [JsonPropertyName("add_dynamic_hints")]
+    public List<object?>? AddDynamicHints { get; set; }
+
+    /// <summary>Wire field <c>back_to_back_functions</c>.</summary>
+    [JsonPropertyName("back_to_back_functions")]
+    public object? BackToBackFunctions { get; set; }
+
+    /// <summary>Wire field <c>change_context</c>.</summary>
+    [JsonPropertyName("change_context")]
+    public string? ChangeContext { get; set; }
+
+    /// <summary>Wire field <c>change_step</c>.</summary>
+    [JsonPropertyName("change_step")]
+    public string? ChangeStep { get; set; }
+
+    /// <summary>Wire field <c>change_voice</c>.</summary>
+    [JsonPropertyName("change_voice")]
+    public object? ChangeVoice { get; set; }
+
+    /// <summary>Wire field <c>clear_dynamic_hints</c>.</summary>
+    [JsonPropertyName("clear_dynamic_hints")]
+    public bool? ClearDynamicHints { get; set; }
+
+    /// <summary>Wire field <c>context_switch</c>.</summary>
+    [JsonPropertyName("context_switch")]
+    public object? ContextSwitch { get; set; }
+
+    /// <summary>Wire field <c>end_of_speech_timeout</c>.</summary>
+    [JsonPropertyName("end_of_speech_timeout")]
+    public long? EndOfSpeechTimeout { get; set; }
+
+    /// <summary>Wire field <c>extensive_data</c>.</summary>
+    [JsonPropertyName("extensive_data")]
+    public bool? ExtensiveData { get; set; }
+
+    /// <summary>Wire field <c>functions_on_speaker_timeout</c>.</summary>
+    [JsonPropertyName("functions_on_speaker_timeout")]
+    public bool? FunctionsOnSpeakerTimeout { get; set; }
+
+    /// <summary>Wire field <c>hangup</c>.</summary>
+    [JsonPropertyName("hangup")]
+    public bool? Hangup { get; set; }
+
+    /// <summary>Wire field <c>hold</c>.</summary>
+    [JsonPropertyName("hold")]
+    public object? Hold { get; set; }
+
+    /// <summary>Wire field <c>playback_bg</c>.</summary>
+    [JsonPropertyName("playback_bg")]
+    public object? PlaybackBg { get; set; }
+
+    /// <summary>Wire field <c>replace_in_history</c>.</summary>
+    [JsonPropertyName("replace_in_history")]
+    public object? ReplaceInHistory { get; set; }
+
+    /// <summary>Wire field <c>say</c>.</summary>
+    [JsonPropertyName("say")]
+    public string? Say { get; set; }
+
+    /// <summary>Wire field <c>set_global_data</c>.</summary>
+    [JsonPropertyName("set_global_data")]
+    public Dictionary<string, object?>? SetGlobalData { get; set; }
+
+    /// <summary>Wire field <c>set_meta_data</c>.</summary>
+    [JsonPropertyName("set_meta_data")]
+    public Dictionary<string, object?>? SetMetaData { get; set; }
+
+    /// <summary>Wire field <c>settings</c>.</summary>
+    [JsonPropertyName("settings")]
+    public Dictionary<string, object?>? Settings { get; set; }
+
+    /// <summary>Wire field <c>speech_event_timeout</c>.</summary>
+    [JsonPropertyName("speech_event_timeout")]
+    public long? SpeechEventTimeout { get; set; }
+
+    /// <summary>Wire field <c>stop</c>.</summary>
+    [JsonPropertyName("stop")]
+    public bool? Stop { get; set; }
+
+    /// <summary>Wire field <c>stop_playback_bg</c>.</summary>
+    [JsonPropertyName("stop_playback_bg")]
+    public bool? StopPlaybackBg { get; set; }
+
+    /// <summary>Wire field <c>toggle_functions</c>.</summary>
+    [JsonPropertyName("toggle_functions")]
+    public List<object?>? ToggleFunctions { get; set; }
+
+    /// <summary>Wire field <c>transfer</c>.</summary>
+    [JsonPropertyName("transfer")]
+    public object? Transfer { get; set; }
+
+    /// <summary>Wire field <c>unset_global_data</c>.</summary>
+    [JsonPropertyName("unset_global_data")]
+    public object? UnsetGlobalData { get; set; }
+
     /// <summary>Wire field <c>unset_meta_data</c>.</summary>
     [JsonPropertyName("unset_meta_data")]
     public object? UnsetMetaData { get; set; }
+
+    /// <summary>Wire field <c>user_event</c>.</summary>
+    [JsonPropertyName("user_event")]
+    public Dictionary<string, object?>? UserEvent { get; set; }
+
+    /// <summary>Wire field <c>user_input</c>.</summary>
+    [JsonPropertyName("user_input")]
+    public string? UserInput { get; set; }
+
+    /// <summary>Wire field <c>wait_for_user</c>.</summary>
+    [JsonPropertyName("wait_for_user")]
+    public object? WaitForUser { get; set; }
 }

@@ -71,11 +71,17 @@ public class ShortCodes
     /// <param name="messageRelayContext">Wire field <c>message_relay_context</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.ShortCodeResponse?> UpdateAsync(string id, string name, string messageHandler, string? messageRequestUrl = null, string? messageRequestMethod = null, string? messageFallbackUrl = null, string? messageFallbackMethod = null, string? messageLamlApplicationId = null, string? messageRelayContext = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.ShortCodeResponse?> UpdateAsync(string id, string? name = null, string? messageHandler = null, string? messageRequestUrl = null, string? messageRequestMethod = null, string? messageFallbackUrl = null, string? messageFallbackMethod = null, string? messageLamlApplicationId = null, string? messageRelayContext = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
-        _reqBody["name"] = name;
-        _reqBody["message_handler"] = messageHandler;
+        if (name is not null)
+        {
+            _reqBody["name"] = name;
+        }
+        if (messageHandler is not null)
+        {
+            _reqBody["message_handler"] = messageHandler;
+        }
         if (messageRequestUrl is not null)
         {
             _reqBody["message_request_url"] = messageRequestUrl;

@@ -134,6 +134,43 @@ public static class WebhookValidator
     }
 
     /// <summary>
+    /// Validate the SHA-256 webhook signature (Scheme A with a stronger hash):
+    /// <c>hex(HMAC-SHA256(signingKey, url + rawBody))</c>, the value SignalWire
+    /// sends as <c>X-SignalWire-Sha256-Signature</c> alongside the SHA-1
+    /// <c>X-SignalWire-Signature</c>. Only Scheme A (RELAY/SWML/JSON) is defined
+    /// for this header; the legacy cXML/form Scheme B stays on SHA-1 — see
+    /// <see cref="ValidateWebhookSignature"/>.
+    /// </summary>
+    /// <param name="signingKey">The customer's Signing Key. Null/empty throws.</param>
+    /// <param name="signature">The <c>X-SignalWire-Sha256-Signature</c> header value
+    /// (64-char lowercase hex). Missing/empty returns false.</param>
+    /// <param name="url">The full public URL SignalWire POSTed to.</param>
+    /// <param name="rawBody">The raw request body, BEFORE any parsing.</param>
+    /// <returns><c>true</c> if the SHA-256 signature matches.</returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="signingKey"/> is null or empty.
+    /// </exception>
+    [SuppressMessage("Usage", "CA1054", Justification = "URL is the wire string the platform signed verbatim; it is concatenated byte-for-byte into the HMAC message, so a Uri round-trip could alter the signed bytes.")]
+    public static bool ValidateWebhookSignatureSha256(
+        string signingKey,
+        string? signature,
+        string url,
+        string? rawBody)
+    {
+        if (string.IsNullOrEmpty(signingKey))
+        {
+            throw new ArgumentException("signingKey is required", nameof(signingKey));
+        }
+        if (string.IsNullOrEmpty(signature))
+        {
+            return false;
+        }
+
+        var expected = HexHmacSha256(signingKey, (url ?? "") + (rawBody ?? ""));
+        return SafeEquals(expected, signature);
+    }
+
+    /// <summary>
     /// Legacy <c>@signalwire/compatibility-api</c> drop-in entry point.
     ///
     /// <para>If <paramref name="paramsOrRawBody"/> is a <see cref="string"/>,
@@ -306,6 +343,16 @@ public static class WebhookValidator
         var keyBytes = Encoding.UTF8.GetBytes(key);
         var msgBytes = Encoding.UTF8.GetBytes(message);
         var digest = HMACSHA1.HashData(keyBytes, msgBytes);
+        return Convert.ToHexString(digest).ToLowerInvariant();
+    }
+
+    /// <summary>SHA-256 Scheme-A digest: lowercase hex of HMAC-SHA256.</summary>
+    [SuppressMessage("Globalization", "CA1308", Justification = "Lowercase hex is the digest form sent on the wire and compared verbatim against the X-SignalWire-Sha256-Signature header.")]
+    private static string HexHmacSha256(string key, string message)
+    {
+        var keyBytes = Encoding.UTF8.GetBytes(key);
+        var msgBytes = Encoding.UTF8.GetBytes(message);
+        var digest = HMACSHA256.HashData(keyBytes, msgBytes);
         return Convert.ToHexString(digest).ToLowerInvariant();
     }
 

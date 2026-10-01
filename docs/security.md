@@ -85,6 +85,10 @@ is used. These are the .NET analogue of pointing Python's REST session at a
 | `SWML_MAX_REQUEST_SIZE` | `10485760` | Maximum inbound request body size in bytes (default 10MB) |
 | `SWML_REQUEST_TIMEOUT` | `30` | Per-request timeout in seconds |
 | `SWML_ALLOW_PRIVATE_URLS` | `false` | Allow SWML/webhook URLs that resolve to private/loopback addresses (SSRF guard bypass) |
+| `SWML_URL_FETCH_USE_PROXY` | `false` | Let the user-URL fetch session (`PublicSession`, used by the Spider skill) go through `HTTP_PROXY`/`HTTPS_PROXY`. Off by default because through a proxy the connected-peer check cannot apply; use only with a proxy that restricts destinations itself |
+| `SWML_SYNC_HANDLERS_INLINE` | `false` | Serve requests one at a time on the listener thread instead of on thread-pool workers (`SyncHandlers`). Default: concurrent, so a blocking handler does not hold up other calls |
+| `SIGNALWIRE_CHAT_GATEWAY_KEY` | generated | Publishable key a `ChatGateway` accepts from the browser widget, when none is passed in code |
+| `SIGNALWIRE_CHAT_GATEWAY_SECRET` | random per process | HMAC key that signs `ChatGateway` conversation handles. Set it in production: a per-process key invalidates every outstanding handle on restart and across replicas |
 
 ## Authentication Details
 

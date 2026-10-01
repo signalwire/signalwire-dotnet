@@ -1,0 +1,73 @@
+# ruff.toml — Python lint + format policy for signalwire-dotnet.
+#
+# This repo is a .NET SDK, but its build/audit infrastructure is Python:
+# scripts/enumerate_*.py (the surface + signature adapters the DRIFT/SIGNATURES
+# gates read) and scripts/generate_*.py (the REST/RELAY/SWML/SWAIG code
+# generators the GEN-FRESH gates re-run), plus the adapter-golden runner under
+# tests/. That code is load-bearing — a defect in it corrupts the artifacts every
+# parity gate compares against — so it is linted at the same bar as the shipped
+# C# library (owner ruling 2026-07-30: every directory in the repo is linted and
+# formatted at the bar the shipped library already meets).
+#
+# SCOPE: the WHOLE tree. Nothing is directory-excluded — there is no vendored
+# third-party Python here to exclude. The `exclude` below is only build output
+# (obj/, bin/) and gitignored scratch, which contain no source we own.
+#
+# Rule selection MIRRORS the python reference (signalwire-python/pyproject.toml
+# [tool.ruff.lint] select) so the fleet is consistent — deliberately not a
+# locally-invented set.
+
+target-version = "py310"
+line-length = 88
+
+# Build output + gitignored scratch only. NOT a source carve-out.
+exclude = ["obj", "bin", ".sw-tmp", ".dotnet-tools"]
+
+[format]
+# Pin STABLE formatting explicitly (mirrors the reference): without this, CI can
+# resolve preview-mode formatting while a local run leaves the file unchanged —
+# a local != CI split with no visible cause.
+preview = false
+
+[lint]
+# E4/E7/E9 + F are the ruff defaults (E501 line-length intentionally excluded —
+# formatting is owned by `ruff format`, not the linter). B = flake8-bugbear
+# (likely-bug patterns), S = flake8-bandit (security smells). Identical to
+# signalwire-python's select list.
+select = ["E4", "E7", "E9", "F", "B", "S", "C4", "PERF", "SIM", "PTH", "RET", "RUF", "UP"]
+
+[lint.per-file-ignores]
+# ── Rule-level exceptions. Each names ONE rule, says why the construct is
+# CORRECT here, and leaves the rule ON everywhere else. No directory blankets.
+
+# The three adapter/generator entry points must resolve porting-sdk (via
+# $PORTING_SDK or repo adjacency) and push it onto sys.path BEFORE importing the
+# sibling module that lives there — so imports-not-at-top is structurally forced
+# by the bootstrap, not sloppiness. Same shape as the reference's conftest.py
+# E402 grant. Scoped per-file, so a NEW stray import elsewhere still reds the gate.
+"scripts/enumerate_signatures.py" = ["E402", "S603"]
+"tests/dotnet_adapter_goldens/run_goldens.py" = ["E402", "S603"]
+
+# S603 (subprocess call) / S607 (partial executable path). Every subprocess site
+# in this repo's Python drives the LOCAL BUILD TOOLCHAIN with a FIXED list-form
+# arg vector and the default shell=False, so there is no shell to interpolate
+# into and no untrusted input reaches the command line:
+#   * enumerate_signatures.py / run_goldens.py — `dotnet` resolved to an ABSOLUTE
+#     path via shutil.which() (fail-loud if absent), then `run --project <a
+#     committed .csproj path>`. No S607: the executable is already absolute.
+#   * enumerate_surface.py — `git -C <this repo> rev-parse HEAD` to stamp the
+#     artifact's provenance sha.
+#   * generate_example_projects.py — `git -C <this repo> ls-files <example
+#     roots>/*.cs`. Asking GIT rather than walking the filesystem is the POINT: it
+#     is what keeps untracked scratch .cs files out of the generated project list,
+#     which no os.walk / Path.glob can replicate. Structurally identical to the
+#     enumerate_surface.py grant directly above — fixed list-form arg vector, this
+#     repo's own path, shell=False.
+#   * generate_rest_tests.py — `bash <repo>/scripts/rest-test-plan.sh`, the
+#     committed wrapper it must shell to capture the real client's call plan.
+# `git`/`bash` are PATH-resolved (S607), which is the normal idiom for a
+# developer-run build script and matches the reference's own dokku.py grant.
+# Scoped per-file so a NEW subprocess call anywhere else still reds the gate.
+"scripts/enumerate_surface.py" = ["S603", "S607"]
+"scripts/generate_example_projects.py" = ["S603", "S607"]
+"scripts/generate_rest_tests.py" = ["S603", "S607"]

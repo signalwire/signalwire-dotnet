@@ -47,7 +47,7 @@ public class TlsRestHttpsTest
             "mock_signalwire --tls did not become ready (~15s cold start; is python3 + porting-sdk available?)");
 
         // Build a real REST HttpClient that talks HTTPS via the trusting transport.
-        var sdkHttp = new SignalWire.REST.HttpClient("test_proj", "test_tok", mock!.BaseUrl, trustingHttp);
+        using var sdkHttp = new SignalWire.REST.HttpClient("test_proj", "test_tok", mock!.BaseUrl, trustingHttp);
         var addresses = new Addresses(sdkHttp);
 
         // GET a spec-backed collection endpoint over HTTPS. A real JSON response
@@ -68,7 +68,7 @@ public class TlsRestHttpsTest
         using var untrusted = BuildHttp(rejecting.Validate);
         var ex = await Assert.ThrowsAnyAsync<Exception>(async () =>
         {
-            await untrusted.GetAsync(mock.BaseUrl + "/__mock__/health");
+            await untrusted.GetAsync(new Uri(mock.BaseUrl + "/__mock__/health")).ConfigureAwait(false);
         });
         Assert.True(
             ex is System.Net.Http.HttpRequestException
@@ -84,14 +84,18 @@ public class TlsRestHttpsTest
         {
             ServerCertificateCustomValidationCallback = validate,
         };
+#pragma warning disable CA5399, CA5400 // Loopback test client against a mock
+        // with a self-signed cert: there is no revocation endpoint to check, and
+        // enabling the check makes the test depend on outbound network access.
         return new System.Net.Http.HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
+#pragma warning restore CA5399, CA5400
     }
 
     private readonly record struct JournalView(string? Method, string? Path);
 
     private static async Task<JournalView> LastJournalAsync(string baseUrl, System.Net.Http.HttpClient http)
     {
-        var body = await http.GetStringAsync(baseUrl + "/__mock__/journal");
+        var body = await http.GetStringAsync(new Uri(baseUrl + "/__mock__/journal")).ConfigureAwait(false);
         using var doc = JsonDocument.Parse(body);
         Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
         var arr = doc.RootElement;

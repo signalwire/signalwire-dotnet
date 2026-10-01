@@ -59,16 +59,28 @@ public class Calling
     /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
     /// <param name="statusEvents">Wire param <c>status_events</c>.</param>
     /// <param name="urlMethod">Wire param <c>url_method</c>.</param>
-    /// <param name="url">Wire param <c>url</c>.</param>
     /// <param name="codecs">Wire param <c>codecs</c>.</param>
+    /// <param name="toScript">Wire param <c>to_script</c>.</param>
+    /// <param name="timeout">Wire param <c>timeout</c>.</param>
+    /// <param name="maxPricePerMinute">Wire param <c>max_price_per_minute</c>.</param>
+    /// <param name="sendDigits">Wire param <c>send_digits</c>.</param>
+    /// <param name="region">Wire param <c>region</c>.</param>
+    /// <param name="username">Wire param <c>username</c>.</param>
+    /// <param name="password">Wire param <c>password</c>.</param>
+    /// <param name="headers">Wire param <c>headers</c>.</param>
+    /// <param name="customVariables">Wire param <c>custom_variables</c>.</param>
+    /// <param name="url">Wire param <c>url</c>.</param>
     /// <param name="swml">Wire param <c>swml</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> DialAsync(string from, string to, string? callerId = null, string? fallbackUrl = null, string? statusUrl = null, List<object?>? statusEvents = null, string? urlMethod = null, string? url = null, Dictionary<string, object?>? codecs = null, Dictionary<string, object?>? swml = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> DialAsync(string from, string? to = null, string? callerId = null, string? fallbackUrl = null, string? statusUrl = null, List<object?>? statusEvents = null, string? urlMethod = null, Dictionary<string, object?>? codecs = null, Dictionary<string, object?>? toScript = null, int? timeout = null, double? maxPricePerMinute = null, string? sendDigits = null, Dictionary<string, object?>? region = null, string? username = null, string? password = null, List<object?>? headers = null, Dictionary<string, object?>? customVariables = null, string? url = null, Dictionary<string, object?>? swml = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["from"] = from;
-        parms["to"] = to;
+        if (to is not null)
+        {
+            parms["to"] = to;
+        }
         if (callerId is not null)
         {
             parms["caller_id"] = callerId;
@@ -89,13 +101,49 @@ public class Calling
         {
             parms["url_method"] = urlMethod;
         }
-        if (url is not null)
-        {
-            parms["url"] = url;
-        }
         if (codecs is not null)
         {
             parms["codecs"] = codecs;
+        }
+        if (toScript is not null)
+        {
+            parms["to_script"] = toScript;
+        }
+        if (timeout is not null)
+        {
+            parms["timeout"] = timeout;
+        }
+        if (maxPricePerMinute is not null)
+        {
+            parms["max_price_per_minute"] = maxPricePerMinute;
+        }
+        if (sendDigits is not null)
+        {
+            parms["send_digits"] = sendDigits;
+        }
+        if (region is not null)
+        {
+            parms["region"] = region;
+        }
+        if (username is not null)
+        {
+            parms["username"] = username;
+        }
+        if (password is not null)
+        {
+            parms["password"] = password;
+        }
+        if (headers is not null)
+        {
+            parms["headers"] = headers;
+        }
+        if (customVariables is not null)
+        {
+            parms["custom_variables"] = customVariables;
+        }
+        if (url is not null)
+        {
+            parms["url"] = url;
         }
         if (swml is not null)
         {
@@ -182,20 +230,20 @@ public class Calling
     /// <summary>
     /// Command <c>calling.ai_hold</c>.
     /// </summary>
-    /// <param name="timeout">Wire param <c>timeout</c>.</param>
     /// <param name="prompt">Wire param <c>prompt</c>.</param>
+    /// <param name="timeout">Wire param <c>timeout</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> AiHoldAsync(string callId, int? timeout = null, string? prompt = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> AiHoldAsync(string callId, string? prompt = null, Dictionary<string, object?>? timeout = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
-        if (timeout is not null)
-        {
-            parms["timeout"] = timeout;
-        }
         if (prompt is not null)
         {
             parms["prompt"] = prompt;
+        }
+        if (timeout is not null)
+        {
+            parms["timeout"] = timeout;
         }
         if (extras is not null)
         {
@@ -233,18 +281,18 @@ public class Calling
     /// <summary>
     /// Command <c>calling.ai_message</c>.
     /// </summary>
-    /// <param name="role">Wire param <c>role</c>.</param>
+    /// <param name="globalData">Wire param <c>global_data</c>.</param>
     /// <param name="messageText">Wire param <c>message_text</c>.</param>
     /// <param name="reset">Wire param <c>reset</c>.</param>
-    /// <param name="globalData">Wire param <c>global_data</c>.</param>
+    /// <param name="role">Wire param <c>role</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> AiMessageAsync(string callId, string? role = null, string? messageText = null, Dictionary<string, object?>? reset = null, Dictionary<string, object?>? globalData = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> AiMessageAsync(string callId, Dictionary<string, object?>? globalData = null, string? messageText = null, Dictionary<string, object?>? reset = null, string? role = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
-        if (role is not null)
+        if (globalData is not null)
         {
-            parms["role"] = role;
+            parms["global_data"] = globalData;
         }
         if (messageText is not null)
         {
@@ -254,9 +302,9 @@ public class Calling
         {
             parms["reset"] = reset;
         }
-        if (globalData is not null)
+        if (role is not null)
         {
-            parms["global_data"] = globalData;
+            parms["role"] = role;
         }
         if (extras is not null)
         {
@@ -272,12 +320,17 @@ public class Calling
     /// Command <c>calling.live_transcribe</c>.
     /// </summary>
     /// <param name="action">Wire param <c>action</c>.</param>
+    /// <param name="hints">Wire param <c>hints</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> LiveTranscribeAsync(string callId, Dictionary<string, object?> action, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> LiveTranscribeAsync(string callId, Dictionary<string, object?> action, List<object?>? hints = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["action"] = action;
+        if (hints is not null)
+        {
+            parms["hints"] = hints;
+        }
         if (extras is not null)
         {
             foreach (var kv in extras)
@@ -376,13 +429,16 @@ public class Calling
     /// </summary>
     /// <param name="play">Wire param <c>play</c>.</param>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
-    /// <param name="volume">Wire param <c>volume</c>.</param>
     /// <param name="direction">Wire param <c>direction</c>.</param>
+    /// <param name="gender">Wire param <c>gender</c>.</param>
+    /// <param name="language">Wire param <c>language</c>.</param>
     /// <param name="loop">Wire param <c>loop</c>.</param>
     /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
+    /// <param name="voice">Wire param <c>voice</c>.</param>
+    /// <param name="volume">Wire param <c>volume</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> PlayAsync(string callId, List<object?> play, string? controlId = null, double? volume = null, string? direction = null, int? loop = null, string? statusUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> PlayAsync(string callId, List<object?> play, string? controlId = null, string? direction = null, string? gender = null, string? language = null, int? loop = null, string? statusUrl = null, string? voice = null, double? volume = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["play"] = play;
@@ -390,13 +446,17 @@ public class Calling
         {
             parms["control_id"] = controlId;
         }
-        if (volume is not null)
-        {
-            parms["volume"] = volume;
-        }
         if (direction is not null)
         {
             parms["direction"] = direction;
+        }
+        if (gender is not null)
+        {
+            parms["gender"] = gender;
+        }
+        if (language is not null)
+        {
+            parms["language"] = language;
         }
         if (loop is not null)
         {
@@ -406,6 +466,14 @@ public class Calling
         {
             parms["status_url"] = statusUrl;
         }
+        if (voice is not null)
+        {
+            parms["voice"] = voice;
+        }
+        if (volume is not null)
+        {
+            parms["volume"] = volume;
+        }
         if (extras is not null)
         {
             foreach (var kv in extras)
@@ -413,6 +481,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
+        parms.TryAdd("control_id", System.Guid.NewGuid().ToString());
         return ExecuteAsync("calling.play", callId, parms, requestOptions, cancellationToken);
     }
 
@@ -502,24 +571,33 @@ public class Calling
     /// Command <c>calling.record</c>.
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
-    /// <param name="audio">Wire param <c>audio</c>.</param>
+    /// <param name="record">Wire param <c>record</c>.</param>
     /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
+    /// <param name="audio">Sent as <c>record.audio</c> (kept for compatibility).</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> RecordAsync(string callId, string? controlId = null, Dictionary<string, object?>? audio = null, string? statusUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> RecordAsync(string callId, string? controlId = null, Dictionary<string, object?>? record = null, string? statusUrl = null, Dictionary<string, object?>? audio = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         if (controlId is not null)
         {
             parms["control_id"] = controlId;
         }
-        if (audio is not null)
+        if (record is not null)
         {
-            parms["audio"] = audio;
+            parms["record"] = record;
         }
         if (statusUrl is not null)
         {
             parms["status_url"] = statusUrl;
+        }
+        if (audio is not null)
+        {
+            var _recordMerged = parms.TryGetValue("record", out var _recordMergedPrev) && _recordMergedPrev is Dictionary<string, object?> _recordMergedDict
+                ? new Dictionary<string, object?>(_recordMergedDict)
+                : new Dictionary<string, object?>();
+            _recordMerged["audio"] = audio;
+            parms["record"] = _recordMerged;
         }
         if (extras is not null)
         {
@@ -528,6 +606,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
+        parms.TryAdd("control_id", System.Guid.NewGuid().ToString());
         return ExecuteAsync("calling.record", callId, parms, requestOptions, cancellationToken);
     }
 
@@ -535,12 +614,17 @@ public class Calling
     /// Command <c>calling.record.pause</c>.
     /// </summary>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
+    /// <param name="behavior">Wire param <c>behavior</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> RecordPauseAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> RecordPauseAsync(string callId, string controlId, string? behavior = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["control_id"] = controlId;
+        if (behavior is not null)
+        {
+            parms["behavior"] = behavior;
+        }
         if (extras is not null)
         {
             foreach (var kv in extras)
@@ -594,40 +678,60 @@ public class Calling
     /// <summary>
     /// Command <c>calling.collect</c>.
     /// </summary>
-    /// <param name="controlId">Wire param <c>control_id</c>.</param>
-    /// <param name="initialTimeout">Wire param <c>initial_timeout</c>.</param>
-    /// <param name="digits">Wire param <c>digits</c>.</param>
-    /// <param name="speech">Wire param <c>speech</c>.</param>
+    /// <param name="continue">Wire param <c>continue</c>.</param>
     /// <param name="continuous">Wire param <c>continuous</c>.</param>
+    /// <param name="controlId">Wire param <c>control_id</c>.</param>
+    /// <param name="digits">Wire param <c>digits</c>.</param>
+    /// <param name="initialTimeout">Wire param <c>initial_timeout</c>.</param>
     /// <param name="partialResults">Wire param <c>partial_results</c>.</param>
+    /// <param name="sendStartOfInput">Wire param <c>send_start_of_input</c>.</param>
+    /// <param name="speech">Wire param <c>speech</c>.</param>
+    /// <param name="startInputTimers">Wire param <c>start_input_timers</c>.</param>
+    /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> CollectAsync(string callId, string? controlId = null, double? initialTimeout = null, Dictionary<string, object?>? digits = null, Dictionary<string, object?>? speech = null, bool? continuous = null, bool? partialResults = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> CollectAsync(string callId, bool? @continue = null, bool? continuous = null, string? controlId = null, Dictionary<string, object?>? digits = null, double? initialTimeout = null, bool? partialResults = null, bool? sendStartOfInput = null, Dictionary<string, object?>? speech = null, bool? startInputTimers = null, string? statusUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
-        if (controlId is not null)
+        if (@continue is not null)
         {
-            parms["control_id"] = controlId;
-        }
-        if (initialTimeout is not null)
-        {
-            parms["initial_timeout"] = initialTimeout;
-        }
-        if (digits is not null)
-        {
-            parms["digits"] = digits;
-        }
-        if (speech is not null)
-        {
-            parms["speech"] = speech;
+            parms["continue"] = @continue;
         }
         if (continuous is not null)
         {
             parms["continuous"] = continuous;
         }
+        if (controlId is not null)
+        {
+            parms["control_id"] = controlId;
+        }
+        if (digits is not null)
+        {
+            parms["digits"] = digits;
+        }
+        if (initialTimeout is not null)
+        {
+            parms["initial_timeout"] = initialTimeout;
+        }
         if (partialResults is not null)
         {
             parms["partial_results"] = partialResults;
+        }
+        if (sendStartOfInput is not null)
+        {
+            parms["send_start_of_input"] = sendStartOfInput;
+        }
+        if (speech is not null)
+        {
+            parms["speech"] = speech;
+        }
+        if (startInputTimers is not null)
+        {
+            parms["start_input_timers"] = startInputTimers;
+        }
+        if (statusUrl is not null)
+        {
+            parms["status_url"] = statusUrl;
         }
         if (extras is not null)
         {
@@ -636,6 +740,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
+        parms.TryAdd("control_id", System.Guid.NewGuid().ToString());
         return ExecuteAsync("calling.collect", callId, parms, requestOptions, cancellationToken);
     }
 
@@ -684,16 +789,21 @@ public class Calling
     /// </summary>
     /// <param name="detect">Wire param <c>detect</c>.</param>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
+    /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
     /// <param name="timeout">Wire param <c>timeout</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> DetectAsync(string callId, Dictionary<string, object?> detect, string? controlId = null, double? timeout = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> DetectAsync(string callId, Dictionary<string, object?> detect, string? controlId = null, string? statusUrl = null, double? timeout = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["detect"] = detect;
         if (controlId is not null)
         {
             parms["control_id"] = controlId;
+        }
+        if (statusUrl is not null)
+        {
+            parms["status_url"] = statusUrl;
         }
         if (timeout is not null)
         {
@@ -706,6 +816,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
+        parms.TryAdd("control_id", System.Guid.NewGuid().ToString());
         return ExecuteAsync("calling.detect", callId, parms, requestOptions, cancellationToken);
     }
 
@@ -732,19 +843,24 @@ public class Calling
     /// <summary>
     /// Command <c>calling.tap</c>.
     /// </summary>
-    /// <param name="tap">Wire param <c>tap</c>.</param>
     /// <param name="device">Wire param <c>device</c>.</param>
+    /// <param name="tap">Wire param <c>tap</c>.</param>
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
+    /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> TapAsync(string callId, Dictionary<string, object?> tap, Dictionary<string, object?> device, string? controlId = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> TapAsync(string callId, Dictionary<string, object?> device, Dictionary<string, object?> tap, string? controlId = null, string? statusUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
-        parms["tap"] = tap;
         parms["device"] = device;
+        parms["tap"] = tap;
         if (controlId is not null)
         {
             parms["control_id"] = controlId;
+        }
+        if (statusUrl is not null)
+        {
+            parms["status_url"] = statusUrl;
         }
         if (extras is not null)
         {
@@ -753,6 +869,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
+        parms.TryAdd("control_id", System.Guid.NewGuid().ToString());
         return ExecuteAsync("calling.tap", callId, parms, requestOptions, cancellationToken);
     }
 
@@ -780,36 +897,51 @@ public class Calling
     /// Command <c>calling.stream</c>.
     /// </summary>
     /// <param name="url">Wire param <c>url</c>.</param>
-    /// <param name="controlId">Wire param <c>control_id</c>.</param>
-    /// <param name="codec">Wire param <c>codec</c>.</param>
-    /// <param name="track">Wire param <c>track</c>.</param>
     /// <param name="authorizationBearerToken">Wire param <c>authorization_bearer_token</c>.</param>
+    /// <param name="codec">Wire param <c>codec</c>.</param>
+    /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="customParameters">Wire param <c>custom_parameters</c>.</param>
+    /// <param name="name">Wire param <c>name</c>.</param>
+    /// <param name="statusUrl">Wire param <c>status_url</c>.</param>
+    /// <param name="statusUrlMethod">Wire param <c>status_url_method</c>.</param>
+    /// <param name="track">Wire param <c>track</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> StreamAsync(string callId, string url, string? controlId = null, string? codec = null, string? track = null, string? authorizationBearerToken = null, Dictionary<string, object?>? customParameters = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> StreamAsync(string callId, string url, string? authorizationBearerToken = null, string? codec = null, string? controlId = null, Dictionary<string, object?>? customParameters = null, string? name = null, string? statusUrl = null, string? statusUrlMethod = null, string? track = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
         parms["url"] = url;
-        if (controlId is not null)
+        if (authorizationBearerToken is not null)
         {
-            parms["control_id"] = controlId;
+            parms["authorization_bearer_token"] = authorizationBearerToken;
         }
         if (codec is not null)
         {
             parms["codec"] = codec;
         }
-        if (track is not null)
+        if (controlId is not null)
         {
-            parms["track"] = track;
-        }
-        if (authorizationBearerToken is not null)
-        {
-            parms["authorization_bearer_token"] = authorizationBearerToken;
+            parms["control_id"] = controlId;
         }
         if (customParameters is not null)
         {
             parms["custom_parameters"] = customParameters;
+        }
+        if (name is not null)
+        {
+            parms["name"] = name;
+        }
+        if (statusUrl is not null)
+        {
+            parms["status_url"] = statusUrl;
+        }
+        if (statusUrlMethod is not null)
+        {
+            parms["status_url_method"] = statusUrlMethod;
+        }
+        if (track is not null)
+        {
+            parms["track"] = track;
         }
         if (extras is not null)
         {
@@ -818,6 +950,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
+        parms.TryAdd("control_id", System.Guid.NewGuid().ToString());
         return ExecuteAsync("calling.stream", callId, parms, requestOptions, cancellationToken);
     }
 
@@ -902,6 +1035,7 @@ public class Calling
                 parms[kv.Key] = kv.Value;
             }
         }
+        parms.TryAdd("control_id", System.Guid.NewGuid().ToString());
         return ExecuteAsync("calling.transcribe", callId, parms, requestOptions, cancellationToken);
     }
 
@@ -931,10 +1065,13 @@ public class Calling
     /// <param name="controlId">Wire param <c>control_id</c>.</param>
     /// <param name="extras">Forward-compat command params.</param>
     /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
-    public Task<Dictionary<string, object?>> AiStopAsync(string callId, string controlId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<Dictionary<string, object?>> AiStopAsync(string callId, string? controlId = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var parms = new Dictionary<string, object?>();
-        parms["control_id"] = controlId;
+        if (controlId is not null)
+        {
+            parms["control_id"] = controlId;
+        }
         if (extras is not null)
         {
             foreach (var kv in extras)
@@ -943,6 +1080,157 @@ public class Calling
             }
         }
         return ExecuteAsync("calling.ai.stop", callId, parms, requestOptions, cancellationToken);
+    }
+
+    /// <summary>
+    /// Command <c>calling.ai_sidecar</c>.
+    /// </summary>
+    /// <param name="lang">Wire param <c>lang</c>.</param>
+    /// <param name="sWAIG">Wire param <c>SWAIG</c>.</param>
+    /// <param name="action">Wire param <c>action</c>.</param>
+    /// <param name="customerRole">Wire param <c>customer_role</c>.</param>
+    /// <param name="direction">Wire param <c>direction</c>.</param>
+    /// <param name="globalData">Wire param <c>global_data</c>.</param>
+    /// <param name="hints">Wire param <c>hints</c>.</param>
+    /// <param name="model">Wire param <c>model</c>.</param>
+    /// <param name="params">Wire param <c>params</c>.</param>
+    /// <param name="permissions">Wire param <c>permissions</c>.</param>
+    /// <param name="prompt">Wire param <c>prompt</c>.</param>
+    /// <param name="url">Wire param <c>url</c>.</param>
+    /// <param name="extras">Forward-compat command params.</param>
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AiSidecarAsync(string callId, string lang, Dictionary<string, object?>? sWAIG = null, Dictionary<string, object?>? action = null, string? customerRole = null, List<object?>? direction = null, Dictionary<string, object?>? globalData = null, List<object?>? hints = null, string? model = null, Dictionary<string, object?>? @params = null, Dictionary<string, object?>? permissions = null, Dictionary<string, object?>? prompt = null, string? url = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var parms = new Dictionary<string, object?>();
+        parms["lang"] = lang;
+        if (sWAIG is not null)
+        {
+            parms["SWAIG"] = sWAIG;
+        }
+        if (action is not null)
+        {
+            parms["action"] = action;
+        }
+        if (customerRole is not null)
+        {
+            parms["customer_role"] = customerRole;
+        }
+        if (direction is not null)
+        {
+            parms["direction"] = direction;
+        }
+        if (globalData is not null)
+        {
+            parms["global_data"] = globalData;
+        }
+        if (hints is not null)
+        {
+            parms["hints"] = hints;
+        }
+        if (model is not null)
+        {
+            parms["model"] = model;
+        }
+        if (@params is not null)
+        {
+            parms["params"] = @params;
+        }
+        if (permissions is not null)
+        {
+            parms["permissions"] = permissions;
+        }
+        if (prompt is not null)
+        {
+            parms["prompt"] = prompt;
+        }
+        if (url is not null)
+        {
+            parms["url"] = url;
+        }
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                parms[kv.Key] = kv.Value;
+            }
+        }
+        return ExecuteAsync("calling.ai_sidecar", callId, parms, requestOptions, cancellationToken);
+    }
+
+    /// <summary>
+    /// Command <c>calling.ai_sidecar.ask</c>.
+    /// </summary>
+    /// <param name="text">Wire param <c>text</c>.</param>
+    /// <param name="extras">Forward-compat command params.</param>
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AiSidecarAskAsync(string callId, string text, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var parms = new Dictionary<string, object?>();
+        parms["text"] = text;
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                parms[kv.Key] = kv.Value;
+            }
+        }
+        return ExecuteAsync("calling.ai_sidecar.ask", callId, parms, requestOptions, cancellationToken);
+    }
+
+    /// <summary>
+    /// Command <c>calling.ai_sidecar.poke</c>.
+    /// </summary>
+    /// <param name="text">Wire param <c>text</c>.</param>
+    /// <param name="extras">Forward-compat command params.</param>
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AiSidecarPokeAsync(string callId, string text, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var parms = new Dictionary<string, object?>();
+        parms["text"] = text;
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                parms[kv.Key] = kv.Value;
+            }
+        }
+        return ExecuteAsync("calling.ai_sidecar.poke", callId, parms, requestOptions, cancellationToken);
+    }
+
+    /// <summary>
+    /// Command <c>calling.ai_sidecar.stop</c>.
+    /// </summary>
+    /// <param name="extras">Forward-compat command params.</param>
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AiSidecarStopAsync(string callId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var parms = new Dictionary<string, object?>();
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                parms[kv.Key] = kv.Value;
+            }
+        }
+        return ExecuteAsync("calling.ai_sidecar.stop", callId, parms, requestOptions, cancellationToken);
+    }
+
+    /// <summary>
+    /// Command <c>calling.ai_sidecar.status</c>.
+    /// </summary>
+    /// <param name="extras">Forward-compat command params.</param>
+    /// <param name="requestOptions">Per-call request options overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> AiSidecarStatusAsync(string callId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var parms = new Dictionary<string, object?>();
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                parms[kv.Key] = kv.Value;
+            }
+        }
+        return ExecuteAsync("calling.ai_sidecar.status", callId, parms, requestOptions, cancellationToken);
     }
 
     /// <summary>

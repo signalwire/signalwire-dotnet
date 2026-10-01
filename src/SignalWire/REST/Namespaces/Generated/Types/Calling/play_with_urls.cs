@@ -24,27 +24,35 @@ public class PlayWithURLS
     [JsonPropertyName("auto_answer")]
     public object? AutoAnswer { get; set; }
 
-    /// <summary>Wire field <c>volume</c>.</summary>
-    [JsonPropertyName("volume")]
-    public object? Volume { get; set; }
-
-    /// <summary>Wire field <c>say_voice</c>.</summary>
-    [JsonPropertyName("say_voice")]
-    public string? SayVoice { get; set; }
-
-    /// <summary>Wire field <c>say_language</c>.</summary>
-    [JsonPropertyName("say_language")]
-    public string? SayLanguage { get; set; }
+    /// <summary>Wire field <c>loop</c>.</summary>
+    [JsonPropertyName("loop")]
+    public object? Loop { get; set; }
 
     /// <summary>Wire field <c>say_gender</c>.</summary>
     [JsonPropertyName("say_gender")]
-    public string? SayGender { get; set; }
+    public object? SayGender { get; set; }
+
+    /// <summary>Wire field <c>say_language</c>.</summary>
+    [JsonPropertyName("say_language")]
+    public object? SayLanguage { get; set; }
+
+    /// <summary>Wire field <c>say_voice</c>.</summary>
+    [JsonPropertyName("say_voice")]
+    public object? SayVoice { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? StatusUrl { get; set; }
+    public object? StatusUrl { get; set; }
+
+    /// <summary>Wire field <c>url</c>.</summary>
+    [JsonPropertyName("url")]
+    public string? Url { get; set; }
 
     /// <summary>Wire field <c>urls</c>.</summary>
     [JsonPropertyName("urls")]
-    public object? Urls { get; set; }
+    public List<object?>? Urls { get; set; }
+
+    /// <summary>Wire field <c>volume</c>.</summary>
+    [JsonPropertyName("volume")]
+    public object? Volume { get; set; }
 }

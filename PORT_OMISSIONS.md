@@ -167,9 +167,7 @@ signalwire.relay.client.RelayClient.__aexit__: impossible: Python async-context-
 signalwire.relay.client.RelayClient.__del__: impossible: Python finalizer dunder; C# uses IAsyncDisposable/Dispose deterministic cleanup instead (TS/PHP omit likewise)
 signalwire.rest._pagination.PaginatedIterator.__iter__: impossible: Python iterator-protocol dunder; C# PaginatedIterator implements IAsyncEnumerable (await foreach) instead — no __iter__/__next__ equivalent (TS/PHP omit likewise)
 signalwire.rest._pagination.PaginatedIterator.__next__: impossible: Python iterator-protocol dunder; C# PaginatedIterator implements IAsyncEnumerable (await foreach) instead — no __iter__/__next__ equivalent (TS/PHP omit likewise)
-signalwire.skills.mcp_gateway.skill.MCPGatewaySkill.get_parameter_schema: Internal MCP gateway helpers; .NET inlines on McpGatewaySkill
 signalwire.core.swml_service.SWMLService.schema_utils: approved: dotnet-no-public-schema-utils — VERIFIED not a rename: dotnet's SWMLService exposes NO public schema_utils/SchemaUtils member of any name; SignalWire.SWML.Schema is used internally. Python's @property has no accessor twin here. Not a language limit — pending API sign-off.
-signalwire.core.swml_service.SWMLService.security: approved: dotnet-no-public-security — VERIFIED not a rename: dotnet's SWMLService exposes NO public security/Security member of any name; the SecurityConfig is a private field. Python's @property has no accessor twin here. Not a language limit — pending API sign-off.
 signalwire.core.swml_service.SWMLService.verb_registry: approved: dotnet-no-public-verb-registry — VERIFIED not a rename: dotnet's SWMLService exposes NO public verb_registry/VerbRegistry member of any name (register_verb_handler/add_verb are methods, not the registry accessor). Python's @property has no accessor twin here. Not a language limit — pending API sign-off.
 
 <!-- agentbase-family folded omissions (surface diff folds WebMixin.get_app /

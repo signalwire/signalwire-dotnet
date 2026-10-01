@@ -24,18 +24,6 @@ public class PomSectionBodyContent
     [JsonPropertyName("title")]
     public string? Title { get; set; }
 
-    /// <summary>Wire field <c>subsections</c>.</summary>
-    [JsonPropertyName("subsections")]
-    public List<object?>? Subsections { get; set; }
-
-    /// <summary>Wire field <c>numbered</c>.</summary>
-    [JsonPropertyName("numbered")]
-    public object? Numbered { get; set; }
-
-    /// <summary>Wire field <c>numberedBullets</c>.</summary>
-    [JsonPropertyName("numberedBullets")]
-    public object? NumberedBullets { get; set; }
-
     /// <summary>Wire field <c>body</c>.</summary>
     [JsonPropertyName("body")]
     public string? Body { get; set; }
@@ -43,4 +31,16 @@ public class PomSectionBodyContent
     /// <summary>Wire field <c>bullets</c>.</summary>
     [JsonPropertyName("bullets")]
     public List<object?>? Bullets { get; set; }
+
+    /// <summary>Wire field <c>numbered</c>.</summary>
+    [JsonPropertyName("numbered")]
+    public bool? Numbered { get; set; }
+
+    /// <summary>Wire field <c>numberedBullets</c>.</summary>
+    [JsonPropertyName("numberedBullets")]
+    public bool? NumberedBullets { get; set; }
+
+    /// <summary>Wire field <c>subsections</c>.</summary>
+    [JsonPropertyName("subsections")]
+    public List<object?>? Subsections { get; set; }
 }

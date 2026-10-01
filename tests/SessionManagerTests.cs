@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Xunit;
@@ -18,11 +19,38 @@ public class SessionManagerTests
     //  Construction
     // =================================================================
 
+    // The reference's SessionManager default is 900 seconds — 15 minutes, NOT the
+    // agent's 3600 (session_manager.py:30/:35). Asserted on the parameterless
+    // constructor AND on the public const, because the const is inlined into any
+    // referencing assembly at compile time and so is itself part of the contract.
     [Fact]
     public void Constructor_SetsDefaultExpiry()
     {
         var manager = new SessionManager();
-        Assert.Equal(3600, manager.TokenExpirySecs);
+        Assert.Equal(900, manager.TokenExpirySecs);
+        Assert.Equal(900, SessionManager.DefaultExpiry);
+    }
+
+    // The DEFAULT changed; an explicitly-passed value must still win, including one
+    // equal to the OLD default. This is what keeps the fold from silently capping a
+    // caller who asked for an hour.
+    [Fact]
+    public void Constructor_ExplicitExpiryOverridesDefault()
+    {
+        Assert.Equal(3600, new SessionManager(3600).TokenExpirySecs);
+        Assert.Equal(3600, new SessionManager(tokenExpirySecs: 3600, secretKey: "k").TokenExpirySecs);
+    }
+
+    // The default is not merely STORED — it is baked into the minted token's expiry
+    // field, which is what the validator and every other port actually read.
+    [Fact]
+    public void DefaultExpiry_IsBakedIntoMintedToken()
+    {
+        var manager = new SessionManager();
+        var before = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var token = manager.DebugToken(manager.CreateToken("fn", "call-1"));
+        var lifetime = long.Parse((string)token["expiry"], CultureInfo.InvariantCulture) - before;
+        Assert.InRange(lifetime, 895, 905);
     }
 
     [Fact]

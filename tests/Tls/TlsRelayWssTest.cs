@@ -51,7 +51,7 @@ public class TlsRelayWssTest
             Token = "test_tok",
             Host = mock!.RelayHost,
             Scheme = "wss",
-            Contexts = new[] { "default" },
+            Contexts = RelayMockTest.DefaultContexts,
         })
         {
             // Trust the test CA for the WSS handshake (real chain validation).
@@ -79,7 +79,9 @@ public class TlsRelayWssTest
         }
         finally
         {
-            try { client.Disconnect(); } catch { /* best effort */ }
+            try { client.Disconnect(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.WebSockets.WebSocketException) { /* socket already gone */ }
         }
 
         // Negative control: the same endpoint must reject a client that does NOT
@@ -91,7 +93,7 @@ public class TlsRelayWssTest
         {
             await untrusted.ConnectAsync(
                 new Uri($"wss://127.0.0.1:{wsPort}/api/relay/ws"),
-                CancellationToken.None);
+                CancellationToken.None).ConfigureAwait(false);
         });
         Assert.True(
             ex is WebSocketException || ex.InnerException is System.Security.Authentication.AuthenticationException
@@ -106,7 +108,7 @@ public class TlsRelayWssTest
     private static async Task<bool> SawRecvAsync(string httpUrl, string method)
     {
         using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-        var body = await http.GetStringAsync(httpUrl + "/__mock__/journal");
+        var body = await http.GetStringAsync(new Uri(httpUrl + "/__mock__/journal")).ConfigureAwait(false);
         using var doc = JsonDocument.Parse(body);
         if (doc.RootElement.ValueKind != JsonValueKind.Array) return false;
         foreach (var entry in doc.RootElement.EnumerateArray())

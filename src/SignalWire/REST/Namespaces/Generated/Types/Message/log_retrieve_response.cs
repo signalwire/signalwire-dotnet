@@ -71,4 +71,12 @@ public class LogRetrieveResponse
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
     public string? CreatedAt { get; set; }
+
+    /// <summary>Wire field <c>error_code</c>.</summary>
+    [JsonPropertyName("error_code")]
+    public string? ErrorCode { get; set; }
+
+    /// <summary>Wire field <c>error_message</c>.</summary>
+    [JsonPropertyName("error_message")]
+    public string? ErrorMessage { get; set; }
 }

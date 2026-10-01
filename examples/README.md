@@ -4,31 +4,36 @@ Agent examples demonstrating the AI Agent framework, SWAIG tools, DataMap, Conte
 
 ## Running Examples
 
-Each example is a single-file, top-level-statements program. There is no
-shared examples project (multiple entry points cannot co-compile), so run one
-by scaffolding a console app that references the SDK and using the example as
-its `Program.cs`:
+Each example is a single-file, top-level-statements program, and each one ships
+with its own `.csproj` alongside it (multiple entry points cannot co-compile, so
+there is one project per example rather than one shared project). Run any
+example directly:
 
 ```bash
-# From the repo root: scaffold a runner (once)
-mkdir -p .sw-tmp/run-example && cd .sw-tmp/run-example
-dotnet new console --force
-dotnet add reference ../../src/SignalWire/SignalWire.csproj
-
 # Set environment variables
 export SIGNALWIRE_PROJECT_ID=your-project-id
 export SIGNALWIRE_API_TOKEN=your-api-token
 export SIGNALWIRE_SPACE=example.signalwire.com
 
-# Pick an example and run it
-cp ../../examples/RestDemo.cs Program.cs
-dotnet run
+# From the repo root: pick an example and run it
+dotnet run --project examples/RestDemo.csproj
 ```
 
 Agent/SWML-service examples start an HTTP server (default
 `http://localhost:3000`); RELAY/REST examples talk to your SignalWire space
-using the env vars above. The audit harnesses (`*AuditHarness.cs`) ship their
-own `.csproj` and run directly with `dotnet run --project`.
+using the env vars above.
+
+The per-example projects are GENERATED — `scripts/generate_example_projects.py`
+writes one for every tracked `examples/*.cs`. Add a new example and regenerate:
+
+```bash
+python3 scripts/generate_example_projects.py --write
+```
+
+CI runs the same script with `--check`, so an example added without a project
+fails the build rather than silently going uncompiled. Because the LINT gate
+enumerates every `.csproj` on disk, having a project is also what puts each
+example under the repo-wide analyzer bar.
 
 ## Agent Examples
 

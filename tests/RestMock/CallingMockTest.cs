@@ -27,6 +27,8 @@ namespace SignalWire.Tests.RestMock;
 [Trait("Category", "RestMock")]
 public class CallingMockTest : IClassFixture<MockServerFixture>
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] OPUSG729VP8Array = new[] { "OPUS", "G729", "VP8", "PCMA" };
     private const string CallsPath = "/api/calling/calls";
 
     private readonly MockServerFixture _fixture;
@@ -45,7 +47,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
 
     /// <summary>Asserts journal entry shape — method/path/command — and
     /// returns the params element for caller-specific assertions.</summary>
-    private JsonElement CommandAssert(MockTest.JournalEntry j, string command, string? expectedId)
+    private static JsonElement CommandAssert(MockTest.JournalEntry j, string command, string? expectedId)
     {
         Assert.Equal("POST", j.Method);
         Assert.Equal(CallsPath, j.Path);
@@ -56,7 +58,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
         if (expectedId is null)
         {
             Assert.False(body.ContainsKey("id"),
-                $"expected no id at body root, got {(body.ContainsKey("id") ? body["id"].ToString() : "<absent>")}");
+                $"expected no id at body root, got {(body.TryGetValue("id", out var idVal) ? idVal.ToString() : "<absent>")}");
         }
         else
         {
@@ -97,7 +99,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
             url: "https://example.com/swml",
             extras: new Dictionary<string, object?>
             {
-                ["codecs"] = new[] { "OPUS", "G729", "VP8", "PCMA" },
+                ["codecs"] = OPUSG729VP8Array,
             });
         Assert.NotNull(body);
         Assert.True(body.ContainsKey("id"));
@@ -109,7 +111,7 @@ public class CallingMockTest : IClassFixture<MockServerFixture>
             .Where(e => e.ValueKind == JsonValueKind.String)
             .Select(e => e.GetString())
             .ToArray();
-        Assert.Equal(new[] { "OPUS", "G729", "VP8", "PCMA" }, arr);
+        Assert.Equal(OPUSG729VP8Array, arr);
     }
 
     [Fact]

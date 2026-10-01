@@ -11,7 +11,7 @@ using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "datamap-demo",
+    Name = "datamap-demo",
     Route = "/datamap-demo",
 });
 
@@ -47,13 +47,13 @@ agent.RegisterSwaigFunction(fileControl.ToSwaigFunction());
 
 // 3. Regular SWAIG function for comparison
 agent.DefineTool(
-    name:        "echo_test",
+    name: "echo_test",
     description: "A simple echo function for testing",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["message"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Message to echo back",
         },
     },

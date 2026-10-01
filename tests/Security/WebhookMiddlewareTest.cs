@@ -31,7 +31,7 @@ using SignalWire.SWML;
 namespace SignalWire.Tests.Security;
 
 [Collection(SignalWire.Tests.GlobalStateCollection.Name)]
-public class WebhookMiddlewareTest : IDisposable
+public sealed class WebhookMiddlewareTest : IDisposable
 {
     public WebhookMiddlewareTest()
     {
@@ -62,7 +62,13 @@ public class WebhookMiddlewareTest : IDisposable
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
         var msgBytes = Encoding.UTF8.GetBytes(message);
+#pragma warning disable CA5350 // HMAC-SHA1 is the SERVER'S webhook signature
+        // algorithm (see src/SignalWire/Security/WebhookValidator.cs); the test must
+        // reproduce it byte-for-byte or it is not testing the contract.
+#pragma warning disable CA1308 // lowercase hex is the on-the-wire signature form
         return Convert.ToHexString(HMACSHA1.HashData(keyBytes, msgBytes)).ToLowerInvariant();
+#pragma warning restore CA1308
+#pragma warning restore CA5350
     }
 
     private static AgentBase MakeSignedAgent(string signingKey = SigningKey)
@@ -101,6 +107,73 @@ public class WebhookMiddlewareTest : IDisposable
     {
         Assert.Throws<ArgumentException>(() => new WebhookValidationMiddleware(""));
         Assert.Throws<ArgumentException>(() => new WebhookValidationMiddleware(null!));
+    }
+
+#pragma warning disable CA1308 // lowercase hex is the on-the-wire signature form
+    private static string HexHmacSha256(string key, string message)
+        => Convert.ToHexString(HMACSHA256.HashData(
+            Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes(message))).ToLowerInvariant();
+#pragma warning restore CA1308
+
+    // ---- X-SignalWire-Sha256-Signature preference (python
+    //      test_webhook_middleware.py::TestSha256SignaturePreference) ----------
+
+    [Fact]
+    public void Middleware_ValidSha256SignaturePasses()
+    {
+        const string url = "http://agent.example.com/webhook";
+        const string body = "{\"event\":\"call.state\",\"params\":{\"call_id\":\"abc-123\"}}";
+        var mw = new WebhookValidationMiddleware(SigningKey);
+        var headers = new Dictionary<string, string>
+        {
+            ["X-SignalWire-Sha256-Signature"] = HexHmacSha256(SigningKey, url + body),
+            ["Host"] = "agent.example.com",
+        };
+        Assert.Null(mw.Validate("POST", "/webhook", headers, body));
+    }
+
+    [Fact]
+    public void Middleware_BadSha256FallsBackToValidSha1()
+    {
+        const string url = "http://agent.example.com/webhook";
+        const string body = "{\"event\":\"call.state\"}";
+        var mw = new WebhookValidationMiddleware(SigningKey);
+        var headers = new Dictionary<string, string>
+        {
+            ["X-SignalWire-Sha256-Signature"] = new string('0', 64),
+            ["X-SignalWire-Signature"] = HexHmacSha1(SigningKey, url + body),
+            ["Host"] = "agent.example.com",
+        };
+        Assert.Null(mw.Validate("POST", "/webhook", headers, body));
+    }
+
+    [Fact]
+    public void Middleware_BadSha256WithNoSha1IsRejected()
+    {
+        var mw = new WebhookValidationMiddleware(SigningKey);
+        var headers = new Dictionary<string, string>
+        {
+            ["X-SignalWire-Sha256-Signature"] = new string('0', 64),
+            ["Host"] = "agent.example.com",
+        };
+        var rejected = mw.Validate("POST", "/webhook", headers, "{\"event\":\"call.state\"}");
+        Assert.NotNull(rejected);
+        Assert.Equal(403, rejected!.Value.Status);
+    }
+
+    [Fact]
+    public void Middleware_ValidSha256PreferredOverBadSha1()
+    {
+        const string url = "http://agent.example.com/webhook";
+        const string body = "{\"event\":\"call.state\"}";
+        var mw = new WebhookValidationMiddleware(SigningKey);
+        var headers = new Dictionary<string, string>
+        {
+            ["X-SignalWire-Sha256-Signature"] = HexHmacSha256(SigningKey, url + body),
+            ["X-SignalWire-Signature"] = "not-valid",
+            ["Host"] = "agent.example.com",
+        };
+        Assert.Null(mw.Validate("POST", "/webhook", headers, body));
     }
 
     [Fact]
@@ -197,7 +270,7 @@ public class WebhookMiddlewareTest : IDisposable
         Assert.NotNull(rejected);
         Assert.Equal(403, rejected!.Value.Status);
         Assert.Equal("", rejected.Value.Body); // empty body
-        Assert.DoesNotContain("scheme", (rejected.Value.Headers["Content-Type"] ?? "").ToLower());
+        Assert.DoesNotContain("SCHEME", (rejected.Value.Headers["Content-Type"] ?? "").ToUpperInvariant());
     }
 
     [Fact]

@@ -62,9 +62,11 @@ public class Addresses
     /// <param name="postalCode">Wire field <c>postal_code</c>.</param>
     /// <param name="addressType">Wire field <c>address_type</c>.</param>
     /// <param name="addressNumber">Wire field <c>address_number</c>.</param>
+    /// <param name="emergencyEnabled">Wire field <c>emergency_enabled</c>.</param>
+    /// <param name="autoCorrectAddress">Wire field <c>auto_correct_address</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.AddressResponse?> CreateAsync(string label, string country, string firstName, string lastName, string streetNumber, string streetName, string city, string state, string postalCode, string? addressType = null, string? addressNumber = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.AddressResponse?> CreateAsync(string label, string country, string firstName, string lastName, string streetNumber, string streetName, string city, string state, string postalCode, string? addressType = null, string? addressNumber = null, bool? emergencyEnabled = null, bool? autoCorrectAddress = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["label"] = label;
@@ -84,6 +86,14 @@ public class Addresses
         {
             _reqBody["address_number"] = addressNumber;
         }
+        if (emergencyEnabled is not null)
+        {
+            _reqBody["emergency_enabled"] = emergencyEnabled;
+        }
+        if (autoCorrectAddress is not null)
+        {
+            _reqBody["auto_correct_address"] = autoCorrectAddress;
+        }
         if (extras is not null)
         {
             foreach (var kv in extras)
@@ -102,6 +112,89 @@ public class Addresses
     public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.AddressResponse?> GetAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.AddressResponse>(Client.GetAsync(Path(id), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
+    /// Generated from operation <c>update_address</c> (PUT /addresses/{id}).
+    /// </summary>
+    /// <param name="label">Wire field <c>label</c>.</param>
+    /// <param name="country">Wire field <c>country</c>.</param>
+    /// <param name="firstName">Wire field <c>first_name</c>.</param>
+    /// <param name="lastName">Wire field <c>last_name</c>.</param>
+    /// <param name="streetNumber">Wire field <c>street_number</c>.</param>
+    /// <param name="streetName">Wire field <c>street_name</c>.</param>
+    /// <param name="addressType">Wire field <c>address_type</c>.</param>
+    /// <param name="addressNumber">Wire field <c>address_number</c>.</param>
+    /// <param name="city">Wire field <c>city</c>.</param>
+    /// <param name="state">Wire field <c>state</c>.</param>
+    /// <param name="postalCode">Wire field <c>postal_code</c>.</param>
+    /// <param name="emergencyEnabled">Wire field <c>emergency_enabled</c>.</param>
+    /// <param name="autoCorrectAddress">Wire field <c>auto_correct_address</c>.</param>
+    /// <param name="extras">Forward-compat body fields merged onto the request.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.AddressResponse?> UpdateAsync(string id, string? label = null, string? country = null, string? firstName = null, string? lastName = null, string? streetNumber = null, string? streetName = null, string? addressType = null, string? addressNumber = null, string? city = null, string? state = null, string? postalCode = null, bool? emergencyEnabled = null, bool? autoCorrectAddress = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var _reqBody = new Dictionary<string, object?>();
+        if (label is not null)
+        {
+            _reqBody["label"] = label;
+        }
+        if (country is not null)
+        {
+            _reqBody["country"] = country;
+        }
+        if (firstName is not null)
+        {
+            _reqBody["first_name"] = firstName;
+        }
+        if (lastName is not null)
+        {
+            _reqBody["last_name"] = lastName;
+        }
+        if (streetNumber is not null)
+        {
+            _reqBody["street_number"] = streetNumber;
+        }
+        if (streetName is not null)
+        {
+            _reqBody["street_name"] = streetName;
+        }
+        if (addressType is not null)
+        {
+            _reqBody["address_type"] = addressType;
+        }
+        if (addressNumber is not null)
+        {
+            _reqBody["address_number"] = addressNumber;
+        }
+        if (city is not null)
+        {
+            _reqBody["city"] = city;
+        }
+        if (state is not null)
+        {
+            _reqBody["state"] = state;
+        }
+        if (postalCode is not null)
+        {
+            _reqBody["postal_code"] = postalCode;
+        }
+        if (emergencyEnabled is not null)
+        {
+            _reqBody["emergency_enabled"] = emergencyEnabled;
+        }
+        if (autoCorrectAddress is not null)
+        {
+            _reqBody["auto_correct_address"] = autoCorrectAddress;
+        }
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                _reqBody[kv.Key] = kv.Value;
+            }
+        }
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.AddressResponse>(Client.PutAsync(Path(id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>

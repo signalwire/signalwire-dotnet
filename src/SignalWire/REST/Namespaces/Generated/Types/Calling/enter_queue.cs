@@ -22,5 +22,5 @@ public class EnterQueue
 {
     /// <summary>Wire field <c>enter_queue</c>.</summary>
     [JsonPropertyName("enter_queue")]
-    public SignalWire.REST.Namespaces.Generated.Types.Calling.EnterQueueObject? EnterQueue_ { get; set; }
+    public object? EnterQueue_ { get; set; }
 }

@@ -52,14 +52,24 @@ public class RegistryCampaigns
     /// Generated from operation <c>update_campaign</c> (PUT /registry/beta/campaigns/{id}).
     /// </summary>
     /// <param name="name">Wire field <c>name</c>.</param>
+    /// <param name="statusCallbackUrl">Wire field <c>status_callback_url</c>.</param>
+    /// <param name="signalwireContactEmails">Wire field <c>signalwire_contact_emails</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.CampaignResponse?> UpdateAsync(string id, string? name = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.CampaignResponse?> UpdateAsync(string id, string? name = null, string? statusCallbackUrl = null, Dictionary<string, object?>? signalwireContactEmails = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         if (name is not null)
         {
             _reqBody["name"] = name;
+        }
+        if (statusCallbackUrl is not null)
+        {
+            _reqBody["status_callback_url"] = statusCallbackUrl;
+        }
+        if (signalwireContactEmails is not null)
+        {
+            _reqBody["signalwire_contact_emails"] = signalwireContactEmails;
         }
         if (extras is not null)
         {
@@ -98,13 +108,10 @@ public class RegistryCampaigns
     /// <param name="statusCallbackUrl">Wire field <c>status_callback_url</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.OrderResponse?> CreateOrderAsync(string id, List<object?>? phoneNumbers = null, string? statusCallbackUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.OrderResponse?> CreateOrderAsync(string id, List<object?> phoneNumbers, string? statusCallbackUrl = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
-        if (phoneNumbers is not null)
-        {
-            _reqBody["phone_numbers"] = phoneNumbers;
-        }
+        _reqBody["phone_numbers"] = phoneNumbers;
         if (statusCallbackUrl is not null)
         {
             _reqBody["status_callback_url"] = statusCallbackUrl;

@@ -9,12 +9,12 @@
 
 using SignalWire.REST;
 
-var client = new RestClient(
+using var client = new RestClient(
     projectId: Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    token:     Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    token: Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    space:     Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
+    space: Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
@@ -28,28 +28,28 @@ async Task Safe(string label, Func<Task> fn)
 Console.WriteLine("Creating SIP subscriber...");
 await Safe("Create subscriber", async () =>
 {
-    var subscriber = await client.Fabric.Subscribers.CreateAsync(new Dictionary<string, object>
+    var subscriber = await client.Fabric.Subscribers.CreateAsync(new Dictionary<string, object?>
     {
         ["display_name"] = "Alice Smith",
-        ["type"]         = "sip",
-        ["email"]        = "alice@example.com",
-        ["password"]     = "secure-sip-password",
+        ["type"] = "sip",
+        ["email"] = "alice@example.com",
+        ["password"] = "secure-sip-password",
     });
-    Console.WriteLine($"    Subscriber ID: {subscriber.GetValueOrDefault("id")}");
+    Console.WriteLine($"    Subscriber ID: {subscriber?.Id} ({subscriber?.DisplayName})");
 });
 
 // 2. Create a SIP endpoint
 Console.WriteLine("\nCreating SIP endpoint...");
 await Safe("Create SIP endpoint", async () =>
 {
-    var endpoint = await client.Fabric.SipEndpoints.CreateAsync(new Dictionary<string, object>
+    var endpoint = await client.Fabric.SipEndpoints.CreateAsync(new Dictionary<string, object?>
     {
-        ["username"]     = "alice",
-        ["password"]     = "secure-sip-password",
+        ["username"] = "alice",
+        ["password"] = "secure-sip-password",
         ["display_name"] = "Alice Smith",
-        ["caller_id"]    = "+15551234567",
+        ["caller_id"] = "+15551234567",
     });
-    Console.WriteLine($"    Endpoint ID: {endpoint.GetValueOrDefault("id")}");
+    Console.WriteLine($"    Endpoint ID: {endpoint?.Id} ({endpoint?.DisplayName})");
 });
 
 // 3. List subscribers
@@ -57,13 +57,10 @@ Console.WriteLine("\nListing subscribers...");
 await Safe("List subscribers", async () =>
 {
     var subscribers = await client.Fabric.Subscribers.ListAsync();
-    var data = subscribers.GetValueOrDefault("data") as List<object> ?? new();
-    foreach (var item in data.Take(5))
+
+    foreach (var s in (subscribers?.Data ?? []).Take(5))
     {
-        if (item is Dictionary<string, object?> s)
-        {
-            Console.WriteLine($"    - {s.GetValueOrDefault("id")}: {s.GetValueOrDefault("display_name")}");
-        }
+        Console.WriteLine($"    - {s.Id}: {s.DisplayName}");
     }
 });
 
@@ -72,13 +69,10 @@ Console.WriteLine("\nListing SIP endpoints...");
 await Safe("List endpoints", async () =>
 {
     var endpoints = await client.Fabric.SipEndpoints.ListAsync();
-    var data = endpoints.GetValueOrDefault("data") as List<object> ?? new();
-    foreach (var item in data.Take(5))
+
+    foreach (var e in (endpoints?.Data ?? []).Take(5))
     {
-        if (item is Dictionary<string, object?> e)
-        {
-            Console.WriteLine($"    - {e.GetValueOrDefault("id")}: {e.GetValueOrDefault("username")}");
-        }
+        Console.WriteLine($"    - {e.Id}: {e.DisplayName}");
     }
 });
 
@@ -87,7 +81,8 @@ Console.WriteLine("\nGetting SIP profile...");
 await Safe("Get SIP profile", async () =>
 {
     var profile = await client.SipProfile.GetAsync();
-    Console.WriteLine($"    SIP profile: {profile.GetValueOrDefault("id")}");
+    // A SIP profile is keyed by its DOMAIN, not an id.
+    Console.WriteLine($"    SIP profile domain: {profile?.Domain} (encryption={profile?.DefaultEncryption})");
 });
 
 Console.WriteLine("\nSubscribers and SIP demo complete.");

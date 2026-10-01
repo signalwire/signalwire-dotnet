@@ -3719,7 +3719,7 @@ suite; the omission is the test-name mismatch, not the behaviour.
 - test_weather_template_contains_wind_info: covered by `dotnet test` under broader-grained xUnit test methods
 - test_web_search_agents_load: covered by `dotnet test` under broader-grained xUnit test methods
 - test_web_template_has_html: covered by `dotnet test` under broader-grained xUnit test methods
-- test_webhook_body_and_params: covered by `dotnet test` under broader-grained xUnit test methods
+- test_webhook_params: covered by `dotnet test` under broader-grained xUnit test methods
 - test_webhook_function_returns_error: covered by `dotnet test` under broader-grained xUnit test methods
 - test_webhook_method_is_get: covered by `dotnet test` under broader-grained xUnit test methods
 - test_webhook_output_is_dict: covered by `dotnet test` under broader-grained xUnit test methods

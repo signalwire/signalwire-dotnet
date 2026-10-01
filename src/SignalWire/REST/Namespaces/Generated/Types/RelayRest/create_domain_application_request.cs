@@ -104,6 +104,10 @@ public class CreateDomainApplicationRequest
     [JsonPropertyName("call_relay_script_url")]
     public string? CallRelayScriptUrl { get; set; }
 
+    /// <summary>Wire field <c>call_relay_script_url_method</c>.</summary>
+    [JsonPropertyName("call_relay_script_url_method")]
+    public string? CallRelayScriptUrlMethod { get; set; }
+
     /// <summary>Wire field <c>call_dialogflow_agent_id</c>.</summary>
     [JsonPropertyName("call_dialogflow_agent_id")]
     public string? CallDialogflowAgentId { get; set; }

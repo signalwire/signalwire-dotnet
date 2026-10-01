@@ -27,7 +27,9 @@ using SignalWire.Tools.DumpCorpus;
 
 if (args.Length != 1)
 {
-    Console.Error.WriteLine("usage: DumpCorpus <wire|swml|strict-render|state|http|wire-relay|envelope|secure-default|secret-scrub|pagination>");
+    await Console.Error.WriteLineAsync(
+        "usage: DumpCorpus <wire|swml|strict-render|state|http|wire-relay|envelope|secure-default|secret-scrub|pagination>")
+        .ConfigureAwait(false);
     return 2;
 }
 
@@ -48,11 +50,16 @@ try
         _ => throw new ArgumentException($"unknown surface '{args[0]}'"),
     };
 
-    Console.WriteLine(JsonSerializer.Serialize(output, Canon.JsonOptions));
+    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(output, Canon.JsonOptions))
+        .ConfigureAwait(false);
     return 0;
 }
+#pragma warning disable CA1031 // A CLI entry point must convert ANY failure into a
+// non-zero exit + a diagnostic on stderr; letting it escape would print an
+// unhandled-exception dump instead of the message the calling gate parses.
 catch (Exception ex)
 {
-    Console.Error.WriteLine($"DumpCorpus[{args[0]}]: {ex}");
+    await Console.Error.WriteLineAsync($"DumpCorpus[{args[0]}]: {ex}").ConfigureAwait(false);
     return 1;
 }
+#pragma warning restore CA1031

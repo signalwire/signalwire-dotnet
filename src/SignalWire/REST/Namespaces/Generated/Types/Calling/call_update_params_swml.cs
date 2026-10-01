@@ -38,5 +38,5 @@ public class CallUpdateParamsSWML
 
     /// <summary>Wire field <c>swml</c>.</summary>
     [JsonPropertyName("swml")]
-    public SignalWire.REST.Namespaces.Generated.Types.Calling.SWMLObject? Swml { get; set; }
+    public object? Swml { get; set; }
 }

@@ -4,7 +4,7 @@ using SignalWire.Serverless;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class ServerlessTests : IDisposable
+public sealed class ServerlessTests : IDisposable
 {
     public ServerlessTests()
     {
@@ -285,10 +285,96 @@ public class ServerlessTests : IDisposable
     }
 
     // ==================================================================
+    //  Query-string forwarding
+    //
+    //  Every envelope must hand the dispatch core the request's query
+    //  string: the per-call SWAIG __token rides it, so an adapter that
+    //  drops it silently makes `secure: true` tools unvalidatable. These
+    //  assert the plumbing at the adapter boundary; the behavioural
+    //  refuse/run matrix lives in SwaigTokenEnforcementTests.
+    // ==================================================================
+
+    [Fact]
+    public void HandleLambda_ForwardsQueryStringParameters()
+    {
+        var agent = new MockAgent(200, new(), "");
+        Adapter.HandleLambda(agent, new Dictionary<string, object?>
+        {
+            ["rawPath"] = "/swaig",
+            ["httpMethod"] = "POST",
+            ["queryStringParameters"] = new Dictionary<string, object?> { ["__token"] = "abc123" },
+        });
+        Assert.Contains("__token=abc123", agent.LastQueryString, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void HandleLambda_ForwardsRawQueryString()
+    {
+        // The HTTP-API-v2 shape supplies only rawQueryString; reading just the
+        // parsed mapping would lose the credential on exactly this payload.
+        var agent = new MockAgent(200, new(), "");
+        Adapter.HandleLambda(agent, new Dictionary<string, object?>
+        {
+            ["rawPath"] = "/swaig",
+            ["httpMethod"] = "POST",
+            ["rawQueryString"] = "__token=abc123",
+        });
+        Assert.Contains("__token=abc123", agent.LastQueryString, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void HandleAzure_SplitsQueryFromPath()
+    {
+        var agent = new MockAgent(200, new(), "");
+        Adapter.HandleAzure(agent, new Dictionary<string, object?>
+        {
+            ["method"] = "POST",
+            ["url"] = "https://f.azurewebsites.net/swaig?__token=abc123",
+        });
+        // The query must NOT be baked into the path (that both loses the
+        // credential and makes the route unmatchable).
+        Assert.Equal("/swaig", agent.LastPath);
+        Assert.Contains("__token=abc123", agent.LastQueryString, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void HandleGoogleCloudFunction_ForwardsQueryString()
+    {
+        var agent = new MockAgent(200, new(), "");
+        Adapter.HandleGoogleCloudFunction(agent, new Dictionary<string, object?>
+        {
+            ["method"] = "POST",
+            ["path"] = "/swaig",
+            ["query_string"] = "__token=abc123",
+        });
+        Assert.Contains("__token=abc123", agent.LastQueryString, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void HandleCgi_ForwardsQueryString()
+    {
+        var agent = new MockAgent(200, new(), "");
+        Environment.SetEnvironmentVariable("REQUEST_METHOD", "POST");
+        Environment.SetEnvironmentVariable("PATH_INFO", "/swaig");
+        Environment.SetEnvironmentVariable("QUERY_STRING", "__token=abc123");
+        try
+        {
+            Adapter.HandleCgi(agent, new StringReader(""));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("REQUEST_METHOD", null);
+            Environment.SetEnvironmentVariable("PATH_INFO", null);
+            Environment.SetEnvironmentVariable("QUERY_STRING", null);
+        }
+        Assert.Contains("__token=abc123", agent.LastQueryString, StringComparison.Ordinal);
+    }
+
+    // ==================================================================
     //  Mock agent for testing
     // ==================================================================
 
-    private class MockAgent : SignalWire.SWML.Service
+    private sealed class MockAgent : SignalWire.SWML.Service
     {
         private readonly int _mockStatus;
         private readonly Dictionary<string, string> _mockHeaders;
@@ -297,6 +383,7 @@ public class ServerlessTests : IDisposable
         public string? LastMethod { get; private set; }
         public string? LastPath { get; private set; }
         public string? LastBody { get; private set; }
+        public string? LastQueryString { get; private set; }
 
         public MockAgent(int status, Dictionary<string, string> headers, string body)
             : base(new SignalWire.SWML.ServiceOptions { Name = "mock" })
@@ -307,11 +394,13 @@ public class ServerlessTests : IDisposable
         }
 
         public override (int Status, Dictionary<string, string> Headers, string Body) HandleRequest(
-            string method, string path, Dictionary<string, string> headers, string? body)
+            string method, string path, Dictionary<string, string> headers, string? body,
+            string? queryString = null)
         {
             LastMethod = method;
             LastPath = path;
             LastBody = body;
+            LastQueryString = queryString;
             return (_mockStatus, _mockHeaders, _mockBody);
         }
     }

@@ -32,4 +32,24 @@ public class AiAgents : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Namesp
     {
         return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentResponse>(Client.PatchAsync(Path(id), data, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
+
+    /// <summary>
+    /// Generated from operation <c>list_ai_agent_voices</c> (GET /resources/ai_agents/voices).
+    /// </summary>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<List<SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentVoice>?> ListVoicesAsync(Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        return SignalWire.REST.ResponseProjection.AsListAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentVoice>(Client.GetAsync(Path("voices"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
+    /// Generated from operation <c>list_ai_agent_conversation_logs</c> (GET /resources/ai_agents/{ai_agent_id}/conversation_logs).
+    /// </summary>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentConversationLogListResponse?> ListConversationLogsAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentConversationLogListResponse>(Client.GetAsync(Path(id, "conversation_logs"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
 }

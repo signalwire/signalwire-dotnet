@@ -26,11 +26,43 @@ using System.Text.Json;
 
 namespace SignalWire.POM;
 
+/// <summary>
+/// One node of a <see cref="PromptObjectModel"/> tree: a title, a body, a
+/// bullet list, and nested subsections. Content methods
+/// (<see cref="AddBody"/>, <see cref="AddBullets"/>) return <c>this</c> for
+/// chaining, while <see cref="AddSubsection"/> returns the <i>new</i> child
+/// so it can be configured in turn.
+///
+/// <para>Note the asymmetry between the two content setters:
+/// <see cref="AddBody"/> <b>replaces</b> the body, whereas
+/// <see cref="AddBullets"/> <b>appends</b> to the existing bullets.</para>
+///
+/// <para><b>Titles.</b> A subsection must always have a title —
+/// <see cref="AddSubsection"/> throws on an explicit null. Only a
+/// top-level section may be untitled, and only the first one; that rule is
+/// enforced by <see cref="PromptObjectModel.AddSection"/>.</para>
+///
+/// <para><b>Numbering</b> is decided per sibling group, not per section.
+/// If any section in a group has <see cref="Numbered"/> <c>== true</c>,
+/// the whole group is numbered except members that explicitly set it to
+/// <c>false</c> — which is why the property is tri-state
+/// (null = inherit). <see cref="NumberedBullets"/> is independent and
+/// applies only to this section's own bullets. An untitled section
+/// carrying no section number does not open a new heading level: its
+/// children render at the same level, so an untitled wrapper adds
+/// structure without adding depth.</para>
+///
+/// <para><b>Rendering</b> is byte-for-byte identical to the Python SDK in
+/// all three forms — markdown, XML, and dict. Note that
+/// <see cref="RenderXml"/> performs <b>no</b> XML escaping (matching the
+/// Python SDK), so a body containing <c>&lt;</c> or <c>&amp;</c> produces
+/// output that is not well-formed XML.</para>
+/// </summary>
 public class Section
 {
     /// <summary>Section title. Null for the (allowed) first untitled
-    /// top-level section. (equivalent to Python's ``Section.title`` is
-    /// ``Optional[str]``.)</summary>
+    /// top-level section.
+    /// </summary>
     public string? Title { get; set; }
 
     public string Body { get; set; }
@@ -44,8 +76,8 @@ public class Section
     internal List<string> BulletsMutable => _bullets;
 
     /// <summary>Three-state numbering: null = inherit, true = force on,
-    /// false = force off. (equivalent to Python's ``numbered`` is
-    /// ``Optional[bool]``.) Sibling propagation: if any sibling at the
+    /// false = force off.
+    ///  Sibling propagation: if any sibling at the
     /// same level has Numbered==true, all siblings get numbered unless
     /// they have Numbered==false.</summary>
     public bool? Numbered { get; set; }
@@ -75,16 +107,14 @@ public class Section
         _subsections = new List<Section>();
     }
 
-    /// <summary>Set or replace this section's body text.
-    /// (equivalent to Python's ``Section.add_body``.)</summary>
+    /// <summary>Set or replace this section's body text.</summary>
     public Section AddBody(string body)
     {
         Body = body;
         return this;
     }
 
-    /// <summary>Append bullets to this section.
-    /// (equivalent to Python's ``Section.add_bullets``.)</summary>
+    /// <summary>Append bullets to this section.</summary>
     public Section AddBullets(IReadOnlyList<string> bullets)
     {
         ArgumentNullException.ThrowIfNull(bullets);
@@ -93,16 +123,20 @@ public class Section
     }
 
     /// <summary>Add a subsection under this section, returning the new
-    /// Section. (equivalent to Python's ``Section.add_subsection``.)</summary>
+    /// Section.</summary>
     public Section AddSubsection(
-        string? title = null,
+        string title,
         string body = "",
         IReadOnlyList<string>? bullets = null,
-        bool? numbered = null,
+        bool numbered = false,
         bool numberedBullets = false)
     {
+        // The reference REQUIRES a title (``add_subsection(self, title: str, *, …)``)
+        // and raises ValueError when it is None. Omitting the argument is now a
+        // C# compile error; an EXPLICIT null still raises the port's ValueError
+        // analogue (ArgumentException), preserving the reference's behaviour.
         if (title is null)
-            throw new ArgumentException("Subsections must have a title");
+            throw new ArgumentException("Subsections must have a title", nameof(title));
         var sub = new Section(title, body, bullets, numbered, numberedBullets);
         _subsections.Add(sub);
         return sub;
@@ -241,7 +275,7 @@ public class Section
     /// <summary>Serialize to a Dictionary suitable for JSON. Emits
     /// keys in this exact order: title, body, bullets, subsections,
     /// numbered, numberedBullets — and only when non-empty / non-null /
-    /// non-default. Mirrors Python's ``Section.to_dict``.</summary>
+    /// non-default.</summary>
     public Dictionary<string, object> ToDict()
     {
         var d = new Dictionary<string, object>();
@@ -263,6 +297,36 @@ public class Section
     }
 }
 
+/// <summary>
+/// A structured AI prompt held as a tree of <see cref="Section"/>s, rendered
+/// on demand to markdown, XML, or a serializable dict. This is the data
+/// model behind the SWML <c>ai</c> verb's <c>prompt.pom</c> form — the
+/// alternative to handing the engine one opaque prompt string.
+///
+/// <para>Build it directly with <see cref="AddSection"/> (which returns the
+/// new section for further nesting), or fluently through
+/// <see cref="PomBuilder"/>. Round-trip it with
+/// <see cref="ToJson"/>/<see cref="FromJson"/> or
+/// <see cref="ToYaml"/>/<see cref="FromYaml"/>, and compose two models with
+/// <see cref="AddPomAsSubsection(string, PromptObjectModel)"/>.</para>
+///
+/// <para><b>Only the first top-level section may be untitled</b>;
+/// <see cref="AddSection"/> throws <see cref="ArgumentException"/> for an
+/// untitled section added after any other. <see cref="FindSection"/>
+/// searches the whole tree depth-first and returns the first title match,
+/// so duplicate titles are resolvable only by holding the
+/// <see cref="Section"/> reference.</para>
+///
+/// <para><b>The exact output is a contract, not a convenience:</b> markdown,
+/// XML, JSON, and YAML output are matched byte-for-byte against the Python
+/// SDK's <c>render_markdown</c> / <c>render_xml</c> / <c>to_json</c> /
+/// <c>to_yaml</c>, so a prompt built here and one built with any other
+/// SignalWire SDK produce identical engine input. Changing the rendering is
+/// a breaking wire change.</para>
+///
+/// <para><see cref="Debug"/> is carried on the model but does not affect
+/// rendering.</para>
+/// </summary>
 public class PromptObjectModel
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -270,6 +334,33 @@ public class PromptObjectModel
         WriteIndented = true,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
+
+    /// <summary>
+    /// Force LF line endings on serialized output, whatever the host OS.
+    /// </summary>
+    /// <remarks>
+    /// <para>POM JSON/YAML is WIRE OUTPUT, and the reference emits LF on every
+    /// platform: Python's <c>json.dumps(indent=2)</c> and
+    /// <c>yaml.dump(default_flow_style=False)</c> both hardcode <c>"\n"</c> and
+    /// never consult the platform. System.Text.Json's indent newline (before
+    /// .NET 9's <c>JsonSerializerOptions.NewLine</c>) and YamlDotNet's serializer
+    /// both default to <see cref="Environment.NewLine"/>, so on Windows this type
+    /// emitted CRLF — a real divergence in the bytes we send, not a test
+    /// artifact.</para>
+    /// <para>Normalizing here rather than via
+    /// <c>JsonSerializerOptions.NewLine</c> keeps ONE code path across the
+    /// net8.0/net9.0/net10.0 matrix (that property does not exist on net8.0) and
+    /// covers YamlDotNet with the same call. CR is only ever a line ending in this
+    /// output — the serializers escape any CR inside a string value (<c>\r</c> in
+    /// JSON, quoted in YAML) — so stripping bare CR cannot corrupt content.</para>
+    /// <para>Caught by the multi-OS nightly (run 30908589549, windows-latest):
+    /// <c>ToJson_ExactShape</c> / <c>ToYaml_ExactShape</c> both differed from the
+    /// expected LF text at the first newline. A linux-only PR tier cannot see
+    /// this.</para>
+    /// </remarks>
+    private static string LfOnly(string s) =>
+        s.Replace("\r\n", "\n", StringComparison.Ordinal)
+         .Replace("\r", "\n", StringComparison.Ordinal);
 
     private readonly List<Section> _sections;
     public bool Debug { get; set; }
@@ -284,7 +375,7 @@ public class PromptObjectModel
 
     /// <summary>Add a top-level section to the model, returning the new
     /// Section. Only the first added section may have a null title.
-    /// (equivalent to Python's ``PromptObjectModel.add_section``.)</summary>
+    /// </summary>
     public Section AddSection(
         string? title = null,
         string body = "",
@@ -301,7 +392,7 @@ public class PromptObjectModel
     }
 
     /// <summary>Recursively find a section by title. Returns null if not
-    /// found. (equivalent to Python's ``PromptObjectModel.find_section``.)</summary>
+    /// found.</summary>
     public Section? FindSection(string title)
     {
         foreach (var s in _sections)
@@ -401,7 +492,7 @@ public class PromptObjectModel
         if (_sections.Count == 0) return "[]";
         // System.Text.Json indents with 2 spaces by default in .NET 9+.
         var dicts = ToDict();
-        return JsonSerializer.Serialize(dicts, JsonOptions);
+        return LfOnly(JsonSerializer.Serialize(dicts, JsonOptions));
     }
 
     /// <summary>Serialize to YAML string. Matches PyYAML's
@@ -415,11 +506,10 @@ public class PromptObjectModel
             .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.NullNamingConvention.Instance)
             .DisableAliases()
             .Build();
-        return serializer.Serialize(sectionDicts);
+        return LfOnly(serializer.Serialize(sectionDicts));
     }
 
-    /// <summary>Construct a PromptObjectModel from YAML string.
-    /// (equivalent to Python's ``PromptObjectModel.from_yaml``.)</summary>
+    /// <summary>Construct a PromptObjectModel from YAML string.</summary>
     public static PromptObjectModel FromYaml(string yaml)
     {
         var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
@@ -451,8 +541,7 @@ public class PromptObjectModel
         }
     }
 
-    /// <summary>Construct a PromptObjectModel from JSON.
-    /// (equivalent to Python's ``PromptObjectModel.from_json``.)</summary>
+    /// <summary>Construct a PromptObjectModel from JSON.</summary>
     public static PromptObjectModel FromJson(string json)
     {
         var pom = new PromptObjectModel();
@@ -527,7 +616,7 @@ public class PromptObjectModel
 
     /// <summary>Add a PromptObjectModel as a subsection of an existing
     /// section in this model, identified by title.
-    /// (equivalent to Python's ``PromptObjectModel.add_pom_as_subsection``.)</summary>
+    /// </summary>
     public void AddPomAsSubsection(string targetTitle, PromptObjectModel pomToAdd)
     {
         ArgumentNullException.ThrowIfNull(pomToAdd);
@@ -539,7 +628,7 @@ public class PromptObjectModel
 
     /// <summary>Add a PromptObjectModel as a subsection of an existing
     /// Section object directly. Overload mirrors Python's polymorphism.
-    /// (equivalent to Python's ``PromptObjectModel.add_pom_as_subsection``.)</summary>
+    /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Performance", "CA1822:Mark members as static",
         Justification = "Instance overload mirrors the AddPomAsSubsection(string, ...) sibling and the cross-port instance surface.")]

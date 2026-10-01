@@ -30,11 +30,11 @@ public class ContextsTextObject
 
     /// <summary>Wire field <c>enter_fillers</c>.</summary>
     [JsonPropertyName("enter_fillers")]
-    public List<object?>? EnterFillers { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.FunctionFillers>? EnterFillers { get; set; }
 
     /// <summary>Wire field <c>exit_fillers</c>.</summary>
     [JsonPropertyName("exit_fillers")]
-    public List<object?>? ExitFillers { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.FunctionFillers>? ExitFillers { get; set; }
 
     /// <summary>Wire field <c>text</c>.</summary>
     [JsonPropertyName("text")]

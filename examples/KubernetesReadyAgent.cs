@@ -3,25 +3,26 @@
 // Demonstrates an agent configured for Kubernetes deployment with
 // health endpoints, graceful shutdown, and environment-based config.
 
+using System.Globalization;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
 var host = Environment.GetEnvironmentVariable("AGENT_HOST") ?? "0.0.0.0";
-var port = int.Parse(Environment.GetEnvironmentVariable("AGENT_PORT") ?? "3000");
+var port = int.Parse(Environment.GetEnvironmentVariable("AGENT_PORT") ?? "3000", CultureInfo.InvariantCulture);
 var name = Environment.GetEnvironmentVariable("AGENT_NAME") ?? "k8s-agent";
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = name,
+    Name = name,
     Route = "/",
-    Host  = host,
-    Port  = port,
+    Host = host,
+    Port = port,
 });
 
 agent.AddLanguage("English", "en-US", "inworld.Mark");
 agent.SetParams(new Dictionary<string, object>
 {
-    ["ai_model"]              = Environment.GetEnvironmentVariable("AI_MODEL") ?? "gpt-4.1-nano",
+    ["ai_model"] = Environment.GetEnvironmentVariable("AI_MODEL") ?? "gpt-4.1-nano",
     ["end_of_speech_timeout"] = 500,
 });
 
@@ -36,32 +37,32 @@ agent.PromptAddSection("Instructions", "", new List<string>
 });
 
 agent.DefineTool(
-    name:        "get_time",
+    name: "get_time",
     description: "Get the current time",
-    parameters:  new Dictionary<string, object>(),
+    parameters: new Dictionary<string, object>(),
     handler: (args, raw) =>
     {
-        var time = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC");
+        var time = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC", CultureInfo.InvariantCulture);
         return new FunctionResult($"The current time is {time}");
     }
 );
 
 agent.DefineTool(
-    name:        "get_pod_info",
+    name: "get_pod_info",
     description: "Get information about the running pod",
-    parameters:  new Dictionary<string, object>(),
+    parameters: new Dictionary<string, object>(),
     handler: (args, raw) =>
     {
-        var podName  = Environment.GetEnvironmentVariable("POD_NAME")      ?? "unknown";
-        var nodeName = Environment.GetEnvironmentVariable("NODE_NAME")     ?? "unknown";
-        var ns       = Environment.GetEnvironmentVariable("POD_NAMESPACE") ?? "default";
+        var podName = Environment.GetEnvironmentVariable("POD_NAME") ?? "unknown";
+        var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? "unknown";
+        var ns = Environment.GetEnvironmentVariable("POD_NAMESPACE") ?? "default";
         return new FunctionResult(
             $"Running on pod {podName} in namespace {ns} on node {nodeName}");
     }
 );
 
 // Graceful shutdown handling
-var cts = new CancellationTokenSource();
+using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>
 {
     e.Cancel = true;

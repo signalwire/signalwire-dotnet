@@ -35,7 +35,7 @@ jobs:
         with:
           repository: signalwire/porting-sdk
           # Publish always builds against porting-sdk main — deliberately NOT the
-          # coordinated-pass PORTING_SDK_REF variable, so a release can never ship from
+          # coordinated-pass .github/porting-sdk-ref pin, so a release can never ship from
           # an unmerged wave branch (see porting-sdk/COORDINATED_PASS.md).
           ref: main
           path: porting-sdk
@@ -59,6 +59,14 @@ jobs:
         run: |
           pip install -e porting-sdk/test_harness/mock_relay
           pip install -e porting-sdk/test_harness/mock_signalwire
+
+      # ruff is a REAL dependency of the FMT + LINT gates: this repo's Python
+      # build/audit infrastructure (scripts/enumerate_*.py, scripts/generate_*.py,
+      # tests/dotnet_adapter_goldens/run_goldens.py) is linted and formatted at
+      # the same bar as the shipped C# library. run-lint.sh / run-format.sh fail
+      # loud if it is absent, so it must be installed here, not assumed present.
+      - name: Install Python dev dependencies (ruff — FMT/LINT gates)
+        run: pip install -r signalwire-dotnet/requirements-dev.txt
 
       - name: Run CI gate script (TEST -> SIGNATURES -> DRIFT -> NO-CHEAT)
         working-directory: signalwire-dotnet

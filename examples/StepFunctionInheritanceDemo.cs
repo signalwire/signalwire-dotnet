@@ -41,7 +41,7 @@ using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "step_function_inheritance_demo",
+    Name = "step_function_inheritance_demo",
     Route = "/",
 });
 
@@ -79,7 +79,7 @@ agent.DefineTool(
 );
 
 // Build the contexts.
-var cb  = agent.DefineContexts();
+var cb = agent.DefineContexts();
 var ctx = cb.AddContext("default");
 
 // -- Step 1: explicit whitelist --
@@ -131,4 +131,11 @@ ctx.AddStep("step_disabled")
 // Render and pretty-print the resulting SWML so you can see exactly
 // which steps have a `functions` key in the output and which don't.
 var swml = agent.RenderSwml();
-Console.WriteLine(JsonSerializer.Serialize(swml, new JsonSerializerOptions { WriteIndented = true }));
+Console.WriteLine(JsonSerializer.Serialize(swml, ExampleJson.Indented));
+
+/// <summary>Cached serializer options. JsonSerializerOptions is expensive to
+/// construct and is designed to be created once and reused.</summary>
+internal static class ExampleJson
+{
+    internal static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
+}

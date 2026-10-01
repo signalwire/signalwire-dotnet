@@ -22,6 +22,8 @@ namespace SignalWire.Tests.RelayMock;
 [Trait("Category", "RelayMock")]
 public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] C1Array = new[] { "c1" };
     private readonly RelayMockServerFixture _fixture;
 
     public ConnectMockTest(RelayMockServerFixture fixture)
@@ -33,7 +35,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
+        MockServerFixture.SkipNote("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
         return true;
     }
 
@@ -45,7 +47,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     public async Task Connect_Returns_ProtocolString()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -65,7 +67,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     public async Task Connect_Journal_RecordsSignalwireConnect()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -85,7 +87,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
         if (Skipped()) return;
         using var bound = RelayMockTest.NewClient(
             project: "test_proj", token: "test_tok",
-            contexts: new[] { "default" });
+            contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -109,7 +111,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     public async Task Connect_Journal_CarriesContexts()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -134,7 +136,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     public async Task Connect_Journal_CarriesAgentAndVersion()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -161,7 +163,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
     public async Task Connect_Journal_EventAcksTrue()
     {
         if (Skipped()) return;
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         await bound.Client.ConnectAsync();
         try
@@ -190,7 +192,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
 
         // First connection captures the issued protocol.
         string? issued;
-        using (var bound1 = RelayMockTest.NewClient(contexts: new[] { "c1" }))
+        using (var bound1 = RelayMockTest.NewClient(contexts: C1Array))
         {
             await bound1.Client.ConnectAsync();
             issued = bound1.Client.Protocol;
@@ -200,7 +202,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
 
         // Second connection sends the saved protocol back. bound2.Harness is
         // scoped to bound2's fresh session, so it only sees the second connect.
-        using (var bound2 = RelayMockTest.NewClient(contexts: new[] { "c1" }))
+        using (var bound2 = RelayMockTest.NewClient(contexts: C1Array))
         {
             bound2.Client.Protocol = issued;
             await bound2.Client.ConnectAsync();
@@ -290,7 +292,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
         while (true)
         {
             var result = await ws.ReceiveAsync(buffer, readCts.Token);
-            assembled.Write(buffer, 0, result.Count);
+            await assembled.WriteAsync(buffer.AsMemory(0, result.Count));
             if (result.EndOfMessage) break;
         }
         var raw = Encoding.UTF8.GetString(assembled.ToArray());
@@ -303,7 +305,9 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
             data.GetProperty("signalwire_error_code").GetString());
 
         try { await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "done", CancellationToken.None); }
-        catch { /* best effort */ }
+        catch (System.Net.WebSockets.WebSocketException) { /* peer already gone */ }
+        catch (ObjectDisposedException) { /* socket already disposed */ }
+        catch (OperationCanceledException) { /* shutting down */ }
     }
 
     // ------------------------------------------------------------------
@@ -348,7 +352,7 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
         while (true)
         {
             var result = await ws.ReceiveAsync(buffer, readCts.Token);
-            assembled.Write(buffer, 0, result.Count);
+            await assembled.WriteAsync(buffer.AsMemory(0, result.Count));
             if (result.EndOfMessage) break;
         }
 
@@ -367,6 +371,8 @@ public class ConnectMockTest : IClassFixture<RelayMockServerFixture>
         Assert.NotEmpty(jwtConnects);
 
         try { await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "done", CancellationToken.None); }
-        catch { /* best effort */ }
+        catch (System.Net.WebSockets.WebSocketException) { /* peer already gone */ }
+        catch (ObjectDisposedException) { /* socket already disposed */ }
+        catch (OperationCanceledException) { /* shutting down */ }
     }
 }

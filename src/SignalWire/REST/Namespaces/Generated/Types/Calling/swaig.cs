@@ -24,19 +24,27 @@ public class SWAIG
     [JsonPropertyName("defaults")]
     public SignalWire.REST.Namespaces.Generated.Types.Calling.SWAIGDefaults? Defaults { get; set; }
 
-    /// <summary>Wire field <c>native_functions</c>.</summary>
-    [JsonPropertyName("native_functions")]
-    public List<object?>? NativeFunctions { get; set; }
+    /// <summary>Wire field <c>functions</c>.</summary>
+    [JsonPropertyName("functions")]
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.SWAIGFunction>? Functions { get; set; }
+
+    /// <summary>Wire field <c>hooks</c>.</summary>
+    [JsonPropertyName("hooks")]
+    public List<object?>? Hooks { get; set; }
 
     /// <summary>Wire field <c>includes</c>.</summary>
     [JsonPropertyName("includes")]
     public List<SignalWire.REST.Namespaces.Generated.Types.Calling.SWAIGIncludes>? Includes { get; set; }
 
-    /// <summary>Wire field <c>functions</c>.</summary>
-    [JsonPropertyName("functions")]
-    public List<object?>? Functions { get; set; }
-
     /// <summary>Wire field <c>internal_fillers</c>.</summary>
     [JsonPropertyName("internal_fillers")]
     public SignalWire.REST.Namespaces.Generated.Types.Calling.SWAIGInternalFiller? InternalFillers { get; set; }
+
+    /// <summary>Wire field <c>mcp_servers</c>.</summary>
+    [JsonPropertyName("mcp_servers")]
+    public List<object?>? McpServers { get; set; }
+
+    /// <summary>Wire field <c>native_functions</c>.</summary>
+    [JsonPropertyName("native_functions")]
+    public List<object?>? NativeFunctions { get; set; }
 }

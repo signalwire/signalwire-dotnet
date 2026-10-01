@@ -27,6 +27,8 @@ namespace SignalWire.Tests;
 [Trait("Category", "LiveSmoke")]
 public class LiveSmokeTests
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] DefaultArray = new[] { "default" };
     /// <summary>(project, token, space) when armed; null → skip cleanly.</summary>
     private static (string Project, string Token, string Space)? LiveCreds()
     {
@@ -83,7 +85,7 @@ public class LiveSmokeTests
             Project = creds.Project,
             Token = creds.Token,
             Host = creds.Space,
-            Contexts = new[] { "default" },
+            Contexts = DefaultArray,
         });
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));

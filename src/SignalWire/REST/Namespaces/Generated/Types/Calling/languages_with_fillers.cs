@@ -20,43 +20,63 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class LanguagesWithFillers
 {
-    /// <summary>Wire field <c>name</c>.</summary>
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
+    /// <summary>Wire field <c>auto_emotion</c>.</summary>
+    [JsonPropertyName("auto_emotion")]
+    public object? AutoEmotion { get; set; }
+
+    /// <summary>Wire field <c>auto_speed</c>.</summary>
+    [JsonPropertyName("auto_speed")]
+    public object? AutoSpeed { get; set; }
 
     /// <summary>Wire field <c>code</c>.</summary>
     [JsonPropertyName("code")]
-    public string? Code { get; set; }
+    public object? Code { get; set; }
 
-    /// <summary>Wire field <c>voice</c>.</summary>
-    [JsonPropertyName("voice")]
-    public string? Voice { get; set; }
-
-    /// <summary>Wire field <c>model</c>.</summary>
-    [JsonPropertyName("model")]
-    public string? Model { get; set; }
-
-    /// <summary>Wire field <c>emotion</c>.</summary>
-    [JsonPropertyName("emotion")]
-    public string? Emotion { get; set; }
-
-    /// <summary>Wire field <c>speed</c>.</summary>
-    [JsonPropertyName("speed")]
-    public string? Speed { get; set; }
+    /// <summary>Wire field <c>double_turn_fillers</c>.</summary>
+    [JsonPropertyName("double_turn_fillers")]
+    public List<object?>? DoubleTurnFillers { get; set; }
 
     /// <summary>Wire field <c>engine</c>.</summary>
     [JsonPropertyName("engine")]
     public string? Engine { get; set; }
 
-    /// <summary>Wire field <c>params</c>.</summary>
-    [JsonPropertyName("params")]
-    public SignalWire.REST.Namespaces.Generated.Types.Calling.LanguageParams? Params { get; set; }
+    /// <summary>Wire field <c>fillers</c>.</summary>
+    [JsonPropertyName("fillers")]
+    public List<object?>? Fillers { get; set; }
 
     /// <summary>Wire field <c>function_fillers</c>.</summary>
     [JsonPropertyName("function_fillers")]
     public List<object?>? FunctionFillers { get; set; }
 
+    /// <summary>Wire field <c>listen_language</c>.</summary>
+    [JsonPropertyName("listen_language")]
+    public object? ListenLanguage { get; set; }
+
+    /// <summary>Wire field <c>model</c>.</summary>
+    [JsonPropertyName("model")]
+    public string? Model { get; set; }
+
+    /// <summary>Wire field <c>name</c>.</summary>
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    /// <summary>Wire field <c>params</c>.</summary>
+    [JsonPropertyName("params")]
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.LanguageParams? Params { get; set; }
+
+    /// <summary>Wire field <c>pronounce</c>.</summary>
+    [JsonPropertyName("pronounce")]
+    public List<object?>? Pronounce { get; set; }
+
     /// <summary>Wire field <c>speech_fillers</c>.</summary>
     [JsonPropertyName("speech_fillers")]
     public List<object?>? SpeechFillers { get; set; }
+
+    /// <summary>Wire field <c>turn_fillers</c>.</summary>
+    [JsonPropertyName("turn_fillers")]
+    public List<object?>? TurnFillers { get; set; }
+
+    /// <summary>Wire field <c>voice</c>.</summary>
+    [JsonPropertyName("voice")]
+    public string? Voice { get; set; }
 }

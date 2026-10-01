@@ -79,4 +79,80 @@ public class RelayVoiceLog
     /// <summary>Wire field <c>parent_id</c>.</summary>
     [JsonPropertyName("parent_id")]
     public string? ParentId { get; set; }
+
+    /// <summary>Wire field <c>audio_in_mos</c>.</summary>
+    [JsonPropertyName("audio_in_mos")]
+    public string? AudioInMos { get; set; }
+
+    /// <summary>Wire field <c>audio_in_jitter_min</c>.</summary>
+    [JsonPropertyName("audio_in_jitter_min")]
+    public object? AudioInJitterMin { get; set; }
+
+    /// <summary>Wire field <c>audio_in_jitter_max</c>.</summary>
+    [JsonPropertyName("audio_in_jitter_max")]
+    public object? AudioInJitterMax { get; set; }
+
+    /// <summary>Wire field <c>audio_out_jitter_min</c>.</summary>
+    [JsonPropertyName("audio_out_jitter_min")]
+    public object? AudioOutJitterMin { get; set; }
+
+    /// <summary>Wire field <c>audio_out_jitter_max</c>.</summary>
+    [JsonPropertyName("audio_out_jitter_max")]
+    public object? AudioOutJitterMax { get; set; }
+
+    /// <summary>Wire field <c>audio_out_jitter_avg</c>.</summary>
+    [JsonPropertyName("audio_out_jitter_avg")]
+    public object? AudioOutJitterAvg { get; set; }
+
+    /// <summary>Wire field <c>audio_rtt_avg</c>.</summary>
+    [JsonPropertyName("audio_rtt_avg")]
+    public object? AudioRttAvg { get; set; }
+
+    /// <summary>Wire field <c>audio_rtt_min</c>.</summary>
+    [JsonPropertyName("audio_rtt_min")]
+    public object? AudioRttMin { get; set; }
+
+    /// <summary>Wire field <c>audio_rtt_max</c>.</summary>
+    [JsonPropertyName("audio_rtt_max")]
+    public object? AudioRttMax { get; set; }
+
+    /// <summary>Wire field <c>audio_in_media_packet_count</c>.</summary>
+    [JsonPropertyName("audio_in_media_packet_count")]
+    public object? AudioInMediaPacketCount { get; set; }
+
+    /// <summary>Wire field <c>audio_out_packet_count</c>.</summary>
+    [JsonPropertyName("audio_out_packet_count")]
+    public object? AudioOutPacketCount { get; set; }
+
+    /// <summary>Wire field <c>audio_out_media_packet_count</c>.</summary>
+    [JsonPropertyName("audio_out_media_packet_count")]
+    public object? AudioOutMediaPacketCount { get; set; }
+
+    /// <summary>Wire field <c>audio_out_lost</c>.</summary>
+    [JsonPropertyName("audio_out_lost")]
+    public object? AudioOutLost { get; set; }
+
+    /// <summary>Wire field <c>audio_in_mean_interval</c>.</summary>
+    [JsonPropertyName("audio_in_mean_interval")]
+    public object? AudioInMeanInterval { get; set; }
+
+    /// <summary>Wire field <c>audio_in_dtmf_packet_count</c>.</summary>
+    [JsonPropertyName("audio_in_dtmf_packet_count")]
+    public object? AudioInDtmfPacketCount { get; set; }
+
+    /// <summary>Wire field <c>audio_out_dtmf_packet_count</c>.</summary>
+    [JsonPropertyName("audio_out_dtmf_packet_count")]
+    public object? AudioOutDtmfPacketCount { get; set; }
+
+    /// <summary>Wire field <c>audio_in_skip_packet_count</c>.</summary>
+    [JsonPropertyName("audio_in_skip_packet_count")]
+    public object? AudioInSkipPacketCount { get; set; }
+
+    /// <summary>Wire field <c>audio_in_flush_packet_count</c>.</summary>
+    [JsonPropertyName("audio_in_flush_packet_count")]
+    public object? AudioInFlushPacketCount { get; set; }
+
+    /// <summary>Wire field <c>audio_in_largest_jb_size</c>.</summary>
+    [JsonPropertyName("audio_in_largest_jb_size")]
+    public object? AudioInLargestJbSize { get; set; }
 }

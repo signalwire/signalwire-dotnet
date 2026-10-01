@@ -44,19 +44,15 @@ public class SubscriberRequest
     [JsonPropertyName("job_title")]
     public string? JobTitle { get; set; }
 
-    /// <summary>Wire field <c>timezone</c>.</summary>
-    [JsonPropertyName("timezone")]
-    public string? Timezone { get; set; }
-
     /// <summary>Wire field <c>country</c>.</summary>
     [JsonPropertyName("country")]
     public string? Country { get; set; }
 
-    /// <summary>Wire field <c>region</c>.</summary>
-    [JsonPropertyName("region")]
-    public string? Region { get; set; }
-
     /// <summary>Wire field <c>company_name</c>.</summary>
     [JsonPropertyName("company_name")]
     public string? CompanyName { get; set; }
+
+    /// <summary>Wire field <c>time_zone</c>.</summary>
+    [JsonPropertyName("time_zone")]
+    public string? TimeZone { get; set; }
 }

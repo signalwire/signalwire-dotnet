@@ -14,27 +14,22 @@ public class ConciergeAgent : AgentBase
     private readonly List<string> _services;
     private readonly Dictionary<string, Dictionary<string, object>> _amenities;
 
-    /// <summary>The venue this concierge represents.
-    /// (equivalent to Python's <c>venue_name</c>.)</summary>
+    /// <summary>The venue this concierge represents.</summary>
     [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface: the property is the reference attribute (readback), the Get* method the pre-existing cross-port accessor.")]
     public string VenueName => _venueName;
 
-    /// <summary>The services the venue offers.
-    /// (equivalent to Python's <c>services</c>.)</summary>
+    /// <summary>The services the venue offers.</summary>
     [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface: the property is the reference attribute (readback), the Get* method the pre-existing cross-port accessor.")]
     public IReadOnlyList<string> Services => _services;
 
-    /// <summary>The venue's amenities, keyed by name.
-    /// (equivalent to Python's <c>amenities</c>.)</summary>
+    /// <summary>The venue's amenities, keyed by name.</summary>
     [SuppressMessage("Naming", "CA1721", Justification = "Both the property and the get_* accessor are part of the cross-port surface: the property is the reference attribute (readback), the Get* method the pre-existing cross-port accessor.")]
     public IReadOnlyDictionary<string, Dictionary<string, object>> Amenities => _amenities;
 
-    /// <summary>The venue's opening hours, keyed by day/label.
-    /// (equivalent to Python's <c>hours_of_operation</c>.)</summary>
+    /// <summary>The venue's opening hours, keyed by day/label.</summary>
     public IReadOnlyDictionary<string, string> HoursOfOperation { get; }
 
-    /// <summary>Extra instructions appended to the agent's prompt.
-    /// (equivalent to Python's <c>special_instructions</c>.)</summary>
+    /// <summary>Extra instructions appended to the agent's prompt.</summary>
     public IReadOnlyList<string> SpecialInstructions { get; }
 
     public ConciergeAgent(
@@ -119,8 +114,7 @@ public class ConciergeAgent : AgentBase
             GetDirections);
     }
 
-    /// <summary>SWAIG tool handler for the ``check_availability`` tool.
-    /// (equivalent to Python's ``ConciergeAgent.check_availability(args, raw_data)``.)</summary>
+    /// <summary>SWAIG tool handler for the ``check_availability`` tool.</summary>
     public FunctionResult CheckAvailability(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
         ArgumentNullException.ThrowIfNull(args);
@@ -131,8 +125,7 @@ public class ConciergeAgent : AgentBase
         return new FunctionResult(response);
     }
 
-    /// <summary>SWAIG tool handler for the ``get_directions`` tool.
-    /// (equivalent to Python's ``ConciergeAgent.get_directions(args, raw_data)``.)</summary>
+    /// <summary>SWAIG tool handler for the ``get_directions`` tool.</summary>
     public FunctionResult GetDirections(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
         ArgumentNullException.ThrowIfNull(args);

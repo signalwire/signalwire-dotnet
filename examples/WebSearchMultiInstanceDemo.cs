@@ -6,13 +6,13 @@
 using SignalWire.Agent;
 using SignalWire.Server;
 
-var apiKey   = Environment.GetEnvironmentVariable("GOOGLE_SEARCH_API_KEY") ?? "";
+var apiKey = Environment.GetEnvironmentVariable("GOOGLE_SEARCH_API_KEY") ?? "";
 var engineId = Environment.GetEnvironmentVariable("GOOGLE_SEARCH_ENGINE_ID") ?? "";
 
 // --- Tech News Agent ---
 var techAgent = new AgentBase(new AgentOptions
 {
-    Name  = "Tech News Agent",
+    Name = "Tech News Agent",
     Route = "/tech",
 });
 
@@ -27,9 +27,9 @@ if (!string.IsNullOrEmpty(apiKey))
     {
         techAgent.AddSkill("web_search", new Dictionary<string, object>
         {
-            ["api_key"]          = apiKey,
+            ["api_key"] = apiKey,
             ["search_engine_id"] = engineId,
-            ["num_results"]      = 3,
+            ["num_results"] = 3,
         });
     }
     catch { /* optional */ }
@@ -38,7 +38,7 @@ if (!string.IsNullOrEmpty(apiKey))
 // --- Sports Agent ---
 var sportsAgent = new AgentBase(new AgentOptions
 {
-    Name  = "Sports Agent",
+    Name = "Sports Agent",
     Route = "/sports",
 });
 
@@ -53,9 +53,9 @@ if (!string.IsNullOrEmpty(apiKey))
     {
         sportsAgent.AddSkill("web_search", new Dictionary<string, object>
         {
-            ["api_key"]          = apiKey,
+            ["api_key"] = apiKey,
             ["search_engine_id"] = engineId,
-            ["num_results"]      = 3,
+            ["num_results"] = 3,
         });
     }
     catch { /* optional */ }
@@ -64,7 +64,7 @@ if (!string.IsNullOrEmpty(apiKey))
 // --- General Knowledge Agent ---
 var generalAgent = new AgentBase(new AgentOptions
 {
-    Name  = "General Knowledge Agent",
+    Name = "General Knowledge Agent",
     Route = "/general",
 });
 
@@ -79,9 +79,9 @@ if (!string.IsNullOrEmpty(apiKey))
     {
         generalAgent.AddSkill("web_search", new Dictionary<string, object>
         {
-            ["api_key"]          = apiKey,
+            ["api_key"] = apiKey,
             ["search_engine_id"] = engineId,
-            ["num_results"]      = 5,
+            ["num_results"] = 5,
         });
     }
     catch { /* optional */ }

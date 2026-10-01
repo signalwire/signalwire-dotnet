@@ -20,11 +20,39 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class LanguageParams
 {
-    /// <summary>Wire field <c>stability</c>.</summary>
-    [JsonPropertyName("stability")]
-    public object? Stability { get; set; }
+    /// <summary>Wire field <c>emotion</c>.</summary>
+    [JsonPropertyName("emotion")]
+    public string? Emotion { get; set; }
+
+    /// <summary>Wire field <c>pitch</c>.</summary>
+    [JsonPropertyName("pitch")]
+    public object? Pitch { get; set; }
 
     /// <summary>Wire field <c>similarity</c>.</summary>
     [JsonPropertyName("similarity")]
     public object? Similarity { get; set; }
+
+    /// <summary>Wire field <c>speakingRate</c>.</summary>
+    [JsonPropertyName("speakingRate")]
+    public object? SpeakingRate { get; set; }
+
+    /// <summary>Wire field <c>speed</c>.</summary>
+    [JsonPropertyName("speed")]
+    public object? Speed { get; set; }
+
+    /// <summary>Wire field <c>stability</c>.</summary>
+    [JsonPropertyName("stability")]
+    public object? Stability { get; set; }
+
+    /// <summary>Wire field <c>streaming</c>.</summary>
+    [JsonPropertyName("streaming")]
+    public object? Streaming { get; set; }
+
+    /// <summary>Wire field <c>temperature</c>.</summary>
+    [JsonPropertyName("temperature")]
+    public object? Temperature { get; set; }
+
+    /// <summary>Wire field <c>vol</c>.</summary>
+    [JsonPropertyName("vol")]
+    public object? Vol { get; set; }
 }

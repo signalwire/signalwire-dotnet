@@ -28,10 +28,6 @@ public class PostPromptStampsUs
     [JsonPropertyName("last_word_end")]
     public long? last_word_end { get; set; }
 
-    /// <summary>Wire field <c>suspected_end</c>.</summary>
-    [JsonPropertyName("suspected_end")]
-    public long? suspected_end { get; set; }
-
     /// <summary>Wire field <c>turn_decided</c>.</summary>
     [JsonPropertyName("turn_decided")]
     public long? turn_decided { get; set; }

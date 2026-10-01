@@ -5,8 +5,10 @@ using SignalWire.Relay;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class RelayTests : IDisposable
+public sealed class RelayTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] TypeParamsArray = new[] { "type", "params" };
     public RelayTests()
     {
         Logging.Logger.Reset();
@@ -226,7 +228,7 @@ public class RelayTests : IDisposable
 
         _ = Task.Run(async () =>
         {
-            await Task.Delay(50);
+            await Task.Delay(50).ConfigureAwait(false);
             action.Resolve("result");
         });
 
@@ -384,7 +386,7 @@ public class RelayTests : IDisposable
 
         _ = Task.Run(async () =>
         {
-            await Task.Delay(50);
+            await Task.Delay(50).ConfigureAwait(false);
             msg.DispatchEvent(new Event("messaging.state", new()
             {
                 ["state"] = "delivered",
@@ -400,9 +402,10 @@ public class RelayTests : IDisposable
     // ==================================================================
 
     [Fact]
-    public void Call_Construction()
+    public async Task Call_Construction()
     {
         var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new()
         {
             ["call_id"] = "c-1",
@@ -421,17 +424,19 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_DefaultState()
+    public async Task Call_DefaultState()
     {
         var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new(), client);
         Assert.Equal("created", call.State);
     }
 
     [Fact]
-    public void Call_DispatchEvent_StateChange()
+    public async Task Call_DispatchEvent_StateChange()
     {
         var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         // Real RELAY wire key is call_state (relay.c + mock_relay).
@@ -444,12 +449,13 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_DispatchEvent_IgnoresBareStateKey()
+    public async Task Call_DispatchEvent_IgnoresBareStateKey()
     {
         // A stray top-level "state" on a call.state event is NOT the call-state
         // field (that belongs to control_id-routed component events) and must
         // not move the call's state off its default.
         var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         call.DispatchEvent(new Event("calling.call.state", new()
@@ -461,9 +467,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_DispatchEvent_EndResolves()
+    public async Task Call_DispatchEvent_EndResolves()
     {
         var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new()
         {
             ["call_id"] = "c-1",
@@ -486,9 +493,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_DispatchEvent_ActionTerminalState()
+    public async Task Call_DispatchEvent_ActionTerminalState()
     {
         var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new()
         {
             ["call_id"] = "c-1",
@@ -509,9 +517,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_DispatchEvent_ConnectSetsPeer()
+    public async Task Call_DispatchEvent_ConnectSetsPeer()
     {
         var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         var peerDict = new Dictionary<string, object?> { ["call_id"] = "c-peer" };
@@ -524,9 +533,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_OnEventCallback()
+    public async Task Call_OnEventCallback()
     {
         var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
 
         Event? received = null;
@@ -542,9 +552,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_ResolveAllActions()
+    public async Task Call_ResolveAllActions()
     {
         var client = new Client(new() { Project = "p1", Token = "t1" });
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new() { ["call_id"] = "c-1", ["node_id"] = "n-1" }, client);
 
         var a1 = new PlayAction("ctrl-1", "c-1", "n-1", client);
@@ -600,9 +611,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleMessage_PingAck()
+    public async Task Client_HandleMessage_PingAck()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
 
         client.HandleMessage(JsonSerializer.Serialize(new Dictionary<string, object?>
         {
@@ -617,9 +629,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleMessage_EventAck()
+    public async Task Client_HandleMessage_EventAck()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
 
         client.HandleMessage(JsonSerializer.Serialize(new Dictionary<string, object?>
         {
@@ -641,9 +654,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleMessage_Response()
+    public async Task Client_HandleMessage_Response()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
 
         // Register a pending request
         var tcs = new TaskCompletionSource<Dictionary<string, object?>>(
@@ -661,13 +675,14 @@ public class RelayTests : IDisposable
         }));
 
         Assert.True(tcs.Task.IsCompletedSuccessfully);
-        Assert.Equal("sess-abc", tcs.Task.Result["session_id"]?.ToString());
+        Assert.Equal("sess-abc", (await tcs.Task)["session_id"]?.ToString());
     }
 
     [Fact]
-    public void Client_HandleMessage_ErrorResponse()
+    public async Task Client_HandleMessage_ErrorResponse()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
 
         var tcs = new TaskCompletionSource<Dictionary<string, object?>>(
             TaskCreationOptions.RunContinuationsAsynchronously);
@@ -696,11 +711,12 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleEvent_InboundCall()
+    public async Task Client_HandleEvent_InboundCall()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
         Call? receivedCall = null;
-        client.OnCallHandler = (call, evt) => { receivedCall = call; return Task.CompletedTask; };
+        client.OnCallHandler = call => { receivedCall = call; return Task.CompletedTask; };
 
         client.HandleEvent(new()
         {
@@ -719,11 +735,12 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_InboundCall_CapBounded_DropsWhenFull()
+    public async Task Client_InboundCall_CapBounded_DropsWhenFull()
     {
         // The Calls map is bounded by max_active_calls: once full, further
         // inbound calls are dropped rather than accumulating forever (r5 F5.4).
         var client = new TestableClient(maxActiveCalls: 2);
+        await using var clientScope = client.ConfigureAwait(false);
 
         for (var i = 0; i < 5; i++)
         {
@@ -761,11 +778,12 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_Disconnect_SweepsCorrelationMaps()
+    public async Task Client_Disconnect_SweepsCorrelationMaps()
     {
         // Disconnect frees every tracked entry — a suppressed terminal event
         // cannot leak an entry past the session that owned it (r5 F5.4).
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
         client.Calls["c-1"] = new Call(new() { ["call_id"] = "c-1" }, client);
         client.Messages["m-1"] = new Message(new() { ["message_id"] = "m-1" });
         Assert.NotEmpty(client.Calls);
@@ -778,9 +796,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleEvent_MessageState()
+    public async Task Client_HandleEvent_MessageState()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
         var msg = new Message(new() { ["message_id"] = "msg-1" });
         client.Messages["msg-1"] = msg;
 
@@ -799,9 +818,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleEvent_RoutesToCall()
+    public async Task Client_HandleEvent_RoutesToCall()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
         client.Calls["c-1"] = call;
 
@@ -819,9 +839,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleEvent_EndedCallRemoved()
+    public async Task Client_HandleEvent_EndedCallRemoved()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new() { ["call_id"] = "c-1" }, client);
         client.Calls["c-1"] = call;
 
@@ -839,9 +860,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Client_HandleEvent_DialCreatesCall()
+    public async Task Client_HandleEvent_DialCreatesCall()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
 
         var tcs = new TaskCompletionSource<Call>(TaskCreationOptions.RunContinuationsAsynchronously);
         client.PendingDials["tag-dial"] = tcs;
@@ -873,13 +895,14 @@ public class RelayTests : IDisposable
         });
 
         Assert.True(tcs.Task.IsCompletedSuccessfully);
-        Assert.True(tcs.Task.Result.DialWinner);
+        Assert.True((await tcs.Task).DialWinner);
     }
 
     [Fact]
-    public void Client_Disconnect()
+    public async Task Client_Disconnect()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
         client.Connected = true;
         client.Disconnect();
 
@@ -908,7 +931,7 @@ public class RelayTests : IDisposable
         Assert.Equal(Constants.CallStateEnded, CallState.Ended.ToWireName());
 
         // wire -> enum round-trips for every member.
-        foreach (CallState s in Enum.GetValues(typeof(CallState)))
+        foreach (CallState s in Enum.GetValues<CallState>())
         {
             Assert.True(CallStateExtensions.TryParse(s.ToWireName(), out var parsed));
             Assert.Equal(s, parsed);
@@ -936,7 +959,7 @@ public class RelayTests : IDisposable
         Assert.False(CallState.Answered.IsTerminal());
         Assert.False(CallState.Ending.IsTerminal());
 
-        foreach (CallState s in Enum.GetValues(typeof(CallState)))
+        foreach (CallState s in Enum.GetValues<CallState>())
         {
             Assert.Equal(Constants.CallTerminalStates.Contains(s.ToWireName()), s.IsTerminal());
         }
@@ -949,7 +972,7 @@ public class RelayTests : IDisposable
         Assert.Equal(Constants.DialStateAnswered, DialState.Answered.ToWireName());
         Assert.Equal(Constants.DialStateFailed, DialState.Failed.ToWireName());
 
-        foreach (DialState s in Enum.GetValues(typeof(DialState)))
+        foreach (DialState s in Enum.GetValues<DialState>())
         {
             Assert.True(DialStateExtensions.TryParse(s.ToWireName(), out var parsed));
             Assert.Equal(s, parsed);
@@ -985,7 +1008,7 @@ public class RelayTests : IDisposable
         Assert.Equal(Constants.MessageStateFailed, MessageState.Failed.ToWireName());
         Assert.Equal(Constants.MessageStateReceived, MessageState.Received.ToWireName());
 
-        foreach (MessageState s in Enum.GetValues(typeof(MessageState)))
+        foreach (MessageState s in Enum.GetValues<MessageState>())
         {
             Assert.True(MessageStateExtensions.TryParse(s.ToWireName(), out var parsed));
             Assert.Equal(s, parsed);
@@ -1012,7 +1035,7 @@ public class RelayTests : IDisposable
         Assert.False(MessageState.Sent.IsTerminal());
         Assert.False(MessageState.Received.IsTerminal());
 
-        foreach (MessageState s in Enum.GetValues(typeof(MessageState)))
+        foreach (MessageState s in Enum.GetValues<MessageState>())
         {
             Assert.Equal(Constants.MessageTerminalStates.Contains(s.ToWireName()), s.IsTerminal());
         }
@@ -1033,11 +1056,12 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_CallStateAccessor_AgreesWithString()
+    public async Task Call_CallStateAccessor_AgreesWithString()
     {
         // Drive Call.State through its real DispatchEvent path (no mocks of the
         // Call itself), then assert the typed accessor agrees with the string.
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new Dictionary<string, object?> { ["call_id"] = "c-typed" }, client);
 
         Assert.Equal("created", call.State);
@@ -1056,9 +1080,10 @@ public class RelayTests : IDisposable
     }
 
     [Fact]
-    public void Call_CallStateAccessor_NullForUnknownState()
+    public async Task Call_CallStateAccessor_NullForUnknownState()
     {
         var client = new TestableClient();
+        await using var clientScope = client.ConfigureAwait(false);
         var call = new Call(new Dictionary<string, object?> { ["call_id"] = "c-unknown" }, client);
         // Force an out-of-set value the way a future server might.
         call.State = "transferring";
@@ -1115,7 +1140,7 @@ public class RelayTests : IDisposable
         Assert.Equal(
             (Dictionary<string, object?>)handWritten["params"]!,
             (Dictionary<string, object?>)typed["params"]!);
-        Assert.Equal(new[] { "type", "params" }, typed.Keys.ToArray());
+        Assert.Equal(TypeParamsArray, typed.Keys.ToArray());
     }
 
     [Fact]
@@ -1137,7 +1162,7 @@ public class RelayTests : IDisposable
     }
 
     /// <summary>Test helper that captures sent messages instead of writing to a socket.</summary>
-    private class TestableClient : Client
+    private sealed class TestableClient : Client
     {
         public List<Dictionary<string, object?>> SentMessages { get; } = [];
 

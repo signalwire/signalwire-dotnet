@@ -11,7 +11,7 @@ var apiKey = Environment.GetEnvironmentVariable("API_NINJAS_KEY") ?? "";
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "Joke Skill Demo",
+    Name = "Joke Skill Demo",
     Route = "/joke-skill",
 });
 
@@ -37,9 +37,9 @@ else
 {
     // Fallback: static joke tool
     agent.DefineTool(
-        name:        "tell_joke",
+        name: "tell_joke",
         description: "Tell a joke",
-        parameters:  new Dictionary<string, object>(),
+        parameters: new Dictionary<string, object>(),
         handler: (args, raw) =>
         {
             var jokes = new[]

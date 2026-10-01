@@ -31,14 +31,14 @@ public class MessagingMockTest : IClassFixture<RelayMockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
+        MockServerFixture.SkipNote("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
         return true;
     }
 
-    private async Task<RelayMockTest.Bound> ConnectedClient()
+    private static async Task<RelayMockTest.Bound> ConnectedClient()
     {
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
-        await bound.Client.ConnectAsync();
+        var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
+        await bound.Client.ConnectAsync().ConfigureAwait(false);
         return bound;
     }
 
@@ -316,6 +316,37 @@ public class MessagingMockTest : IClassFixture<RelayMockServerFixture>
     // ------------------------------------------------------------------
 
     [Fact]
+    public async Task InboundMessage_WithEvent_GetsTheReceiveEvent()
+    {
+        if (Skipped()) return;
+        using var bound = await ConnectedClient();
+        try
+        {
+            var done = new TaskCompletionSource<(Message Msg, Event Evt)>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Assert.Same(bound.Client, bound.Client.OnMessage((msg, evt) =>
+            {
+                done.TrySetResult((msg, evt));
+                return Task.CompletedTask;
+            }));
+
+            bound.Harness.Push(EventFrame("messaging.receive", new()
+            {
+                ["message_id"] = "in-msg-evt",
+                ["context"] = "default",
+                ["direction"] = "inbound",
+                ["from_number"] = "+15551110000",
+                ["to_number"] = "+15552220000",
+                ["body"] = "hi",
+                ["message_state"] = "received",
+            }));
+            var (m, evt) = await done.Task.WaitAsync(RelayMockTest.EventTimeout);
+            Assert.Equal("in-msg-evt", m.MessageId);
+            Assert.Equal("messaging.receive", evt.EventType);
+        }
+        finally { bound.Client.Disconnect(); }
+    }
+
+    [Fact]
     public async Task InboundMessage_FiresOnMessageHandler()
     {
         if (Skipped()) return;
@@ -323,7 +354,7 @@ public class MessagingMockTest : IClassFixture<RelayMockServerFixture>
         try
         {
             var done = new TaskCompletionSource<Message>(TaskCreationOptions.RunContinuationsAsynchronously);
-            bound.Client.OnMessage((msg, evt) =>
+            bound.Client.OnMessage(msg =>
             {
                 done.TrySetResult(msg);
                 return Task.CompletedTask;

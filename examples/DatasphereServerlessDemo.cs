@@ -6,18 +6,18 @@
 
 using SignalWire.Agent;
 
-var spaceName  = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE_NAME")
+var spaceName = Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE_NAME")
                  ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE_NAME");
-var projectId  = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
+var projectId = Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                  ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID");
-var token      = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+var token = Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                  ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN");
 var documentId = Environment.GetEnvironmentVariable("DATASPHERE_DOCUMENT_ID")
                  ?? throw new InvalidOperationException("Set DATASPHERE_DOCUMENT_ID");
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "DataSphere Serverless Assistant",
+    Name = "DataSphere Serverless Assistant",
     Route = "/datasphere-serverless",
 });
 
@@ -33,13 +33,13 @@ try
 {
     agent.AddSkill("datasphere", new Dictionary<string, object>
     {
-        ["space_name"]  = spaceName,
-        ["project_id"]  = projectId,
-        ["token"]       = token,
+        ["space_name"] = spaceName,
+        ["project_id"] = projectId,
+        ["token"] = token,
         ["document_id"] = documentId,
-        ["count"]       = 3,
-        ["distance"]    = 4.0,
-        ["tool_name"]   = "search_knowledge",
+        ["count"] = 3,
+        ["distance"] = 4.0,
+        ["tool_name"] = "search_knowledge",
     });
     Console.WriteLine("Added DataSphere skill (serverless mode)");
 }

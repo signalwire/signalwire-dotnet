@@ -22,5 +22,5 @@ public class JoinConference
 {
     /// <summary>Wire field <c>join_conference</c>.</summary>
     [JsonPropertyName("join_conference")]
-    public SignalWire.REST.Namespaces.Generated.Types.Calling.JoinConferenceObject? JoinConference_ { get; set; }
+    public object? JoinConference_ { get; set; }
 }

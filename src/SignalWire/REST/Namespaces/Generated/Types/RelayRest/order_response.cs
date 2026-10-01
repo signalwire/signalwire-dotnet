@@ -43,4 +43,16 @@ public class OrderResponse
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
     public string? StatusCallbackUrl { get; set; }
+
+    /// <summary>Wire field <c>campaign_id</c>.</summary>
+    [JsonPropertyName("campaign_id")]
+    public string? CampaignId { get; set; }
+
+    /// <summary>Wire field <c>brand_id</c>.</summary>
+    [JsonPropertyName("brand_id")]
+    public string? BrandId { get; set; }
+
+    /// <summary>Wire field <c>phone_numbers</c>.</summary>
+    [JsonPropertyName("phone_numbers")]
+    public List<object?>? PhoneNumbers { get; set; }
 }

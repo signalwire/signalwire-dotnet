@@ -30,29 +30,5 @@ public class RingbackConfig
 
     /// <summary>Wire field <c>volume</c>.</summary>
     [JsonPropertyName("volume")]
-    public double? volume { get; set; }
-
-    /// <summary>Wire field <c>auto_answer</c>.</summary>
-    [JsonPropertyName("auto_answer")]
-    public bool? auto_answer { get; set; }
-
-    /// <summary>Wire field <c>say_voice</c>.</summary>
-    [JsonPropertyName("say_voice")]
-    public string? say_voice { get; set; }
-
-    /// <summary>Wire field <c>say_language</c>.</summary>
-    [JsonPropertyName("say_language")]
-    public string? say_language { get; set; }
-
-    /// <summary>Wire field <c>say_gender</c>.</summary>
-    [JsonPropertyName("say_gender")]
-    public string? say_gender { get; set; }
-
-    /// <summary>Wire field <c>status_url</c>.</summary>
-    [JsonPropertyName("status_url")]
-    public string? status_url { get; set; }
-
-    /// <summary>Wire field <c>loop</c>.</summary>
-    [JsonPropertyName("loop")]
-    public long? loop { get; set; }
+    public Dictionary<string, object?>? volume { get; set; }
 }

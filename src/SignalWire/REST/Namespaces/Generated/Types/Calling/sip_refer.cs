@@ -22,5 +22,5 @@ public class SIPRefer
 {
     /// <summary>Wire field <c>sip_refer</c>.</summary>
     [JsonPropertyName("sip_refer")]
-    public Dictionary<string, object?>? SipRefer { get; set; }
+    public object? SipRefer { get; set; }
 }

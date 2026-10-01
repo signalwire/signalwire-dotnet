@@ -39,4 +39,8 @@ public class ProjectCreate
     /// <summary>Wire field <c>force_https_requests</c>.</summary>
     [JsonPropertyName("force_https_requests")]
     public bool? ForceHttpsRequests { get; set; }
+
+    /// <summary>Wire field <c>parent_project_id</c>.</summary>
+    [JsonPropertyName("parent_project_id")]
+    public string? ParentProjectId { get; set; }
 }

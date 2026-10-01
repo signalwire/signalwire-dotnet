@@ -20,19 +20,19 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class Hint
 {
-    /// <summary>Wire field <c>hint</c>.</summary>
-    [JsonPropertyName("hint")]
-    public string? Hint_ { get; set; }
-
     /// <summary>Wire field <c>pattern</c>.</summary>
     [JsonPropertyName("pattern")]
     public string? Pattern { get; set; }
 
-    /// <summary>Wire field <c>replace</c>.</summary>
-    [JsonPropertyName("replace")]
-    public string? Replace { get; set; }
+    /// <summary>Wire field <c>hint</c>.</summary>
+    [JsonPropertyName("hint")]
+    public string? Hint_ { get; set; }
 
     /// <summary>Wire field <c>ignore_case</c>.</summary>
     [JsonPropertyName("ignore_case")]
     public object? IgnoreCase { get; set; }
+
+    /// <summary>Wire field <c>replace</c>.</summary>
+    [JsonPropertyName("replace")]
+    public string? Replace { get; set; }
 }

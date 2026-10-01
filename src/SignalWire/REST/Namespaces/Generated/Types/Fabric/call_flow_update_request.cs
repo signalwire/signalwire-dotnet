@@ -27,4 +27,12 @@ public class CallFlowUpdateRequest
     /// <summary>Wire field <c>document_version</c>.</summary>
     [JsonPropertyName("document_version")]
     public long? DocumentVersion { get; set; }
+
+    /// <summary>Wire field <c>flow_data</c>.</summary>
+    [JsonPropertyName("flow_data")]
+    public Dictionary<string, object?>? FlowData { get; set; }
+
+    /// <summary>Wire field <c>relayml</c>.</summary>
+    [JsonPropertyName("relayml")]
+    public Dictionary<string, object?>? Relayml { get; set; }
 }

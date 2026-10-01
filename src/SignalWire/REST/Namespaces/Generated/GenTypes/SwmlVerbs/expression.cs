@@ -20,15 +20,23 @@ namespace SignalWire.Core.SwmlVerbsGenerated;
 /// </summary>
 public class Expression
 {
-    /// <summary>Wire field <c>string</c>.</summary>
-    [JsonPropertyName("string")]
-    public string? @string { get; set; }
-
     /// <summary>Wire field <c>pattern</c>.</summary>
     [JsonPropertyName("pattern")]
     public string? pattern { get; set; }
 
+    /// <summary>Wire field <c>expr</c>.</summary>
+    [JsonPropertyName("expr")]
+    public string? expr { get; set; }
+
+    /// <summary>Wire field <c>nomatch-output</c>.</summary>
+    [JsonPropertyName("nomatch-output")]
+    public Dictionary<string, object?>? nomatch_output { get; set; }
+
     /// <summary>Wire field <c>output</c>.</summary>
     [JsonPropertyName("output")]
-    public SignalWire.Core.SwmlVerbsGenerated.Output? output { get; set; }
+    public Dictionary<string, object?>? output { get; set; }
+
+    /// <summary>Wire field <c>string</c>.</summary>
+    [JsonPropertyName("string")]
+    public string? @string { get; set; }
 }

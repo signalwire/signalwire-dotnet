@@ -32,7 +32,7 @@ var advancedApi = new DataMap("advanced_api_tool")
         headers: new Dictionary<string, string>
         {
             ["Authorization"] = "Bearer ${token}",
-            ["User-Agent"]    = "SignalWire-Agent/1.0",
+            ["User-Agent"] = "SignalWire-Agent/1.0",
         },
         inputArgsAsParams: true,
         requireArgs: new[] { "action" },
@@ -49,7 +49,7 @@ var formSubmission = new DataMap("form_submission_tool")
         headers: new Dictionary<string, string>
         {
             ["Content-Type"] = "application/x-www-form-urlencoded",
-            ["X-API-Key"]    = "${api_key}",
+            ["X-API-Key"] = "${api_key}",
         },
         formParam: "form_data")
     .Output(new FunctionResult("Form submitted successfully for ${args.name}"));
@@ -64,12 +64,12 @@ var searchResults = new DataMap("search_results_tool")
         {
             ["Authorization"] = "Bearer ${search_token}",
         })
-    .Foreach(new Dictionary<string, object>
+    .ForEach(new Dictionary<string, object>
     {
-        ["input_key"]  = "results",
+        ["input_key"] = "results",
         ["output_key"] = "formatted_results",
-        ["max"]        = 5,
-        ["append"]     = "Title: ${this.title}\n${this.summary}\nURL: ${this.url}\n\n",
+        ["max"] = 5,
+        ["append"] = "Title: ${this.title}\n${this.summary}\nURL: ${this.url}\n\n",
     })
     .Output(new FunctionResult("Found results for \"${args.query}\":\n\n${formatted_results}"));
 
@@ -93,12 +93,15 @@ var demos = new (string Name, DataMap Map)[]
     ("Conditional Logic Demo", calculator),
 };
 
+// Cache the serializer options: JsonSerializerOptions is expensive to construct
+// and is designed to be created once and reused.
+var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+
 foreach (var (name, map) in demos)
 {
     Console.WriteLine(new string('=', 50));
     Console.WriteLine(name);
     Console.WriteLine(new string('=', 50));
-    Console.WriteLine(JsonSerializer.Serialize(map.ToSwaigFunction(),
-        new JsonSerializerOptions { WriteIndented = true }));
+    Console.WriteLine(JsonSerializer.Serialize(map.ToSwaigFunction(), jsonOptions));
     Console.WriteLine();
 }

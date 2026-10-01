@@ -6,11 +6,14 @@
 using SignalWire.SWAIG;
 using System.Text.Json;
 
+// Cache the serializer options: JsonSerializerOptions is expensive to construct
+// and is designed to be created once and reused.
+var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+
 void PrintResult(string label, FunctionResult result)
 {
     Console.WriteLine($"=== {label} ===");
-    Console.WriteLine(JsonSerializer.Serialize(result.ToDict(),
-        new JsonSerializerOptions { WriteIndented = true }));
+    Console.WriteLine(JsonSerializer.Serialize(result.ToDict(), jsonOptions));
     Console.WriteLine();
 }
 
@@ -26,8 +29,8 @@ PrintResult("Basic Recording", basic);
 var advanced = new FunctionResult("Starting advanced call recording");
 advanced.RecordCall(
     controlId: "support_call_001",
-    stereo:    true,
-    format:    RecordFormat.Mp3
+    stereo: true,
+    format: RecordFormat.Mp3
 );
 PrintResult("Advanced Recording", advanced);
 
@@ -51,8 +54,8 @@ PrintResult("Customer Service - Stop", endCs);
 var compliance = new FunctionResult("This call is being recorded for compliance purposes");
 compliance.RecordCall(
     controlId: "compliance_rec_001",
-    stereo:    true,
-    format:    "wav"
+    stereo: true,
+    format: "wav"
 );
 PrintResult("Compliance Recording", compliance);
 

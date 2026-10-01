@@ -32,8 +32,7 @@ public sealed class ClientOptions
     /// A SignalWire JWT. When supplied, it authenticates on its own — the
     /// project id is carried inside the token, so <see cref="Project"/> and
     /// <see cref="Token"/> are not required. Falls back to the
-    /// <c>SIGNALWIRE_JWT_TOKEN</c> env var. (equivalent to Python's
-    /// <c>RelayClient(jwt_token=...)</c>, relay/client.py:166,173.)
+    /// <c>SIGNALWIRE_JWT_TOKEN</c> env var.
     /// </summary>
     public string? JwtToken { get; init; }
 
@@ -94,7 +93,7 @@ public class Client : IAsyncDisposable
     /// keys wherever they appear in the (JSON) frame, so a
     /// <c>SIGNALWIRE_LOG_LEVEL=debug</c> session never emits live credentials or
     /// the re-auth blob. Non-string / structural content is preserved so the
-    /// frame stays diagnostic. Mirrors Python's <c>_scrub_frame</c>.
+    /// frame stays diagnostic.
     /// </summary>
     internal static string ScrubFrame(string raw)
         => ScrubRe.Replace(raw ?? "", "$1\"***\"");
@@ -105,7 +104,7 @@ public class Client : IAsyncDisposable
 
     /// <summary>
     /// The JWT this client authenticates with, if any. Empty when using
-    /// project/token auth. (equivalent to Python's <c>jwt_token</c>.)
+    /// project/token auth.
     /// </summary>
     public string JwtToken { get; }
     public string Host { get; set; }
@@ -161,14 +160,18 @@ public class Client : IAsyncDisposable
     private readonly int _maxActiveCalls;
 
     // -- event handlers --
-    public Func<Call, Event, Task>? OnCallHandler { get; set; }
+    public Func<Call, Task>? OnCallHandler { get; set; }
+
+    // Handlers registered through the (item, event) overloads.
+    private Func<Call, Event, Task>? _onCallWithEvent;
+    private Func<Message, Event, Task>? _onMessageWithEvent;
 
     /// <summary>
-    /// Inbound message handler. Mirrors Python's <c>@client.on_message</c>:
-    /// fires with a fully-formed <see cref="Message"/> for every
+    /// Inbound message handler.
+    /// Fires with a fully-formed <see cref="Message"/> for every
     /// <c>messaging.receive</c> event.
     /// </summary>
-    public Func<Message, Event, Task>? OnMessageHandler { get; set; }
+    public Func<Message, Task>? OnMessageHandler { get; set; }
 
     public Func<Event, Dictionary<string, object?>, Task>? OnEventHandler { get; set; }
 
@@ -841,9 +844,10 @@ public class Client : IAsyncDisposable
     /// Returns the "result" portion of the response.
     /// </summary>
     public async Task<Dictionary<string, object?>> ExecuteAsync(
-        string method, Dictionary<string, object?>? parameters = null,
+        string method, Dictionary<string, object?> parameters,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
         var id = Guid.NewGuid().ToString();
 
         var msg = new Dictionary<string, object?>
@@ -851,7 +855,7 @@ public class Client : IAsyncDisposable
             ["jsonrpc"] = "2.0",
             ["id"] = id,
             ["method"] = method,
-            ["params"] = parameters ?? new Dictionary<string, object?>(),
+            ["params"] = parameters,
         };
 
         var tcs = new TaskCompletionSource<Dictionary<string, object?>>(
@@ -1060,11 +1064,11 @@ public class Client : IAsyncDisposable
                 msgParams["direction"] = "inbound";
             }
             var inboundMsg = new Message(msgParams);
-            if (OnMessageHandler is not null)
+            if (OnMessageHandler is not null || _onMessageWithEvent is not null)
             {
                 try
                 {
-                    _ = OnMessageHandler(inboundMsg, evt);
+                    _ = OnMessageHandler is not null ? OnMessageHandler(inboundMsg) : _onMessageWithEvent!(inboundMsg, evt);
                 }
                 catch (Exception ex)
                 {
@@ -1278,17 +1282,57 @@ public class Client : IAsyncDisposable
         _logger.Info($"Unsubscribed from contexts: {string.Join(", ", ctxList)}");
     }
 
-    /// <summary>Register a handler for inbound calls.</summary>
-    public Client OnCall(Func<Call, Event, Task> callback)
+    /// <summary>
+    /// Register a handler for inbound calls. Mirrors Python's decorator form
+    /// (<c>relay/client.py: def on_call(self, handler) -> CallHandler</c>): the
+    /// handler itself is returned so it can be used as a decorator and so the
+    /// caller keeps the reference for later detach.
+    /// </summary>
+    public Func<Call, Task> OnCall(Func<Call, Task> callback)
     {
         OnCallHandler = callback;
+        _onCallWithEvent = null;
+        return callback;
+    }
+
+    /// <summary>
+    /// Register a handler for inbound calls that also receives the raw
+    /// <c>calling.call.receive</c> <see cref="Event"/> the call was built from.
+    /// Replaces any handler registered with the single-argument form.
+    /// </summary>
+    /// <param name="callback">Takes (call, receive event).</param>
+    /// <returns>This client, for chaining.</returns>
+    public Client OnCall(Func<Call, Event, Task> callback)
+    {
+        ArgumentNullException.ThrowIfNull(callback);
+        _onCallWithEvent = callback;
+        OnCallHandler = null;
         return this;
     }
 
-    /// <summary>Register a handler for inbound messages.</summary>
-    public Client OnMessage(Func<Message, Event, Task> callback)
+    /// <summary>
+    /// Register a handler for inbound messages. Mirrors Python's decorator form
+    /// (<c>relay/client.py: def on_message(self, handler) -> MessageHandler</c>).
+    /// </summary>
+    public Func<Message, Task> OnMessage(Func<Message, Task> callback)
     {
         OnMessageHandler = callback;
+        _onMessageWithEvent = null;
+        return callback;
+    }
+
+    /// <summary>
+    /// Register a handler for inbound messages that also receives the raw
+    /// <c>messaging.receive</c> <see cref="Event"/>. Replaces any handler
+    /// registered with the single-argument form.
+    /// </summary>
+    /// <param name="callback">Takes (message, receive event).</param>
+    /// <returns>This client, for chaining.</returns>
+    public Client OnMessage(Func<Message, Event, Task> callback)
+    {
+        ArgumentNullException.ThrowIfNull(callback);
+        _onMessageWithEvent = callback;
+        OnMessageHandler = null;
         return this;
     }
 
@@ -1330,11 +1374,11 @@ public class Client : IAsyncDisposable
 
         _logger.Info($"Inbound call {callId}");
 
-        if (OnCallHandler is not null)
+        if (OnCallHandler is not null || _onCallWithEvent is not null)
         {
             try
             {
-                _ = OnCallHandler(call, evt);
+                _ = OnCallHandler is not null ? OnCallHandler(call) : _onCallWithEvent!(call, evt);
             }
             catch (Exception ex)
             {

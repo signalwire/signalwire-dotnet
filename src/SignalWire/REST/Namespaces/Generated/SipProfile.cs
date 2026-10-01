@@ -56,9 +56,10 @@ public class SipProfile
     /// <param name="defaultCiphers">Wire field <c>default_ciphers</c>.</param>
     /// <param name="defaultEncryption">Wire field <c>default_encryption</c>.</param>
     /// <param name="defaultSendAs">Wire field <c>default_send_as</c>.</param>
+    /// <param name="defaultOutboundPolicy">Wire field <c>default_outbound_policy</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.SipProfileResponse?> UpdateAsync(string? domainIdentifier = null, List<object?>? defaultCodecs = null, List<object?>? defaultCiphers = null, string? defaultEncryption = null, string? defaultSendAs = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.SipProfileResponse?> UpdateAsync(string? domainIdentifier = null, List<object?>? defaultCodecs = null, List<object?>? defaultCiphers = null, string? defaultEncryption = null, string? defaultSendAs = null, string? defaultOutboundPolicy = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         if (domainIdentifier is not null)
@@ -80,6 +81,10 @@ public class SipProfile
         if (defaultSendAs is not null)
         {
             _reqBody["default_send_as"] = defaultSendAs;
+        }
+        if (defaultOutboundPolicy is not null)
+        {
+            _reqBody["default_outbound_policy"] = defaultOutboundPolicy;
         }
         if (extras is not null)
         {

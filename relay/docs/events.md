@@ -72,9 +72,9 @@ public class Event
 ### Call Handler
 
 ```csharp
-client.OnCall(async (call, evt) =>
+client.OnCall(async call =>
 {
-    Console.WriteLine($"Call {evt.EventType}: {call.CallId}");
+    Console.WriteLine($"Inbound call: {call.CallId}");
     await call.AnswerAsync();
     // ...
 });
@@ -82,10 +82,10 @@ client.OnCall(async (call, evt) =>
 
 ### Message Handler
 
-The callback receives the `Message` object and the `Event`:
+The callback receives the `Message` object:
 
 ```csharp
-client.OnMessage(async (message, evt) =>
+client.OnMessage(async message =>
 {
     var from = message.FromNumber ?? "unknown";
     var body = message.Body ?? "";

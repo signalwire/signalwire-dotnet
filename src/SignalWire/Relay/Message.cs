@@ -28,8 +28,7 @@ public sealed class Message
     public IReadOnlyList<string> Media { get; private set; }
     public IReadOnlyList<string> Tags { get; private set; }
 
-    /// <summary>How many SMS segments the message was split into.
-    /// (equivalent to Python's <c>segments</c>, message.py:53,65.)</summary>
+    /// <summary>How many SMS segments the message was split into.</summary>
     public int Segments { get; private set; }
     public string? State { get; private set; }
 
@@ -48,8 +47,8 @@ public sealed class Message
     public bool Completed { get; private set; }
     public string? Result { get; private set; }
 
-    /// <summary>A concise debug representation of this message (equivalent to Python's
-    /// ``Message.__repr__``).</summary>
+    /// <summary>A concise debug representation of this message
+    /// .</summary>
     public override string ToString()
         => $"<Message id={MessageId} state={State}>";
 
@@ -124,12 +123,20 @@ public sealed class Message
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Await until the message completes or the timeout elapses.
-    /// Returns the resolved result, or null on timeout.
+    /// Await until the message reaches a terminal state, or until
+    /// <paramref name="timeout"/> seconds elapse. Mirrors the reference
+    /// <c>Message.wait(timeout: float | None = None)</c>: with no timeout the
+    /// wait is unbounded; a timed-out wait returns null without poisoning the
+    /// message, so a later wait still returns the terminal state.
     /// </summary>
-    public async Task<string?> WaitAsync(int timeoutSeconds = 30)
+    public async Task<string?> WaitAsync(double? timeout = null)
     {
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+        if (timeout is null)
+        {
+            return await _tcs.Task.ConfigureAwait(false);
+        }
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout.Value));
 
         try
         {

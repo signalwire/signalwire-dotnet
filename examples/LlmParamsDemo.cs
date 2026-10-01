@@ -11,7 +11,7 @@ using SignalWire.SWAIG;
 
 var precise = new AgentBase(new AgentOptions
 {
-    Name  = "precise-assistant",
+    Name = "precise-assistant",
     Route = "/precise",
 });
 
@@ -26,10 +26,10 @@ precise.PromptAddSection("Instructions", "", new List<string>
 
 precise.SetPromptLlmParams(new Dictionary<string, object>
 {
-    ["temperature"]       = 0.2,
-    ["top_p"]             = 0.85,
-    ["barge_confidence"]  = 0.8,
-    ["presence_penalty"]  = 0.0,
+    ["temperature"] = 0.2,
+    ["top_p"] = 0.85,
+    ["barge_confidence"] = 0.8,
+    ["presence_penalty"] = 0.0,
     ["frequency_penalty"] = 0.1,
 });
 precise.SetPostPrompt("Provide a brief technical summary of the key points discussed.");
@@ -38,9 +38,9 @@ precise.AddLanguage("English", "en-US", "inworld.Mark");
 precise.SetParams(new Dictionary<string, object> { ["ai_model"] = "gpt-4.1-nano" });
 
 precise.DefineTool(
-    name:        "get_system_info",
+    name: "get_system_info",
     description: "Get technical system information",
-    parameters:  new Dictionary<string, object>(),
+    parameters: new Dictionary<string, object>(),
     handler: (args, raw) =>
     {
         return new FunctionResult(
@@ -54,7 +54,7 @@ precise.DefineTool(
 
 var creative = new AgentBase(new AgentOptions
 {
-    Name  = "creative-assistant",
+    Name = "creative-assistant",
     Route = "/creative",
 });
 
@@ -69,10 +69,10 @@ creative.PromptAddSection("Instructions", "", new List<string>
 
 creative.SetPromptLlmParams(new Dictionary<string, object>
 {
-    ["temperature"]       = 0.8,
-    ["top_p"]             = 0.95,
-    ["barge_confidence"]  = 0.5,
-    ["presence_penalty"]  = 0.2,
+    ["temperature"] = 0.8,
+    ["top_p"] = 0.95,
+    ["barge_confidence"] = 0.5,
+    ["presence_penalty"] = 0.2,
     ["frequency_penalty"] = 0.3,
 });
 creative.SetPostPrompt("Create an artistic summary of our conversation.");
@@ -81,13 +81,13 @@ creative.AddLanguage("English", "en-US", "inworld.Sarah");
 creative.SetParams(new Dictionary<string, object> { ["ai_model"] = "gpt-4.1-nano" });
 
 creative.DefineTool(
-    name:        "generate_story_prompt",
+    name: "generate_story_prompt",
     description: "Generate a creative story prompt",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["theme"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Story theme (adventure, mystery, etc.)",
         },
     },
@@ -108,7 +108,7 @@ creative.DefineTool(
 
 var support = new AgentBase(new AgentOptions
 {
-    Name  = "customer-service",
+    Name = "customer-service",
     Route = "/support",
 });
 
@@ -123,10 +123,10 @@ support.PromptAddSection("Guidelines", "", new List<string>
 
 support.SetPromptLlmParams(new Dictionary<string, object>
 {
-    ["temperature"]       = 0.4,
-    ["top_p"]             = 0.9,
-    ["barge_confidence"]  = 0.7,
-    ["presence_penalty"]  = 0.1,
+    ["temperature"] = 0.4,
+    ["top_p"] = 0.9,
+    ["barge_confidence"] = 0.7,
+    ["presence_penalty"] = 0.1,
     ["frequency_penalty"] = 0.1,
 });
 support.SetPostPrompt("Summarize the customer's issue and resolution for the ticket system.");

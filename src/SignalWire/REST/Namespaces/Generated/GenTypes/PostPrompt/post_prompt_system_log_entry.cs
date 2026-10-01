@@ -51,16 +51,4 @@ public class PostPromptSystemLogEntry
     /// <summary>Wire field <c>metadata</c>.</summary>
     [JsonPropertyName("metadata")]
     public Dictionary<string, object?>? metadata { get; set; }
-
-    /// <summary>Wire field <c>context</c>.</summary>
-    [JsonPropertyName("context")]
-    public string? context { get; set; }
-
-    /// <summary>Wire field <c>step</c>.</summary>
-    [JsonPropertyName("step")]
-    public string? step { get; set; }
-
-    /// <summary>Wire field <c>step_index</c>.</summary>
-    [JsonPropertyName("step_index")]
-    public long? step_index { get; set; }
 }

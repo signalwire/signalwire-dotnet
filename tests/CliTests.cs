@@ -234,7 +234,7 @@ public class CliTests
             if (args[i] == "--param" && i + 1 < args.Length)
             {
                 var param = args[++i];
-                var eqIdx = param.IndexOf('=');
+                var eqIdx = param.IndexOf('=', StringComparison.Ordinal);
                 if (eqIdx > 0)
                 {
                     result[param[..eqIdx]] = param[(eqIdx + 1)..];
@@ -276,7 +276,7 @@ public class CliTests
                     if (i + 1 < args.Length)
                     {
                         var param = args[++i];
-                        var eqIdx = param.IndexOf('=');
+                        var eqIdx = param.IndexOf('=', StringComparison.Ordinal);
                         if (eqIdx > 0)
                             opts.Params[param[..eqIdx]] = param[(eqIdx + 1)..];
                     }
@@ -300,7 +300,7 @@ public class CliTests
         return opts;
     }
 
-    private class CliTestOptions
+    private sealed class CliTestOptions
     {
         public string BaseUrl { get; set; } = "";
         public bool HasUrl { get; set; }

@@ -42,7 +42,29 @@ public class FabricGeneratedTest : CoverageBase
 {
     public FabricGeneratedTest(MockServerFixture fixture) : base(fixture) { }
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
+
+    [Fact]
+    public async Task FabricAddresses_Delete_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.Addresses.DeleteAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("DELETE", j.Method);
+        Assert.Equal("fabric.delete_fabric_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricAddresses_Delete_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.delete_fabric_address", 500,
+            () => tree.Fabric.Addresses.DeleteAsync("x"));
+        Assert.Equal(500, status);
+    }
 
     [Fact]
     public async Task FabricAddresses_Get_Success()
@@ -199,6 +221,50 @@ public class FabricGeneratedTest : CoverageBase
     }
 
     [Fact]
+    public async Task FabricAiAgents_ListConversationLogs_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.AiAgents.ListConversationLogsAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("fabric.list_ai_agent_conversation_logs", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricAiAgents_ListConversationLogs_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.list_ai_agent_conversation_logs", 500,
+            () => tree.Fabric.AiAgents.ListConversationLogsAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricAiAgents_ListVoices_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.AiAgents.ListVoicesAsync();
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("fabric.list_ai_agent_voices", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricAiAgents_ListVoices_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.list_ai_agent_voices", 500,
+            () => tree.Fabric.AiAgents.ListVoicesAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
     public async Task FabricAiAgents_Update_Success()
     {
         if (!Fixture.Available) return;
@@ -217,6 +283,116 @@ public class FabricGeneratedTest : CoverageBase
         var tree = NewTree();
         var status = await AssertErrorAsync("fabric.update_ai_agent", 500,
             () => tree.Fabric.AiAgents.UpdateAsync("x", new Dictionary<string, object?>()));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricAliasAddresses_Create_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.AliasAddresses.CreateAsync(new Dictionary<string, object?>());
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("fabric.create_alias_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricAliasAddresses_Create_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.create_alias_address", 500,
+            () => tree.Fabric.AliasAddresses.CreateAsync(new Dictionary<string, object?>()));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricAliasAddresses_Delete_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.AliasAddresses.DeleteAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("DELETE", j.Method);
+        Assert.Equal("fabric.delete_alias_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricAliasAddresses_Delete_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.delete_alias_address", 500,
+            () => tree.Fabric.AliasAddresses.DeleteAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricAliasAddresses_Get_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.AliasAddresses.GetAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("fabric.get_alias_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricAliasAddresses_Get_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.get_alias_address", 500,
+            () => tree.Fabric.AliasAddresses.GetAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricAliasAddresses_List_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.AliasAddresses.ListAsync();
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("fabric.list_alias_addresses", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricAliasAddresses_List_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.list_alias_addresses", 500,
+            () => tree.Fabric.AliasAddresses.ListAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricAliasAddresses_Update_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.AliasAddresses.UpdateAsync("x", new Dictionary<string, object?>());
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("PATCH", j.Method);
+        Assert.Equal("fabric.update_alias_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricAliasAddresses_Update_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.update_alias_address", 500,
+            () => tree.Fabric.AliasAddresses.UpdateAsync("x", new Dictionary<string, object?>()));
         Assert.Equal(500, status);
     }
 
@@ -1035,6 +1211,116 @@ public class FabricGeneratedTest : CoverageBase
     }
 
     [Fact]
+    public async Task FabricPhoneNumberAddresses_Create_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.PhoneNumberAddresses.CreateAsync(new Dictionary<string, object?>());
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("fabric.create_phone_number_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricPhoneNumberAddresses_Create_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.create_phone_number_address", 500,
+            () => tree.Fabric.PhoneNumberAddresses.CreateAsync(new Dictionary<string, object?>()));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricPhoneNumberAddresses_Delete_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.PhoneNumberAddresses.DeleteAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("DELETE", j.Method);
+        Assert.Equal("fabric.delete_phone_number_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricPhoneNumberAddresses_Delete_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.delete_phone_number_address", 500,
+            () => tree.Fabric.PhoneNumberAddresses.DeleteAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricPhoneNumberAddresses_Get_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.PhoneNumberAddresses.GetAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("fabric.get_phone_number_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricPhoneNumberAddresses_Get_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.get_phone_number_address", 500,
+            () => tree.Fabric.PhoneNumberAddresses.GetAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricPhoneNumberAddresses_List_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.PhoneNumberAddresses.ListAsync();
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("fabric.list_phone_number_addresses", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricPhoneNumberAddresses_List_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.list_phone_number_addresses", 500,
+            () => tree.Fabric.PhoneNumberAddresses.ListAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricPhoneNumberAddresses_Update_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.PhoneNumberAddresses.UpdateAsync("x", new Dictionary<string, object?>());
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("PATCH", j.Method);
+        Assert.Equal("fabric.update_phone_number_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricPhoneNumberAddresses_Update_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.update_phone_number_address", 500,
+            () => tree.Fabric.PhoneNumberAddresses.UpdateAsync("x", new Dictionary<string, object?>()));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
     public async Task FabricRelayApplications_Create_Success()
     {
         if (!Fixture.Available) return;
@@ -1211,6 +1497,50 @@ public class FabricGeneratedTest : CoverageBase
     }
 
     [Fact]
+    public async Task FabricResources_AssignSipEndpoint_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.Resources.AssignSipEndpointAsync("x", "x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("fabric.assign_resource_sip_endpoint", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricResources_AssignSipEndpoint_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.assign_resource_sip_endpoint", 500,
+            () => tree.Fabric.Resources.AssignSipEndpointAsync("x", "x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricResources_AssignWhatsappNumber_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.Resources.AssignWhatsappNumberAsync("x", "x", "x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("fabric.assign_resource_whatsapp_number", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricResources_AssignWhatsappNumber_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.assign_resource_whatsapp_number", 500,
+            () => tree.Fabric.Resources.AssignWhatsappNumberAsync("x", "x", "x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
     public async Task FabricResources_Delete_Success()
     {
         if (!Fixture.Available) return;
@@ -1295,6 +1625,116 @@ public class FabricGeneratedTest : CoverageBase
         var tree = NewTree();
         var status = await AssertErrorAsync("fabric.list_resources", 500,
             () => tree.Fabric.Resources.ListAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricSipAddresses_Create_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.SipAddresses.CreateAsync(new Dictionary<string, object?>());
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("fabric.create_sip_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricSipAddresses_Create_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.create_sip_address", 500,
+            () => tree.Fabric.SipAddresses.CreateAsync(new Dictionary<string, object?>()));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricSipAddresses_Delete_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.SipAddresses.DeleteAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("DELETE", j.Method);
+        Assert.Equal("fabric.delete_sip_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricSipAddresses_Delete_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.delete_sip_address", 500,
+            () => tree.Fabric.SipAddresses.DeleteAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricSipAddresses_Get_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.SipAddresses.GetAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("fabric.get_sip_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricSipAddresses_Get_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.get_sip_address", 500,
+            () => tree.Fabric.SipAddresses.GetAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricSipAddresses_List_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.SipAddresses.ListAsync();
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("fabric.list_sip_addresses", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricSipAddresses_List_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.list_sip_addresses", 500,
+            () => tree.Fabric.SipAddresses.ListAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task FabricSipAddresses_Update_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Fabric.SipAddresses.UpdateAsync("x", new Dictionary<string, object?>());
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("PATCH", j.Method);
+        Assert.Equal("fabric.update_sip_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task FabricSipAddresses_Update_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("fabric.update_sip_address", 500,
+            () => tree.Fabric.SipAddresses.UpdateAsync("x", new Dictionary<string, object?>()));
         Assert.Equal(500, status);
     }
 
@@ -2095,7 +2535,7 @@ public class FabricGeneratedTest : CoverageBase
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Fabric.Tokens.CreateGuestTokenAsync(new List<object>());
+        var body = await tree.Fabric.Tokens.CreateGuestTokenAsync();
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
@@ -2108,29 +2548,7 @@ public class FabricGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("fabric.create_subscriber_guest_token", 500,
-            () => tree.Fabric.Tokens.CreateGuestTokenAsync(new List<object>()));
-        Assert.Equal(500, status);
-    }
-
-    [Fact]
-    public async Task FabricTokens_CreateInviteToken_Success()
-    {
-        if (!Fixture.Available) return;
-        var tree = NewTree();
-        var body = await tree.Fabric.Tokens.CreateInviteTokenAsync("x");
-        Assert.NotNull(body);
-        var j = Fixture.Harness.Journal.Last();
-        Assert.Equal("POST", j.Method);
-        Assert.Equal("fabric.create_subscriber_invite_token", j.MatchedRoute);
-    }
-
-    [Fact]
-    public async Task FabricTokens_CreateInviteToken_Error()
-    {
-        if (!Fixture.Available) return;
-        var tree = NewTree();
-        var status = await AssertErrorAsync("fabric.create_subscriber_invite_token", 500,
-            () => tree.Fabric.Tokens.CreateInviteTokenAsync("x"));
+            () => tree.Fabric.Tokens.CreateGuestTokenAsync());
         Assert.Equal(500, status);
     }
 

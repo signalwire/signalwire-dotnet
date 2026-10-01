@@ -39,7 +39,9 @@ if not DOTNET:
 def build_fixtures() -> Path:
     cp = subprocess.run(
         [DOTNET, "build", str(FIXTURES_PROJECT)],
-        capture_output=True, text=True, timeout=300,
+        capture_output=True,
+        text=True,
+        timeout=300,
     )
     if cp.returncode != 0:
         raise SystemExit(f"fixtures build failed:\n{cp.stderr}\n{cp.stdout}")
@@ -58,9 +60,10 @@ def run_dump_against(dll: Path) -> dict:
     # DLL by path and dumps types under the GoldenFixtures namespace.
     helper = HERE / "DumpFixtures" / "DumpFixtures.csproj"
     cp = subprocess.run(
-        [DOTNET, "run", "--project", str(helper),
-         "--", str(dll)],
-        capture_output=True, text=True, timeout=300,
+        [DOTNET, "run", "--project", str(helper), "--", str(dll)],
+        capture_output=True,
+        text=True,
+        timeout=300,
     )
     if cp.returncode != 0:
         raise SystemExit(f"DumpFixtures failed:\n{cp.stderr}\n{cp.stdout}")
@@ -100,6 +103,7 @@ def main() -> int:
     if emitted_text != expected:
         print("FAIL: emitted differs from golden", file=sys.stderr)
         import difflib
+
         for line in difflib.unified_diff(
             expected.splitlines(keepends=True),
             emitted_text.splitlines(keepends=True),

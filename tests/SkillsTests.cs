@@ -13,8 +13,10 @@ using SignalWire.SWML;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class SkillsTests : IDisposable
+public sealed class SkillsTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly string[] ScriptStyleNavArray = new[] { "//script", "//style", "//nav", "//header", "//footer", "//aside", "//noscript" };
     public SkillsTests()
     {
         Logger.Reset();
@@ -514,6 +516,9 @@ public class SkillsTests : IDisposable
     /// xUnit tests can run in parallel without colliding.</summary>
     private static (string baseUrl, IDisposable disposable) StartCseFixture(string body)
     {
+        // The returned FixtureHandle owns the listener + CTS and disposes both;
+        // ownership TRANSFERS to the caller, so they are not scoped here.
+#pragma warning disable CA2000
         var listener = new HttpListener();
         // 0 → kernel picks an unused port; bind to loopback IPv4.
         var port = GetFreePort();
@@ -521,6 +526,7 @@ public class SkillsTests : IDisposable
         listener.Prefixes.Add(prefix);
         listener.Start();
         var cts = new System.Threading.CancellationTokenSource();
+#pragma warning restore CA2000
         Task.Run(async () =>
         {
             while (!cts.IsCancellationRequested)
@@ -532,7 +538,7 @@ public class SkillsTests : IDisposable
                     ctx.Response.StatusCode = 200;
                     ctx.Response.ContentType = "application/json";
                     ctx.Response.ContentLength64 = bytes.Length;
-                    await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                    await ctx.Response.OutputStream.WriteAsync(bytes.AsMemory(0, bytes.Length)).ConfigureAwait(false);
                     ctx.Response.Close();
                 }
                 catch (HttpListenerException) { break; }
@@ -542,8 +548,12 @@ public class SkillsTests : IDisposable
         var disposable = new FixtureHandle(() =>
         {
             cts.Cancel();
-            try { listener.Stop(); } catch { }
-            try { listener.Close(); } catch { }
+            try { listener.Stop(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            try { listener.Close(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
         });
         return (prefix.TrimEnd('/'), disposable);
     }
@@ -593,7 +603,7 @@ public class SkillsTests : IDisposable
                         ctx.Response.StatusCode = 200;
                         ctx.Response.ContentType = "application/json";
                         ctx.Response.ContentLength64 = bytes.Length;
-                        await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                        await ctx.Response.OutputStream.WriteAsync(bytes.AsMemory(0, bytes.Length)).ConfigureAwait(false);
                         ctx.Response.Close();
                     }
                     catch (HttpListenerException) { break; }
@@ -605,8 +615,13 @@ public class SkillsTests : IDisposable
         public void Dispose()
         {
             _cts.Cancel();
-            try { _listener.Stop(); } catch { }
-            try { _listener.Close(); } catch { }
+            try { _listener.Stop(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            try { _listener.Close(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            _cts.Dispose();
         }
     }
 
@@ -655,7 +670,7 @@ public class SkillsTests : IDisposable
     private static int GetFreePort()
     {
         // Bind to port 0 to let the OS pick; then read the assigned port.
-        var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
         l.Start();
         var port = ((System.Net.IPEndPoint)l.LocalEndpoint).Port;
         l.Stop();
@@ -883,7 +898,7 @@ public class SkillsTests : IDisposable
         var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
         // A handler that would hang forever if touched — proving the fast path
         // never scrapes.
-        var handler = new DelayingScrapeHandler(TimeSpan.FromMinutes(5));
+        using var handler = new DelayingScrapeHandler(TimeSpan.FromMinutes(5));
         WebSearchSkill.ScrapeHandlerFactory = () => handler;
         try
         {
@@ -917,7 +932,7 @@ public class SkillsTests : IDisposable
         var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
         // Each scrape would take 30s; the 1.0s deadline must abort them and we
         // fall back to the (non-empty) snippet response.
-        var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(30));
+        using var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(30));
         WebSearchSkill.ScrapeHandlerFactory = () => handler;
         try
         {
@@ -959,7 +974,7 @@ public class SkillsTests : IDisposable
     public void WebSearchSkill_OverallDeadlineEnforcedInSequentialMode()
     {
         var (baseUrl, fixture) = StartCseFixture(CseTwoResultsJson);
-        var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(30));
+        using var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(30));
         WebSearchSkill.ScrapeHandlerFactory = () => handler;
         try
         {
@@ -999,7 +1014,7 @@ public class SkillsTests : IDisposable
         // Each scrape takes 10s but per_page_timeout is 0.3s, so every page is
         // abandoned well before its body arrives. overall_deadline is generous
         // (10s default) — this isolates the per-page timeout.
-        var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(10));
+        using var handler = new DelayingScrapeHandler(TimeSpan.FromSeconds(10));
         WebSearchSkill.ScrapeHandlerFactory = () => handler;
         try
         {
@@ -1037,7 +1052,7 @@ public class SkillsTests : IDisposable
         // Fast scrapes under a generous deadline must yield the normal
         // fully-scraped response (proving the deadline machinery doesn't
         // truncate healthy runs).
-        var handler = new DelayingScrapeHandler(TimeSpan.FromMilliseconds(20));
+        using var handler = new DelayingScrapeHandler(TimeSpan.FromMilliseconds(20));
         WebSearchSkill.ScrapeHandlerFactory = () => handler;
         try
         {
@@ -1088,6 +1103,70 @@ public class SkillsTests : IDisposable
         AssertParam("snippets_only", "boolean", false);
         AssertParam("response_prefix", "string", "");
         AssertParam("response_postfix", "string", "");
+    }
+
+    /// <summary>
+    /// The serverless DataSphere search payload must ride on the webhook's
+    /// <c>params</c> key. The engine reads ONLY <c>params</c> and <c>headers</c>
+    /// off a data_map webhook object (mod_openai/actions.c:735-739 — there is no
+    /// read of <c>body</c> anywhere), so a payload emitted under <c>body</c> is
+    /// silently dropped and the search runs with NO parameters at all.
+    ///
+    /// <para>Likewise the foreach block's per-item template key is
+    /// <c>append</c>, not <c>template</c> — <c>${formatted_results}</c> in the
+    /// output is populated only by <c>append</c>, so a <c>template</c> key
+    /// leaves the response body empty.</para>
+    ///
+    /// <para>This asserts on the EMITTED PAYLOAD rather than on construction:
+    /// the construction-shaped assertions passed happily while both keys were
+    /// wrong. Mirrors the reference at
+    /// <c>signalwire/skills/datasphere_serverless/skill.py:211-218</c>
+    /// (<c>.params(webhook_params).foreach({input_key, output_key, max, append})</c>).</para>
+    /// </summary>
+    [Fact]
+    public void DatasphereServerlessSkill_WebhookCarriesParamsNotBody()
+    {
+        var agent = MakeAgent();
+        var skill = new DatasphereServerlessSkill();
+        var parameters = new Dictionary<string, object>
+        {
+            ["space_name"] = "test.signalwire.com",
+            ["project_id"] = "proj",
+            ["token"] = "tok",
+            ["document_id"] = "doc-789",
+            ["count"] = 3,
+            ["distance"] = 2.5,
+        };
+        Assert.True(skill.Setup(agent, parameters));
+        skill.Wire(agent, parameters);
+        skill.RegisterTools(agent);
+
+        var funcDef = agent.GetFunction("search_knowledge");
+        Assert.NotNull(funcDef);
+        var dataMap = (Dictionary<string, object>)funcDef!["data_map"];
+        var webhooks = (List<Dictionary<string, object>>)dataMap["webhooks"];
+        var webhook = Assert.Single(webhooks);
+
+        // The search payload must ride on "params" — the engine never reads "body".
+        Assert.False(
+            webhook.ContainsKey("body"),
+            "webhook must not carry a body key; the engine never reads it");
+        Assert.True(webhook.ContainsKey("params"), "webhook must carry params");
+        var wparams = (Dictionary<string, object>)webhook["params"];
+        Assert.Equal("${args.query}", wparams["query_string"]);
+        Assert.Equal("doc-789", wparams["document_id"]);
+        Assert.Equal(3, wparams["count"]);
+        Assert.Equal(2.5, wparams["distance"]);
+
+        // ${formatted_results} is populated only by the foreach block's "append".
+        var foreachBlock = (Dictionary<string, object>)webhook["foreach"];
+        Assert.Equal("chunks", foreachBlock["input_key"]);
+        Assert.Equal("formatted_results", foreachBlock["output_key"]);
+        Assert.False(
+            foreachBlock.ContainsKey("template"),
+            "foreach's per-item key is 'append'; 'template' is never read");
+        Assert.True(foreachBlock.ContainsKey("max"), "foreach must carry max");
+        Assert.Contains("${this.text}", (string)foreachBlock["append"], StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1177,7 +1256,7 @@ public class SkillsTests : IDisposable
                     ctx.Response.StatusCode = 200;
                     ctx.Response.ContentType = "application/json";
                     ctx.Response.ContentLength64 = bytes.Length;
-                    await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                    await ctx.Response.OutputStream.WriteAsync(bytes.AsMemory(0, bytes.Length)).ConfigureAwait(false);
                     ctx.Response.Close();
                 }
             });
@@ -1186,8 +1265,13 @@ public class SkillsTests : IDisposable
         public void Dispose()
         {
             _cts.Cancel();
-            try { _listener.Stop(); } catch { }
-            try { _listener.Close(); } catch { }
+            try { _listener.Stop(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            try { _listener.Close(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            _cts.Dispose();
         }
     }
 
@@ -1331,5 +1415,154 @@ public class SkillsTests : IDisposable
         Assert.Contains("MCP", hints);
         Assert.Contains("gateway", hints);
         Assert.Contains("calc", hints);
+    }
+
+    // ==================================================================
+    //  SpiderSkill.remove_xpaths (derived-attr parity, porting-sdk d7c859d)
+    //  The reference prefills seven XPaths in __init__ and drops each
+    //  matched element WHOLE before text extraction. Prove the .NET
+    //  property is (a) prefilled with the same seven and (b) load-bearing:
+    //  removing an entry must let that element's text through, and adding
+    //  one must strip it.
+    // ==================================================================
+
+    /// <summary>Serves one fixed HTML body on an ephemeral loopback port.</summary>
+    private static (string baseUrl, IDisposable disposable) StartHtmlFixture(string html)
+    {
+        // Ownership TRANSFERS to the returned FixtureHandle, as in StartCseFixture.
+#pragma warning disable CA2000
+        var listener = new HttpListener();
+        var port = GetFreePort();
+        var prefix = $"http://127.0.0.1:{port}/";
+        listener.Prefixes.Add(prefix);
+        listener.Start();
+        var cts = new System.Threading.CancellationTokenSource();
+#pragma warning restore CA2000
+        Task.Run(async () =>
+        {
+            while (!cts.IsCancellationRequested)
+            {
+                try
+                {
+                    var ctx = await listener.GetContextAsync().ConfigureAwait(false);
+                    var bytes = Encoding.UTF8.GetBytes(html);
+                    ctx.Response.StatusCode = 200;
+                    ctx.Response.ContentType = "text/html";
+                    ctx.Response.ContentLength64 = bytes.Length;
+                    await ctx.Response.OutputStream.WriteAsync(bytes.AsMemory(0, bytes.Length)).ConfigureAwait(false);
+                    ctx.Response.Close();
+                }
+                catch (HttpListenerException) { break; }
+                catch (ObjectDisposedException) { break; }
+            }
+        });
+        var disposable = new FixtureHandle(() =>
+        {
+            cts.Cancel();
+            try { listener.Stop(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+            try { listener.Close(); }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.Sockets.SocketException) { /* best effort */ }
+        });
+        return (prefix.TrimEnd('/'), disposable);
+    }
+
+    private const string SpiderFixtureHtml =
+        "<html><body>"
+        + "<nav>NAVJUNK</nav>"
+        + "<header>HEADERJUNK</header>"
+        + "<aside>ASIDEJUNK</aside>"
+        + "<footer>FOOTERJUNK</footer>"
+        + "<noscript>NOSCRIPTJUNK</noscript>"
+        + "<script>SCRIPTJUNK</script>"
+        + "<style>STYLEJUNK</style>"
+        + "<article>KEEPTHISTEXT</article>"
+        + "<blockquote>QUOTETEXT</blockquote>"
+        + "</body></html>";
+
+    private static string ScrapeVia(AgentBase agent, string url)
+    {
+        var result = agent.OnFunctionCall(
+            "scrape_url",
+            new Dictionary<string, object> { ["url"] = url },
+            new Dictionary<string, object?>());
+        Assert.NotNull(result);
+        return (string)result!.ToDict()["response"];
+    }
+
+    [Fact]
+    public void SpiderSkill_RemoveXpathsIsPrefilledWithTheReferenceSeven()
+    {
+        var skill = new SpiderSkill();
+        Assert.Equal(
+            ScriptStyleNavArray,
+            skill.RemoveXpaths);
+    }
+
+    [Fact]
+    public void SpiderSkill_RemoveXpathsDropsMatchedElementsWholeFromScrapedText()
+    {
+        var (baseUrl, fixture) = StartHtmlFixture(SpiderFixtureHtml);
+        try
+        {
+            Environment.SetEnvironmentVariable("SPIDER_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            var skill = new SpiderSkill();
+            skill.Wire(agent, []);
+            skill.RegisterTools(agent);
+
+            var response = ScrapeVia(agent, baseUrl + "/page");
+
+            // Every default XPath strips its element AND its inner text.
+            Assert.DoesNotContain("NAVJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("HEADERJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("ASIDEJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("FOOTERJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("NOSCRIPTJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("SCRIPTJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("STYLEJUNK", response, StringComparison.Ordinal);
+            // Non-selected content survives.
+            Assert.Contains("KEEPTHISTEXT", response, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SPIDER_BASE_URL", null);
+            fixture.Dispose();
+        }
+    }
+
+    [Fact]
+    public void SpiderSkill_RemoveXpathsIsLoadBearingWhenMutated()
+    {
+        var (baseUrl, fixture) = StartHtmlFixture(SpiderFixtureHtml);
+        try
+        {
+            Environment.SetEnvironmentVariable("SPIDER_BASE_URL", baseUrl);
+            var agent = MakeAgent();
+            var skill = new SpiderSkill();
+
+            // Drop "//nav" from the list -> its text must now come through;
+            // add "//blockquote" -> its text must now be stripped.
+            Assert.True(skill.RemoveXpaths.Remove("//nav"));
+            skill.RemoveXpaths.Add("//blockquote");
+
+            skill.Wire(agent, []);
+            skill.RegisterTools(agent);
+
+            var response = ScrapeVia(agent, baseUrl + "/page");
+
+            Assert.Contains("NAVJUNK", response, StringComparison.Ordinal);
+            Assert.DoesNotContain("QUOTETEXT", response, StringComparison.Ordinal);
+            // Untouched defaults still apply.
+            Assert.DoesNotContain("SCRIPTJUNK", response, StringComparison.Ordinal);
+            Assert.Contains("KEEPTHISTEXT", response, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SPIDER_BASE_URL", null);
+            fixture.Dispose();
+        }
     }
 }

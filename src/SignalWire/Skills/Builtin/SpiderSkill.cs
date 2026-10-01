@@ -5,6 +5,8 @@ using System.Text.RegularExpressions;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
+using SignalWire.Utils;
+
 namespace SignalWire.Skills.Builtin;
 
 /// <summary>
@@ -25,12 +27,52 @@ namespace SignalWire.Skills.Builtin;
 public sealed class SpiderSkill : SkillBase
 {
     private const string BaseUrlEnv = "SPIDER_BASE_URL";
-    private static readonly Regex ScriptRegex = new(@"<script[^>]*>[\s\S]*?</script>",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
-    private static readonly Regex StyleRegex = new(@"<style[^>]*>[\s\S]*?</style>",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex TagRegex = new(@"<[^>]+>", RegexOptions.Compiled);
     private static readonly Regex WhitespaceRegex = new(@"\s+", RegexOptions.Compiled);
+
+    /// <summary>
+    /// XPath expressions selecting the elements dropped whole (element AND its
+    /// text) before text extraction. Prefilled with the same seven the
+    /// reference sets in <c>__init__</c>; callers may add or remove entries to
+    /// change what gets stripped.
+    /// </summary>
+    /// <remarks>
+    /// The reference evaluates these with lxml. The .NET port ships a regex
+    /// HTML stripper, so each entry of the form <c>//tag</c> is honoured by
+    /// dropping that element and its content; a more complex expression is
+    /// ignored by the stripper rather than silently mis-applied.
+    /// </remarks>
+    [SuppressMessage("Design", "CA1002", Justification = "Cross-port surface exposes the XPath list verbatim and callers mutate it in place; changing the collection type would break the parity surface.")]
+    public List<string> RemoveXpaths { get; } =
+    [
+        "//script",
+        "//style",
+        "//nav",
+        "//header",
+        "//footer",
+        "//aside",
+        "//noscript",
+    ];
+
+    private PublicSession? _session;
+
+    /// <summary>
+    /// The HTTP session pages are fetched through. It refuses private or internal
+    /// URLs and peers — redirects included, and checked against the address
+    /// actually connected to — which a check before the fetch can't catch.
+    /// (With the <c>SPIDER_BASE_URL</c> fixture override set, it targets that
+    /// fixture and permits it.)
+    /// </summary>
+    public PublicSession Session => _session ??= new PublicSession(
+        allowPrivate: !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(BaseUrlEnv)));
+
+    /// <summary>GET a page through <see cref="Session"/>: (status, body).</summary>
+    private (int Status, string Body, object? Unused) Fetch(string url, string userAgent, int timeoutSeconds)
+    {
+        var (status, body, _) = Session.GetAsync(url, timeoutSeconds, userAgent: userAgent)
+            .ConfigureAwait(false).GetAwaiter().GetResult();
+        return (status, body, null);
+    }
 
     public override string Name => "spider";
     public override string Description => "Fast web scraping and crawling capabilities";
@@ -68,10 +110,7 @@ public sealed class SpiderSkill : SkillBase
                 var fetchUrl = HttpHelper.ApplyBaseUrlOverride(url, BaseUrlEnv);
                 try
                 {
-                    var (status, body, _) = HttpHelper.GetAsync(fetchUrl,
-                        headers: new Dictionary<string, string> { ["User-Agent"] = userAgent },
-                        timeoutSeconds: timeout)
-                        .ConfigureAwait(false).GetAwaiter().GetResult();
+                    var (status, body, _) = Fetch(fetchUrl, userAgent, timeout);
                     if (status < 200 || status >= 400)
                     {
                         return new FunctionResult($"Failed to fetch {url}: HTTP {status}");
@@ -126,10 +165,7 @@ public sealed class SpiderSkill : SkillBase
                     var fetchUrl = HttpHelper.ApplyBaseUrlOverride(current, BaseUrlEnv);
                     try
                     {
-                        var (status, body, _) = HttpHelper.GetAsync(fetchUrl,
-                            headers: new Dictionary<string, string> { ["User-Agent"] = userAgent },
-                            timeoutSeconds: timeout)
-                            .ConfigureAwait(false).GetAwaiter().GetResult();
+                        var (status, body, _) = Fetch(fetchUrl, userAgent, timeout);
                         if (status < 200 || status >= 400) continue;
                         visited.Add(current);
                         var text = StripHtml(body);
@@ -195,10 +231,7 @@ public sealed class SpiderSkill : SkillBase
                 var fetchUrl = HttpHelper.ApplyBaseUrlOverride(url, BaseUrlEnv);
                 try
                 {
-                    var (status, body, _) = HttpHelper.GetAsync(fetchUrl,
-                        headers: new Dictionary<string, string> { ["User-Agent"] = userAgent },
-                        timeoutSeconds: timeout)
-                        .ConfigureAwait(false).GetAwaiter().GetResult();
+                    var (status, body, _) = Fetch(fetchUrl, userAgent, timeout);
                     if (status < 200 || status >= 400)
                     {
                         return new FunctionResult($"Failed to fetch {url}: HTTP {status}");
@@ -253,15 +286,39 @@ public sealed class SpiderSkill : SkillBase
     // HTML helpers
     // ------------------------------------------------------------------
 
-    private static string StripHtml(string html)
+    /// <summary>
+    /// Strip HTML to plain text. Elements selected by <see cref="RemoveXpaths"/>
+    /// are dropped WHOLE (element + inner text) first — mirroring the
+    /// reference's <c>for xpath in self.remove_xpaths: … elem.drop_tree()</c> —
+    /// then remaining tags are removed and whitespace collapsed.
+    /// </summary>
+    private string StripHtml(string html)
     {
         if (string.IsNullOrEmpty(html)) return "";
-        var noScripts = ScriptRegex.Replace(html, " ");
-        var noStyles = StyleRegex.Replace(noScripts, " ");
-        var noTags = TagRegex.Replace(noStyles, " ");
+
+        var stripped = html;
+        foreach (var xpath in RemoveXpaths)
+        {
+            // Only the `//tag` form is expressible in the regex stripper; any
+            // richer expression is left alone rather than mis-applied.
+            if (!xpath.StartsWith("//", StringComparison.Ordinal)) continue;
+            var tag = xpath[2..];
+            if (tag.Length == 0 || !TagNamePattern.IsMatch(tag)) continue;
+
+            stripped = Regex.Replace(
+                stripped,
+                $@"<{Regex.Escape(tag)}\b[^>]*>[\s\S]*?</{Regex.Escape(tag)}\s*>",
+                " ",
+                RegexOptions.IgnoreCase);
+        }
+
+        var noTags = TagRegex.Replace(stripped, " ");
         var collapsed = WhitespaceRegex.Replace(noTags, " ").Trim();
         return collapsed;
     }
+
+    private static readonly Regex TagNamePattern = new(@"^[A-Za-z][A-Za-z0-9]*$",
+        RegexOptions.Compiled);
 
     private static string ExtractTitle(string html)
     {
@@ -270,7 +327,7 @@ public sealed class SpiderSkill : SkillBase
         return m.Groups[1].Value.Trim();
     }
 
-    private static List<string> ExtractBySimpleSelector(string html, string selector)
+    private List<string> ExtractBySimpleSelector(string html, string selector)
     {
         // Very small subset of CSS: bare tag name, or "tag.class", or "#id".
         var result = new List<string>();

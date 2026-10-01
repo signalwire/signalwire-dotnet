@@ -22,5 +22,5 @@ public class Cond
 {
     /// <summary>Wire field <c>cond</c>.</summary>
     [JsonPropertyName("cond")]
-    public List<object?>? Cond_ { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.CondParams>? Cond_ { get; set; }
 }

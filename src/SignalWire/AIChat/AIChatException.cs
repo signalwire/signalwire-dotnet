@@ -56,7 +56,7 @@ public class AIChatException : Exception
     /// <summary>
     /// Map a JSON-RPC error <paramref name="code"/> to the typed error class the
     /// reference uses for it — an unmapped (or <c>null</c>) code falls to the base
-    /// <see cref="AIChatException"/>. Mirrors python's <c>_ERROR_BY_CODE</c>.
+    /// <see cref="AIChatException"/>.
     /// </summary>
     public static AIChatException FromCode(int? code, string message) => code switch
     {

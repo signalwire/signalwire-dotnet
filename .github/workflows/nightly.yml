@@ -37,6 +37,21 @@ jobs:
       changed: ${{ steps.check.outputs.changed }}
       cache_key: ${{ steps.fp.outputs.cache_key }}
     steps:
+      # Only the pin files + resolver are needed here (sparse), so the fingerprint below
+      # hashes the SAME refs the heavy job's checkouts resolve.
+      - name: Checkout signalwire-dotnet (pin files only)
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/coordinated-ref.sh
+            .github/porting-sdk-ref
+            .github/signalwire-python-ref
+          sparse-checkout-cone-mode: false
+      - name: Resolve coordinated refs (branch-local .github/porting-sdk-ref pin; no pin = main)
+        # See porting-sdk/COORDINATED_PASS.md.
+        id: coord
+        shell: bash
+        run: bash .github/coordinated-ref.sh .
       - name: Fingerprint input HEAD SHAs (port + porting-sdk + python)
         id: fp
         env:
@@ -46,12 +61,13 @@ jobs:
           set -euo pipefail
           port_sha='${{ github.sha }}'
           # Fingerprint the porting-sdk + python-oracle refs that the checkouts below
-          # actually use — the coordinated-pass PORTING_SDK_REF (main normally, a wave
-          # branch during a pass). Was hardcoded to the dead `plan/a-bar-2026-07-18`
-          # branch (404'd → guard failed). No revert commit — tracks the variable.
-          coord_ref='${{ vars.PORTING_SDK_REF || 'main' }}'
+          # actually use — the `coord` step's pin-file refs (main normally, a wave branch
+          # on a coordinated branch that commits .github/porting-sdk-ref). Was hardcoded to the
+          # dead `plan/a-bar-2026-07-18` branch (404'd → guard failed).
+          coord_ref='${{ steps.coord.outputs.ref }}'
+          coord_ref_python='${{ steps.coord.outputs.ref_python }}'
           psdk_sha=$(GH_TOKEN="$PSDK_TOKEN" gh api "repos/signalwire/porting-sdk/commits/${coord_ref//\//%2F}" --jq .sha)
-          py_sha=$(gh api "repos/signalwire/signalwire-python/commits/${coord_ref//\//%2F}" --jq .sha)
+          py_sha=$(gh api "repos/signalwire/signalwire-python/commits/${coord_ref_python//\//%2F}" --jq .sha)
           echo "cache_key=nightly-green-v1-${port_sha}-${psdk_sha}-${py_sha}" >> "$GITHUB_OUTPUT"
           echo "inputs -> port=$port_sha psdk=$psdk_sha python=$py_sha"
       - name: Probe last-green marker
@@ -86,14 +102,21 @@ jobs:
         with:
           path: signalwire-dotnet
 
+      - name: Resolve coordinated refs (branch-local .github/porting-sdk-ref pin; no pin = main)
+        # See porting-sdk/COORDINATED_PASS.md. Every foreign coordinated-set
+        # checkout below takes its ref from this step's outputs.
+        id: coord
+        shell: bash
+        run: bash signalwire-dotnet/.github/coordinated-ref.sh signalwire-dotnet
+
       - name: Checkout porting-sdk (mock_relay + mock_signalwire test harnesses)
         uses: actions/checkout@v7
         with:
           repository: signalwire/porting-sdk
-          # Coordinated-pass pin: 'main' normally; set the PORTING_SDK_REF repo variable
-          # to a wave branch to test a coordinated porting-sdk change, declared on the PR
-          # (see porting-sdk/COORDINATED_PASS.md). No revert commit.
-          ref: ${{ vars.PORTING_SDK_REF || 'main' }}
+          # Coordinated-pass pin: resolved by the `coord` step from the branch-local
+          # .github/porting-sdk-ref pin file; main when the file is absent, so only a branch
+          # that commits the pin is affected (see porting-sdk/COORDINATED_PASS.md).
+          ref: ${{ steps.coord.outputs.ref }}
           path: porting-sdk
           token: ${{ secrets.PORTING_SDK_TOKEN }}
 
@@ -105,7 +128,7 @@ jobs:
         with:
           repository: signalwire/signalwire-python
           path: signalwire-python
-          ref: ${{ vars.PORTING_SDK_REF || 'main' }}
+          ref: ${{ steps.coord.outputs.ref_python }}
 
       - name: Set up .NET SDKs (net8.0 / net9.0 / net10.0)
         # Host-side dotnet is consumed by scripts/enumerate_signatures.py
@@ -126,6 +149,14 @@ jobs:
         run: |
           pip install -e porting-sdk/test_harness/mock_relay
           pip install -e porting-sdk/test_harness/mock_signalwire
+
+      # ruff is a REAL dependency of the FMT + LINT gates: this repo's Python
+      # build/audit infrastructure (scripts/enumerate_*.py, scripts/generate_*.py,
+      # tests/dotnet_adapter_goldens/run_goldens.py) is linted and formatted at
+      # the same bar as the shipped C# library. run-lint.sh / run-format.sh fail
+      # loud if it is absent, so it must be installed here, not assumed present.
+      - name: Install Python dev dependencies (ruff — FMT/LINT gates)
+        run: pip install -r signalwire-dotnet/requirements-dev.txt
 
       # EMISSION needs `import signalwire` (the oracle). Install from the
       # adjacent checkout only if not already importable.

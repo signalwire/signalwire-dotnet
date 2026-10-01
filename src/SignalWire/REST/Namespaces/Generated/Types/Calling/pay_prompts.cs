@@ -22,21 +22,29 @@ public class PayPrompts
 {
     /// <summary>Wire field <c>actions</c>.</summary>
     [JsonPropertyName("actions")]
-    public List<object?>? Actions { get; set; }
+    public object? Actions { get; set; }
 
-    /// <summary>Wire field <c>for</c>.</summary>
-    [JsonPropertyName("for")]
-    public string? For { get; set; }
-
-    /// <summary>Wire field <c>attempts</c>.</summary>
-    [JsonPropertyName("attempts")]
-    public string? Attempts { get; set; }
+    /// <summary>Wire field <c>attempt</c>.</summary>
+    [JsonPropertyName("attempt")]
+    public object? Attempt { get; set; }
 
     /// <summary>Wire field <c>card_type</c>.</summary>
     [JsonPropertyName("card_type")]
-    public string? CardType { get; set; }
+    public object? CardType { get; set; }
 
     /// <summary>Wire field <c>error_type</c>.</summary>
     [JsonPropertyName("error_type")]
-    public string? ErrorType { get; set; }
+    public object? ErrorType { get; set; }
+
+    /// <summary>Wire field <c>for</c>.</summary>
+    [JsonPropertyName("for")]
+    public object? For { get; set; }
+
+    /// <summary>Wire field <c>play</c>.</summary>
+    [JsonPropertyName("play")]
+    public object? Play { get; set; }
+
+    /// <summary>Wire field <c>require_matching_inputs</c>.</summary>
+    [JsonPropertyName("require_matching_inputs")]
+    public object? RequireMatchingInputs { get; set; }
 }

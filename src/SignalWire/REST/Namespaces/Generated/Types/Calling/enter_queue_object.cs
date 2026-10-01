@@ -20,23 +20,27 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class EnterQueueObject
 {
+    /// <summary>Wire field <c>execute_after_queue</c>.</summary>
+    [JsonPropertyName("execute_after_queue")]
+    public object? ExecuteAfterQueue { get; set; }
+
     /// <summary>Wire field <c>queue_name</c>.</summary>
     [JsonPropertyName("queue_name")]
-    public string? QueueName { get; set; }
-
-    /// <summary>Wire field <c>transfer_after_bridge</c>.</summary>
-    [JsonPropertyName("transfer_after_bridge")]
-    public object? TransferAfterBridge { get; set; }
+    public object? QueueName { get; set; }
 
     /// <summary>Wire field <c>status_url</c>.</summary>
     [JsonPropertyName("status_url")]
-    public string? StatusUrl { get; set; }
+    public object? StatusUrl { get; set; }
+
+    /// <summary>Wire field <c>wait_time</c>.</summary>
+    [JsonPropertyName("wait_time")]
+    public object? WaitTime { get; set; }
 
     /// <summary>Wire field <c>wait_url</c>.</summary>
     [JsonPropertyName("wait_url")]
     public object? WaitUrl { get; set; }
 
-    /// <summary>Wire field <c>wait_time</c>.</summary>
-    [JsonPropertyName("wait_time")]
-    public object? WaitTime { get; set; }
+    /// <summary>Wire field <c>whisper_url</c>.</summary>
+    [JsonPropertyName("whisper_url")]
+    public object? WhisperUrl { get; set; }
 }

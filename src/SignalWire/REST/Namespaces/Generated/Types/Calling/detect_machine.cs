@@ -22,5 +22,5 @@ public class DetectMachine
 {
     /// <summary>Wire field <c>detect_machine</c>.</summary>
     [JsonPropertyName("detect_machine")]
-    public Dictionary<string, object?>? DetectMachine_ { get; set; }
+    public object? DetectMachine_ { get; set; }
 }

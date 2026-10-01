@@ -9,12 +9,12 @@
 
 using SignalWire.REST;
 
-var client = new RestClient(
+using var client = new RestClient(
     projectId: Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    token:     Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    token: Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    space:     Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
+    space: Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
@@ -30,12 +30,12 @@ await Safe("Create room", async () =>
 {
     var room = await client.Video.Rooms.CreateAsync(new Dictionary<string, object?>
     {
-        ["name"]             = "team-meeting",
+        ["name"] = "team-meeting",
         ["max_participants"] = 10,
-        ["quality"]          = "1080p",
-        ["layout"]           = "grid-responsive",
+        ["quality"] = "1080p",
+        ["layout"] = "grid-responsive",
     });
-    Console.WriteLine($"    Room ID: {room.GetValueOrDefault("id")}");
+    Console.WriteLine($"    Room ID: {room?.Id}");
 });
 
 // 2. List video rooms
@@ -43,13 +43,9 @@ Console.WriteLine("\nListing video rooms...");
 await Safe("List rooms", async () =>
 {
     var rooms = await client.Video.Rooms.ListAsync();
-    var data = rooms.GetValueOrDefault("data") as List<object> ?? new();
-    foreach (var item in data.Take(5))
+    foreach (var r in (rooms?.Data ?? []).Take(5))
     {
-        if (item is Dictionary<string, object?> r)
-        {
-            Console.WriteLine($"    - {r.GetValueOrDefault("id")}: {r.GetValueOrDefault("name")}");
-        }
+        Console.WriteLine($"    - {r.Id}: {r.Name}");
     }
 });
 
@@ -59,12 +55,12 @@ await Safe("Create webinar", async () =>
 {
     var room = await client.Video.Rooms.CreateAsync(new Dictionary<string, object?>
     {
-        ["name"]             = "product-webinar",
+        ["name"] = "product-webinar",
         ["max_participants"] = 100,
-        ["quality"]          = "720p",
-        ["layout"]           = "highlight-1-responsive",
+        ["quality"] = "720p",
+        ["layout"] = "highlight-1-responsive",
     });
-    Console.WriteLine($"    Room ID: {room.GetValueOrDefault("id")}");
+    Console.WriteLine($"    Room ID: {room?.Id}");
 });
 
 // 4. Create a PubSub token (for real-time video events)
@@ -75,7 +71,7 @@ await Safe("PubSub token", async () =>
         ttl: 3600,
         channels: new Dictionary<string, object?>
         {
-            ["video-events"]  = new Dictionary<string, object?>(),
+            ["video-events"] = new Dictionary<string, object?>(),
             ["notifications"] = new Dictionary<string, object?>(),
         });
     Console.WriteLine($"    PubSub token generated");

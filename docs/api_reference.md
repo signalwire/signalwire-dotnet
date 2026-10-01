@@ -44,7 +44,7 @@ var agent = new AgentBase(new AgentOptions
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `DefineTool` | `AgentBase DefineTool(string name, string description, Dictionary<string, object> parameters, Func<...> handler, bool secure = false)` | Define a tool with a handler |
+| `DefineTool` | `AgentBase DefineTool(string name, string description, Dictionary<string, object> parameters, Func<...> handler, bool secure = true)` | Define a tool with a handler. `secure` defaults to **true**: the tool requires a valid per-call token, and a call without one is refused. |
 | `RegisterSwaigFunction` | `AgentBase RegisterSwaigFunction(Dictionary<string, object> funcDef)` | Register a raw SWAIG function |
 | `DefineTools` | `AgentBase DefineTools(List<Dictionary<string, object>> toolDefs)` | Register multiple tool definitions |
 | `OnFunctionCall` | `FunctionResult? OnFunctionCall(string name, Dictionary<string, object> args, Dictionary<string, object?> rawData)` | Dispatch a function call |

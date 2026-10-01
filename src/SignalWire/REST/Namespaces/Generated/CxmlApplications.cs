@@ -61,80 +61,75 @@ public class CxmlApplications
     /// <summary>
     /// Generated from operation <c>update_cxml_application</c> (PUT /resources/cxml_applications/{id}).
     /// </summary>
-    /// <param name="displayName">Wire field <c>display_name</c>.</param>
-    /// <param name="accountSid">Wire field <c>account_sid</c>.</param>
-    /// <param name="voiceUrl">Wire field <c>voice_url</c>.</param>
-    /// <param name="voiceMethod">Wire field <c>voice_method</c>.</param>
-    /// <param name="voiceFallbackUrl">Wire field <c>voice_fallback_url</c>.</param>
-    /// <param name="voiceFallbackMethod">Wire field <c>voice_fallback_method</c>.</param>
-    /// <param name="statusCallback">Wire field <c>status_callback</c>.</param>
-    /// <param name="statusCallbackMethod">Wire field <c>status_callback_method</c>.</param>
-    /// <param name="smsUrl">Wire field <c>sms_url</c>.</param>
-    /// <param name="smsMethod">Wire field <c>sms_method</c>.</param>
-    /// <param name="smsFallbackUrl">Wire field <c>sms_fallback_url</c>.</param>
-    /// <param name="smsFallbackMethod">Wire field <c>sms_fallback_method</c>.</param>
-    /// <param name="smsStatusCallback">Wire field <c>sms_status_callback</c>.</param>
-    /// <param name="smsStatusCallbackMethod">Wire field <c>sms_status_callback_method</c>.</param>
+    /// <param name="name">Wire field <c>name</c>.</param>
+    /// <param name="callRequestUrl">Wire field <c>call_request_url</c>.</param>
+    /// <param name="callRequestMethod">Wire field <c>call_request_method</c>.</param>
+    /// <param name="callFallbackUrl">Wire field <c>call_fallback_url</c>.</param>
+    /// <param name="callFallbackMethod">Wire field <c>call_fallback_method</c>.</param>
+    /// <param name="callStatusUrl">Wire field <c>call_status_url</c>.</param>
+    /// <param name="callStatusMethod">Wire field <c>call_status_method</c>.</param>
+    /// <param name="messageRequestUrl">Wire field <c>message_request_url</c>.</param>
+    /// <param name="messageRequestMethod">Wire field <c>message_request_method</c>.</param>
+    /// <param name="messageFallbackUrl">Wire field <c>message_fallback_url</c>.</param>
+    /// <param name="messageFallbackMethod">Wire field <c>message_fallback_method</c>.</param>
+    /// <param name="messageStatusUrl">Wire field <c>message_status_url</c>.</param>
+    /// <param name="messageStatusMethod">Wire field <c>message_status_method</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CxmlApplicationResponse?> UpdateAsync(string id, string? displayName = null, string? accountSid = null, string? voiceUrl = null, Dictionary<string, object?>? voiceMethod = null, string? voiceFallbackUrl = null, Dictionary<string, object?>? voiceFallbackMethod = null, string? statusCallback = null, Dictionary<string, object?>? statusCallbackMethod = null, string? smsUrl = null, Dictionary<string, object?>? smsMethod = null, string? smsFallbackUrl = null, Dictionary<string, object?>? smsFallbackMethod = null, string? smsStatusCallback = null, Dictionary<string, object?>? smsStatusCallbackMethod = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CxmlApplicationResponse?> UpdateAsync(string id, string? name = null, string? callRequestUrl = null, string? callRequestMethod = null, string? callFallbackUrl = null, string? callFallbackMethod = null, string? callStatusUrl = null, string? callStatusMethod = null, string? messageRequestUrl = null, string? messageRequestMethod = null, string? messageFallbackUrl = null, string? messageFallbackMethod = null, string? messageStatusUrl = null, string? messageStatusMethod = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
-        if (displayName is not null)
+        if (name is not null)
         {
-            _reqBody["display_name"] = displayName;
+            _reqBody["name"] = name;
         }
-        if (accountSid is not null)
+        if (callRequestUrl is not null)
         {
-            _reqBody["account_sid"] = accountSid;
+            _reqBody["call_request_url"] = callRequestUrl;
         }
-        if (voiceUrl is not null)
+        if (callRequestMethod is not null)
         {
-            _reqBody["voice_url"] = voiceUrl;
+            _reqBody["call_request_method"] = callRequestMethod;
         }
-        if (voiceMethod is not null)
+        if (callFallbackUrl is not null)
         {
-            _reqBody["voice_method"] = voiceMethod;
+            _reqBody["call_fallback_url"] = callFallbackUrl;
         }
-        if (voiceFallbackUrl is not null)
+        if (callFallbackMethod is not null)
         {
-            _reqBody["voice_fallback_url"] = voiceFallbackUrl;
+            _reqBody["call_fallback_method"] = callFallbackMethod;
         }
-        if (voiceFallbackMethod is not null)
+        if (callStatusUrl is not null)
         {
-            _reqBody["voice_fallback_method"] = voiceFallbackMethod;
+            _reqBody["call_status_url"] = callStatusUrl;
         }
-        if (statusCallback is not null)
+        if (callStatusMethod is not null)
         {
-            _reqBody["status_callback"] = statusCallback;
+            _reqBody["call_status_method"] = callStatusMethod;
         }
-        if (statusCallbackMethod is not null)
+        if (messageRequestUrl is not null)
         {
-            _reqBody["status_callback_method"] = statusCallbackMethod;
+            _reqBody["message_request_url"] = messageRequestUrl;
         }
-        if (smsUrl is not null)
+        if (messageRequestMethod is not null)
         {
-            _reqBody["sms_url"] = smsUrl;
+            _reqBody["message_request_method"] = messageRequestMethod;
         }
-        if (smsMethod is not null)
+        if (messageFallbackUrl is not null)
         {
-            _reqBody["sms_method"] = smsMethod;
+            _reqBody["message_fallback_url"] = messageFallbackUrl;
         }
-        if (smsFallbackUrl is not null)
+        if (messageFallbackMethod is not null)
         {
-            _reqBody["sms_fallback_url"] = smsFallbackUrl;
+            _reqBody["message_fallback_method"] = messageFallbackMethod;
         }
-        if (smsFallbackMethod is not null)
+        if (messageStatusUrl is not null)
         {
-            _reqBody["sms_fallback_method"] = smsFallbackMethod;
+            _reqBody["message_status_url"] = messageStatusUrl;
         }
-        if (smsStatusCallback is not null)
+        if (messageStatusMethod is not null)
         {
-            _reqBody["sms_status_callback"] = smsStatusCallback;
-        }
-        if (smsStatusCallbackMethod is not null)
-        {
-            _reqBody["sms_status_callback_method"] = smsStatusCallbackMethod;
+            _reqBody["message_status_method"] = messageStatusMethod;
         }
         if (extras is not null)
         {

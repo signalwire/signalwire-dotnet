@@ -11,6 +11,7 @@
 //   DATASPHERE_COUNT (default 3), DATASPHERE_DISTANCE (default 4.0),
 //   DATASPHERE_TAGS (comma-separated), DATASPHERE_LANGUAGE
 
+using System.Globalization;
 using SignalWire.Agent;
 
 string GetRequired(string name)
@@ -19,16 +20,16 @@ string GetRequired(string name)
            ?? throw new InvalidOperationException($"Set environment variable {name}");
 }
 
-var spaceName  = GetRequired("SIGNALWIRE_SPACE_NAME");
-var projectId  = GetRequired("SIGNALWIRE_PROJECT_ID");
-var token      = GetRequired("SIGNALWIRE_API_TOKEN");
+var spaceName = GetRequired("SIGNALWIRE_SPACE_NAME");
+var projectId = GetRequired("SIGNALWIRE_PROJECT_ID");
+var token = GetRequired("SIGNALWIRE_API_TOKEN");
 var documentId = GetRequired("DATASPHERE_DOCUMENT_ID");
 
-var count    = int.Parse(Environment.GetEnvironmentVariable("DATASPHERE_COUNT") ?? "3");
-var distance = double.Parse(Environment.GetEnvironmentVariable("DATASPHERE_DISTANCE") ?? "4.0");
+var count = int.Parse(Environment.GetEnvironmentVariable("DATASPHERE_COUNT") ?? "3", CultureInfo.InvariantCulture);
+var distance = double.Parse(Environment.GetEnvironmentVariable("DATASPHERE_DISTANCE") ?? "4.0", CultureInfo.InvariantCulture);
 var language = Environment.GetEnvironmentVariable("DATASPHERE_LANGUAGE");
-var tagsStr  = Environment.GetEnvironmentVariable("DATASPHERE_TAGS") ?? "";
-var tags     = string.IsNullOrWhiteSpace(tagsStr)
+var tagsStr = Environment.GetEnvironmentVariable("DATASPHERE_TAGS") ?? "";
+var tags = string.IsNullOrWhiteSpace(tagsStr)
     ? null
     : tagsStr.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
 
@@ -37,11 +38,11 @@ Console.WriteLine($"  Space: {spaceName}");
 Console.WriteLine($"  Document: {documentId}");
 Console.WriteLine($"  Count: {count}, Distance: {distance}");
 if (language != null) Console.WriteLine($"  Language: {language}");
-if (tags != null)     Console.WriteLine($"  Tags: {string.Join(", ", tags)}");
+if (tags != null) Console.WriteLine($"  Tags: {string.Join(", ", tags)}");
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "DataSphere Env Assistant",
+    Name = "DataSphere Env Assistant",
     Route = "/datasphere-env",
 });
 
@@ -54,17 +55,17 @@ agent.PromptAddSection("Role",
 
 var config = new Dictionary<string, object>
 {
-    ["space_name"]  = spaceName,
-    ["project_id"]  = projectId,
-    ["token"]       = token,
+    ["space_name"] = spaceName,
+    ["project_id"] = projectId,
+    ["token"] = token,
     ["document_id"] = documentId,
-    ["count"]       = count,
-    ["distance"]    = distance,
-    ["tool_name"]   = "search_knowledge",
+    ["count"] = count,
+    ["distance"] = distance,
+    ["tool_name"] = "search_knowledge",
 };
 
 if (language != null) config["language"] = language;
-if (tags != null)     config["tags"]     = tags;
+if (tags != null) config["tags"] = tags;
 
 try
 {

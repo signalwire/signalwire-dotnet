@@ -64,10 +64,6 @@ public class BrandResponse
     [JsonPropertyName("company_vertical")]
     public string? CompanyVertical { get; set; }
 
-    /// <summary>Wire field <c>company_website</c>.</summary>
-    [JsonPropertyName("company_website")]
-    public string? CompanyWebsite { get; set; }
-
     /// <summary>Wire field <c>csp_brand_reference</c>.</summary>
     [JsonPropertyName("csp_brand_reference")]
     public string? CspBrandReference { get; set; }
@@ -87,4 +83,16 @@ public class BrandResponse
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
     public string? UpdatedAt { get; set; }
+
+    /// <summary>Wire field <c>signalwire_contact_emails</c>.</summary>
+    [JsonPropertyName("signalwire_contact_emails")]
+    public List<object?>? SignalwireContactEmails { get; set; }
+
+    /// <summary>Wire field <c>large_message_limit</c>.</summary>
+    [JsonPropertyName("large_message_limit")]
+    public string? LargeMessageLimit { get; set; }
+
+    /// <summary>Wire field <c>number_pooling_for_company</c>.</summary>
+    [JsonPropertyName("number_pooling_for_company")]
+    public string? NumberPoolingForCompany { get; set; }
 }

@@ -215,8 +215,8 @@ var corpus = new (string Id, Func<FunctionResult> Build)[]
         direction: TapDirection.Both, codec: Codec.Pcmu)),
     ("tap.speak_pcma", () => Fr("").Tap("ws://ex.com/tap",
         direction: TapDirection.Speak, codec: Codec.Pcma)),
-    ("tap.hear_pcmu", () => Fr("").Tap("wss://ex.com/tap",
-        direction: TapDirection.Hear, codec: Codec.Pcmu)),
+    ("tap.listen_pcmu", () => Fr("").Tap("wss://ex.com/tap",
+        direction: TapDirection.Listen, codec: Codec.Pcmu)),
     ("tap.both_full", () => Fr("").Tap("rtp://10.0.0.1:5004",
         controlId: "tap1",
         direction: TapDirection.Both,
@@ -255,6 +255,24 @@ var corpus = new (string Id, Func<FunctionResult> Build)[]
     ("rpc_dial", () => Fr("").RpcDial("+15551234567", "+15559876543", "https://ex.com/call-agent")),
     ("rpc_ai_message", () => Fr("").RpcAiMessage("call-abc", "Please take a message.")),
     ("rpc_ai_unhold", () => Fr("").RpcAiUnhold("call-abc")),
+
+    // ---- structured tool response (tool_result / tool_prompt) ---------------
+    ("tool_response.ctor", () => new FunctionResult(
+        toolResult: "Order 1042 placed.", toolPrompt: "Tell the caller their order number.")),
+    ("tool_response.set", () => Fr("").SetToolResponse("Balance is $12.50.", "Read the balance to the caller.")),
+    ("tool_response.result_only", () => Fr("").SetToolResponse(toolResult: "Saved.")),
+
+    // ---- hold with a prompt and step routing --------------------------------
+    ("hold.prompt", () => Fr("").Hold("Please hold while I check.")),
+    ("hold.routing", () => Fr("").Hold("One moment.", 60, step: "resume", timeoutStep: "timed_out")),
+
+    // ---- RPC global data ----------------------------------------------------
+    ("rpc_ai_message.global_data", () => Fr("").RpcAiMessage("call-abc", "The caller is back.",
+        globalData: new Dictionary<string, object> { ["status"] = "returned" })),
+    ("rpc_ai_message.data_only", () => Fr("").RpcAiMessage("call-abc",
+        globalData: new Dictionary<string, object> { ["order_id"] = "1042" })),
+    ("rpc_ai_global_data", () => Fr("").RpcAiGlobalData("call-abc",
+        new Dictionary<string, object> { ["order_id"] = "1042", ["paid"] = true })),
 
     // ---- simulate_user_input -----------------------------------------------
     ("simulate_user_input", () => Fr("").SimulateUserInput("I'd like to pay my bill.")),
@@ -326,14 +344,20 @@ foreach (var (id, build) in corpus)
     output[id] = build().ToDict();
 }
 
-var jsonOptions = new JsonSerializerOptions
+Console.WriteLine(JsonSerializer.Serialize(output, EmitCorpusJson.Options));
+return 0;
+
+
+/// <summary>Serializer options, cached in a static so they are allocated once
+/// (CA1869) rather than per invocation.</summary>
+internal static class EmitCorpusJson
 {
     // Keep '+' / '&' / '<' / '>' literal so the JSON matches Python's json.dumps
     // output character-for-character (the differ parses both sides anyway, but
     // this avoids surprising \uXXXX escapes in the dump for human inspection).
-    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    WriteIndented = false,
-};
-
-Console.WriteLine(JsonSerializer.Serialize(output, jsonOptions));
-return 0;
+    public static readonly JsonSerializerOptions Options = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        WriteIndented = false,
+    };
+}

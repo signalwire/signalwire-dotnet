@@ -15,7 +15,7 @@ using Xunit;
 namespace SignalWire.Tests;
 
 [Collection(GlobalStateCollection.Name)]
-public class CoreAuthHandlerTests : IDisposable
+public sealed class CoreAuthHandlerTests : IDisposable
 {
     private static readonly string[] EnvKeys =
     {
@@ -62,7 +62,7 @@ public class CoreAuthHandlerTests : IDisposable
     {
         var h = Handler(user: "alice", password: "secret");
 
-        Assert.True(h.VerifyBasicAuth("alice", "secret"));
+        Assert.True(h.VerifyBasicAuth(new BasicCredentials("alice", "secret")));
     }
 
     [Fact]
@@ -70,8 +70,8 @@ public class CoreAuthHandlerTests : IDisposable
     {
         var h = Handler(user: "alice", password: "secret");
 
-        Assert.False(h.VerifyBasicAuth("alice", "nope"));
-        Assert.False(h.VerifyBasicAuth("bob", "secret"));
+        Assert.False(h.VerifyBasicAuth(new BasicCredentials("alice", "nope")));
+        Assert.False(h.VerifyBasicAuth(new BasicCredentials("bob", "secret")));
     }
 
     [Fact]
@@ -79,8 +79,8 @@ public class CoreAuthHandlerTests : IDisposable
     {
         var h = Handler(bearerToken: "tok123");
 
-        Assert.True(h.VerifyBearerToken("tok123"));
-        Assert.False(h.VerifyBearerToken("wrong"));
+        Assert.True(h.VerifyBearerToken(new BearerCredentials("Bearer", "tok123")));
+        Assert.False(h.VerifyBearerToken(new BearerCredentials("Bearer", "wrong")));
     }
 
     [Fact]
@@ -88,7 +88,37 @@ public class CoreAuthHandlerTests : IDisposable
     {
         var h = Handler();
 
-        Assert.False(h.VerifyBearerToken("anything"));
+        Assert.False(h.VerifyBearerToken(new BearerCredentials("Bearer", "anything")));
+    }
+
+    // The reference compares ONLY credentials.credentials — the scheme is
+    // carried but never part of the comparison (auth_handler.py:113-119). A
+    // port that additionally required scheme == "Bearer" would reject requests
+    // the reference accepts.
+    [Fact]
+    public void VerifyBearerTokenIgnoresScheme()
+    {
+        var h = Handler(bearerToken: "tok123");
+
+        Assert.True(h.VerifyBearerToken(new BearerCredentials("Bearer", "tok123")));
+        Assert.True(h.VerifyBearerToken(new BearerCredentials("bearer", "tok123")));
+        Assert.True(h.VerifyBearerToken(new BearerCredentials("Token", "tok123")));
+        Assert.True(h.VerifyBearerToken(new BearerCredentials(string.Empty, "tok123")));
+    }
+
+    // The credential carriers ARE the contract: the reference records exactly
+    // these field names on each class (BasicCredentials -> username, password;
+    // BearerCredentials -> scheme, credentials).
+    [Fact]
+    public void CredentialCarriersExposeTheReferenceFields()
+    {
+        var basic = new BasicCredentials("alice", "secret");
+        Assert.Equal("alice", basic.Username);
+        Assert.Equal("secret", basic.Password);
+
+        var bearer = new BearerCredentials("Bearer", "tok123");
+        Assert.Equal("Bearer", bearer.Scheme);
+        Assert.Equal("tok123", bearer.Credentials);
     }
 
     [Fact]
@@ -150,8 +180,8 @@ public class CoreAuthHandlerTests : IDisposable
         // shorter/longer candidate simply fails.
         var h = Handler(user: "u", password: "password");
 
-        Assert.False(h.VerifyBasicAuth("u", "pass"));
-        Assert.False(h.VerifyBasicAuth("u", "passwordX"));
-        Assert.True(h.VerifyBasicAuth("u", "password"));
+        Assert.False(h.VerifyBasicAuth(new BasicCredentials("u", "pass")));
+        Assert.False(h.VerifyBasicAuth(new BasicCredentials("u", "passwordX")));
+        Assert.True(h.VerifyBasicAuth(new BasicCredentials("u", "password")));
     }
 }

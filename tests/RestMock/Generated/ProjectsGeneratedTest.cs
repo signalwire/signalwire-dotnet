@@ -42,7 +42,7 @@ public class ProjectsGeneratedTest : CoverageBase
 {
     public ProjectsGeneratedTest(MockServerFixture fixture) : base(fixture) { }
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 
     [Fact]
     public async Task Projects_Create_Success()

@@ -60,7 +60,7 @@ public static class RelayMockTest
         => MockTest.DiscoverPortingSdkPackage("mock_relay") is not null;
 
     /// <summary>Returns the shared harness; resets journal/scenarios.</summary>
-    public static Harness GetHarness()
+    internal static Harness GetHarness()
     {
         var h = EnsureServer();
         h.Reset();
@@ -68,12 +68,18 @@ public static class RelayMockTest
     }
 
     /// <summary>Returns the shared harness without resetting.</summary>
-    public static Harness GetHarnessNoReset() => EnsureServer();
+    internal static Harness GetHarnessNoReset() => EnsureServer();
 
     /// <summary>Convenience: build a configured Relay <see cref="SignalWire.Relay.Client"/>
     /// pointed at the local mock's WebSocket. Caller is responsible for
     /// calling <c>ConnectAsync()</c>.</summary>
-    public static Bound NewClient(string project = "test_proj", string token = "test_tok",
+    // Literal arrays reused across the RelayMock suite, hoisted so each call site
+    // does not allocate a fresh one (CA1861).
+    public static readonly string[] DefaultContexts = ["default"];
+    public static readonly string[] CreatedAnswered = ["created", "answered"];
+    public static readonly string[] CreatedEnded = ["created", "ended"];
+
+    internal static Bound NewClient(string project = "test_proj", string token = "test_tok",
         IEnumerable<string>? contexts = null)
     {
         var shared = EnsureServer();
@@ -85,7 +91,11 @@ public static class RelayMockTest
             Scheme = "ws",
             Contexts = contexts?.ToList(),
         };
+        // Ownership TRANSFERS to the caller (this is a factory), so it is not
+        // disposed here.
+#pragma warning disable CA2000
         var client = new SignalWire.Relay.Client(opts);
+#pragma warning restore CA2000
         // The caller connects the client (some tests cover the connect path
         // itself). The returned Bound exposes a per-client Harness view that
         // scopes journal reads/resets + pushes to THIS client's session id —
@@ -99,7 +109,7 @@ public static class RelayMockTest
     /// <summary>Tuple of Relay client + Harness bound to the same mock. The
     /// <see cref="Harness"/> view is session-scoped to <see cref="Client"/>
     /// (lazily, once the connect handshake assigns a session id).</summary>
-    public sealed class Bound : IDisposable
+    internal sealed class Bound : IDisposable
     {
         public SignalWire.Relay.Client Client { get; }
         private readonly Harness _shared;
@@ -150,7 +160,8 @@ public static class RelayMockTest
             // swallows its fault), so nothing escapes. Block on it here because
             // Bound is IDisposable and Client is IAsyncDisposable-only.
             try { Client.DisposeAsync().AsTask().GetAwaiter().GetResult(); }
-            catch { /* best effort */ }
+            catch (ObjectDisposedException) { /* already torn down */ }
+            catch (System.Net.WebSockets.WebSocketException) { /* socket already gone */ }
         }
     }
 
@@ -160,7 +171,14 @@ public static class RelayMockTest
 
     /// <summary>Live mock-server handle exposing the HTTP control plane
     /// + push helpers.</summary>
-    public sealed class Harness
+    // CA1001: this type holds an HttpClient but is deliberately NOT IDisposable.
+    // A Harness is a VIEW onto the PROCESS-WIDE shared mock server; callers borrow
+    // it, they never own it. Making it disposable was tried and made things worse —
+    // the finding count went UP (98 -> 100) because every borrower then looked like
+    // an owner (CA2213 on each field holding one, CA2000 at each site producing
+    // one). The client lives for the whole test run and is released at process exit.
+#pragma warning disable CA1001
+    internal sealed class Harness
     {
         public string HttpUrl { get; }
         public string WsUrl { get; }
@@ -309,7 +327,7 @@ public static class RelayMockTest
         /// </remarks>
         public List<Dictionary<string, JsonElement>> Sessions()
         {
-            var resp = _http.GetAsync(HttpUrl + "/__mock__/sessions" + SessionQuery())
+            var resp = _http.GetAsync(new Uri(HttpUrl + "/__mock__/sessions" + SessionQuery()))
                 .GetAwaiter().GetResult();
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             using var doc = JsonDocument.Parse(body);
@@ -337,7 +355,10 @@ public static class RelayMockTest
         {
             var json = JsonSerializer.Serialize(body);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(HttpUrl + path, content).GetAwaiter().GetResult();
+#pragma warning disable CA2025 // the request is BLOCKED on right here, so `content`
+            // is alive for its whole lifetime; the analyzer cannot see the join.
+            var resp = _http.PostAsync(new Uri(HttpUrl + path), content).GetAwaiter().GetResult();
+#pragma warning restore CA2025
             var respBody = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -357,9 +378,10 @@ public static class RelayMockTest
             return result;
         }
     }
+#pragma warning restore CA1001
 
     /// <summary>Wrapper around <c>/__mock__/journal</c> + reset.</summary>
-    public sealed class JournalApi
+    internal sealed class JournalApi
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
@@ -378,7 +400,7 @@ public static class RelayMockTest
 
         public List<JournalEntry> All()
         {
-            var resp = _http.GetAsync(_baseUrl + "/__mock__/journal" + _sessionQuery)
+            var resp = _http.GetAsync(new Uri(_baseUrl + "/__mock__/journal" + _sessionQuery))
                 .GetAwaiter().GetResult();
             if (resp.StatusCode != HttpStatusCode.OK)
             {
@@ -417,8 +439,9 @@ public static class RelayMockTest
 
         public void Reset()
         {
+#pragma warning disable CA2025 // the request is BLOCKED on below
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/journal/reset" + _sessionQuery, content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/journal/reset" + _sessionQuery), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -429,7 +452,7 @@ public static class RelayMockTest
     }
 
     /// <summary>Wrapper around <c>/__mock__/scenarios/&lt;id&gt;</c> + reset.</summary>
-    public sealed class ScenariosApi
+    internal sealed class ScenariosApi
     {
         private readonly System.Net.Http.HttpClient _http;
         private readonly string _baseUrl;
@@ -453,7 +476,7 @@ public static class RelayMockTest
         {
             var json = JsonSerializer.Serialize(events.ToList());
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/" + method + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/" + method + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -469,7 +492,7 @@ public static class RelayMockTest
         {
             var json = JsonSerializer.Serialize(opts);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/dial" + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/dial" + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -482,8 +505,9 @@ public static class RelayMockTest
         /// when unscoped).</summary>
         public void Reset()
         {
+#pragma warning disable CA2025 // the request is BLOCKED on below
             using var content = new StringContent("");
-            var resp = _http.PostAsync(_baseUrl + "/__mock__/scenarios/reset" + Q(), content)
+            var resp = _http.PostAsync(new Uri(_baseUrl + "/__mock__/scenarios/reset" + Q()), content)
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode)
             {
@@ -494,7 +518,7 @@ public static class RelayMockTest
     }
 
     /// <summary>Inbound call factory spec.</summary>
-    public sealed class InboundCallSpec
+    internal sealed class InboundCallSpec
     {
         public string? CallId { get; set; }
         public string FromNumber { get; set; } = "+15551234567";
@@ -509,7 +533,9 @@ public static class RelayMockTest
     /// Lightweight view of a frame the mock server recorded. Mirrors the
     /// dataclass in <c>mock_relay.journal._JournalEntry</c>.
     /// </summary>
-    public sealed class JournalEntry
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812",
+        Justification = "Deserialization target — constructed reflectively by System.Text.Json.")]
+    internal sealed class JournalEntry
     {
         [JsonPropertyName("timestamp")]
         public double Timestamp { get; set; }
@@ -613,27 +639,82 @@ public static class RelayMockTest
                 return hr;
             }
 
-            try
+            // Self-spawn. Both ports are HELD open until the instant before the
+            // child starts, so nothing else can be handed them in the meantime;
+            // if the child still loses either bind we discard both and retry on
+            // a fresh pair. mock_relay needs WS + HTTP as two INDEPENDENT ports,
+            // so both are reserved before either is released.
+            Exception? lastSpawnError = null;
+            for (var attempt = 1; attempt <= SpawnAttempts; attempt++)
             {
-                var process = SpawnMockServer(host, wsPort, httpPort);
+                int attemptWsPort, attemptHttpPort;
+                using var wsReservation = ReservePort(out attemptWsPort);
+                using var httpReservation = ReservePort(out attemptHttpPort);
+                var attemptHttpUrl = $"http://{host}:{attemptHttpPort}";
+                var attemptWsUrl = $"ws://{host}:{attemptWsPort}";
+
+                Process process;
+                try
+                {
+                    wsReservation.Stop();
+                    httpReservation.Stop();
+#pragma warning disable CA2000 // ownership TRANSFERS to the returned handle,
+                    // which owns teardown; disposing here would tear the mock down early.
+                    process = SpawnMockServer(host, attemptWsPort, attemptHttpPort);
+#pragma warning restore CA2000
+                }
+                catch (Exception ex)
+                {
+                    try { wsReservation.Stop(); }
+                    catch (ObjectDisposedException) { /* already stopped */ }
+                    catch (System.Net.Sockets.SocketException) { /* best effort */ }
+                    try { httpReservation.Stop(); }
+                    catch (ObjectDisposedException) { /* already stopped */ }
+                    catch (System.Net.Sockets.SocketException) { /* best effort */ }
+                    _startupFailure = new InvalidOperationException(
+                        $"RelayMockTest: failed to spawn `python -m mock_relay`: {ex.Message} " +
+                        $"(set MOCK_RELAY_HOST / MOCK_RELAY_PORT / MOCK_RELAY_HTTP_PORT to use a pre-running instance, " +
+                        $"or run inside an environment with python3 + porting-sdk available)", ex);
+                    throw _startupFailure;
+                }
+
                 _mockProcess = process;
                 var deadline = DateTime.UtcNow + StartupTimeout;
+                var lostTheBind = false;
+
                 while (DateTime.UtcNow < deadline)
                 {
-                    if (ProbeHealth(probeClient, httpUrl))
+                    if (ProbeHealth(probeClient, attemptHttpUrl))
                     {
                         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
                         {
-                            try { if (!process.HasExited) process.Kill(true); } catch { /* best effort */ }
+                            try { if (!process.HasExited) process.Kill(true); }
+                            catch (InvalidOperationException) { /* already exited */ }
+                            catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         };
-                        var hr = new Harness(httpUrl, wsUrl, host, wsPort, httpPort);
+                        var hr = new Harness(attemptHttpUrl, attemptWsUrl, host, attemptWsPort, attemptHttpPort);
                         _sharedHarness = hr;
                         return hr;
                     }
                     if (process.HasExited)
                     {
+                        // Drain the async output handlers before classifying —
+                        // the bind error is written AFTER the startup banner.
+                        // WaitForExit() with no timeout is the overload that
+                        // also waits for those handlers.
+                        try { process.WaitForExit(); }
+                        catch (InvalidOperationException) { /* already exited */ }
+                        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                         var stderr = _mockStderr?.ToString() ?? "";
                         var stdout = _mockStdout?.ToString() ?? "";
+                        if (MockTest.IsAddressInUse(stdout, stderr))
+                        {
+                            lostTheBind = true;
+                            lastSpawnError = new InvalidOperationException(
+                                $"mock_relay lost a bind on {attemptHttpUrl} / {attemptWsUrl} (address already in use); " +
+                                $"retrying on a fresh pair (attempt {attempt}/{SpawnAttempts}).");
+                            break;
+                        }
                         _startupFailure = new InvalidOperationException(
                             $"mock_relay process exited before becoming ready (exit {process.ExitCode}). " +
                             $"stdout={Truncate(stdout)} stderr={Truncate(stderr)}");
@@ -641,21 +722,35 @@ public static class RelayMockTest
                     }
                     Thread.Sleep(150);
                 }
-                try { process.Kill(true); } catch { /* best effort */ }
+
+                if (lostTheBind) continue;
+
+                try { process.Kill(true); }
+                catch (InvalidOperationException) { /* already exited */ }
+                catch (System.ComponentModel.Win32Exception) { /* best effort */ }
                 _startupFailure = new InvalidOperationException(
-                    $"RelayMockTest: `python -m mock_relay` did not become ready within {StartupTimeout} on {httpUrl} / {wsUrl}. " +
+                    $"RelayMockTest: `python -m mock_relay` did not become ready within {StartupTimeout} on {attemptHttpUrl} / {attemptWsUrl}. " +
                     $"Either start it manually on host before running tests, or clone porting-sdk next to signalwire-dotnet.");
                 throw _startupFailure;
             }
-            catch (Exception ex) when (ex is not InvalidOperationException)
-            {
-                _startupFailure = new InvalidOperationException(
-                    $"RelayMockTest: failed to spawn `python -m mock_relay`: {ex.Message} " +
-                    $"(set MOCK_RELAY_HOST / MOCK_RELAY_PORT / MOCK_RELAY_HTTP_PORT to use a pre-running instance, " +
-                    $"or run inside an environment with python3 + porting-sdk available)", ex);
-                throw _startupFailure;
-            }
+
+            _startupFailure = new InvalidOperationException(
+                $"RelayMockTest: `python -m mock_relay` lost a port bind on {SpawnAttempts} " +
+                $"consecutive freshly-picked port pairs. Last: {lastSpawnError?.Message}", lastSpawnError);
+            throw _startupFailure;
         }
+    }
+
+    /// <summary>Fresh port pairs to try before giving up (mirrors MockTest).</summary>
+    private const int SpawnAttempts = 5;
+
+    /// <summary>Hold a free loopback port open; see MockTest.ReservePort.</summary>
+    private static System.Net.Sockets.TcpListener ReservePort(out int port)
+    {
+        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        return listener;
     }
 
     private static string Truncate(string s)
@@ -673,11 +768,11 @@ public static class RelayMockTest
         // hardcoded default — WS and HTTP control plane picked independently.
         var wsRaw = Environment.GetEnvironmentVariable("MOCK_RELAY_PORT");
         var wsFromEnv = !string.IsNullOrWhiteSpace(wsRaw) && int.TryParse(wsRaw.Trim(), out var w) && w > 0;
-        var wsPort = wsFromEnv ? int.Parse(wsRaw!.Trim()) : PickFreePort();
+        var wsPort = wsFromEnv ? int.Parse(wsRaw!.Trim(), System.Globalization.CultureInfo.InvariantCulture) : PickFreePort();
 
         var httpRaw = Environment.GetEnvironmentVariable("MOCK_RELAY_HTTP_PORT");
         var httpFromEnv = !string.IsNullOrWhiteSpace(httpRaw) && int.TryParse(httpRaw.Trim(), out var hp) && hp > 0;
-        var httpPort = httpFromEnv ? int.Parse(httpRaw!.Trim()) : PickFreePort();
+        var httpPort = httpFromEnv ? int.Parse(httpRaw!.Trim(), System.Globalization.CultureInfo.InvariantCulture) : PickFreePort();
 
         // Either explicit port signals "a mock is promised on these ports"
         // (the CI gate's host-spawned mock, reused via --network host). In that
@@ -688,7 +783,7 @@ public static class RelayMockTest
     /// <summary>Ask the OS for a free loopback TCP port (bind :0, read it, release).</summary>
     private static int PickFreePort()
     {
-        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
         try
         {
@@ -716,9 +811,9 @@ public static class RelayMockTest
         psi.ArgumentList.Add("--host");
         psi.ArgumentList.Add(host);
         psi.ArgumentList.Add("--ws-port");
-        psi.ArgumentList.Add(wsPort.ToString());
+        psi.ArgumentList.Add(wsPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--http-port");
-        psi.ArgumentList.Add(httpPort.ToString());
+        psi.ArgumentList.Add(httpPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--log-level");
         psi.ArgumentList.Add("error");
 
@@ -753,16 +848,18 @@ public static class RelayMockTest
     {
         try
         {
-            var resp = client.GetAsync(baseUrl + "/__mock__/health")
+            var resp = client.GetAsync(new Uri(baseUrl + "/__mock__/health"))
                 .GetAwaiter().GetResult();
             if (!resp.IsSuccessStatusCode) return false;
             var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             // The health endpoint emits a JSON object containing
             // "schemas_loaded"; treat any other shape as a probe failure.
-            return body.Contains("\"schemas_loaded\"");
+            return body.Contains("\"schemas_loaded\"", StringComparison.Ordinal);
         }
-        catch
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
+                                      or OperationCanceledException or System.Net.Sockets.SocketException)
         {
+            // Not up yet (connection refused / timeout) — exactly what this probe asks.
             return false;
         }
     }
@@ -774,7 +871,7 @@ public static class RelayMockTest
 /// </summary>
 public sealed class RelayMockServerFixture : IDisposable
 {
-    public RelayMockTest.Harness Harness { get; }
+    internal RelayMockTest.Harness Harness { get; }
     public bool Available { get; }
 
     public RelayMockServerFixture()
@@ -785,10 +882,14 @@ public sealed class RelayMockServerFixture : IDisposable
             Harness = RelayMockTest.GetHarnessNoReset();
             Available = true;
         }
+#pragma warning disable CA1031 // A fixture ctor must not throw: any failure to
+        // reach the mock has to become "Available = false" so every test in the
+        // class skips cleanly instead of the whole class erroring out.
         catch (Exception)
         {
             Harness = null!;
         }
+#pragma warning restore CA1031
     }
 
     /// <summary>
@@ -802,10 +903,14 @@ public sealed class RelayMockServerFixture : IDisposable
     /// constructors that call it. Mirrors the REST <c>MockServerFixture.Reset</c>
     /// no-op for scoped harnesses.
     /// </summary>
+#pragma warning disable CA1822 // deliberately an INSTANCE method: it mirrors
+    // MockServerFixture.Reset so both fixtures satisfy the same shape their test
+    // constructors call. Static would break every call site.
     public void Reset()
     {
         // intentionally empty — see remarks above.
     }
+#pragma warning restore CA1822
 
     public void Dispose() { /* shared mock lives for whole test run */ }
 }

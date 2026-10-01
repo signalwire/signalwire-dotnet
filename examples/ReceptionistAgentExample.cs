@@ -33,13 +33,19 @@ var departments = new List<Dictionary<string, object>>
     },
 };
 
+// Route/greeting/basic-auth are passed through the prefab's options dictionary.
 var agent = new ReceptionistAgent(
-    name:        "acme-receptionist",
-    route:       "/reception",
+    name: "acme-receptionist",
     departments: departments,
-    greeting:    "Hello, thank you for calling ACME Corporation. How may I direct your call today?",
-    voice:       "inworld.Mark"
+    options: new Dictionary<string, object>
+    {
+        ["route"] = "/reception",
+        ["greeting"] = "Hello, thank you for calling ACME Corporation. How may I direct your call today?",
+    }
 );
+
+// Pick the TTS voice for the agent's language.
+agent.AddLanguage("English", "en-US", "inworld.Mark");
 
 agent.PromptAddSection("Company Information",
     "ACME Corporation is a leading provider of innovative solutions. "
@@ -49,7 +55,7 @@ agent.PromptAddSection("Company Information",
 var deptText = "Available departments for transfer:\n";
 foreach (var dept in departments)
 {
-    deptText += $"- {dept["name"].ToString()!.ToUpper()[0]}{dept["name"].ToString()![1..]}: {dept["description"]}\n";
+    deptText += $"- {dept["name"].ToString()!.ToUpperInvariant()[0]}{dept["name"].ToString()![1..]}: {dept["description"]}\n";
 }
 agent.PromptAddSection("Transfer Options", deptText);
 

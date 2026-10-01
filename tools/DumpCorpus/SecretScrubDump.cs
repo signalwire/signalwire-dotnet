@@ -49,10 +49,10 @@ internal static class SecretScrubDump
         // the very line that carries a sentinel — turning a real leak into a false
         // leaked=false.
         var realErr = Console.Error;
-        var sink = new StringWriter();
-        var captured = TextWriter.Synchronized(sink);
+        using var sink = new StringWriter();
+        using var captured = TextWriter.Synchronized(sink);
 
-        var mock = new MockRelayServer();
+        using var mock = new MockRelayServer();
         var port = mock.Start();
 
         Console.SetError(captured);
@@ -65,6 +65,7 @@ internal static class SecretScrubDump
                 Host = $"127.0.0.1:{port}",
                 Scheme = "ws",
             });
+            await using var clientScope = client.ConfigureAwait(false);
 
             // Real connect: sends the signalwire.connect frame (project/token) and
             // starts the reader loop that pumps inbound frames into HandleMessage.
@@ -97,7 +98,7 @@ internal static class SecretScrubDump
         }
         finally
         {
-            captured.Flush();
+            await captured.FlushAsync().ConfigureAwait(false);
             Console.SetError(realErr);
             await mock.StopAsync().ConfigureAwait(false);
         }
@@ -132,7 +133,7 @@ internal static class SecretScrubDump
     //  An embedded RELAY WebSocket mock — answers signalwire.connect and can
     //  push a server-initiated signalwire.authorization.state event.
     // ==================================================================
-    private sealed class MockRelayServer
+    private sealed class MockRelayServer : IDisposable
     {
         private readonly HttpListener _listener = new();
         private WebSocket? _socket;
@@ -266,6 +267,16 @@ internal static class SecretScrubDump
                 WebSocketMessageType.Text,
                 endOfMessage: true,
                 CancellationToken.None).ConfigureAwait(false);
+        }
+
+        /// <summary>Release the listener/CTS the type owns. StopAsync() is the
+        /// ordered shutdown; this is the safety net that runs even if it was
+        /// skipped, so the HttpListener and CancellationTokenSource cannot leak.</summary>
+        public void Dispose()
+        {
+            try { _listener.Close(); } catch (ObjectDisposedException) { }
+            _socket?.Dispose();
+            _cts.Dispose();
         }
 
         public async Task StopAsync()

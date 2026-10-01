@@ -44,6 +44,14 @@ public class PhoneNumber
     [JsonPropertyName("e911_address_id")]
     public string? E911AddressId { get; set; }
 
+    /// <summary>Wire field <c>e911_status</c>.</summary>
+    [JsonPropertyName("e911_status")]
+    public string? E911Status { get; set; }
+
+    /// <summary>Wire field <c>cnam</c>.</summary>
+    [JsonPropertyName("cnam")]
+    public string? Cnam { get; set; }
+
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
     public string? CreatedAt { get; set; }

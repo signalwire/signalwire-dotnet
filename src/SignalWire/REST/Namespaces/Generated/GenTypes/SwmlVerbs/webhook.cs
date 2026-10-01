@@ -20,33 +20,37 @@ namespace SignalWire.Core.SwmlVerbsGenerated;
 /// </summary>
 public class Webhook
 {
-    /// <summary>Wire field <c>expressions</c>.</summary>
-    [JsonPropertyName("expressions")]
-    public List<SignalWire.Core.SwmlVerbsGenerated.Expression>? expressions { get; set; }
-
     /// <summary>Wire field <c>error_keys</c>.</summary>
     [JsonPropertyName("error_keys")]
     public Dictionary<string, object?>? error_keys { get; set; }
 
-    /// <summary>Wire field <c>url</c>.</summary>
-    [JsonPropertyName("url")]
-    public string? url { get; set; }
+    /// <summary>Wire field <c>expressions</c>.</summary>
+    [JsonPropertyName("expressions")]
+    public Dictionary<string, object?>? expressions { get; set; }
 
     /// <summary>Wire field <c>foreach</c>.</summary>
     [JsonPropertyName("foreach")]
-    public Dictionary<string, object?>? @foreach { get; set; }
+    public SignalWire.Core.SwmlVerbsGenerated.Foreach? @foreach { get; set; }
+
+    /// <summary>Wire field <c>form_param</c>.</summary>
+    [JsonPropertyName("form_param")]
+    public string? form_param { get; set; }
 
     /// <summary>Wire field <c>headers</c>.</summary>
     [JsonPropertyName("headers")]
     public Dictionary<string, object?>? headers { get; set; }
 
-    /// <summary>Wire field <c>method</c>.</summary>
-    [JsonPropertyName("method")]
-    public Dictionary<string, object?>? method { get; set; }
-
     /// <summary>Wire field <c>input_args_as_params</c>.</summary>
     [JsonPropertyName("input_args_as_params")]
-    public Dictionary<string, object?>? input_args_as_params { get; set; }
+    public bool? input_args_as_params { get; set; }
+
+    /// <summary>Wire field <c>method</c>.</summary>
+    [JsonPropertyName("method")]
+    public string? method { get; set; }
+
+    /// <summary>Wire field <c>output</c>.</summary>
+    [JsonPropertyName("output")]
+    public Dictionary<string, object?>? output { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
@@ -56,7 +60,7 @@ public class Webhook
     [JsonPropertyName("require_args")]
     public Dictionary<string, object?>? require_args { get; set; }
 
-    /// <summary>Wire field <c>output</c>.</summary>
-    [JsonPropertyName("output")]
-    public SignalWire.Core.SwmlVerbsGenerated.Output? output { get; set; }
+    /// <summary>Wire field <c>url</c>.</summary>
+    [JsonPropertyName("url")]
+    public string? url { get; set; }
 }

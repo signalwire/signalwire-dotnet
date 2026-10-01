@@ -36,10 +36,6 @@ public class Project
     [JsonPropertyName("subproject")]
     public bool? Subproject { get; set; }
 
-    /// <summary>Wire field <c>region_preference</c>.</summary>
-    [JsonPropertyName("region_preference")]
-    public string? RegionPreference { get; set; }
-
     /// <summary>Wire field <c>protect_recordings</c>.</summary>
     [JsonPropertyName("protect_recordings")]
     public bool? ProtectRecordings { get; set; }

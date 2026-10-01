@@ -66,9 +66,9 @@ public class PostPromptSwaigLogEntry
 
     /// <summary>Wire field <c>mcp_response</c>.</summary>
     [JsonPropertyName("mcp_response")]
-    public Dictionary<string, object?>? mcp_response { get; set; }
+    public string? mcp_response { get; set; }
 
     /// <summary>Wire field <c>mcp_error</c>.</summary>
     [JsonPropertyName("mcp_error")]
-    public string? mcp_error { get; set; }
+    public bool? mcp_error { get; set; }
 }

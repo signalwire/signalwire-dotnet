@@ -31,8 +31,4 @@ public class AssignedPhoneNumber
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
     public string? Number { get; set; }
-
-    /// <summary>Wire field <c>status_callback_url</c>.</summary>
-    [JsonPropertyName("status_callback_url")]
-    public string? StatusCallbackUrl { get; set; }
 }

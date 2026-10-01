@@ -31,4 +31,8 @@ public class CreateTokenRequest
     /// <summary>Wire field <c>subproject_id</c>.</summary>
     [JsonPropertyName("subproject_id")]
     public string? SubprojectId { get; set; }
+
+    /// <summary>Wire field <c>project_id</c>.</summary>
+    [JsonPropertyName("project_id")]
+    public string? ProjectId { get; set; }
 }

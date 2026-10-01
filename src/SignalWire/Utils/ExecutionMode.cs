@@ -10,13 +10,30 @@ using System;
 
 namespace SignalWire.Utils;
 
+/// <summary>
+/// Detects whether the SDK is running in a long-lived server process or in
+/// a serverless invocation environment, by inspecting well-known platform
+/// environment variables.
+///
+/// <para>Detection is env-var sniffing only — nothing is probed over the
+/// network and nothing is cached, so each call re-reads the environment.
+/// The probes are evaluated in a fixed order (CGI, AWS Lambda, Google Cloud
+/// Functions, Azure Functions) and the first match wins; when none match the
+/// mode is <c>"server"</c>.</para>
+///
+/// <para>Callers use this to decide between behaviours that assume process
+/// longevity (background tasks, in-memory session state, a listening socket)
+/// and behaviours safe for a per-invocation runtime.</para>
+///
+/// <para>Mirrors Python's <c>signalwire.core.logging_config.get_execution_mode</c>
+/// and <c>signalwire.utils.is_serverless_mode</c>.</para>
+/// </summary>
 public static class ExecutionMode
 {
     /// <summary>Returns the execution-mode string —
     /// ``"server"`` (default), ``"cgi"``, ``"lambda"``,
     /// ``"google_cloud_function"``, ``"azure_function"``.
-    /// (equivalent to Python's
-    /// ``signalwire.core.logging_config.get_execution_mode``.)</summary>
+    /// </summary>
     public static string GetExecutionMode()
     {
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GATEWAY_INTERFACE")))
@@ -40,7 +57,7 @@ public static class ExecutionMode
     }
 
     /// <summary>True when running in any serverless environment
-    /// (anything other than ``"server"``). (equivalent to Python's
-    /// ``signalwire.utils.is_serverless_mode``.)</summary>
+    /// (anything other than ``"server"``).
+    /// </summary>
     public static bool IsServerlessMode() => GetExecutionMode() != "server";
 }

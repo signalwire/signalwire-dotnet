@@ -35,6 +35,74 @@ public class PhoneNumbers : SignalWire.REST.CrudResource<SignalWire.REST.Namespa
     }
 
     /// <summary>
+    /// Generated from operation <c>assign_e911_address</c> (POST /phone_numbers/{id}/e911_address).
+    /// </summary>
+    /// <param name="e911AddressId">Wire field <c>e911_address_id</c>.</param>
+    /// <param name="extras">Forward-compat body fields merged onto the request.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse?> AssignE911AddressAsync(string id, string e911AddressId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["e911_address_id"] = e911AddressId;
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                _reqBody[kv.Key] = kv.Value;
+            }
+        }
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(Client.PostAsync(Path(id, "e911_address"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
+    /// Generated from operation <c>remove_e911_address</c> (DELETE /phone_numbers/{id}/e911_address).
+    /// </summary>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse?> RemoveE911AddressAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberResponse>(Client.DeleteAsync(Path(id, "e911_address"), requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
+    /// Generated from operation <c>retrieve_caller_id_name</c> (GET /phone_numbers/{id}/cnam).
+    /// </summary>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberCnamResponse?> GetCnamAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberCnamResponse>(Client.GetAsync(Path(id, "cnam"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
+    /// Generated from operation <c>request_caller_id_name</c> (POST /phone_numbers/{id}/cnam).
+    /// </summary>
+    /// <param name="name">Wire field <c>name</c>.</param>
+    /// <param name="extras">Forward-compat body fields merged onto the request.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberCnamResponse?> RequestCnamAsync(string id, string name, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["name"] = name;
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                _reqBody[kv.Key] = kv.Value;
+            }
+        }
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberCnamResponse>(Client.PostAsync(Path(id, "cnam"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
+    /// Generated from operation <c>clear_caller_id_name</c> (DELETE /phone_numbers/{id}/cnam).
+    /// </summary>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> ClearCnamAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        return Client.DeleteAsync(Path(id, "cnam"), requestOptions: requestOptions, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
     /// Declarative binding helper — sets <c>call_handler=relay_script</c> via UpdateAsync.
     /// </summary>
     /// <param name="url">Bound update field <c>call_relay_script_url</c>.</param>

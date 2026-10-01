@@ -20,27 +20,31 @@ namespace SignalWire.REST.Namespaces.Generated.Types.RelayRest;
 /// </summary>
 public class AvailablePhoneNumber
 {
-    /// <summary>Wire field <c>number</c>.</summary>
-    [JsonPropertyName("number")]
-    public string? Number { get; set; }
-
     /// <summary>Wire field <c>region</c>.</summary>
     [JsonPropertyName("region")]
     public string? Region { get; set; }
-
-    /// <summary>Wire field <c>city</c>.</summary>
-    [JsonPropertyName("city")]
-    public string? City { get; set; }
 
     /// <summary>Wire field <c>rate_center</c>.</summary>
     [JsonPropertyName("rate_center")]
     public string? RateCenter { get; set; }
 
-    /// <summary>Wire field <c>lata</c>.</summary>
-    [JsonPropertyName("lata")]
-    public string? Lata { get; set; }
-
     /// <summary>Wire field <c>capabilities</c>.</summary>
     [JsonPropertyName("capabilities")]
-    public SignalWire.REST.Namespaces.Generated.Types.RelayRest.PhoneNumberCapabilities? Capabilities { get; set; }
+    public List<object?>? Capabilities { get; set; }
+
+    /// <summary>Wire field <c>e164</c>.</summary>
+    [JsonPropertyName("e164")]
+    public string? E164 { get; set; }
+
+    /// <summary>Wire field <c>national_number_formatted</c>.</summary>
+    [JsonPropertyName("national_number_formatted")]
+    public string? NationalNumberFormatted { get; set; }
+
+    /// <summary>Wire field <c>international_number_formatted</c>.</summary>
+    [JsonPropertyName("international_number_formatted")]
+    public string? InternationalNumberFormatted { get; set; }
+
+    /// <summary>Wire field <c>country_code</c>.</summary>
+    [JsonPropertyName("country_code")]
+    public string? CountryCode { get; set; }
 }

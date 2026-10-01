@@ -130,11 +130,16 @@ When an agent runs, it exposes these endpoints:
 You can add custom routes to a service:
 
 ```csharp
-// AgentBase inherits routing from Service
-agent.RegisterRoutingCallback("/custom-endpoint", (requestData, headers) =>
+// AgentBase inherits routing from Service.
+// The callback comes FIRST; `path` is an optional second argument
+// (default "/sip"). It receives the parsed request body and headers,
+// and returns a route string to redirect to — or null to continue
+// normal processing on this service.
+agent.RegisterRoutingCallback((requestData, headers) =>
 {
-    return new { status = "ok", timestamp = DateTime.UtcNow };
-});
+    var sipUsername = SignalWire.SWML.Service.ExtractSipUsername(requestData);
+    return sipUsername == "support" ? "/support-agent" : null;
+}, path: "/custom-endpoint");
 ```
 
 ## Proxy Detection

@@ -22,9 +22,9 @@ public class PayParameters
 {
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
-    public string? Name { get; set; }
+    public object? Name { get; set; }
 
     /// <summary>Wire field <c>value</c>.</summary>
     [JsonPropertyName("value")]
-    public string? Value { get; set; }
+    public object? Value { get; set; }
 }

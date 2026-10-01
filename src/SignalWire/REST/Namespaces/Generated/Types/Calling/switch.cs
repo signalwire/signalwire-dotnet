@@ -22,5 +22,5 @@ public class Switch
 {
     /// <summary>Wire field <c>switch</c>.</summary>
     [JsonPropertyName("switch")]
-    public Dictionary<string, object?>? Switch_ { get; set; }
+    public object? Switch_ { get; set; }
 }

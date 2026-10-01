@@ -36,6 +36,10 @@ public class CallingDialParams
     [JsonPropertyName("region")]
     public string? Region { get; set; }
 
+    /// <summary>Wire field <c>send_digits</c>.</summary>
+    [JsonPropertyName("send_digits")]
+    public string? SendDigits { get; set; }
+
     /// <summary>Wire field <c>tag</c>.</summary>
     [JsonPropertyName("tag")]
     public string? Tag { get; set; }

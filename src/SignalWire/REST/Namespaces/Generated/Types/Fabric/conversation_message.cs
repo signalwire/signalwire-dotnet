@@ -20,10 +20,6 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class ConversationMessage
 {
-    /// <summary>Wire field <c>role</c>.</summary>
-    [JsonPropertyName("role")]
-    public string? Role { get; set; }
-
     /// <summary>Wire field <c>content</c>.</summary>
     [JsonPropertyName("content")]
     public string? Content { get; set; }
@@ -31,4 +27,16 @@ public class ConversationMessage
     /// <summary>Wire field <c>lang</c>.</summary>
     [JsonPropertyName("lang")]
     public string? Lang { get; set; }
+
+    /// <summary>Wire field <c>role</c>.</summary>
+    [JsonPropertyName("role")]
+    public string? Role { get; set; }
+
+    /// <summary>Wire field <c>tool_call_id</c>.</summary>
+    [JsonPropertyName("tool_call_id")]
+    public string? ToolCallId { get; set; }
+
+    /// <summary>Wire field <c>tool_calls</c>.</summary>
+    [JsonPropertyName("tool_calls")]
+    public List<object?>? ToolCalls { get; set; }
 }

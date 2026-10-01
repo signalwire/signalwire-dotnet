@@ -6,11 +6,14 @@
 using SignalWire.SWAIG;
 using System.Text.Json;
 
+// Cache the serializer options: JsonSerializerOptions is expensive to construct
+// and is designed to be created once and reused.
+var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+
 void PrintResult(string label, FunctionResult result)
 {
     Console.WriteLine($"=== {label} ===");
-    Console.WriteLine(JsonSerializer.Serialize(result.ToDict(),
-        new JsonSerializerOptions { WriteIndented = true }));
+    Console.WriteLine(JsonSerializer.Serialize(result.ToDict(), jsonOptions));
     Console.WriteLine();
 }
 
@@ -25,7 +28,7 @@ conference.JoinRoom("daily_standup_room");
 conference.UpdateGlobalData(new Dictionary<string, object>
 {
     ["meeting_active"] = true,
-    ["room_name"]      = "daily_standup_room",
+    ["room_name"] = "daily_standup_room",
 });
 PrintResult("Conference Room", conference);
 
@@ -39,7 +42,7 @@ var advancedSip = new FunctionResult("Transferring to technical support");
 advancedSip.SipRefer("sip:tech-specialist@pbx.company.com:5060");
 advancedSip.UpdateGlobalData(new Dictionary<string, object>
 {
-    ["transfer_completed"]  = true,
+    ["transfer_completed"] = true,
     ["transfer_destination"] = "tech-specialist@pbx.company.com",
 });
 PrintResult("Advanced SIP REFER", advancedSip);
@@ -53,8 +56,8 @@ var escalate = new FunctionResult("Escalating to manager");
 escalate.SipRefer("sip:manager@customer-service.company.com");
 escalate.UpdateGlobalData(new Dictionary<string, object>
 {
-    ["escalated"]          = true,
-    ["escalation_reason"]  = "customer_request",
+    ["escalated"] = true,
+    ["escalation_reason"] = "customer_request",
 });
 PrintResult("Escalate to Manager", escalate);
 
@@ -64,7 +67,7 @@ emergency.JoinRoom("emergency_response_room");
 emergency.SipRefer("sip:emergency-manager@company.com:5060");
 emergency.UpdateGlobalData(new Dictionary<string, object>
 {
-    ["emergency_active"]       = true,
+    ["emergency_active"] = true,
     ["response_team_notified"] = true,
 });
 PrintResult("Emergency Escalation", emergency);

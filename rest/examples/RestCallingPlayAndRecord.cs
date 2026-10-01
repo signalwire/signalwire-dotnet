@@ -8,13 +8,14 @@
 //   SIGNALWIRE_SPACE
 
 using SignalWire.REST;
+using System.Text.Json;
 
-var client = new RestClient(
+using var client = new RestClient(
     projectId: Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    token:     Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    token: Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    space:     Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
+    space: Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
@@ -52,10 +53,10 @@ await Safe("Play audio", () => client.Calling.PlayAsync(callId, new List<object?
 Console.WriteLine("\nStarting recording...");
 await Safe("Record", () => client.Calling.RecordAsync(callId, audio: new Dictionary<string, object?>
 {
-    ["beep"]        = true,
-    ["format"]      = "wav",
-    ["stereo"]      = true,
-    ["direction"]   = "both",
+    ["beep"] = true,
+    ["format"] = "wav",
+    ["stereo"] = true,
+    ["direction"] = "both",
     ["end_silence"] = 5,
 }));
 
@@ -72,12 +73,16 @@ Console.WriteLine("\nListing recordings...");
 await Safe("List recordings", async () =>
 {
     var recordings = await client.Recordings.ListAsync();
-    var data = recordings.GetValueOrDefault("data") as List<object> ?? new();
-    foreach (var item in data.Take(5))
+    // RecordingListResponse.Data is List<object?> — the spec leaves the
+    // recording item shape open, so items arrive as JsonElement rather than a
+    // generated DTO. Read them with the JsonElement API.
+    foreach (var item in (recordings?.Data ?? []).Take(5))
     {
-        if (item is Dictionary<string, object?> r)
+        if (item is JsonElement r && r.ValueKind == JsonValueKind.Object)
         {
-            Console.WriteLine($"    - {r.GetValueOrDefault("id")}: {r.GetValueOrDefault("duration")}s");
+            var id = r.TryGetProperty("id", out var idEl) ? idEl.ToString() : "?";
+            var dur = r.TryGetProperty("duration", out var durEl) ? durEl.ToString() : "?";
+            Console.WriteLine($"    - {id}: {dur}s");
         }
     }
 });

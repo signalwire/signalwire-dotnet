@@ -13,6 +13,8 @@ namespace SignalWire.Tests;
 // each test starts and stops the server so nothing hangs.
 public sealed class WebServiceTests : IDisposable
 {
+    // Hoisted so the literal is allocated once, not per call (CA1861).
+    private static readonly int[] Arr403404400Array = new[] { 403, 404, 400 };
     private const string User = "webuser";
     private const string Pass = "webpass";
 
@@ -36,6 +38,7 @@ public sealed class WebServiceTests : IDisposable
     public void Dispose()
     {
         _svc.Stop();
+        _svc.Dispose();
         if (Directory.Exists(_dir))
         {
             Directory.Delete(_dir, recursive: true);
@@ -51,7 +54,11 @@ public sealed class WebServiceTests : IDisposable
         // servers + blocking-sync clients run concurrently under the assembly's
         // unbounded xUnit parallelism (MaxParallelThreads=-1). A tight 5s deadline
         // here was an intermittent TaskCanceledException on net8 under that load.
+#pragma warning disable CA5399, CA5400 // Loopback test client against a mock
+        // with a self-signed cert: there is no revocation endpoint to check, and
+        // enabling the check makes the test depend on outbound network access.
         using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+#pragma warning restore CA5399, CA5400
         using var req = new HttpRequestMessage(HttpMethod.Get, $"http://127.0.0.1:{_port}{path}");
         if (auth)
         {
@@ -109,7 +116,7 @@ public sealed class WebServiceTests : IDisposable
         var res = Get("/static/../../etc/passwd");
         var code = (int)res.StatusCode;
 
-        Assert.Contains(code, new[] { 403, 404, 400 });
+        Assert.Contains(code, Arr403404400Array);
         Assert.DoesNotContain("root:", Body(res));
     }
 
@@ -126,7 +133,11 @@ public sealed class WebServiceTests : IDisposable
     {
         using var handler = new HttpClientHandler { AllowAutoRedirect = false };
         // 30s CI-safe timeout (see Get()); tight deadlines flake under parallelism.
+#pragma warning disable CA5399 // loopback client against an in-process server; there
+        // is no revocation endpoint to check and enabling it would make the test need
+        // outbound network access.
         using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+#pragma warning restore CA5399
         using var req = new HttpRequestMessage(
             HttpMethod.Get, $"http://127.0.0.1:{_port}/static/hello.txt");
         var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{User}:wrongpass"));
@@ -160,7 +171,7 @@ public sealed class WebServiceTests : IDisposable
     [Fact]
     public void AddDirectory_MissingDirectoryThrows()
     {
-        var svc = new WebService();
+        using var svc = new WebService();
         Assert.Throws<ArgumentException>(() =>
             svc.AddDirectory("/x", Path.Combine(_dir, "nope-does-not-exist")));
     }

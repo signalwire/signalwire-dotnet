@@ -42,6 +42,7 @@ public class FabricTokens
     /// Generated from operation <c>create_subscriber_token</c> (POST /subscribers/tokens).
     /// </summary>
     /// <param name="reference">Wire field <c>reference</c>.</param>
+    /// <param name="ch">Wire field <c>ch</c>.</param>
     /// <param name="expireAt">Wire field <c>expire_at</c>.</param>
     /// <param name="applicationId">Wire field <c>application_id</c>.</param>
     /// <param name="password">Wire field <c>password</c>.</param>
@@ -53,12 +54,18 @@ public class FabricTokens
     /// <param name="country">Wire field <c>country</c>.</param>
     /// <param name="region">Wire field <c>region</c>.</param>
     /// <param name="companyName">Wire field <c>company_name</c>.</param>
+    /// <param name="scope">Wire field <c>scope</c>.</param>
+    /// <param name="fingerprint">Wire field <c>fingerprint</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberTokenResponse?> CreateSubscriberTokenAsync(string reference, int? expireAt = null, string? applicationId = null, string? password = null, string? firstName = null, string? lastName = null, string? displayName = null, string? jobTitle = null, string? timeZone = null, string? country = null, string? region = null, string? companyName = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberTokenResponse?> CreateSubscriberTokenAsync(string reference, string? ch = null, int? expireAt = null, string? applicationId = null, string? password = null, string? firstName = null, string? lastName = null, string? displayName = null, string? jobTitle = null, string? timeZone = null, string? country = null, string? region = null, string? companyName = null, string? scope = null, string? fingerprint = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["reference"] = reference;
+        if (ch is not null)
+        {
+            _reqBody["ch"] = ch;
+        }
         if (expireAt is not null)
         {
             _reqBody["expire_at"] = expireAt;
@@ -103,6 +110,14 @@ public class FabricTokens
         {
             _reqBody["company_name"] = companyName;
         }
+        if (scope is not null)
+        {
+            _reqBody["scope"] = scope;
+        }
+        if (fingerprint is not null)
+        {
+            _reqBody["fingerprint"] = fingerprint;
+        }
         if (extras is not null)
         {
             foreach (var kv in extras)
@@ -134,44 +149,72 @@ public class FabricTokens
     }
 
     /// <summary>
-    /// Generated from operation <c>create_subscriber_invite_token</c> (POST /subscriber/invites).
-    /// </summary>
-    /// <param name="addressId">Wire field <c>address_id</c>.</param>
-    /// <param name="expiresAt">Wire field <c>expires_at</c>.</param>
-    /// <param name="extras">Forward-compat body fields merged onto the request.</param>
-    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberInviteTokenCreateResponse?> CreateInviteTokenAsync(string addressId, int? expiresAt = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
-    {
-        var _reqBody = new Dictionary<string, object?>();
-        _reqBody["address_id"] = addressId;
-        if (expiresAt is not null)
-        {
-            _reqBody["expires_at"] = expiresAt;
-        }
-        if (extras is not null)
-        {
-            foreach (var kv in extras)
-            {
-                _reqBody[kv.Key] = kv.Value;
-            }
-        }
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberInviteTokenCreateResponse>(Client.PostAsync("/api/fabric/subscriber/invites", _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
-    }
-
-    /// <summary>
     /// Generated from operation <c>create_subscriber_guest_token</c> (POST /guests/tokens).
     /// </summary>
     /// <param name="allowedAddresses">Wire field <c>allowed_addresses</c>.</param>
     /// <param name="expireAt">Wire field <c>expire_at</c>.</param>
+    /// <param name="ch">Wire field <c>ch</c>.</param>
+    /// <param name="region">Wire field <c>region</c>.</param>
+    /// <param name="email">Wire field <c>email</c>.</param>
+    /// <param name="firstName">Wire field <c>first_name</c>.</param>
+    /// <param name="lastName">Wire field <c>last_name</c>.</param>
+    /// <param name="displayName">Wire field <c>display_name</c>.</param>
+    /// <param name="jobTitle">Wire field <c>job_title</c>.</param>
+    /// <param name="timeZone">Wire field <c>time_zone</c>.</param>
+    /// <param name="country">Wire field <c>country</c>.</param>
+    /// <param name="companyName">Wire field <c>company_name</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberGuestTokenCreateResponse?> CreateGuestTokenAsync(List<object?> allowedAddresses, int? expireAt = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.SubscriberGuestTokenCreateResponse?> CreateGuestTokenAsync(List<object?>? allowedAddresses = null, int? expireAt = null, string? ch = null, string? region = null, string? email = null, string? firstName = null, string? lastName = null, string? displayName = null, string? jobTitle = null, string? timeZone = null, string? country = null, string? companyName = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
-        _reqBody["allowed_addresses"] = allowedAddresses;
+        if (allowedAddresses is not null)
+        {
+            _reqBody["allowed_addresses"] = allowedAddresses;
+        }
         if (expireAt is not null)
         {
             _reqBody["expire_at"] = expireAt;
+        }
+        if (ch is not null)
+        {
+            _reqBody["ch"] = ch;
+        }
+        if (region is not null)
+        {
+            _reqBody["region"] = region;
+        }
+        if (email is not null)
+        {
+            _reqBody["email"] = email;
+        }
+        if (firstName is not null)
+        {
+            _reqBody["first_name"] = firstName;
+        }
+        if (lastName is not null)
+        {
+            _reqBody["last_name"] = lastName;
+        }
+        if (displayName is not null)
+        {
+            _reqBody["display_name"] = displayName;
+        }
+        if (jobTitle is not null)
+        {
+            _reqBody["job_title"] = jobTitle;
+        }
+        if (timeZone is not null)
+        {
+            _reqBody["time_zone"] = timeZone;
+        }
+        if (country is not null)
+        {
+            _reqBody["country"] = country;
+        }
+        if (companyName is not null)
+        {
+            _reqBody["company_name"] = companyName;
         }
         if (extras is not null)
         {

@@ -7,7 +7,7 @@ using SignalWire.Agent;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "simple-static",
+    Name = "simple-static",
     Route = "/static",
 });
 
@@ -25,7 +25,7 @@ agent.PromptAddSection("Instructions", "", new List<string>
 
 agent.SetParams(new Dictionary<string, object>
 {
-    ["ai_model"]     = "gpt-4.1-nano",
+    ["ai_model"] = "gpt-4.1-nano",
     ["wait_for_user"] = false,
 });
 

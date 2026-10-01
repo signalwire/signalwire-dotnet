@@ -114,15 +114,13 @@ public sealed class SkillRegistry
     /// <summary>Discover and return all available skills.
     /// Skills resolve on-demand, so there is nothing to eagerly register;
     /// this returns the discoverable inventory (mirrors <see cref="ListSkills"/>).
-    /// (equivalent to Python's ``SkillRegistry.discover_skills`` now returns
-    /// ``list_skills()`` — it was a no-op until the reference stub was fixed.)</summary>
+    /// </summary>
     public IReadOnlyList<string> DiscoverSkills()
     {
         return ListSkills();
     }
 
-    /// <summary>The skill_registry logger.
-    /// (equivalent to Python's ``SkillRegistry.logger`` instance attribute.)</summary>
+    /// <summary>The skill_registry logger.</summary>
     public Logger Logger { get; } = Logger.GetLogger("skill_registry");
 
     private readonly List<string> _externalPaths = new();
@@ -134,7 +132,7 @@ public sealed class SkillRegistry
     /// <summary>Add a directory to the external skill-source path list.
     /// .NET ports loading skills from disk SHOULD consult this list.
     /// Throws when the path does not exist or is not a directory.
-    /// (equivalent to Python's ``SkillRegistry.add_skill_directory(path)``.)</summary>
+    /// </summary>
     public void AddSkillDirectory(string path)
     {
         if (string.IsNullOrEmpty(path))

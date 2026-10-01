@@ -20,7 +20,15 @@ namespace SignalWire.Core.SwaigActionsGenerated;
 /// </summary>
 public class HoldAction
 {
+    /// <summary>Wire field <c>step</c>.</summary>
+    [JsonPropertyName("step")]
+    public string? step { get; set; }
+
     /// <summary>Wire field <c>timeout</c>.</summary>
     [JsonPropertyName("timeout")]
-    public long? Timeout { get; set; }
+    public double? timeout { get; set; }
+
+    /// <summary>Wire field <c>timeout_step</c>.</summary>
+    [JsonPropertyName("timeout_step")]
+    public string? timeout_step { get; set; }
 }

@@ -24,7 +24,6 @@ namespace SignalWire.Tests.RelayMock;
 public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
 {
     private readonly RelayMockServerFixture _fixture;
-    private static readonly System.Net.Http.HttpClient HttpClient = new();
 
     public ActionsMockTest(RelayMockServerFixture fixture)
     {
@@ -35,7 +34,7 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
     private bool Skipped()
     {
         if (_fixture.Available) return false;
-        Console.WriteLine("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
+        MockServerFixture.SkipNote("[SKIP] mock_relay unreachable on ws://127.0.0.1:8785");
         return true;
     }
 
@@ -43,18 +42,18 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
     // Helpers
     // ------------------------------------------------------------------
 
-    private async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId = "act-call-1")
+    private static async Task<RelayMockTest.Bound> AnsweredInboundCall(string callId = "act-call-1")
     {
-        var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
-        await bound.Client.ConnectAsync();
-        await bound.Client.ReceiveAsync(new[] { "default" });
+        var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
+        await bound.Client.ConnectAsync().ConfigureAwait(false);
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts).ConfigureAwait(false);
 
         Call? captured = null;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        bound.Client.OnCall(async (call, evt) =>
+        bound.Client.OnCall(async call =>
         {
             captured = call;
-            await call.AnswerAsync();
+            await call.AnswerAsync().ConfigureAwait(false);
             done.TrySetResult();
         });
 
@@ -63,14 +62,14 @@ public class ActionsMockTest : IClassFixture<RelayMockServerFixture>
             CallId = callId,
             AutoStates = new() { "created" },
         });
-        await done.Task.WaitAsync(RelayMockTest.EventTimeout);
+        await done.Task.WaitAsync(RelayMockTest.EventTimeout).ConfigureAwait(false);
 
         // Mark as answered so subsequent actions don't think the call ended.
         captured!.State = "answered";
         return bound;
     }
 
-    private void ArmMethod(RelayMockTest.Bound bound, string method, IEnumerable<Dictionary<string, object?>> events)
+    private static void ArmMethod(RelayMockTest.Bound bound, string method, IEnumerable<Dictionary<string, object?>> events)
     {
         bound.Harness.Scenarios.ArmMethod(method, events);
     }

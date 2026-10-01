@@ -38,7 +38,13 @@ public sealed class DatasphereServerlessSkill : SkillBase
             ? nr as string ?? "No results found in the knowledge base for the given query."
             : "No results found in the knowledge base for the given query.";
 
-        var bodyPayload = new Dictionary<string, object>
+        // The search payload rides on the webhook's ``params`` key. The engine
+        // reads ONLY ``params`` and ``headers`` off a data_map webhook object
+        // (mod_openai/actions.c:735-739 — there is no read of ``body`` anywhere),
+        // so a payload emitted under ``body`` is silently dropped and the search
+        // runs with NO parameters. Mirrors the reference's ``.params(...)``
+        // (signalwire/skills/datasphere_serverless/skill.py:211).
+        var webhookParams = new Dictionary<string, object>
         {
             ["document_id"] = documentId,
             ["query_string"] = "${args.query}",
@@ -46,8 +52,8 @@ public sealed class DatasphereServerlessSkill : SkillBase
             ["distance"] = distance,
         };
 
-        if (Params.TryGetValue("tags", out var tags)) bodyPayload["tags"] = tags;
-        if (Params.TryGetValue("language", out var lang)) bodyPayload["language"] = lang;
+        if (Params.TryGetValue("tags", out var tags)) webhookParams["tags"] = tags;
+        if (Params.TryGetValue("language", out var lang)) webhookParams["language"] = lang;
 
         var funcDef = new Dictionary<string, object>
         {
@@ -79,12 +85,17 @@ public sealed class DatasphereServerlessSkill : SkillBase
                             ["Content-Type"] = "application/json",
                             ["Authorization"] = "Basic " + authString,
                         },
-                        ["body"] = bodyPayload,
+                        ["params"] = webhookParams,
+                        // The foreach per-item key is ``append`` — ``${formatted_results}``
+                        // in the output is built only from ``append``, so a ``template``
+                        // key leaves the response empty. ``max`` bounds the item count.
                         ["foreach"] = new Dictionary<string, object>
                         {
                             ["input_key"] = "chunks",
                             ["output_key"] = "formatted_results",
-                            ["template"] = "${this.document_id}: ${this.text}",
+                            ["max"] = count,
+                            ["append"] = "=== RESULT ===\n${this.text}\n"
+                                + new string('=', 50) + "\n\n",
                         },
                         ["output"] = new Dictionary<string, object>
                         {

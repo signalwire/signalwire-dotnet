@@ -1,7 +1,7 @@
 namespace SignalWire.SWAIG;
 
 /// <summary>
-/// Media codec for <see cref="FunctionResult.Tap(string, string, TapDirection, Codec, int, string?)"/>, as a typed,
+/// Media codec for <see cref="FunctionResult.Tap(string, string?, TapDirection, Codec, int, string?)"/>, as a typed,
 /// compile-time-checked closed set.
 /// </summary>
 /// <remarks>
@@ -17,7 +17,7 @@ namespace SignalWire.SWAIG;
 /// codec superset (<c>{PCMU, PCMA, OPUS, G729, G722, VP8, H264}</c>, optionally
 /// comma-joined): only <c>PCMU</c>/<c>PCMA</c> are valid here, so this type must
 /// not be reused for those RELAY params (which stay strings).
-/// <see cref="FunctionResult.Tap(string, string, TapDirection, Codec, int, string?)"/>
+/// <see cref="FunctionResult.Tap(string, string?, TapDirection, Codec, int, string?)"/>
 /// accepts this enum OR a string: the enum gives editor autocompletion and turns
 /// a typo into a compile error, while the string overload also accepts
 /// the plain wire string (which is all the Python API takes).

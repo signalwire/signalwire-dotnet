@@ -20,10 +20,6 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class SwmlScriptUpdateRequest
 {
-    /// <summary>Wire field <c>display_name</c>.</summary>
-    [JsonPropertyName("display_name")]
-    public string? DisplayName { get; set; }
-
     /// <summary>Wire field <c>contents</c>.</summary>
     [JsonPropertyName("contents")]
     public string? Contents { get; set; }
@@ -31,4 +27,12 @@ public class SwmlScriptUpdateRequest
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
     public string? StatusCallbackUrl { get; set; }
+
+    /// <summary>Wire field <c>name</c>.</summary>
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    /// <summary>Wire field <c>script_type</c>.</summary>
+    [JsonPropertyName("script_type")]
+    public string? ScriptType { get; set; }
 }

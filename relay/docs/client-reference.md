@@ -125,7 +125,7 @@ var call = await client.DialAsync(new Dictionary<string, object?>
 Register a handler for inbound calls.
 
 ```csharp
-client.OnCall(async (call, evt) =>
+client.OnCall(async call =>
 {
     await call.AnswerAsync();
     // handle the call
@@ -159,10 +159,11 @@ var message = await client.SendMessageAsync(new Dictionary<string, object?>
 ### OnMessage()
 
 Register a handler for inbound messages. The callback receives the
-`Message` object and the `Event`.
+`Message` object. The handler itself is returned, mirroring Python's
+decorator form, so the caller can keep the reference.
 
 ```csharp
-client.OnMessage(async (message, evt) =>
+client.OnMessage(async message =>
 {
     Console.WriteLine($"Message: {message.Body}");
 });

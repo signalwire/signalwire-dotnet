@@ -22,5 +22,5 @@ public class SendSMS
 {
     /// <summary>Wire field <c>send_sms</c>.</summary>
     [JsonPropertyName("send_sms")]
-    public object? SendSms { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.SMSWithBody? SendSms { get; set; }
 }

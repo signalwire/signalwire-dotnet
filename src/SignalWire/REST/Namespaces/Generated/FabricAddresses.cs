@@ -39,18 +39,18 @@ public class FabricAddresses
     }
 
     /// <summary>List resources (GET BasePath).</summary>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddressesResponse?> ListAsync(
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddressListResponse?> ListAsync(
         Dictionary<string, string>? queryParams = null,
         CancellationToken cancellationToken = default)
     {
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddressesResponse>(Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken));
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddressListResponse>(Client.GetAsync(BasePath, queryParams, cancellationToken: cancellationToken));
     }
 
     /// <summary>Retrieve a single resource by id (GET BasePath/{id}).</summary>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddress?> GetAsync(
+    public Task<Dictionary<string, object?>> GetAsync(
         string id, CancellationToken cancellationToken = default)
     {
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.FabricAddress>(Client.GetAsync(Path(id), cancellationToken: cancellationToken));
+        return Client.GetAsync(Path(id), cancellationToken: cancellationToken);
     }
 
     /// <summary>Iterate every item across all pages of this resource's
@@ -63,5 +63,14 @@ public class FabricAddresses
         RequestOptions? requestOptions = null)
     {
         return new SignalWire.REST.PaginatedIterator(Client, BasePath, queryParams, dataKey: "data", requestOptions: requestOptions);
+    }
+
+    /// <summary>
+    /// Generated from operation <c>delete_fabric_address</c> (DELETE /addresses/{id}).
+    /// </summary>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<Dictionary<string, object?>> DeleteAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        return Client.DeleteAsync(Path(id), requestOptions: requestOptions, cancellationToken: cancellationToken);
     }
 }

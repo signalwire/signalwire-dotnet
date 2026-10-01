@@ -51,11 +51,14 @@ Microsoft.AspNetCore.Http.HttpResponse#WriteAsync: Microsoft.AspNetCore.Http.Htt
 System.String#Replace: System.Text.RegularExpressions.Regex.Replace / System.String.Replace
 System.Environment#SetEnvironmentVariable: System.Environment.SetEnvironmentVariable
 System.String#ToUpperInvariant: System.String.ToUpperInvariant
+System.String#ToLowerInvariant: System.String.ToLowerInvariant — the culture-invariant twin of the already-ledgered ToLower/ToUpper/ToUpperInvariant; every hit is `<expr>.ToString().ToLowerInvariant()` on a BCL string (.NET stdlib)
 System.String#TrimEnd: System.String.TrimEnd
 System.Uri#TryCreate: System.Uri.TryCreate
 System.Text.Json.JsonElement#EnumerateObject: System.Text.Json.JsonElement.EnumerateObject
 System.Uri#EscapeDataString: System.Uri.EscapeDataString
 System.Threading.Tasks.Task#GetAwaiter: System.Threading.Tasks.Task<T>.GetAwaiter
+System.Threading.Tasks.Task#ConfigureAwait: System.Threading.Tasks.Task.ConfigureAwait — the BCL context-capture opt-out the SDK and its examples call on every await (.NET stdlib)
+System.IDisposable#Dispose: System.IDisposable.Dispose — the BCL disposal method (.NET stdlib)
 System.Runtime.CompilerServices.TaskAwaiter#GetResult: System.Runtime.CompilerServices.TaskAwaiter.GetResult
 System.Text.Json.JsonElement#TryGetProperty: System.Text.Json.JsonElement.TryGetProperty
 System.Net.Http.Headers.HttpHeaderValueCollection#ParseAdd: System.Net.Http.Headers.HttpHeaderValueCollection<T>.ParseAdd

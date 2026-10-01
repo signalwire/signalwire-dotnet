@@ -11,7 +11,7 @@ using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "session-state-demo",
+    Name = "session-state-demo",
     Route = "/session-state",
 });
 
@@ -30,8 +30,8 @@ agent.PromptAddSection(
 // Initial global data for every session
 agent.SetGlobalData(new Dictionary<string, object>
 {
-    ["company"]     = "Acme Corp",
-    ["department"]  = "customer_service",
+    ["company"] = "Acme Corp",
+    ["department"] = "customer_service",
     ["call_reason"] = "unknown",
 });
 
@@ -56,13 +56,13 @@ agent.OnSummary((summary, raw, headers) =>
 
 // --- Tool: check_account ---
 agent.DefineTool(
-    name:        "check_account",
+    name: "check_account",
     description: "Look up a customer account by name or ID",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["identifier"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Customer name or account ID",
         },
     },
@@ -76,8 +76,8 @@ agent.DefineTool(
         result.UpdateGlobalData(new Dictionary<string, object>
         {
             ["customer_name"] = id,
-            ["account_tier"]  = "premium",
-            ["call_reason"]   = "account_inquiry",
+            ["account_tier"] = "premium",
+            ["call_reason"] = "account_inquiry",
         });
         return result;
     }
@@ -85,18 +85,18 @@ agent.DefineTool(
 
 // --- Tool: update_preferences ---
 agent.DefineTool(
-    name:        "update_preferences",
+    name: "update_preferences",
     description: "Update customer communication preferences",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["email_notifications"] = new Dictionary<string, object>
         {
-            ["type"]        = "boolean",
+            ["type"] = "boolean",
             ["description"] = "Enable email notifications",
         },
         ["sms_notifications"] = new Dictionary<string, object>
         {
-            ["type"]        = "boolean",
+            ["type"] = "boolean",
             ["description"] = "Enable SMS notifications",
         },
     },
@@ -104,7 +104,7 @@ agent.DefineTool(
     {
         var prefs = new List<string>();
         if (args.GetValueOrDefault("email_notifications") is true) prefs.Add("email");
-        if (args.GetValueOrDefault("sms_notifications") is true)   prefs.Add("SMS");
+        if (args.GetValueOrDefault("sms_notifications") is true) prefs.Add("SMS");
         var prefStr = prefs.Count > 0 ? string.Join(" and ", prefs) : "none";
         return new FunctionResult(
             $"Preferences updated: {prefStr} notifications enabled."
@@ -114,9 +114,9 @@ agent.DefineTool(
 
 // --- Tool: end_call ---
 agent.DefineTool(
-    name:        "end_call",
+    name: "end_call",
     description: "End the call after saying goodbye",
-    parameters:  new Dictionary<string, object>(),
+    parameters: new Dictionary<string, object>(),
     handler: (args, raw) =>
     {
         var result = new FunctionResult("Thank you for calling. Goodbye!");

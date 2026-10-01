@@ -43,13 +43,13 @@ internal static class WaitLivenessDump
         {
             ["live_play_wait"] = await RunCase(
                 new PlayAction("ctl-live-1", "call-live-1", "node-live-1", new object()),
-                "calling.call.play"),
+                "calling.call.play").ConfigureAwait(false),
             ["live_record_wait"] = await RunCase(
                 new RecordAction("ctl-live-1", "call-live-1", "node-live-1", new object()),
-                "calling.call.record"),
+                "calling.call.record").ConfigureAwait(false),
         };
 
-        Console.WriteLine(JsonSerializer.Serialize(results));
+        await Console.Out.WriteLineAsync(JsonSerializer.Serialize(results)).ConfigureAwait(false);
         return 0;
     }
 
@@ -81,7 +81,7 @@ internal static class WaitLivenessDump
 
         // WaitAsync with the shared deadline as the timeout — a wait that never
         // returns hits it and classifies as timed_out (a hung wait), not a hang.
-        var result = await action.WaitAsync((int)Math.Ceiling(DeadlineS)).ConfigureAwait(false);
+        var result = await action.WaitAsync(DeadlineS).ConfigureAwait(false);
         var returnedMs = sw.Elapsed.TotalMilliseconds;
 
         // A null result from WaitAsync means the timeout fired first → hung wait.

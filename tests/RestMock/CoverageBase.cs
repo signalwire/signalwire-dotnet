@@ -34,7 +34,11 @@ namespace SignalWire.Tests.RestMock;
 /// this one collection makes xUnit run them sequentially, so the shared journal
 /// deterministically accumulates every route's success+error traffic.</summary>
 [CollectionDefinition("RestCoverage", DisableParallelization = true)]
+// CA1711: "Collection" is xUnit's concept name for a test collection, not a
+// System.Collections type; renaming breaks the [Collection(...)] wiring.
+#pragma warning disable CA1711
 public sealed class RestCoverageCollection { }
+#pragma warning restore CA1711
 
 [Collection("RestCoverage")]
 [Trait("Category", "RestCoverage")]
@@ -50,10 +54,14 @@ public abstract class CoverageBase : IClassFixture<MockServerFixture>
 
     protected SignalWire.REST.HttpClient NewHttp() => Fixture.NewHttp();
 
+    /// <summary>A Personal Access Token transport bound to the mock (the Space
+    /// Administration API's credential).</summary>
+    protected SignalWire.REST.HttpClient NewPatHttp() => Fixture.NewPatHttp();
+
     /// <summary>Assert the last journal entry matched <paramref name="endpointId"/>
     /// with the expected HTTP method + path. Returns the entry for further
     /// per-test assertions.</summary>
-    protected MockTest.JournalEntry AssertRoute(string method, string path, string endpointId)
+    private protected MockTest.JournalEntry AssertRoute(string method, string path, string endpointId)
     {
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal(method, j.Method);
@@ -69,20 +77,31 @@ public abstract class CoverageBase : IClassFixture<MockServerFixture>
     /// status so the caller asserts it in its own body (the no-cheat auditor is
     /// intra-function, so the rich journal checks stay DRY here while each test
     /// keeps a real in-body assertion).</summary>
-    protected async Task<int> AssertErrorAsync(
+    protected Task<int> AssertErrorAsync(
         string endpointId, int status, Func<Task> call)
+        => AssertErrorOnAsync(Fixture.Harness, endpointId, status, call);
+
+    /// <summary><see cref="AssertErrorAsync"/> for a route authenticated with
+    /// the Personal Access Token (the Space Administration API): the scenario is
+    /// armed, and the journal read, under the PAT scope.</summary>
+    protected Task<int> AssertPatErrorAsync(
+        string endpointId, int status, Func<Task> call)
+        => AssertErrorOnAsync(Fixture.PatHarness, endpointId, status, call);
+
+    private static async Task<int> AssertErrorOnAsync(
+        MockTest.Harness harness, string endpointId, int status, Func<Task> call)
     {
-        Fixture.Harness.Scenarios.Set(endpointId, status,
+        harness.Scenarios.Set(endpointId, status,
             new Dictionary<string, object?> { ["error"] = "boom" });
-        var err = await Assert.ThrowsAsync<SignalWireRestError>(async () => await call());
+        var err = await Assert.ThrowsAsync<SignalWireRestError>(async () => await call().ConfigureAwait(false)).ConfigureAwait(false);
         Assert.Equal(status, err.StatusCode);
-        var j = Fixture.Harness.Journal.Last();
+        var j = harness.Journal.Last();
         Assert.Equal(endpointId, j.MatchedRoute);
         Assert.Equal(status, j.ResponseStatus);
         return err.StatusCode;
     }
 
-    protected static string? StringField(MockTest.JournalEntry j, string key)
+    private protected static string? StringField(MockTest.JournalEntry j, string key)
     {
         var map = j.BodyMap();
         if (map is null || !map.TryGetValue(key, out var v)) return null;
@@ -90,5 +109,8 @@ public abstract class CoverageBase : IClassFixture<MockServerFixture>
     }
 
     protected static bool HasKey(Dictionary<string, object?> body, params string[] keys)
-        => keys.Any(body.ContainsKey);
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        return keys.Any(body.ContainsKey);
+    }
 }

@@ -30,11 +30,11 @@ public class CallFlow
 
     /// <summary>Wire field <c>flow_data</c>.</summary>
     [JsonPropertyName("flow_data")]
-    public string? FlowData { get; set; }
+    public Dictionary<string, object?>? FlowData { get; set; }
 
     /// <summary>Wire field <c>relayml</c>.</summary>
     [JsonPropertyName("relayml")]
-    public string? Relayml { get; set; }
+    public Dictionary<string, object?>? Relayml { get; set; }
 
     /// <summary>Wire field <c>document_version</c>.</summary>
     [JsonPropertyName("document_version")]

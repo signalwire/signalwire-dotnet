@@ -20,17 +20,9 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class ConferenceRoomUpdateRequest
 {
-    /// <summary>Wire field <c>name</c>.</summary>
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
-
     /// <summary>Wire field <c>display_name</c>.</summary>
     [JsonPropertyName("display_name")]
     public string? DisplayName { get; set; }
-
-    /// <summary>Wire field <c>description</c>.</summary>
-    [JsonPropertyName("description")]
-    public string? Description { get; set; }
 
     /// <summary>Wire field <c>join_from</c>.</summary>
     [JsonPropertyName("join_from")]
@@ -75,16 +67,4 @@ public class ConferenceRoomUpdateRequest
     /// <summary>Wire field <c>sync_audio_video</c>.</summary>
     [JsonPropertyName("sync_audio_video")]
     public bool? SyncAudioVideo { get; set; }
-
-    /// <summary>Wire field <c>tone_on_entry_and_exit</c>.</summary>
-    [JsonPropertyName("tone_on_entry_and_exit")]
-    public bool? ToneOnEntryAndExit { get; set; }
-
-    /// <summary>Wire field <c>room_join_video_off</c>.</summary>
-    [JsonPropertyName("room_join_video_off")]
-    public bool? RoomJoinVideoOff { get; set; }
-
-    /// <summary>Wire field <c>user_join_video_off</c>.</summary>
-    [JsonPropertyName("user_join_video_off")]
-    public bool? UserJoinVideoOff { get; set; }
 }

@@ -20,35 +20,55 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class AIPromptText
 {
-    /// <summary>Wire field <c>max_tokens</c>.</summary>
-    [JsonPropertyName("max_tokens")]
-    public long? MaxTokens { get; set; }
-
-    /// <summary>Wire field <c>temperature</c>.</summary>
-    [JsonPropertyName("temperature")]
-    public object? Temperature { get; set; }
-
-    /// <summary>Wire field <c>top_p</c>.</summary>
-    [JsonPropertyName("top_p")]
-    public object? TopP { get; set; }
-
-    /// <summary>Wire field <c>confidence</c>.</summary>
-    [JsonPropertyName("confidence")]
-    public object? Confidence { get; set; }
-
-    /// <summary>Wire field <c>presence_penalty</c>.</summary>
-    [JsonPropertyName("presence_penalty")]
-    public object? PresencePenalty { get; set; }
+    /// <summary>Wire field <c>contexts</c>.</summary>
+    [JsonPropertyName("contexts")]
+    public Dictionary<string, object?>? Contexts { get; set; }
 
     /// <summary>Wire field <c>frequency_penalty</c>.</summary>
     [JsonPropertyName("frequency_penalty")]
     public object? FrequencyPenalty { get; set; }
 
+    /// <summary>Wire field <c>max_completion_tokens</c>.</summary>
+    [JsonPropertyName("max_completion_tokens")]
+    public double? MaxCompletionTokens { get; set; }
+
+    /// <summary>Wire field <c>max_tokens</c>.</summary>
+    [JsonPropertyName("max_tokens")]
+    public double? MaxTokens { get; set; }
+
+    /// <summary>Wire field <c>model</c>.</summary>
+    [JsonPropertyName("model")]
+    public string? Model { get; set; }
+
+    /// <summary>Wire field <c>pom</c>.</summary>
+    [JsonPropertyName("pom")]
+    public List<object?>? Pom { get; set; }
+
+    /// <summary>Wire field <c>presence_penalty</c>.</summary>
+    [JsonPropertyName("presence_penalty")]
+    public object? PresencePenalty { get; set; }
+
+    /// <summary>Wire field <c>reasoning_effort</c>.</summary>
+    [JsonPropertyName("reasoning_effort")]
+    public string? ReasoningEffort { get; set; }
+
+    /// <summary>Wire field <c>steps</c>.</summary>
+    [JsonPropertyName("steps")]
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.Step>? Steps { get; set; }
+
+    /// <summary>Wire field <c>temperature</c>.</summary>
+    [JsonPropertyName("temperature")]
+    public double? Temperature { get; set; }
+
     /// <summary>Wire field <c>text</c>.</summary>
     [JsonPropertyName("text")]
     public string? Text { get; set; }
 
-    /// <summary>Wire field <c>contexts</c>.</summary>
-    [JsonPropertyName("contexts")]
-    public SignalWire.REST.Namespaces.Generated.Types.Calling.Contexts? Contexts { get; set; }
+    /// <summary>Wire field <c>top_p</c>.</summary>
+    [JsonPropertyName("top_p")]
+    public double? TopP { get; set; }
+
+    /// <summary>Wire field <c>verbosity</c>.</summary>
+    [JsonPropertyName("verbosity")]
+    public string? Verbosity { get; set; }
 }

@@ -403,8 +403,7 @@ public sealed class WebSearchSkill : SkillBase
     /// Format Google CSE snippets without fetching the underlying pages. Used
     /// for snippets_only, and as the graceful fallback when scraping is
     /// abandoned by the overall_deadline. Always non-empty when CSE returned
-    /// anything at all, so the kernel never sees a webhook timeout. Mirrors
-    /// Python's <c>_format_snippet_results</c>.
+    /// anything at all, so the kernel never sees a webhook timeout.
     /// </summary>
     private static string FormatSnippetResults(string query, List<SearchResult> results, int numResults)
     {

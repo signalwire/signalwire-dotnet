@@ -14,10 +14,10 @@ agent.AddLanguage("English", "en-US", "inworld.Mark");
 agent.PromptAddSection("Role", "You are a helpful assistant.");
 
 agent.DefineTool(
-    name:        "get_time",
+    name: "get_time",
     description: "Get the current time",
-    parameters:  new Dictionary<string, object>(),
-    handler:     (args, rawData) => new FunctionResult($"The time is {DateTime.Now:HH:mm:ss}"));
+    parameters: new Dictionary<string, object>(),
+    handler: (args, rawData) => new FunctionResult($"The time is {DateTime.Now:HH:mm:ss}"));
 
 agent.Run();
 // endregion: agent

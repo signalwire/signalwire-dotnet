@@ -33,6 +33,12 @@ namespace SignalWire.Tools.DumpCorpus;
 
 internal static class PaginationDump
 {
+    // Expected id sequences, hoisted to statics so the comparison does not
+    // allocate a fresh array on every case (CA1861).
+    private static readonly string[] ExpectedLoopIds = ["loop-1", "loop-2"];
+    private static readonly string[] ExpectedAfterEmptyIds = ["found-after-empty"];
+    private static readonly string[] ExpectedExhaustionIds = ["x-1", "x-2", "x-3", "x-4", "x-5"];
+
     // The list endpoint the differ arms the page sequences on (mirrors
     // pagination_corpus.LIST_PATH / ENDPOINT_ID). The exact route is not asserted
     // — only that the mock serves the armed {data, links} bodies for it.
@@ -117,7 +123,10 @@ internal static class PaginationDump
         {
             if (ownProcess is not null)
             {
-                try { if (!ownProcess.HasExited) ownProcess.Kill(true); } catch { /* best effort */ }
+                try { if (!ownProcess.HasExited) ownProcess.Kill(true); }
+                catch (InvalidOperationException) { /* already gone */ }
+                catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+                ownProcess.Dispose();
             }
         }
 
@@ -141,14 +150,14 @@ internal static class PaginationDump
             }
             var items = await walk.ConfigureAwait(false);
             // Terminated: the cycle guard fired, both pages' items consumed once.
-            var loopGuarded = items.SequenceEqual(new[] { "loop-1", "loop-2" });
+            var loopGuarded = items.SequenceEqual(ExpectedLoopIds);
             return new Dictionary<string, object?> { ["loop_guarded"] = loopGuarded, ["hung"] = false };
         }
 
         if (c.Kind == "empty_page_with_next")
         {
             var items = await WalkIdsAsync(it).ConfigureAwait(false);
-            var continued = items.SequenceEqual(new[] { "found-after-empty" });
+            var continued = items.SequenceEqual(ExpectedAfterEmptyIds);
             return new Dictionary<string, object?>
             {
                 ["continued_past_empty"] = continued,
@@ -159,7 +168,7 @@ internal static class PaginationDump
         if (c.Kind == "exhaustion")
         {
             var items = await WalkIdsAsync(it).ConfigureAwait(false);
-            var terminated = items.SequenceEqual(new[] { "x-1", "x-2", "x-3", "x-4", "x-5" });
+            var terminated = items.SequenceEqual(ExpectedExhaustionIds);
             return new Dictionary<string, object?>
             {
                 ["terminated"] = terminated,

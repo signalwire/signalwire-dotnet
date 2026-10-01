@@ -20,6 +20,26 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class SWAIGDefaults
 {
+    /// <summary>Wire field <c>meta_data</c>.</summary>
+    [JsonPropertyName("meta_data")]
+    public object? MetaData { get; set; }
+
+    /// <summary>Wire field <c>meta_data_token</c>.</summary>
+    [JsonPropertyName("meta_data_token")]
+    public string? MetaDataToken { get; set; }
+
+    /// <summary>Wire field <c>web_hook_auth_pass</c>.</summary>
+    [JsonPropertyName("web_hook_auth_pass")]
+    public string? WebHookAuthPass { get; set; }
+
+    /// <summary>Wire field <c>web_hook_auth_password</c>.</summary>
+    [JsonPropertyName("web_hook_auth_password")]
+    public string? WebHookAuthPassword { get; set; }
+
+    /// <summary>Wire field <c>web_hook_auth_user</c>.</summary>
+    [JsonPropertyName("web_hook_auth_user")]
+    public string? WebHookAuthUser { get; set; }
+
     /// <summary>Wire field <c>web_hook_url</c>.</summary>
     [JsonPropertyName("web_hook_url")]
     public string? WebHookUrl { get; set; }

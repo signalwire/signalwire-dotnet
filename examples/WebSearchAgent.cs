@@ -11,7 +11,7 @@ using SignalWire.Agent;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "Web Search Agent",
+    Name = "Web Search Agent",
     Route = "/web-search",
 });
 
@@ -35,7 +35,7 @@ agent.PromptAddSection("Instructions", "", new List<string>
 try { agent.AddSkill("datetime"); } catch { /* optional */ }
 
 // Add web search skill
-var apiKey   = Environment.GetEnvironmentVariable("GOOGLE_SEARCH_API_KEY");
+var apiKey = Environment.GetEnvironmentVariable("GOOGLE_SEARCH_API_KEY");
 var engineId = Environment.GetEnvironmentVariable("GOOGLE_SEARCH_ENGINE_ID");
 
 if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(engineId))
@@ -49,9 +49,9 @@ else
     {
         agent.AddSkill("web_search", new Dictionary<string, object>
         {
-            ["api_key"]          = apiKey,
+            ["api_key"] = apiKey,
             ["search_engine_id"] = engineId,
-            ["num_results"]      = 3,
+            ["num_results"] = 3,
         });
         Console.WriteLine("Added web_search skill");
     }

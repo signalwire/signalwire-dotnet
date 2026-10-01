@@ -8,13 +8,14 @@
 //   SIGNALWIRE_SPACE
 
 using SignalWire.REST;
+using System.Text.Json;
 
-var client = new RestClient(
+using var client = new RestClient(
     projectId: Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_PROJECT_ID"),
-    token:     Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
+    token: Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_API_TOKEN"),
-    space:     Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
+    space: Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")
                ?? throw new InvalidOperationException("Set SIGNALWIRE_SPACE")
 );
 
@@ -28,12 +29,12 @@ async Task Safe(string label, Func<Task> fn)
 Console.WriteLine("Creating call queue...");
 await Safe("Create queue", async () =>
 {
-    var queue = await client.Queues.CreateAsync(new Dictionary<string, object>
+    var queue = await client.Queues.CreateAsync(new Dictionary<string, object?>
     {
-        ["name"]     = "support-queue",
+        ["name"] = "support-queue",
         ["max_size"] = 50,
     });
-    Console.WriteLine($"    Queue ID: {queue.GetValueOrDefault("id")}");
+    Console.WriteLine($"    Queue ID: {queue?.Id}");
 });
 
 // 2. List queues
@@ -41,13 +42,9 @@ Console.WriteLine("\nListing queues...");
 await Safe("List queues", async () =>
 {
     var queues = await client.Queues.ListAsync();
-    var data = queues.GetValueOrDefault("data") as List<object> ?? new();
-    foreach (var item in data.Take(5))
+    foreach (var q in (queues?.Data ?? []).Take(5))
     {
-        if (item is Dictionary<string, object?> q)
-        {
-            Console.WriteLine($"    - {q.GetValueOrDefault("id")}: {q.GetValueOrDefault("name")}");
-        }
+        Console.WriteLine($"    - {q.Id}: {q.FriendlyName}");
     }
 });
 
@@ -56,13 +53,17 @@ Console.WriteLine("\nListing recordings...");
 await Safe("List recordings", async () =>
 {
     var recordings = await client.Recordings.ListAsync();
-    var data = recordings.GetValueOrDefault("data") as List<object> ?? new();
-    Console.WriteLine($"    Found {data.Count} recordings");
-    foreach (var item in data.Take(5))
+    var recordingData = recordings?.Data ?? [];
+    Console.WriteLine($"    Found {recordingData.Count} recordings");
+    // RecordingListResponse.Data is List<object?> — the spec leaves the
+    // recording item shape open, so items arrive as JsonElement.
+    foreach (var item in recordingData.Take(5))
     {
-        if (item is Dictionary<string, object?> r)
+        if (item is JsonElement r && r.ValueKind == JsonValueKind.Object)
         {
-            Console.WriteLine($"    - {r.GetValueOrDefault("id")}: {r.GetValueOrDefault("duration")}s");
+            var id = r.TryGetProperty("id", out var idEl) ? idEl.ToString() : "?";
+            var dur = r.TryGetProperty("duration", out var durEl) ? durEl.ToString() : "?";
+            Console.WriteLine($"    - {id}: {dur}s");
         }
     }
 });
@@ -72,10 +73,10 @@ Console.WriteLine("\nSending MFA verification...");
 await Safe("Send MFA", async () =>
 {
     var mfa = await client.Mfa.SmsAsync(
-        to:      "+15551234567",
-        from:    "+15559876543",
+        to: "+15551234567",
+        from: "+15559876543",
         message: "Your verification code is: {code}");
-    Console.WriteLine($"    MFA ID: {mfa.GetValueOrDefault("id")}");
+    Console.WriteLine($"    MFA ID: {mfa?.Id} (success={mfa?.Success})");
 });
 
 // 5. List logs
@@ -83,8 +84,7 @@ Console.WriteLine("\nListing call logs...");
 await Safe("List logs", async () =>
 {
     var logs = await client.Logs.Messages.ListAsync();
-    var data = logs.GetValueOrDefault("data") as List<object> ?? new();
-    Console.WriteLine($"    Found {data.Count} log entries");
+    Console.WriteLine($"    Found {(logs?.Data ?? []).Count} log entries");
 });
 
 Console.WriteLine("\nQueues, MFA, and recordings demo complete.");

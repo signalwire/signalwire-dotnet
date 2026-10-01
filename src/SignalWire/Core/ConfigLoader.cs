@@ -48,8 +48,8 @@ public sealed class ConfigLoader
     }
 
     /// <summary>The paths searched for a config file, in order — either the
-    /// caller's list or the defaults. (equivalent to Python's
-    /// <c>config_paths</c>, config_loader.py:37.)</summary>
+    /// caller's list or the defaults.
+    /// </summary>
     public IReadOnlyList<string> ConfigPaths => _configPaths;
 
     private static List<string> DefaultPaths()

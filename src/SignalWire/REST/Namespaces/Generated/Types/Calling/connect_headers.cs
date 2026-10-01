@@ -26,5 +26,5 @@ public class ConnectHeaders
 
     /// <summary>Wire field <c>value</c>.</summary>
     [JsonPropertyName("value")]
-    public string? Value { get; set; }
+    public object? Value { get; set; }
 }

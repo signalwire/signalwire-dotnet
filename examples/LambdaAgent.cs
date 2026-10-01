@@ -13,7 +13,7 @@ using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "lambda-agent",
+    Name = "lambda-agent",
     Route = "/",
 });
 
@@ -31,13 +31,13 @@ agent.PromptAddSection("Instructions", "", new List<string>
 });
 
 agent.DefineTool(
-    name:        "greet_user",
+    name: "greet_user",
     description: "Greet a user by name",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["name"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Name of the person to greet",
         },
     },
@@ -49,9 +49,9 @@ agent.DefineTool(
 );
 
 agent.DefineTool(
-    name:        "get_time",
+    name: "get_time",
     description: "Get the current time",
-    parameters:  new Dictionary<string, object>(),
+    parameters: new Dictionary<string, object>(),
     handler: (args, raw) =>
     {
         return new FunctionResult($"Current time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");

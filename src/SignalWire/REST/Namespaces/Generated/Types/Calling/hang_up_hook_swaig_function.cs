@@ -24,25 +24,25 @@ public class HangUpHookSWAIGFunction
     [JsonPropertyName("description")]
     public string? Description { get; set; }
 
-    /// <summary>Wire field <c>purpose</c>.</summary>
-    [JsonPropertyName("purpose")]
-    public string? Purpose { get; set; }
-
-    /// <summary>Wire field <c>parameters</c>.</summary>
-    [JsonPropertyName("parameters")]
-    public SignalWire.REST.Namespaces.Generated.Types.Calling.FunctionParameters? Parameters { get; set; }
-
-    /// <summary>Wire field <c>fillers</c>.</summary>
-    [JsonPropertyName("fillers")]
-    public Dictionary<string, object?>? Fillers { get; set; }
+    /// <summary>Wire field <c>active</c>.</summary>
+    [JsonPropertyName("active")]
+    public object? Active { get; set; }
 
     /// <summary>Wire field <c>argument</c>.</summary>
     [JsonPropertyName("argument")]
     public SignalWire.REST.Namespaces.Generated.Types.Calling.FunctionParameters? Argument { get; set; }
 
-    /// <summary>Wire field <c>active</c>.</summary>
-    [JsonPropertyName("active")]
-    public object? Active { get; set; }
+    /// <summary>Wire field <c>data_map</c>.</summary>
+    [JsonPropertyName("data_map")]
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.DataMap? DataMap { get; set; }
+
+    /// <summary>Wire field <c>fillers</c>.</summary>
+    [JsonPropertyName("fillers")]
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.FunctionFillers? Fillers { get; set; }
+
+    /// <summary>Wire field <c>function</c>.</summary>
+    [JsonPropertyName("function")]
+    public string? Function { get; set; }
 
     /// <summary>Wire field <c>meta_data</c>.</summary>
     [JsonPropertyName("meta_data")]
@@ -52,17 +52,17 @@ public class HangUpHookSWAIGFunction
     [JsonPropertyName("meta_data_token")]
     public string? MetaDataToken { get; set; }
 
-    /// <summary>Wire field <c>data_map</c>.</summary>
-    [JsonPropertyName("data_map")]
-    public SignalWire.REST.Namespaces.Generated.Types.Calling.DataMap? DataMap { get; set; }
+    /// <summary>Wire field <c>parameters</c>.</summary>
+    [JsonPropertyName("parameters")]
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.FunctionParameters? Parameters { get; set; }
+
+    /// <summary>Wire field <c>purpose</c>.</summary>
+    [JsonPropertyName("purpose")]
+    public string? Purpose { get; set; }
 
     /// <summary>Wire field <c>skip_fillers</c>.</summary>
     [JsonPropertyName("skip_fillers")]
     public object? SkipFillers { get; set; }
-
-    /// <summary>Wire field <c>web_hook_url</c>.</summary>
-    [JsonPropertyName("web_hook_url")]
-    public string? WebHookUrl { get; set; }
 
     /// <summary>Wire field <c>wait_file</c>.</summary>
     [JsonPropertyName("wait_file")]
@@ -76,7 +76,19 @@ public class HangUpHookSWAIGFunction
     [JsonPropertyName("wait_for_fillers")]
     public object? WaitForFillers { get; set; }
 
-    /// <summary>Wire field <c>function</c>.</summary>
-    [JsonPropertyName("function")]
-    public string? Function { get; set; }
+    /// <summary>Wire field <c>web_hook_auth_pass</c>.</summary>
+    [JsonPropertyName("web_hook_auth_pass")]
+    public string? WebHookAuthPass { get; set; }
+
+    /// <summary>Wire field <c>web_hook_auth_password</c>.</summary>
+    [JsonPropertyName("web_hook_auth_password")]
+    public string? WebHookAuthPassword { get; set; }
+
+    /// <summary>Wire field <c>web_hook_auth_user</c>.</summary>
+    [JsonPropertyName("web_hook_auth_user")]
+    public string? WebHookAuthUser { get; set; }
+
+    /// <summary>Wire field <c>web_hook_url</c>.</summary>
+    [JsonPropertyName("web_hook_url")]
+    public string? WebHookUrl { get; set; }
 }

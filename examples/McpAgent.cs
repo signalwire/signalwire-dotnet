@@ -9,7 +9,7 @@ using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name  = "mcp-agent",
+    Name = "mcp-agent",
     Route = "/agent",
 });
 
@@ -40,7 +40,7 @@ agent.AddMcpServer(
     resourceVars: new Dictionary<string, string>
     {
         ["caller_id"] = "${caller_id_number}",
-        ["tenant"]    = "acme-corp",
+        ["tenant"] = "acme-corp",
     }
 );
 
@@ -60,20 +60,20 @@ agent.PromptAddSection("Customer Context",
 agent.AddLanguage("English", "en-US", "inworld.Mark");
 agent.SetParams(new Dictionary<string, object>
 {
-    ["ai_model"]          = "gpt-4.1-nano",
+    ["ai_model"] = "gpt-4.1-nano",
     ["attention_timeout"] = 15000,
 });
 
 // --- Local Tools (available via both SWAIG and MCP) ---
 
 agent.DefineTool(
-    name:        "get_weather",
+    name: "get_weather",
     description: "Get the current weather for a location",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["location"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "City name or zip code",
         },
     },
@@ -85,18 +85,18 @@ agent.DefineTool(
 );
 
 agent.DefineTool(
-    name:        "create_ticket",
+    name: "create_ticket",
     description: "Create a support ticket for the customer",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["subject"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Ticket subject",
         },
         ["description"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Detailed description of the issue",
         },
     },

@@ -42,7 +42,7 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
     {
         if (!_fixture.Available)
         {
-            Console.WriteLine("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
+            MockServerFixture.SkipNote("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
             return;
         }
         Assert.NotNull(_fixture.Harness);
@@ -72,7 +72,7 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
     {
         if (!_fixture.Available)
         {
-            Console.WriteLine("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
+            MockServerFixture.SkipNote("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
             return;
         }
 
@@ -112,7 +112,7 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
         while (true)
         {
             var result = await ws.ReceiveAsync(buffer, readCts.Token);
-            assembled.Write(buffer, 0, result.Count);
+            await assembled.WriteAsync(buffer.AsMemory(0, result.Count));
             if (result.EndOfMessage) break;
         }
         var responseText = Encoding.UTF8.GetString(assembled.ToArray());
@@ -164,7 +164,9 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
         {
             await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "smoke test done", CancellationToken.None);
         }
-        catch { /* best effort */ }
+        catch (System.Net.WebSockets.WebSocketException) { /* peer already gone */ }
+        catch (ObjectDisposedException) { /* socket already disposed */ }
+        catch (OperationCanceledException) { /* shutting down */ }
     }
 
     [Fact]
@@ -172,17 +174,17 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
     {
         if (!_fixture.Available)
         {
-            Console.WriteLine("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
+            MockServerFixture.SkipNote("[SKIP] mock_relay unreachable; clone porting-sdk next to signalwire-dotnet OR start `python -m mock_relay --ws-port 8785 --http-port 9785` on host");
             return;
         }
 
         // Use the real Relay Client (not raw WebSocket) so we exercise the
         // SDK's signalwire.event ack path + Call object plumbing.
-        using var bound = RelayMockTest.NewClient(contexts: new[] { "default" });
+        using var bound = RelayMockTest.NewClient(contexts: RelayMockTest.DefaultContexts);
 
         Call? received = null;
         var tcs = new TaskCompletionSource<Call>(TaskCreationOptions.RunContinuationsAsynchronously);
-        bound.Client.OnCall((call, evt) =>
+        bound.Client.OnCall(call =>
         {
             received = call;
             tcs.TrySetResult(call);
@@ -192,7 +194,7 @@ public class RelaySmokeTest : IClassFixture<RelayMockServerFixture>
         await bound.Client.ConnectAsync();
 
         // Subscribe to inbound contexts (mirrors what real production code does).
-        await bound.Client.ReceiveAsync(new[] { "default" });
+        await bound.Client.ReceiveAsync(RelayMockTest.DefaultContexts);
 
         // Push an inbound call via the control plane. mock_relay synthesizes
         // a calling.call.receive event and broadcasts it to the connected

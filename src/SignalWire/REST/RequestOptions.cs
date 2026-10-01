@@ -24,7 +24,7 @@ namespace SignalWire.REST;
 /// <see cref="System.Threading.CancellationToken"/> straight to the underlying
 /// <c>System.Net.Http.HttpClient</c> send, so a set token cancels the in-flight
 /// socket read (true in-flight cancellation, not merely a between-attempts
-/// check). Mirrors Python <c>signalwire.rest._request_options.RequestOptions</c>.</para>
+/// check).</para>
 ///
 /// <para>All fields are optional (<c>null</c> = inherit); resolution is
 /// per-request over client-default over built-in.</para>
@@ -74,7 +74,7 @@ public sealed record RequestOptions
     /// Return <c>this</c> with any set (non-<c>null</c>) field of
     /// <paramref name="over"/> applied — the per-request-over-client-default
     /// shallow merge. An unset field on <paramref name="over"/> leaves
-    /// <c>this</c>'s value intact. Mirrors Python <c>RequestOptions.merge</c>.
+    /// <c>this</c>'s value intact.
     /// </summary>
     public RequestOptions Merge(RequestOptions? over)
     {
@@ -146,7 +146,7 @@ public static class RequestOptionsSupport
     /// <summary>
     /// Resolve the effective options: per-request over client-default over
     /// built-in. <c>null</c> on any field inherits the next level down; the
-    /// built-in defaults are the floor. Mirrors Python <c>resolve</c>.
+    /// built-in defaults are the floor.
     /// </summary>
     public static EffectiveRequestOptions Resolve(
         RequestOptions? clientDefault, RequestOptions? perRequest)
@@ -166,7 +166,7 @@ public static class RequestOptionsSupport
     /// full <see cref="EffectiveRequestOptions.RetryOnStatus"/> set. Non-idempotent
     /// methods (POST/PATCH) retry only on 429/503 (the Retry-After-bearing
     /// throttles), never on 500/502/504, to avoid replaying a side effect that may
-    /// have partially applied. Mirrors Python <c>status_is_retryable</c>.
+    /// have partially applied.
     /// </summary>
     public static bool StatusIsRetryable(string method, int status, EffectiveRequestOptions opts)
     {

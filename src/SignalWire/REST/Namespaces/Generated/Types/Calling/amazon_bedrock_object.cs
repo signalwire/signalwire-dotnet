@@ -20,9 +20,33 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class AmazonBedrockObject
 {
+    /// <summary>Wire field <c>SWAIG</c>.</summary>
+    [JsonPropertyName("SWAIG")]
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.BedrockSWAIG? SWAIG { get; set; }
+
+    /// <summary>Wire field <c>app_name</c>.</summary>
+    [JsonPropertyName("app_name")]
+    public string? AppName { get; set; }
+
+    /// <summary>Wire field <c>assistant_name</c>.</summary>
+    [JsonPropertyName("assistant_name")]
+    public string? AssistantName { get; set; }
+
+    /// <summary>Wire field <c>assistant_prompt</c>.</summary>
+    [JsonPropertyName("assistant_prompt")]
+    public string? AssistantPrompt { get; set; }
+
+    /// <summary>Wire field <c>conversation_id</c>.</summary>
+    [JsonPropertyName("conversation_id")]
+    public string? ConversationId { get; set; }
+
     /// <summary>Wire field <c>global_data</c>.</summary>
     [JsonPropertyName("global_data")]
     public Dictionary<string, object?>? GlobalData { get; set; }
+
+    /// <summary>Wire field <c>greeting_prompt</c>.</summary>
+    [JsonPropertyName("greeting_prompt")]
+    public Dictionary<string, object?>? GreetingPrompt { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
@@ -30,7 +54,7 @@ public class AmazonBedrockObject
 
     /// <summary>Wire field <c>post_prompt</c>.</summary>
     [JsonPropertyName("post_prompt")]
-    public Dictionary<string, object?>? PostPrompt { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.BedrockPostPrompt? PostPrompt { get; set; }
 
     /// <summary>Wire field <c>post_prompt_url</c>.</summary>
     [JsonPropertyName("post_prompt_url")]
@@ -38,9 +62,9 @@ public class AmazonBedrockObject
 
     /// <summary>Wire field <c>prompt</c>.</summary>
     [JsonPropertyName("prompt")]
-    public Dictionary<string, object?>? Prompt { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.BedrockPrompt? Prompt { get; set; }
 
-    /// <summary>Wire field <c>SWAIG</c>.</summary>
-    [JsonPropertyName("SWAIG")]
-    public SignalWire.REST.Namespaces.Generated.Types.Calling.BedrockSWAIG? SWAIG { get; set; }
+    /// <summary>Wire field <c>transcript_webhook_url</c>.</summary>
+    [JsonPropertyName("transcript_webhook_url")]
+    public string? TranscriptWebhookUrl { get; set; }
 }

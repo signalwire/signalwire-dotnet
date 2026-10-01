@@ -39,11 +39,11 @@ var basicPass = Environment.GetEnvironmentVariable("SWML_BASIC_AUTH_PASSWORD");
 
 var service = new Service(new ServiceOptions
 {
-    Name              = "standalone-swaig",
-    Route             = "/standalone",
-    Host              = "0.0.0.0",
-    Port              = port,
-    BasicAuthUser     = basicUser ?? "user",
+    Name = "standalone-swaig",
+    Route = "/standalone",
+    Host = "0.0.0.0",
+    Port = port,
+    BasicAuthUser = basicUser ?? "user",
     BasicAuthPassword = basicPass ?? "pass",
 });
 
@@ -56,14 +56,14 @@ service.Verb("hangup", "main", new Dictionary<string, object>());
 //    AgentBase). The handler receives parsed arguments plus the raw
 //    request body.
 service.DefineTool(
-    name:        "lookup_competitor",
+    name: "lookup_competitor",
     description: "Look up competitor pricing by company name. Use this when the user "
                + "asks how a competitor's price compares to ours.",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["competitor"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "The competitor's company name, e.g. 'ACME'.",
         },
     },

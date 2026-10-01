@@ -61,8 +61,7 @@ public class InfoGathererAgent : AgentBase
 
     /// <summary>
     /// Register a callback that dynamically supplies the questions per request
-    /// (given the request args / raw data / query params). Mirrors the Python
-    /// reference ``InfoGathererAgent.set_question_callback``.
+    /// (given the request args / raw data / query params).
     /// </summary>
     public InfoGathererAgent SetQuestionCallback(
         Func<Dictionary<string, object>, Dictionary<string, object?>, Dictionary<string, object?>,
@@ -74,7 +73,7 @@ public class InfoGathererAgent : AgentBase
 
     /// <summary>SWAIG tool handler for the ``start_questions`` tool.
     /// Reads the current question_index from global_data and returns that
-    /// question. (equivalent to Python's ``InfoGathererAgent.start_questions``.)</summary>
+    /// question.</summary>
     [SuppressMessage("Performance", "CA1822", Justification = "instance method matches the cross-port SWAIG tool-handler surface")]
     public FunctionResult StartQuestions(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {
@@ -100,7 +99,7 @@ public class InfoGathererAgent : AgentBase
     /// <summary>SWAIG tool handler for the ``submit_answer`` tool. Stores the
     /// answer in global_data.answers, advances question_index, and returns the
     /// next question (or the completion message).
-    /// (equivalent to Python's ``InfoGathererAgent.submit_answer``.)</summary>
+    /// </summary>
     [SuppressMessage("Performance", "CA1822", Justification = "instance method matches the cross-port SWAIG tool-handler surface")]
     public FunctionResult SubmitAnswer(Dictionary<string, object> args, Dictionary<string, object?> rawData)
     {

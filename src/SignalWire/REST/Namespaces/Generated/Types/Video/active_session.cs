@@ -96,7 +96,43 @@ public class ActiveSession
     [JsonPropertyName("preview_url")]
     public string? PreviewUrl { get; set; }
 
-    /// <summary>Wire field <c>audio_video_sync</c>.</summary>
-    [JsonPropertyName("audio_video_sync")]
-    public bool? AudioVideoSync { get; set; }
+    /// <summary>Wire field <c>sync_audio_video</c>.</summary>
+    [JsonPropertyName("sync_audio_video")]
+    public bool? SyncAudioVideo { get; set; }
+
+    /// <summary>Wire field <c>tone_on_entry_and_exit</c>.</summary>
+    [JsonPropertyName("tone_on_entry_and_exit")]
+    public bool? ToneOnEntryAndExit { get; set; }
+
+    /// <summary>Wire field <c>room_join_video_off</c>.</summary>
+    [JsonPropertyName("room_join_video_off")]
+    public bool? RoomJoinVideoOff { get; set; }
+
+    /// <summary>Wire field <c>user_join_video_off</c>.</summary>
+    [JsonPropertyName("user_join_video_off")]
+    public bool? UserJoinVideoOff { get; set; }
+
+    /// <summary>Wire field <c>locked</c>.</summary>
+    [JsonPropertyName("locked")]
+    public bool? Locked { get; set; }
+
+    /// <summary>Wire field <c>cost_in_dollars</c>.</summary>
+    [JsonPropertyName("cost_in_dollars")]
+    public double? CostInDollars { get; set; }
+
+    /// <summary>Wire field <c>created_at</c>.</summary>
+    [JsonPropertyName("created_at")]
+    public string? CreatedAt { get; set; }
+
+    /// <summary>Wire field <c>updated_at</c>.</summary>
+    [JsonPropertyName("updated_at")]
+    public string? UpdatedAt { get; set; }
+
+    /// <summary>Wire field <c>locked_cover</c>.</summary>
+    [JsonPropertyName("locked_cover")]
+    public string? LockedCover { get; set; }
+
+    /// <summary>Wire field <c>prioritize_handraise</c>.</summary>
+    [JsonPropertyName("prioritize_handraise")]
+    public bool? PrioritizeHandraise { get; set; }
 }

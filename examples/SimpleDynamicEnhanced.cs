@@ -8,17 +8,17 @@ using SignalWire.SWAIG;
 
 var agent = new AgentBase(new AgentOptions
 {
-    Name       = "Enhanced Dynamic Agent",
-    Route      = "/enhanced",
+    Name = "Enhanced Dynamic Agent",
+    Route = "/enhanced",
     AutoAnswer = true,
     RecordCall = true,
 });
 
 agent.SetDynamicConfigCallback((qp, bp, headers, a) =>
 {
-    var tier       = (qp?.GetValueOrDefault("tier")?.ToString()       ?? "standard").ToLower();
-    var department = (qp?.GetValueOrDefault("department")?.ToString() ?? "general").ToLower();
-    var language   = (qp?.GetValueOrDefault("language")?.ToString()   ?? "en").ToLower();
+    var tier = (qp?.GetValueOrDefault("tier")?.ToString() ?? "standard").ToLowerInvariant();
+    var department = (qp?.GetValueOrDefault("department")?.ToString() ?? "general").ToLowerInvariant();
+    var language = (qp?.GetValueOrDefault("language")?.ToString() ?? "en").ToLowerInvariant();
 
     // Language selection
     if (language == "es")
@@ -31,14 +31,14 @@ agent.SetDynamicConfigCallback((qp, bp, headers, a) =>
     // Tier-based parameters
     var timeout = tier switch
     {
-        "premium"    => 600,
+        "premium" => 600,
         "enterprise" => 800,
-        _            => 400,
+        _ => 400,
     };
 
     a.SetParams(new Dictionary<string, object>
     {
-        ["ai_model"]              = "gpt-4.1-nano",
+        ["ai_model"] = "gpt-4.1-nano",
         ["end_of_speech_timeout"] = timeout,
     });
 
@@ -61,22 +61,22 @@ agent.SetDynamicConfigCallback((qp, bp, headers, a) =>
     // Global data
     a.SetGlobalData(new Dictionary<string, object>
     {
-        ["customer_id"]   = qp?.GetValueOrDefault("customer_id")?.ToString() ?? "",
-        ["tier"]          = tier,
-        ["department"]    = department,
-        ["session_type"]  = "enhanced_dynamic",
+        ["customer_id"] = qp?.GetValueOrDefault("customer_id")?.ToString() ?? "",
+        ["tier"] = tier,
+        ["department"] = department,
+        ["session_type"] = "enhanced_dynamic",
     });
 });
 
 // Tools available to the dynamic agent
 agent.DefineTool(
-    name:        "get_account_info",
+    name: "get_account_info",
     description: "Look up customer account information",
-    parameters:  new Dictionary<string, object>
+    parameters: new Dictionary<string, object>
     {
         ["account_id"] = new Dictionary<string, object>
         {
-            ["type"]        = "string",
+            ["type"] = "string",
             ["description"] = "Customer account ID",
         },
     },

@@ -47,10 +47,10 @@ var agent = new SurveyAgent(
     },
     options: new Dictionary<string, object>
     {
-        ["survey_name"]  = "Product Feedback Survey",
-        ["brand_name"]   = "Acme Products",
+        ["survey_name"] = "Product Feedback Survey",
+        ["brand_name"] = "Acme Products",
         ["introduction"] = "Thank you for using Acme Products! We'd love your feedback.",
-        ["conclusion"]   = "Thank you for your feedback. It helps us improve!",
+        ["conclusion"] = "Thank you for your feedback. It helps us improve!",
     }
 );
 

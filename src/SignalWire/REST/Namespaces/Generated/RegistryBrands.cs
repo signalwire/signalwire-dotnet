@@ -69,6 +69,89 @@ public class RegistryBrands
     }
 
     /// <summary>
+    /// Generated from operation <c>update_brand</c> (PUT /registry/beta/brands/{id}).
+    /// </summary>
+    /// <param name="name">Wire field <c>name</c>.</param>
+    /// <param name="companyName">Wire field <c>company_name</c>.</param>
+    /// <param name="contactEmail">Wire field <c>contact_email</c>.</param>
+    /// <param name="contactPhone">Wire field <c>contact_phone</c>.</param>
+    /// <param name="einIssuingCountry">Wire field <c>ein_issuing_country</c>.</param>
+    /// <param name="legalEntityType">Wire field <c>legal_entity_type</c>.</param>
+    /// <param name="ein">Wire field <c>ein</c>.</param>
+    /// <param name="companyVertical">Wire field <c>company_vertical</c>.</param>
+    /// <param name="companyWebsite">Wire field <c>company_website</c>.</param>
+    /// <param name="companyAddress">Wire field <c>company_address</c>.</param>
+    /// <param name="cspBrandReference">Wire field <c>csp_brand_reference</c>.</param>
+    /// <param name="statusCallbackUrl">Wire field <c>status_callback_url</c>.</param>
+    /// <param name="signalwireContactEmails">Wire field <c>signalwire_contact_emails</c>.</param>
+    /// <param name="extras">Forward-compat body fields merged onto the request.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.RelayRest.BrandResponse?> UpdateAsync(string id, string? name = null, string? companyName = null, string? contactEmail = null, string? contactPhone = null, string? einIssuingCountry = null, string? legalEntityType = null, string? ein = null, string? companyVertical = null, string? companyWebsite = null, string? companyAddress = null, string? cspBrandReference = null, string? statusCallbackUrl = null, Dictionary<string, object?>? signalwireContactEmails = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var _reqBody = new Dictionary<string, object?>();
+        if (name is not null)
+        {
+            _reqBody["name"] = name;
+        }
+        if (companyName is not null)
+        {
+            _reqBody["company_name"] = companyName;
+        }
+        if (contactEmail is not null)
+        {
+            _reqBody["contact_email"] = contactEmail;
+        }
+        if (contactPhone is not null)
+        {
+            _reqBody["contact_phone"] = contactPhone;
+        }
+        if (einIssuingCountry is not null)
+        {
+            _reqBody["ein_issuing_country"] = einIssuingCountry;
+        }
+        if (legalEntityType is not null)
+        {
+            _reqBody["legal_entity_type"] = legalEntityType;
+        }
+        if (ein is not null)
+        {
+            _reqBody["ein"] = ein;
+        }
+        if (companyVertical is not null)
+        {
+            _reqBody["company_vertical"] = companyVertical;
+        }
+        if (companyWebsite is not null)
+        {
+            _reqBody["company_website"] = companyWebsite;
+        }
+        if (companyAddress is not null)
+        {
+            _reqBody["company_address"] = companyAddress;
+        }
+        if (cspBrandReference is not null)
+        {
+            _reqBody["csp_brand_reference"] = cspBrandReference;
+        }
+        if (statusCallbackUrl is not null)
+        {
+            _reqBody["status_callback_url"] = statusCallbackUrl;
+        }
+        if (signalwireContactEmails is not null)
+        {
+            _reqBody["signalwire_contact_emails"] = signalwireContactEmails;
+        }
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                _reqBody[kv.Key] = kv.Value;
+            }
+        }
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.RelayRest.BrandResponse>(Client.PutAsync(Path(id), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
     /// Generated from operation <c>list_campaigns</c> (GET /registry/beta/brands/{id}/campaigns).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>

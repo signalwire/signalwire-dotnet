@@ -101,3 +101,155 @@ dotnet_diagnostic.CA1720.severity = none
 # tests require); it returns a constant path, so the analyzer suggests static,
 # but making it static would break instance access. Deliberate surface shape.
 dotnet_diagnostic.CA1822.severity = none
+
+# ── Rule-level exceptions for tests/ and examples/ ─────────────────────────
+# These directories are LINTED AT THE FULL SHIPPING BAR (owner ruling
+# 2026-07-30: "all the full directories should be linted and formatted
+# including tests examples and all ... examples and tests are shipping code
+# too"). Nothing here is a directory carve-out. Each entry below names ONE rule
+# that the code in that directory legitimately and correctly violates, and every
+# other rule stays at error over these trees — so both are burnable to zero and
+# STAY zero. Both rules remain ON for src/.
+
+[tests/**.cs]
+# CA1707 — underscores in member names. Every test is named `Method_Scenario`
+# (`AgentBase_AgentIdIsReadableBack`, `Register_Agent`,
+# `Tools_ExposesRegisteredFunction`): the xUnit convention, where the underscore
+# is precisely the subject/scenario split that makes a failure report legible.
+# Obeying the rule would rename ~1,273 test methods and destroy the readability
+# the convention exists for. Same shape as java declining AvoidStarImport
+# because it "would de-idiomatize test code". (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA1707.severity = none
+
+# CA1307 / CA1310 — string comparison without an explicit StringComparison.
+# These fire on xUnit's OWN assertion API: `Assert.Contains(expected, actual)`,
+# `Assert.StartsWith`, `Assert.DoesNotContain`, `Assert.EndsWith` — 190 of the
+# 199 sites in this tree. The rule targets production string comparison you
+# control; the comparison here happens inside the test framework, and the
+# remedy (a third StringComparison argument on every substring assertion in the
+# suite) adds no signal because the fixtures are ASCII literals. The nine real
+# `string.Contains/Replace/IndexOf` sites in tests/ were BURNED, not excused
+# (commit 0b38ac6), and any new one is caught by review — this grant only
+# covers the framework's overload. (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA1307.severity = none
+dotnet_diagnostic.CA1310.severity = none
+
+# CA1515 — types can be made internal. This DIRECTLY CONTRADICTS xUnit: the test
+# framework's own analyzers require the opposite (xUnit1000 "Test classes must be
+# public", xUnit1027 "Collection definition classes must be public"). Applying
+# CA1515 across this tree produced 93 xUnit1000/xUnit1027 build errors — there is
+# no code that satisfies both rules, so this is a genuine conflict rather than a
+# preference. (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA1515.severity = none
+
+# CA1515 above; CA2000 below.
+#
+# CA2000 — dispose objects before losing scope. The analyzer cannot see ownership
+# TRANSFER, and this suite is fixture-based, so almost every finding it reports
+# here is a transfer rather than a leak. Measured, not assumed: applying `using`
+# where it pointed took the suite from 2127 passing to 114 failing with
+# ObjectDisposedException — MockServerFixture.NewHttp() hands out clients that
+# share a fixture-owned transport (103 of those failures, all of RestMock),
+# StartCseFixture/StartHtmlFixture return a handle owning the listener + CTS,
+# TlsHarness returns a handle owning the mock process, RelayMockTest.NewClient is
+# a factory. Going the other way was no better: making Harness IDisposable to
+# satisfy CA1001 made the count go UP (98 -> 100), because a Harness is a VIEW
+# onto the process-wide mock and every borrower then looked like an owner.
+#
+# WHAT THIS TRADES AWAY — read before assuming the gate has you covered.
+# CA2000 is the signal that FOUND the real leak in this tree: NewHttp() minted a
+# SignalWire.REST.HttpClient per call and tracked none of them, so the suite
+# leaked one client and transport handle PER TEST for the entire run (fixed in
+# 544487a — the fixture now records what it issues and disposes them together).
+# Turning the rule off in tests/ means the next harness that mints-and-forgets
+# will NOT be caught here. If you add a factory that hands out IDisposable, the
+# owning fixture must track and release it; nothing will remind you.
+# Rule stays ON for src/. (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA2000.severity = none
+
+# CA2007 — call ConfigureAwait on the awaited task. DIRECTLY CONTRADICTS the test
+# framework: xUnit1030 is "Test methods should not call ConfigureAwait(false), as
+# it may bypass parallelization limits". xUnit owns the synchronization context a
+# test body runs on, so inside a [Fact]/[Theory] its rule is the authoritative one
+# and CA2007's advice is actively harmful.
+#
+# Proven by OSCILLATION, not argued: burning CA2007 to zero here produced 19
+# xUnit1030 errors, and removing the ConfigureAwait to satisfy xUnit put the
+# CA2007 findings straight back. There is no source text that satisfies both.
+#
+# This is the THIRD analyzer-vs-xUnit contradiction in this suite — CA1707 vs the
+# Method_Scenario naming xUnit's own docs use, CA1515 vs xUnit1000/xUnit1027
+# ("test classes must be public"), and now CA2007 vs xUnit1030. The pattern is
+# consistent: where a CA rule and the test framework disagree about a TEST BODY,
+# the framework wins, because it owns the runtime the body executes in.
+#
+# Burned everywhere it was NOT a test body — src/, tools/, examples/ and the test
+# HELPERS are all clean and stay that way. This grant covers only what xUnit
+# governs. Rule stays ON for src/, where ConfigureAwait genuinely matters.
+# (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA2007.severity = none
+
+# The shipped examples live in THREE roots — examples/, rest/examples/ and
+# relay/examples/ — which is the set the EXAMPLES-RUN gate globs. A grant scoped
+# to `examples/**.cs` alone silently misses the other two (verified: the 14
+# rest/relay examples reported the full un-granted finding set until this
+# pattern was widened). Keep all three in the selector.
+[{examples,rest/examples,relay/examples}/**.cs]
+# CA1303 — do not pass literals as localized parameters. An example's
+# `Console.WriteLine("Starting standalone SWAIG-on-Service at ...")` is TEACHING
+# TEXT printed to a developer's terminal, not a localizable product string; the
+# rule's remedy (a .resx resource table per demo) would obscure the very thing
+# the example exists to show. The shipped library has zero such sites, which is
+# why this never fired before. (mike@signalwire.com, 2026-07-30)
+dotnet_diagnostic.CA1303.severity = none
+
+# ---------------------------------------------------------------------------
+# The grants below landed with task #204, when every examples/*.cs first got a
+# .csproj and therefore entered the LINT gate's project enumeration for the
+# first time. Before that these files were compiled by NOTHING, so none of these
+# rules had ever been evaluated against them. Each grant below is a rule whose
+# REMEDY would damage the example as teaching material; every finding that had a
+# clean code fix (CA1304/CA1311/CA1305 culture, CA1869 cached serializer
+# options, CA2000 using-var, CA2234 Uri overload) was FIXED IN CODE instead and
+# is not listed here.
+# ---------------------------------------------------------------------------
+
+# CA2007 — call ConfigureAwait on the awaited task. Microsoft's own guidance is
+# that CA2007 targets LIBRARY code; application entry points should not use
+# ConfigureAwait(false), and an example IS an application entry point (a
+# top-level-statements Program). Threading `.ConfigureAwait(false)` through
+# every `await call.AnswerAsync()` in a RELAY demo triples the visual noise of
+# the exact lines the example exists to teach, and the three README quickstarts
+# (QuickstartAgent/QuickstartRelay/QuickstartRest) are rendered verbatim on the
+# repo front page. Rule stays ON for src/, where it genuinely matters.
+dotnet_diagnostic.CA2007.severity = none
+
+# CA1031 — do not catch general exception types. Every site is a demo's
+# top-level `try { ...the thing being demonstrated... } catch (Exception ex) {
+# Console.WriteLine($"failed: {ex.Message}"); }`. Catching broadly IS the
+# demonstrated behavior: it keeps a multi-step demo running past one
+# unavailable resource and prints why. Narrowing to the specific exception set
+# of each SDK call would make the examples longer than the feature they show.
+dotnet_diagnostic.CA1031.severity = none
+
+# CA5394 — do not use insecure randomness. The sites are JokeSkillDemo picking
+# a random joke and LlmParamsDemo picking a random sample prompt. Neither is a
+# security context; swapping in RandomNumberGenerator would teach a reader that
+# choosing a demo string needs cryptographic randomness, which is wrong.
+dotnet_diagnostic.CA5394.severity = none
+
+# CA1861 — prefer static readonly fields over constant array arguments. Every
+# site is a one-shot literal in a top-level program (`Contexts = new[]
+# { "default" }`, `requireArgs: new[] { "action" }`) evaluated exactly ONCE, so
+# the perf premise of the rule does not hold. Hoisting them into static fields
+# above a 15-line quickstart is pure ceremony.
+dotnet_diagnostic.CA1861.severity = none
+
+# CA1308 — normalize strings to uppercase. The examples lower-case a
+# query-string value before comparing it to lower-case ASCII literals ("vip",
+# "es", "sales"). CA1308's concern is round-tripping/security identity
+# comparisons; here ToLowerInvariant is the readable, correct form and flipping
+# every literal to upper-case for the analyzer would obscure the comparison.
+# (CA1304/CA1311 — the culture-implicit ToLower()/ToUpper() overloads — remain
+# ON and were fixed in code by moving to the Invariant forms.)
+dotnet_diagnostic.CA1308.severity = none

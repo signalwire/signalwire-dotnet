@@ -124,6 +124,23 @@ public sealed class LoggingConfigTests : IDisposable
     }
 
     [Fact]
+    public void StripControlChars_ProcessorCallFormUsesTheLastArgument()
+    {
+        // Python parity: strip_control_chars(logger, method_name, event_dict) — the
+        // LAST positional argument is the event dict, so it can sit in a processor chain.
+        var evt = new Dictionary<string, object?> { ["m"] = "a\u0000b" };
+        var result = LoggingConfig.StripControlChars(new object(), "info", evt);
+        Assert.Same(evt, result);
+        Assert.Equal("ab", result["m"]);
+    }
+
+    [Fact]
+    public void StripControlChars_NoArgumentThrows()
+    {
+        Assert.Throws<ArgumentException>(() => LoggingConfig.StripControlChars());
+    }
+
+    [Fact]
     public void StripControlChars_StripsDeleteAndC1()
     {
         var evt = new Dictionary<string, object?> { ["m"] = "a\u007Fb\u009Fc" };

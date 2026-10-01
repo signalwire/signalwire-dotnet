@@ -38,12 +38,10 @@ public class Call
     public string? EndReason { get; set; }
     public string? Context { get; set; }
 
-    /// <summary>The SignalWire project this call belongs to.
-    /// (equivalent to Python's <c>project_id</c>.)</summary>
+    /// <summary>The SignalWire project this call belongs to.</summary>
     public string? ProjectId { get; set; }
 
-    /// <summary>The call's segment identifier.
-    /// (equivalent to Python's <c>segment_id</c>.)</summary>
+    /// <summary>The call's segment identifier.</summary>
     public string? SegmentId { get; set; }
 
     public string? Direction { get; set; }
@@ -60,8 +58,8 @@ public class Call
     /// <summary>User-registered event callbacks (catch-all).</summary>
     public IReadOnlyList<System.Action<Event, Call>> OnEventCallbacks => _onEventCallbacks;
 
-    /// <summary>Per-event-type listeners registered via <see cref="On(string, System.Action{Event})"/>.</summary>
-    public Dictionary<string, List<System.Action<Event>>> TypedListeners { get; } = new();
+    /// <summary>Per-event-type listeners registered via <see cref="On(string, System.Action{RelayEvent})"/>.</summary>
+    public Dictionary<string, List<System.Action<RelayEvent>>> TypedListeners { get; } = new();
 
     // ------------------------------------------------------------------
     // Construction
@@ -176,9 +174,10 @@ public class Call
         // -- fire typed listeners for the matching event_type --
         if (TypedListeners.TryGetValue(eventType, out var listeners))
         {
+            var typedEvt = ToRelayEvent(evt);
             foreach (var cb in listeners.ToArray())
             {
-                try { cb(evt); }
+                try { cb(typedEvt); }
                 catch (Exception ex) { _logger.Error($"on('{eventType}') callback raised: {ex.Message}"); }
             }
         }
@@ -192,15 +191,14 @@ public class Call
     }
 
     /// <summary>Register a per-event-type listener (mirrors Python <c>call.on(event_type, handler)</c>).</summary>
-    public Call On(string eventType, System.Action<Event> callback)
+    public void On(string eventType, System.Action<RelayEvent> callback)
     {
         if (!TypedListeners.TryGetValue(eventType, out var list))
         {
-            list = new List<System.Action<Event>>();
+            list = new List<System.Action<RelayEvent>>();
             TypedListeners[eventType] = list;
         }
         list.Add(callback);
-        return this;
     }
 
     /// <summary>
@@ -247,8 +245,21 @@ public class Call
     public Task<Dictionary<string, object?>> DenoiseStopAsync()
         => ExecuteAsync("calling.denoise.stop");
 
-    public Task<Dictionary<string, object?>> TransferAsync(Dictionary<string, object?>? extra = null)
-        => ExecuteAsync("calling.transfer", extra);
+    /// <summary>Transfer call control to another RELAY app or SWML script.
+    /// Mirrors the reference <c>Call.transfer(dest, **kwargs)</c>: <c>dest</c>
+    /// is REQUIRED and rides the wire as the <c>dest</c> param; anything in
+    /// <paramref name="extra"/> is merged alongside it.</summary>
+    public Task<Dictionary<string, object?>> TransferAsync(
+        string dest, Dictionary<string, object?>? extra = null)
+    {
+        ArgumentNullException.ThrowIfNull(dest);
+        var parms = new Dictionary<string, object?> { ["dest"] = dest };
+        if (extra is not null)
+        {
+            foreach (var kvp in extra) parms[kvp.Key] = kvp.Value;
+        }
+        return ExecuteAsync("calling.transfer", parms);
+    }
 
     public Task<Dictionary<string, object?>> JoinConferenceAsync(Dictionary<string, object?>? extra = null)
         => ExecuteAsync("calling.join_conference", extra);
@@ -621,23 +632,36 @@ public class Call
         return idx;
     }
 
-    private async Task<Event> WaitForStateAsync(string target, double? timeoutSeconds)
+    /// <summary>Project a dispatch <see cref="Event"/> onto the typed
+    /// <see cref="RelayEvent"/> the reference's wait_for* family returns.</summary>
+    private static RelayEvent ToRelayEvent(Event evt) => new()
+    {
+        EventType = evt.EventType,
+        Params = evt.Params,
+        CallId = evt.CallId ?? "",
+        Timestamp = evt.Timestamp,
+    };
+
+    private static RelayEvent StateSnapshot(string? state) => new()
+    {
+        EventType = "calling.call.state",
+        Params = new Dictionary<string, object?> { ["call_state"] = state },
+    };
+
+    private async Task<RelayEvent> WaitForStateAsync(string target, double? timeoutSeconds)
     {
         // Already at or past the target -> resolve immediately.
         if (StateRank(State) >= StateRank(target))
         {
-            return new Event("calling.call.state", new Dictionary<string, object?>
-            {
-                ["call_state"] = State,
-            });
+            return StateSnapshot(State);
         }
 
-        var tcs = new TaskCompletionSource<Event>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var tcs = new TaskCompletionSource<RelayEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         // The dispatcher reads "call_state" off the params for state events;
         // match on that (Event.State reads "state", which the state frame
         // does not carry).
-        void Listener(Event evt)
+        void Listener(RelayEvent evt)
         {
             if (tcs.Task.IsCompleted) return;
             var cs = evt.Params.TryGetValue("call_state", out var v) ? v?.ToString() : null;
@@ -662,10 +686,7 @@ public class Call
                 {
                     // Timed out: surface the current state so callers can
                     // introspect rather than throw out of an SDK call.
-                    return new Event("calling.call.state", new Dictionary<string, object?>
-                    {
-                        ["call_state"] = State,
-                    });
+                    return StateSnapshot(State);
                 }
             }
             return await tcs.Task.ConfigureAwait(false);
@@ -680,29 +701,64 @@ public class Call
     }
 
     /// <summary>Wait until the call is answered (immediate if already answered or past it).</summary>
-    public Task<Event> WaitForAnsweredAsync(double? timeout = null)
+    public Task<RelayEvent> WaitForAnsweredAsync(double? timeout = null)
         => WaitForStateAsync(Constants.CallStateAnswered, timeout);
 
     /// <summary>Wait until the call is ringing (immediate if already ringing or past it).</summary>
-    public Task<Event> WaitForRingingAsync(double? timeout = null)
+    public Task<RelayEvent> WaitForRingingAsync(double? timeout = null)
         => WaitForStateAsync(Constants.CallStateRinging, timeout);
 
     /// <summary>Wait until the call is ending (immediate if already ending or past it).</summary>
-    public Task<Event> WaitForEndingAsync(double? timeout = null)
+    public Task<RelayEvent> WaitForEndingAsync(double? timeout = null)
         => WaitForStateAsync(Constants.CallStateEnding, timeout);
 
-    /// <summary>Wait for the call to reach a specific state (generic wait).
-    /// (equivalent to Python's ``Call.wait_for(event_type, ...)``.)</summary>
-    public Task<Event> WaitForAsync(string state, double? timeout = null)
-        => WaitForStateAsync(state, timeout);
+    /// <summary>Wait for a specific event, optionally filtered by a predicate
+    /// .
+    /// When <paramref name="predicate"/> is null the first event of that type
+    /// resolves the wait.</summary>
+    public async Task<RelayEvent> WaitForAsync(
+        string eventType,
+        Func<RelayEvent, bool>? predicate = null,
+        double? timeout = null)
+    {
+        var tcs = new TaskCompletionSource<RelayEvent>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
 
-    /// <summary>Wait for the call to reach the ended state.
-    /// (equivalent to Python's ``Call.wait_for_ended``.)</summary>
-    public Task<Event> WaitForEndedAsync(double? timeout = null)
+        void Listener(RelayEvent evt)
+        {
+            if (tcs.Task.IsCompleted) return;
+            if (predicate is null || predicate(evt))
+            {
+                tcs.TrySetResult(evt);
+            }
+        }
+
+        On(eventType, Listener);
+        try
+        {
+            if (timeout is not null)
+            {
+                using var cts = new CancellationTokenSource(
+                    TimeSpan.FromSeconds(timeout.Value));
+                return await tcs.Task.WaitAsync(cts.Token).ConfigureAwait(false);
+            }
+            return await tcs.Task.ConfigureAwait(false);
+        }
+        finally
+        {
+            if (TypedListeners.TryGetValue(eventType, out var list))
+            {
+                list.Remove(Listener);
+            }
+        }
+    }
+
+    /// <summary>Wait for the call to reach the ended state.</summary>
+    public Task<RelayEvent> WaitForEndedAsync(double? timeout = null)
         => WaitForStateAsync(Constants.CallStateEnded, timeout);
 
-    /// <summary>A concise debug representation of this call (equivalent to Python's
-    /// ``Call.__repr__``).</summary>
+    /// <summary>A concise debug representation of this call
+    /// .</summary>
     public override string ToString() => $"<Call id={CallId} state={State}>";
 
     // ------------------------------------------------------------------

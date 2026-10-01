@@ -7,8 +7,7 @@ namespace SignalWire.Relay;
 
 /// <summary>
 /// Raised when a RELAY operation fails (a protocol/transport error or a
-/// server-reported action failure). Mirrors the Python reference
-/// ``signalwire.relay.client.RelayError``.
+/// server-reported action failure).
 /// </summary>
 [SuppressMessage("Naming", "CA1710", Justification = "RelayError is the cross-port class name (Python signalwire.relay.client.RelayError); the Exception suffix would break surface parity.")]
 public class RelayError : Exception

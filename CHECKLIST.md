@@ -76,7 +76,7 @@ Agents completing this checklist have historically left gaps by treating ambiguo
 - [ ] HMAC-SHA256 token creation (functionName:callID:expiry, signed, base64)
 - [ ] Token validation (timing-safe comparison, expiry check)
 - [ ] Random 32-byte secret per manager — fail hard if entropy unavailable
-- [ ] Default expiry: 3600 seconds
+- [ ] Default expiry: 900 seconds (15 minutes, matching the reference)
 - [ ] Tests: token round-trip, wrong function/callID rejected, expired rejected, tampered rejected
 
 ### DataMap

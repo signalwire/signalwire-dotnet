@@ -50,5 +50,5 @@ public class ContextPOMSteps
 
     /// <summary>Wire field <c>pom</c>.</summary>
     [JsonPropertyName("pom")]
-    public List<object?>? Pom { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.POM>? Pom { get; set; }
 }

@@ -52,6 +52,10 @@ public sealed class WebhookValidationMiddleware
     /// <summary>The canonical SignalWire signature header name.</summary>
     public const string SignalWireSignatureHeader = "X-SignalWire-Signature";
 
+    /// <summary>The SHA-256 signature header (same Scheme A message, SHA-256
+    /// hash), preferred over <see cref="SignalWireSignatureHeader"/> when sent.</summary>
+    public const string SignalWireSha256SignatureHeader = "X-SignalWire-Sha256-Signature";
+
     /// <summary>Legacy alias for cXML/Twilio-compat callers.</summary>
     public const string TwilioCompatSignatureHeader = "X-Twilio-Signature";
 
@@ -104,14 +108,34 @@ public sealed class WebhookValidationMiddleware
         string? hostFallback = null,
         int portFallback = 0)
     {
-        var signature = ExtractSignatureHeader(headers);
+        var url = ReconstructUrl(headers, path, hostFallback, portFallback);
+        var rawBody = body ?? "";
+
+        // Prefer the stronger SHA-256 signature when the platform sends it
+        // (X-SignalWire-Sha256-Signature): same Scheme A message, SHA-256 hash.
+        // Fall back to the SHA-1 header below so deployments on older platform
+        // builds -- and the cXML/form Scheme B path -- keep validating.
+        var sha256Signature = headers is null ? null : GetHeaderCaseInsensitive(headers, SignalWireSha256SignatureHeader);
+        if (!string.IsNullOrEmpty(sha256Signature))
+        {
+            try
+            {
+                if (WebhookValidator.ValidateWebhookSignatureSha256(_signingKey, sha256Signature, url, rawBody))
+                {
+                    return null;
+                }
+            }
+            catch (ArgumentException)
+            {
+                // Fall back to the SHA-1 header path below.
+            }
+        }
+
+        var signature = ExtractSignatureHeader(headers!);
         if (string.IsNullOrEmpty(signature))
         {
             return ForbiddenResponse();
         }
-
-        var url = ReconstructUrl(headers, path, hostFallback, portFallback);
-        var rawBody = body ?? "";
 
         bool ok;
         try

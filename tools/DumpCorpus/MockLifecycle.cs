@@ -23,14 +23,15 @@ internal static class MockLifecycle
     public static async Task ResetJournalAsync(System.Net.Http.HttpClient http, string mockUrl)
     {
         using var content = new StringContent("");
-        (await http.PostAsync(mockUrl + "/__mock__/journal/reset", content).ConfigureAwait(false)).Dispose();
+        (await http.PostAsync(new Uri(mockUrl + "/__mock__/journal/reset"), content)
+            .ConfigureAwait(false)).Dispose();
     }
 
     public static async Task ResetScenariosAsync(System.Net.Http.HttpClient http, string mockUrl, string authHeader)
     {
         using var content = new StringContent("");
         var url = mockUrl + "/__mock__/scenarios/reset?session_id=" + Uri.EscapeDataString(authHeader);
-        (await http.PostAsync(url, content).ConfigureAwait(false)).Dispose();
+        (await http.PostAsync(new Uri(url), content).ConfigureAwait(false)).Dispose();
     }
 
     public static async Task ArmScenarioAsync(
@@ -42,7 +43,7 @@ internal static class MockLifecycle
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
         var url = mockUrl + "/__mock__/scenarios/" + Uri.EscapeDataString(endpointId)
             + "?session_id=" + Uri.EscapeDataString(authHeader);
-        (await http.PostAsync(url, content).ConfigureAwait(false)).Dispose();
+        (await http.PostAsync(new Uri(url), content).ConfigureAwait(false)).Dispose();
     }
 
     // ------------------------------------------------------------------
@@ -101,8 +102,20 @@ internal static class MockLifecycle
             ? pkgDir
             : pkgDir + Path.PathSeparator + existingPyPath;
 
+        // The Process is handed to the caller on the success path (it owns the
+        // teardown), so it is disposed here only on the paths that do NOT return it.
+#pragma warning disable CA2000 // ownership transfers to the caller on success
         var process = new System.Diagnostics.Process { StartInfo = psi };
-        process.Start();
+#pragma warning restore CA2000
+        try
+        {
+            process.Start();
+        }
+        catch
+        {
+            process.Dispose();
+            throw;
+        }
 
         var url = $"http://{host}:{freePort}";
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
@@ -114,12 +127,17 @@ internal static class MockLifecycle
             }
             if (process.HasExited)
             {
+                var exit = process.ExitCode;
+                process.Dispose();
                 throw new InvalidOperationException(
-                    $"{who}: mock_signalwire process exited before becoming ready (exit {process.ExitCode}).");
+                    $"{who}: mock_signalwire process exited before becoming ready (exit {exit}).");
             }
             await Task.Delay(150).ConfigureAwait(false);
         }
-        try { process.Kill(true); } catch { /* best effort */ }
+        try { process.Kill(true); }
+        catch (InvalidOperationException) { /* already gone */ }
+        catch (System.ComponentModel.Win32Exception) { /* best effort */ }
+        process.Dispose();
         throw new InvalidOperationException($"{who}: mock_signalwire did not become ready within 30s on {url}.");
     }
 
@@ -127,20 +145,23 @@ internal static class MockLifecycle
     {
         try
         {
-            var resp = await client.GetAsync(baseUrl + "/__mock__/health").ConfigureAwait(false);
+            using var resp = await client.GetAsync(new Uri(baseUrl + "/__mock__/health"))
+                .ConfigureAwait(false);
             if (!resp.IsSuccessStatusCode) return false;
             var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
             return body.Contains("\"specs_loaded\"", StringComparison.Ordinal);
         }
-        catch
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
+                                      or OperationCanceledException)
         {
+            // Not up yet (connection refused / timeout) — that is what this probe asks.
             return false;
         }
     }
 
     public static int PickFreePort()
     {
-        var listener = new TcpListener(IPAddress.Loopback, 0);
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         try
         {
@@ -158,14 +179,15 @@ internal static class MockLifecycle
     public static string? DiscoverPortingSdkPackage(string name)
     {
         var anchors = new List<string>();
-        try { anchors.Add(AppContext.BaseDirectory); } catch { /* best effort */ }
+        try { anchors.Add(AppContext.BaseDirectory); }
+        catch (InvalidOperationException) { /* no base dir in this host */ }
         anchors.Add(Environment.CurrentDirectory);
 
         foreach (var anchor in anchors)
         {
             if (string.IsNullOrEmpty(anchor)) continue;
             var dir = new DirectoryInfo(Path.GetFullPath(anchor));
-            while (dir != null)
+            while (true)
             {
                 var parent = dir.Parent;
                 if (parent == null) break;

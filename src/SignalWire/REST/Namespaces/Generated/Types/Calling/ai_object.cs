@@ -20,6 +20,18 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class AIObject
 {
+    /// <summary>Wire field <c>SWAIG</c>.</summary>
+    [JsonPropertyName("SWAIG")]
+    public object? SWAIG { get; set; }
+
+    /// <summary>Wire field <c>agent</c>.</summary>
+    [JsonPropertyName("agent")]
+    public object? Agent { get; set; }
+
+    /// <summary>Wire field <c>engine</c>.</summary>
+    [JsonPropertyName("engine")]
+    public object? Engine { get; set; }
+
     /// <summary>Wire field <c>global_data</c>.</summary>
     [JsonPropertyName("global_data")]
     public Dictionary<string, object?>? GlobalData { get; set; }
@@ -30,7 +42,11 @@ public class AIObject
 
     /// <summary>Wire field <c>languages</c>.</summary>
     [JsonPropertyName("languages")]
-    public List<object?>? Languages { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.Languages>? Languages { get; set; }
+
+    /// <summary>Wire field <c>multilingual</c>.</summary>
+    [JsonPropertyName("multilingual")]
+    public Dictionary<string, object?>? Multilingual { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
@@ -38,21 +54,29 @@ public class AIObject
 
     /// <summary>Wire field <c>post_prompt</c>.</summary>
     [JsonPropertyName("post_prompt")]
-    public Dictionary<string, object?>? PostPrompt { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.AIPostPrompt? PostPrompt { get; set; }
+
+    /// <summary>Wire field <c>post_prompt_auth_password</c>.</summary>
+    [JsonPropertyName("post_prompt_auth_password")]
+    public object? PostPromptAuthPassword { get; set; }
+
+    /// <summary>Wire field <c>post_prompt_auth_user</c>.</summary>
+    [JsonPropertyName("post_prompt_auth_user")]
+    public object? PostPromptAuthUser { get; set; }
 
     /// <summary>Wire field <c>post_prompt_url</c>.</summary>
     [JsonPropertyName("post_prompt_url")]
-    public string? PostPromptUrl { get; set; }
+    public object? PostPromptUrl { get; set; }
+
+    /// <summary>Wire field <c>prompt</c>.</summary>
+    [JsonPropertyName("prompt")]
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.AIPrompt? Prompt { get; set; }
 
     /// <summary>Wire field <c>pronounce</c>.</summary>
     [JsonPropertyName("pronounce")]
     public List<SignalWire.REST.Namespaces.Generated.Types.Calling.Pronounce>? Pronounce { get; set; }
 
-    /// <summary>Wire field <c>prompt</c>.</summary>
-    [JsonPropertyName("prompt")]
-    public Dictionary<string, object?>? Prompt { get; set; }
-
-    /// <summary>Wire field <c>SWAIG</c>.</summary>
-    [JsonPropertyName("SWAIG")]
-    public SignalWire.REST.Namespaces.Generated.Types.Calling.SWAIG? SWAIG { get; set; }
+    /// <summary>Wire field <c>voice</c>.</summary>
+    [JsonPropertyName("voice")]
+    public object? Voice { get; set; }
 }

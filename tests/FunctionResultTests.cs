@@ -199,7 +199,7 @@ public class FunctionResultTests
         Assert.Equal("true", action["transfer"]);
         var swml = (Dictionary<string, object>)action["SWML"];
         Assert.Equal("1.0.0", swml["version"]);
-        var main = Main(action);
+        var main = MainSections(action);
         var set = (Dictionary<string, object>)main[0]["set"];
         Assert.Equal("Goodbye!", set["ai_response"]);
         var transfer = (Dictionary<string, object>)main[1]["transfer"];
@@ -213,7 +213,7 @@ public class FunctionResultTests
         fr.SwmlTransfer("sip:support@company.com", "Welcome back!", false);
         var action = GetAction(fr, 0);
         Assert.Equal("false", action["transfer"]);
-        var transfer = (Dictionary<string, object>)Main(action)[1]["transfer"];
+        var transfer = (Dictionary<string, object>)MainSections(action)[1]["transfer"];
         Assert.Equal("sip:support@company.com", transfer["dest"]);
     }
 
@@ -224,6 +224,16 @@ public class FunctionResultTests
         var fr = new FunctionResult();
         fr.Hangup();
         Assert.True((bool)GetAction(fr, 0)["hangup"]);
+    }
+
+    [Fact]
+    public void Hold_BareIntIsTheTimeoutNotAPrompt()
+    {
+        // The 1.1.2 form: an int binds the timeout overload, never the prompt.
+        var fr = new FunctionResult().Hold(60);
+        Assert.Equal(60, GetAction(fr, 0)["hold"]);
+        Assert.False(fr.ToDict().ContainsKey("post_process"));
+        Assert.Equal(30, GetAction(new FunctionResult().Hold(timeout: 30), 0)["hold"]);
     }
 
     [Fact]
@@ -251,6 +261,58 @@ public class FunctionResultTests
     public void Hold_WithinRange()
     {
         Assert.Equal(450, GetAction(new FunctionResult().Hold(450), 0)["hold"]);
+    }
+
+    [Fact]
+    public void Hold_WithPrompt_SetsToolResponseAndPostProcess()
+    {
+        // Python parity: hold(prompt, 120) -> structured response + post_process,
+        // bare-integer hold action (no step routing requested).
+        var fr = new FunctionResult().Hold("Tell the caller you are placing them on hold.", 120);
+        var d = fr.ToDict();
+        var resp = (Dictionary<string, object>)d["response"];
+        Assert.Equal("status: on hold", resp["tool_result"]);
+        Assert.Equal("Tell the caller you are placing them on hold.", resp["tool_prompt"]);
+        Assert.True((bool)d["post_process"]);
+        Assert.Equal(120, GetAction(fr, 0)["hold"]);
+    }
+
+    [Fact]
+    public void Hold_WithSteps_EmitsObjectForm()
+    {
+        // Python parity: step / timeout_step route where the caller lands, so the
+        // hold value becomes {timeout, step, timeout_step}.
+        var fr = new FunctionResult().Hold(null, 300, step: "back_with_agent", timeoutStep: "take_a_message");
+        var hold = (Dictionary<string, object>)GetAction(fr, 0)["hold"];
+        Assert.Equal(300, hold["timeout"]);
+        Assert.Equal("back_with_agent", hold["step"]);
+        Assert.Equal("take_a_message", hold["timeout_step"]);
+        Assert.False(fr.ToDict().ContainsKey("post_process"));
+    }
+
+    [Fact]
+    public void ChangeVoice_EmitsChangeVoiceAction()
+    {
+        var fr = new FunctionResult().ChangeVoice("elevenlabs.rachel");
+        Assert.Equal("elevenlabs.rachel", GetAction(fr, 0)["change_voice"]);
+    }
+
+    [Fact]
+    public void SetToolResponse_IsTheStructuredResponse()
+    {
+        var d = new FunctionResult().SetToolResponse(toolResult: "3 seats left").ToDict();
+        var resp = (Dictionary<string, object>)d["response"];
+        Assert.Equal("3 seats left", resp["tool_result"]);
+        Assert.False(resp.ContainsKey("tool_prompt"));
+    }
+
+    [Fact]
+    public void Constructor_ToolResultAndPrompt_SetStructuredResponse()
+    {
+        var fr = new FunctionResult(toolResult: "payment declined", toolPrompt: "Ask for another card.");
+        var resp = Assert.IsType<Dictionary<string, object>>(fr.Response);
+        Assert.Equal("payment declined", resp["tool_result"]);
+        Assert.Equal("Ask for another card.", resp["tool_prompt"]);
     }
 
     // Python parity: the wait_for_user value is a single primitive,
@@ -374,7 +436,7 @@ public class FunctionResultTests
         Assert.True(action.ContainsKey("SWML"));
         var swml = (Dictionary<string, object>)action["SWML"];
         Assert.Equal("1.0.0", swml["version"]);
-        var userEvent = (Dictionary<string, object>)Main(action)[0]["user_event"];
+        var userEvent = (Dictionary<string, object>)MainSections(action)[0]["user_event"];
         var evt = (Dictionary<string, object>)userEvent["event"];
         Assert.Equal("cards_dealt", evt["type"]);
         Assert.Equal(21, evt["score"]);
@@ -729,10 +791,11 @@ public class FunctionResultTests
     }
 
     [Fact]
-    public void ExecuteSwml_WithTransfer_AddsTransferInsideSwml()
+    public void ExecuteSwml_WithTransfer_AddsTransferBesideSwml()
     {
-        // Python parity (test_execute_swml_with_transfer_true):
-        // action["SWML"]["transfer"] == "true" (NOT a separate transfer_swml action).
+        // Python parity (test_execute_swml_with_transfer_true): action["transfer"]
+        // == "true" BESIDE the SWML document (inside it the call never exits the
+        // agent), and no separate transfer_swml action.
         var swml = new Dictionary<string, object>
         {
             ["version"] = "1.0.0",
@@ -743,8 +806,9 @@ public class FunctionResultTests
         var action = GetAction(fr, 0);
         Assert.True(action.ContainsKey("SWML"));
         Assert.False(action.ContainsKey("transfer_swml"));
+        Assert.Equal("true", action["transfer"]);
         var emitted = (Dictionary<string, object>)action["SWML"];
-        Assert.Equal("true", emitted["transfer"]);
+        Assert.False(emitted.ContainsKey("transfer"));
     }
 
     [Fact]
@@ -770,7 +834,8 @@ public class FunctionResultTests
         fr.ExecuteSwml(original, true);
         Assert.False(original.ContainsKey("transfer"));
         var emitted = (Dictionary<string, object>)GetAction(fr, 0)["SWML"];
-        Assert.Equal("true", emitted["transfer"]);
+        Assert.NotSame(original, emitted);
+        Assert.Equal("true", GetAction(fr, 0)["transfer"]);
     }
 
     // =================================================================
@@ -786,7 +851,7 @@ public class FunctionResultTests
         var fr = new FunctionResult();
         fr.JoinConference("my-conference");
         var action = GetAction(fr, 0);
-        var verb = Main(action)[0]["join_conference"];
+        var verb = MainSections(action)[0]["join_conference"];
         Assert.Equal("my-conference", verb);
     }
 
@@ -848,17 +913,26 @@ public class FunctionResultTests
     }
 
     [Fact]
-    public void JoinConference_MaxParticipantsTooHigh_Throws()
+    public void JoinConference_MaxParticipants_HasNoUpperLimit()
     {
-        var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().JoinConference("conf", maxParticipants: 300));
-        Assert.Contains("max_participants must be a positive integer <= 250", ex.Message);
+        // Python parity (test_join_conference_max_participants_has_no_upper_limit):
+        // the platform sets no upper limit.
+        var fr = new FunctionResult();
+        fr.JoinConference("conf", maxParticipants: 100001);
+        var jc = MainVerb(GetAction(fr, 0), "join_conference");
+        Assert.Equal(100001, jc["max_participants"]);
     }
 
-    [Fact]
-    public void JoinConference_MaxParticipantsZero_Throws()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public void JoinConference_MaxParticipantsBelowTwo_Throws(int value)
     {
-        var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().JoinConference("conf", maxParticipants: 0));
-        Assert.Contains("max_participants must be a positive integer <= 250", ex.Message);
+        // Python parity (test_join_conference_max_participants_below_two): the
+        // conference refuses fewer than 2.
+        var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().JoinConference("conf", maxParticipants: value));
+        Assert.Contains("max_participants must be an integer of at least 2", ex.Message);
     }
 
     [Fact]
@@ -962,14 +1036,15 @@ public class FunctionResultTests
     [Fact]
     public void Tap_Defaults_OmitsDefaultKeys()
     {
-        // Python parity (test_tap_default_params): only uri present; default
-        // direction/codec/rtp_ptime omitted.
+        // Python parity (test_tap_default_params): uri + direction present
+        // (direction is always sent — the verb's own default is "speak", not
+        // "both"); default codec/rtp_ptime omitted.
         // Tap(uri) alone is ambiguous between the enum and string overloads (both
         // default direction/codec); pin the typed default to select the canonical
         // overload — the emitted SWML is byte-identical to tap(uri) in Python.
         var t = MainVerb(GetAction(new FunctionResult().Tap("rtp://192.168.1.1:5000", direction: TapDirection.Both), 0), "tap");
         Assert.Equal("rtp://192.168.1.1:5000", t["uri"]);
-        Assert.False(t.ContainsKey("direction"));
+        Assert.Equal("both", t["direction"]);
         Assert.False(t.ContainsKey("codec"));
         Assert.False(t.ContainsKey("rtp_ptime"));
     }
@@ -988,10 +1063,18 @@ public class FunctionResultTests
     }
 
     [Fact]
-    public void Tap_DirectionHear()
+    public void Tap_DirectionListen()
     {
-        var t = MainVerb(GetAction(new FunctionResult().Tap("rtp://1.2.3.4:5000", direction: "hear"), 0), "tap");
-        Assert.Equal("hear", t["direction"]);
+        var t = MainVerb(GetAction(new FunctionResult().Tap("rtp://1.2.3.4:5000", direction: "listen"), 0), "tap");
+        Assert.Equal("listen", t["direction"]);
+    }
+
+    [Fact]
+    public void Tap_DirectionHear_IsNotATapDirection()
+    {
+        // "hear" is not in the SWML tap verb's enum (speak/listen/both): the
+        // engine reads "listen" as what the party hears.
+        Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("rtp://1.2.3.4:5000", direction: "hear"));
     }
 
     [Fact]
@@ -999,7 +1082,7 @@ public class FunctionResultTests
     {
         var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("rtp://1.2.3.4:5000", direction: "invalid"));
         Assert.Contains("direction must be one of", ex.Message);
-        Assert.Contains("['speak', 'hear', 'both']", ex.Message);
+        Assert.Contains("['speak', 'listen', 'both']", ex.Message);
     }
 
     [Fact]
@@ -1024,28 +1107,23 @@ public class FunctionResultTests
     {
         // (a) each member maps to its exact wire value.
         Assert.Equal("speak", TapDirection.Speak.ToWireName());
-        Assert.Equal("hear", TapDirection.Hear.ToWireName());
+        Assert.Equal("listen", TapDirection.Listen.ToWireName());
         Assert.Equal("both", TapDirection.Both.ToWireName());
 
         // (b) the enum overload and the equivalent string produce the
-        // BYTE-IDENTICAL tap verb. Use a non-default direction (hear) so the
-        // key is actually emitted and assertable.
-        var enumTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", controlId: "t1", direction: TapDirection.Hear, codec: Codec.Pcmu, rtpPtime: 20, statusUrl: null), 0), "tap");
-        var stringTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", "t1", "hear", "PCMU", 20, null), 0), "tap");
-        Assert.Equal("hear", enumTap["direction"]);
+        // BYTE-IDENTICAL tap verb.
+        var enumTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", controlId: "t1", direction: TapDirection.Listen, codec: Codec.Pcmu, rtpPtime: 20, statusUrl: null), 0), "tap");
+        var stringTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", "t1", "listen", "PCMU", 20, null), 0), "tap");
+        Assert.Equal("listen", enumTap["direction"]);
         Assert.Equal(stringTap, enumTap);  // whole verb dict byte-identical
 
-        // (c) every value round-trips to the wire, including the default which
-        // the per-key guard omits (both -> direction key absent on both paths).
-        foreach (var d in (TapDirection[])Enum.GetValues(typeof(TapDirection)))
+        // (c) every value round-trips to the wire, the default included.
+        foreach (var d in (TapDirection[])Enum.GetValues<TapDirection>())
         {
             var e = MainVerb(GetAction(new FunctionResult().Tap("u", direction: d, codec: Codec.Pcmu), 0), "tap");
             var s = MainVerb(GetAction(new FunctionResult().Tap("u", "", d.ToWireName(), "PCMU", 20, null), 0), "tap");
             Assert.Equal(s, e);
-            if (d == TapDirection.Both)
-                Assert.False(e.ContainsKey("direction"));  // default omitted
-            else
-                Assert.Equal(d.ToWireName(), e["direction"]);
+            Assert.Equal(d.ToWireName(), e["direction"]);
         }
     }
 
@@ -1066,7 +1144,7 @@ public class FunctionResultTests
 
         // (c) every value round-trips to the wire, including the default which
         // the per-key guard omits (PCMU -> codec key absent on both paths).
-        foreach (var c in (Codec[])Enum.GetValues(typeof(Codec)))
+        foreach (var c in (Codec[])Enum.GetValues<Codec>())
         {
             var e = MainVerb(GetAction(new FunctionResult().Tap("u", direction: TapDirection.Both, codec: c), 0), "tap");
             var s = MainVerb(GetAction(new FunctionResult().Tap("u", "", "both", c.ToWireName(), 20, null), 0), "tap");
@@ -1084,9 +1162,9 @@ public class FunctionResultTests
         // (d) the string overload's validation still rejects out-of-set values
         // (the enum overload only constrains compile-time call sites; the string
         // path remains the runtime guard — parity with Python's ValueError).
-        var dirEx = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("u", controlId: "", direction: "listen"));
+        var dirEx = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("u", controlId: "", direction: "hear"));
         Assert.Contains("direction must be one of", dirEx.Message);
-        Assert.Contains("['speak', 'hear', 'both']", dirEx.Message);  // 'listen' is record_call's, NOT tap's
+        Assert.Contains("['speak', 'listen', 'both']", dirEx.Message);  // 'hear' is not a tap direction
 
         var codecEx = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("u", controlId: "", codec: "OPUS"));
         Assert.Contains("codec must be one of", codecEx.Message);
@@ -1159,7 +1237,7 @@ public class FunctionResultTests
         var fr = new FunctionResult();
         fr.Pay("https://pay.example.com/connector");
         var action = GetAction(fr, 0);
-        var main = Main(action);
+        var main = MainSections(action);
         // First verb is set ai_response.
         var set = (Dictionary<string, object>)main[0]["set"];
         Assert.True(set.ContainsKey("ai_response"));
@@ -1189,7 +1267,7 @@ public class FunctionResultTests
         fr.Pay("https://pay.example.com", "voice", "https://status.example.com", "credit-card",
             10, 3, false, "90210", 5, "one-time", "49.99", "eur", "fr-FR", "man",
             "Monthly subscription", "visa amex", null, null, "Payment processed.");
-        var main = Main(GetAction(fr, 0));
+        var main = MainSections(GetAction(fr, 0));
         var pay = (Dictionary<string, object>)main[1]["pay"];
         Assert.Equal("voice", pay["input"]);
         Assert.Equal("https://status.example.com", pay["status_url"]);  // status_url, not action_url
@@ -1220,7 +1298,7 @@ public class FunctionResultTests
         var parameters = new List<Dictionary<string, string>> { new() { ["name"] = "store_id", ["value"] = "123" } };
         var fr = new FunctionResult();
         fr.Pay("https://pay.example.com", parameters: parameters, prompts: prompts);
-        var pay = (Dictionary<string, object>)Main(GetAction(fr, 0))[1]["pay"];
+        var pay = (Dictionary<string, object>)MainSections(GetAction(fr, 0))[1]["pay"];
         Assert.Equal(prompts, pay["prompts"]);
         Assert.Equal(parameters, pay["parameters"]);
     }
@@ -1231,7 +1309,7 @@ public class FunctionResultTests
         // Python parity (test_pay_postal_code_boolean_false): bool False -> "false".
         var fr = new FunctionResult();
         fr.Pay("https://pay.example.com", postalCode: false);
-        var pay = (Dictionary<string, object>)Main(GetAction(fr, 0))[1]["pay"];
+        var pay = (Dictionary<string, object>)MainSections(GetAction(fr, 0))[1]["pay"];
         Assert.Equal("false", pay["postal_code"]);
     }
 
@@ -1321,6 +1399,35 @@ public class FunctionResultTests
         var rpc = MainVerb(GetAction(new FunctionResult().RpcAiMessage("call-xyz", "User said hello", "user"), 0), "execute_rpc");
         var p = (Dictionary<string, object>)rpc["params"];
         Assert.Equal("user", p["role"]);
+    }
+
+    [Fact]
+    public void RpcAiMessage_GlobalDataOnly()
+    {
+        // Python parity: global_data alone -> params={global_data}, no role/message.
+        var data = new Dictionary<string, object> { ["decline_message"] = "No one is available." };
+        var rpc = MainVerb(GetAction(new FunctionResult().RpcAiMessage("call-abc", globalData: data), 0), "execute_rpc");
+        var p = (Dictionary<string, object>)rpc["params"];
+        Assert.Equal(data, p["global_data"]);
+        Assert.False(p.ContainsKey("role"));
+        Assert.False(p.ContainsKey("message_text"));
+    }
+
+    [Fact]
+    public void RpcAiMessage_NeitherMessageNorGlobalData_Throws()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().RpcAiMessage("call-abc"));
+        Assert.Contains("rpc_ai_message needs message_text, global_data, or both", ex.Message);
+    }
+
+    [Fact]
+    public void RpcAiGlobalData_MergesGlobalDataOnly()
+    {
+        var data = new Dictionary<string, object> { ["key"] = "value" };
+        var rpc = MainVerb(GetAction(new FunctionResult().RpcAiGlobalData("call-9", data), 0), "execute_rpc");
+        Assert.Equal("ai_message", rpc["method"]);
+        Assert.Equal("call-9", rpc["call_id"]);
+        Assert.Equal(data, ((Dictionary<string, object>)rpc["params"])["global_data"]);
     }
 
     [Fact]
@@ -1497,7 +1604,7 @@ public class FunctionResultTests
         => Actions(fr)[index];
 
     // For SWML-wrapped actions: pull the main[] section list out of {SWML:{...}}.
-    private static List<Dictionary<string, object>> Main(Dictionary<string, object> action)
+    private static List<Dictionary<string, object>> MainSections(Dictionary<string, object> action)
     {
         var swml = (Dictionary<string, object>)action["SWML"];
         var sections = (Dictionary<string, object>)swml["sections"];
@@ -1506,5 +1613,5 @@ public class FunctionResultTests
 
     // Pull the params object of the single verb in a SWML-wrapped action's main[0].
     private static Dictionary<string, object> MainVerb(Dictionary<string, object> action, string verb)
-        => (Dictionary<string, object>)Main(action)[0][verb];
+        => (Dictionary<string, object>)MainSections(action)[0][verb];
 }
