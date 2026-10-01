@@ -22,5 +22,5 @@ public class Cond
 {
     /// <summary>Wire field <c>cond</c>.</summary>
     [JsonPropertyName("cond")]
-    public List<object?>? cond { get; set; }
+    public List<SignalWire.Core.SwmlVerbsGenerated.CondItem>? cond { get; set; }
 }

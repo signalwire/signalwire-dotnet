@@ -22,5 +22,5 @@ public class AmazonBedrock
 {
     /// <summary>Wire field <c>amazon_bedrock</c>.</summary>
     [JsonPropertyName("amazon_bedrock")]
-    public SignalWire.Core.SwmlVerbsGenerated.AmazonBedrockObject? amazon_bedrock { get; set; }
+    public Dictionary<string, object?>? amazon_bedrock { get; set; }
 }

@@ -42,7 +42,7 @@ public class LogsGeneratedTest : CoverageBase
 {
     public LogsGeneratedTest(MockServerFixture fixture) : base(fixture) { }
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 
     [Fact]
     public async Task LogsConferences_List_Success()

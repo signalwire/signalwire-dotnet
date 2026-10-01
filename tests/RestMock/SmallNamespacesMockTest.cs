@@ -40,7 +40,7 @@ public class SmallNamespacesMockTest : IClassFixture<MockServerFixture>
     private ResourceTree NewClient()
     {
         var http = _fixture.NewHttp();
-        return new ResourceTree(http);
+        return new ResourceTree(http, http);
     }
 
     private static string? StringField(MockTest.JournalEntry j, string key)

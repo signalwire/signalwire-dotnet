@@ -40,6 +40,10 @@ public class SwaigAction
     [JsonPropertyName("change_step")]
     public string? change_step { get; set; }
 
+    /// <summary>Wire field <c>change_voice</c>.</summary>
+    [JsonPropertyName("change_voice")]
+    public SignalWire.Core.SwaigActionsGenerated.ChangeVoiceAction? change_voice { get; set; }
+
     /// <summary>Wire field <c>clear_dynamic_hints</c>.</summary>
     [JsonPropertyName("clear_dynamic_hints")]
     public bool? clear_dynamic_hints { get; set; }

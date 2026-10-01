@@ -23,4 +23,14 @@ public class ConferenceRooms : SignalWire.REST.CrudWithAddresses<SignalWire.REST
         : base(http, "/api/fabric/resources/conference_rooms")
     {
     }
+
+    /// <summary>
+    /// Generated from operation <c>list_conference_room_addresses</c> (GET /resources/conference_rooms/{id}/addresses).
+    /// </summary>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomAddressListResponse?> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.ConferenceRoomAddressListResponse>(Client.GetAsync(Path(id, "addresses"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
 }

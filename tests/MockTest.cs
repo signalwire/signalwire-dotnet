@@ -826,6 +826,15 @@ public sealed class MockServerFixture : IDisposable
     /// Falls back to an unscoped harness when the mock is unavailable.
     /// </summary>
     internal MockTest.Harness Harness { get; private set; }
+
+    /// <summary>
+    /// The same per-test scope seen through the CURRENT test's Personal Access
+    /// Token (<c>pat_&lt;project&gt;</c>): the Space Administration API
+    /// authenticates with HTTP Basic <c>":" + pat</c>, so its requests carry a
+    /// different <c>Authorization</c> header than the project's and are journaled
+    /// (and scenario-matched) under this view.
+    /// </summary>
+    internal MockTest.Harness PatHarness { get; private set; }
     public bool Available { get; }
 
     /// <summary>The unique random project the CURRENT test's clients
@@ -864,6 +873,7 @@ public sealed class MockServerFixture : IDisposable
         Project = NewProject();
         AuthHeader = BasicAuth(Project);
         Harness = BuildScopedHarness(Project, AuthHeader);
+        PatHarness = BuildScopedHarness(Project, PatAuth(Project));
     }
 
     private static string NewProject()
@@ -872,6 +882,14 @@ public sealed class MockServerFixture : IDisposable
     private static string BasicAuth(string project)
         => "Basic " + Convert.ToBase64String(
             System.Text.Encoding.UTF8.GetBytes($"{project}:{Token}"));
+
+    /// <summary>The per-test Personal Access Token: <c>pat_</c> + the scope's
+    /// project, so it rotates with the project.</summary>
+    public string Pat => "pat_" + Project;
+
+    private static string PatAuth(string project)
+        => "Basic " + Convert.ToBase64String(
+            System.Text.Encoding.UTF8.GetBytes($":pat_{project}"));
 
     private MockTest.Harness BuildScopedHarness(string project, string authHeader)
     {
@@ -912,6 +930,18 @@ public sealed class MockServerFixture : IDisposable
         return http;
     }
 
+    /// <summary>Build an SDK <see cref="SignalWire.REST.HttpClient"/> bound to
+    /// the mock and authenticating with this scope's Personal Access Token (an
+    /// EMPTY username, the token as the password) — the transport the Space
+    /// Administration API dispatches through. Owned by this fixture, like
+    /// <see cref="NewHttp"/>.</summary>
+    public SignalWire.REST.HttpClient NewPatHttp()
+    {
+        var http = new SignalWire.REST.HttpClient("", Pat, Harness.Url);
+        lock (_issued) { _issued.Add(http); }
+        return http;
+    }
+
     /// <summary>
     /// Re-mint this fixture's per-test scope: a brand-new random project =&gt;
     /// new auth header =&gt; new auth-filtered Harness view that starts empty.
@@ -926,6 +956,7 @@ public sealed class MockServerFixture : IDisposable
         Project = NewProject();
         AuthHeader = BasicAuth(Project);
         Harness = BuildScopedHarness(Project, AuthHeader);
+        PatHarness = BuildScopedHarness(Project, PatAuth(Project));
     }
 
     /// <summary>The shared mock lives for the whole test run, but the clients

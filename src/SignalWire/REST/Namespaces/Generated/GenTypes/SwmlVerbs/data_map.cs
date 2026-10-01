@@ -20,15 +20,19 @@ namespace SignalWire.Core.SwmlVerbsGenerated;
 /// </summary>
 public class DataMap
 {
-    /// <summary>Wire field <c>output</c>.</summary>
-    [JsonPropertyName("output")]
-    public SignalWire.Core.SwmlVerbsGenerated.Output? output { get; set; }
+    /// <summary>Wire field <c>contexts</c>.</summary>
+    [JsonPropertyName("contexts")]
+    public Dictionary<string, object?>? contexts { get; set; }
 
     /// <summary>Wire field <c>expressions</c>.</summary>
     [JsonPropertyName("expressions")]
-    public List<SignalWire.Core.SwmlVerbsGenerated.Expression>? expressions { get; set; }
+    public Dictionary<string, object?>? expressions { get; set; }
+
+    /// <summary>Wire field <c>output</c>.</summary>
+    [JsonPropertyName("output")]
+    public Dictionary<string, object?>? output { get; set; }
 
     /// <summary>Wire field <c>webhooks</c>.</summary>
     [JsonPropertyName("webhooks")]
-    public List<SignalWire.Core.SwmlVerbsGenerated.Webhook>? webhooks { get; set; }
+    public Dictionary<string, object?>? webhooks { get; set; }
 }

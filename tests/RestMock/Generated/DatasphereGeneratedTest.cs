@@ -42,7 +42,7 @@ public class DatasphereGeneratedTest : CoverageBase
 {
     public DatasphereGeneratedTest(MockServerFixture fixture) : base(fixture) { }
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 
     [Fact]
     public async Task DatasphereDocuments_Create_Success()

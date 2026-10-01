@@ -42,7 +42,7 @@ public class MessageGeneratedTest : CoverageBase
 {
     public MessageGeneratedTest(MockServerFixture fixture) : base(fixture) { }
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 
     [Fact]
     public async Task LogsMessages_Get_Success()
@@ -85,6 +85,182 @@ public class MessageGeneratedTest : CoverageBase
         var tree = NewTree();
         var status = await AssertErrorAsync("message.list_message_logs", 500,
             () => tree.Logs.Messages.ListAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task WhatsappBusinesses_List_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Whatsapp.Businesses.ListAsync();
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("message.list_whatsapp_businesses", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task WhatsappBusinesses_List_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("message.list_whatsapp_businesses", 500,
+            () => tree.Whatsapp.Businesses.ListAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task WhatsappNumbers_Get_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Whatsapp.Numbers.GetAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("message.retrieve_whatsapp_number", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task WhatsappNumbers_Get_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("message.retrieve_whatsapp_number", 500,
+            () => tree.Whatsapp.Numbers.GetAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task WhatsappNumbers_List_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Whatsapp.Numbers.ListAsync();
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("message.list_whatsapp_numbers", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task WhatsappNumbers_List_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("message.list_whatsapp_numbers", 500,
+            () => tree.Whatsapp.Numbers.ListAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task WhatsappTemplates_Create_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Whatsapp.Templates.CreateAsync(new Dictionary<string, object?>());
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("message.create_whatsapp_template", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task WhatsappTemplates_Create_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("message.create_whatsapp_template", 500,
+            () => tree.Whatsapp.Templates.CreateAsync(new Dictionary<string, object?>()));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task WhatsappTemplates_Delete_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Whatsapp.Templates.DeleteAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("DELETE", j.Method);
+        Assert.Equal("message.delete_whatsapp_template", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task WhatsappTemplates_Delete_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("message.delete_whatsapp_template", 500,
+            () => tree.Whatsapp.Templates.DeleteAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task WhatsappTemplates_Get_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Whatsapp.Templates.GetAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("message.retrieve_whatsapp_template", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task WhatsappTemplates_Get_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("message.retrieve_whatsapp_template", 500,
+            () => tree.Whatsapp.Templates.GetAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task WhatsappTemplates_List_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Whatsapp.Templates.ListAsync();
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("message.list_whatsapp_templates", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task WhatsappTemplates_List_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("message.list_whatsapp_templates", 500,
+            () => tree.Whatsapp.Templates.ListAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task WhatsappTemplates_Update_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Whatsapp.Templates.UpdateAsync("x", new Dictionary<string, object?>());
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("PATCH", j.Method);
+        Assert.Equal("message.update_whatsapp_template", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task WhatsappTemplates_Update_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("message.update_whatsapp_template", 500,
+            () => tree.Whatsapp.Templates.UpdateAsync("x", new Dictionary<string, object?>()));
         Assert.Equal(500, status);
     }
 }

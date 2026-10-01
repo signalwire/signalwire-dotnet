@@ -732,6 +732,17 @@ def command_param_fields(
     return [(name, psc, name in req_all) for name, psc in all_props.items()], has_id
 
 
+def schema_props_flat(spec: Spec, schema: dict) -> dict:
+    """The properties of an object schema, following $ref and allOf (the
+    compat-kwarg target lookup)."""
+    out: dict = {}
+    node = resolve_schema(spec, schema)
+    for sub in node.get("allOf") or []:
+        out.update(schema_props_flat(spec, sub))
+    out.update(node.get("properties") or {})
+    return out
+
+
 def is_object_body(spec: Spec, body_schema: dict) -> bool:
     if not body_schema:
         return False
@@ -2091,6 +2102,45 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         cmd_leaf = cmd_schema_ref.rsplit("/", 1)[-1] if cmd_schema_ref else ""
         cmd_schema = spec.schemas.get(cmd_leaf, {})
         fields, with_id = command_param_fields(spec, cmd_schema)
+        # x-sdk-compat-kwargs (on the ``params`` schema): an SDK kwarg kept for
+        # compatibility that is sent INTO a nested wire key (calling.record
+        # ``audio`` -> params.record.audio); the nested root it fills becomes
+        # optional. Mirrors the reference generator.
+        pnode = (resolve_schema(spec, cmd_schema).get("properties") or {}).get("params")
+        pnode = resolve_schema(spec, pnode) if isinstance(pnode, dict) else {}
+        compat_kw: list[tuple[str, str, str, dict]] = []  # (arg, root, leaf, schema)
+        field_names = {f[0] for f in fields}
+        for carg, cspec in (pnode.get("x-sdk-compat-kwargs") or {}).items():
+            into = (cspec or {}).get("into", "") if isinstance(cspec, dict) else ""
+            parts = into.split(".")
+            if len(parts) != 2 or carg in field_names or parts[0] not in field_names:
+                raise SystemExit(
+                    f"command {cmd!r}: x-sdk-compat-kwargs.{carg} into {into!r} must name "
+                    f"<existing param>.<key> and must not shadow a param"
+                )
+            root_schema = next(f[1] for f in fields if f[0] == parts[0])
+            root_props = schema_props_flat(spec, root_schema)
+            if parts[1] not in root_props:
+                raise SystemExit(
+                    f"command {cmd!r}: x-sdk-compat-kwargs.{carg}: {into!r} not found"
+                )
+            compat_kw.append((carg, parts[0], parts[1], root_props[parts[1]]))
+            fields = [
+                (n, sc, False if n == parts[0] else r) for n, sc, r in fields
+            ]
+        autofill_keys: list[str] = []
+        for wire_name, schema, _r in fields:
+            af = schema.get("x-sdk-autofill") if isinstance(schema, dict) else None
+            if af not in (None, "uuid4"):
+                raise SystemExit(
+                    f"command {cmd!r}: {wire_name}: x-sdk-autofill {af!r} is not a "
+                    f"known generator (uuid4)"
+                )
+            if af == "uuid4":
+                autofill_keys.append(wire_name)
+        # x-sdk-autofill: uuid4 — a server-required id the SDK generates when the
+        # caller omits it (the RELAY client's control_id idiom): an optional param.
+        fields = [(n, sc, False if n in autofill_keys else r) for n, sc, r in fields]
 
         used: set[str] = set()
         records: list[dict] = []
@@ -2134,6 +2184,35 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
                 build.append(f"            parms[{cs_str(wire_name)}] = {ident};")
                 build.append("        }")
             records.append(rec)
+        for carg, root, leaf, cschema in compat_kw:
+            ident = _dedupe_param(escape_param(carg), used)
+            pt = cs_param_type(spec, cschema, False)
+            ct = canonical_type(spec, cschema, False)
+            raw = ident.lstrip("@")
+            field_doc.append(
+                f'    /// <param name="{raw}">Sent as <c>{root}.{leaf}</c> (kept for compatibility).</param>'
+            )
+            field_cs.append(f"{pt} {ident} = null")
+            records.append(
+                {
+                    "name": carg,
+                    "kind": "keyword",
+                    "type": ct,
+                    "required": False,
+                    "default": None,
+                }
+            )
+            rv = "_" + snake_to_camel(root) + "Merged"
+            build.append(f"        if ({ident} is not null)")
+            build.append("        {")
+            build.append(
+                f"            var {rv} = parms.TryGetValue({cs_str(root)}, out var {rv}Prev) && {rv}Prev is Dictionary<string, object?> {rv}Dict"
+            )
+            build.append(f"                ? new Dictionary<string, object?>({rv}Dict)")
+            build.append("                : new Dictionary<string, object?>();")
+            build.append(f"            {rv}[{cs_str(leaf)}] = {ident};")
+            build.append(f"            parms[{cs_str(root)}] = {rv};")
+            build.append("        }")
         extras_id = _dedupe_param("extras", used)
         field_cs.append(f"Dictionary<string, object?>? {extras_id} = null")
         field_doc.append(
@@ -2155,6 +2234,10 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         build.append("                parms[kv.Key] = kv.Value;")
         build.append("            }")
         build.append("        }")
+        for key in autofill_keys:
+            build.append(
+                f"        parms.TryAdd({cs_str(key)}, System.Guid.NewGuid().ToString());"
+            )
         # request_options (plan 4.2): the keyword-only per-call envelope, recorded
         # AFTER extras to match the oracle order (…fields, extras, request_options).
         field_cs.append("RequestOptions? requestOptions = null")
@@ -2354,14 +2437,11 @@ def _emit_declared_and_sets(
             raise SystemExit(
                 f"{markup['name']}.{method_snake}: method markup missing op"
             )
-        if method_snake in provided:
-            if method_snake == "list_addresses":
-                _verb, op_path, _ = spec.ops[op_id]
-                _, sibling = relative_tail(spec, anchor, markup, op_path)
-                if not sibling:
-                    continue
-            else:
-                continue
+        if method_snake in provided and method_snake != "list_addresses":
+            continue
+        # A declared ``list_addresses`` is always re-emitted over the base's (as the
+        # reference does): the declaration carries the op's typed response, and a
+        # sibling op its own path.
         lines.append("")
         lines.append(
             emit_method(spec, anchor, markup, base, method_snake, op_id).rstrip("\n")
@@ -2500,15 +2580,11 @@ def _declared_surface_names(
     provided = BASE_PROVIDES[base]
     for method_snake, spec_ref in (markup.get("methods") or {}).items():
         if method_snake in provided:
-            # ``list_addresses`` re-emitted only as a sibling op (matches the
+            # A declared ``list_addresses`` is always re-emitted (matches the
             # generator's own _emit_declared_and_sets rule); other provided
             # methods stay on the base.
             if method_snake == "list_addresses":
-                op_id = spec_ref.get("op")
-                _verb, op_path, _ = spec.ops[op_id]
-                _, sibling = relative_tail(spec, anchor, markup, op_path)
-                if sibling:
-                    names.add("list_addresses")
+                names.add("list_addresses")
             continue
         names.add(method_snake)
     for sm_name in markup.get("set_methods") or {}:

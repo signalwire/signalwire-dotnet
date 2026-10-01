@@ -102,6 +102,7 @@
       "__init__",
       "create",
       "deploy_version",
+      "list_addresses",
       "list_versions",
       "update"
     ],
@@ -161,6 +162,7 @@
     "ConferenceRooms": [
       "__init__",
       "create",
+      "list_addresses",
       "update"
     ],
     "CxmlApplications": [
@@ -804,6 +806,21 @@
         "default": null
       }
     ],
+    "CallFlows::ListAddressesAsync": [
+      {
+        "name": "id",
+        "kind": "positional",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
+      }
+    ],
     "CallFlows::ListVersionsAsync": [
       {
         "name": "id",
@@ -1176,12 +1193,6 @@
         "required": true
       },
       {
-        "name": "control_id",
-        "kind": "keyword",
-        "type": "string",
-        "required": true
-      },
-      {
         "name": "continue",
         "kind": "keyword",
         "type": "optional<any>",
@@ -1190,6 +1201,13 @@
       },
       {
         "name": "continuous",
+        "kind": "keyword",
+        "type": "optional<any>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "control_id",
         "kind": "keyword",
         "type": "optional<any>",
         "required": false,
@@ -1367,16 +1385,17 @@
         "required": true
       },
       {
-        "name": "control_id",
-        "kind": "keyword",
-        "type": "string",
-        "required": true
-      },
-      {
         "name": "detect",
         "kind": "keyword",
         "type": "dict<string,any>",
         "required": true
+      },
+      {
+        "name": "control_id",
+        "kind": "keyword",
+        "type": "optional<any>",
+        "required": false,
+        "default": null
       },
       {
         "name": "status_url",
@@ -1712,16 +1731,17 @@
         "required": true
       },
       {
-        "name": "control_id",
-        "kind": "keyword",
-        "type": "string",
-        "required": true
-      },
-      {
         "name": "play",
         "kind": "keyword",
         "type": "list<any>",
         "required": true
+      },
+      {
+        "name": "control_id",
+        "kind": "keyword",
+        "type": "optional<any>",
+        "required": false,
+        "default": null
       },
       {
         "name": "direction",
@@ -1943,17 +1963,26 @@
       {
         "name": "control_id",
         "kind": "keyword",
-        "type": "string",
-        "required": true
+        "type": "optional<any>",
+        "required": false,
+        "default": null
       },
       {
         "name": "record",
         "kind": "keyword",
-        "type": "dict<string,any>",
-        "required": true
+        "type": "optional<any>",
+        "required": false,
+        "default": null
       },
       {
         "name": "status_url",
+        "kind": "keyword",
+        "type": "optional<any>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "audio",
         "kind": "keyword",
         "type": "optional<any>",
         "required": false,
@@ -2136,12 +2165,6 @@
         "required": true
       },
       {
-        "name": "control_id",
-        "kind": "keyword",
-        "type": "string",
-        "required": true
-      },
-      {
         "name": "url",
         "kind": "keyword",
         "type": "string",
@@ -2156,6 +2179,13 @@
       },
       {
         "name": "codec",
+        "kind": "keyword",
+        "type": "optional<any>",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "control_id",
         "kind": "keyword",
         "type": "optional<any>",
         "required": false,
@@ -2247,12 +2277,6 @@
         "required": true
       },
       {
-        "name": "control_id",
-        "kind": "keyword",
-        "type": "string",
-        "required": true
-      },
-      {
         "name": "device",
         "kind": "keyword",
         "type": "dict<string,any>",
@@ -2263,6 +2287,13 @@
         "kind": "keyword",
         "type": "dict<string,any>",
         "required": true
+      },
+      {
+        "name": "control_id",
+        "kind": "keyword",
+        "type": "optional<any>",
+        "required": false,
+        "default": null
       },
       {
         "name": "status_url",
@@ -2324,8 +2355,9 @@
       {
         "name": "control_id",
         "kind": "keyword",
-        "type": "string",
-        "required": true
+        "type": "optional<any>",
+        "required": false,
+        "default": null
       },
       {
         "name": "status_url",
@@ -2533,6 +2565,21 @@
       }
     ],
     "ConferenceLogs::ListAsync": [
+      {
+        "name": "request_options",
+        "kind": "keyword",
+        "type": "optional<class:signalwire.rest._request_options.RequestOptions>",
+        "required": false,
+        "default": null
+      }
+    ],
+    "ConferenceRooms::ListAddressesAsync": [
+      {
+        "name": "id",
+        "kind": "positional",
+        "type": "string",
+        "required": true
+      },
       {
         "name": "request_options",
         "kind": "keyword",
@@ -5954,11 +6001,13 @@
     "AliasAddresses::update": "class:signalwire.rest.namespaces.fabric_types_generated.AliasAddress",
     "CallFlows::create": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowResponse",
     "CallFlows::deploy_version": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowVersionDeployResponse",
+    "CallFlows::list_addresses": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowAddressListResponse",
     "CallFlows::list_versions": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowVersionListResponse",
     "CallFlows::update": "class:signalwire.rest.namespaces.fabric_types_generated.CallFlowResponse",
     "Chat::create_token": "class:signalwire.rest.namespaces.chat_types_generated.ChatToken",
     "ConferenceLogs::list": "class:signalwire.rest.namespaces.logs_types_generated.ConferencesResponse",
     "ConferenceRooms::create": "class:signalwire.rest.namespaces.fabric_types_generated.ConferenceRoomResponse",
+    "ConferenceRooms::list_addresses": "class:signalwire.rest.namespaces.fabric_types_generated.ConferenceRoomAddressListResponse",
     "ConferenceRooms::update": "class:signalwire.rest.namespaces.fabric_types_generated.ConferenceRoomResponse",
     "CxmlApplications::get": "class:signalwire.rest.namespaces.fabric_types_generated.CxmlApplicationResponse",
     "CxmlApplications::list": "class:signalwire.rest.namespaces.fabric_types_generated.CxmlApplicationListResponse",

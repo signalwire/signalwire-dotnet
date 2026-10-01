@@ -25,6 +25,16 @@ public class CallFlows : SignalWire.REST.CrudWithAddresses<SignalWire.REST.Names
     }
 
     /// <summary>
+    /// Generated from operation <c>list_call_flow_addresses</c> (GET /resources/call_flows/{id}/addresses).
+    /// </summary>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowAddressListResponse?> ListAddressesAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.CallFlowAddressListResponse>(Client.GetAsync(Path(id, "addresses"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
     /// Generated from operation <c>list_call_flow_versions</c> (GET /resources/call_flows/{id}/versions).
     /// </summary>
     /// <param name="queryParams">Query-string parameters.</param>

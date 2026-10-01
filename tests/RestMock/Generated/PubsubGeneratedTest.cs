@@ -42,7 +42,7 @@ public class PubsubGeneratedTest : CoverageBase
 {
     public PubsubGeneratedTest(MockServerFixture fixture) : base(fixture) { }
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 
     [Fact]
     public async Task Pubsub_CreateToken_Success()

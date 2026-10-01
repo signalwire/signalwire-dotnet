@@ -376,13 +376,13 @@ public sealed class RestClientTests : IDisposable
     public void Calling_MethodCount()
     {
         // The generated command-dispatch Calling resource exposes one typed
-        // method per canonical call-control command (37 commands). This guards
+        // method per canonical call-control command (42 commands, incl. the five calling.ai_sidecar ones). This guards
         // the generator against silently dropping/adding a command method.
         var methods = typeof(Calling)
             .GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Where(m => m.Name.EndsWith("Async", StringComparison.Ordinal))
             .ToList();
 
-        Assert.Equal(37, methods.Count);
+        Assert.Equal(42, methods.Count);
     }
 }

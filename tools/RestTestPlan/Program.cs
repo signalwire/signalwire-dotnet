@@ -65,7 +65,7 @@ internal static class Program
             BaseAddress = new Uri("http://127.0.0.1:0"),
         };
         using var swHttp = new SignalWire.REST.HttpClient(Sentinel, "t", "http://127.0.0.1:0", recordingHttp);
-        var tree = new ResourceTree(swHttp);
+        var tree = new ResourceTree(swHttp, swHttp);
 
         var plan = new List<PlanRec>();
         var errors = new List<ErrRec>();
@@ -158,6 +158,15 @@ internal static class Program
             if (result is Task task)
             {
                 try { task.GetAwaiter().GetResult(); }
+                catch (SignalWireRestError) when (recorder.Snapshot().Count > 0)
+                {
+                    // The route DISPATCHED (its request is recorded) and the SDK
+                    // then refused the recorder's uniform 200 answer — a method
+                    // whose success IS a redirect (DownloadAsync / GetPdfAsync
+                    // return the Location) reads a 200 as the wrong answer. The
+                    // plan captures the dispatched (method, path), which is all
+                    // it needs.
+                }
 #pragma warning disable CA1031 // Same: record whatever the awaited route threw.
                 catch (Exception ex)
                 {

@@ -42,7 +42,7 @@ public class VideoGeneratedTest : CoverageBase
 {
     public VideoGeneratedTest(MockServerFixture fixture) : base(fixture) { }
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 
     [Fact]
     public async Task VideoConferenceTokens_Get_Success()
@@ -283,6 +283,28 @@ public class VideoGeneratedTest : CoverageBase
         var tree = NewTree();
         var status = await AssertErrorAsync("video.delete_room_recording", 500,
             () => tree.Video.RoomRecordings.DeleteAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task VideoRoomRecordings_Download_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Video.RoomRecordings.DownloadAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("video.download_room_recording", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task VideoRoomRecordings_Download_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("video.download_room_recording", 500,
+            () => tree.Video.RoomRecordings.DownloadAsync("x"));
         Assert.Equal(500, status);
     }
 
@@ -687,7 +709,7 @@ public class VideoGeneratedTest : CoverageBase
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Video.Streams.UpdateAsync("x", "x");
+        var body = await tree.Video.Streams.UpdateAsync("x");
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("PUT", j.Method);
@@ -700,7 +722,7 @@ public class VideoGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("video.update_stream", 500,
-            () => tree.Video.Streams.UpdateAsync("x", "x"));
+            () => tree.Video.Streams.UpdateAsync("x"));
         Assert.Equal(500, status);
     }
 }

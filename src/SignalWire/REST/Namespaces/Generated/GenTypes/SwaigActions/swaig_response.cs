@@ -22,7 +22,7 @@ public class SwaigResponse
 {
     /// <summary>Wire field <c>response</c>.</summary>
     [JsonPropertyName("response")]
-    public string? response { get; set; }
+    public Dictionary<string, object?>? response { get; set; }
 
     /// <summary>Wire field <c>action</c>.</summary>
     [JsonPropertyName("action")]

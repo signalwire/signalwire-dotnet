@@ -44,6 +44,10 @@ public class CallingConnectParams
     [JsonPropertyName("ringback")]
     public List<object?>? Ringback { get; set; }
 
+    /// <summary>Wire field <c>send_digits</c>.</summary>
+    [JsonPropertyName("send_digits")]
+    public string? SendDigits { get; set; }
+
     /// <summary>Wire field <c>tag</c>.</summary>
     [JsonPropertyName("tag")]
     public string? Tag { get; set; }

@@ -42,7 +42,7 @@ public class RelayRestGeneratedTest : CoverageBase
 {
     public RelayRestGeneratedTest(MockServerFixture fixture) : base(fixture) { }
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 
     [Fact]
     public async Task Addresses_Create_Success()
@@ -129,6 +129,28 @@ public class RelayRestGeneratedTest : CoverageBase
         var tree = NewTree();
         var status = await AssertErrorAsync("relay-rest.list_addresses", 500,
             () => tree.Addresses.ListAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task Addresses_Update_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Addresses.UpdateAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("PUT", j.Method);
+        Assert.Equal("relay-rest.update_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task Addresses_Update_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("relay-rest.update_address", 500,
+            () => tree.Addresses.UpdateAsync("x"));
         Assert.Equal(500, status);
     }
 
@@ -441,6 +463,50 @@ public class RelayRestGeneratedTest : CoverageBase
     }
 
     [Fact]
+    public async Task PhoneNumbers_AssignE911Address_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.PhoneNumbers.AssignE911AddressAsync("x", "x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("relay-rest.assign_e911_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task PhoneNumbers_AssignE911Address_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("relay-rest.assign_e911_address", 500,
+            () => tree.PhoneNumbers.AssignE911AddressAsync("x", "x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task PhoneNumbers_ClearCnam_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.PhoneNumbers.ClearCnamAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("DELETE", j.Method);
+        Assert.Equal("relay-rest.clear_caller_id_name", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task PhoneNumbers_ClearCnam_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("relay-rest.clear_caller_id_name", 500,
+            () => tree.PhoneNumbers.ClearCnamAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
     public async Task PhoneNumbers_Create_Success()
     {
         if (!Fixture.Available) return;
@@ -507,6 +573,28 @@ public class RelayRestGeneratedTest : CoverageBase
     }
 
     [Fact]
+    public async Task PhoneNumbers_GetCnam_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.PhoneNumbers.GetCnamAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("relay-rest.retrieve_caller_id_name", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task PhoneNumbers_GetCnam_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("relay-rest.retrieve_caller_id_name", 500,
+            () => tree.PhoneNumbers.GetCnamAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
     public async Task PhoneNumbers_List_Success()
     {
         if (!Fixture.Available) return;
@@ -525,6 +613,50 @@ public class RelayRestGeneratedTest : CoverageBase
         var tree = NewTree();
         var status = await AssertErrorAsync("relay-rest.list_phone_numbers", 500,
             () => tree.PhoneNumbers.ListAsync());
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task PhoneNumbers_RemoveE911Address_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.PhoneNumbers.RemoveE911AddressAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("DELETE", j.Method);
+        Assert.Equal("relay-rest.remove_e911_address", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task PhoneNumbers_RemoveE911Address_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("relay-rest.remove_e911_address", 500,
+            () => tree.PhoneNumbers.RemoveE911AddressAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
+    public async Task PhoneNumbers_RequestCnam_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.PhoneNumbers.RequestCnamAsync("x", "x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("POST", j.Method);
+        Assert.Equal("relay-rest.request_caller_id_name", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task PhoneNumbers_RequestCnam_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("relay-rest.request_caller_id_name", 500,
+            () => tree.PhoneNumbers.RequestCnamAsync("x", "x"));
         Assert.Equal(500, status);
     }
 
@@ -925,6 +1057,28 @@ public class RelayRestGeneratedTest : CoverageBase
     }
 
     [Fact]
+    public async Task Recordings_Download_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Recordings.DownloadAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("GET", j.Method);
+        Assert.Equal("relay-rest.download_recording", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task Recordings_Download_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("relay-rest.download_recording", 500,
+            () => tree.Recordings.DownloadAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
     public async Task Recordings_Get_Success()
     {
         if (!Fixture.Available) return;
@@ -1079,11 +1233,33 @@ public class RelayRestGeneratedTest : CoverageBase
     }
 
     [Fact]
+    public async Task RegistryBrands_Update_Success()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var body = await tree.Registry.Brands.UpdateAsync("x");
+        Assert.NotNull(body);
+        var j = Fixture.Harness.Journal.Last();
+        Assert.Equal("PUT", j.Method);
+        Assert.Equal("relay-rest.update_brand", j.MatchedRoute);
+    }
+
+    [Fact]
+    public async Task RegistryBrands_Update_Error()
+    {
+        if (!Fixture.Available) return;
+        var tree = NewTree();
+        var status = await AssertErrorAsync("relay-rest.update_brand", 500,
+            () => tree.Registry.Brands.UpdateAsync("x"));
+        Assert.Equal(500, status);
+    }
+
+    [Fact]
     public async Task RegistryCampaigns_CreateOrder_Success()
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Registry.Campaigns.CreateOrderAsync("x");
+        var body = await tree.Registry.Campaigns.CreateOrderAsync("x", new List<object?>());
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("POST", j.Method);
@@ -1096,7 +1272,7 @@ public class RelayRestGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("relay-rest.create_order", 500,
-            () => tree.Registry.Campaigns.CreateOrderAsync("x"));
+            () => tree.Registry.Campaigns.CreateOrderAsync("x", new List<object?>()));
         Assert.Equal(500, status);
     }
 
@@ -1281,7 +1457,7 @@ public class RelayRestGeneratedTest : CoverageBase
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.ShortCodes.UpdateAsync("x", "x", "x");
+        var body = await tree.ShortCodes.UpdateAsync("x");
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("PUT", j.Method);
@@ -1294,7 +1470,7 @@ public class RelayRestGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("relay-rest.update_short_code", 500,
-            () => tree.ShortCodes.UpdateAsync("x", "x", "x"));
+            () => tree.ShortCodes.UpdateAsync("x"));
         Assert.Equal(500, status);
     }
 

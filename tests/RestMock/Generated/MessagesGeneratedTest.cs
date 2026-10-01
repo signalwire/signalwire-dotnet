@@ -42,7 +42,7 @@ public class MessagesGeneratedTest : CoverageBase
 {
     public MessagesGeneratedTest(MockServerFixture fixture) : base(fixture) { }
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 
     [Fact]
     public async Task Messages_Create_Success()
@@ -71,7 +71,7 @@ public class MessagesGeneratedTest : CoverageBase
     {
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var body = await tree.Messages.UpdateAsync("x", "x");
+        var body = await tree.Messages.UpdateAsync("x");
         Assert.NotNull(body);
         var j = Fixture.Harness.Journal.Last();
         Assert.Equal("PATCH", j.Method);
@@ -84,7 +84,7 @@ public class MessagesGeneratedTest : CoverageBase
         if (!Fixture.Available) return;
         var tree = NewTree();
         var status = await AssertErrorAsync("messages.update_message", 500,
-            () => tree.Messages.UpdateAsync("x", "x"));
+            () => tree.Messages.UpdateAsync("x"));
         Assert.Equal(500, status);
     }
 }

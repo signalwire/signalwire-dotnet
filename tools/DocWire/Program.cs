@@ -40,7 +40,7 @@ internal static class DocWire
         var url = $"http://{host}:{portRaw}";
 
         using var http = new SignalWire.REST.HttpClient("test_proj", "test_tok", url);
-        var tree = new ResourceTree(http);
+        var tree = new ResourceTree(http, http);
 
         const string callId = "call-doc-wire";
 

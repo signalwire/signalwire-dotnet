@@ -132,6 +132,10 @@ internal static class Program
         // lazily materialised, so the recording transport is what every route hits.
         SetPrivateField(client, "_http", swHttp);
         SetPrivateField(client, "_generatedHttp", swHttp);
+        // The Personal Access Token transport (client.Space) records through the
+        // same transport — the route is what is captured, not the credential.
+        SetPrivateField(client, "_patHttp", swHttp);
+        SetPrivateField(client, "_generatedPatHttp", swHttp);
 
         var routes = new SortedDictionary<string, RouteRec>(StringComparer.Ordinal);
         var skipped = new List<SkipRec>();

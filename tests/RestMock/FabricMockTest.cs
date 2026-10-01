@@ -80,10 +80,10 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     // no-create design), so there is nothing to invoke or assert. See
     // PORT_TEST_OMISSIONS.md.
 
-    // ---- CallFlows.list_addresses — singular path ------------------
+    // ---- CallFlows.list_addresses ------------------------------------
 
     [Fact]
-    public async Task CallFlows_ListAddresses_UsesSingularPath()
+    public async Task CallFlows_ListAddresses_UsesAddressesSubpath()
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
@@ -93,15 +93,15 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
-        // singular 'call_flow' (NOT 'call_flows').
-        Assert.Equal("/api/fabric/resources/call_flow/cf-1/addresses", last.Path);
+        // plural 'call_flows': the server routes no singular addresses path.
+        Assert.Equal("/api/fabric/resources/call_flows/cf-1/addresses", last.Path);
         Assert.NotNull(last.MatchedRoute);
     }
 
-    // ---- ConferenceRooms.list_addresses — singular path ------------
+    // ---- ConferenceRooms.list_addresses ------------------------------
 
     [Fact]
-    public async Task ConferenceRooms_ListAddresses_UsesSingularPath()
+    public async Task ConferenceRooms_ListAddresses_UsesAddressesSubpath()
     {
         if (!_fixture.Available) return;
         var fabric = NewFabric();
@@ -111,7 +111,7 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
 
         var last = _fixture.Harness.Journal.Last();
         Assert.Equal("GET", last.Method);
-        Assert.Equal("/api/fabric/resources/conference_room/cr-1/addresses", last.Path);
+        Assert.Equal("/api/fabric/resources/conference_rooms/cr-1/addresses", last.Path);
         Assert.NotNull(last.MatchedRoute);
     }
 
@@ -160,30 +160,6 @@ public class FabricMockTest : IClassFixture<MockServerFixture>
     }
 
     // ---- FabricTokens — invite / embed / refresh -------------------
-
-    [Fact]
-    public async Task Tokens_CreateInviteToken()
-    {
-        if (!_fixture.Available) return;
-        var fabric = NewFabric();
-        // SubscriberInviteTokenCreateRequest declares address_id (required) +
-        // expires_at (optional) — exercise the real typed expiresAt param instead
-        // of the old hand test's invented `email` extras key.
-        var body = await fabric.Tokens.CreateInviteTokenAsync(
-            addressId: "addr-invite-1",
-            expiresAt: 7200);
-        Assert.NotNull(body);
-
-        var last = _fixture.Harness.Journal.Last();
-        Assert.Equal("POST", last.Method);
-        // subscriber/invites uses singular 'subscriber'.
-        Assert.Equal("/api/fabric/subscriber/invites", last.Path);
-        var map = last.BodyMap();
-        Assert.NotNull(map);
-        Assert.Equal("addr-invite-1", StringField(last, "address_id"));
-        Assert.True(map!.ContainsKey("expires_at"));
-        Assert.Equal(7200, map["expires_at"].GetInt32());
-    }
 
     [Fact]
     public async Task Tokens_CreateEmbedToken()

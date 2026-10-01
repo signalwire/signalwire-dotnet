@@ -283,13 +283,27 @@ public class {cls} : CoverageBase
 {{
     public {cls}(MockServerFixture fixture) : base(fixture) {{ }}
 
-    private ResourceTree NewTree() => new(NewHttp());
+    private ResourceTree NewTree() => new(NewHttp(), NewPatHttp());
 """
 
 
-def emit_spec_file(spec: str, rows: list[dict]) -> str:
+#: The security scheme a Personal-Access-Token spec declares (rest-apis/space).
+PAT_SECURITY_SCHEME = "SignalWirePersonalAccessToken"
+
+
+def spec_is_pat(doc: dict) -> bool:
+    """True when the spec's root ``security`` accepts ONLY the Personal Access
+    Token: its routes are journaled under the PAT credential, not the project's."""
+    security = doc.get("security") or []
+    names = [n for req in security if isinstance(req, dict) for n in req]
+    return bool(names) and all(n == PAT_SECURITY_SCHEME for n in names)
+
+
+def emit_spec_file(spec: str, rows: list[dict], pat: bool = False) -> str:
     cls = pascal_spec(spec) + "GeneratedTest"
     body = HEADER_TMPL.format(spec=spec, cls=cls)
+    harness = "Fixture.PatHarness" if pat else "Fixture.Harness"
+    assert_error = "AssertPatErrorAsync" if pat else "AssertErrorAsync"
     for r in rows:
         ident = r["_ident"]
         call = call_expr(r["chain"], r["member"], r["args"])
@@ -303,7 +317,7 @@ def emit_spec_file(spec: str, rows: list[dict]) -> str:
         var tree = NewTree();
         var body = await {call};
         Assert.NotNull(body);
-        var j = Fixture.Harness.Journal.Last();
+        var j = {harness}.Journal.Last();
         Assert.Equal("{method}", j.Method);
         Assert.Equal("{op_id}", j.MatchedRoute);
     }}
@@ -313,7 +327,7 @@ def emit_spec_file(spec: str, rows: list[dict]) -> str:
     {{
         if (!Fixture.Available) return;
         var tree = NewTree();
-        var status = await AssertErrorAsync("{op_id}", 500,
+        var status = await {assert_error}("{op_id}", 500,
             () => {call});
         Assert.Equal(500, status);
     }}
@@ -352,7 +366,10 @@ def build_outputs(psdk: Path) -> tuple[dict[str, str], list[str], int]:
                 k += 1
             used.add(ident)
             r["_ident"] = ident
-        outs[f"{pascal_spec(spec)}GeneratedTest.cs"] = emit_spec_file(spec, srows)
+        doc = yaml.safe_load((psdk / "rest-apis" / spec / "openapi.yaml").read_text())
+        outs[f"{pascal_spec(spec)}GeneratedTest.cs"] = emit_spec_file(
+            spec, srows, pat=spec_is_pat(doc)
+        )
 
     return outs, unmatched, len(rows)
 
