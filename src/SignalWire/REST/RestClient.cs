@@ -105,10 +105,10 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
         public static Credentials Resolve(string projectId, string token, string space, string pat)
         {
             var c = new Credentials(
-                Pick(projectId, "SIGNALWIRE_PROJECT_ID"),
-                Pick(token, "SIGNALWIRE_API_TOKEN"),
-                Pick(space, "SIGNALWIRE_SPACE"),
-                Pick(pat, "SIGNALWIRE_PERSONAL_ACCESS_TOKEN"));
+                Pick(projectId, Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID")),
+                Pick(token, Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN")),
+                Pick(space, Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE")),
+                Pick(pat, Environment.GetEnvironmentVariable("SIGNALWIRE_PERSONAL_ACCESS_TOKEN")));
             if (c.Pat.Length == 0)
             {
                 if (c.ProjectId.Length == 0)
@@ -121,8 +121,8 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
             return c;
         }
 
-        private static string Pick(string? value, string envVar)
-            => !string.IsNullOrEmpty(value) ? value : Environment.GetEnvironmentVariable(envVar) ?? "";
+        private static string Pick(string? value, string? fromEnv)
+            => !string.IsNullOrEmpty(value) ? value : fromEnv ?? "";
     }
 
     /// <summary>

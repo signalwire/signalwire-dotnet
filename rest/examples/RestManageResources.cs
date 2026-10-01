@@ -61,7 +61,7 @@ await Safe("Search numbers", async () =>
         new Dictionary<string, string> { ["areacode"] = "512", ["max_results"] = "3" });
     foreach (var n in available?.Data ?? [])
     {
-        Console.WriteLine($"  - {n.Number} ({n.City}, {n.Region})");
+        Console.WriteLine($"  - {n.E164} ({n.RateCenter}, {n.Region})");
     }
     return available;
 });

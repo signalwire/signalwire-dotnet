@@ -33,7 +33,7 @@ await Safe("Create cXML", async () =>
         ["name"] = "team-conference",
         ["body"] = @"<Response><Dial><Conference>team-room</Conference></Dial></Response>",
     });
-    Console.WriteLine($"    Resource ID: {cxml?.Id} ({cxml?.Name})");
+    Console.WriteLine($"    Resource ID: {cxml?.Id} ({cxml?.DisplayName})");
 });
 
 // 2. Create a generic Fabric resource
@@ -54,9 +54,10 @@ await Safe("List addresses", async () =>
 {
     var addresses = await client.Fabric.Addresses.ListAsync();
 
+    // Each item is one of the address kinds (a union), so print it as returned.
     foreach (var a in (addresses?.Data ?? []).Take(5))
     {
-        Console.WriteLine($"    - {a.Id}: {a.Name}");
+        Console.WriteLine($"    - {a}");
     }
 });
 

@@ -2264,10 +2264,10 @@ def emit_command_dispatch(spec: Spec, anchor: str, markup: dict) -> str:
         build.append("                parms[kv.Key] = kv.Value;")
         build.append("            }")
         build.append("        }")
-        for key in autofill_keys:
-            build.append(
-                f"        parms.TryAdd({cs_str(key)}, System.Guid.NewGuid().ToString());"
-            )
+        build.extend(
+            f"        parms.TryAdd({cs_str(key)}, System.Guid.NewGuid().ToString());"
+            for key in autofill_keys
+        )
         # request_options (plan 4.2): the keyword-only per-call envelope, recorded
         # AFTER extras to match the oracle order (…fields, extras, request_options).
         field_cs.append("RequestOptions? requestOptions = null")
@@ -2608,7 +2608,7 @@ def _declared_surface_names(
     ``list_addresses``) that method. Always includes ``__init__``."""
     names: set[str] = {"__init__"}
     provided = BASE_PROVIDES[base]
-    for method_snake, spec_ref in (markup.get("methods") or {}).items():
+    for method_snake in markup.get("methods") or {}:
         if method_snake in provided:
             # A declared ``list_addresses`` is always re-emitted (matches the
             # generator's own _emit_declared_and_sets rule); other provided

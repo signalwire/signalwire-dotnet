@@ -781,10 +781,11 @@ public class FunctionResultTests
     }
 
     [Fact]
-    public void ExecuteSwml_WithTransfer_AddsTransferInsideSwml()
+    public void ExecuteSwml_WithTransfer_AddsTransferBesideSwml()
     {
-        // Python parity (test_execute_swml_with_transfer_true):
-        // action["SWML"]["transfer"] == "true" (NOT a separate transfer_swml action).
+        // Python parity (test_execute_swml_with_transfer_true): action["transfer"]
+        // == "true" BESIDE the SWML document (inside it the call never exits the
+        // agent), and no separate transfer_swml action.
         var swml = new Dictionary<string, object>
         {
             ["version"] = "1.0.0",
@@ -795,8 +796,9 @@ public class FunctionResultTests
         var action = GetAction(fr, 0);
         Assert.True(action.ContainsKey("SWML"));
         Assert.False(action.ContainsKey("transfer_swml"));
+        Assert.Equal("true", action["transfer"]);
         var emitted = (Dictionary<string, object>)action["SWML"];
-        Assert.Equal("true", emitted["transfer"]);
+        Assert.False(emitted.ContainsKey("transfer"));
     }
 
     [Fact]
@@ -822,7 +824,8 @@ public class FunctionResultTests
         fr.ExecuteSwml(original, true);
         Assert.False(original.ContainsKey("transfer"));
         var emitted = (Dictionary<string, object>)GetAction(fr, 0)["SWML"];
-        Assert.Equal("true", emitted["transfer"]);
+        Assert.NotSame(original, emitted);
+        Assert.Equal("true", GetAction(fr, 0)["transfer"]);
     }
 
     // =================================================================
@@ -1023,14 +1026,15 @@ public class FunctionResultTests
     [Fact]
     public void Tap_Defaults_OmitsDefaultKeys()
     {
-        // Python parity (test_tap_default_params): only uri present; default
-        // direction/codec/rtp_ptime omitted.
+        // Python parity (test_tap_default_params): uri + direction present
+        // (direction is always sent — the verb's own default is "speak", not
+        // "both"); default codec/rtp_ptime omitted.
         // Tap(uri) alone is ambiguous between the enum and string overloads (both
         // default direction/codec); pin the typed default to select the canonical
         // overload — the emitted SWML is byte-identical to tap(uri) in Python.
         var t = MainVerb(GetAction(new FunctionResult().Tap("rtp://192.168.1.1:5000", direction: TapDirection.Both), 0), "tap");
         Assert.Equal("rtp://192.168.1.1:5000", t["uri"]);
-        Assert.False(t.ContainsKey("direction"));
+        Assert.Equal("both", t["direction"]);
         Assert.False(t.ContainsKey("codec"));
         Assert.False(t.ContainsKey("rtp_ptime"));
     }
@@ -1049,10 +1053,18 @@ public class FunctionResultTests
     }
 
     [Fact]
-    public void Tap_DirectionHear()
+    public void Tap_DirectionListen()
     {
-        var t = MainVerb(GetAction(new FunctionResult().Tap("rtp://1.2.3.4:5000", direction: "hear"), 0), "tap");
-        Assert.Equal("hear", t["direction"]);
+        var t = MainVerb(GetAction(new FunctionResult().Tap("rtp://1.2.3.4:5000", direction: "listen"), 0), "tap");
+        Assert.Equal("listen", t["direction"]);
+    }
+
+    [Fact]
+    public void Tap_DirectionHear_IsNotATapDirection()
+    {
+        // "hear" is not in the SWML tap verb's enum (speak/listen/both): the
+        // engine reads "listen" as what the party hears.
+        Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("rtp://1.2.3.4:5000", direction: "hear"));
     }
 
     [Fact]
@@ -1060,7 +1072,7 @@ public class FunctionResultTests
     {
         var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("rtp://1.2.3.4:5000", direction: "invalid"));
         Assert.Contains("direction must be one of", ex.Message);
-        Assert.Contains("['speak', 'hear', 'both']", ex.Message);
+        Assert.Contains("['speak', 'listen', 'both']", ex.Message);
     }
 
     [Fact]
@@ -1085,28 +1097,23 @@ public class FunctionResultTests
     {
         // (a) each member maps to its exact wire value.
         Assert.Equal("speak", TapDirection.Speak.ToWireName());
-        Assert.Equal("hear", TapDirection.Hear.ToWireName());
+        Assert.Equal("listen", TapDirection.Listen.ToWireName());
         Assert.Equal("both", TapDirection.Both.ToWireName());
 
         // (b) the enum overload and the equivalent string produce the
-        // BYTE-IDENTICAL tap verb. Use a non-default direction (hear) so the
-        // key is actually emitted and assertable.
-        var enumTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", controlId: "t1", direction: TapDirection.Hear, codec: Codec.Pcmu, rtpPtime: 20, statusUrl: null), 0), "tap");
-        var stringTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", "t1", "hear", "PCMU", 20, null), 0), "tap");
-        Assert.Equal("hear", enumTap["direction"]);
+        // BYTE-IDENTICAL tap verb.
+        var enumTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", controlId: "t1", direction: TapDirection.Listen, codec: Codec.Pcmu, rtpPtime: 20, statusUrl: null), 0), "tap");
+        var stringTap = MainVerb(GetAction(new FunctionResult().Tap("wss://example.com/t", "t1", "listen", "PCMU", 20, null), 0), "tap");
+        Assert.Equal("listen", enumTap["direction"]);
         Assert.Equal(stringTap, enumTap);  // whole verb dict byte-identical
 
-        // (c) every value round-trips to the wire, including the default which
-        // the per-key guard omits (both -> direction key absent on both paths).
+        // (c) every value round-trips to the wire, the default included.
         foreach (var d in (TapDirection[])Enum.GetValues<TapDirection>())
         {
             var e = MainVerb(GetAction(new FunctionResult().Tap("u", direction: d, codec: Codec.Pcmu), 0), "tap");
             var s = MainVerb(GetAction(new FunctionResult().Tap("u", "", d.ToWireName(), "PCMU", 20, null), 0), "tap");
             Assert.Equal(s, e);
-            if (d == TapDirection.Both)
-                Assert.False(e.ContainsKey("direction"));  // default omitted
-            else
-                Assert.Equal(d.ToWireName(), e["direction"]);
+            Assert.Equal(d.ToWireName(), e["direction"]);
         }
     }
 
@@ -1145,9 +1152,9 @@ public class FunctionResultTests
         // (d) the string overload's validation still rejects out-of-set values
         // (the enum overload only constrains compile-time call sites; the string
         // path remains the runtime guard — parity with Python's ValueError).
-        var dirEx = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("u", controlId: "", direction: "listen"));
+        var dirEx = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("u", controlId: "", direction: "hear"));
         Assert.Contains("direction must be one of", dirEx.Message);
-        Assert.Contains("['speak', 'hear', 'both']", dirEx.Message);  // 'listen' is record_call's, NOT tap's
+        Assert.Contains("['speak', 'listen', 'both']", dirEx.Message);  // 'hear' is not a tap direction
 
         var codecEx = Assert.Throws<ArgumentException>(() => new FunctionResult().Tap("u", controlId: "", codec: "OPUS"));
         Assert.Contains("codec must be one of", codecEx.Message);

@@ -56,7 +56,7 @@ var avail = await SafeAsync("Search 512", () => client.PhoneNumbers.SearchAsync(
     new Dictionary<string, string> { ["areacode"] = "512", ["max_results"] = "3" }));
 foreach (var n in (avail?.Data ?? []).Take(5))
 {
-    Console.WriteLine($"    - {n.Number ?? "unknown"} ({n.City}, {n.Region})");
+    Console.WriteLine($"    - {n.E164 ?? "unknown"} ({n.RateCenter}, {n.Region})");
 }
 
 // 3. List AI agents

@@ -801,10 +801,11 @@ public class FunctionResult
     /// <remarks>
     /// The content (a dict, or a JSON string parsed to a dict) is emitted verbatim
     /// under the <c>SWML</c> action key. When <paramref name="transfer"/> is true,
-    /// a <c>"transfer": "true"</c> entry is added INSIDE that SWML dict (Python does
-    /// <c>action["transfer"] = "true"</c> on the SWML payload itself — there is no
-    /// separate <c>transfer_swml</c> action name). A JSON string that fails to parse
-    /// is wrapped as <c>{ "raw_swml": &lt;text&gt; }</c>, matching the reference.
+    /// <c>"transfer": "true"</c> rides BESIDE the SWML document in the same action
+    /// object — the shape <c>connect</c> and <c>swml_transfer</c> emit. Inside the
+    /// document it is not a SWML key and the call never exits the agent. A JSON
+    /// string that fails to parse is wrapped as <c>{ "raw_swml": &lt;text&gt; }</c>,
+    /// matching the reference.
     /// </remarks>
     /// <exception cref="ArgumentException">
     /// If <paramref name="swmlContent"/> is neither a string nor a dictionary
@@ -815,7 +816,7 @@ public class FunctionResult
         Dictionary<string, object> swmlData;
         if (swmlContent is string text)
         {
-            // Raw SWML string: parse to dict so the transfer key can be added.
+            // Raw SWML string: parse to dict so the action carries a document.
             // On parse failure fall back to {raw_swml: text} (Python parity).
             try
             {
@@ -829,7 +830,7 @@ public class FunctionResult
         }
         else if (swmlContent is Dictionary<string, object> dict)
         {
-            // Copy so we don't mutate the caller's dictionary when adding transfer.
+            // Copy so the emitted document never aliases the caller's dictionary.
             swmlData = new Dictionary<string, object>(dict);
         }
         else
@@ -838,12 +839,13 @@ public class FunctionResult
                 "swmlContent must be string or dictionary", nameof(swmlContent));
         }
 
+        var action = new Dictionary<string, object> { ["SWML"] = swmlData };
         if (transfer)
         {
-            swmlData["transfer"] = "true";
+            action["transfer"] = "true";
         }
 
-        return AddAction("SWML", swmlData);
+        return AddAction(action);
     }
 
     /// <summary>
@@ -1069,7 +1071,7 @@ public class FunctionResult
     /// Equivalent to the Python
     /// <c>tap(uri, control_id, direction, codec, rtp_ptime, status_url)</c>, in the
     /// same parameter order. The Python reference validates the bare-string
-    /// <c>direction</c>/<c>codec</c> against the closed sets {speak,hear,both} /
+    /// <c>direction</c>/<c>codec</c> against the closed sets {speak,listen,both} /
     /// {PCMU,PCMA}; this overload surfaces those knowable sets as enums so a bad
     /// value is a compile error rather than a runtime <c>ValueError</c> (a
     /// same-arity bare-string overload preserves the Python <c>str</c> path — see
@@ -1108,7 +1110,7 @@ public class FunctionResult
     /// <see cref="Tap(string, string?, TapDirection, Codec, int, string?)"/>: start
     /// a background call tap with <paramref name="direction"/> and
     /// <paramref name="codec"/> as bare strings, validated at runtime against the
-    /// same closed sets ({speak,hear,both} / {PCMU,PCMA}). This keeps consistency
+    /// same closed sets ({speak,listen,both} / {PCMU,PCMA}). This keeps consistency
     /// with the Python reference (which takes bare <c>str</c> arguments and raises
     /// <c>ValueError</c> on a bad value) and keeps a forward-compatible escape
     /// hatch. The emitted SWML is identical to the typed overload — both delegate
@@ -1121,14 +1123,16 @@ public class FunctionResult
     /// <see cref="TapDirection"/>/<see cref="Codec"/> enums (or neither) binds the
     /// typed canonical overload. Both share Python's parameter order and defaults;
     /// the only difference is the static type of the two closed-set arguments.
-    /// The tap direction set (<c>speak</c>/<c>hear</c>/<c>both</c>) differs from
-    /// <c>record_call</c>'s (<c>speak</c>/<c>listen</c>/<c>both</c>), and the tap
-    /// codec set (<c>PCMU</c>/<c>PCMA</c>) is narrower than the RELAY connect/stream
-    /// codec superset — hence the dedicated <see cref="TapDirection"/> and
-    /// <see cref="Codec"/> enums rather than shared ones.
+    /// The tap direction set (<c>speak</c>/<c>listen</c>/<c>both</c>, the SWML
+    /// <c>tap</c> verb's enum) is validated separately from <c>record_call</c>'s,
+    /// and the tap codec set (<c>PCMU</c>/<c>PCMA</c>) is narrower than the RELAY
+    /// connect/stream codec superset — hence the dedicated
+    /// <see cref="TapDirection"/> and <see cref="Codec"/> enums rather than shared
+    /// ones. <c>direction</c> is always emitted: the verb's own default is
+    /// <c>speak</c>, not this helper's <c>both</c>.
     /// </remarks>
     /// <exception cref="ArgumentException">
-    /// If <paramref name="direction"/> is not one of <c>speak</c>/<c>hear</c>/<c>both</c>,
+    /// If <paramref name="direction"/> is not one of <c>speak</c>/<c>listen</c>/<c>both</c>,
     /// <paramref name="codec"/> is not one of <c>PCMU</c>/<c>PCMA</c>, or
     /// <paramref name="rtpPtime"/> is not a positive integer (matching Python's
     /// <c>ValueError</c>).
@@ -1142,8 +1146,8 @@ public class FunctionResult
         int rtpPtime = 20,
         string? statusUrl = null)
     {
-        // Validate direction ({speak, hear, both}), codec ({PCMU, PCMA}), rtp_ptime > 0.
-        string[] validDirections = ["speak", "hear", "both"];
+        // Validate direction ({speak, listen, both}), codec ({PCMU, PCMA}), rtp_ptime > 0.
+        string[] validDirections = ["speak", "listen", "both"];
         if (Array.IndexOf(validDirections, direction) < 0)
             throw new ArgumentException(
                 $"direction must be one of {PyList(validDirections)}", nameof(direction));
@@ -1173,10 +1177,12 @@ public class FunctionResult
         int rtpPtime,
         string? statusUrl)
     {
-        // uri is always present; the rest only when non-default.
+        // uri and direction are always present; the rest only when non-default.
+        // direction is always sent: the verb's own default is "speak", not this
+        // helper's "both", so omitting it would tap less than the caller asked for.
         var tapObj = new Dictionary<string, object> { ["uri"] = uri };
         if (!string.IsNullOrEmpty(controlId)) tapObj["control_id"] = controlId;
-        if (direction != "both") tapObj["direction"] = direction;
+        tapObj["direction"] = direction;
         if (codec != "PCMU") tapObj["codec"] = codec;
         if (rtpPtime != 20) tapObj["rtp_ptime"] = rtpPtime;
         if (!string.IsNullOrEmpty(statusUrl)) tapObj["status_url"] = statusUrl;

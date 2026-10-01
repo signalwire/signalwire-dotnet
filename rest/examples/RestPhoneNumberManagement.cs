@@ -44,7 +44,7 @@ await Safe("Search 512", async () =>
     var available = await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacode"] = "512", ["max_results"] = "5" });
     foreach (var n in available?.Data ?? [])
     {
-        Console.WriteLine($"    - {n.Number} ({n.City}, {n.Region})");
+        Console.WriteLine($"    - {n.E164} ({n.RateCenter}, {n.Region})");
     }
 });
 
@@ -55,7 +55,7 @@ await Safe("Search toll-free", async () =>
     var available = await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacode"] = "800", ["max_results"] = "3" });
     foreach (var n in available?.Data ?? [])
     {
-        Console.WriteLine($"    - {n.Number} ({n.City}, {n.Region})");
+        Console.WriteLine($"    - {n.E164} ({n.RateCenter}, {n.Region})");
     }
 });
 

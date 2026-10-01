@@ -267,8 +267,8 @@ public sealed class ParameterSchemaTests : IDisposable
             (List<string>)((Dictionary<string, object>)p["format"])["enum"]);
         Assert.Equal(new List<string> { "speak", "listen", "both" },
             (List<string>)((Dictionary<string, object>)p["rec_dir"])["enum"]);
-        // tap uses "hear" where record_call uses "listen" — distinct vocab.
-        Assert.Equal(new List<string> { "speak", "hear", "both" },
+        // tap's own closed set (the SWML tap verb's enum).
+        Assert.Equal(new List<string> { "speak", "listen", "both" },
             (List<string>)((Dictionary<string, object>)p["tap_dir"])["enum"]);
         Assert.Equal(new List<string> { "PCMU", "PCMA" },
             (List<string>)((Dictionary<string, object>)p["codec"])["enum"]);

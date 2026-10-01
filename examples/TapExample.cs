@@ -30,7 +30,7 @@ var controlledTap = new FunctionResult("Starting controlled audio tap");
 controlledTap.Tap(
     uri: "wss://analytics.example.com/stream",
     controlId: "analytics_tap_001",
-    direction: "hear",
+    direction: "listen",
     codec: "PCMA");
 PrintResult("Controlled Tap", controlledTap);
 
@@ -55,6 +55,6 @@ PrintResult("Transcription Tap", transcriptionTap);
 Console.WriteLine("All tap examples completed.");
 Console.WriteLine("\nKey Features:");
 Console.WriteLine("- Real-time audio streaming to external endpoints");
-Console.WriteLine("- Directional tapping (direction: \"speak\", \"hear\", or \"both\")");
+Console.WriteLine("- Directional tapping (direction: \"speak\", \"listen\", or \"both\")");
 Console.WriteLine("- Control IDs for starting/stopping taps");
 Console.WriteLine("- Integration with transcription and analytics services");

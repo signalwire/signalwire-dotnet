@@ -162,7 +162,7 @@ await client.PhoneNumbers.SearchAsync(new Dictionary<string, string> { ["areacod
 await client.Datasphere.Documents.SearchAsync("billing policy");
 ```
 
-- 22 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Phone Numbers, SIP, Queues, Recordings, and more
+- 24 namespaced API surfaces: Fabric, Calling, Video, Datasphere, Phone Numbers, SIP, Queues, Recordings, WhatsApp, Space administration, and more
 - `Task`-based async API throughout
 - `HttpClient` with connection pooling
 - Dictionary returns -- raw data, no wrapper objects
