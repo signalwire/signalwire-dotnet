@@ -154,6 +154,12 @@ static JsonObject? DumpType(Type t)
             ["is_required"] = p.GetCustomAttributes(inherit: false)
                 .Any(a => a.GetType().FullName
                     == "System.Runtime.CompilerServices.RequiredMemberAttribute"),
+            // The [JsonPropertyName] wire key, when declared: a generated data
+            // type whose wire key is not a legal C# identifier (`nomatch-output`)
+            // names the property `nomatch_output` and carries the key here.
+            ["wire_name"] = p.GetCustomAttributes(inherit: false)
+                .OfType<System.Text.Json.Serialization.JsonPropertyNameAttribute>()
+                .FirstOrDefault()?.Name,
         });
     }
     typeObj["properties"] = properties;

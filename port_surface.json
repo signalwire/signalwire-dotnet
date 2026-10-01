@@ -268,7 +268,7 @@
       ]
     }
   },
-  "generated_from": "signalwire-dotnet @ 6cd9b4901a2456f15d241fbbc0e415d8bf101523",
+  "generated_from": "signalwire-dotnet @ 411a071dd62510192f531d7a38efcfed4dd57e03",
   "modules": {
     "signalwire": {
       "classes": {},
@@ -631,6 +631,7 @@
           "add_action",
           "add_actions",
           "add_dynamic_hints",
+          "change_voice",
           "clear_dynamic_hints",
           "connect",
           "create_payment_action",
@@ -652,6 +653,7 @@
           "remove_metadata",
           "replace_in_history",
           "response",
+          "rpc_ai_global_data",
           "rpc_ai_message",
           "rpc_ai_unhold",
           "rpc_dial",
@@ -662,6 +664,7 @@
           "set_post_process",
           "set_response",
           "set_speech_event_timeout",
+          "set_tool_response",
           "simulate_user_input",
           "sip_refer",
           "stop",
@@ -1107,35 +1110,86 @@
     "signalwire.core.swml_verbs_generated": {
       "classes": {
         "AI": [],
-        "AiConfig": [],
+        "AiConfig": [
+          "hints",
+          "languages",
+          "multilingual",
+          "params",
+          "post_prompt",
+          "prompt",
+          "pronounce"
+        ],
         "AiHintsItem": [],
-        "AiLanguagesItem": [],
+        "AiLanguagesItem": [
+          "params"
+        ],
         "AiLanguagesItemParams": [],
         "AiMultilingual": [],
         "AiMultilingualFillers": [],
         "AiMultilingualFunctionFillers": [],
         "AiMultilingualTurnFillers": [],
-        "AiParams": [],
+        "AiParams": [
+          "convo",
+          "inner_dialog",
+          "realtime"
+        ],
         "AiParamsConvoItem": [],
-        "AiParamsInnerDialog": [],
-        "AiParamsInnerDialogSWAIG": [],
+        "AiParamsInnerDialog": [
+          "SWAIG"
+        ],
+        "AiParamsInnerDialogSWAIG": [
+          "defaults"
+        ],
         "AiParamsInnerDialogSWAIGDefaults": [],
         "AiParamsInnerDialogScorecard": [],
         "AiParamsRealtime": [],
         "AiParamsToolResultDistill": [],
-        "AiPostPrompt": [],
+        "AiPostPrompt": [
+          "pom"
+        ],
         "AiPostPromptPomItem": [],
-        "AiPrompt": [],
+        "AiPrompt": [
+          "contexts",
+          "pom",
+          "steps"
+        ],
         "AiPromptPomItem": [],
         "AiPronounceItem": [],
-        "AiSWAIG": [],
+        "AiSWAIG": [
+          "defaults",
+          "functions",
+          "hooks",
+          "includes",
+          "internal_fillers",
+          "mcp_servers"
+        ],
         "AiSWAIGDefaults": [],
-        "AiSWAIGFunctionsItem": [],
+        "AiSWAIGFunctionsItem": [
+          "argument",
+          "data_map",
+          "fillers",
+          "parameters"
+        ],
         "AiSWAIGFunctionsItemFillers": [],
-        "AiSWAIGHooksItem": [],
+        "AiSWAIGHooksItem": [
+          "argument",
+          "data_map",
+          "fillers",
+          "parameters"
+        ],
         "AiSWAIGHooksItemFillers": [],
         "AiSWAIGIncludesItem": [],
-        "AiSWAIGInternalFillers": [],
+        "AiSWAIGInternalFillers": [
+          "adjust_response_latency",
+          "change_context",
+          "check_time",
+          "get_ideal_strategy",
+          "get_visual_input",
+          "next_step",
+          "pause_conversation",
+          "wait_for_user",
+          "wait_seconds"
+        ],
         "AiSWAIGInternalFillersAdjustResponseLatency": [],
         "AiSWAIGInternalFillersChangeContext": [],
         "AiSWAIGInternalFillersCheckTime": [],
@@ -1145,7 +1199,12 @@
         "AiSWAIGInternalFillersPauseConversation": [],
         "AiSWAIGInternalFillersWaitForUser": [],
         "AiSWAIGInternalFillersWaitSeconds": [],
-        "AiSWAIGItem": [],
+        "AiSWAIGItem": [
+          "argument",
+          "data_map",
+          "fillers",
+          "parameters"
+        ],
         "AiSWAIGItemFillers": [],
         "AiSWAIGMcpServersItem": [],
         "AiSidecar": [],
@@ -1157,29 +1216,56 @@
         "AiSidecarSWAIGDefaults": [],
         "AiSidecarSWAIGFunctionsItem": [],
         "AmazonBedrock": [],
-        "AmazonBedrockConfig": [],
+        "AmazonBedrockConfig": [
+          "SWAIG",
+          "greeting_prompt",
+          "params",
+          "post_prompt",
+          "prompt"
+        ],
         "AmazonBedrockGreetingPrompt": [],
         "AmazonBedrockParams": [],
-        "AmazonBedrockPostPrompt": [],
+        "AmazonBedrockPostPrompt": [
+          "pom"
+        ],
         "AmazonBedrockPostPromptPomItem": [],
-        "AmazonBedrockPrompt": [],
+        "AmazonBedrockPrompt": [
+          "pom"
+        ],
         "AmazonBedrockPromptPomItem": [],
-        "AmazonBedrockSWAIG": [],
+        "AmazonBedrockSWAIG": [
+          "defaults",
+          "functions"
+        ],
         "AmazonBedrockSWAIGDefaults": [],
-        "AmazonBedrockSWAIGFunctionsItem": [],
+        "AmazonBedrockSWAIGFunctionsItem": [
+          "data_map",
+          "parameters"
+        ],
         "Answer": [],
         "AnswerConfig": [],
-        "BindDigit": [],
+        "BindDigit": [
+          "bind_digit"
+        ],
         "BindDigitConfig": [],
         "CallDeviceStream": [],
         "CallPayParameters": [],
         "CallPayPrompts": [],
         "CallPayPromptsActions": [],
-        "ClearDigitBindings": [],
+        "ClearDigitBindings": [
+          "clear_digit_bindings"
+        ],
         "ClearDigitBindingsConfig": [],
-        "Cond": [],
-        "CondItem": [],
-        "Connect": [],
+        "Cond": [
+          "cond"
+        ],
+        "CondItem": [
+          "else",
+          "then"
+        ],
+        "Connect": [
+          "connect"
+        ],
         "ConnectConfig": [
           "headers",
           "parallel",
@@ -1191,10 +1277,15 @@
           "headers"
         ],
         "ConnectDeviceConfirm": [],
-        "ConnectResult": [],
+        "ConnectResult": [
+          "case"
+        ],
         "ConnectResultCaseValue": [],
         "ConnectResultDefault": [],
-        "ConnectResultItem": [],
+        "ConnectResultItem": [
+          "else",
+          "then"
+        ],
         "ConnectSipHeader": [],
         "Context": [
           "pom",
@@ -1206,12 +1297,6 @@
         "Denoise": [],
         "DetectMachine": [],
         "DetectMachineConfig": [],
-        "DialConfig": [
-          "headers",
-          "parallel",
-          "serial",
-          "serial_parallel"
-        ],
         "Echo": [],
         "EchoConfig": [],
         "EnterQueue": [],
@@ -1219,10 +1304,15 @@
         "Execute": [],
         "ExecuteConfig": [],
         "ExecuteOnReturn": [],
-        "ExecuteResult": [],
+        "ExecuteResult": [
+          "case"
+        ],
         "ExecuteResultCaseValue": [],
         "ExecuteResultDefault": [],
-        "ExecuteResultItem": [],
+        "ExecuteResultItem": [
+          "else",
+          "then"
+        ],
         "ExecuteRpc": [],
         "ExecuteRpcConfig": [],
         "Expression": [
@@ -1242,14 +1332,20 @@
         "JsonSchema": [
           "allOf",
           "anyOf",
+          "dependentSchemas",
           "oneOf",
-          "prefixItems"
+          "patternProperties",
+          "prefixItems",
+          "properties"
         ],
         "JsonSchemaUnion": [
           "allOf",
           "anyOf",
+          "dependentSchemas",
           "oneOf",
-          "prefixItems"
+          "patternProperties",
+          "prefixItems",
+          "properties"
         ],
         "Label": [],
         "LabelConfig": [],
@@ -1293,7 +1389,9 @@
         "SendDigitsConfig": [],
         "SendFax": [],
         "SendFaxConfig": [],
-        "SendSMS": [],
+        "SendSMS": [
+          "send_sms"
+        ],
         "SendSmsConfig": [],
         "Set": [],
         "SetCapabilities": [],
@@ -1317,7 +1415,9 @@
         "StreamConfig": [],
         "Switch": [],
         "SwitchCaseValue": [],
-        "SwitchConfig": [],
+        "SwitchConfig": [
+          "case"
+        ],
         "SwitchDefault": [],
         "Tap": [],
         "TapConfig": [],

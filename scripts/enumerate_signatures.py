@@ -850,6 +850,10 @@ def _collect_generated_type(
         pname = p.get("name", "")
         if not pname or pname.startswith("_"):
             continue
+        # The wire key the generator declared via [JsonPropertyName] wins: a key
+        # that is not a legal C# identifier (``nomatch-output``) is emitted as a
+        # ``nomatch_output`` property, and the reference records the key verbatim.
+        pname = p.get("wire_name") or pname
         if gate is not None and pname not in gate:
             # ORACLE-GATED: the reference records no accessor for this field
             # (a scalar/open action value, or a class the oracle keeps method-less).

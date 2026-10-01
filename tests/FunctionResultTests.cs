@@ -253,6 +253,58 @@ public class FunctionResultTests
         Assert.Equal(450, GetAction(new FunctionResult().Hold(450), 0)["hold"]);
     }
 
+    [Fact]
+    public void Hold_WithPrompt_SetsToolResponseAndPostProcess()
+    {
+        // Python parity: hold(prompt, 120) -> structured response + post_process,
+        // bare-integer hold action (no step routing requested).
+        var fr = new FunctionResult().Hold("Tell the caller you are placing them on hold.", 120);
+        var d = fr.ToDict();
+        var resp = (Dictionary<string, object>)d["response"];
+        Assert.Equal("status: on hold", resp["tool_result"]);
+        Assert.Equal("Tell the caller you are placing them on hold.", resp["tool_prompt"]);
+        Assert.True((bool)d["post_process"]);
+        Assert.Equal(120, GetAction(fr, 0)["hold"]);
+    }
+
+    [Fact]
+    public void Hold_WithSteps_EmitsObjectForm()
+    {
+        // Python parity: step / timeout_step route where the caller lands, so the
+        // hold value becomes {timeout, step, timeout_step}.
+        var fr = new FunctionResult().Hold(null, 300, step: "back_with_agent", timeoutStep: "take_a_message");
+        var hold = (Dictionary<string, object>)GetAction(fr, 0)["hold"];
+        Assert.Equal(300, hold["timeout"]);
+        Assert.Equal("back_with_agent", hold["step"]);
+        Assert.Equal("take_a_message", hold["timeout_step"]);
+        Assert.False(fr.ToDict().ContainsKey("post_process"));
+    }
+
+    [Fact]
+    public void ChangeVoice_EmitsChangeVoiceAction()
+    {
+        var fr = new FunctionResult().ChangeVoice("elevenlabs.rachel");
+        Assert.Equal("elevenlabs.rachel", GetAction(fr, 0)["change_voice"]);
+    }
+
+    [Fact]
+    public void SetToolResponse_IsTheStructuredResponse()
+    {
+        var d = new FunctionResult().SetToolResponse(toolResult: "3 seats left").ToDict();
+        var resp = (Dictionary<string, object>)d["response"];
+        Assert.Equal("3 seats left", resp["tool_result"]);
+        Assert.False(resp.ContainsKey("tool_prompt"));
+    }
+
+    [Fact]
+    public void Constructor_ToolResultAndPrompt_SetStructuredResponse()
+    {
+        var fr = new FunctionResult(toolResult: "payment declined", toolPrompt: "Ask for another card.");
+        var resp = Assert.IsType<Dictionary<string, object>>(fr.Response);
+        Assert.Equal("payment declined", resp["tool_result"]);
+        Assert.Equal("Ask for another card.", resp["tool_prompt"]);
+    }
+
     // Python parity: the wait_for_user value is a single primitive,
     // priority answerFirst > timeout > enabled > true.
 
@@ -1330,6 +1382,35 @@ public class FunctionResultTests
         var rpc = MainVerb(GetAction(new FunctionResult().RpcAiMessage("call-xyz", "User said hello", "user"), 0), "execute_rpc");
         var p = (Dictionary<string, object>)rpc["params"];
         Assert.Equal("user", p["role"]);
+    }
+
+    [Fact]
+    public void RpcAiMessage_GlobalDataOnly()
+    {
+        // Python parity: global_data alone -> params={global_data}, no role/message.
+        var data = new Dictionary<string, object> { ["decline_message"] = "No one is available." };
+        var rpc = MainVerb(GetAction(new FunctionResult().RpcAiMessage("call-abc", globalData: data), 0), "execute_rpc");
+        var p = (Dictionary<string, object>)rpc["params"];
+        Assert.Equal(data, p["global_data"]);
+        Assert.False(p.ContainsKey("role"));
+        Assert.False(p.ContainsKey("message_text"));
+    }
+
+    [Fact]
+    public void RpcAiMessage_NeitherMessageNorGlobalData_Throws()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new FunctionResult().RpcAiMessage("call-abc"));
+        Assert.Contains("rpc_ai_message needs message_text, global_data, or both", ex.Message);
+    }
+
+    [Fact]
+    public void RpcAiGlobalData_MergesGlobalDataOnly()
+    {
+        var data = new Dictionary<string, object> { ["key"] = "value" };
+        var rpc = MainVerb(GetAction(new FunctionResult().RpcAiGlobalData("call-9", data), 0), "execute_rpc");
+        Assert.Equal("ai_message", rpc["method"]);
+        Assert.Equal("call-9", rpc["call_id"]);
+        Assert.Equal(data, ((Dictionary<string, object>)rpc["params"])["global_data"]);
     }
 
     [Fact]

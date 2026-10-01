@@ -9,21 +9,32 @@ namespace SignalWire.SWAIG;
 /// </summary>
 public class FunctionResult
 {
-    private string _response;
+    private object _response;
     private bool _postProcess;
     private readonly List<Dictionary<string, object>> _actions = [];
 
-    public FunctionResult(string? response = null, bool postProcess = false)
+    /// <param name="response">Optional PROMPT to inject into the model's context.</param>
+    /// <param name="postProcess">Let the AI take another turn before the actions execute.</param>
+    /// <param name="toolResult">Structured form: what the tool DID (see <see cref="SetToolResponse"/>).</param>
+    /// <param name="toolPrompt">Structured form: what the model should now SAY (see <see cref="SetToolResponse"/>).</param>
+    public FunctionResult(string? response = null, bool postProcess = false,
+        string? toolResult = null, string? toolPrompt = null)
     {
         _response = response ?? "";
         _postProcess = postProcess;
+        if (toolResult is not null || toolPrompt is not null)
+        {
+            SetToolResponse(toolResult, toolPrompt);
+        }
     }
 
-    /// <summary>The spoken/returned response text.
-    /// (equivalent to Python's <c>response</c>, function_result.py:79,93.)
+    /// <summary>The response: a plain string, or — after
+    /// <see cref="SetToolResponse"/> — the structured
+    /// <c>{tool_result, tool_prompt}</c> object.
+    /// (equivalent to Python's <c>response</c>, function_result.py.)
     /// The reference records BOTH this attribute and <c>set_response</c>, so
     /// this is an added reader, not a rename of the fluent setter.</summary>
-    public string Response => _response;
+    public object Response => _response;
 
     /// <summary>Whether the AI post-processes this result before speaking.
     /// (equivalent to Python's <c>post_process</c>, function_result.py:81,110.)</summary>
@@ -36,6 +47,29 @@ public class FunctionResult
     public FunctionResult SetResponse(string text)
     {
         _response = text;
+        return this;
+    }
+
+    /// <summary>
+    /// Set the structured response form, separating outcome from instruction:
+    /// <c>{"tool_result": "status: on hold", "tool_prompt": "Tell the caller ..."}</c>.
+    /// <paramref name="toolResult"/> is what the tool DID (a factual status line
+    /// for the model to reason from); <paramref name="toolPrompt"/> is what the
+    /// model should now SAY. Splitting them keeps the model from reading a status
+    /// line aloud. Either may be omitted.
+    /// </summary>
+    public FunctionResult SetToolResponse(string? toolResult = null, string? toolPrompt = null)
+    {
+        var payload = new Dictionary<string, object>();
+        if (toolResult is not null)
+        {
+            payload["tool_result"] = toolResult;
+        }
+        if (toolPrompt is not null)
+        {
+            payload["tool_prompt"] = toolPrompt;
+        }
+        _response = payload;
         return this;
     }
 
@@ -88,7 +122,10 @@ public class FunctionResult
     {
         var result = new Dictionary<string, object>();
 
-        if (!string.IsNullOrEmpty(_response))
+        // Python parity: `if self.response:` — a non-empty string or a non-empty
+        // structured {tool_result, tool_prompt} object.
+        if ((_response is string text && text.Length > 0)
+            || (_response is Dictionary<string, object> structured && structured.Count > 0))
         {
             result["response"] = _response;
         }
@@ -188,12 +225,82 @@ public class FunctionResult
         return this;
     }
 
-    public FunctionResult Hold(int timeout = 300)
+    /// <summary>
+    /// Put the call on hold, optionally announcing it and routing what happens
+    /// next. During hold the agent does not respond, so anything the caller needs
+    /// to hear must be said BEFORE the action lands: <paramref name="prompt"/>
+    /// becomes the structured response (<c>tool_result: "status: on hold"</c>,
+    /// <c>tool_prompt: prompt</c>) and switches on post_process, so the model
+    /// speaks once more before the hold executes. <paramref name="step"/> /
+    /// <paramref name="timeoutStep"/> land the caller in a chosen step when the
+    /// hold ends (taken off hold / timed out); with neither, the bare integer form
+    /// is emitted and the caller resumes where they were. An <see cref="int"/>
+    /// passed as <paramref name="prompt"/> is the timeout, so <c>Hold(120)</c>
+    /// keeps meaning a 120-second hold.
+    /// </summary>
+    /// <param name="prompt">The instruction to deliver before the hold (a
+    /// <see cref="string"/>), or the timeout in seconds (an <see cref="int"/>).</param>
+    /// <param name="timeout">Timeout in seconds (clamped to 0..900).</param>
+    /// <param name="step">Step to move to when the call is taken off hold.</param>
+    /// <param name="timeoutStep">Step to move to when the hold times out.</param>
+    public FunctionResult Hold(object? prompt = null, int timeout = 300, string? step = null, string? timeoutStep = null)
     {
-        // Python parity: add_action("hold", timeout) — the value is the bare
-        // (clamped) integer, not a {timeout: N} object. Clamp to [0, 900].
+        // Back-compat: Hold(120) means Hold(timeout: 120). A bool is neither a
+        // prompt nor a timeout and is dropped (Python parity).
+        string? promptText = null;
+        switch (prompt)
+        {
+            case null:
+            case bool:
+                break;
+            case int seconds:
+                timeout = seconds;
+                break;
+            case string text:
+                promptText = text;
+                break;
+            default:
+                throw new ArgumentException("prompt must be a string (the instruction) or an int (the timeout)");
+        }
+
+        if (promptText is not null)
+        {
+            SetToolResponse(toolResult: "status: on hold", toolPrompt: promptText);
+            _postProcess = true;
+        }
+
+        // Clamp to [0, 900].
         var clamped = Math.Max(0, Math.Min(900, timeout));
-        _actions.Add(new Dictionary<string, object> { ["hold"] = clamped });
+        if (step is null && timeoutStep is null)
+        {
+            // Python parity: add_action("hold", timeout) — the bare integer.
+            _actions.Add(new Dictionary<string, object> { ["hold"] = clamped });
+            return this;
+        }
+
+        var holdConfig = new Dictionary<string, object> { ["timeout"] = clamped };
+        if (step is not null)
+        {
+            holdConfig["step"] = step;
+        }
+        if (timeoutStep is not null)
+        {
+            holdConfig["timeout_step"] = timeoutStep;
+        }
+        _actions.Add(new Dictionary<string, object> { ["hold"] = holdConfig });
+        return this;
+    }
+
+    /// <summary>
+    /// Change the agent's voice for the rest of the call. <paramref name="voice"/>
+    /// is an <c>engine.voice:model</c> spec (the same form a language's voice
+    /// takes in the SWML <c>languages</c> list, e.g. <c>"elevenlabs.rachel"</c>);
+    /// it replaces the voice of the language in use, applied at the next speech
+    /// batch boundary.
+    /// </summary>
+    public FunctionResult ChangeVoice(string voice)
+    {
+        _actions.Add(new Dictionary<string, object> { ["change_voice"] = voice });
         return this;
     }
 
@@ -1288,22 +1395,47 @@ public class FunctionResult
     }
 
     /// <summary>
-    /// Inject a message into an AI agent on another call using <see cref="ExecuteRpc"/>.
+    /// Send a message and/or global_data to an AI agent on another call using
+    /// <see cref="ExecuteRpc"/>.
     /// </summary>
     /// <remarks>
-    /// Emits
-    /// <c>method="ai_message"</c>, <c>call_id</c> as a top-level sibling, and
-    /// <c>params={role, message_text}</c>. <paramref name="role"/> remains
-    /// caller-overridable (defaults to <c>"system"</c>), not hard-coded.
+    /// Emits <c>method="ai_message"</c>, <c>call_id</c> as a top-level sibling,
+    /// and <c>params</c> carrying <c>{role, message_text}</c> when
+    /// <paramref name="messageText"/> is given and <c>global_data</c> when
+    /// <paramref name="globalData"/> is (MERGED into the other call's
+    /// global_data, silent until a prompt expands <c>${global_data.key}</c>).
+    /// <paramref name="role"/> remains caller-overridable (defaults to
+    /// <c>"system"</c>). Throws <see cref="ArgumentException"/> when neither is
+    /// given.
     /// </remarks>
-    public FunctionResult RpcAiMessage(string callId, string messageText, string role = "system")
+    public FunctionResult RpcAiMessage(string callId, string? messageText = null, string role = "system",
+        Dictionary<string, object>? globalData = null)
     {
-        return ExecuteRpc("ai_message", new Dictionary<string, object>
+        var parms = new Dictionary<string, object>();
+        if (messageText is not null)
         {
-            ["role"] = role,
-            ["message_text"] = messageText,
-        }, callId);
+            parms["role"] = role;
+            parms["message_text"] = messageText;
+        }
+        if (globalData is not null)
+        {
+            parms["global_data"] = globalData;
+        }
+        if (parms.Count == 0)
+        {
+            throw new ArgumentException("rpc_ai_message needs message_text, global_data, or both");
+        }
+        return ExecuteRpc("ai_message", parms, callId);
     }
+
+    /// <summary>
+    /// Merge <paramref name="data"/> into another call's global_data, with no
+    /// conversation turn — a thin wrapper over <see cref="RpcAiMessage"/> with
+    /// only <c>global_data</c>. The other call's prompt reads it back with
+    /// <c>${global_data.key}</c>.
+    /// </summary>
+    public FunctionResult RpcAiGlobalData(string callId, Dictionary<string, object> data)
+        => RpcAiMessage(callId, globalData: data);
 
     /// <summary>
     /// Unhold another call using <see cref="ExecuteRpc"/>.

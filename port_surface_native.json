@@ -1,5 +1,5 @@
 {
-  "generated_from": "signalwire-dotnet @ 6cd9b4901a2456f15d241fbbc0e415d8bf101523",
+  "generated_from": "signalwire-dotnet @ 411a071dd62510192f531d7a38efcfed4dd57e03",
   "native_names": [
     "AI",
     "AIAction",
@@ -2164,6 +2164,7 @@
     "Rooms",
     "RotateSigningKeyAsync",
     "Route",
+    "RpcAiGlobalData",
     "RpcAiMessage",
     "RpcAiUnhold",
     "RpcDial",
@@ -2328,6 +2329,7 @@
     "SetSwmlWebhookAsync",
     "SetSystemPrompt",
     "SetText",
+    "SetToolResponse",
     "SetUserPrompt",
     "SetValidContexts",
     "SetValidSteps",

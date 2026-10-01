@@ -3963,6 +3963,18 @@
                   "type": "bool",
                   "required": false,
                   "default": false
+                },
+                {
+                  "name": "tool_result",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "tool_prompt",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "void"
@@ -4009,6 +4021,20 @@
                 {
                   "name": "hints",
                   "type": "list<any>",
+                  "required": true
+                }
+              ],
+              "returns": "class:signalwire.core.function_result.FunctionResult"
+            },
+            "change_voice": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "voice",
+                  "type": "string",
                   "required": true
                 }
               ],
@@ -4204,10 +4230,28 @@
                   "kind": "self"
                 },
                 {
+                  "name": "prompt",
+                  "type": "optional<any>",
+                  "required": false,
+                  "default": null
+                },
+                {
                   "name": "timeout",
                   "type": "int",
                   "required": false,
                   "default": 300
+                },
+                {
+                  "name": "step",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "timeout_step",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -4618,7 +4662,26 @@
                   "kind": "self"
                 }
               ],
-              "returns": "string"
+              "returns": "any"
+            },
+            "rpc_ai_global_data": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "call_id",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                }
+              ],
+              "returns": "class:signalwire.core.function_result.FunctionResult"
             },
             "rpc_ai_message": {
               "params": [
@@ -4633,14 +4696,21 @@
                 },
                 {
                   "name": "message_text",
-                  "type": "string",
-                  "required": true
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
                 },
                 {
                   "name": "role",
                   "type": "string",
                   "required": false,
                   "default": "system"
+                },
+                {
+                  "name": "global_data",
+                  "type": "optional<dict<string,any>>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -4812,6 +4882,27 @@
                   "name": "ms",
                   "type": "int",
                   "required": true
+                }
+              ],
+              "returns": "class:signalwire.core.function_result.FunctionResult"
+            },
+            "set_tool_response": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "tool_result",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
+                },
+                {
+                  "name": "tool_prompt",
+                  "type": "optional<string>",
+                  "required": false,
+                  "default": null
                 }
               ],
               "returns": "class:signalwire.core.function_result.FunctionResult"
@@ -17448,7 +17539,7 @@
               ],
               "returns": "any"
             },
-            "nomatch_output": {
+            "nomatch-output": {
               "params": [
                 {
                   "name": "self",
@@ -43928,6 +44019,14 @@
           "required": false
         },
         "response": {
+          "type": "optional<string>",
+          "required": false
+        },
+        "tool_prompt": {
+          "type": "optional<string>",
+          "required": false
+        },
+        "tool_result": {
           "type": "optional<string>",
           "required": false
         }

@@ -2008,6 +2008,22 @@ def _enrich_composition_attributes(
                 surf_mod["classes"][cls] = sorted(set(existing) | set(comp))
 
 
+def _load_generate_swml_verbs():
+    """Load scripts/generate_swml_verbs.py (the SWML-verb type generator) so the
+    surface derives its schema view from the generator's own transform."""
+    import importlib.util
+
+    here = Path(__file__).resolve().parent
+    spec = importlib.util.spec_from_file_location(
+        "generate_swml_verbs", here / "generate_swml_verbs.py"
+    )
+    if spec is None or spec.loader is None:
+        return None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def _load_generate_rest():
     import importlib.util
 
@@ -2140,17 +2156,26 @@ def _schema_field_is_composition(psc: object) -> bool:
         return False
     if _local_ref(psc):
         return True
+    t = psc.get("type")
+    # ``items`` only types the field when it IS an array (the reference reads an
+    # ``items`` with no ``type: array`` as an open ``dict[str, Any]``).
     items = psc.get("items")
-    return isinstance(items, dict) and _items_reference_local(items)
+    if t == "array" and isinstance(items, dict):
+        return _items_reference_local(items)
+    # A map (``additionalProperties`` schema) is ``dict<string, X>`` — a
+    # composition member when X references a model class (the reference records a
+    # ``dict<...class...>`` return; only a TOP-LEVEL union is excluded).
+    ap = psc.get("additionalProperties")
+    if t in ("object", None) and isinstance(ap, dict) and not psc.get("properties"):
+        return _items_reference_local(ap)
+    return False
 
 
 def _comp_members_from_props(props) -> set[str]:
-    import keyword
-
+    # Keyword / non-identifier keys (``else``, ``from``) are recorded too: the
+    # reference emits those TypedDicts in the functional form, keyed verbatim.
     return {
-        name
-        for name, psc in (props or {}).items()
-        if _schema_field_is_composition(psc) and not keyword.iskeyword(name)
+        name for name, psc in (props or {}).items() if _schema_field_is_composition(psc)
     }
 
 
@@ -2170,21 +2195,24 @@ def _generated_model_composition_members(psdk: Path, GR) -> dict[str, dict]:
             out.setdefault(mod, {}).setdefault(cls, sorted(members))
 
     # --- 1. SWML verbs: porting-sdk/schema.json $defs ------------------------
-    schema_path = psdk / "schema.json"
-    if schema_path.is_file():
-        try:
-            defs = json.loads(schema_path.read_text(encoding="utf-8")).get("$defs", {})
-        except (OSError, json.JSONDecodeError):
-            defs = {}
+    # The SAME transformed $defs generate_swml_verbs.py emits from (deprecated
+    # verbs dropped, inline objects hoisted to named types) and the same
+    # <Verb>Config rule, so the surface members track the emitted classes.
+    GS = _load_generate_swml_verbs()
+    if (psdk / "schema.json").is_file() and GS is not None:
+        defs = GS.transformed_defs(psdk)
         SW_MOD = "signalwire.core.swml_verbs_generated"
         for raw, node in defs.items():
-            if isinstance(node, dict) and GR.is_object_schema(node):
+            if (
+                isinstance(node, dict)
+                and GR.is_object_schema(node)
+                and not GS._is_envelope(raw)
+            ):
                 _add(
                     SW_MOD,
                     GR.type_name(raw),
                     _comp_members_from_props(node.get("properties")),
                 )
-        hand = {"answer", "hangup", "ai", "play", "say"}
         sm = defs.get("SWMLMethod")
         if isinstance(sm, dict):
             for ref in sm.get("anyOf") or []:
@@ -2193,39 +2221,24 @@ def _generated_model_composition_members(psdk: Path, GR) -> dict[str, dict]:
                 if not isinstance(wdef, dict) or not (wdef.get("properties") or {}):
                     continue
                 verb = next(iter(wdef["properties"].keys()))
-                if verb in hand:
+                if verb in GS.HAND_WRITTEN_VERBS:
                     continue
                 inner = wdef["properties"][verb]
                 if not isinstance(inner, dict):
                     continue
-                if inner.get("type") == "string" or inner.get("$ref"):
+                if GS._type_str(inner) == "string" or GS._verb_config_ref(defs, inner):
                     continue
-                has_inline = inner.get("type") == "object" and bool(
+                has_inline = GS._type_str(inner) == "object" and bool(
                     inner.get("properties")
                 )
                 if not inner.get("oneOf") and not has_inline:
                     continue
-                props: dict = {}
-                if inner.get("oneOf"):
-                    for b in inner["oneOf"]:
-                        if isinstance(b, dict) and b.get("$ref"):
-                            d = defs.get(b["$ref"].rsplit("/", 1)[-1], {})
-                            props.update(
-                                (d.get("properties") if isinstance(d, dict) else {})
-                                or {}
-                            )
-                        elif isinstance(b, dict):
-                            props.update(b.get("properties") or {})
-                else:
-                    props.update(inner.get("properties") or {})
+                props = GS._flatten_union(defs, inner)
                 if not props:
                     continue
-                pascal = "".join(
-                    w[:1].upper() + w[1:] for w in re.split(r"[._\-\s]", verb) if w
-                )
                 _add(
                     SW_MOD,
-                    GR.type_name(pascal + "Config"),
+                    GR.type_name(GS._pascal(verb) + "Config"),
                     _comp_members_from_props(props),
                 )
 
