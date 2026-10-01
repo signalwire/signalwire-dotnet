@@ -26,7 +26,7 @@ public class SwmlScript
 
     /// <summary>Wire field <c>contents</c>.</summary>
     [JsonPropertyName("contents")]
-    public string? Contents { get; set; }
+    public Dictionary<string, object?>? Contents { get; set; }
 
     /// <summary>Wire field <c>request_url</c>.</summary>
     [JsonPropertyName("request_url")]
@@ -43,4 +43,8 @@ public class SwmlScript
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
     public string? StatusCallbackMethod { get; set; }
+
+    /// <summary>Wire field <c>script_type</c>.</summary>
+    [JsonPropertyName("script_type")]
+    public string? ScriptType { get; set; }
 }

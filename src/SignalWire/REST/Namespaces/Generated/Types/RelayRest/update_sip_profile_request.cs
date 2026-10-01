@@ -39,4 +39,8 @@ public class UpdateSipProfileRequest
     /// <summary>Wire field <c>default_send_as</c>.</summary>
     [JsonPropertyName("default_send_as")]
     public string? DefaultSendAs { get; set; }
+
+    /// <summary>Wire field <c>default_outbound_policy</c>.</summary>
+    [JsonPropertyName("default_outbound_policy")]
+    public string? DefaultOutboundPolicy { get; set; }
 }

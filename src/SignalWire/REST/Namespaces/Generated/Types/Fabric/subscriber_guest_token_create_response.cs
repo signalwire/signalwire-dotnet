@@ -27,4 +27,20 @@ public class SubscriberGuestTokenCreateResponse
     /// <summary>Wire field <c>refresh_token</c>.</summary>
     [JsonPropertyName("refresh_token")]
     public string? RefreshToken { get; set; }
+
+    /// <summary>Wire field <c>address_uri</c>.</summary>
+    [JsonPropertyName("address_uri")]
+    public string? AddressUri { get; set; }
+
+    /// <summary>Wire field <c>expires_at</c>.</summary>
+    [JsonPropertyName("expires_at")]
+    public string? ExpiresAt { get; set; }
+
+    /// <summary>Wire field <c>expires_in</c>.</summary>
+    [JsonPropertyName("expires_in")]
+    public long? ExpiresIn { get; set; }
+
+    /// <summary>Wire field <c>issued_at</c>.</summary>
+    [JsonPropertyName("issued_at")]
+    public string? IssuedAt { get; set; }
 }

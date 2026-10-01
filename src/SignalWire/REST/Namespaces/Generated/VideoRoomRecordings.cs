@@ -76,4 +76,16 @@ public class VideoRoomRecordings
     {
         return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Video.ListRoomRecordingEventsResponse>(Client.GetAsync(Path(id, "events"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
+
+    /// <summary>
+    /// Generated from operation <c>download_room_recording</c> (GET /room_recordings/{id}.mp4).
+    /// Returns the URL this endpoint redirects to (the <c>Location</c> of its
+    /// redirect), without following it or downloading anything.
+    /// </summary>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<string> DownloadAsync(string id, Dictionary<string, string>? queryParams = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        return Client.GetRedirectLocationAsync(Path(id + ".mp4"), queryParams, requestOptions: requestOptions, cancellationToken: cancellationToken);
+    }
 }

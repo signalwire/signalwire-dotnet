@@ -442,7 +442,6 @@ namespace_field_accessor: .NET RestClient exposes each namespace as a readonly p
 signalwire.rest.client.RestClient.base_url: namespace_field_accessor: .NET RestClient field accessor for the base URL; Python uses attribute access.
 signalwire.rest.client.RestClient.http: namespace_field_accessor: .NET RestClient field accessor for the HTTP transport; Python uses attribute access.
 signalwire.rest.client.RestClient.project_id: namespace_field_accessor: .NET RestClient field accessor for the project_id; Python uses attribute access.
-signalwire.rest.client.RestClient.space: namespace_field_accessor: .NET RestClient field accessor for the space domain; Python uses attribute access.
 signalwire.rest.client.RestClient.token: namespace_field_accessor: .NET RestClient field accessor for the API token; Python uses attribute access.
 
 ### SkillRegistry .NET-specific accessors

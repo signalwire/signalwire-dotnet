@@ -20,75 +20,111 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class JoinConferenceObject
 {
-    /// <summary>Wire field <c>name</c>.</summary>
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
-
-    /// <summary>Wire field <c>muted</c>.</summary>
-    [JsonPropertyName("muted")]
-    public object? Muted { get; set; }
-
     /// <summary>Wire field <c>beep</c>.</summary>
     [JsonPropertyName("beep")]
-    public string? Beep { get; set; }
+    public object? Beep { get; set; }
 
-    /// <summary>Wire field <c>start_on_enter</c>.</summary>
-    [JsonPropertyName("start_on_enter")]
-    public object? StartOnEnter { get; set; }
+    /// <summary>Wire field <c>coach</c>.</summary>
+    [JsonPropertyName("coach")]
+    public object? Coach { get; set; }
+
+    /// <summary>Wire field <c>emit_call_quality</c>.</summary>
+    [JsonPropertyName("emit_call_quality")]
+    public object? EmitCallQuality { get; set; }
 
     /// <summary>Wire field <c>end_on_exit</c>.</summary>
     [JsonPropertyName("end_on_exit")]
     public object? EndOnExit { get; set; }
 
-    /// <summary>Wire field <c>wait_url</c>.</summary>
-    [JsonPropertyName("wait_url")]
-    public object? WaitUrl { get; set; }
-
     /// <summary>Wire field <c>max_participants</c>.</summary>
     [JsonPropertyName("max_participants")]
     public object? MaxParticipants { get; set; }
 
+    /// <summary>Wire field <c>meta</c>.</summary>
+    [JsonPropertyName("meta")]
+    public object? Meta { get; set; }
+
+    /// <summary>Wire field <c>min_participants</c>.</summary>
+    [JsonPropertyName("min_participants")]
+    public object? MinParticipants { get; set; }
+
+    /// <summary>Wire field <c>muted</c>.</summary>
+    [JsonPropertyName("muted")]
+    public object? Muted { get; set; }
+
+    /// <summary>Wire field <c>name</c>.</summary>
+    [JsonPropertyName("name")]
+    public object? Name { get; set; }
+
     /// <summary>Wire field <c>record</c>.</summary>
     [JsonPropertyName("record")]
-    public string? Record { get; set; }
-
-    /// <summary>Wire field <c>region</c>.</summary>
-    [JsonPropertyName("region")]
-    public string? Region { get; set; }
-
-    /// <summary>Wire field <c>trim</c>.</summary>
-    [JsonPropertyName("trim")]
-    public string? Trim { get; set; }
-
-    /// <summary>Wire field <c>coach</c>.</summary>
-    [JsonPropertyName("coach")]
-    public string? Coach { get; set; }
-
-    /// <summary>Wire field <c>status_callback_event</c>.</summary>
-    [JsonPropertyName("status_callback_event")]
-    public string? StatusCallbackEvent { get; set; }
-
-    /// <summary>Wire field <c>status_callback</c>.</summary>
-    [JsonPropertyName("status_callback")]
-    public string? StatusCallback { get; set; }
-
-    /// <summary>Wire field <c>status_callback_method</c>.</summary>
-    [JsonPropertyName("status_callback_method")]
-    public string? StatusCallbackMethod { get; set; }
+    public object? Record { get; set; }
 
     /// <summary>Wire field <c>recording_status_callback</c>.</summary>
     [JsonPropertyName("recording_status_callback")]
-    public string? RecordingStatusCallback { get; set; }
-
-    /// <summary>Wire field <c>recording_status_callback_method</c>.</summary>
-    [JsonPropertyName("recording_status_callback_method")]
-    public string? RecordingStatusCallbackMethod { get; set; }
+    public object? RecordingStatusCallback { get; set; }
 
     /// <summary>Wire field <c>recording_status_callback_event</c>.</summary>
     [JsonPropertyName("recording_status_callback_event")]
-    public string? RecordingStatusCallbackEvent { get; set; }
+    public object? RecordingStatusCallbackEvent { get; set; }
 
-    /// <summary>Wire field <c>result</c>.</summary>
-    [JsonPropertyName("result")]
-    public object? Result { get; set; }
+    /// <summary>Wire field <c>recording_status_callback_event_type</c>.</summary>
+    [JsonPropertyName("recording_status_callback_event_type")]
+    public object? RecordingStatusCallbackEventType { get; set; }
+
+    /// <summary>Wire field <c>recording_status_callback_method</c>.</summary>
+    [JsonPropertyName("recording_status_callback_method")]
+    public object? RecordingStatusCallbackMethod { get; set; }
+
+    /// <summary>Wire field <c>region</c>.</summary>
+    [JsonPropertyName("region")]
+    public object? Region { get; set; }
+
+    /// <summary>Wire field <c>start_on_enter</c>.</summary>
+    [JsonPropertyName("start_on_enter")]
+    public object? StartOnEnter { get; set; }
+
+    /// <summary>Wire field <c>status_callback</c>.</summary>
+    [JsonPropertyName("status_callback")]
+    public object? StatusCallback { get; set; }
+
+    /// <summary>Wire field <c>status_callback_event</c>.</summary>
+    [JsonPropertyName("status_callback_event")]
+    public object? StatusCallbackEvent { get; set; }
+
+    /// <summary>Wire field <c>status_callback_event_type</c>.</summary>
+    [JsonPropertyName("status_callback_event_type")]
+    public object? StatusCallbackEventType { get; set; }
+
+    /// <summary>Wire field <c>status_callback_method</c>.</summary>
+    [JsonPropertyName("status_callback_method")]
+    public object? StatusCallbackMethod { get; set; }
+
+    /// <summary>Wire field <c>stream</c>.</summary>
+    [JsonPropertyName("stream")]
+    public object? Stream { get; set; }
+
+    /// <summary>Wire field <c>trim</c>.</summary>
+    [JsonPropertyName("trim")]
+    public object? Trim { get; set; }
+
+    /// <summary>Wire field <c>video</c>.</summary>
+    [JsonPropertyName("video")]
+    public object? Video { get; set; }
+
+    /// <summary>Wire field <c>video_layout</c>.</summary>
+    [JsonPropertyName("video_layout")]
+    public object? VideoLayout { get; set; }
+
+    /// <summary>Wire field <c>video_preview</c>.</summary>
+    [JsonPropertyName("video_preview")]
+    public object? VideoPreview { get; set; }
+
+    /// <summary>Wire field <c>video_quality</c>.</summary>
+    [JsonPropertyName("video_quality")]
+    public object? VideoQuality { get; set; }
+
+    /// <summary>Wire field <c>wait_url</c>.</summary>
+    [JsonPropertyName("wait_url")]
+    public object? WaitUrl { get; set; }
 }

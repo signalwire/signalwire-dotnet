@@ -30,7 +30,7 @@ public class AIAgentCreateRequest
 
     /// <summary>Wire field <c>languages</c>.</summary>
     [JsonPropertyName("languages")]
-    public List<object?>? Languages { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentLanguage>? Languages { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
@@ -38,7 +38,7 @@ public class AIAgentCreateRequest
 
     /// <summary>Wire field <c>post_prompt</c>.</summary>
     [JsonPropertyName("post_prompt")]
-    public Dictionary<string, object?>? PostPrompt { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentPostPrompt? PostPrompt { get; set; }
 
     /// <summary>Wire field <c>post_prompt_url</c>.</summary>
     [JsonPropertyName("post_prompt_url")]
@@ -46,21 +46,29 @@ public class AIAgentCreateRequest
 
     /// <summary>Wire field <c>pronounce</c>.</summary>
     [JsonPropertyName("pronounce")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.Pronounce>? Pronounce { get; set; }
+    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentPronounce>? Pronounce { get; set; }
 
     /// <summary>Wire field <c>prompt</c>.</summary>
     [JsonPropertyName("prompt")]
-    public Dictionary<string, object?>? Prompt { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentPrompt? Prompt { get; set; }
 
     /// <summary>Wire field <c>SWAIG</c>.</summary>
     [JsonPropertyName("SWAIG")]
-    public SignalWire.REST.Namespaces.Generated.Types.Fabric.SWAIG? SWAIG { get; set; }
-
-    /// <summary>Wire field <c>agent_id</c>.</summary>
-    [JsonPropertyName("agent_id")]
-    public string? AgentId { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.AIAgentSWAIG? SWAIG { get; set; }
 
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    /// <summary>Wire field <c>post_prompt_auth_user</c>.</summary>
+    [JsonPropertyName("post_prompt_auth_user")]
+    public string? PostPromptAuthUser { get; set; }
+
+    /// <summary>Wire field <c>post_prompt_auth_password</c>.</summary>
+    [JsonPropertyName("post_prompt_auth_password")]
+    public string? PostPromptAuthPassword { get; set; }
+
+    /// <summary>Wire field <c>multilingual</c>.</summary>
+    [JsonPropertyName("multilingual")]
+    public Dictionary<string, object?>? Multilingual { get; set; }
 }

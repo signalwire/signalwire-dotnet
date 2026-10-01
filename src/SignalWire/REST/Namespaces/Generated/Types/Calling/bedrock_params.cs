@@ -24,27 +24,35 @@ public class BedrockParams
     [JsonPropertyName("attention_timeout")]
     public object? AttentionTimeout { get; set; }
 
+    /// <summary>Wire field <c>compact_conversation_time</c>.</summary>
+    [JsonPropertyName("compact_conversation_time")]
+    public string? CompactConversationTime { get; set; }
+
+    /// <summary>Wire field <c>compact_strategy</c>.</summary>
+    [JsonPropertyName("compact_strategy")]
+    public string? CompactStrategy { get; set; }
+
+    /// <summary>Wire field <c>hard_stop_prompt</c>.</summary>
+    [JsonPropertyName("hard_stop_prompt")]
+    public string? HardStopPrompt { get; set; }
+
     /// <summary>Wire field <c>hard_stop_time</c>.</summary>
     [JsonPropertyName("hard_stop_time")]
-    public object? HardStopTime { get; set; }
+    public string? HardStopTime { get; set; }
 
     /// <summary>Wire field <c>inactivity_timeout</c>.</summary>
     [JsonPropertyName("inactivity_timeout")]
     public object? InactivityTimeout { get; set; }
 
-    /// <summary>Wire field <c>video_listening_file</c>.</summary>
-    [JsonPropertyName("video_listening_file")]
-    public string? VideoListeningFile { get; set; }
-
     /// <summary>Wire field <c>video_idle_file</c>.</summary>
     [JsonPropertyName("video_idle_file")]
     public string? VideoIdleFile { get; set; }
 
+    /// <summary>Wire field <c>video_listening_file</c>.</summary>
+    [JsonPropertyName("video_listening_file")]
+    public string? VideoListeningFile { get; set; }
+
     /// <summary>Wire field <c>video_talking_file</c>.</summary>
     [JsonPropertyName("video_talking_file")]
     public string? VideoTalkingFile { get; set; }
-
-    /// <summary>Wire field <c>hard_stop_prompt</c>.</summary>
-    [JsonPropertyName("hard_stop_prompt")]
-    public string? HardStopPrompt { get; set; }
 }

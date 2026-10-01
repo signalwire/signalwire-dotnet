@@ -27,4 +27,44 @@ public class SubscriberGuestTokenCreateRequest
     /// <summary>Wire field <c>expire_at</c>.</summary>
     [JsonPropertyName("expire_at")]
     public long? ExpireAt { get; set; }
+
+    /// <summary>Wire field <c>ch</c>.</summary>
+    [JsonPropertyName("ch")]
+    public string? Ch { get; set; }
+
+    /// <summary>Wire field <c>region</c>.</summary>
+    [JsonPropertyName("region")]
+    public string? Region { get; set; }
+
+    /// <summary>Wire field <c>email</c>.</summary>
+    [JsonPropertyName("email")]
+    public string? Email { get; set; }
+
+    /// <summary>Wire field <c>first_name</c>.</summary>
+    [JsonPropertyName("first_name")]
+    public string? FirstName { get; set; }
+
+    /// <summary>Wire field <c>last_name</c>.</summary>
+    [JsonPropertyName("last_name")]
+    public string? LastName { get; set; }
+
+    /// <summary>Wire field <c>display_name</c>.</summary>
+    [JsonPropertyName("display_name")]
+    public string? DisplayName { get; set; }
+
+    /// <summary>Wire field <c>job_title</c>.</summary>
+    [JsonPropertyName("job_title")]
+    public string? JobTitle { get; set; }
+
+    /// <summary>Wire field <c>time_zone</c>.</summary>
+    [JsonPropertyName("time_zone")]
+    public string? TimeZone { get; set; }
+
+    /// <summary>Wire field <c>country</c>.</summary>
+    [JsonPropertyName("country")]
+    public string? Country { get; set; }
+
+    /// <summary>Wire field <c>company_name</c>.</summary>
+    [JsonPropertyName("company_name")]
+    public string? CompanyName { get; set; }
 }

@@ -23,6 +23,7 @@ namespace SignalWire.REST.Namespaces.Generated;
 public partial class ResourceTree
 {
     private readonly SignalWire.REST.HttpClient _generatedHttp;
+    private readonly SignalWire.REST.HttpClient _generatedPatHttp;
     private Addresses? _addresses;
     private ImportedNumbers? _importedNumbers;
     private Lookup? _lookup;
@@ -44,17 +45,29 @@ public partial class ResourceTree
     private VideoNamespace? _video;
     private DatasphereNamespace? _datasphere;
     private LogsNamespace? _logs;
+    private WhatsappNamespace? _whatsapp;
     private ProjectNamespace? _project;
+    private SpaceNamespace? _space;
 
-    public ResourceTree(SignalWire.REST.HttpClient http)
+    /// <summary>Wire every resource: <paramref name="http"/> carries the project
+    /// token, <paramref name="patHttp"/> the Personal Access Token (the namespaces
+    /// whose spec security requires it).</summary>
+    /// <param name="http">The project-credential transport.</param>
+    /// <param name="patHttp">The Personal Access Token transport.</param>
+    public ResourceTree(SignalWire.REST.HttpClient http, SignalWire.REST.HttpClient patHttp)
     {
         _generatedHttp = http;
+        _generatedPatHttp = patHttp;
     }
 
     /// <summary>The authenticated transport this tree dispatches through
     /// (exposed to the inheriting RestClient for disposal; protected so it
     /// is not public route/surface).</summary>
     protected SignalWire.REST.HttpClient GeneratedHttp => _generatedHttp;
+
+    /// <summary>The Personal Access Token transport (exposed to the inheriting
+    /// RestClient for disposal).</summary>
+    protected SignalWire.REST.HttpClient GeneratedPatHttp => _generatedPatHttp;
 
     /// <summary>The Addresses resource.</summary>
     public Addresses Addresses => _addresses ??= new Addresses(_generatedHttp);
@@ -119,6 +132,12 @@ public partial class ResourceTree
     /// <summary>The LogsNamespace container.</summary>
     public LogsNamespace Logs => _logs ??= new LogsNamespace(_generatedHttp);
 
+    /// <summary>The WhatsappNamespace container.</summary>
+    public WhatsappNamespace Whatsapp => _whatsapp ??= new WhatsappNamespace(_generatedHttp);
+
     /// <summary>The ProjectNamespace container.</summary>
     public ProjectNamespace Project => _project ??= new ProjectNamespace(_generatedHttp);
+
+    /// <summary>The SpaceNamespace container.</summary>
+    public SpaceNamespace Space => _space ??= new SpaceNamespace(_generatedPatHttp);
 }

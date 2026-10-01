@@ -20,15 +20,23 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class Expression
 {
-    /// <summary>Wire field <c>string</c>.</summary>
-    [JsonPropertyName("string")]
-    public string? String { get; set; }
-
     /// <summary>Wire field <c>pattern</c>.</summary>
     [JsonPropertyName("pattern")]
     public string? Pattern { get; set; }
 
+    /// <summary>Wire field <c>expr</c>.</summary>
+    [JsonPropertyName("expr")]
+    public string? Expr { get; set; }
+
+    /// <summary>Wire field <c>nomatch-output</c>.</summary>
+    [JsonPropertyName("nomatch-output")]
+    public SignalWire.REST.Namespaces.Generated.Types.Calling.Output? NomatchOutput { get; set; }
+
     /// <summary>Wire field <c>output</c>.</summary>
     [JsonPropertyName("output")]
     public SignalWire.REST.Namespaces.Generated.Types.Calling.Output? Output { get; set; }
+
+    /// <summary>Wire field <c>string</c>.</summary>
+    [JsonPropertyName("string")]
+    public string? String { get; set; }
 }

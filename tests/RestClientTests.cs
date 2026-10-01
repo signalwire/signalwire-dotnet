@@ -34,7 +34,6 @@ public sealed class RestClientTests : IDisposable
         using var client = new RestClient("proj-1", "tok-1", "test.signalwire.com");
         Assert.Equal("proj-1", client.ProjectId);
         Assert.Equal("tok-1", client.Token);
-        Assert.Equal("test.signalwire.com", client.Space);
         Assert.Equal("https://test.signalwire.com", client.BaseUrl);
     }
 
@@ -48,7 +47,7 @@ public sealed class RestClientTests : IDisposable
         using var client = new RestClient();
         Assert.Equal("env-proj", client.ProjectId);
         Assert.Equal("env-tok", client.Token);
-        Assert.Equal("env.signalwire.com", client.Space);
+        Assert.Equal("https://env.signalwire.com", client.BaseUrl);
     }
 
     [Fact]

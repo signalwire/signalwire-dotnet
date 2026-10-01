@@ -102,6 +102,7 @@ _NS_ORDER = (
     "projects",
     "chat",
     "pubsub",
+    "space",
     "swml-webhooks",
 )
 
@@ -384,10 +385,14 @@ class Spec:
         ] = {}  # operationId -> requestBody JSON schema (or {})
         # operationId -> 200/201/2XX JSON response schema (for the typed-return flip).
         self.op_response: dict[str, dict] = {}
+        # operationId -> (raw operation, raw path item): the response-kind and
+        # header-parameter derivations read the operation as written.
+        self.op_raw: dict[str, tuple[dict, dict]] = {}
         for path, item in (doc.get("paths") or {}).items():
             for verb in ("get", "post", "put", "patch", "delete"):
                 o = item.get(verb)
                 if o and o.get("operationId"):
+                    self.op_raw[o["operationId"]] = (o, item)
                     self.ops[o["operationId"]] = (
                         verb,
                         path,
@@ -1181,6 +1186,8 @@ def _returns_canonical(cs_type: str) -> str:
     typed DTO becomes ``class:<oracle-module>.<Leaf>`` so it matches the oracle."""
     if _is_dict_cs_type(cs_type):
         return "dict<string,any>"
+    if cs_type == "string":
+        return "string"
     # Types.<Sub>.<Leaf> -> class:signalwire.rest.namespaces.<ns>_types_generated.<Leaf>
     ns_prefix = TYPES_CS_NS_BASE + "."
     if cs_type.startswith(ns_prefix):
@@ -1210,6 +1217,7 @@ _REST_TYPES_NS_LEAF = {
     "Projects": "projects",
     "Chat": "chat",
     "PubSub": "pubsub",
+    "Space": "space",
     "SwmlWebhooks": "swml_webhooks",
 }
 
@@ -1536,12 +1544,21 @@ def method_call_path(spec: Spec, anchor: str, markup: dict, op_path: str):
     id_args: list[str] = []
     pieces: list[str] = []
     for s in segs:
-        if s.startswith("{") and s.endswith("}"):
-            arg = arg_for(s[1:-1])
+        # A path param fills a whole segment (``{id}``) or sits beside a literal
+        # in one (``{id}.mp3`` — a Rails format suffix); the literal stays in the
+        # same segment, concatenated around the arg.
+        m = re.fullmatch(r"([^{}]*)\{([^}]+)\}([^{}]*)", s)
+        if m:
+            arg = arg_for(m.group(2))
             while arg in id_args:
                 arg += "2"
             id_args.append(arg)
-            pieces.append(arg)
+            pre, post = m.group(1), m.group(3)
+            pieces.append(
+                " + ".join(
+                    [*([cs_str(pre)] if pre else []), arg, *([cs_str(post)] if post else [])]
+                )
+            )
         else:
             pieces.append(cs_str(s))
     if sibling:
@@ -1579,6 +1596,47 @@ def abs_cs_path(full: str, id_args: list[str]) -> str:
     return " + ".join(out) if out else '""'
 
 
+
+def op_response_kind(spec: Spec, op_id: str) -> tuple[str, str | None]:
+    """How an operation's success is read, mirroring the reference generator:
+    ``json`` (the default); ``text`` when the success body is another media type
+    (``GET /space/billing_statement.csv`` -> ``text/csv``; returns that media
+    type for the ``Accept`` header); ``redirect`` when the only success IS a
+    redirect carrying ``Location`` (the method returns that URL, unfollowed)."""
+    o, _item = spec.op_raw[op_id]
+    responses = o.get("responses") or {}
+    ok = responses.get("200") or responses.get("201") or responses.get("2XX") or {}
+    ok_content = ok.get("content") or {}
+    text_media = next((m for m in ok_content if m != "application/json"), None)
+    if ok and "application/json" not in ok_content and text_media is not None:
+        return "text", text_media
+    if not ok:
+        for code, r in sorted(responses.items()):
+            if str(code).startswith("3") and "Location" in ((r or {}).get("headers") or {}):
+                return "redirect", None
+    return "json", None
+
+
+def op_header_params(spec: Spec, op_id: str) -> list[tuple[str, str, bool]]:
+    """``in: header`` parameters of an operation (path-item + operation level):
+    (wire header name, snake_case arg name, required). E.g. the space top-up's
+    required ``Idempotency-Key``."""
+    o, item = spec.op_raw[op_id]
+    out: list[tuple[str, str, bool]] = []
+    for raw in [*(item.get("parameters") or []), *(o.get("parameters") or [])]:
+        prm = raw
+        if isinstance(raw, dict) and "$ref" in raw:
+            node = spec.doc
+            for part in raw["$ref"].lstrip("#/").split("/"):
+                node = node[part]
+            prm = node
+        if not isinstance(prm, dict) or prm.get("in") != "header":
+            continue
+        arg = re.sub(r"[^0-9A-Za-z]+", "_", prm["name"]).strip("_").lower()
+        out.append((prm["name"], arg, bool(prm.get("required"))))
+    return out
+
+
 def emit_method(
     spec: Spec, anchor: str, markup: dict, base: str, method_snake: str, op_id: str
 ) -> str:
@@ -1600,11 +1658,59 @@ def emit_method(
         for a in id_args
     ]
     id_params = ["string " + a for a in id_args]
+    kind, text_media = op_response_kind(spec, op_id)
+    if kind != "json" and verb != "get":
+        raise SystemExit(
+            f"{cls}.{method_snake} ({op_id}): a {kind} success on {verb.upper()}; "
+            f"only GET is supported"
+        )
+    # Header parameters (``in: header``): a required string param each, sent as
+    # that header on this call only (the reference's keyword-only header args).
+    header_params = op_header_params(spec, op_id)
+    if header_params and verb not in ("get", "post"):
+        raise SystemExit(
+            f"{cls}.{method_snake} ({op_id}): header parameter on {verb.upper()}; "
+            f"only GET/POST carry headers"
+        )
+    header_items: list[str] = []
+    header_doc: list[str] = []
+    for wire, arg, required in header_params:
+        if not required:
+            raise SystemExit(
+                f"{cls}.{method_snake} ({op_id}): optional header {wire!r} is not "
+                f"supported by this generator yet"
+            )
+        ident = _dedupe_param(snake_to_camel(arg), used)
+        id_params.append("string " + ident)
+        id_records.append(
+            {"name": arg, "kind": "keyword", "type": "string", "required": True}
+        )
+        header_items.append(f"[{cs_str(wire)}] = {ident}")
+        header_doc.append(
+            f'    /// <param name="{ident}">Sent as the <c>{wire}</c> request header.</param>'
+        )
+    if kind == "text":
+        header_items.append(f"[{cs_str('Accept')}] = {cs_str(text_media)}")
+    hdr_arg = (
+        ", headers: new Dictionary<string, string> { " + ", ".join(header_items) + " }"
+        if header_items
+        else ""
+    )
     doc = ["    /// <summary>"]
     doc.append(
         f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path})."
     )
+    if kind == "redirect":
+        doc.append(
+            "    /// Returns the URL this endpoint redirects to (the <c>Location</c> of its"
+        )
+        doc.append(
+            "    /// redirect), without following it or downloading anything."
+        )
+    elif kind == "text":
+        doc.append(f"    /// Returns the <c>{text_media}</c> response body as text.")
     doc.append("    /// </summary>")
+    doc.extend(header_doc)
     body_ml: list[str] = []
     write_verb = verb in ("post", "put", "patch")
     verb_fn = {"post": "PostAsync", "put": "PutAsync", "patch": "PatchAsync"}.get(verb)
@@ -1640,9 +1746,10 @@ def emit_method(
                 "    /// <summary>",
                 f"    /// Generated from operation <c>{op_id}</c> ({verb.upper()} {op_path}).",
                 "    /// </summary>",
+                *header_doc,
                 *field_doc,
             ]
-            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, _reqBody, requestOptions: requestOptions{hdr_arg}, cancellationToken: cancellationToken);"
         else:
             # §5.2 union body → a single ``Dictionary<string,object?> body`` param.
             body_id = _dedupe_param("body", used)
@@ -1662,11 +1769,11 @@ def emit_method(
                 ],
             )
             doc.append(f'    /// <param name="{body_id}">JSON request body.</param>')
-            call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
+            call_line = f"        return Client.{verb_fn}({path_expr}, {body_id}, requestOptions: requestOptions{hdr_arg}, cancellationToken: cancellationToken);"
     elif write_verb:
         params = id_params
         _register_sidecar(cls, name, [*id_records, dict(ro_record)])
-        call_line = f"        return Client.{verb_fn}({path_expr}, null, requestOptions: requestOptions, cancellationToken: cancellationToken);"
+        call_line = f"        return Client.{verb_fn}({path_expr}, null, requestOptions: requestOptions{hdr_arg}, cancellationToken: cancellationToken);"
     elif verb == "get":
         # §5.3 GET query door — a trailing query-params map. The C# convenience
         # ``queryParams`` param is a port idiom; the python reference expresses it
@@ -1679,7 +1786,10 @@ def emit_method(
         params = [*id_params, f"Dictionary<string, string>? {qp_id} = null"]
         _register_sidecar(cls, name, [*id_records, dict(ro_record)])
         doc.append(f'    /// <param name="{qp_id}">Query-string parameters.</param>')
-        call_line = f"        return Client.GetAsync({path_expr}, {qp_id}, requestOptions: requestOptions, cancellationToken: cancellationToken);"
+        get_fn = {"text": "GetTextAsync", "redirect": "GetRedirectLocationAsync"}.get(
+            kind, "GetAsync"
+        )
+        call_line = f"        return Client.{get_fn}({path_expr}, {qp_id}, requestOptions: requestOptions{hdr_arg}, cancellationToken: cancellationToken);"
     else:  # delete
         params = id_params
         _register_sidecar(cls, name, [*id_records, dict(ro_record)])
@@ -1690,8 +1800,13 @@ def emit_method(
     sig = ", ".join(params)
     # DOTNET-1 typed returns: the operation's 200/201 response DTO, or Dictionary
     # when the response is a delete/union/non-object (mirroring dict[str, Any]).
-    ret_cs = response_cs_type(spec, op_id)
-    ret_task, call_line = _typed_return(ret_cs, call_line)
+    if kind == "json":
+        ret_cs = response_cs_type(spec, op_id)
+        ret_task, call_line = _typed_return(ret_cs, call_line)
+    else:
+        # GetTextAsync / GetRedirectLocationAsync are typed Task<string>.
+        ret_cs = "string"
+        ret_task = "Task<string>"
     _register_sidecar_return(cls, name, ret_cs)
     lines = "\n".join(doc) + "\n"
     lines += f"    public {ret_task} {name}({sig})\n    {{\n"
@@ -2454,6 +2569,8 @@ CONTAINERS = {
     "registry": ("RegistryNamespace", "Registry"),
     "project": ("ProjectNamespace", "Project"),
     "datasphere": ("DatasphereNamespace", "Datasphere"),
+    "space": ("SpaceNamespace", "Space"),
+    "whatsapp": ("WhatsappNamespace", "Whatsapp"),
 }
 
 # Accessor-name overrides — mirrors the Python reference generator's
@@ -2536,20 +2653,43 @@ def flat_accessor(name: str) -> str:
     return name
 
 
+#: The security scheme a Personal-Access-Token spec declares (rest-apis/space) —
+#: the same name the reference generator and the mock route by.
+PAT_SECURITY_SCHEME = "SignalWirePersonalAccessToken"
+
+
+def _spec_is_pat(spec: Spec) -> bool:
+    """True when the spec's root ``security`` accepts ONLY the Personal Access
+    Token (mirrors the reference generator's ``_spec_requires_pat``)."""
+    security = spec.doc.get("security") or []
+    names = [n for req in security if isinstance(req, dict) for n in req]
+    return bool(names) and all(n == PAT_SECURITY_SCHEME for n in names)
+
+
 def emit_resource_tree(placed) -> str:
     """Emit ResourceTree: a partial class the hand RestClient composes,
-    providing a lazy accessor per FLAT resource + per CONTAINER (§8)."""
+    providing a lazy accessor per FLAT resource + per CONTAINER (§8). A
+    container whose spec authenticates with a Personal Access Token (``space``)
+    is wired to the PAT transport; everything else to the project transport."""
     flats = []  # (accessor, class)
     containers_seen = []  # ordered container attrs
     seen_c = set()
-    for _spec, _anchor, markup, container in placed:
+    pat_containers: set[str] = set()
+    for spec, _anchor, markup, container in placed:
         name = markup["name"]
         if not container:
+            if _spec_is_pat(spec):
+                raise SystemExit(
+                    f"{name}: a flat resource on a Personal-Access-Token spec "
+                    f"({spec.name}) has no PAT wiring — place it in a namespace"
+                )
             flats.append((flat_accessor(name), name))
         else:
             if container not in seen_c:
                 seen_c.add(container)
                 containers_seen.append(container)
+            if _spec_is_pat(spec):
+                pat_containers.add(container)
 
     lines = []
     lines.append("/// <summary>")
@@ -2563,15 +2703,32 @@ def emit_resource_tree(placed) -> str:
     lines.append("public partial class ResourceTree")
     lines.append("{")
     lines.append("    private readonly SignalWire.REST.HttpClient _generatedHttp;")
+    lines.append("    private readonly SignalWire.REST.HttpClient _generatedPatHttp;")
     for accessor, cls in flats:
         lines.append(f"    private {cls}? _{accessor[:1].lower() + accessor[1:]};")
     for c in containers_seen:
         clsname, acc = CONTAINERS[c]
         lines.append(f"    private {clsname}? _{acc[:1].lower() + acc[1:]};")
     lines.append("")
-    lines.append("    public ResourceTree(SignalWire.REST.HttpClient http)")
+    lines.append(
+        "    /// <summary>Wire every resource: <paramref name=\"http\"/> carries the project"
+    )
+    lines.append(
+        "    /// token, <paramref name=\"patHttp\"/> the Personal Access Token (the namespaces"
+    )
+    lines.append("    /// whose spec security requires it).</summary>")
+    lines.append(
+        '    /// <param name="http">The project-credential transport.</param>'
+    )
+    lines.append(
+        '    /// <param name="patHttp">The Personal Access Token transport.</param>'
+    )
+    lines.append(
+        "    public ResourceTree(SignalWire.REST.HttpClient http, SignalWire.REST.HttpClient patHttp)"
+    )
     lines.append("    {")
     lines.append("        _generatedHttp = http;")
+    lines.append("        _generatedPatHttp = patHttp;")
     lines.append("    }")
     lines.append("")
     lines.append(
@@ -2583,6 +2740,14 @@ def emit_resource_tree(placed) -> str:
     lines.append("    /// is not public route/surface).</summary>")
     lines.append(
         "    protected SignalWire.REST.HttpClient GeneratedHttp => _generatedHttp;"
+    )
+    lines.append("")
+    lines.append(
+        "    /// <summary>The Personal Access Token transport (exposed to the inheriting"
+    )
+    lines.append("    /// RestClient for disposal).</summary>")
+    lines.append(
+        "    protected SignalWire.REST.HttpClient GeneratedPatHttp => _generatedPatHttp;"
     )
     for accessor, cls in flats:
         field = "_" + accessor[:1].lower() + accessor[1:]
@@ -2596,8 +2761,9 @@ def emit_resource_tree(placed) -> str:
         field = "_" + acc[:1].lower() + acc[1:]
         lines.append("")
         lines.append(f"    /// <summary>The {clsname} container.</summary>")
+        cred = "_generatedPatHttp" if c in pat_containers else "_generatedHttp"
         lines.append(
-            f"    public {clsname} {acc} => {field} ??= new {clsname}(_generatedHttp);"
+            f"    public {clsname} {acc} => {field} ??= new {clsname}({cred});"
         )
     lines.append("}")
     return (

@@ -62,7 +62,7 @@ public class VideoRoomSessionConference
 
     /// <summary>Wire field <c>charge</c>.</summary>
     [JsonPropertyName("charge")]
-    public string? Charge { get; set; }
+    public double? Charge { get; set; }
 
     /// <summary>Wire field <c>charge_details</c>.</summary>
     [JsonPropertyName("charge_details")]

@@ -79,4 +79,16 @@ public class CxmlApplication
     /// <summary>Wire field <c>sms_status_callback_method</c>.</summary>
     [JsonPropertyName("sms_status_callback_method")]
     public object? SmsStatusCallbackMethod { get; set; }
+
+    /// <summary>Wire field <c>message_status_callback</c>.</summary>
+    [JsonPropertyName("message_status_callback")]
+    public string? MessageStatusCallback { get; set; }
+
+    /// <summary>Wire field <c>api_version</c>.</summary>
+    [JsonPropertyName("api_version")]
+    public string? ApiVersion { get; set; }
+
+    /// <summary>Wire field <c>uri</c>.</summary>
+    [JsonPropertyName("uri")]
+    public string? Uri { get; set; }
 }

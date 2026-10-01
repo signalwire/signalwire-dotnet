@@ -36,6 +36,10 @@ public class AssignedNumber
     [JsonPropertyName("phone_number")]
     public SignalWire.REST.Namespaces.Generated.Types.RelayRest.AssignedPhoneNumber? PhoneNumber { get; set; }
 
+    /// <summary>Wire field <c>status_callback_url</c>.</summary>
+    [JsonPropertyName("status_callback_url")]
+    public string? StatusCallbackUrl { get; set; }
+
     /// <summary>Wire field <c>created_at</c>.</summary>
     [JsonPropertyName("created_at")]
     public string? CreatedAt { get; set; }

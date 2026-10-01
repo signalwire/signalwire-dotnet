@@ -63,4 +63,12 @@ public class CreateAddressRequest
     /// <summary>Wire field <c>postal_code</c>.</summary>
     [JsonPropertyName("postal_code")]
     public string? PostalCode { get; set; }
+
+    /// <summary>Wire field <c>emergency_enabled</c>.</summary>
+    [JsonPropertyName("emergency_enabled")]
+    public bool? EmergencyEnabled { get; set; }
+
+    /// <summary>Wire field <c>auto_correct_address</c>.</summary>
+    [JsonPropertyName("auto_correct_address")]
+    public bool? AutoCorrectAddress { get; set; }
 }

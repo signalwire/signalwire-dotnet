@@ -64,7 +64,7 @@ public class DependencyInjectionTests
 
         Assert.Equal("di-proj", client.ProjectId);
         Assert.Equal("di-tok", client.Token);
-        Assert.Equal("di.signalwire.com", client.Space);
+        Assert.Equal("https://di.signalwire.com", client.BaseUrl);
     }
 
     [Fact]

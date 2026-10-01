@@ -20,11 +20,11 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class SWMLObject
 {
-    /// <summary>Wire field <c>version</c>.</summary>
-    [JsonPropertyName("version")]
-    public string? Version { get; set; }
-
     /// <summary>Wire field <c>sections</c>.</summary>
     [JsonPropertyName("sections")]
     public SignalWire.REST.Namespaces.Generated.Types.Calling.Section? Sections { get; set; }
+
+    /// <summary>Wire field <c>version</c>.</summary>
+    [JsonPropertyName("version")]
+    public string? Version { get; set; }
 }

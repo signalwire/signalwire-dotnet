@@ -76,6 +76,10 @@ public class UpdatePhoneNumberRequest
     [JsonPropertyName("call_relay_script_url")]
     public string? CallRelayScriptUrl { get; set; }
 
+    /// <summary>Wire field <c>call_relay_script_url_method</c>.</summary>
+    [JsonPropertyName("call_relay_script_url_method")]
+    public string? CallRelayScriptUrlMethod { get; set; }
+
     /// <summary>Wire field <c>call_relay_context</c>.</summary>
     [JsonPropertyName("call_relay_context")]
     public string? CallRelayContext { get; set; }

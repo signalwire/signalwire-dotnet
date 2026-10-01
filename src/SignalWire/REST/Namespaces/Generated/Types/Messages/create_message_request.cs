@@ -47,4 +47,24 @@ public class CreateMessageRequest
     /// <summary>Wire field <c>custom_variables</c>.</summary>
     [JsonPropertyName("custom_variables")]
     public Dictionary<string, object?>? CustomVariables { get; set; }
+
+    /// <summary>Wire field <c>message_type</c>.</summary>
+    [JsonPropertyName("message_type")]
+    public string? MessageType { get; set; }
+
+    /// <summary>Wire field <c>template_id</c>.</summary>
+    [JsonPropertyName("template_id")]
+    public string? TemplateId { get; set; }
+
+    /// <summary>Wire field <c>header_template_parameters</c>.</summary>
+    [JsonPropertyName("header_template_parameters")]
+    public Dictionary<string, object?>? HeaderTemplateParameters { get; set; }
+
+    /// <summary>Wire field <c>body_template_parameters</c>.</summary>
+    [JsonPropertyName("body_template_parameters")]
+    public Dictionary<string, object?>? BodyTemplateParameters { get; set; }
+
+    /// <summary>Wire field <c>button_template_parameters</c>.</summary>
+    [JsonPropertyName("button_template_parameters")]
+    public List<object?>? ButtonTemplateParameters { get; set; }
 }

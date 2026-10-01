@@ -48,6 +48,46 @@ public class CallCreateParamsURL
     [JsonPropertyName("url_method")]
     public string? UrlMethod { get; set; }
 
+    /// <summary>Wire field <c>codecs</c>.</summary>
+    [JsonPropertyName("codecs")]
+    public object? Codecs { get; set; }
+
+    /// <summary>Wire field <c>to_script</c>.</summary>
+    [JsonPropertyName("to_script")]
+    public object? ToScript { get; set; }
+
+    /// <summary>Wire field <c>timeout</c>.</summary>
+    [JsonPropertyName("timeout")]
+    public long? Timeout { get; set; }
+
+    /// <summary>Wire field <c>max_price_per_minute</c>.</summary>
+    [JsonPropertyName("max_price_per_minute")]
+    public double? MaxPricePerMinute { get; set; }
+
+    /// <summary>Wire field <c>send_digits</c>.</summary>
+    [JsonPropertyName("send_digits")]
+    public string? SendDigits { get; set; }
+
+    /// <summary>Wire field <c>region</c>.</summary>
+    [JsonPropertyName("region")]
+    public object? Region { get; set; }
+
+    /// <summary>Wire field <c>username</c>.</summary>
+    [JsonPropertyName("username")]
+    public string? Username { get; set; }
+
+    /// <summary>Wire field <c>password</c>.</summary>
+    [JsonPropertyName("password")]
+    public string? Password { get; set; }
+
+    /// <summary>Wire field <c>headers</c>.</summary>
+    [JsonPropertyName("headers")]
+    public List<object?>? Headers { get; set; }
+
+    /// <summary>Wire field <c>custom_variables</c>.</summary>
+    [JsonPropertyName("custom_variables")]
+    public Dictionary<string, object?>? CustomVariables { get; set; }
+
     /// <summary>Wire field <c>url</c>.</summary>
     [JsonPropertyName("url")]
     public string? Url { get; set; }

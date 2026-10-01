@@ -32,6 +32,8 @@ public class HttpClient : IDisposable
     private readonly string _baseUrl;
     private readonly string _authHeader;
     private readonly RequestOptions? _requestOptions;
+    private readonly string? _missingCredential;
+    private System.Net.Http.HttpClient? _noRedirectHttp;
     private static readonly string _userAgent = BuildUserAgent();
 
     // The REST user-agent is `signalwire-dotnet/<package-version>`, aligned to the
@@ -101,6 +103,53 @@ public class HttpClient : IDisposable
     }
 
     /// <summary>
+    /// A stand-in for the transport of a credential the <see cref="RestClient"/>
+    /// was not given: every request throws <see cref="InvalidOperationException"/>
+    /// naming the missing credential before anything is sent — so a client built
+    /// with only a Personal Access Token fails loudly on a project resource (and a
+    /// project-only client on <c>Space</c>) instead of sending a request the server
+    /// can only refuse.
+    /// </summary>
+    internal static HttpClient ForMissingCredential(string message, string baseUrl)
+        => new(message, baseUrl);
+
+    private HttpClient(string missingCredential, string baseUrl)
+        : this("", "", baseUrl, null, null)
+    {
+        _missingCredential = missingCredential;
+    }
+
+    /// <summary>
+    /// The transport a redirect-answering GET is sent on: it must NOT follow the
+    /// redirect (the Location is the result). For a transport this object owns,
+    /// that is a lazily-built twin with auto-redirect off; a caller-injected client
+    /// is used as-is (its own redirect policy applies — a followed redirect is read
+    /// back from the final request URI).
+    /// </summary>
+    [SuppressMessage("Reliability", "CA2000", Justification = "Ownership transfer: the handler is handed to the HttpClient ctor with disposeHandler:true; the twin is disposed in Dispose().")]
+    private System.Net.Http.HttpClient NoRedirectTransport()
+    {
+        if (!_ownsHttp)
+        {
+            return _http;
+        }
+        if (_noRedirectHttp is null)
+        {
+            var handler = BuildRestTransportHandler();
+            handler.AllowAutoRedirect = false;
+            var twin = new System.Net.Http.HttpClient(handler, disposeHandler: true)
+            {
+                Timeout = System.Threading.Timeout.InfiniteTimeSpan,
+            };
+            if (Interlocked.CompareExchange(ref _noRedirectHttp, twin, null) is not null)
+            {
+                twin.Dispose();
+            }
+        }
+        return _noRedirectHttp;
+    }
+
+    /// <summary>
     /// Build the <see cref="HttpClientHandler"/> for a SDK-owned REST transport,
     /// honouring the A5 fleet CA-var <c>SIGNALWIRE_REST_CA_FILE</c>. When the env
     /// var names a PEM CA bundle, the returned handler validates the server chain
@@ -144,24 +193,83 @@ public class HttpClient : IDisposable
     // ------------------------------------------------------------------
 
     /// <summary>GET with optional query-string parameters.</summary>
+    /// <param name="path">Absolute API path, appended to the base URL.</param>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options over the client default.</param>
+    /// <param name="headers">Extra request headers for this call only.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
     public virtual async Task<Dictionary<string, object?>> GetAsync(
+        string path, Dictionary<string, string>? queryParams = null,
+        RequestOptions? requestOptions = null,
+        IReadOnlyDictionary<string, string>? headers = null,
+        CancellationToken cancellationToken = default)
+    {
+        return await RequestAsync("GET", path, queryParams,
+                cancellationToken: cancellationToken, requestOptions: requestOptions,
+                headers: headers)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// GET whose success body is NOT JSON (e.g. <c>text/csv</c>): returns the body
+    /// as text. Pass the media type as the <c>Accept</c> header. Errors are raised
+    /// exactly as <see cref="GetAsync"/> raises them.
+    /// </summary>
+    /// <param name="path">Absolute API path, appended to the base URL.</param>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options over the client default.</param>
+    /// <param name="headers">Extra request headers for this call only (e.g. <c>Accept: text/csv</c>).</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public virtual async Task<string> GetTextAsync(
+        string path, Dictionary<string, string>? queryParams = null,
+        RequestOptions? requestOptions = null,
+        IReadOnlyDictionary<string, string>? headers = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await SendAsync("GET", path, queryParams, null, requestOptions, headers,
+                ResponseKind.Text, cancellationToken)
+            .ConfigureAwait(false);
+        return (string)result;
+    }
+
+    /// <summary>
+    /// GET whose success IS a redirect: returns the redirect's <c>Location</c> (the
+    /// URL of the resource, e.g. a signed download URL) without following it or
+    /// downloading anything. Throws <see cref="SignalWireRestError"/> for an error
+    /// status or a success that is not a redirect.
+    /// </summary>
+    /// <param name="path">Absolute API path, appended to the base URL.</param>
+    /// <param name="queryParams">Query-string parameters.</param>
+    /// <param name="requestOptions">Per-call request options over the client default.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public virtual async Task<string> GetRedirectLocationAsync(
         string path, Dictionary<string, string>? queryParams = null,
         RequestOptions? requestOptions = null,
         CancellationToken cancellationToken = default)
     {
-        return await RequestAsync("GET", path, queryParams,
-                cancellationToken: cancellationToken, requestOptions: requestOptions)
+        var result = await SendAsync("GET", path, queryParams, null, requestOptions, null,
+                ResponseKind.Redirect, cancellationToken)
             .ConfigureAwait(false);
+        return (string)result;
     }
 
     /// <summary>POST with JSON body.</summary>
+    /// <param name="path">Absolute API path, appended to the base URL.</param>
+    /// <param name="data">Value serialised as the JSON request body; <c>null</c> sends no body.</param>
+    /// <param name="queryParams">Query-string parameters (some create endpoints take both).</param>
+    /// <param name="requestOptions">Per-call request options over the client default.</param>
+    /// <param name="headers">Extra request headers for this call only (e.g. an <c>Idempotency-Key</c>).</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
     public virtual async Task<Dictionary<string, object?>> PostAsync(
         string path, Dictionary<string, object?>? data = null,
+        Dictionary<string, string>? queryParams = null,
         RequestOptions? requestOptions = null,
+        IReadOnlyDictionary<string, string>? headers = null,
         CancellationToken cancellationToken = default)
     {
-        return await RequestAsync("POST", path, body: data,
-                cancellationToken: cancellationToken, requestOptions: requestOptions)
+        return await RequestAsync("POST", path, queryParams, body: data,
+                cancellationToken: cancellationToken, requestOptions: requestOptions,
+                headers: headers)
             .ConfigureAwait(false);
     }
 
@@ -254,14 +362,49 @@ public class HttpClient : IDisposable
     // Internal request engine
     // ------------------------------------------------------------------
 
+    /// <summary>How a success response is read (mirrors the reference's
+    /// <c>_request(response=...)</c>): the decoded JSON body, the body as text,
+    /// or the <c>Location</c> of a redirect that is NOT followed.</summary>
+    private enum ResponseKind
+    {
+        Json,
+        Text,
+        Redirect,
+    }
+
     private async Task<Dictionary<string, object?>> RequestAsync(
         string method,
         string path,
         Dictionary<string, string>? queryParams = null,
         Dictionary<string, object?>? body = null,
         RequestOptions? requestOptions = null,
+        IReadOnlyDictionary<string, string>? headers = null,
         CancellationToken cancellationToken = default)
     {
+        var result = await SendAsync(method, path, queryParams, body, requestOptions, headers,
+                ResponseKind.Json, cancellationToken)
+            .ConfigureAwait(false);
+        return (Dictionary<string, object?>)result;
+    }
+
+    private async Task<object> SendAsync(
+        string method,
+        string path,
+        Dictionary<string, string>? queryParams,
+        Dictionary<string, object?>? body,
+        RequestOptions? requestOptions,
+        IReadOnlyDictionary<string, string>? headers,
+        ResponseKind kind,
+        CancellationToken cancellationToken)
+    {
+        if (_missingCredential is not null)
+        {
+            // A RestClient built without this credential: refuse before anything
+            // is sent, naming the missing credential (the reference raises the same
+            // way from its _MissingCredentialHttp stand-in).
+            throw new InvalidOperationException(_missingCredential);
+        }
+
         var url = _baseUrl + path;
 
         if (queryParams is { Count: > 0 })
@@ -309,7 +452,22 @@ public class HttpClient : IDisposable
 
             using var request = new HttpRequestMessage(new HttpMethod(method), url);
             request.Headers.Authorization = AuthenticationHeaderValue.Parse(_authHeader);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            var acceptOverride = false;
+            if (headers is not null)
+            {
+                foreach (var kvp in headers)
+                {
+                    if (string.Equals(kvp.Key, "Accept", StringComparison.OrdinalIgnoreCase))
+                    {
+                        acceptOverride = true;
+                    }
+                    request.Headers.TryAddWithoutValidation(kvp.Key, kvp.Value);
+                }
+            }
+            if (!acceptOverride)
+            {
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
             request.Headers.UserAgent.ParseAdd(_userAgent);
             if (serializedBody is not null)
             {
@@ -319,7 +477,8 @@ public class HttpClient : IDisposable
             HttpResponseMessage response;
             try
             {
-                response = await _http.SendAsync(request, linkedCts.Token).ConfigureAwait(false);
+                var transport = kind == ResponseKind.Redirect ? NoRedirectTransport() : _http;
+                response = await transport.SendAsync(request, linkedCts.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (
                 cancellationToken.IsCancellationRequested || abortToken.IsCancellationRequested)
@@ -353,6 +512,40 @@ public class HttpClient : IDisposable
 
             var statusCode = (int)response.StatusCode;
 
+            if (kind == ResponseKind.Redirect && statusCode < 400)
+            {
+                // The endpoint's answer IS a redirect: return its Location without
+                // following it. A caller-injected transport that follows redirects
+                // itself surfaces as a 2xx whose final request URI moved — that URI
+                // is the same Location.
+                var location = response.Headers.Location;
+                var finalUri = response.RequestMessage?.RequestUri;
+                string? target = null;
+                if (statusCode is >= 300 and < 400 && location is not null)
+                {
+                    target = location.IsAbsoluteUri
+                        ? location.AbsoluteUri
+                        : new Uri(new Uri(url), location).AbsoluteUri;
+                }
+                else if (statusCode is >= 200 and < 300 && finalUri is not null
+                    && !string.Equals(finalUri.AbsoluteUri, new Uri(url).AbsoluteUri, StringComparison.Ordinal))
+                {
+                    target = finalUri.AbsoluteUri;
+                }
+                if (target is not null)
+                {
+                    response.Dispose();
+                    return target;
+                }
+                // A success that is not the redirect the endpoint answers with.
+                var okBody = await response.Content.ReadAsStringAsync(linkedCts.Token).ConfigureAwait(false);
+                var okHeaders = CollectHeaders(response);
+                response.Dispose();
+                throw new SignalWireRestError(
+                    $"{method} {url} returned {statusCode} without a redirect Location",
+                    statusCode, okBody, url, method, okHeaders);
+            }
+
             if (statusCode < 200 || statusCode >= 300)
             {
                 // Retryable failure with attempts remaining: honour Retry-After
@@ -381,10 +574,15 @@ public class HttpClient : IDisposable
             var responseBody = await response.Content.ReadAsStringAsync(linkedCts.Token).ConfigureAwait(false);
             response.Dispose();
 
+            if (kind == ResponseKind.Text)
+            {
+                return responseBody;
+            }
+
             // 204 No Content or empty body
             if (statusCode == 204 || string.IsNullOrEmpty(responseBody))
             {
-                return new();
+                return new Dictionary<string, object?>();
             }
 
             try
@@ -399,19 +597,19 @@ public class HttpClient : IDisposable
                 // (pkg/rest/client.go: array root → map{"data": arr}).
                 if (root.ValueKind == JsonValueKind.Array)
                 {
-                    return new() { ["data"] = JsonElementToObject(root) };
+                    return new Dictionary<string, object?>() { ["data"] = JsonElementToObject(root) };
                 }
                 if (root.ValueKind != JsonValueKind.Object)
                 {
                     // A bare scalar/null 2xx body is non-canonical; surface it under
                     // "data" rather than crashing on EnumerateObject.
-                    return new() { ["data"] = JsonElementToObject(root) };
+                    return new Dictionary<string, object?>() { ["data"] = JsonElementToObject(root) };
                 }
                 return JsonElementToDict(root);
             }
             catch (JsonException)
             {
-                return new() { ["raw"] = responseBody };
+                return new Dictionary<string, object?>() { ["raw"] = responseBody };
             }
         }
     }
@@ -528,6 +726,7 @@ public class HttpClient : IDisposable
         if (disposing && _ownsHttp)
         {
             _http.Dispose();
+            _noRedirectHttp?.Dispose();
         }
         _disposed = true;
     }

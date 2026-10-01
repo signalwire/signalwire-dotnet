@@ -118,4 +118,46 @@ public class GenericResources
         }
         return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.DomainApplicationResponse>(Client.PostAsync(Path(id, "domain_applications"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
+
+    /// <summary>
+    /// Generated from operation <c>assign_resource_sip_endpoint</c> (POST /resources/{id}/sip_endpoints).
+    /// </summary>
+    /// <param name="sipEndpointId">Wire field <c>sip_endpoint_id</c>.</param>
+    /// <param name="extras">Forward-compat body fields merged onto the request.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.ResourceResponseSipEndpoint?> AssignSipEndpointAsync(string id, string sipEndpointId, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["sip_endpoint_id"] = sipEndpointId;
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                _reqBody[kv.Key] = kv.Value;
+            }
+        }
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.ResourceResponseSipEndpoint>(Client.PostAsync(Path(id, "sip_endpoints"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
+    /// Generated from operation <c>assign_resource_whatsapp_number</c> (POST /resources/{id}/whatsapp_numbers).
+    /// </summary>
+    /// <param name="whatsappNumberId">Wire field <c>whatsapp_number_id</c>.</param>
+    /// <param name="handler">Wire field <c>handler</c>.</param>
+    /// <param name="extras">Forward-compat body fields merged onto the request.</param>
+    /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Fabric.WhatsappNumberAddressResponse?> AssignWhatsappNumberAsync(string id, string whatsappNumberId, string handler, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        var _reqBody = new Dictionary<string, object?>();
+        _reqBody["whatsapp_number_id"] = whatsappNumberId;
+        _reqBody["handler"] = handler;
+        if (extras is not null)
+        {
+            foreach (var kv in extras)
+            {
+                _reqBody[kv.Key] = kv.Value;
+            }
+        }
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Fabric.WhatsappNumberAddressResponse>(Client.PostAsync(Path(id, "whatsapp_numbers"), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
+    }
 }

@@ -20,9 +20,89 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class FunctionParameters
 {
+    /// <summary>Wire field <c>title</c>.</summary>
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    /// <summary>Wire field <c>description</c>.</summary>
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? Type { get; set; }
+    public object? Type { get; set; }
+
+    /// <summary>Wire field <c>const</c>.</summary>
+    [JsonPropertyName("const")]
+    public object? Const { get; set; }
+
+    /// <summary>Wire field <c>enum</c>.</summary>
+    [JsonPropertyName("enum")]
+    public List<object?>? Enum { get; set; }
+
+    /// <summary>Wire field <c>format</c>.</summary>
+    [JsonPropertyName("format")]
+    public string? Format { get; set; }
+
+    /// <summary>Wire field <c>pattern</c>.</summary>
+    [JsonPropertyName("pattern")]
+    public string? Pattern { get; set; }
+
+    /// <summary>Wire field <c>minimum</c>.</summary>
+    [JsonPropertyName("minimum")]
+    public double? Minimum { get; set; }
+
+    /// <summary>Wire field <c>maximum</c>.</summary>
+    [JsonPropertyName("maximum")]
+    public double? Maximum { get; set; }
+
+    /// <summary>Wire field <c>exclusiveMinimum</c>.</summary>
+    [JsonPropertyName("exclusiveMinimum")]
+    public double? ExclusiveMinimum { get; set; }
+
+    /// <summary>Wire field <c>exclusiveMaximum</c>.</summary>
+    [JsonPropertyName("exclusiveMaximum")]
+    public double? ExclusiveMaximum { get; set; }
+
+    /// <summary>Wire field <c>minLength</c>.</summary>
+    [JsonPropertyName("minLength")]
+    public long? MinLength { get; set; }
+
+    /// <summary>Wire field <c>maxLength</c>.</summary>
+    [JsonPropertyName("maxLength")]
+    public long? MaxLength { get; set; }
+
+    /// <summary>Wire field <c>minItems</c>.</summary>
+    [JsonPropertyName("minItems")]
+    public long? MinItems { get; set; }
+
+    /// <summary>Wire field <c>maxItems</c>.</summary>
+    [JsonPropertyName("maxItems")]
+    public long? MaxItems { get; set; }
+
+    /// <summary>Wire field <c>minProperties</c>.</summary>
+    [JsonPropertyName("minProperties")]
+    public long? MinProperties { get; set; }
+
+    /// <summary>Wire field <c>maxProperties</c>.</summary>
+    [JsonPropertyName("maxProperties")]
+    public long? MaxProperties { get; set; }
+
+    /// <summary>Wire field <c>default</c>.</summary>
+    [JsonPropertyName("default")]
+    public object? Default { get; set; }
+
+    /// <summary>Wire field <c>examples</c>.</summary>
+    [JsonPropertyName("examples")]
+    public List<object?>? Examples { get; set; }
+
+    /// <summary>Wire field <c>deprecated</c>.</summary>
+    [JsonPropertyName("deprecated")]
+    public bool? Deprecated { get; set; }
+
+    /// <summary>Wire field <c>nullable</c>.</summary>
+    [JsonPropertyName("nullable")]
+    public bool? Nullable { get; set; }
 
     /// <summary>Wire field <c>properties</c>.</summary>
     [JsonPropertyName("properties")]
@@ -31,4 +111,104 @@ public class FunctionParameters
     /// <summary>Wire field <c>required</c>.</summary>
     [JsonPropertyName("required")]
     public List<object?>? Required { get; set; }
+
+    /// <summary>Wire field <c>prefixItems</c>.</summary>
+    [JsonPropertyName("prefixItems")]
+    public List<object?>? PrefixItems { get; set; }
+
+    /// <summary>Wire field <c>items</c>.</summary>
+    [JsonPropertyName("items")]
+    public object? Items { get; set; }
+
+    /// <summary>Wire field <c>propertyNames</c>.</summary>
+    [JsonPropertyName("propertyNames")]
+    public object? PropertyNames { get; set; }
+
+    /// <summary>Wire field <c>additionalProperties</c>.</summary>
+    [JsonPropertyName("additionalProperties")]
+    public object? AdditionalProperties { get; set; }
+
+    /// <summary>Wire field <c>unevaluatedProperties</c>.</summary>
+    [JsonPropertyName("unevaluatedProperties")]
+    public object? UnevaluatedProperties { get; set; }
+
+    /// <summary>Wire field <c>oneOf</c>.</summary>
+    [JsonPropertyName("oneOf")]
+    public List<object?>? OneOf { get; set; }
+
+    /// <summary>Wire field <c>anyOf</c>.</summary>
+    [JsonPropertyName("anyOf")]
+    public List<object?>? AnyOf { get; set; }
+
+    /// <summary>Wire field <c>allOf</c>.</summary>
+    [JsonPropertyName("allOf")]
+    public List<object?>? AllOf { get; set; }
+
+    /// <summary>Wire field <c>not</c>.</summary>
+    [JsonPropertyName("not")]
+    public object? Not { get; set; }
+
+    /// <summary>Wire field <c>contains</c>.</summary>
+    [JsonPropertyName("contains")]
+    public object? Contains { get; set; }
+
+    /// <summary>Wire field <c>dependentRequired</c>.</summary>
+    [JsonPropertyName("dependentRequired")]
+    public Dictionary<string, object?>? DependentRequired { get; set; }
+
+    /// <summary>Wire field <c>dependentSchemas</c>.</summary>
+    [JsonPropertyName("dependentSchemas")]
+    public Dictionary<string, object?>? DependentSchemas { get; set; }
+
+    /// <summary>Wire field <c>else</c>.</summary>
+    [JsonPropertyName("else")]
+    public object? Else { get; set; }
+
+    /// <summary>Wire field <c>example</c>.</summary>
+    [JsonPropertyName("example")]
+    public object? Example { get; set; }
+
+    /// <summary>Wire field <c>if</c>.</summary>
+    [JsonPropertyName("if")]
+    public object? If { get; set; }
+
+    /// <summary>Wire field <c>maxContains</c>.</summary>
+    [JsonPropertyName("maxContains")]
+    public long? MaxContains { get; set; }
+
+    /// <summary>Wire field <c>minContains</c>.</summary>
+    [JsonPropertyName("minContains")]
+    public long? MinContains { get; set; }
+
+    /// <summary>Wire field <c>multipleOf</c>.</summary>
+    [JsonPropertyName("multipleOf")]
+    public double? MultipleOf { get; set; }
+
+    /// <summary>Wire field <c>patternProperties</c>.</summary>
+    [JsonPropertyName("patternProperties")]
+    public Dictionary<string, object?>? PatternProperties { get; set; }
+
+    /// <summary>Wire field <c>propertyOrdering</c>.</summary>
+    [JsonPropertyName("propertyOrdering")]
+    public List<object?>? PropertyOrdering { get; set; }
+
+    /// <summary>Wire field <c>readOnly</c>.</summary>
+    [JsonPropertyName("readOnly")]
+    public bool? ReadOnly { get; set; }
+
+    /// <summary>Wire field <c>then</c>.</summary>
+    [JsonPropertyName("then")]
+    public object? Then { get; set; }
+
+    /// <summary>Wire field <c>unevaluatedItems</c>.</summary>
+    [JsonPropertyName("unevaluatedItems")]
+    public object? UnevaluatedItems { get; set; }
+
+    /// <summary>Wire field <c>uniqueItems</c>.</summary>
+    [JsonPropertyName("uniqueItems")]
+    public bool? UniqueItems { get; set; }
+
+    /// <summary>Wire field <c>writeOnly</c>.</summary>
+    [JsonPropertyName("writeOnly")]
+    public bool? WriteOnly { get; set; }
 }

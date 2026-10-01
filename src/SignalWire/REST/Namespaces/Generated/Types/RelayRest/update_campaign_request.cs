@@ -23,4 +23,12 @@ public class UpdateCampaignRequest
     /// <summary>Wire field <c>name</c>.</summary>
     [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    /// <summary>Wire field <c>status_callback_url</c>.</summary>
+    [JsonPropertyName("status_callback_url")]
+    public string? StatusCallbackUrl { get; set; }
+
+    /// <summary>Wire field <c>signalwire_contact_emails</c>.</summary>
+    [JsonPropertyName("signalwire_contact_emails")]
+    public object? SignalwireContactEmails { get; set; }
 }

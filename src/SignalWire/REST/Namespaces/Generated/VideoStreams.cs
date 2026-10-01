@@ -54,10 +54,13 @@ public class VideoStreams
     /// <param name="url">Wire field <c>url</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Video.Stream?> UpdateAsync(string id, string url, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Video.Stream?> UpdateAsync(string id, string? url = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
-        _reqBody["url"] = url;
+        if (url is not null)
+        {
+            _reqBody["url"] = url;
+        }
         if (extras is not null)
         {
             foreach (var kv in extras)

@@ -68,10 +68,6 @@ public class Campaign
     [JsonPropertyName("sample5")]
     public string? Sample5 { get; set; }
 
-    /// <summary>Wire field <c>dynamic_templates</c>.</summary>
-    [JsonPropertyName("dynamic_templates")]
-    public string? DynamicTemplates { get; set; }
-
     /// <summary>Wire field <c>message_flow</c>.</summary>
     [JsonPropertyName("message_flow")]
     public string? MessageFlow { get; set; }
@@ -99,10 +95,6 @@ public class Campaign
     /// <summary>Wire field <c>help_keywords</c>.</summary>
     [JsonPropertyName("help_keywords")]
     public string? HelpKeywords { get; set; }
-
-    /// <summary>Wire field <c>number_pooling_required</c>.</summary>
-    [JsonPropertyName("number_pooling_required")]
-    public bool? NumberPoolingRequired { get; set; }
 
     /// <summary>Wire field <c>number_pooling_per_campaign</c>.</summary>
     [JsonPropertyName("number_pooling_per_campaign")]
@@ -143,4 +135,28 @@ public class Campaign
     /// <summary>Wire field <c>updated_at</c>.</summary>
     [JsonPropertyName("updated_at")]
     public string? UpdatedAt { get; set; }
+
+    /// <summary>Wire field <c>dynamic_messages</c>.</summary>
+    [JsonPropertyName("dynamic_messages")]
+    public string? DynamicMessages { get; set; }
+
+    /// <summary>Wire field <c>requested_throughput</c>.</summary>
+    [JsonPropertyName("requested_throughput")]
+    public string? RequestedThroughput { get; set; }
+
+    /// <summary>Wire field <c>daily_messages_per_number</c>.</summary>
+    [JsonPropertyName("daily_messages_per_number")]
+    public string? DailyMessagesPerNumber { get; set; }
+
+    /// <summary>Wire field <c>privacy_policy_link</c>.</summary>
+    [JsonPropertyName("privacy_policy_link")]
+    public string? PrivacyPolicyLink { get; set; }
+
+    /// <summary>Wire field <c>purchase_or_port_numbers</c>.</summary>
+    [JsonPropertyName("purchase_or_port_numbers")]
+    public string? PurchaseOrPortNumbers { get; set; }
+
+    /// <summary>Wire field <c>signalwire_contact_emails</c>.</summary>
+    [JsonPropertyName("signalwire_contact_emails")]
+    public List<object?>? SignalwireContactEmails { get; set; }
 }

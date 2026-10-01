@@ -31,4 +31,8 @@ public class SwmlScriptCreateRequest
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
     public string? StatusCallbackUrl { get; set; }
+
+    /// <summary>Wire field <c>script_type</c>.</summary>
+    [JsonPropertyName("script_type")]
+    public string? ScriptType { get; set; }
 }

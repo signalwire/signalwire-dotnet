@@ -20,6 +20,9 @@ namespace SignalWire.REST.Namespaces.Generated;
 public class FabricNamespace
 {
     private readonly SignalWire.REST.HttpClient _http;
+    private AliasAddresses? _aliasAddresses;
+    private SipAddresses? _sipAddresses;
+    private PhoneNumberAddresses? _phoneNumberAddresses;
     private FabricAddresses? _addresses;
     private GenericResources? _resources;
     private AiAgents? _aiAgents;
@@ -41,6 +44,15 @@ public class FabricNamespace
     {
         _http = http;
     }
+
+    /// <summary>The AliasAddresses resource.</summary>
+    public AliasAddresses AliasAddresses => _aliasAddresses ??= new AliasAddresses(_http);
+
+    /// <summary>The SipAddresses resource.</summary>
+    public SipAddresses SipAddresses => _sipAddresses ??= new SipAddresses(_http);
+
+    /// <summary>The PhoneNumberAddresses resource.</summary>
+    public PhoneNumberAddresses PhoneNumberAddresses => _phoneNumberAddresses ??= new PhoneNumberAddresses(_http);
 
     /// <summary>The FabricAddresses resource.</summary>
     public FabricAddresses Addresses => _addresses ??= new FabricAddresses(_http);

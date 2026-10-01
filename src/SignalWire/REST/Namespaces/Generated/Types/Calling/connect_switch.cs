@@ -20,15 +20,15 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class ConnectSwitch
 {
-    /// <summary>Wire field <c>variable</c>.</summary>
-    [JsonPropertyName("variable")]
-    public string? Variable { get; set; }
+    /// <summary>Wire field <c>default</c>.</summary>
+    [JsonPropertyName("default")]
+    public object? Default { get; set; }
 
     /// <summary>Wire field <c>case</c>.</summary>
     [JsonPropertyName("case")]
     public Dictionary<string, object?>? Case { get; set; }
 
-    /// <summary>Wire field <c>default</c>.</summary>
-    [JsonPropertyName("default")]
-    public List<object?>? Default { get; set; }
+    /// <summary>Wire field <c>variable</c>.</summary>
+    [JsonPropertyName("variable")]
+    public object? Variable { get; set; }
 }

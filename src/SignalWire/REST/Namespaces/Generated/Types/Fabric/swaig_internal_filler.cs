@@ -20,13 +20,33 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class SWAIGInternalFiller
 {
-    /// <summary>Wire field <c>hangup</c>.</summary>
-    [JsonPropertyName("hangup")]
-    public Dictionary<string, object?>? Hangup { get; set; }
+    /// <summary>Wire field <c>adjust_response_latency</c>.</summary>
+    [JsonPropertyName("adjust_response_latency")]
+    public Dictionary<string, object?>? AdjustResponseLatency { get; set; }
+
+    /// <summary>Wire field <c>change_context</c>.</summary>
+    [JsonPropertyName("change_context")]
+    public Dictionary<string, object?>? ChangeContext { get; set; }
 
     /// <summary>Wire field <c>check_time</c>.</summary>
     [JsonPropertyName("check_time")]
     public Dictionary<string, object?>? CheckTime { get; set; }
+
+    /// <summary>Wire field <c>get_ideal_strategy</c>.</summary>
+    [JsonPropertyName("get_ideal_strategy")]
+    public Dictionary<string, object?>? GetIdealStrategy { get; set; }
+
+    /// <summary>Wire field <c>get_visual_input</c>.</summary>
+    [JsonPropertyName("get_visual_input")]
+    public Dictionary<string, object?>? GetVisualInput { get; set; }
+
+    /// <summary>Wire field <c>next_step</c>.</summary>
+    [JsonPropertyName("next_step")]
+    public Dictionary<string, object?>? NextStep { get; set; }
+
+    /// <summary>Wire field <c>pause_conversation</c>.</summary>
+    [JsonPropertyName("pause_conversation")]
+    public Dictionary<string, object?>? PauseConversation { get; set; }
 
     /// <summary>Wire field <c>wait_for_user</c>.</summary>
     [JsonPropertyName("wait_for_user")]
@@ -35,24 +55,4 @@ public class SWAIGInternalFiller
     /// <summary>Wire field <c>wait_seconds</c>.</summary>
     [JsonPropertyName("wait_seconds")]
     public Dictionary<string, object?>? WaitSeconds { get; set; }
-
-    /// <summary>Wire field <c>adjust_response_latency</c>.</summary>
-    [JsonPropertyName("adjust_response_latency")]
-    public Dictionary<string, object?>? AdjustResponseLatency { get; set; }
-
-    /// <summary>Wire field <c>next_step</c>.</summary>
-    [JsonPropertyName("next_step")]
-    public Dictionary<string, object?>? NextStep { get; set; }
-
-    /// <summary>Wire field <c>change_context</c>.</summary>
-    [JsonPropertyName("change_context")]
-    public Dictionary<string, object?>? ChangeContext { get; set; }
-
-    /// <summary>Wire field <c>get_visual_input</c>.</summary>
-    [JsonPropertyName("get_visual_input")]
-    public Dictionary<string, object?>? GetVisualInput { get; set; }
-
-    /// <summary>Wire field <c>get_ideal_strategy</c>.</summary>
-    [JsonPropertyName("get_ideal_strategy")]
-    public Dictionary<string, object?>? GetIdealStrategy { get; set; }
 }

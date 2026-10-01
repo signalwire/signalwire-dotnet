@@ -48,9 +48,14 @@ public class Messages
     /// <param name="sendAsMms">Wire field <c>send_as_mms</c>.</param>
     /// <param name="statusCallback">Wire field <c>status_callback</c>.</param>
     /// <param name="customVariables">Wire field <c>custom_variables</c>.</param>
+    /// <param name="messageType">Wire field <c>message_type</c>.</param>
+    /// <param name="templateId">Wire field <c>template_id</c>.</param>
+    /// <param name="headerTemplateParameters">Wire field <c>header_template_parameters</c>.</param>
+    /// <param name="bodyTemplateParameters">Wire field <c>body_template_parameters</c>.</param>
+    /// <param name="buttonTemplateParameters">Wire field <c>button_template_parameters</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Messages.Message?> CreateAsync(string to, string from, string? body = null, List<object?>? media = null, bool? sendAsMms = null, string? statusCallback = null, Dictionary<string, object?>? customVariables = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Messages.Message?> CreateAsync(string to, string from, string? body = null, List<object?>? media = null, bool? sendAsMms = null, string? statusCallback = null, Dictionary<string, object?>? customVariables = null, string? messageType = null, string? templateId = null, Dictionary<string, object?>? headerTemplateParameters = null, Dictionary<string, object?>? bodyTemplateParameters = null, List<object?>? buttonTemplateParameters = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["to"] = to;
@@ -75,6 +80,26 @@ public class Messages
         {
             _reqBody["custom_variables"] = customVariables;
         }
+        if (messageType is not null)
+        {
+            _reqBody["message_type"] = messageType;
+        }
+        if (templateId is not null)
+        {
+            _reqBody["template_id"] = templateId;
+        }
+        if (headerTemplateParameters is not null)
+        {
+            _reqBody["header_template_parameters"] = headerTemplateParameters;
+        }
+        if (bodyTemplateParameters is not null)
+        {
+            _reqBody["body_template_parameters"] = bodyTemplateParameters;
+        }
+        if (buttonTemplateParameters is not null)
+        {
+            _reqBody["button_template_parameters"] = buttonTemplateParameters;
+        }
         if (extras is not null)
         {
             foreach (var kv in extras)
@@ -91,10 +116,13 @@ public class Messages
     /// <param name="body">Wire field <c>body</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Messages.Message?> UpdateAsync(string messageId, string body, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Messages.Message?> UpdateAsync(string messageId, string? body = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
-        _reqBody["body"] = body;
+        if (body is not null)
+        {
+            _reqBody["body"] = body;
+        }
         if (extras is not null)
         {
             foreach (var kv in extras)

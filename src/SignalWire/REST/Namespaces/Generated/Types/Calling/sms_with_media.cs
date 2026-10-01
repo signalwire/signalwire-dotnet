@@ -20,27 +20,31 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class SMSWithMedia
 {
-    /// <summary>Wire field <c>to_number</c>.</summary>
-    [JsonPropertyName("to_number")]
-    public string? ToNumber { get; set; }
+    /// <summary>Wire field <c>body</c>.</summary>
+    [JsonPropertyName("body")]
+    public object? Body { get; set; }
 
     /// <summary>Wire field <c>from_number</c>.</summary>
     [JsonPropertyName("from_number")]
-    public string? FromNumber { get; set; }
-
-    /// <summary>Wire field <c>region</c>.</summary>
-    [JsonPropertyName("region")]
-    public string? Region { get; set; }
-
-    /// <summary>Wire field <c>tags</c>.</summary>
-    [JsonPropertyName("tags")]
-    public List<object?>? Tags { get; set; }
+    public object? FromNumber { get; set; }
 
     /// <summary>Wire field <c>media</c>.</summary>
     [JsonPropertyName("media")]
     public List<object?>? Media { get; set; }
 
-    /// <summary>Wire field <c>body</c>.</summary>
-    [JsonPropertyName("body")]
-    public string? Body { get; set; }
+    /// <summary>Wire field <c>region</c>.</summary>
+    [JsonPropertyName("region")]
+    public object? Region { get; set; }
+
+    /// <summary>Wire field <c>status_callback</c>.</summary>
+    [JsonPropertyName("status_callback")]
+    public object? StatusCallback { get; set; }
+
+    /// <summary>Wire field <c>tags</c>.</summary>
+    [JsonPropertyName("tags")]
+    public List<object?>? Tags { get; set; }
+
+    /// <summary>Wire field <c>to_number</c>.</summary>
+    [JsonPropertyName("to_number")]
+    public object? ToNumber { get; set; }
 }

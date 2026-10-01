@@ -22,5 +22,5 @@ public class JoinRoom
 {
     /// <summary>Wire field <c>join_room</c>.</summary>
     [JsonPropertyName("join_room")]
-    public Dictionary<string, object?>? JoinRoom_ { get; set; }
+    public object? JoinRoom_ { get; set; }
 }

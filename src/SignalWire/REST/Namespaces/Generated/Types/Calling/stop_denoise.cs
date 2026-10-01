@@ -22,5 +22,5 @@ public class StopDenoise
 {
     /// <summary>Wire field <c>stop_denoise</c>.</summary>
     [JsonPropertyName("stop_denoise")]
-    public Dictionary<string, object?>? StopDenoise_ { get; set; }
+    public object? StopDenoise_ { get; set; }
 }

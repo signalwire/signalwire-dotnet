@@ -28,11 +28,23 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
 {
     private readonly string _projectId;
     private readonly string _token;
-    private readonly string _space;
     private readonly string _baseUrl;
     private readonly HttpClient _http;
+    private readonly HttpClient _patHttp;
     private bool _disposed;
 
+    /// <summary>
+    /// Create a client for one project, one space's administration API, or both.
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="projectId"/> + <paramref name="token"/> authenticate every
+    /// project-scoped resource. <paramref name="personalAccessToken"/> (a user's
+    /// <c>pat_...</c> token) authenticates <c>Space</c> — the Space Administration
+    /// API, which the server serves only to a Personal Access Token (HTTP Basic with
+    /// an EMPTY username). Either credential, or both, may be given; calling a
+    /// resource whose credential is missing throws
+    /// <see cref="InvalidOperationException"/> before anything is sent.
+    /// </remarks>
     /// <param name="projectId">Project ID (falls back to SIGNALWIRE_PROJECT_ID env var).</param>
     /// <param name="token">API token (falls back to SIGNALWIRE_API_TOKEN env var).</param>
     /// <param name="space">Space host (falls back to SIGNALWIRE_SPACE env var).</param>
@@ -40,9 +52,13 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
     /// (timeout / retries / cancellation) applied to every request; a per-request
     /// override shallow-merges over it. <c>null</c> = the built-in defaults
     /// (30s timeout, no retries).</param>
+    /// <param name="personalAccessToken">Personal Access Token for <c>Space</c>
+    /// (falls back to SIGNALWIRE_PERSONAL_ACCESS_TOKEN env var).</param>
+    /// <exception cref="ArgumentException">The space is missing, or neither a
+    /// complete project ID + token pair nor a personal access token is given.</exception>
     public RestClient(string projectId = "", string token = "", string space = "",
-        RequestOptions? requestOptions = null)
-        : this(projectId, token, space, httpClient: null, requestOptions)
+        RequestOptions? requestOptions = null, string personalAccessToken = "")
+        : this(projectId, token, space, httpClient: null, requestOptions, personalAccessToken)
     {
     }
 
@@ -55,47 +71,95 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
     /// client's lifetime stays with the caller; disposing the
     /// <see cref="RestClient"/> never disposes it.
     /// </summary>
+    /// <param name="projectId">Project ID (falls back to SIGNALWIRE_PROJECT_ID env var).</param>
+    /// <param name="token">API token (falls back to SIGNALWIRE_API_TOKEN env var).</param>
+    /// <param name="space">Space host (falls back to SIGNALWIRE_SPACE env var).</param>
+    /// <param name="httpClient">Caller-owned transport both credentials send through.</param>
+    /// <param name="requestOptions">Client-default request-options envelope.</param>
+    /// <param name="personalAccessToken">Personal Access Token for <c>Space</c>
+    /// (falls back to SIGNALWIRE_PERSONAL_ACCESS_TOKEN env var).</param>
     public RestClient(string projectId, string token, string space,
-        System.Net.Http.HttpClient? httpClient, RequestOptions? requestOptions = null)
-        : base(BuildHttp(
-            !string.IsNullOrEmpty(projectId) ? projectId
-                : Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID") ?? "",
-            !string.IsNullOrEmpty(token) ? token
-                : Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN") ?? "",
-            !string.IsNullOrEmpty(space) ? space
-                : Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "",
-            httpClient,
-            requestOptions))
+        System.Net.Http.HttpClient? httpClient, RequestOptions? requestOptions = null,
+        string personalAccessToken = "")
+        : this(Credentials.Resolve(projectId, token, space, personalAccessToken), httpClient, requestOptions)
     {
-        _projectId = !string.IsNullOrEmpty(projectId) ? projectId
-            : Environment.GetEnvironmentVariable("SIGNALWIRE_PROJECT_ID") ?? "";
-        _token = !string.IsNullOrEmpty(token) ? token
-            : Environment.GetEnvironmentVariable("SIGNALWIRE_API_TOKEN") ?? "";
-        _space = !string.IsNullOrEmpty(space) ? space
-            : Environment.GetEnvironmentVariable("SIGNALWIRE_SPACE") ?? "";
+    }
 
-        _baseUrl = BuildBaseUrl(_space);
-        // Re-derive the transport the base already owns so RestClient can dispose it.
+    private RestClient(Credentials creds, System.Net.Http.HttpClient? httpClient,
+        RequestOptions? requestOptions)
+        : base(BuildHttp(creds, httpClient, requestOptions), BuildPatHttp(creds, httpClient, requestOptions))
+    {
+        _projectId = creds.ProjectId;
+        _token = creds.Token;
+        _baseUrl = BuildBaseUrl(creds.Space);
+        // The transports the base already owns, so RestClient can dispose them.
         _http = GeneratedHttp;
+        _patHttp = GeneratedPatHttp;
+    }
+
+    /// <summary>The resolved (argument-or-environment) credentials, validated once.</summary>
+    private sealed record Credentials(string ProjectId, string Token, string Space, string Pat)
+    {
+        public bool HasProject => ProjectId.Length > 0 && Token.Length > 0;
+
+        public static Credentials Resolve(string projectId, string token, string space, string pat)
+        {
+            var c = new Credentials(
+                Pick(projectId, "SIGNALWIRE_PROJECT_ID"),
+                Pick(token, "SIGNALWIRE_API_TOKEN"),
+                Pick(space, "SIGNALWIRE_SPACE"),
+                Pick(pat, "SIGNALWIRE_PERSONAL_ACCESS_TOKEN"));
+            if (c.Pat.Length == 0)
+            {
+                if (c.ProjectId.Length == 0)
+                    throw new ArgumentException("projectId is required (pass explicitly or set SIGNALWIRE_PROJECT_ID; or, for Space only, personalAccessToken / SIGNALWIRE_PERSONAL_ACCESS_TOKEN)");
+                if (c.Token.Length == 0)
+                    throw new ArgumentException("token is required (pass explicitly or set SIGNALWIRE_API_TOKEN; or, for Space only, personalAccessToken / SIGNALWIRE_PERSONAL_ACCESS_TOKEN)");
+            }
+            if (c.Space.Length == 0)
+                throw new ArgumentException("space is required (pass explicitly or set SIGNALWIRE_SPACE)");
+            return c;
+        }
+
+        private static string Pick(string? value, string envVar)
+            => !string.IsNullOrEmpty(value) ? value : Environment.GetEnvironmentVariable(envVar) ?? "";
     }
 
     /// <summary>
-    /// Validate credentials and construct the authenticated transport the
-    /// generated <see cref="Namespaces.Generated.ResourceTree"/> base composes.
-    /// Runs before the base constructor (C# argument evaluation order), so it is
-    /// the single point that enforces the required-credential contract.
+    /// The project-credential transport the generated
+    /// <see cref="Namespaces.Generated.ResourceTree"/> base composes, or — for a
+    /// client given only a personal access token — a stand-in that refuses every
+    /// request, naming the missing credential.
     /// </summary>
-    private static HttpClient BuildHttp(string projectId, string token, string space,
+    [SuppressMessage("Reliability", "CA2000", Justification = "Ownership transfer: the transport is handed to the ResourceTree base and disposed by RestClient.Dispose().")]
+    private static HttpClient BuildHttp(Credentials creds,
         System.Net.Http.HttpClient? httpClient, RequestOptions? requestOptions)
     {
-        if (string.IsNullOrEmpty(projectId))
-            throw new ArgumentException("projectId is required (pass explicitly or set SIGNALWIRE_PROJECT_ID)");
-        if (string.IsNullOrEmpty(token))
-            throw new ArgumentException("token is required (pass explicitly or set SIGNALWIRE_API_TOKEN)");
-        if (string.IsNullOrEmpty(space))
-            throw new ArgumentException("space is required (pass explicitly or set SIGNALWIRE_SPACE)");
+        var baseUrl = BuildBaseUrl(creds.Space);
+        return creds.HasProject
+            ? new HttpClient(creds.ProjectId, creds.Token, baseUrl, httpClient, requestOptions)
+            : HttpClient.ForMissingCredential(
+                "projectId and token are required for this resource (SIGNALWIRE_PROJECT_ID / "
+                + "SIGNALWIRE_API_TOKEN); this client has only a personal access token, which "
+                + "authenticates Space", baseUrl);
+    }
 
-        return new HttpClient(projectId, token, BuildBaseUrl(space), httpClient, requestOptions);
+    /// <summary>
+    /// The Personal Access Token transport <c>Space</c> dispatches through: HTTP
+    /// Basic with an EMPTY username and the token as the password, as the server's
+    /// Space Administration API reads it. A stand-in that refuses every request when
+    /// no token was given.
+    /// </summary>
+    [SuppressMessage("Reliability", "CA2000", Justification = "Ownership transfer: the transport is handed to the ResourceTree base and disposed by RestClient.Dispose().")]
+    private static HttpClient BuildPatHttp(Credentials creds,
+        System.Net.Http.HttpClient? httpClient, RequestOptions? requestOptions)
+    {
+        var baseUrl = BuildBaseUrl(creds.Space);
+        return creds.Pat.Length > 0
+            ? new HttpClient("", creds.Pat, baseUrl, httpClient, requestOptions)
+            : HttpClient.ForMissingCredential(
+                "personalAccessToken is required for Space (SIGNALWIRE_PERSONAL_ACCESS_TOKEN)",
+                baseUrl);
     }
 
     /// <summary>
@@ -142,7 +206,6 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
 
     public string ProjectId => _projectId;
     public string Token => _token;
-    public string Space => _space;
     [SuppressMessage("Usage", "CA1056", Justification = "BaseUrl is a wire string sent verbatim to the SignalWire API.")]
     public string BaseUrl => _baseUrl;
     public HttpClient Http => _http;
@@ -169,6 +232,7 @@ public class RestClient : Namespaces.Generated.ResourceTree, IDisposable
         if (disposing)
         {
             _http.Dispose();
+            _patHttp.Dispose();
         }
         _disposed = true;
     }

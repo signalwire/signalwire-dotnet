@@ -44,9 +44,10 @@ public class ProjectTokens
     /// <param name="name">Wire field <c>name</c>.</param>
     /// <param name="permissions">Wire field <c>permissions</c>.</param>
     /// <param name="subprojectId">Wire field <c>subproject_id</c>.</param>
+    /// <param name="projectId">Wire field <c>project_id</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Project.TokenResponse?> CreateAsync(string name, List<object?> permissions, string? subprojectId = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Project.TokenResponse?> CreateAsync(string name, List<object?> permissions, string? subprojectId = null, string? projectId = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         _reqBody["name"] = name;
@@ -54,6 +55,10 @@ public class ProjectTokens
         if (subprojectId is not null)
         {
             _reqBody["subproject_id"] = subprojectId;
+        }
+        if (projectId is not null)
+        {
+            _reqBody["project_id"] = projectId;
         }
         if (extras is not null)
         {
@@ -72,7 +77,7 @@ public class ProjectTokens
     /// <param name="permissions">Wire field <c>permissions</c>.</param>
     /// <param name="extras">Forward-compat body fields merged onto the request.</param>
     /// <param name="requestOptions">Per-call request options (timeout/retries/abort) overriding the client defaults.</param>
-    public Task<SignalWire.REST.Namespaces.Generated.Types.Project.TokenResponse?> UpdateAsync(string tokenId, string? name = null, List<object?>? permissions = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    public Task<SignalWire.REST.Namespaces.Generated.Types.Project.TokenUpdateResponse?> UpdateAsync(string tokenId, string? name = null, List<object?>? permissions = null, Dictionary<string, object?>? extras = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         var _reqBody = new Dictionary<string, object?>();
         if (name is not null)
@@ -90,7 +95,7 @@ public class ProjectTokens
                 _reqBody[kv.Key] = kv.Value;
             }
         }
-        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Project.TokenResponse>(Client.PatchAsync(Path(tokenId), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
+        return SignalWire.REST.ResponseProjection.AsAsync<SignalWire.REST.Namespaces.Generated.Types.Project.TokenUpdateResponse>(Client.PatchAsync(Path(tokenId), _reqBody, requestOptions: requestOptions, cancellationToken: cancellationToken));
     }
 
     /// <summary>

@@ -22,9 +22,9 @@ public class PayPromptPlayAction
 {
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
-    public string? Type { get; set; }
+    public object? Type { get; set; }
 
     /// <summary>Wire field <c>phrase</c>.</summary>
     [JsonPropertyName("phrase")]
-    public string? Phrase { get; set; }
+    public object? Phrase { get; set; }
 }

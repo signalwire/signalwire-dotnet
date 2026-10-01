@@ -24,9 +24,17 @@ public class AIParams
     [JsonPropertyName("acknowledge_interruptions")]
     public object? AcknowledgeInterruptions { get; set; }
 
+    /// <summary>Wire field <c>acoustic_eot_gate_prob</c>.</summary>
+    [JsonPropertyName("acoustic_eot_gate_prob")]
+    public object? AcousticEotGateProb { get; set; }
+
+    /// <summary>Wire field <c>acoustic_eot_trust_prob</c>.</summary>
+    [JsonPropertyName("acoustic_eot_trust_prob")]
+    public object? AcousticEotTrustProb { get; set; }
+
     /// <summary>Wire field <c>ai_model</c>.</summary>
     [JsonPropertyName("ai_model")]
-    public object? AiModel { get; set; }
+    public string? AiModel { get; set; }
 
     /// <summary>Wire field <c>ai_name</c>.</summary>
     [JsonPropertyName("ai_name")]
@@ -40,9 +48,25 @@ public class AIParams
     [JsonPropertyName("app_name")]
     public string? AppName { get; set; }
 
+    /// <summary>Wire field <c>asr_diarize</c>.</summary>
+    [JsonPropertyName("asr_diarize")]
+    public object? AsrDiarize { get; set; }
+
+    /// <summary>Wire field <c>asr_params</c>.</summary>
+    [JsonPropertyName("asr_params")]
+    public Dictionary<string, object?>? AsrParams { get; set; }
+
     /// <summary>Wire field <c>asr_smart_format</c>.</summary>
     [JsonPropertyName("asr_smart_format")]
     public object? AsrSmartFormat { get; set; }
+
+    /// <summary>Wire field <c>asr_speaker_affinity</c>.</summary>
+    [JsonPropertyName("asr_speaker_affinity")]
+    public object? AsrSpeakerAffinity { get; set; }
+
+    /// <summary>Wire field <c>attention_escalate_prompt</c>.</summary>
+    [JsonPropertyName("attention_escalate_prompt")]
+    public string? AttentionEscalatePrompt { get; set; }
 
     /// <summary>Wire field <c>attention_timeout</c>.</summary>
     [JsonPropertyName("attention_timeout")]
@@ -52,13 +76,21 @@ public class AIParams
     [JsonPropertyName("attention_timeout_prompt")]
     public string? AttentionTimeoutPrompt { get; set; }
 
-    /// <summary>Wire field <c>asr_diarize</c>.</summary>
-    [JsonPropertyName("asr_diarize")]
-    public object? AsrDiarize { get; set; }
+    /// <summary>Wire field <c>auth_token</c>.</summary>
+    [JsonPropertyName("auth_token")]
+    public string? AuthToken { get; set; }
 
-    /// <summary>Wire field <c>asr_speaker_affinity</c>.</summary>
-    [JsonPropertyName("asr_speaker_affinity")]
-    public object? AsrSpeakerAffinity { get; set; }
+    /// <summary>Wire field <c>auto_correct</c>.</summary>
+    [JsonPropertyName("auto_correct")]
+    public object? AutoCorrect { get; set; }
+
+    /// <summary>Wire field <c>azure_stream_first</c>.</summary>
+    [JsonPropertyName("azure_stream_first")]
+    public object? AzureStreamFirst { get; set; }
+
+    /// <summary>Wire field <c>azure_tts_key</c>.</summary>
+    [JsonPropertyName("azure_tts_key")]
+    public string? AzureTtsKey { get; set; }
 
     /// <summary>Wire field <c>background_file</c>.</summary>
     [JsonPropertyName("background_file")]
@@ -72,6 +104,146 @@ public class AIParams
     [JsonPropertyName("background_file_volume")]
     public object? BackgroundFileVolume { get; set; }
 
+    /// <summary>Wire field <c>barge_functions</c>.</summary>
+    [JsonPropertyName("barge_functions")]
+    public object? BargeFunctions { get; set; }
+
+    /// <summary>Wire field <c>barge_match_string</c>.</summary>
+    [JsonPropertyName("barge_match_string")]
+    public string? BargeMatchString { get; set; }
+
+    /// <summary>Wire field <c>barge_min_words</c>.</summary>
+    [JsonPropertyName("barge_min_words")]
+    public object? BargeMinWords { get; set; }
+
+    /// <summary>Wire field <c>bill_all_tts</c>.</summary>
+    [JsonPropertyName("bill_all_tts")]
+    public object? BillAllTts { get; set; }
+
+    /// <summary>Wire field <c>cache</c>.</summary>
+    [JsonPropertyName("cache")]
+    public object? Cache { get; set; }
+
+    /// <summary>Wire field <c>call_uuid</c>.</summary>
+    [JsonPropertyName("call_uuid")]
+    public string? CallUuid { get; set; }
+
+    /// <summary>Wire field <c>cartesia_key</c>.</summary>
+    [JsonPropertyName("cartesia_key")]
+    public string? CartesiaKey { get; set; }
+
+    /// <summary>Wire field <c>cartesia_model</c>.</summary>
+    [JsonPropertyName("cartesia_model")]
+    public string? CartesiaModel { get; set; }
+
+    /// <summary>Wire field <c>cartesia_stream_first</c>.</summary>
+    [JsonPropertyName("cartesia_stream_first")]
+    public object? CartesiaStreamFirst { get; set; }
+
+    /// <summary>Wire field <c>confidence</c>.</summary>
+    [JsonPropertyName("confidence")]
+    public object? Confidence { get; set; }
+
+    /// <summary>Wire field <c>conscience</c>.</summary>
+    [JsonPropertyName("conscience")]
+    public string? Conscience { get; set; }
+
+    /// <summary>Wire field <c>conversation_id</c>.</summary>
+    [JsonPropertyName("conversation_id")]
+    public string? ConversationId { get; set; }
+
+    /// <summary>Wire field <c>conversation_sliding_window</c>.</summary>
+    [JsonPropertyName("conversation_sliding_window")]
+    public object? ConversationSlidingWindow { get; set; }
+
+    /// <summary>Wire field <c>convo</c>.</summary>
+    [JsonPropertyName("convo")]
+    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.ConversationMessage>? Convo { get; set; }
+
+    /// <summary>Wire field <c>debug_webhook_level</c>.</summary>
+    [JsonPropertyName("debug_webhook_level")]
+    public object? DebugWebhookLevel { get; set; }
+
+    /// <summary>Wire field <c>debug_webhook_url</c>.</summary>
+    [JsonPropertyName("debug_webhook_url")]
+    public string? DebugWebhookUrl { get; set; }
+
+    /// <summary>Wire field <c>deepgram_key_override</c>.</summary>
+    [JsonPropertyName("deepgram_key_override")]
+    public string? DeepgramKeyOverride { get; set; }
+
+    /// <summary>Wire field <c>deepgram_stream_first</c>.</summary>
+    [JsonPropertyName("deepgram_stream_first")]
+    public object? DeepgramStreamFirst { get; set; }
+
+    /// <summary>Wire field <c>deepgram_tts_key</c>.</summary>
+    [JsonPropertyName("deepgram_tts_key")]
+    public string? DeepgramTtsKey { get; set; }
+
+    /// <summary>Wire field <c>deepgram_url_override</c>.</summary>
+    [JsonPropertyName("deepgram_url_override")]
+    public string? DeepgramUrlOverride { get; set; }
+
+    /// <summary>Wire field <c>developer_prompt</c>.</summary>
+    [JsonPropertyName("developer_prompt")]
+    public string? DeveloperPrompt { get; set; }
+
+    /// <summary>Wire field <c>digit_terminators</c>.</summary>
+    [JsonPropertyName("digit_terminators")]
+    public string? DigitTerminators { get; set; }
+
+    /// <summary>Wire field <c>digit_timeout</c>.</summary>
+    [JsonPropertyName("digit_timeout")]
+    public object? DigitTimeout { get; set; }
+
+    /// <summary>Wire field <c>direction</c>.</summary>
+    [JsonPropertyName("direction")]
+    public string? Direction { get; set; }
+
+    /// <summary>Wire field <c>double_turn_filler_every_n</c>.</summary>
+    [JsonPropertyName("double_turn_filler_every_n")]
+    public object? DoubleTurnFillerEveryN { get; set; }
+
+    /// <summary>Wire field <c>double_turn_filler_min_ms</c>.</summary>
+    [JsonPropertyName("double_turn_filler_min_ms")]
+    public object? DoubleTurnFillerMinMs { get; set; }
+
+    /// <summary>Wire field <c>double_turn_model</c>.</summary>
+    [JsonPropertyName("double_turn_model")]
+    public string? DoubleTurnModel { get; set; }
+
+    /// <summary>Wire field <c>double_turn_prompt</c>.</summary>
+    [JsonPropertyName("double_turn_prompt")]
+    public string? DoubleTurnPrompt { get; set; }
+
+    /// <summary>Wire field <c>double_turn_wait_ms</c>.</summary>
+    [JsonPropertyName("double_turn_wait_ms")]
+    public object? DoubleTurnWaitMs { get; set; }
+
+    /// <summary>Wire field <c>double_turns</c>.</summary>
+    [JsonPropertyName("double_turns")]
+    public object? DoubleTurns { get; set; }
+
+    /// <summary>Wire field <c>eleven_labs_key</c>.</summary>
+    [JsonPropertyName("eleven_labs_key")]
+    public string? ElevenLabsKey { get; set; }
+
+    /// <summary>Wire field <c>eleven_labs_model</c>.</summary>
+    [JsonPropertyName("eleven_labs_model")]
+    public string? ElevenLabsModel { get; set; }
+
+    /// <summary>Wire field <c>eleven_labs_similarity</c>.</summary>
+    [JsonPropertyName("eleven_labs_similarity")]
+    public object? ElevenLabsSimilarity { get; set; }
+
+    /// <summary>Wire field <c>eleven_labs_stability</c>.</summary>
+    [JsonPropertyName("eleven_labs_stability")]
+    public object? ElevenLabsStability { get; set; }
+
+    /// <summary>Wire field <c>eleven_labs_stream_first</c>.</summary>
+    [JsonPropertyName("eleven_labs_stream_first")]
+    public object? ElevenLabsStreamFirst { get; set; }
+
     /// <summary>Wire field <c>enable_barge</c>.</summary>
     [JsonPropertyName("enable_barge")]
     public object? EnableBarge { get; set; }
@@ -84,81 +256,61 @@ public class AIParams
     [JsonPropertyName("enable_pause")]
     public object? EnablePause { get; set; }
 
-    /// <summary>Wire field <c>enable_turn_detection</c>.</summary>
-    [JsonPropertyName("enable_turn_detection")]
-    public object? EnableTurnDetection { get; set; }
-
-    /// <summary>Wire field <c>barge_match_string</c>.</summary>
-    [JsonPropertyName("barge_match_string")]
-    public string? BargeMatchString { get; set; }
-
-    /// <summary>Wire field <c>barge_min_words</c>.</summary>
-    [JsonPropertyName("barge_min_words")]
-    public object? BargeMinWords { get; set; }
-
-    /// <summary>Wire field <c>barge_functions</c>.</summary>
-    [JsonPropertyName("barge_functions")]
-    public object? BargeFunctions { get; set; }
-
-    /// <summary>Wire field <c>conscience</c>.</summary>
-    [JsonPropertyName("conscience")]
-    public string? Conscience { get; set; }
-
-    /// <summary>Wire field <c>convo</c>.</summary>
-    [JsonPropertyName("convo")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.ConversationMessage>? Convo { get; set; }
-
-    /// <summary>Wire field <c>conversation_id</c>.</summary>
-    [JsonPropertyName("conversation_id")]
-    public string? ConversationId { get; set; }
-
-    /// <summary>Wire field <c>conversation_sliding_window</c>.</summary>
-    [JsonPropertyName("conversation_sliding_window")]
-    public object? ConversationSlidingWindow { get; set; }
-
-    /// <summary>Wire field <c>debug_webhook_level</c>.</summary>
-    [JsonPropertyName("debug_webhook_level")]
-    public object? DebugWebhookLevel { get; set; }
-
-    /// <summary>Wire field <c>debug_webhook_url</c>.</summary>
-    [JsonPropertyName("debug_webhook_url")]
-    public string? DebugWebhookUrl { get; set; }
-
-    /// <summary>Wire field <c>debug</c>.</summary>
-    [JsonPropertyName("debug")]
-    public object? Debug { get; set; }
-
-    /// <summary>Wire field <c>direction</c>.</summary>
-    [JsonPropertyName("direction")]
-    public object? Direction { get; set; }
-
-    /// <summary>Wire field <c>digit_terminators</c>.</summary>
-    [JsonPropertyName("digit_terminators")]
-    public string? DigitTerminators { get; set; }
-
-    /// <summary>Wire field <c>digit_timeout</c>.</summary>
-    [JsonPropertyName("digit_timeout")]
-    public object? DigitTimeout { get; set; }
-
-    /// <summary>Wire field <c>end_of_speech_timeout</c>.</summary>
-    [JsonPropertyName("end_of_speech_timeout")]
-    public object? EndOfSpeechTimeout { get; set; }
+    /// <summary>Wire field <c>enable_text_normalization</c>.</summary>
+    [JsonPropertyName("enable_text_normalization")]
+    public string? EnableTextNormalization { get; set; }
 
     /// <summary>Wire field <c>enable_thinking</c>.</summary>
     [JsonPropertyName("enable_thinking")]
     public object? EnableThinking { get; set; }
 
+    /// <summary>Wire field <c>enable_turn_detection</c>.</summary>
+    [JsonPropertyName("enable_turn_detection")]
+    public object? EnableTurnDetection { get; set; }
+
     /// <summary>Wire field <c>enable_vision</c>.</summary>
     [JsonPropertyName("enable_vision")]
     public object? EnableVision { get; set; }
+
+    /// <summary>Wire field <c>end_of_speech_timeout</c>.</summary>
+    [JsonPropertyName("end_of_speech_timeout")]
+    public object? EndOfSpeechTimeout { get; set; }
 
     /// <summary>Wire field <c>energy_level</c>.</summary>
     [JsonPropertyName("energy_level")]
     public object? EnergyLevel { get; set; }
 
+    /// <summary>Wire field <c>escalate_after_ms</c>.</summary>
+    [JsonPropertyName("escalate_after_ms")]
+    public object? EscalateAfterMs { get; set; }
+
+    /// <summary>Wire field <c>escalate_after_turns</c>.</summary>
+    [JsonPropertyName("escalate_after_turns")]
+    public object? EscalateAfterTurns { get; set; }
+
+    /// <summary>Wire field <c>event_webhook_url</c>.</summary>
+    [JsonPropertyName("event_webhook_url")]
+    public string? EventWebhookUrl { get; set; }
+
+    /// <summary>Wire field <c>ext</c>.</summary>
+    [JsonPropertyName("ext")]
+    public string? Ext { get; set; }
+
     /// <summary>Wire field <c>first_word_timeout</c>.</summary>
     [JsonPropertyName("first_word_timeout")]
     public object? FirstWordTimeout { get; set; }
+
+    /// <summary>Wire field <c>fish_key</c>.</summary>
+    [JsonPropertyName("fish_key")]
+    public string? FishKey { get; set; }
+
+    /// <summary>Wire field <c>fish_model</c>.</summary>
+    [JsonPropertyName("fish_model")]
+    public string? FishModel { get; set; }
+
+    /// <summary>Wire field <c>function_filler_sequence_gap_ms</c>.</summary>
+    [JsonPropertyName("function_filler_sequence_gap_ms")]
+    public object? FunctionFillerSequenceGapMs { get; set; }
 
     /// <summary>Wire field <c>function_wait_for_talking</c>.</summary>
     [JsonPropertyName("function_wait_for_talking")]
@@ -168,13 +320,21 @@ public class AIParams
     [JsonPropertyName("functions_on_no_response")]
     public object? FunctionsOnNoResponse { get; set; }
 
+    /// <summary>Wire field <c>grok_key</c>.</summary>
+    [JsonPropertyName("grok_key")]
+    public string? GrokKey { get; set; }
+
+    /// <summary>Wire field <c>groq_tts_key</c>.</summary>
+    [JsonPropertyName("groq_tts_key")]
+    public string? GroqTtsKey { get; set; }
+
     /// <summary>Wire field <c>hard_stop_prompt</c>.</summary>
     [JsonPropertyName("hard_stop_prompt")]
     public string? HardStopPrompt { get; set; }
 
     /// <summary>Wire field <c>hard_stop_time</c>.</summary>
     [JsonPropertyName("hard_stop_time")]
-    public object? HardStopTime { get; set; }
+    public string? HardStopTime { get; set; }
 
     /// <summary>Wire field <c>hold_music</c>.</summary>
     [JsonPropertyName("hold_music")]
@@ -188,21 +348,25 @@ public class AIParams
     [JsonPropertyName("inactivity_timeout")]
     public object? InactivityTimeout { get; set; }
 
+    /// <summary>Wire field <c>initial_sleep_ms</c>.</summary>
+    [JsonPropertyName("initial_sleep_ms")]
+    public object? InitialSleepMs { get; set; }
+
+    /// <summary>Wire field <c>inner_dialog</c>.</summary>
+    [JsonPropertyName("inner_dialog")]
+    public Dictionary<string, object?>? InnerDialog { get; set; }
+
     /// <summary>Wire field <c>inner_dialog_model</c>.</summary>
     [JsonPropertyName("inner_dialog_model")]
-    public object? InnerDialogModel { get; set; }
+    public string? InnerDialogModel { get; set; }
 
     /// <summary>Wire field <c>inner_dialog_prompt</c>.</summary>
     [JsonPropertyName("inner_dialog_prompt")]
     public string? InnerDialogPrompt { get; set; }
 
-    /// <summary>Wire field <c>inner_dialog_synced</c>.</summary>
-    [JsonPropertyName("inner_dialog_synced")]
-    public object? InnerDialogSynced { get; set; }
-
-    /// <summary>Wire field <c>initial_sleep_ms</c>.</summary>
-    [JsonPropertyName("initial_sleep_ms")]
-    public object? InitialSleepMs { get; set; }
+    /// <summary>Wire field <c>inner_dialog_scorecard</c>.</summary>
+    [JsonPropertyName("inner_dialog_scorecard")]
+    public object? InnerDialogScorecard { get; set; }
 
     /// <summary>Wire field <c>input_poll_freq</c>.</summary>
     [JsonPropertyName("input_poll_freq")]
@@ -216,18 +380,38 @@ public class AIParams
     [JsonPropertyName("interrupt_prompt")]
     public string? InterruptPrompt { get; set; }
 
+    /// <summary>Wire field <c>inworld_apikey</c>.</summary>
+    [JsonPropertyName("inworld_apikey")]
+    public string? InworldApikey { get; set; }
+
+    /// <summary>Wire field <c>inworld_key</c>.</summary>
+    [JsonPropertyName("inworld_key")]
+    public string? InworldKey { get; set; }
+
+    /// <summary>Wire field <c>inworld_model</c>.</summary>
+    [JsonPropertyName("inworld_model")]
+    public string? InworldModel { get; set; }
+
+    /// <summary>Wire field <c>language</c>.</summary>
+    [JsonPropertyName("language")]
+    public string? Language { get; set; }
+
     /// <summary>Wire field <c>languages_enabled</c>.</summary>
     [System.Obsolete("Deprecated wire field 'languages_enabled'.")]
     [JsonPropertyName("languages_enabled")]
     public object? LanguagesEnabled { get; set; }
 
-    /// <summary>Wire field <c>local_tz</c>.</summary>
-    [JsonPropertyName("local_tz")]
-    public string? LocalTz { get; set; }
+    /// <summary>Wire field <c>lipsync_debug</c>.</summary>
+    [JsonPropertyName("lipsync_debug")]
+    public object? LipsyncDebug { get; set; }
 
     /// <summary>Wire field <c>llm_diarize_aware</c>.</summary>
     [JsonPropertyName("llm_diarize_aware")]
     public object? LlmDiarizeAware { get; set; }
+
+    /// <summary>Wire field <c>local_tz</c>.</summary>
+    [JsonPropertyName("local_tz")]
+    public string? LocalTz { get; set; }
 
     /// <summary>Wire field <c>max_emotion</c>.</summary>
     [JsonPropertyName("max_emotion")]
@@ -237,13 +421,65 @@ public class AIParams
     [JsonPropertyName("max_response_tokens")]
     public object? MaxResponseTokens { get; set; }
 
+    /// <summary>Wire field <c>min_utterance_ms</c>.</summary>
+    [JsonPropertyName("min_utterance_ms")]
+    public object? MinUtteranceMs { get; set; }
+
+    /// <summary>Wire field <c>minimax_key</c>.</summary>
+    [JsonPropertyName("minimax_key")]
+    public string? MinimaxKey { get; set; }
+
+    /// <summary>Wire field <c>minimax_model</c>.</summary>
+    [JsonPropertyName("minimax_model")]
+    public string? MinimaxModel { get; set; }
+
+    /// <summary>Wire field <c>mistral_key</c>.</summary>
+    [JsonPropertyName("mistral_key")]
+    public string? MistralKey { get; set; }
+
+    /// <summary>Wire field <c>mistral_model</c>.</summary>
+    [JsonPropertyName("mistral_model")]
+    public string? MistralModel { get; set; }
+
+    /// <summary>Wire field <c>model</c>.</summary>
+    [JsonPropertyName("model")]
+    public string? Model { get; set; }
+
     /// <summary>Wire field <c>openai_asr_engine</c>.</summary>
     [JsonPropertyName("openai_asr_engine")]
     public string? OpenaiAsrEngine { get; set; }
 
+    /// <summary>Wire field <c>openai_azure</c>.</summary>
+    [JsonPropertyName("openai_azure")]
+    public object? OpenaiAzure { get; set; }
+
+    /// <summary>Wire field <c>openai_gcloud_version</c>.</summary>
+    [JsonPropertyName("openai_gcloud_version")]
+    public string? OpenaiGcloudVersion { get; set; }
+
+    /// <summary>Wire field <c>openai_stream_first</c>.</summary>
+    [JsonPropertyName("openai_stream_first")]
+    public object? OpenaiStreamFirst { get; set; }
+
+    /// <summary>Wire field <c>openai_tts_key</c>.</summary>
+    [JsonPropertyName("openai_tts_key")]
+    public string? OpenaiTtsKey { get; set; }
+
+    /// <summary>Wire field <c>openai_tts_url</c>.</summary>
+    [JsonPropertyName("openai_tts_url")]
+    public string? OpenaiTtsUrl { get; set; }
+
     /// <summary>Wire field <c>outbound_attention_timeout</c>.</summary>
     [JsonPropertyName("outbound_attention_timeout")]
     public object? OutboundAttentionTimeout { get; set; }
+
+    /// <summary>Wire field <c>pcm_channels</c>.</summary>
+    [JsonPropertyName("pcm_channels")]
+    public object? PcmChannels { get; set; }
+
+    /// <summary>Wire field <c>pcm_rate</c>.</summary>
+    [JsonPropertyName("pcm_rate")]
+    public object? PcmRate { get; set; }
 
     /// <summary>Wire field <c>persist_global_data</c>.</summary>
     [JsonPropertyName("persist_global_data")]
@@ -253,9 +489,69 @@ public class AIParams
     [JsonPropertyName("pom_format")]
     public string? PomFormat { get; set; }
 
+    /// <summary>Wire field <c>provider</c>.</summary>
+    [JsonPropertyName("provider")]
+    public string? Provider { get; set; }
+
+    /// <summary>Wire field <c>pvt_params</c>.</summary>
+    [JsonPropertyName("pvt_params")]
+    public string? PvtParams { get; set; }
+
+    /// <summary>Wire field <c>realtime</c>.</summary>
+    [JsonPropertyName("realtime")]
+    public Dictionary<string, object?>? Realtime { get; set; }
+
+    /// <summary>Wire field <c>redact_prompt</c>.</summary>
+    [JsonPropertyName("redact_prompt")]
+    public string? RedactPrompt { get; set; }
+
+    /// <summary>Wire field <c>rime_apikey</c>.</summary>
+    [JsonPropertyName("rime_apikey")]
+    public string? RimeApikey { get; set; }
+
+    /// <summary>Wire field <c>rime_key</c>.</summary>
+    [JsonPropertyName("rime_key")]
+    public string? RimeKey { get; set; }
+
+    /// <summary>Wire field <c>rime_model</c>.</summary>
+    [JsonPropertyName("rime_model")]
+    public string? RimeModel { get; set; }
+
+    /// <summary>Wire field <c>rime_stream_first</c>.</summary>
+    [JsonPropertyName("rime_stream_first")]
+    public object? RimeStreamFirst { get; set; }
+
+    /// <summary>Wire field <c>sample_rate</c>.</summary>
+    [JsonPropertyName("sample_rate")]
+    public object? SampleRate { get; set; }
+
     /// <summary>Wire field <c>save_conversation</c>.</summary>
     [JsonPropertyName("save_conversation")]
     public object? SaveConversation { get; set; }
+
+    /// <summary>Wire field <c>send_single_llm_response</c>.</summary>
+    [JsonPropertyName("send_single_llm_response")]
+    public object? SendSingleLlmResponse { get; set; }
+
+    /// <summary>Wire field <c>similarity</c>.</summary>
+    [JsonPropertyName("similarity")]
+    public object? Similarity { get; set; }
+
+    /// <summary>Wire field <c>smallest_key</c>.</summary>
+    [JsonPropertyName("smallest_key")]
+    public string? SmallestKey { get; set; }
+
+    /// <summary>Wire field <c>smallest_model</c>.</summary>
+    [JsonPropertyName("smallest_model")]
+    public string? SmallestModel { get; set; }
+
+    /// <summary>Wire field <c>speak_when_spoken_to</c>.</summary>
+    [JsonPropertyName("speak_when_spoken_to")]
+    public object? SpeakWhenSpokenTo { get; set; }
+
+    /// <summary>Wire field <c>speaker</c>.</summary>
+    [JsonPropertyName("speaker")]
+    public string? Speaker { get; set; }
 
     /// <summary>Wire field <c>speech_event_timeout</c>.</summary>
     [JsonPropertyName("speech_event_timeout")]
@@ -269,9 +565,37 @@ public class AIParams
     [JsonPropertyName("speech_timeout")]
     public object? SpeechTimeout { get; set; }
 
-    /// <summary>Wire field <c>speak_when_spoken_to</c>.</summary>
-    [JsonPropertyName("speak_when_spoken_to")]
-    public object? SpeakWhenSpokenTo { get; set; }
+    /// <summary>Wire field <c>speechify_key</c>.</summary>
+    [JsonPropertyName("speechify_key")]
+    public string? SpeechifyKey { get; set; }
+
+    /// <summary>Wire field <c>speechify_loudness_normalization</c>.</summary>
+    [JsonPropertyName("speechify_loudness_normalization")]
+    public object? SpeechifyLoudnessNormalization { get; set; }
+
+    /// <summary>Wire field <c>speechify_model</c>.</summary>
+    [JsonPropertyName("speechify_model")]
+    public string? SpeechifyModel { get; set; }
+
+    /// <summary>Wire field <c>speechify_output_format</c>.</summary>
+    [JsonPropertyName("speechify_output_format")]
+    public string? SpeechifyOutputFormat { get; set; }
+
+    /// <summary>Wire field <c>speechify_stream_first</c>.</summary>
+    [JsonPropertyName("speechify_stream_first")]
+    public object? SpeechifyStreamFirst { get; set; }
+
+    /// <summary>Wire field <c>speechify_text_normalization</c>.</summary>
+    [JsonPropertyName("speechify_text_normalization")]
+    public object? SpeechifyTextNormalization { get; set; }
+
+    /// <summary>Wire field <c>speed</c>.</summary>
+    [JsonPropertyName("speed")]
+    public object? Speed { get; set; }
+
+    /// <summary>Wire field <c>stability</c>.</summary>
+    [JsonPropertyName("stability")]
+    public object? Stability { get; set; }
 
     /// <summary>Wire field <c>start_paused</c>.</summary>
     [JsonPropertyName("start_paused")]
@@ -285,9 +609,21 @@ public class AIParams
     [JsonPropertyName("static_greeting_no_barge")]
     public object? StaticGreetingNoBarge { get; set; }
 
+    /// <summary>Wire field <c>stream_first</c>.</summary>
+    [JsonPropertyName("stream_first")]
+    public object? StreamFirst { get; set; }
+
+    /// <summary>Wire field <c>streaming</c>.</summary>
+    [JsonPropertyName("streaming")]
+    public object? Streaming { get; set; }
+
+    /// <summary>Wire field <c>strict_mode</c>.</summary>
+    [JsonPropertyName("strict_mode")]
+    public string? StrictMode { get; set; }
+
     /// <summary>Wire field <c>summary_mode</c>.</summary>
     [JsonPropertyName("summary_mode")]
-    public object? SummaryMode { get; set; }
+    public string? SummaryMode { get; set; }
 
     /// <summary>Wire field <c>swaig_allow_settings</c>.</summary>
     [JsonPropertyName("swaig_allow_settings")]
@@ -301,17 +637,33 @@ public class AIParams
     [JsonPropertyName("swaig_post_conversation")]
     public object? SwaigPostConversation { get; set; }
 
-    /// <summary>Wire field <c>swaig_set_global_data</c>.</summary>
-    [JsonPropertyName("swaig_set_global_data")]
-    public object? SwaigSetGlobalData { get; set; }
-
     /// <summary>Wire field <c>swaig_post_swml_vars</c>.</summary>
     [JsonPropertyName("swaig_post_swml_vars")]
     public object? SwaigPostSwmlVars { get; set; }
 
+    /// <summary>Wire field <c>swaig_set_global_data</c>.</summary>
+    [JsonPropertyName("swaig_set_global_data")]
+    public object? SwaigSetGlobalData { get; set; }
+
+    /// <summary>Wire field <c>target_first_segment_ms</c>.</summary>
+    [JsonPropertyName("target_first_segment_ms")]
+    public object? TargetFirstSegmentMs { get; set; }
+
+    /// <summary>Wire field <c>text_normalization_far_dir</c>.</summary>
+    [JsonPropertyName("text_normalization_far_dir")]
+    public string? TextNormalizationFarDir { get; set; }
+
     /// <summary>Wire field <c>thinking_model</c>.</summary>
     [JsonPropertyName("thinking_model")]
-    public object? ThinkingModel { get; set; }
+    public string? ThinkingModel { get; set; }
+
+    /// <summary>Wire field <c>tool_result_distill</c>.</summary>
+    [JsonPropertyName("tool_result_distill")]
+    public object? ToolResultDistill { get; set; }
+
+    /// <summary>Wire field <c>transfer_summary</c>.</summary>
+    [JsonPropertyName("transfer_summary")]
+    public object? TransferSummary { get; set; }
 
     /// <summary>Wire field <c>transparent_barge</c>.</summary>
     [JsonPropertyName("transparent_barge")]
@@ -321,25 +673,61 @@ public class AIParams
     [JsonPropertyName("transparent_barge_max_time")]
     public object? TransparentBargeMaxTime { get; set; }
 
-    /// <summary>Wire field <c>transfer_summary</c>.</summary>
-    [JsonPropertyName("transfer_summary")]
-    public object? TransferSummary { get; set; }
+    /// <summary>Wire field <c>tts_number_format</c>.</summary>
+    [JsonPropertyName("tts_number_format")]
+    public string? TtsNumberFormat { get; set; }
+
+    /// <summary>Wire field <c>turn_detection</c>.</summary>
+    [JsonPropertyName("turn_detection")]
+    public object? TurnDetection { get; set; }
+
+    /// <summary>Wire field <c>turn_detection_min_length</c>.</summary>
+    [JsonPropertyName("turn_detection_min_length")]
+    public object? TurnDetectionMinLength { get; set; }
 
     /// <summary>Wire field <c>turn_detection_timeout</c>.</summary>
     [JsonPropertyName("turn_detection_timeout")]
     public object? TurnDetectionTimeout { get; set; }
 
-    /// <summary>Wire field <c>tts_number_format</c>.</summary>
-    [JsonPropertyName("tts_number_format")]
-    public string? TtsNumberFormat { get; set; }
+    /// <summary>Wire field <c>turn_filler_every_n</c>.</summary>
+    [JsonPropertyName("turn_filler_every_n")]
+    public object? TurnFillerEveryN { get; set; }
+
+    /// <summary>Wire field <c>turn_filler_min_ms</c>.</summary>
+    [JsonPropertyName("turn_filler_min_ms")]
+    public object? TurnFillerMinMs { get; set; }
+
+    /// <summary>Wire field <c>turn_filler_sources</c>.</summary>
+    [JsonPropertyName("turn_filler_sources")]
+    public string? TurnFillerSources { get; set; }
+
+    /// <summary>Wire field <c>url</c>.</summary>
+    [JsonPropertyName("url")]
+    public string? Url { get; set; }
+
+    /// <summary>Wire field <c>utility_model</c>.</summary>
+    [JsonPropertyName("utility_model")]
+    public string? UtilityModel { get; set; }
+
+    /// <summary>Wire field <c>vad_config</c>.</summary>
+    [JsonPropertyName("vad_config")]
+    public string? VadConfig { get; set; }
+
+    /// <summary>Wire field <c>video_fps</c>.</summary>
+    [JsonPropertyName("video_fps")]
+    public object? VideoFps { get; set; }
+
+    /// <summary>Wire field <c>video_idle_file</c>.</summary>
+    [JsonPropertyName("video_idle_file")]
+    public string? VideoIdleFile { get; set; }
 
     /// <summary>Wire field <c>video_listening_file</c>.</summary>
     [JsonPropertyName("video_listening_file")]
     public string? VideoListeningFile { get; set; }
 
-    /// <summary>Wire field <c>video_idle_file</c>.</summary>
-    [JsonPropertyName("video_idle_file")]
-    public string? VideoIdleFile { get; set; }
+    /// <summary>Wire field <c>video_scale</c>.</summary>
+    [JsonPropertyName("video_scale")]
+    public string? VideoScale { get; set; }
 
     /// <summary>Wire field <c>video_talking_file</c>.</summary>
     [JsonPropertyName("video_talking_file")]
@@ -347,11 +735,15 @@ public class AIParams
 
     /// <summary>Wire field <c>vision_model</c>.</summary>
     [JsonPropertyName("vision_model")]
-    public object? VisionModel { get; set; }
+    public string? VisionModel { get; set; }
 
-    /// <summary>Wire field <c>vad_config</c>.</summary>
-    [JsonPropertyName("vad_config")]
-    public string? VadConfig { get; set; }
+    /// <summary>Wire field <c>voice_name</c>.</summary>
+    [JsonPropertyName("voice_name")]
+    public string? VoiceName { get; set; }
+
+    /// <summary>Wire field <c>vol</c>.</summary>
+    [JsonPropertyName("vol")]
+    public object? Vol { get; set; }
 
     /// <summary>Wire field <c>wait_for_user</c>.</summary>
     [JsonPropertyName("wait_for_user")]
@@ -360,12 +752,4 @@ public class AIParams
     /// <summary>Wire field <c>wake_prefix</c>.</summary>
     [JsonPropertyName("wake_prefix")]
     public string? WakePrefix { get; set; }
-
-    /// <summary>Wire field <c>eleven_labs_stability</c>.</summary>
-    [JsonPropertyName("eleven_labs_stability")]
-    public object? ElevenLabsStability { get; set; }
-
-    /// <summary>Wire field <c>eleven_labs_similarity</c>.</summary>
-    [JsonPropertyName("eleven_labs_similarity")]
-    public object? ElevenLabsSimilarity { get; set; }
 }

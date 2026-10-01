@@ -46,7 +46,7 @@ public class ConferenceRoom
 
     /// <summary>Wire field <c>fps</c>.</summary>
     [JsonPropertyName("fps")]
-    public double? Fps { get; set; }
+    public long? Fps { get; set; }
 
     /// <summary>Wire field <c>join_from</c>.</summary>
     [JsonPropertyName("join_from")]

@@ -20,6 +20,10 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class SubscriberTokenRequest
 {
+    /// <summary>Wire field <c>ch</c>.</summary>
+    [JsonPropertyName("ch")]
+    public string? Ch { get; set; }
+
     /// <summary>Wire field <c>reference</c>.</summary>
     [JsonPropertyName("reference")]
     public string? Reference { get; set; }
@@ -67,4 +71,12 @@ public class SubscriberTokenRequest
     /// <summary>Wire field <c>company_name</c>.</summary>
     [JsonPropertyName("company_name")]
     public string? CompanyName { get; set; }
+
+    /// <summary>Wire field <c>scope</c>.</summary>
+    [JsonPropertyName("scope")]
+    public string? Scope { get; set; }
+
+    /// <summary>Wire field <c>fingerprint</c>.</summary>
+    [JsonPropertyName("fingerprint")]
+    public string? Fingerprint { get; set; }
 }

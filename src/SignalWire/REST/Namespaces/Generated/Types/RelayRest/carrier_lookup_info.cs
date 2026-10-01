@@ -55,4 +55,8 @@ public class CarrierLookupInfo
     /// <summary>Wire field <c>linetype</c>.</summary>
     [JsonPropertyName("linetype")]
     public string? Linetype { get; set; }
+
+    /// <summary>Wire field <c>dnc</c>.</summary>
+    [JsonPropertyName("dnc")]
+    public string? Dnc { get; set; }
 }

@@ -20,6 +20,10 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class Pronounce
 {
+    /// <summary>Wire field <c>ignore_case</c>.</summary>
+    [JsonPropertyName("ignore_case")]
+    public object? IgnoreCase { get; set; }
+
     /// <summary>Wire field <c>replace</c>.</summary>
     [JsonPropertyName("replace")]
     public string? Replace { get; set; }
@@ -27,8 +31,4 @@ public class Pronounce
     /// <summary>Wire field <c>with</c>.</summary>
     [JsonPropertyName("with")]
     public string? With { get; set; }
-
-    /// <summary>Wire field <c>ignore_case</c>.</summary>
-    [JsonPropertyName("ignore_case")]
-    public object? IgnoreCase { get; set; }
 }

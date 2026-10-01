@@ -71,4 +71,16 @@ public class AddressResponse
     /// <summary>Wire field <c>zip_code</c>.</summary>
     [JsonPropertyName("zip_code")]
     public string? ZipCode { get; set; }
+
+    /// <summary>Wire field <c>emergency_enabled</c>.</summary>
+    [JsonPropertyName("emergency_enabled")]
+    public bool? EmergencyEnabled { get; set; }
+
+    /// <summary>Wire field <c>validated</c>.</summary>
+    [JsonPropertyName("validated")]
+    public bool? Validated { get; set; }
+
+    /// <summary>Wire field <c>validated_at</c>.</summary>
+    [JsonPropertyName("validated_at")]
+    public string? ValidatedAt { get; set; }
 }

@@ -20,11 +20,15 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class Output
 {
-    /// <summary>Wire field <c>response</c>.</summary>
-    [JsonPropertyName("response")]
-    public string? Response { get; set; }
-
     /// <summary>Wire field <c>action</c>.</summary>
     [JsonPropertyName("action")]
-    public List<object?>? Action { get; set; }
+    public object? Action { get; set; }
+
+    /// <summary>Wire field <c>post_process</c>.</summary>
+    [JsonPropertyName("post_process")]
+    public bool? PostProcess { get; set; }
+
+    /// <summary>Wire field <c>response</c>.</summary>
+    [JsonPropertyName("response")]
+    public object? Response { get; set; }
 }

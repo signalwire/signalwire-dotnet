@@ -20,10 +20,6 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class SipEndpointCreateRequest
 {
-    /// <summary>Wire field <c>id</c>.</summary>
-    [JsonPropertyName("id")]
-    public string? Id { get; set; }
-
     /// <summary>Wire field <c>username</c>.</summary>
     [JsonPropertyName("username")]
     public string? Username { get; set; }
@@ -55,4 +51,8 @@ public class SipEndpointCreateRequest
     /// <summary>Wire field <c>calling_handler_resource_id</c>.</summary>
     [JsonPropertyName("calling_handler_resource_id")]
     public string? CallingHandlerResourceId { get; set; }
+
+    /// <summary>Wire field <c>password</c>.</summary>
+    [JsonPropertyName("password")]
+    public string? Password { get; set; }
 }

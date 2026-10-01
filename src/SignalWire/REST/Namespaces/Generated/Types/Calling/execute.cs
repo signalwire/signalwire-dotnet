@@ -22,5 +22,5 @@ public class Execute
 {
     /// <summary>Wire field <c>execute</c>.</summary>
     [JsonPropertyName("execute")]
-    public Dictionary<string, object?>? Execute_ { get; set; }
+    public object? Execute_ { get; set; }
 }

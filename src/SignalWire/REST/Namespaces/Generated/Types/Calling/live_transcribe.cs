@@ -22,5 +22,5 @@ public class LiveTranscribe
 {
     /// <summary>Wire field <c>live_transcribe</c>.</summary>
     [JsonPropertyName("live_transcribe")]
-    public Dictionary<string, object?>? LiveTranscribe_ { get; set; }
+    public object? LiveTranscribe_ { get; set; }
 }

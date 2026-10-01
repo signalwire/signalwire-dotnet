@@ -23,4 +23,8 @@ public class PurchasePhoneNumberRequest
     /// <summary>Wire field <c>number</c>.</summary>
     [JsonPropertyName("number")]
     public string? Number { get; set; }
+
+    /// <summary>Wire field <c>number_type</c>.</summary>
+    [JsonPropertyName("number_type")]
+    public string? NumberType { get; set; }
 }

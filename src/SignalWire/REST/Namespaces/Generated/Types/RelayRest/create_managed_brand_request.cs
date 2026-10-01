@@ -63,4 +63,12 @@ public class CreateManagedBrandRequest
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
     public string? StatusCallbackUrl { get; set; }
+
+    /// <summary>Wire field <c>csp_brand_reference</c>.</summary>
+    [JsonPropertyName("csp_brand_reference")]
+    public string? CspBrandReference { get; set; }
+
+    /// <summary>Wire field <c>signalwire_contact_emails</c>.</summary>
+    [JsonPropertyName("signalwire_contact_emails")]
+    public object? SignalwireContactEmails { get; set; }
 }

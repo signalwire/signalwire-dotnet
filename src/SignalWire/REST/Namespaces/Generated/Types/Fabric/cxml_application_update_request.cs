@@ -20,59 +20,55 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class CxmlApplicationUpdateRequest
 {
-    /// <summary>Wire field <c>display_name</c>.</summary>
-    [JsonPropertyName("display_name")]
-    public string? DisplayName { get; set; }
+    /// <summary>Wire field <c>name</c>.</summary>
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
 
-    /// <summary>Wire field <c>account_sid</c>.</summary>
-    [JsonPropertyName("account_sid")]
-    public string? AccountSid { get; set; }
+    /// <summary>Wire field <c>call_request_url</c>.</summary>
+    [JsonPropertyName("call_request_url")]
+    public string? CallRequestUrl { get; set; }
 
-    /// <summary>Wire field <c>voice_url</c>.</summary>
-    [JsonPropertyName("voice_url")]
-    public string? VoiceUrl { get; set; }
+    /// <summary>Wire field <c>call_request_method</c>.</summary>
+    [JsonPropertyName("call_request_method")]
+    public string? CallRequestMethod { get; set; }
 
-    /// <summary>Wire field <c>voice_method</c>.</summary>
-    [JsonPropertyName("voice_method")]
-    public object? VoiceMethod { get; set; }
+    /// <summary>Wire field <c>call_fallback_url</c>.</summary>
+    [JsonPropertyName("call_fallback_url")]
+    public string? CallFallbackUrl { get; set; }
 
-    /// <summary>Wire field <c>voice_fallback_url</c>.</summary>
-    [JsonPropertyName("voice_fallback_url")]
-    public string? VoiceFallbackUrl { get; set; }
+    /// <summary>Wire field <c>call_fallback_method</c>.</summary>
+    [JsonPropertyName("call_fallback_method")]
+    public string? CallFallbackMethod { get; set; }
 
-    /// <summary>Wire field <c>voice_fallback_method</c>.</summary>
-    [JsonPropertyName("voice_fallback_method")]
-    public object? VoiceFallbackMethod { get; set; }
+    /// <summary>Wire field <c>call_status_url</c>.</summary>
+    [JsonPropertyName("call_status_url")]
+    public string? CallStatusUrl { get; set; }
 
-    /// <summary>Wire field <c>status_callback</c>.</summary>
-    [JsonPropertyName("status_callback")]
-    public string? StatusCallback { get; set; }
+    /// <summary>Wire field <c>call_status_method</c>.</summary>
+    [JsonPropertyName("call_status_method")]
+    public string? CallStatusMethod { get; set; }
 
-    /// <summary>Wire field <c>status_callback_method</c>.</summary>
-    [JsonPropertyName("status_callback_method")]
-    public object? StatusCallbackMethod { get; set; }
+    /// <summary>Wire field <c>message_request_url</c>.</summary>
+    [JsonPropertyName("message_request_url")]
+    public string? MessageRequestUrl { get; set; }
 
-    /// <summary>Wire field <c>sms_url</c>.</summary>
-    [JsonPropertyName("sms_url")]
-    public string? SmsUrl { get; set; }
+    /// <summary>Wire field <c>message_request_method</c>.</summary>
+    [JsonPropertyName("message_request_method")]
+    public string? MessageRequestMethod { get; set; }
 
-    /// <summary>Wire field <c>sms_method</c>.</summary>
-    [JsonPropertyName("sms_method")]
-    public object? SmsMethod { get; set; }
+    /// <summary>Wire field <c>message_fallback_url</c>.</summary>
+    [JsonPropertyName("message_fallback_url")]
+    public string? MessageFallbackUrl { get; set; }
 
-    /// <summary>Wire field <c>sms_fallback_url</c>.</summary>
-    [JsonPropertyName("sms_fallback_url")]
-    public string? SmsFallbackUrl { get; set; }
+    /// <summary>Wire field <c>message_fallback_method</c>.</summary>
+    [JsonPropertyName("message_fallback_method")]
+    public string? MessageFallbackMethod { get; set; }
 
-    /// <summary>Wire field <c>sms_fallback_method</c>.</summary>
-    [JsonPropertyName("sms_fallback_method")]
-    public object? SmsFallbackMethod { get; set; }
+    /// <summary>Wire field <c>message_status_url</c>.</summary>
+    [JsonPropertyName("message_status_url")]
+    public string? MessageStatusUrl { get; set; }
 
-    /// <summary>Wire field <c>sms_status_callback</c>.</summary>
-    [JsonPropertyName("sms_status_callback")]
-    public string? SmsStatusCallback { get; set; }
-
-    /// <summary>Wire field <c>sms_status_callback_method</c>.</summary>
-    [JsonPropertyName("sms_status_callback_method")]
-    public object? SmsStatusCallbackMethod { get; set; }
+    /// <summary>Wire field <c>message_status_method</c>.</summary>
+    [JsonPropertyName("message_status_method")]
+    public string? MessageStatusMethod { get; set; }
 }

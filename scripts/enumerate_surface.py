@@ -1893,6 +1893,7 @@ _REST_TYPES_NS_LEAF = {
     "Projects": "projects",
     "Chat": "chat",
     "PubSub": "pubsub",
+    "Space": "space",
     "SwmlWebhooks": "swml_webhooks",
 }
 

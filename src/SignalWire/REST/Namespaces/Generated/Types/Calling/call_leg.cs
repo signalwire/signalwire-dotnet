@@ -76,6 +76,10 @@ public class CallLeg
     [JsonPropertyName("type")]
     public object? Type { get; set; }
 
+    /// <summary>Wire field <c>qos_metrics</c>.</summary>
+    [JsonPropertyName("qos_metrics")]
+    public Dictionary<string, object?>? QosMetrics { get; set; }
+
     /// <summary>Wire field <c>parent_id</c>.</summary>
     [JsonPropertyName("parent_id")]
     public string? ParentId { get; set; }

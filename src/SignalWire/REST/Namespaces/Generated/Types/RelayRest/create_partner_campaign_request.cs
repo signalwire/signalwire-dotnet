@@ -24,10 +24,6 @@ public class CreatePartnerCampaignRequest
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
-    /// <summary>Wire field <c>brand_id</c>.</summary>
-    [JsonPropertyName("brand_id")]
-    public string? BrandId { get; set; }
-
     /// <summary>Wire field <c>csp_campaign_reference</c>.</summary>
     [JsonPropertyName("csp_campaign_reference")]
     public string? CspCampaignReference { get; set; }
@@ -35,4 +31,8 @@ public class CreatePartnerCampaignRequest
     /// <summary>Wire field <c>status_callback_url</c>.</summary>
     [JsonPropertyName("status_callback_url")]
     public string? StatusCallbackUrl { get; set; }
+
+    /// <summary>Wire field <c>signalwire_contact_emails</c>.</summary>
+    [JsonPropertyName("signalwire_contact_emails")]
+    public object? SignalwireContactEmails { get; set; }
 }

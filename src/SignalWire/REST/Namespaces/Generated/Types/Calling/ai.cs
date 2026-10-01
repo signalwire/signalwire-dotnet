@@ -22,5 +22,5 @@ public class AI
 {
     /// <summary>Wire field <c>ai</c>.</summary>
     [JsonPropertyName("ai")]
-    public SignalWire.REST.Namespaces.Generated.Types.Calling.AIObject? Ai { get; set; }
+    public object? Ai { get; set; }
 }

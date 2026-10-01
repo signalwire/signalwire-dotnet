@@ -22,5 +22,5 @@ public class StopRecordCall
 {
     /// <summary>Wire field <c>stop_record_call</c>.</summary>
     [JsonPropertyName("stop_record_call")]
-    public Dictionary<string, object?>? StopRecordCall_ { get; set; }
+    public object? StopRecordCall_ { get; set; }
 }

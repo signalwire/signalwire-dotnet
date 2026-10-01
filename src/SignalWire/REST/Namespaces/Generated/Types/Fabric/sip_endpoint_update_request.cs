@@ -51,4 +51,8 @@ public class SipEndpointUpdateRequest
     /// <summary>Wire field <c>calling_handler_resource_id</c>.</summary>
     [JsonPropertyName("calling_handler_resource_id")]
     public string? CallingHandlerResourceId { get; set; }
+
+    /// <summary>Wire field <c>password</c>.</summary>
+    [JsonPropertyName("password")]
+    public string? Password { get; set; }
 }

@@ -20,15 +20,19 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class DataMap
 {
+    /// <summary>Wire field <c>contexts</c>.</summary>
+    [JsonPropertyName("contexts")]
+    public object? Contexts { get; set; }
+
+    /// <summary>Wire field <c>expressions</c>.</summary>
+    [JsonPropertyName("expressions")]
+    public object? Expressions { get; set; }
+
     /// <summary>Wire field <c>output</c>.</summary>
     [JsonPropertyName("output")]
     public SignalWire.REST.Namespaces.Generated.Types.Calling.Output? Output { get; set; }
 
-    /// <summary>Wire field <c>expressions</c>.</summary>
-    [JsonPropertyName("expressions")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.Expression>? Expressions { get; set; }
-
     /// <summary>Wire field <c>webhooks</c>.</summary>
     [JsonPropertyName("webhooks")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Calling.Webhook>? Webhooks { get; set; }
+    public object? Webhooks { get; set; }
 }

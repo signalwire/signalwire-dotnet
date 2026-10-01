@@ -20,10 +20,6 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class CXMLScriptCreateRequest
 {
-    /// <summary>Wire field <c>display_name</c>.</summary>
-    [JsonPropertyName("display_name")]
-    public string? DisplayName { get; set; }
-
     /// <summary>Wire field <c>contents</c>.</summary>
     [JsonPropertyName("contents")]
     public string? Contents { get; set; }
@@ -35,4 +31,12 @@ public class CXMLScriptCreateRequest
     /// <summary>Wire field <c>status_callback_method</c>.</summary>
     [JsonPropertyName("status_callback_method")]
     public object? StatusCallbackMethod { get; set; }
+
+    /// <summary>Wire field <c>name</c>.</summary>
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    /// <summary>Wire field <c>script_type</c>.</summary>
+    [JsonPropertyName("script_type")]
+    public string? ScriptType { get; set; }
 }

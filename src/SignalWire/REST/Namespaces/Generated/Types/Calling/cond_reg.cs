@@ -20,15 +20,15 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Calling;
 /// </summary>
 public class CondReg
 {
-    /// <summary>Wire field <c>when</c>.</summary>
-    [JsonPropertyName("when")]
-    public string? When { get; set; }
+    /// <summary>Wire field <c>else</c>.</summary>
+    [JsonPropertyName("else")]
+    public List<object?>? Else { get; set; }
 
     /// <summary>Wire field <c>then</c>.</summary>
     [JsonPropertyName("then")]
     public List<object?>? Then { get; set; }
 
-    /// <summary>Wire field <c>else</c>.</summary>
-    [JsonPropertyName("else")]
-    public List<object?>? Else { get; set; }
+    /// <summary>Wire field <c>when</c>.</summary>
+    [JsonPropertyName("when")]
+    public string? When { get; set; }
 }

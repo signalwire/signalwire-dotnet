@@ -20,43 +20,47 @@ namespace SignalWire.REST.Namespaces.Generated.Types.Fabric;
 /// </summary>
 public class Webhook
 {
-    /// <summary>Wire field <c>expressions</c>.</summary>
-    [JsonPropertyName("expressions")]
-    public List<SignalWire.REST.Namespaces.Generated.Types.Fabric.Expression>? Expressions { get; set; }
-
     /// <summary>Wire field <c>error_keys</c>.</summary>
     [JsonPropertyName("error_keys")]
     public object? ErrorKeys { get; set; }
 
-    /// <summary>Wire field <c>url</c>.</summary>
-    [JsonPropertyName("url")]
-    public string? Url { get; set; }
+    /// <summary>Wire field <c>expressions</c>.</summary>
+    [JsonPropertyName("expressions")]
+    public object? Expressions { get; set; }
 
     /// <summary>Wire field <c>foreach</c>.</summary>
     [JsonPropertyName("foreach")]
-    public Dictionary<string, object?>? Foreach { get; set; }
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.Foreach? Foreach { get; set; }
+
+    /// <summary>Wire field <c>form_param</c>.</summary>
+    [JsonPropertyName("form_param")]
+    public string? FormParam { get; set; }
 
     /// <summary>Wire field <c>headers</c>.</summary>
     [JsonPropertyName("headers")]
     public Dictionary<string, object?>? Headers { get; set; }
 
+    /// <summary>Wire field <c>input_args_as_params</c>.</summary>
+    [JsonPropertyName("input_args_as_params")]
+    public bool? InputArgsAsParams { get; set; }
+
     /// <summary>Wire field <c>method</c>.</summary>
     [JsonPropertyName("method")]
     public string? Method { get; set; }
 
-    /// <summary>Wire field <c>input_args_as_params</c>.</summary>
-    [JsonPropertyName("input_args_as_params")]
-    public object? InputArgsAsParams { get; set; }
+    /// <summary>Wire field <c>output</c>.</summary>
+    [JsonPropertyName("output")]
+    public SignalWire.REST.Namespaces.Generated.Types.Fabric.Output? Output { get; set; }
 
     /// <summary>Wire field <c>params</c>.</summary>
     [JsonPropertyName("params")]
-    public Dictionary<string, object?>? Params { get; set; }
+    public object? Params { get; set; }
 
     /// <summary>Wire field <c>require_args</c>.</summary>
     [JsonPropertyName("require_args")]
     public object? RequireArgs { get; set; }
 
-    /// <summary>Wire field <c>output</c>.</summary>
-    [JsonPropertyName("output")]
-    public SignalWire.REST.Namespaces.Generated.Types.Fabric.Output? Output { get; set; }
+    /// <summary>Wire field <c>url</c>.</summary>
+    [JsonPropertyName("url")]
+    public string? Url { get; set; }
 }

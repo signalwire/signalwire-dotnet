@@ -48,11 +48,11 @@ public class FabricAddressApp
     [JsonPropertyName("channels")]
     public Dictionary<string, object?>? Channels { get; set; }
 
-    /// <summary>Wire field <c>created_at</c>.</summary>
-    [JsonPropertyName("created_at")]
-    public string? CreatedAt { get; set; }
-
     /// <summary>Wire field <c>type</c>.</summary>
     [JsonPropertyName("type")]
     public string? Type { get; set; }
+
+    /// <summary>Wire field <c>resource_id</c>.</summary>
+    [JsonPropertyName("resource_id")]
+    public string? ResourceId { get; set; }
 }
