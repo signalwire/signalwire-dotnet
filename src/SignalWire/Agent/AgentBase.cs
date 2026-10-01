@@ -1573,7 +1573,9 @@ public class AgentBase : Service
     /// into a failed hangup.</para>
     /// </remarks>
     /// <param name="handler">Takes (callLog, rawData).</param>
-    public AgentBase OnCallEnd(Action<List<Dictionary<string, object?>>, Dictionary<string, object?>> handler)
+    /// <returns>The handler, so a registration can be kept and reused.</returns>
+    public Action<List<Dictionary<string, object?>>, Dictionary<string, object?>> OnCallEnd(
+        Action<List<Dictionary<string, object?>>, Dictionary<string, object?>> handler)
     {
         ArgumentNullException.ThrowIfNull(handler);
         if (_callEndHandlers is null)
@@ -1585,7 +1587,7 @@ public class AgentBase : Service
         {
             _callEndHandlers = [.. _callEndHandlers, handler];
         }
-        return this;
+        return handler;
     }
 
     /// <summary>The fields a call log arrives under (both spellings are seen,

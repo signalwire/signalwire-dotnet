@@ -5,6 +5,8 @@ using System.Text.RegularExpressions;
 using SignalWire.Agent;
 using SignalWire.SWAIG;
 
+using SignalWire.Utils;
+
 namespace SignalWire.Skills.Builtin;
 
 /// <summary>
@@ -52,6 +54,26 @@ public sealed class SpiderSkill : SkillBase
         "//noscript",
     ];
 
+    private PublicSession? _session;
+
+    /// <summary>
+    /// The HTTP session pages are fetched through. It refuses private or internal
+    /// URLs and peers — redirects included, and checked against the address
+    /// actually connected to — which a check before the fetch can't catch.
+    /// (With the <c>SPIDER_BASE_URL</c> fixture override set, it targets that
+    /// fixture and permits it.)
+    /// </summary>
+    public PublicSession Session => _session ??= new PublicSession(
+        allowPrivate: !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(BaseUrlEnv)));
+
+    /// <summary>GET a page through <see cref="Session"/>: (status, body).</summary>
+    private (int Status, string Body, object? Unused) Fetch(string url, string userAgent, int timeoutSeconds)
+    {
+        var (status, body, _) = Session.GetAsync(url, timeoutSeconds, userAgent: userAgent)
+            .ConfigureAwait(false).GetAwaiter().GetResult();
+        return (status, body, null);
+    }
+
     public override string Name => "spider";
     public override string Description => "Fast web scraping and crawling capabilities";
     public override bool SupportsMultipleInstances => true;
@@ -88,10 +110,7 @@ public sealed class SpiderSkill : SkillBase
                 var fetchUrl = HttpHelper.ApplyBaseUrlOverride(url, BaseUrlEnv);
                 try
                 {
-                    var (status, body, _) = HttpHelper.GetAsync(fetchUrl,
-                        headers: new Dictionary<string, string> { ["User-Agent"] = userAgent },
-                        timeoutSeconds: timeout)
-                        .ConfigureAwait(false).GetAwaiter().GetResult();
+                    var (status, body, _) = Fetch(fetchUrl, userAgent, timeout);
                     if (status < 200 || status >= 400)
                     {
                         return new FunctionResult($"Failed to fetch {url}: HTTP {status}");
@@ -146,10 +165,7 @@ public sealed class SpiderSkill : SkillBase
                     var fetchUrl = HttpHelper.ApplyBaseUrlOverride(current, BaseUrlEnv);
                     try
                     {
-                        var (status, body, _) = HttpHelper.GetAsync(fetchUrl,
-                            headers: new Dictionary<string, string> { ["User-Agent"] = userAgent },
-                            timeoutSeconds: timeout)
-                            .ConfigureAwait(false).GetAwaiter().GetResult();
+                        var (status, body, _) = Fetch(fetchUrl, userAgent, timeout);
                         if (status < 200 || status >= 400) continue;
                         visited.Add(current);
                         var text = StripHtml(body);
@@ -215,10 +231,7 @@ public sealed class SpiderSkill : SkillBase
                 var fetchUrl = HttpHelper.ApplyBaseUrlOverride(url, BaseUrlEnv);
                 try
                 {
-                    var (status, body, _) = HttpHelper.GetAsync(fetchUrl,
-                        headers: new Dictionary<string, string> { ["User-Agent"] = userAgent },
-                        timeoutSeconds: timeout)
-                        .ConfigureAwait(false).GetAwaiter().GetResult();
+                    var (status, body, _) = Fetch(fetchUrl, userAgent, timeout);
                     if (status < 200 || status >= 400)
                     {
                         return new FunctionResult($"Failed to fetch {url}: HTTP {status}");

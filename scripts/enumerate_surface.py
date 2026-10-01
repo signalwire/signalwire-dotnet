@@ -72,6 +72,11 @@ CLASS_MODULE_MAP: dict[str, str] = {
     "RateLimitError": "signalwire.ai_chat.client",
     "ChatInProgressError": "signalwire.ai_chat.client",
     "SummaryError": "signalwire.ai_chat.client",
+    # The browser gateway and its voice/text handoff routes.
+    "ChatGateway": "signalwire.ai_chat.gateway",
+    "GatewayRejection": "signalwire.ai_chat.gateway",
+    "HandoffRouter": "signalwire.ai_chat.handoff",
+    "NonceEntry": "signalwire.ai_chat.handoff",
     # -- item-I implemented subsystems (H/I turn) -------------------------
     # New hand classes routed to their reference core modules (class name
     # matches the reference leaf verbatim).
@@ -297,6 +302,11 @@ CONSTRUCTION_OPTIONS_CLASSES: frozenset[str] = frozenset(
         # those entries are deleted. Its properties reconcile in the construction
         # contract; every one is also readable off the Client itself.
         "ClientOptions",
+        # ChatGateway / HandoffRouter take keyword-only construction arguments in the
+        # reference (``ChatGateway(*, config_url=..., key=...)``); the reference has
+        # no ``ChatGatewayOptions`` / ``HandoffRouterOptions`` class — same idiom.
+        "ChatGatewayOptions",
+        "HandoffRouterOptions",
     }
 )
 
@@ -315,6 +325,13 @@ CLASS_RENAME_MAP: dict[tuple[str, str], tuple[str, str]] = {
     ("SignalWire.AIChat", "AIChatException"): (
         "signalwire.ai_chat.client",
         "AIChatError",
+    ),
+    # The public-URL fetch session: the reference's class is module-private
+    # (``_PublicSession``, reached as ``SpiderSkill.session``); C# names it
+    # without the underscore.
+    ("SignalWire.Utils", "PublicSession"): (
+        "signalwire.utils.url_validator",
+        "_PublicSession",
     ),
     # SignalWire.Relay's ``Client`` is Python's ``RelayClient``.
     ("SignalWire.Relay", "Client"): (
@@ -810,9 +827,11 @@ MIXIN_PROJECTIONS: dict[tuple[str, str], list[str]] = {
         "remove_function",
     ],
     ("signalwire.core.mixins.web_mixin", "WebMixin"): [
+        "add_per_call_config",
         "as_router",
         "enable_debug_routes",
         "manual_set_proxy_url",
+        "mount",
         "on_request",
         "on_swml_request",
         "register_routing_callback",
@@ -2006,6 +2025,10 @@ def _enrich_composition_attributes(
         return
     for mod, sinv in sig.get("modules", {}).items():
         for cls, sce in sinv.get("classes", {}).items():
+            # Options-object classes are construction idiom, never surface (their
+            # class-typed properties would otherwise re-enter here).
+            if cls in CONSTRUCTION_OPTIONS_CLASSES or cls in AICHAT_OPTIONS_CLASSES:
+                continue
             smethods = sce.get("methods", {})
             if not isinstance(smethods, dict):
                 continue
@@ -2514,6 +2537,11 @@ def build_snapshot(repo: Path, src_dir: Path) -> dict:
                 target_mod = module_for_class(class_name, namespace)
                 target_class = emit_class_name(class_name)
             if target_mod is None:
+                continue
+            # A class the reference keeps module-private (``_PublicSession``) is
+            # not public surface on either side; the reference enumerator skips
+            # underscore names, and so does this one.
+            if target_class.startswith("_"):
                 continue
 
             # Translate method names

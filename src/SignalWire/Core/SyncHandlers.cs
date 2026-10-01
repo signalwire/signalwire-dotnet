@@ -53,23 +53,23 @@ public static class SyncHandlers
 
     /// <summary>
     /// Call <paramref name="func"/> with <paramref name="args"/> on a thread-pool
-    /// worker, or inline when <see cref="SyncHandlersInline"/> is set. An
-    /// exception the callable throws surfaces from the returned task unwrapped.
+    /// worker, or inline when <see cref="SyncHandlersInline"/> is set.
     /// </summary>
     /// <param name="func">The synchronous callable.</param>
     /// <param name="args">Its arguments.</param>
     /// <returns>The callable's result.</returns>
-    public static Task<object?> RunSyncHandler(Delegate func, params object?[] args)
+    public static Task<object?> RunSyncHandler(Func<object?[], object?> func, params object?[] args)
     {
         ArgumentNullException.ThrowIfNull(func);
+        ArgumentNullException.ThrowIfNull(args);
         if (SyncHandlersInline())
         {
-            return Task.FromResult(Invoke(func, args));
+            return Task.FromResult(func(args));
         }
-        return Task.Run(() => Invoke(func, args));
+        return Task.Run(() => func(args));
     }
 
-    /// <summary>Typed form of <see cref="RunSyncHandler(Delegate, object?[])"/>.</summary>
+    /// <summary>Typed form of <see cref="RunSyncHandler(Func{object?[], object?}, object?[])"/>.</summary>
     /// <param name="func">The synchronous callable.</param>
     public static Task<T> RunSyncHandler<T>(Func<T> func)
     {
@@ -89,19 +89,6 @@ public static class SyncHandlers
         else
         {
             _ = Task.Run(work);
-        }
-    }
-
-    private static object? Invoke(Delegate func, object?[] args)
-    {
-        try
-        {
-            return func.DynamicInvoke(args);
-        }
-        catch (TargetInvocationException tie) when (tie.InnerException is not null)
-        {
-            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(tie.InnerException).Throw();
-            throw; // unreachable
         }
     }
 }

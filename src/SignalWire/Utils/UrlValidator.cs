@@ -48,7 +48,7 @@ public static class UrlValidator
 {
     private static readonly string[] TruthyEnvValues = { "1", "true", "yes" };
 
-    private static bool IsTruthyEnv(string? value) =>
+    internal static bool IsTruthyEnv(string? value) =>
         value is not null && Array.Exists(
             TruthyEnvValues,
             v => string.Equals(v, value, StringComparison.OrdinalIgnoreCase));
@@ -141,7 +141,7 @@ public static class UrlValidator
         return true;
     }
 
-    private static bool IsBlocked(IPAddress ip)
+    internal static bool IsBlocked(IPAddress ip)
     {
         // IPv4
         if (ip.AddressFamily == AddressFamily.InterNetwork)

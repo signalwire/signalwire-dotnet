@@ -8,44 +8,55 @@ namespace SignalWire.Core;
 /// One finished conversation leg, in a shape that does not vary by engine
 /// (voice or text chat). Built by <see cref="PostPromptNormalizer.NormalizePostPrompt"/>.
 /// </summary>
-/// <param name="medium"><c>conversation_type</c> as reported (<c>"voice"</c> /
-/// <c>"chat"</c>); empty when the engine did not say.</param>
-/// <param name="conversationId">Present on chat, absent on voice; null when the
-/// engine supplied none.</param>
-/// <param name="summary">The parsed <c>post_prompt_data</c> (whatever keys the
-/// application's post-prompt asked for); empty when none or unparseable. A model
-/// that answered in prose yields <c>{"summary": "&lt;the prose&gt;"}</c>.</param>
-/// <param name="dialogue"><c>user</c>/<c>assistant</c> turns only, tool calls and
-/// the chat engine's summary echo removed.</param>
-/// <param name="callId">The platform call id, when present.</param>
-/// <param name="raw">The complete request body, untouched.</param>
 [SuppressMessage("Design", "CA1002", Justification = "Cross-port surface carries the dialogue list verbatim (the reference's dataclass field is a plain list).")]
-public sealed class NormalizedPostPrompt(
-    string medium = "",
-    string? conversationId = null,
-    Dictionary<string, object?>? summary = null,
-    List<Dictionary<string, string>>? dialogue = null,
-    string? callId = null,
-    Dictionary<string, object?>? raw = null)
+public sealed class NormalizedPostPrompt
 {
+    /// <summary>Build the normalized post-prompt.</summary>
+    /// <param name="medium"><c>conversation_type</c> as reported (<c>"voice"</c> /
+    /// <c>"chat"</c>); empty when the engine did not say.</param>
+    /// <param name="conversationId">Present on chat, absent on voice; null when the
+    /// engine supplied none.</param>
+    /// <param name="summary">The parsed <c>post_prompt_data</c> (whatever keys the
+    /// application's post-prompt asked for); empty when none or unparseable. A model
+    /// that answered in prose yields <c>{"summary": "&lt;the prose&gt;"}</c>.</param>
+    /// <param name="dialogue"><c>user</c>/<c>assistant</c> turns only, tool calls and
+    /// the chat engine's summary echo removed.</param>
+    /// <param name="callId">The platform call id, when present.</param>
+    /// <param name="raw">The complete request body, untouched.</param>
+    public NormalizedPostPrompt(
+        string medium = "",
+        string? conversationId = null,
+        Dictionary<string, object?>? summary = null,
+        List<Dictionary<string, string>>? dialogue = null,
+        string? callId = null,
+        Dictionary<string, object?>? raw = null)
+    {
+        Medium = medium;
+        ConversationId = conversationId;
+        Summary = summary ?? [];
+        Dialogue = dialogue ?? [];
+        CallId = callId;
+        Raw = raw ?? [];
+    }
+
     /// <summary><c>conversation_type</c> as reported; empty when not said.</summary>
-    public string Medium { get; } = medium;
+    public string Medium { get; }
 
     /// <summary>The chat conversation id; null on voice.</summary>
-    public string? ConversationId { get; } = conversationId;
+    public string? ConversationId { get; }
 
     /// <summary>The parsed post-prompt summary object.</summary>
-    public Dictionary<string, object?> Summary { get; } = summary ?? [];
+    public Dictionary<string, object?> Summary { get; }
 
     /// <summary>The real dialogue turns, in order.</summary>
     [SuppressMessage("Design", "CA1002", Justification = "Cross-port surface exposes the dialogue list verbatim.")]
-    public List<Dictionary<string, string>> Dialogue { get; } = dialogue ?? [];
+    public List<Dictionary<string, string>> Dialogue { get; }
 
     /// <summary>The platform call id, when present.</summary>
-    public string? CallId { get; } = callId;
+    public string? CallId { get; }
 
     /// <summary>The complete request body, untouched.</summary>
-    public Dictionary<string, object?> Raw { get; } = raw ?? [];
+    public Dictionary<string, object?> Raw { get; }
 }
 
 /// <summary>

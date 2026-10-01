@@ -76,6 +76,7 @@ from enumerate_surface import (  # type: ignore
     SKILL_INHERITED_PROJECTIONS,
     SURFACE_METHOD_INJECTIONS,
     AICHAT_OPTIONS_CLASSES,
+    CONSTRUCTION_OPTIONS_CLASSES,
 )
 
 
@@ -198,6 +199,11 @@ def translate_dotnet_type(t: str, aliases: dict[str, str], context: str) -> str:
         return "any"
     t = t.strip()
 
+    # An aliased array type (``System.Byte[]`` -> bytes) wins over the generic
+    # element-list translation.
+    if t in aliases:
+        return aliases[t]
+
     # Array suffix
     if t.endswith("[]"):
         inner = translate_dotnet_type(t[:-2], aliases, context)
@@ -281,7 +287,11 @@ def translate_dotnet_type(t: str, aliases: dict[str, str], context: str) -> str:
         "System.Collections.Concurrent.ConcurrentDictionary",
     ):
         return f"dict<{canon_args[0]},{canon_args[1]}>"
-    if head in ("System.Collections.Generic.HashSet",):
+    if head in (
+        "System.Collections.Generic.HashSet",
+        "System.Collections.Generic.ISet",
+        "System.Collections.Generic.IReadOnlySet",
+    ):
         return f"list<{canon_args[0]}>"
     # Generic future / async wrapper that carries no Python equivalent;
     # treat as the wrapped type.
@@ -415,6 +425,11 @@ def build_signature(method: dict, aliases: dict, context: str, is_static: bool) 
         if has_default:
             param["required"] = False
             param["default"] = default
+        elif kind == "var_positional":
+            # A C# ``params`` array is optional by construction (zero arguments
+            # bind an empty array) — the reference's ``*args`` (default ``()``).
+            param["required"] = False
+            param["default"] = "()"
         else:
             param["required"] = True
         params_out.append(param)
@@ -1328,6 +1343,10 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
             else:
                 target_module = module_for_class(canonical_name, ns)
                 target_class = canonical_name
+        # A class the reference keeps module-private (``_PublicSession``) is not
+        # signature surface on either side (the reference skips underscore names).
+        if target_class.startswith("_"):
+            continue
 
         methods_out: dict = {}
 
@@ -2096,16 +2115,32 @@ def collect(raw: dict, aliases: dict) -> tuple[dict, list]:
         if entry.get("functions"):
             sorted_modules[mod]["functions"] = dict(sorted(entry["functions"].items()))
 
+    construction = build_construction(
+        sorted_modules,
+        settable_props,
+        native_base,
+        native_to_canonical,
+    )
+    # A construction options class (ChatGatewayOptions, HandoffRouterOptions, ...)
+    # is the .NET home for the reference's keyword arguments: its properties ARE
+    # the owning class's construction contract (unfolded above), not member
+    # surface of their own. Drop the class from the member inventory once the
+    # contract is built, mirroring enumerate_surface's CONSTRUCTION_OPTIONS_CLASSES.
+    for entry in sorted_modules.values():
+        classes = entry.get("classes")
+        if isinstance(classes, dict):
+            for cls in [c for c in classes if c in CONSTRUCTION_OPTIONS_CLASSES]:
+                del classes[cls]
+    sorted_modules = {
+        m: e
+        for m, e in sorted_modules.items()
+        if e.get("classes") or e.get("functions")
+    }
     return {
         "version": "2",
         "generated_from": "SignalWire.dll via SignatureDump (System.Reflection)",
         "modules": sorted_modules,
-        "construction": build_construction(
-            sorted_modules,
-            settable_props,
-            native_base,
-            native_to_canonical,
-        ),
+        "construction": construction,
     }, failures
 
 

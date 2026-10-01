@@ -8,6 +8,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using SignalWire.Logging;
+
 namespace SignalWire.AIChat;
 
 /// <summary>
@@ -253,22 +255,23 @@ public sealed class AIChatClient : IDisposable
     }
 
     /// <summary>
-    /// Send one JSON-RPC call and return the response with its body UNREAD, for
-    /// proxies that must stream the body through rather than buffer it. The
-    /// service pads a slow response with keepalive whitespace so intermediaries do
-    /// not sever the connection mid-turn; a proxy that awaits the whole body
-    /// absorbs that padding and reintroduces the very timeout it exists to
-    /// prevent — read <see cref="HttpResponseMessage.Content"/> as a stream and
-    /// forward the chunks as they arrive.
+    /// Send one JSON-RPC call and stream its response body back chunk by chunk
+    /// (UTF-8 text, decoded across chunk boundaries), as it arrives — for proxies that must relay the body rather than buffer it.
+    /// The service pads a slow response with keepalive whitespace so
+    /// intermediaries do not sever the connection mid-turn; a proxy that awaits
+    /// the whole body absorbs that padding and reintroduces the very timeout it
+    /// exists to prevent. Forward each chunk as it is yielded.
     /// </summary>
-    /// <remarks>The caller owns the returned response (dispose it) and owns
-    /// interpreting the result — including that a JSON-RPC error arrives under HTTP
-    /// 200. Prefer the typed methods unless you are genuinely relaying bytes.</remarks>
+    /// <remarks>The caller owns interpreting the relayed result — including that a
+    /// JSON-RPC error arrives under HTTP 200. Prefer the typed methods unless you
+    /// are genuinely relaying bytes.</remarks>
     /// <param name="method">The JSON-RPC method.</param>
     /// <param name="params">The JSON-RPC params object.</param>
     /// <param name="cancellationToken">Cooperative cancellation.</param>
-    public async Task<HttpResponseMessage> RawPostAsync(
-        string method, IReadOnlyDictionary<string, object?> @params, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<string> RawPostAsync(
+        string method,
+        IReadOnlyDictionary<string, object?> @params,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var id = $"req-{Interlocked.Increment(ref _requestCounter)}";
         var payload = new Dictionary<string, object?>
@@ -286,11 +289,60 @@ public sealed class AIChatClient : IDisposable
         request.Headers.TryAddWithoutValidation("Authorization", _authHeader);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         request.Headers.UserAgent.ParseAdd(UserAgent);
-        return await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
             .ConfigureAwait(false);
+        var body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using (body.ConfigureAwait(false))
+        {
+            var decoder = Encoding.UTF8.GetDecoder();
+            var buffer = new byte[8192];
+            var chars = new char[Encoding.UTF8.GetMaxCharCount(buffer.Length)];
+            int read;
+            while ((read = await body.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+            {
+                var n = decoder.GetChars(buffer, 0, read, chars, 0, flush: false);
+                if (n > 0)
+                {
+                    yield return new string(chars, 0, n);
+                }
+            }
+            var tail = decoder.GetChars([], 0, 0, chars, 0, flush: true);
+            if (tail > 0)
+            {
+                yield return new string(chars, 0, tail);
+            }
+        }
     }
 
     // ── API methods ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// Warn when the service will not store the id it is given. The service drops
+    /// characters outside <c>[A-Za-z0-9_\-.:]</c> without reporting it, so a composed
+    /// id such as <c>root~2</c> is stored as <c>root2</c> — a different, valid-looking
+    /// id — and everything filed under the original is unreachable. <c>.</c> is the
+    /// safe separator for composing ids.
+    /// </summary>
+    internal static void WarnIfIdWillBeAltered(string? conversationId)
+    {
+        if (string.IsNullOrEmpty(conversationId))
+        {
+            return;
+        }
+        var cleaned = string.Concat(conversationId.Where(IsIdSafe));
+        if (cleaned == conversationId)
+        {
+            return;
+        }
+        var removed = string.Concat(conversationId.Where(c => !IsIdSafe(c)).Distinct().Order());
+        Logger.GetLogger("ai_chat.client").Warn(
+            $"conversation_id_will_be_sanitized requested={conversationId} stored_as={cleaned} "
+            + $"removed_characters={removed} message=[signalwire] the chat service will store this "
+            + "conversation under a different id; anything filed under the requested id will not be "
+            + "found. Use '.' to compose ids.");
+    }
+
+    private static bool IsIdSafe(char c) => char.IsAsciiLetterOrDigit(c) || c is '_' or '-' or '.' or ':';
 
     /// <summary>
     /// Create a conversation (or, with <see cref="ConversationTurnOptions.Reinit"/>,
@@ -305,6 +357,7 @@ public sealed class AIChatClient : IDisposable
         string conversationId, CreateConversationOptions options, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
+        WarnIfIdWillBeAltered(conversationId);
         var parameters = new Dictionary<string, object?>
         {
             ["id"] = conversationId,

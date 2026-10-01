@@ -51,9 +51,15 @@ public sealed class SyncHandlersTests : IDisposable
     public async Task RunSyncHandler_RunsOffTheCallingThread()
     {
         var caller = Environment.CurrentManagedThreadId;
-        Func<int, int> f = x => x == 0 ? 0 : Environment.CurrentManagedThreadId;
-        var workerThread = (int)(await SyncHandlers.RunSyncHandler(f, 7))!;
+        var workerThread = (int)(await SyncHandlers.RunSyncHandler(
+            a => (int)a[0]! == 0 ? 0 : Environment.CurrentManagedThreadId, 7))!;
         Assert.NotEqual(caller, workerThread);
+    }
+
+    [Fact]
+    public async Task RunSyncHandler_PassesItsArguments()
+    {
+        Assert.Equal(5, (int)(await SyncHandlers.RunSyncHandler(a => (int)a[0]! + (int)a[1]!, 2, 3))!);
     }
 
     [Fact]
@@ -61,6 +67,9 @@ public sealed class SyncHandlersTests : IDisposable
     {
         Func<int> boom = () => throw new InvalidOperationException("boom");
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => SyncHandlers.RunSyncHandler(boom));
+        Assert.Equal("boom", ex.Message);
+        ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => SyncHandlers.RunSyncHandler(_ => throw new InvalidOperationException("boom")));
         Assert.Equal("boom", ex.Message);
     }
 
