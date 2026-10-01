@@ -222,7 +222,7 @@ public sealed class SWMLServiceTests : IDisposable
         ["amazon_bedrock"] = new() { ["prompt"] = new Dictionary<string, object> { ["text"] = "hi" } },
         ["connect"] = new() { ["to"] = "sip:someone@example.com" },
         ["context_switch"] = new() { ["system_prompt"] = "hi" },
-        ["enter_queue"] = new() { ["queue_name"] = "q1", ["transfer_after_bridge"] = "main" },
+        ["enter_queue"] = new() { ["queue_name"] = "q1" },
         ["join_conference"] = new() { ["name"] = "conf1" },
         ["play"] = new() { ["url"] = "say:hello" },
         ["send_sms"] = new()
@@ -259,6 +259,10 @@ public sealed class SWMLServiceTests : IDisposable
         ["tap"] = new() { ["uri"] = "wss://example.com/tap" },
         ["transfer"] = new() { ["dest"] = "sip:someone@example.com" },
         ["user_event"] = new() { ["event"] = new Dictionary<string, object>() },
+        ["bind_digit"] = new() { ["digits"] = "1", ["method"] = "transfer" },
+        ["execute_rpc"] = new() { ["method"] = "ai_message" },
+        ["set_capabilities"] = new() { ["capabilities"] = new List<object> { "video" } },
+        ["stream"] = new() { ["url"] = "wss://example.com/audio-stream" },
     };
 
     [Fact]

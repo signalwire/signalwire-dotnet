@@ -3603,6 +3603,20 @@
               ],
               "returns": "void"
             },
+            "body": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                },
+                {
+                  "name": "data",
+                  "type": "dict<string,any>",
+                  "required": true
+                }
+              ],
+              "returns": "class:signalwire.core.data_map.DataMap"
+            },
             "description": {
               "params": [
                 {
@@ -4241,9 +4255,9 @@
                 },
                 {
                   "name": "max_participants",
-                  "type": "int",
+                  "type": "optional<int>",
                   "required": false,
-                  "default": 250
+                  "default": null
                 },
                 {
                   "name": "record",
@@ -8806,16 +8820,128 @@
     "signalwire.core.swaig_actions_generated": {
       "classes": {
         "ChangeVoiceAction": {
-          "methods": {}
+          "methods": {
+            "voice": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            }
+          }
         },
         "ContextSwitchAction": {
-          "methods": {}
+          "methods": {
+            "consolidate": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "full_reset": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "system_pom": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "system_prompt": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "user_pom": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "user_prompt": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            }
+          }
         },
         "HoldAction": {
-          "methods": {}
+          "methods": {
+            "step": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "timeout": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "timeout_step": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            }
+          }
         },
         "PlaybackBgAction": {
-          "methods": {}
+          "methods": {
+            "file": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "wait": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            }
+          }
         },
         "SwaigAction": {
           "methods": {
@@ -9114,7 +9240,26 @@
           }
         },
         "TransferAction": {
-          "methods": {}
+          "methods": {
+            "dest": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            },
+            "summarize": {
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "self"
+                }
+              ],
+              "returns": "any"
+            }
+          }
         }
       }
     },
@@ -32274,7 +32419,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.rest.namespaces.fabric_types_generated.AIAgentVoice"
+              "returns": "list<class:signalwire.rest.namespaces.fabric_types_generated.AIAgentVoice>"
             },
             "update": {
               "params": [
@@ -39224,7 +39369,7 @@
                   "default": null
                 }
               ],
-              "returns": "class:signalwire.rest.namespaces.space_types_generated.PaymentMethod"
+              "returns": "list<class:signalwire.rest.namespaces.space_types_generated.PaymentMethod>"
             }
           }
         },

@@ -341,6 +341,11 @@ internal static class Program
         {
 #pragma warning disable CA1031 // Same, for the awaited form.
             try { task.GetAwaiter().GetResult(); }
+            // A method whose success IS a redirect (DownloadAsync / GetPdfAsync
+            // return the Location) reads the recorder's uniform 200 as the wrong
+            // answer AFTER its request was sent; the caller still requires that
+            // request to have been recorded, which is all the registry needs.
+            catch (SignalWireRestError) { }
             catch (Exception ex) { return $"awaited task threw: {Unwrap(ex).Message}"; }
 #pragma warning restore CA1031
         }

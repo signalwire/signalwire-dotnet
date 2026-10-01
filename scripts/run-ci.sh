@@ -385,6 +385,14 @@ sched_gate NO-CHEAT desc="audit_no_cheat_tests" \
 sched_gate COORDINATED-PASS desc="a non-main porting-sdk pin must be declared on the PR (Coordinated-With: line or coordinated-pass label)" \
     -- python3 "$PORTING_SDK_DIR/scripts/coordinated_pass.py" --porting-sdk "$PORTING_SDK_DIR"
 
+# SCHEMA-BUNDLE (porting-sdk docs/SCHEMA_ROUND_TRIP.md): the embedded
+# src/SignalWire/SWML/schema.json is byte-identical to porting-sdk's schema.json at
+# the coordinated pin, its schema.json.sha256 record names those bytes, and psdk's
+# copy matches the ARS producer commit recorded in schema.provenance.json.
+sched_gate SCHEMA-BUNDLE desc="bundled schema.json == porting-sdk's == ARS output (record matches)" \
+    -- python3 "$PORTING_SDK_DIR/scripts/port_schema_bundle.py" check \
+        --port signalwire-dotnet --port-root "$PORT_ROOT" --selftest
+
 sched_gate COORDINATED-REFS desc="every coordinated-set checkout (porting-sdk + python oracle + matrix ports) takes its ref from the branch-local .github/porting-sdk-ref pin resolver, never a repo variable or literal ref" \
     -- python3 "$PORTING_SDK_DIR/scripts/check_coordinated_refs.py" --repo "$PORT_ROOT"
 

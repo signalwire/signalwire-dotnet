@@ -23,11 +23,16 @@ namespace SignalWire.Tests;
 /// branches whose keys are perfectly enumerable, and the shallow check accepted
 /// arbitrary keys for all four.</para>
 ///
-/// <para>The semantic: a config satisfying a union satisfies SOME branch, so the
-/// known keys are the UNION of the object branches' keys. Non-object branches
+/// <para>The semantic is the #223 contract (porting-sdk
+/// docs/legacy-census/DISC-g-d21.md §1.4/§4): exactly ONE closed-object branch
+/// supplies the known keys; zero or several closed-object branches disengage the
+/// shallow check (the deep validator owns those shapes). Non-object branches
 /// contribute nothing — they constrain the config to not be an object at all, a
 /// different question. <c>unset</c> has no object branch, so it correctly stays
-/// disengaged.</para>
+/// disengaged. In the current schema every engaged verb body has exactly one
+/// closed-object branch (its object form beside string / array / number
+/// shorthands), so the contract and a branch union engage on the same 44 of 53
+/// verbs with identical key sets.</para>
 /// </summary>
 [Collection(GlobalStateCollection.Name)]
 public sealed class SWMLSchemaAnyOfTests : IDisposable
@@ -88,10 +93,10 @@ public sealed class SWMLSchemaAnyOfTests : IDisposable
         Assert.True(valid, $"{verb}: legitimate config rejected: {string.Join("; ", errors)}");
     }
 
-    /// <summary>Every key of every object branch must be accepted, which is what
-    /// distinguishes a UNION from picking one branch. connect's four
-    /// ConnectDevice branches differ only in their discriminating key (to /
-    /// serial / parallel / serial_parallel), so all four must pass.</summary>
+    /// <summary>connect's one closed object form declares all four device
+    /// discriminating keys (to / serial / parallel / serial_parallel; the engine's
+    /// SWML_CHECK_ONLY_ONE_OF is a presence rule, not separate object branches),
+    /// so each must pass the shallow key check.</summary>
     [Theory]
     [InlineData("to", "sip:alice@example.test")]
     [InlineData("serial", "[]")]
@@ -114,15 +119,15 @@ public sealed class SWMLSchemaAnyOfTests : IDisposable
     /// design.</item>
     /// <item><c>unset</c> — a union with no object branch (string | array of
     /// string).</item>
-    /// <item><c>cond</c>/<c>label</c>/<c>return</c> — array / string / untyped,
-    /// not objects at all.</item>
+    /// <item><c>cond</c> — an array, not an object at all.</item>
+    /// <item><c>return</c> — any JSON value; its object form declares no closed
+    /// key set.</item>
     /// </list>
     /// For these the check must be a NO-OP (pass), not a rejection.</summary>
     [Theory]
     [InlineData("set")]
     [InlineData("unset")]
     [InlineData("cond")]
-    [InlineData("label")]
     [InlineData("return")]
     public void NonEnumerableConfig_StaysDisengaged(string verb)
     {

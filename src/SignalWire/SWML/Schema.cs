@@ -364,9 +364,9 @@ public sealed class Schema
     }
 
     /// <summary>Resolve the set of KNOWN top-level property names for a verb's
-    /// config object, following a single ``$ref`` (e.g. ai -> AIObject) and
-    /// UNIONING the branches of an ``anyOf``/``oneOf`` union. Returns null only
-    /// when there is genuinely no enumerable closed key-set (so no shallow check
+    /// config object, following ``$ref`` and taking the ONE closed-object branch
+    /// of an ``anyOf``/``oneOf`` union (the #223 contract). Returns null when
+    /// there is no single enumerable closed key-set (so no shallow check
     /// applies).
     /// </summary>
     private HashSet<string>? VerbTopLevelPropertyNames(string verbName)
@@ -397,19 +397,17 @@ public sealed class Schema
     /// <list type="bullet">
     /// <item><c>$ref</c> — followed into <c>$defs</c> and resolved recursively
     /// (ai -&gt; AIObject).</item>
-    /// <item><c>anyOf</c>/<c>oneOf</c> — resolved BRANCH BY BRANCH and UNIONED.
-    /// Without this the resolver bailed on the first <c>type != "object"</c>
-    /// test, because a union node carries no <c>type</c> of its own. That bail
-    /// silently DISENGAGED the closed-key check: ValidateVerbTopLevelKeys reads
-    /// null as "nothing to enforce" and reports Valid for any key whatsoever.
-    /// Five verbs in the shipped schema are union-shaped — connect, play,
-    /// send_sms, sleep, unset — so the check was doing nothing for all of them.
-    /// A union's known-key set is the union of its object branches' keys: a
-    /// config satisfying the union satisfies SOME branch, so a key belonging to
-    /// no branch belongs to no valid document. Non-object branches (sleep's bare
-    /// <c>integer</c>, SWMLVar) contribute no keys and are skipped — they
-    /// constrain the config to not be an object at all, a different question
-    /// from which keys an object config may carry.</item>
+    /// <item><c>anyOf</c>/<c>oneOf</c> — resolved BRANCH BY BRANCH under the
+    /// #223 contract (porting-sdk docs/legacy-census/DISC-g-d21.md §1.4/§4):
+    /// exactly ONE closed-object branch yields its key set; zero or several
+    /// disengage (null). Without union handling the resolver bailed on the first
+    /// <c>type != "object"</c> test, because a union node carries no <c>type</c>
+    /// of its own, which silently DISENGAGED the closed-key check for every
+    /// union-shaped verb body (most verb bodies in schema.json are inline
+    /// <c>anyOf</c> nodes: object | string | array forms, as swml_schema.c's
+    /// check_method_type_and_unknown_params admits). Non-object branches
+    /// (a bare <c>integer</c>, SWMLVar, an array form) contribute no keys and
+    /// are skipped — they constrain the config to not be an object at all.</item>
     /// <item>a plain closed object — its own <c>properties</c>.</item>
     /// </list>
     /// </summary>
@@ -438,7 +436,7 @@ public sealed class Schema
             return ClosedKeySet(refDoc.RootElement.Clone(), depth + 1);
         }
 
-        // A union node: resolve every branch and union the ones that yield a set.
+        // A union node: resolve every branch; exactly one closed arm engages.
         JsonElement? union0 = null;
         if (body.TryGetProperty("anyOf", out var anyOfEl) && anyOfEl.ValueKind == JsonValueKind.Array)
         {
@@ -450,8 +448,12 @@ public sealed class Schema
         }
         if (union0 is JsonElement branches)
         {
-            var union = new HashSet<string>();
-            var found = false;
+            // The #223 contract: exactly ONE closed-object arm -> its key set;
+            // zero or several -> disengage. Several closed arms have no single key
+            // set a config must stay inside (a config satisfies SOME arm), so the
+            // shallow check steps aside and the deep validator owns the shape.
+            HashSet<string>? only = null;
+            var closedArms = 0;
             foreach (var branch in branches.EnumerateArray())
             {
                 var keys = ClosedKeySet(branch, depth + 1);
@@ -459,12 +461,12 @@ public sealed class Schema
                 {
                     continue;
                 }
-                found = true;
-                union.UnionWith(keys);
+                closedArms++;
+                only = keys;
             }
-            // No branch is a closed object (e.g. unset: string | array-of-string).
-            // There is no key-set to enforce; the deep validator owns this shape.
-            return found ? union : null;
+            // No branch is a closed object (e.g. unset: string | array-of-string),
+            // or more than one is: nothing single to enforce.
+            return closedArms == 1 ? only : null;
         }
 
         if (!body.TryGetProperty("type", out var typeProp)
@@ -629,7 +631,21 @@ public sealed class Schema
                 continue;
             }
 
+            // A verb the schema marks `deprecated: true` (on the wrapper or on its
+            // verb property) is not SDK surface — dial / eval / if stay out of the
+            // SDKs. Keyed on the schema's annotation, never on a list of names, so
+            // un-deprecating one in the schema re-exposes it here.
+            if (IsDeprecated(defn) || IsDeprecated(props.GetProperty(actualVerb)))
+            {
+                continue;
+            }
+
             _verbs[actualVerb] = new VerbInfo(actualVerb, defName, defn.Clone());
         }
     }
+
+    private static bool IsDeprecated(JsonElement node)
+        => node.ValueKind == JsonValueKind.Object
+            && node.TryGetProperty("deprecated", out var d)
+            && d.ValueKind == JsonValueKind.True;
 }
