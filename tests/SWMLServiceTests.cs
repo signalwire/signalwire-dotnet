@@ -727,6 +727,23 @@ public sealed class SWMLServiceTests : IDisposable
         Assert.Contains("response", body);
     }
 
+    [Fact]
+    public void RoutingCallback_PathFirstFormIsTheSame()
+    {
+        var svc = MakeService();
+        var called = false;
+        svc.RegisterRoutingCallback("custom/", (data, headers) =>
+        {
+            called = true;
+            return new Dictionary<string, object> { ["custom"] = "response" };
+        });
+
+        var (status, _, body) = svc.HandleRequest("POST", "/custom", AuthHeader(), "{}");
+        Assert.True(called);
+        Assert.Equal(200, status);
+        Assert.Contains("response", body);
+    }
+
     // ==================================================================
     //  SWMLService TLS derived attributes (porting-sdk d7c859d)
     //  The reference hoists four values off `self.security` in __init__:

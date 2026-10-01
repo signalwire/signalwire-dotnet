@@ -359,6 +359,16 @@ public class Service
         _routingCallbacks[normalized] = callback;
     }
 
+    /// <summary>Register a routing callback at <paramref name="path"/> (path-first
+    /// argument order); same behaviour as the callback-first form.</summary>
+    /// <param name="path">The route the callback serves (normalized as above).</param>
+    /// <param name="callback">Takes (body, headers); returns a route (string) to
+    /// redirect to, or null to serve this service's SWML.</param>
+    public void RegisterRoutingCallback(
+        string path,
+        Func<Dictionary<string, object?>?, Dictionary<string, string>, object?> callback)
+        => RegisterRoutingCallback(callback, path);
+
     /// <summary>The normalized paths currently registered with a routing
     /// callback, sorted. Mirrors the Python reference's
     /// <c>sorted(self._routing_callbacks)</c> observable state. Internal

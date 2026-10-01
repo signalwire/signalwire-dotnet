@@ -114,6 +114,36 @@ public class InboundCallMockTest : IClassFixture<RelayMockServerFixture>
     }
 
     [Fact]
+    public async Task OnCallHandler_WithEvent_GetsTheReceiveEvent()
+    {
+        if (Skipped()) return;
+        using var bound = await ConnectedClient();
+        try
+        {
+            var done = new TaskCompletionSource<(Call Call, Event Evt)>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Assert.Same(bound.Client, bound.Client.OnCall((call, evt) =>
+            {
+                done.TrySetResult((call, evt));
+                return Task.CompletedTask;
+            }));
+
+            bound.Harness.InboundCall(new RelayMockTest.InboundCallSpec
+            {
+                CallId = "c-evt",
+                FromNumber = "+15551110000",
+                ToNumber = "+15552220000",
+                AutoStates = new() { "created" },
+            });
+            var (got, evt) = await done.Task.WaitAsync(RelayMockTest.EventTimeout);
+
+            Assert.Equal("c-evt", got.CallId);
+            Assert.Equal("calling.call.receive", evt.EventType);
+            Assert.Equal("c-evt", evt.Params["call_id"]?.ToString());
+        }
+        finally { bound.Client.Disconnect(); }
+    }
+
+    [Fact]
     public async Task InboundCall_HasCorrectCallIdAndDirection()
     {
         if (Skipped()) return;

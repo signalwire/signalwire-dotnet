@@ -162,6 +162,10 @@ public class Client : IAsyncDisposable
     // -- event handlers --
     public Func<Call, Task>? OnCallHandler { get; set; }
 
+    // Handlers registered through the (item, event) overloads.
+    private Func<Call, Event, Task>? _onCallWithEvent;
+    private Func<Message, Event, Task>? _onMessageWithEvent;
+
     /// <summary>
     /// Inbound message handler.
     /// Fires with a fully-formed <see cref="Message"/> for every
@@ -1060,11 +1064,11 @@ public class Client : IAsyncDisposable
                 msgParams["direction"] = "inbound";
             }
             var inboundMsg = new Message(msgParams);
-            if (OnMessageHandler is not null)
+            if (OnMessageHandler is not null || _onMessageWithEvent is not null)
             {
                 try
                 {
-                    _ = OnMessageHandler(inboundMsg);
+                    _ = OnMessageHandler is not null ? OnMessageHandler(inboundMsg) : _onMessageWithEvent!(inboundMsg, evt);
                 }
                 catch (Exception ex)
                 {
@@ -1287,7 +1291,23 @@ public class Client : IAsyncDisposable
     public Func<Call, Task> OnCall(Func<Call, Task> callback)
     {
         OnCallHandler = callback;
+        _onCallWithEvent = null;
         return callback;
+    }
+
+    /// <summary>
+    /// Register a handler for inbound calls that also receives the raw
+    /// <c>calling.call.receive</c> <see cref="Event"/> the call was built from.
+    /// Replaces any handler registered with the single-argument form.
+    /// </summary>
+    /// <param name="callback">Takes (call, receive event).</param>
+    /// <returns>This client, for chaining.</returns>
+    public Client OnCall(Func<Call, Event, Task> callback)
+    {
+        ArgumentNullException.ThrowIfNull(callback);
+        _onCallWithEvent = callback;
+        OnCallHandler = null;
+        return this;
     }
 
     /// <summary>
@@ -1297,7 +1317,23 @@ public class Client : IAsyncDisposable
     public Func<Message, Task> OnMessage(Func<Message, Task> callback)
     {
         OnMessageHandler = callback;
+        _onMessageWithEvent = null;
         return callback;
+    }
+
+    /// <summary>
+    /// Register a handler for inbound messages that also receives the raw
+    /// <c>messaging.receive</c> <see cref="Event"/>. Replaces any handler
+    /// registered with the single-argument form.
+    /// </summary>
+    /// <param name="callback">Takes (message, receive event).</param>
+    /// <returns>This client, for chaining.</returns>
+    public Client OnMessage(Func<Message, Event, Task> callback)
+    {
+        ArgumentNullException.ThrowIfNull(callback);
+        _onMessageWithEvent = callback;
+        OnMessageHandler = null;
+        return this;
     }
 
     // -- accessors --
@@ -1338,11 +1374,11 @@ public class Client : IAsyncDisposable
 
         _logger.Info($"Inbound call {callId}");
 
-        if (OnCallHandler is not null)
+        if (OnCallHandler is not null || _onCallWithEvent is not null)
         {
             try
             {
-                _ = OnCallHandler(call);
+                _ = OnCallHandler is not null ? OnCallHandler(call) : _onCallWithEvent!(call, evt);
             }
             catch (Exception ex)
             {
