@@ -288,12 +288,13 @@ def translate_dotnet_type(t: str, aliases: dict[str, str], context: str) -> str:
         "System.Collections.Concurrent.ConcurrentDictionary",
     ):
         return f"dict<{canon_args[0]},{canon_args[1]}>"
-    # An immutable homogeneous sequence is the reference's ``tuple[T, ...]``.
+    # An immutable homogeneous sequence (the reference's ``tuple[T, ...]``, which
+    # the oracle records as ``list<T>``).
     if head in (
         "System.Collections.Immutable.ImmutableArray",
         "System.Collections.Immutable.IImmutableList",
     ):
-        return f"tuple<{canon_args[0]},any>"
+        return f"list<{canon_args[0]}>"
     if head in (
         "System.Collections.Generic.HashSet",
         "System.Collections.Generic.ISet",

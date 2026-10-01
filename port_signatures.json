@@ -7126,7 +7126,7 @@
             {
               "name": "roles",
               "kind": "keyword",
-              "type": "tuple<string,any>",
+              "type": "list<string>",
               "required": false
             },
             {
@@ -44728,7 +44728,7 @@
           "required": false
         },
         "roles": {
-          "type": "tuple<string,any>",
+          "type": "list<string>",
           "required": false
         }
       }
