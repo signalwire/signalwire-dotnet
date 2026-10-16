@@ -113,7 +113,7 @@ jobs:
       - name: Set up Python (mock harnesses + package_smoke.py)
         uses: actions/setup-python@v6
         with:
-          python-version: '3.14'
+          python-version: '3.15'
       - name: Install Python test harnesses (mock_relay + mock_signalwire)
         run: |
           pip install -e porting-sdk/test_harness/mock_relay
