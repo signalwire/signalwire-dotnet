@@ -60,7 +60,7 @@
          not silently dropped). .NET's regex engine supports the schema's
          negative-lookahead step-name patterns natively (unlike Go's RE2), so no
          custom regex engine is needed. It adds no SignalWire.* public surface. -->
-    <PackageReference Include="JsonSchema.Net" Version="7.3.4" />
+    <PackageReference Include="JsonSchema.Net" Version="7.4.0" />
   </ItemGroup>
 
   <ItemGroup>
